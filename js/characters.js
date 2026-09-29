@@ -124,7 +124,7 @@ function defaultWeave() {
   return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2, tauntVuln: 2 };
 }
 function defaultWatcher() {
-  return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 1, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
+  return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
 }
 
 // Fills in fields for characters saved before an ability existed (e.g. kick, grapple, power punch, rage charge, corner watch).
