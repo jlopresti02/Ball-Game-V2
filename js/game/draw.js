@@ -17,7 +17,7 @@ function draw() {
   for (var gy = 50; gy < H; gy += 50) { ctx.moveTo(0, gy); ctx.lineTo(W, gy); }
   ctx.stroke();
   ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
-  ctx.beginPath(); ctx.arc(W / 2, H / 2, 90, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.15, 0, Math.PI * 2); ctx.stroke();
 
   drawSitSpots();
 
