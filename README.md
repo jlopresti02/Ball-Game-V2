@@ -24,7 +24,7 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 | Power Puncher | Charges up, then spins into a 30-damage haymaker that sends the opponent pinballing into 4 walls for 5 damage each |
 | Sees Red | Charges at the opponent throwing a flurry of jabs, but takes extra damage while winding up |
 | Watcher | Sits in a corner seat (invincible), charges, then fires tracking lasers |
-| BMF | Rapid 2-damage jabs up close; weaves (dodges) 50% of attacks, and 20% of weaves are critical: a 5-punch chase combo ending in a launching blow, then a 2-second hands-in-the-air celebration |
+| BMF | Rapid 2-damage jabs up close; weaves (dodges) 75% of attacks, and 20% of weaves are critical: a 5-punch chase combo ending in a launching blow, then a 2-second hands-in-the-air celebration |
 
 Roster fighters can mix any of these abilities, with sliders for every stat. They're saved in the browser's local storage.
 
