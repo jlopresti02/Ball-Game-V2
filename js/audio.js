@@ -257,7 +257,7 @@ function stopChargeVoice(v, when) {
 // Watcher laser sound: a sharp zap when the beams lock on, then a buzzing
 // beam hum for as long as they fire. Each laser adds its own high tone, so
 // more lasers sound thicker. A faint sizzle and a fast flicker match the
-// beams' shimmer, and the hum fades out as the laser timer runs down.
+// beams' shimmer, and the whole thing powers down when the lasers finish.
 // ---------------------------------------------------------------
 var laserNoise = null;
 
@@ -333,13 +333,67 @@ function makeLaserVoice(ctx, dest, lasers, when) {
 
   var sources = [flickLfo, buzz, vib, hiss].concat(beams);
   sources.forEach(function (src) { src.start(when); });
-  return { kind: "laser", out: out, sources: sources };
+  return {
+    kind: "laser", out: out, sources: sources,
+    beams: beams, beamFreqs: beams.map(function (o, i) { return 880 * ratios[i]; }),
+    buzz: buzz, buzzF: buzzF, flickLfo: flickLfo, vibDepth: vibDepth
+  };
 }
 
-// p is how much of the laser time has passed, from 0 to 1.
+// p is how much of the laser time has passed, from 0 to 1. The beam holds
+// full strength right to the end; the power-down below handles the finish.
 function setLaserVoice(v, p, when) {
-  var fade = Math.max(0, Math.min(1, (1 - p) / 0.08)); // fades over the last 8%
-  v.out.gain.setTargetAtTime(0.0001 + 0.085 * fade, when, 0.03);
+  v.out.gain.setTargetAtTime(0.085, when, 0.03);
+}
+
+// Power-down when the lasers finish: everything winds down together like a
+// machine switching off. The beam tones sag, the buzz drops to a low
+// grumble, the flicker slows to a stutter, a falling "whooo" sweeps down
+// underneath, and it ends in a soft thunk.
+var LASER_POWER_DOWN = 0.9; // seconds
+
+function powerDownLaserVoice(ctx, dest, v, when) {
+  var D = LASER_POWER_DOWN;
+  v.beams.forEach(function (o, i) {
+    o.frequency.cancelScheduledValues(when);
+    o.frequency.setValueAtTime(v.beamFreqs[i], when);
+    o.frequency.exponentialRampToValueAtTime(v.beamFreqs[i] * 0.2, when + D);
+  });
+  v.vibDepth.gain.setTargetAtTime(2, when, D / 3);
+  v.buzz.frequency.setValueAtTime(98, when);
+  v.buzz.frequency.exponentialRampToValueAtTime(32, when + D);
+  v.buzzF.frequency.setValueAtTime(1200, when);
+  v.buzzF.frequency.exponentialRampToValueAtTime(140, when + D);
+  v.flickLfo.frequency.setValueAtTime(23, when);
+  v.flickLfo.frequency.exponentialRampToValueAtTime(3, when + D);
+  // Holds for a moment, then drains away as it winds down.
+  v.out.gain.setTargetAtTime(0.0001, when + D * 0.3, D * 0.22);
+  v.sources.forEach(function (src) { try { src.stop(when + D + 0.3); } catch (e) {} });
+
+  // The falling sweep underneath.
+  var sw = ctx.createOscillator();
+  sw.type = "triangle";
+  sw.frequency.setValueAtTime(900, when);
+  sw.frequency.exponentialRampToValueAtTime(55, when + D);
+  var sg = ctx.createGain();
+  sg.gain.setValueAtTime(0.0001, when);
+  sg.gain.exponentialRampToValueAtTime(0.09, when + 0.05);
+  sg.gain.exponentialRampToValueAtTime(0.0001, when + D);
+  sw.connect(sg); sg.connect(dest);
+  sw.start(when); sw.stop(when + D + 0.05);
+
+  // The final thunk as it shuts off.
+  var t = when + D * 0.82;
+  var th = ctx.createOscillator();
+  th.type = "sine";
+  th.frequency.setValueAtTime(95, t);
+  th.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+  var tg = ctx.createGain();
+  tg.gain.setValueAtTime(0.0001, t);
+  tg.gain.exponentialRampToValueAtTime(0.16, t + 0.004);
+  tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+  th.connect(tg); tg.connect(dest);
+  th.start(t); th.stop(t + 0.25);
 }
 
 function stopLaserVoice(v, when) {
@@ -356,7 +410,9 @@ function updateChargeSound(id, kind, p, extra) {
   try {
     var v = chargeVoices[id];
     if (v && v.kind !== kind) {
-      if (v.kind === "laser") stopLaserVoice(v, audioCtx.currentTime);
+      // Lasers that finish (or win the match) power down; a charge that
+      // ends just cuts off, since its attack's own sound takes over.
+      if (v.kind === "laser") powerDownLaserVoice(audioCtx, audioCtx.destination, v, audioCtx.currentTime);
       else stopChargeVoice(v, audioCtx.currentTime);
       chargeVoices[id] = v = null;
     }
@@ -374,6 +430,16 @@ function updateChargeSound(id, kind, p, extra) {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// Leaving the game screen or restarting the match cuts every looping sound
+// off at once, with no power-down.
 function stopAllChargeSounds() {
-  for (var i = 0; i < chargeVoices.length; i++) updateChargeSound(i, null, 0);
+  try {
+    for (var i = 0; i < chargeVoices.length; i++) {
+      var v = chargeVoices[i];
+      if (!v) continue;
+      if (v.kind === "laser") stopLaserVoice(v, audioCtx.currentTime);
+      else stopChargeVoice(v, audioCtx.currentTime);
+      chargeVoices[i] = null;
+    }
+  } catch (e) { /* never let audio break the game */ }
 }
