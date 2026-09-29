@@ -1,0 +1,188 @@
+// Drawing the arena, fighters, projectiles and damage numbers.
+"use strict";
+
+function draw() {
+  readTheme();
+  var s = canvas.width / W;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = theme.floor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  var sx = 0, sy = 0;
+  if (shake > 0) { sx = (Math.random() - 0.5) * shake * 2 * s; sy = (Math.random() - 0.5) * shake * 2 * s; }
+  ctx.setTransform(s, 0, 0, s, sx, sy);
+
+  ctx.strokeStyle = theme.grid; ctx.lineWidth = 1.5; ctx.beginPath();
+  for (var gx = 50; gx < W; gx += 50) { ctx.moveTo(gx, 0); ctx.lineTo(gx, H); }
+  for (var gy = 50; gy < H; gy += 50) { ctx.moveTo(0, gy); ctx.lineTo(W, gy); }
+  ctx.stroke();
+  ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, 90, 0, Math.PI * 2); ctx.stroke();
+
+  drawSitSpots();
+
+  particles.forEach(function (p) {
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  balls.forEach(function (b) {
+    if (!b.alive) return;
+    var other = balls[1 - b.id];
+
+    // While charging a power punch or rage attack, the ball jitters with
+    // rising intensity; while throwing the power punch specifically, the
+    // whole body spins through the same 3 turns as the windmilling fist.
+    var jx = 0, jy = 0, spinAngle = 0, spinning = false;
+    if (b.powerState) {
+      if (b.powerState.phase === "charge") {
+        var prog = b.powerState.t / b.char.powerPunch.chargeDur;
+        var mag = 1 + 5 * prog;
+        jx = (Math.random() - 0.5) * mag;
+        jy = (Math.random() - 0.5) * mag;
+      } else if (b.powerState.phase === "attack") {
+        spinning = true;
+        spinAngle = (b.powerState.t / b.char.powerPunch.spinDur) * Math.PI * 2 * 3;
+      }
+    } else if (b.rageState && b.rageState.phase === "charge") {
+      var rprog = b.rageState.t / b.char.rage.chargeDur;
+      var rmag = 1 + 5 * rprog;
+      jx = (Math.random() - 0.5) * rmag;
+      jy = (Math.random() - 0.5) * rmag;
+    }
+
+    ctx.save();
+    ctx.translate(b.x + jx, b.y + jy);
+    if (spinning) ctx.rotate(spinAngle);
+    ctx.translate(-b.x, -b.y);
+    if (b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser")) {
+      // Sitting: squashed down toward the ground, a little wider.
+      ctx.translate(b.x, b.y + b.r);
+      ctx.scale(1.08, 0.88);
+      ctx.translate(-b.x, -(b.y + b.r));
+    }
+
+    var img = getImg(b.char.imgData);
+    if (img) {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      ctx.drawImage(img, b.x - b.r, b.y - b.r, b.r * 2, b.r * 2);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = b.char.color;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.28)";
+      ctx.beginPath(); ctx.ellipse(b.x - b.r * 0.35, b.y - b.r * 0.4, b.r * 0.32, b.r * 0.2, -0.6, 0, Math.PI * 2); ctx.fill();
+    }
+    if (b.flash > 0) {
+      ctx.fillStyle = "rgba(255,255,255," + (b.flash / 0.16) * 0.85 + ")";
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.lineWidth = 3; ctx.strokeStyle = theme.wall;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
+
+    if (b.char.label) {
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = "700 13px \"Barlow Condensed\", \"Arial Narrow\", sans-serif";
+      ctx.lineWidth = 3; ctx.lineJoin = "round";
+      ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.strokeText(b.char.label, b.x, b.y);
+      ctx.fillStyle = "#fff"; ctx.fillText(b.char.label, b.x, b.y);
+    }
+
+    if (b.powerState && b.powerState.phase === "charge") {
+      var prog2 = b.powerState.t / b.char.powerPunch.chargeDur;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = b.char.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 9, -Math.PI / 2, -Math.PI / 2 + prog2 * Math.PI * 2);
+      ctx.stroke();
+    } else if (b.rageState && b.rageState.phase === "charge") {
+      var rprog2 = b.rageState.t / b.char.rage.chargeDur;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = b.char.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 9, -Math.PI / 2, -Math.PI / 2 + rprog2 * Math.PI * 2);
+      ctx.stroke();
+    } else if (b.watcherState && b.watcherState.phase === "charge") {
+      // The charge itself only begins once the sit delay has passed.
+      var wch = b.char.watcher;
+      var wprog2 = Math.max(0, Math.min(1, (b.watcherState.t - wch.preDelay) / wch.chargeDur));
+      if (wprog2 > 0) {
+        ctx.lineCap = "round";
+        ctx.strokeStyle = b.char.color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r + 9, -Math.PI / 2, -Math.PI / 2 + wprog2 * Math.PI * 2);
+        ctx.stroke();
+      }
+    } else if (b.watcherState && b.watcherState.phase === "laser") {
+      // A ring that drains as the lasers' time runs out.
+      var wleft = Math.max(0, 1 - b.watcherState.t / b.char.watcher.fireDur);
+      ctx.lineCap = "round";
+      ctx.strokeStyle = b.char.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 9, -Math.PI / 2, -Math.PI / 2 + wleft * Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // A bright pulsing ring whenever a fighter is invincible (the Watcher,
+    // sitting in its corner), so it's obvious hits won't land.
+    if (b.invincible) {
+      var pulse = 0.55 + 0.35 * Math.sin(performance.now() / 140);
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(255,255,255," + pulse + ")";
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.restore();
+
+    var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
+    if (by < 4) by = b.y + b.r + 10;
+    ctx.fillStyle = theme.grid; ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = b.char.color; ctx.fillRect(bx, by, bw * (b.hp / MAX_HP), bh);
+    ctx.lineWidth = 2; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+
+    drawFist(b, other);
+    drawKick(b, other);
+    drawGrapple(b);
+    drawThrow(b, other);
+    drawPowerSpin(b);
+    drawJab(b);
+    drawHands(b, other);
+  });
+
+  drawWatcherLasers();
+
+  projectiles.forEach(function (p) {
+    var pimg = getImg(p.imgData);
+    if (pimg) {
+      ctx.drawImage(pimg, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+    } else {
+      ctx.fillStyle = p.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+  });
+
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  floaters.forEach(function (f) {
+    var t = f.life / f.max;
+    ctx.globalAlpha = Math.min(1, t * 2);
+    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : 28);
+    ctx.font = "800 " + size + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
+    var fx = Math.min(W - 50, Math.max(50, f.x)), fy = Math.max(18, f.y);
+    ctx.lineWidth = f.kind === "tick" ? 3 : 6; ctx.lineJoin = "round";
+    ctx.strokeStyle = theme.floor; ctx.strokeText(f.text, fx, fy);
+    ctx.fillStyle = f.kind === "dodge" ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
+  });
+  ctx.globalAlpha = 1;
+}

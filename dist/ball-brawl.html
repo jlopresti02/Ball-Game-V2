@@ -1,0 +1,2636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ball Brawl V2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light dark;
+  --bg: #dde5e1;
+  --ink: #16211f;
+  --muted: #55645f;
+  --floor: #f5f7f4;
+  --grid: #dbe2de;
+  --wall: #16211f;
+  --track: #c3cdc8;
+  --red: #e5483b;
+  --blue: #2e64f0;
+  --hit: #c62d1f;
+  --dodge: #0c8f6d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1518; --ink: #e8eeeb; --muted: #8fa19a; --floor: #172127;
+    --grid: #212f37; --wall: #7f939d; --track: #2a3a43;
+    --red: #ff6153; --blue: #5b8cff; --hit: #ff7d70; --dodge: #3ddbb0;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1518; --ink: #e8eeeb; --muted: #8fa19a; --floor: #172127;
+  --grid: #212f37; --wall: #7f939d; --track: #2a3a43;
+  --red: #ff6153; --blue: #5b8cff; --hit: #ff7d70; --dodge: #3ddbb0;
+}
+
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  font-weight: 500;
+  min-height: 100vh;
+}
+
+main { max-width: 640px; margin: 0 auto; padding: 18px 16px 32px; }
+
+h1 {
+  margin: 0 0 4px;
+  font-size: clamp(30px, 8vw, 40px);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+h2 { margin: 0; font-size: 22px; font-weight: 800; }
+.lede { margin: 0 0 18px; color: var(--muted); font-size: 17px; }
+
+button {
+  font: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--floor);
+  background: var(--ink);
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 22px 11px;
+  cursor: pointer;
+}
+button.secondary { color: var(--ink); background: transparent; border: 3px solid var(--wall); padding: 6px 19px 8px; }
+button.small { font-size: 15px; padding: 5px 12px 7px; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button:hover:not(:disabled) { filter: brightness(1.15); }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+/* ---------- select screen ---------- */
+.slots { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-bottom: 22px; }
+.slot {
+  border: 3px solid var(--wall);
+  border-radius: 8px;
+  background: var(--floor);
+  padding: 12px;
+  text-align: center;
+  min-height: 108px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.slot.empty { color: var(--muted); border-style: dashed; }
+.slot .avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 3px solid var(--wall);
+  background-size: cover; background-position: center;
+}
+.slot .sname { font-weight: 800; font-size: 19px; }
+.slot .sabilities { font-size: 13px; color: var(--muted); }
+.vs { font-weight: 800; font-size: 20px; color: var(--muted); }
+
+.rosterHead { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
+.roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.rcard {
+  border: 3px solid var(--wall);
+  border-radius: 8px;
+  background: var(--floor);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rcard .top { display: flex; align-items: center; gap: 8px; }
+.rcard .avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex: none;
+  border: 3px solid var(--wall); background-size: cover; background-position: center;
+}
+.rcard .rname { font-weight: 700; font-size: 17px; line-height: 1.05; }
+.rcard .rabilities { font-size: 12px; color: var(--muted); line-height: 1.3; }
+.rcard .rbtns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+.rcard .rbtns button { flex: 1 1 auto; }
+
+.fightRow { display: flex; justify-content: center; }
+#fightBtn { font-size: 26px; padding: 12px 40px 15px; }
+
+/* ---------- editor ---------- */
+.field { margin-bottom: 14px; }
+.field > label {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 16px; color: var(--muted); margin-bottom: 5px;
+}
+.field > label span.val { color: var(--ink); font-weight: 700; }
+.field input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 34px;
+  background: transparent;
+  margin: 4px 0;
+  touch-action: pan-y;
+}
+.field input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  background: var(--track);
+  border-radius: 3px;
+}
+.field input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: var(--track);
+  border-radius: 3px;
+}
+.field input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -11px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid var(--floor);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.field input[type="range"]::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 3px solid var(--floor);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.field input[type="text"] {
+  width: 100%; font: inherit; font-size: 18px; padding: 8px 10px;
+  border: 2px solid var(--wall); border-radius: 5px; background: var(--floor); color: var(--ink);
+}
+.field input[type="color"] {
+  width: 46px; height: 36px; border: 2px solid var(--wall); border-radius: 5px; padding: 2px;
+  background: var(--floor); cursor: pointer;
+}
+.uploadRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.uploadRow .thumb {
+  width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--wall);
+  background: var(--track) center/cover no-repeat; flex: none;
+}
+.fileLabel { font-size: 15px; }
+.linkbtn {
+  font-size: 14px; color: var(--muted); background: none; border: 0; padding: 0;
+  font-weight: 500; text-decoration: underline; cursor: pointer;
+}
+
+.abilityBlock { border: 3px solid var(--wall); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; background: var(--floor); }
+.abilityBlock summary { list-style: none; cursor: pointer; }
+.abilityBlock summary::-webkit-details-marker { display: none; }
+.abilityHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.abilityHead .htext { display: flex; flex-direction: column; }
+.abilityHead .htitle { font-weight: 800; font-size: 19px; }
+.abilityHead .hsub { font-size: 13px; color: var(--muted); }
+.switch {
+  position: relative; width: 46px; height: 27px; flex: none;
+  border: 3px solid var(--wall); border-radius: 14px; background: var(--track);
+  display: inline-block; padding: 0; font: inherit; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+}
+.switch .knob {
+  position: absolute; top: 1px; left: 1px; width: 19px; height: 19px; border-radius: 50%;
+  background: var(--floor); border: 2px solid var(--wall); transition: transform 0.15s ease;
+  pointer-events: none;
+}
+.switch[aria-checked="true"] { background: var(--ink); }
+.switch[aria-checked="true"] .knob { transform: translateX(18px); }
+.abilityBody { margin-top: 14px; }
+.abilityBlock[data-on="false"] .abilityBody { display: none; }
+
+.editorGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+@media (max-width: 480px) { .editorGrid { grid-template-columns: 1fr; } }
+
+.editorBtns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.editorBtns .spacer { flex: 1; }
+
+/* ---------- game screen ---------- */
+.hud { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 14px; }
+.fighter .row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.fighter.right .row { flex-direction: row-reverse; }
+.name { font-size: clamp(20px, 5vw, 28px); font-weight: 800; letter-spacing: 0.01em; line-height: 1; }
+.hp { font-size: clamp(20px, 5vw, 28px); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.bar { position: relative; height: 22px; background: var(--track); border: 3px solid var(--wall); border-radius: 4px; overflow: hidden; }
+.bar .ghost, .bar .fill { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; }
+.fighter.right .bar .ghost, .fighter.right .bar .fill { left: auto; right: 0; }
+.bar .ghost { background: var(--ink); opacity: 0.35; }
+.role { margin-top: 5px; min-height: 1.2em; font-size: 16px; line-height: 1.2; color: var(--muted); }
+.fighter.right .role { text-align: right; }
+.fighter.dead .name { opacity: 0.45; text-decoration: line-through; }
+
+.arena { position: relative; border: 6px solid var(--wall); border-radius: 8px; overflow: hidden; background: var(--floor); }
+canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipulation; }
+
+.banner {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 20px; pointer-events: none; padding: 12px;
+}
+.banner button { pointer-events: auto; font-size: clamp(26px, 7vw, 38px); padding: 11px 32px 14px; }
+.banner span {
+  font-size: clamp(40px, 11vw, 84px); font-weight: 800; line-height: 1;
+  padding: 0.1em 0.3em 0.14em; background: var(--floor); border: 5px solid var(--wall); border-radius: 8px;
+}
+
+.gameFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ================= SELECT SCREEN ================= -->
+  <section id="screenSelect">
+    <h1>Ball Brawl</h1>
+    <p class="lede">Pick a fighter for each side, or build your own.</p>
+
+    <div class="slots">
+      <div class="slot empty" id="slot0"><div class="sname">Choose fighter</div></div>
+      <div class="vs">VS</div>
+      <div class="slot empty" id="slot1"><div class="sname">Choose fighter</div></div>
+    </div>
+
+    <div class="rosterHead">
+      <h2>Roster</h2>
+      <button id="newCharBtn" class="small">+ New character</button>
+    </div>
+    <div class="roster" id="roster"></div>
+
+    <div class="fightRow">
+      <button id="fightBtn" disabled>Fight</button>
+    </div>
+  </section>
+
+  <!-- ================= EDITOR SCREEN ================= -->
+  <section id="screenEditor" hidden>
+    <h1 id="editorTitle">New character</h1>
+    <p class="lede">Set their look, then turn on the attacks they use.</p>
+
+    <div class="editorGrid">
+      <div class="field">
+        <label for="fName">Name</label>
+        <input type="text" id="fName" maxlength="16" placeholder="Fighter name">
+      </div>
+      <div class="field">
+        <label for="fColor">Color</label>
+        <input type="color" id="fColor" value="#e5483b">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="fLabel">Text on ball</label>
+      <input type="text" id="fLabel" maxlength="10" placeholder="Optional">
+    </div>
+    <div class="field">
+      <label for="fBlockChance">Block chance <span class="val" id="fBlockChanceVal">0%</span></label>
+      <input type="range" id="fBlockChance" min="0" max="100" step="1" value="0">
+    </div>
+    <div class="field">
+      <label>Ball appearance</label>
+      <div class="uploadRow">
+        <span class="thumb" id="fThumb"></span>
+        <span class="fileLabel"><input type="file" id="fImg" accept="image/png"></span>
+        <button type="button" class="linkbtn" id="fImgClear">Clear</button>
+      </div>
+    </div>
+
+    <details class="abilityBlock" id="projBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Projectile attack</span>
+            <span class="hsub">Fires at the other fighter from range</span>
+          </div>
+          <button type="button" class="switch" id="projOn" role="switch" aria-checked="false" aria-label="Toggle projectile attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="projSize">Size <span class="val" id="projSizeVal">7</span></label>
+          <input type="range" id="projSize" min="3" max="90" step="1" value="7">
+        </div>
+        <div class="field">
+          <label for="projSpeed">Speed <span class="val" id="projSpeedVal">460</span></label>
+          <input type="range" id="projSpeed" min="120" max="900" step="10" value="460">
+        </div>
+        <div class="field">
+          <label for="projDamage">Damage <span class="val" id="projDamageVal">10</span></label>
+          <input type="range" id="projDamage" min="1" max="50" step="1" value="10">
+        </div>
+        <div class="field">
+          <label for="projCooldown">Cooldown <span class="val" id="projCooldownVal">1.6s</span></label>
+          <input type="range" id="projCooldown" min="0.2" max="5" step="0.1" value="1.6">
+        </div>
+        <div class="field">
+          <label>Projectile appearance</label>
+          <div class="uploadRow">
+            <span class="thumb" id="projThumb"></span>
+            <span class="fileLabel"><input type="file" id="projImg" accept="image/png"></span>
+            <button type="button" class="linkbtn" id="projImgClear">Clear</button>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="punchBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Punch attack</span>
+            <span class="hsub">Hits the other fighter up close</span>
+          </div>
+          <button type="button" class="switch" id="punchOn" role="switch" aria-checked="false" aria-label="Toggle punch attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="punchDamage">Damage <span class="val" id="punchDamageVal">25</span></label>
+          <input type="range" id="punchDamage" min="1" max="50" step="1" value="25">
+        </div>
+        <div class="field">
+          <label for="punchCooldown">Cooldown <span class="val" id="punchCooldownVal">1.2s</span></label>
+          <input type="range" id="punchCooldown" min="0.2" max="4" step="0.1" value="1.2">
+        </div>
+        <div class="field">
+          <label for="punchSpeed">Speed <span class="val" id="punchSpeedVal">0.32s</span></label>
+          <input type="range" id="punchSpeed" min="0.1" max="1" step="0.02" value="0.32">
+        </div>
+        <div class="field">
+          <label for="punchSize">Fist size <span class="val" id="punchSizeVal">15</span></label>
+          <input type="range" id="punchSize" min="6" max="30" step="1" value="15">
+        </div>
+        <div class="field">
+          <label for="punchKnockback">Knockback <span class="val" id="punchKnockbackVal">300</span></label>
+          <input type="range" id="punchKnockback" min="0" max="900" step="10" value="300">
+        </div>
+        <div class="field">
+          <label for="punchReach">Reach <span class="val" id="punchReachVal">40</span></label>
+          <input type="range" id="punchReach" min="0" max="150" step="5" value="40">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="kickBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Kick attack</span>
+            <span class="hsub">A sweeping leg attack — longer reach than the punch, but a long recovery</span>
+          </div>
+          <button type="button" class="switch" id="kickOn" role="switch" aria-checked="false" aria-label="Toggle kick attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="kickDamage">Damage <span class="val" id="kickDamageVal">40</span></label>
+          <input type="range" id="kickDamage" min="1" max="60" step="1" value="40">
+        </div>
+        <div class="field">
+          <label for="kickCooldown">Recovery <span class="val" id="kickCooldownVal">2.8s</span></label>
+          <input type="range" id="kickCooldown" min="0.5" max="6" step="0.1" value="2.8">
+        </div>
+        <div class="field">
+          <label for="kickSpeed">Speed <span class="val" id="kickSpeedVal">0.5s</span></label>
+          <input type="range" id="kickSpeed" min="0.15" max="1.2" step="0.02" value="0.5">
+        </div>
+        <div class="field">
+          <label for="kickSize">Leg size <span class="val" id="kickSizeVal">17</span></label>
+          <input type="range" id="kickSize" min="6" max="30" step="1" value="17">
+        </div>
+        <div class="field">
+          <label for="kickKnockback">Knockback <span class="val" id="kickKnockbackVal">450</span></label>
+          <input type="range" id="kickKnockback" min="0" max="900" step="10" value="450">
+        </div>
+        <div class="field">
+          <label for="kickReach">Reach <span class="val" id="kickReachVal">75</span></label>
+          <input type="range" id="kickReach" min="0" max="220" step="5" value="75">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="grappleBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Grapple attack</span>
+            <span class="hsub">Grabs a fighter on direct contact and slams them into the nearest wall</span>
+          </div>
+          <button type="button" class="switch" id="grappleOn" role="switch" aria-checked="false" aria-label="Toggle grapple attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="grappleDamage">Slam damage <span class="val" id="grappleDamageVal">50</span></label>
+          <input type="range" id="grappleDamage" min="1" max="80" step="1" value="50">
+        </div>
+        <div class="field">
+          <label for="grappleCooldown">Recovery <span class="val" id="grappleCooldownVal">1.5s</span></label>
+          <input type="range" id="grappleCooldown" min="0.3" max="5" step="0.1" value="1.5">
+        </div>
+        <div class="field">
+          <label for="grappleSpeed">Slam speed <span class="val" id="grappleSpeedVal">0.45s</span></label>
+          <input type="range" id="grappleSpeed" min="0.15" max="1.2" step="0.05" value="0.45">
+        </div>
+        <div class="field">
+          <label for="grappleReach">Grab range <span class="val" id="grappleReachVal">6</span></label>
+          <input type="range" id="grappleReach" min="0" max="30" step="1" value="6">
+        </div>
+        <div class="field">
+          <label for="grappleCounter">Counter chance <span class="val" id="grappleCounterVal">25%</span></label>
+          <input type="range" id="grappleCounter" min="0" max="100" step="5" value="25">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="powerBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Power punch</span>
+            <span class="hsub">Charges up on a timer, slowing to a crawl, then spins into a huge haymaker on contact</span>
+          </div>
+          <button type="button" class="switch" id="powerOn" role="switch" aria-checked="false" aria-label="Toggle power punch attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="powerDamageMin">Min damage <span class="val" id="powerDamageMinVal">50</span></label>
+          <input type="range" id="powerDamageMin" min="1" max="100" step="1" value="50">
+        </div>
+        <div class="field">
+          <label for="powerDamageMax">Max damage <span class="val" id="powerDamageMaxVal">100</span></label>
+          <input type="range" id="powerDamageMax" min="1" max="100" step="1" value="100">
+        </div>
+        <div class="field">
+          <label for="powerInterval">Attacks every <span class="val" id="powerIntervalVal">3s</span></label>
+          <input type="range" id="powerInterval" min="2" max="15" step="0.5" value="3">
+        </div>
+        <div class="field">
+          <label for="powerCharge">Charge time <span class="val" id="powerChargeVal">3s</span></label>
+          <input type="range" id="powerCharge" min="0.5" max="8" step="0.1" value="3">
+        </div>
+        <div class="field">
+          <label for="powerSpin">Throw speed <span class="val" id="powerSpinVal">0.9s</span></label>
+          <input type="range" id="powerSpin" min="0.3" max="2" step="0.1" value="0.9">
+        </div>
+        <div class="field">
+          <label for="powerKnockback">Knockback <span class="val" id="powerKnockbackVal">850</span></label>
+          <input type="range" id="powerKnockback" min="0" max="900" step="10" value="850">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="rageBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Rage charge</span>
+            <span class="hsub">Charges off in a random direction throwing a flurry of quick punches, but takes extra damage while it's happening</span>
+          </div>
+          <button type="button" class="switch" id="rageOn" role="switch" aria-checked="false" aria-label="Toggle rage charge attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="ragePunchDamage">Damage per punch <span class="val" id="ragePunchDamageVal">2</span></label>
+          <input type="range" id="ragePunchDamage" min="1" max="10" step="1" value="2">
+        </div>
+        <div class="field">
+          <label for="ragePunchCount">Number of punches <span class="val" id="ragePunchCountVal">10</span></label>
+          <input type="range" id="ragePunchCount" min="1" max="20" step="1" value="10">
+        </div>
+        <div class="field">
+          <label for="rageInterval">Attacks every <span class="val" id="rageIntervalVal">5s</span></label>
+          <input type="range" id="rageInterval" min="2" max="15" step="0.5" value="5">
+        </div>
+        <div class="field">
+          <label for="rageCharge">Charge time <span class="val" id="rageChargeVal">1.5s</span></label>
+          <input type="range" id="rageCharge" min="0.5" max="4" step="0.1" value="1.5">
+        </div>
+        <div class="field">
+          <label for="rageSpeed">Charge speed <span class="val" id="rageSpeedVal">520</span></label>
+          <input type="range" id="rageSpeed" min="200" max="900" step="10" value="520">
+        </div>
+        <div class="field">
+          <label for="rageReach">Reach <span class="val" id="rageReachVal">20</span></label>
+          <input type="range" id="rageReach" min="0" max="60" step="2" value="20">
+        </div>
+        <div class="field">
+          <label for="rageVuln">Damage taken while charging <span class="val" id="rageVulnVal">2x</span></label>
+          <input type="range" id="rageVuln" min="1" max="4" step="0.5" value="2">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="watcherBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Corner watch</span>
+            <span class="hsub">Retreats to a corner and sits — invincible the whole time — then locks tracking lasers onto the opponent</span>
+          </div>
+          <button type="button" class="switch" id="watcherOn" role="switch" aria-checked="false" aria-label="Toggle corner watch attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="watcherDelay">Sit delay before charging <span class="val" id="watcherDelayVal">1s</span></label>
+          <input type="range" id="watcherDelay" min="0" max="3" step="0.1" value="1">
+        </div>
+        <div class="field">
+          <label for="watcherCharge">Charge time <span class="val" id="watcherChargeVal">2s</span></label>
+          <input type="range" id="watcherCharge" min="0.5" max="5" step="0.1" value="2">
+        </div>
+        <div class="field">
+          <label for="watcherDuration">Laser duration <span class="val" id="watcherDurationVal">10s</span></label>
+          <input type="range" id="watcherDuration" min="2" max="20" step="0.5" value="10">
+        </div>
+        <div class="field">
+          <label for="watcherLasers">Number of lasers <span class="val" id="watcherLasersVal">2</span></label>
+          <input type="range" id="watcherLasers" min="1" max="8" step="1" value="2">
+        </div>
+        <div class="field">
+          <label for="watcherTickDamage">Damage per laser tick <span class="val" id="watcherTickDamageVal">0.25</span></label>
+          <input type="range" id="watcherTickDamage" min="0.1" max="5" step="0.05" value="0.25">
+        </div>
+        <div class="field">
+          <label for="watcherTickInterval">Tick every <span class="val" id="watcherTickIntervalVal">0.25s</span></label>
+          <input type="range" id="watcherTickInterval" min="0.1" max="2" step="0.05" value="0.25">
+        </div>
+        <div class="field">
+          <label for="watcherRest">Roams for before sitting <span class="val" id="watcherRestVal">6s</span></label>
+          <input type="range" id="watcherRest" min="0" max="20" step="0.5" value="6">
+        </div>
+        <div class="field">
+          <label for="watcherSpeed">Approach speed <span class="val" id="watcherSpeedVal">420</span></label>
+          <input type="range" id="watcherSpeed" min="200" max="900" step="10" value="420">
+        </div>
+      </div>
+    </details>
+
+    <div class="editorBtns">
+      <button id="editorSave">Save character</button>
+      <button id="editorCancel" class="secondary">Cancel</button>
+      <span class="spacer"></span>
+      <button id="editorDelete" class="secondary" hidden>Delete</button>
+    </div>
+  </section>
+
+  <!-- ================= GAME SCREEN ================= -->
+  <section id="screenGame" hidden>
+    <header class="hud" aria-label="Health">
+      <div class="fighter" data-id="0" id="hud0">
+        <div class="row"><span class="name" id="name0">Red</span><span class="hp" id="hp0">100</span></div>
+        <div class="bar" role="progressbar" aria-label="Left fighter health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="bar0">
+          <div class="ghost" id="ghost0"></div><div class="fill" id="fill0"></div>
+        </div>
+        <div class="role" id="role0"></div>
+      </div>
+      <div class="fighter right" data-id="1" id="hud1">
+        <div class="row"><span class="name" id="name1">Blue</span><span class="hp" id="hp1">100</span></div>
+        <div class="bar" role="progressbar" aria-label="Right fighter health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="bar1">
+          <div class="ghost" id="ghost1"></div><div class="fill" id="fill1"></div>
+        </div>
+        <div class="role" id="role1"></div>
+      </div>
+    </header>
+
+    <div class="arena">
+      <canvas id="c" aria-label="Square arena with two bouncing fighters"></canvas>
+      <div class="banner" id="banner">
+        <span id="bannerText" hidden></span>
+        <button id="startBtn" type="button">Start match</button>
+      </div>
+    </div>
+
+    <div class="gameFooter">
+      <button id="backBtn" class="secondary">Change fighters</button>
+      <button id="rematch" class="secondary">Reset</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Scripts share one global scope and must load in this order. -->
+<script>
+(function () {
+// Arena size, physics constants and the Watcher's corner seats.
+"use strict";
+
+var STORAGE_KEY = "ballbrawl_roster_v1";
+var W = 600, H = 600, RADIUS = 30, SPEED = 340, MAX_HP = 100, SUBSTEPS = 4;
+// Shared by the power punch's hit detection and its drawing, so the fist
+// you see is exactly the fist that can land a hit.
+var POWER_ARM_LEN_MULT = 2.9, POWER_FIST_R_MULT = 0.62;
+// The four corner seats the Watcher can sit in.
+var SIT_INSET = RADIUS + 4;
+var SIT_SPOTS = [
+  { x: SIT_INSET, y: SIT_INSET },
+  { x: W - SIT_INSET, y: SIT_INSET },
+  { x: SIT_INSET, y: H - SIT_INSET },
+  { x: W - SIT_INSET, y: H - SIT_INSET }
+];
+
+var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Synthesized wall-bounce sound (no audio files).
+"use strict";
+
+// A bright "ding" for every wall bounce — a little casino sparkle without
+// turning into a melody. Pitch is randomized per hit rather than climbing
+// a scale, and the shimmer is short and subtle. No audio file needed, it's
+// all synthesized. Browsers require a user gesture before audio can play,
+// so the context is created lazily and resumed on the next tap.
+var audioCtx = null;
+var echoBus = null;
+var lastBounceSound = 0;
+function getAudioCtx() {
+  if (audioCtx) return audioCtx;
+  var Ctor = window.AudioContext || window.webkitAudioContext;
+  if (!Ctor) return null;
+  try {
+    audioCtx = new Ctor();
+    // A brief, low-feedback echo every ding feeds into, for a touch of
+    // sparkle without a ringing, musical tail.
+    var delay = audioCtx.createDelay();
+    delay.delayTime.value = 0.055;
+    var feedback = audioCtx.createGain();
+    feedback.gain.value = 0.14;
+    var echoOut = audioCtx.createGain();
+    echoOut.gain.value = 0.4;
+    delay.connect(feedback); feedback.connect(delay);
+    delay.connect(echoOut); echoOut.connect(audioCtx.destination);
+    echoBus = delay;
+  } catch (e) { audioCtx = null; echoBus = null; }
+  return audioCtx;
+}
+function playBounce() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    // Throttle so many simultaneous/near-simultaneous bounces (e.g. both
+    // balls hitting walls the same frame) don't stack into a harsh spike.
+    var now = ctx.currentTime;
+    if (now - lastBounceSound < 0.03) return;
+    lastBounceSound = now;
+
+    var freq = 300 + Math.random() * 220;
+
+    var master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.exponentialRampToValueAtTime(0.22, now + 0.005);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    master.connect(ctx.destination);
+    if (echoBus) master.connect(echoBus);
+
+    // Fundamental + one octave above: enough for a bright "ding" without
+    // the fuller bell chord.
+    [
+      { mult: 1, type: "sine", peak: 1, dur: 0.16 },
+      { mult: 2, type: "sine", peak: 0.3, dur: 0.1 }
+    ].forEach(function (p) {
+      var osc = ctx.createOscillator();
+      osc.type = p.type;
+      osc.frequency.setValueAtTime(freq * p.mult, now);
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(p.peak, now + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + p.dur);
+      osc.connect(g); g.connect(master);
+      osc.start(now); osc.stop(now + p.dur + 0.02);
+    });
+  } catch (e) { /* audio is a nice-to-have, never let it break the game */ }
+}
+
+// Built-in roster, ability defaults, saving custom characters, image cache.
+"use strict";
+
+// ---------------------------------------------------------------
+// Character roster: built-ins + whatever the user saved
+// ---------------------------------------------------------------
+var builtins = [
+  {
+    id: "builtin-gunner", builtin: true, name: "Gunner", color: "#e5483b", label: "", imgData: null,
+    hasProjectile: true, proj: { size: 7, speed: 460, damage: 10, cooldown: 1.6, imgData: null },
+    hasPunch: false, punch: defaultPunch(),
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    blockChance: 0
+  },
+  {
+    id: "builtin-brawler", builtin: true, name: "Brawler", color: "#2e64f0", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: true, punch: { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40 },
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    blockChance: 10
+  },
+  {
+    id: "builtin-kicker", builtin: true, name: "Kicker", color: "#8b5cf6", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: false, punch: defaultPunch(),
+    hasKick: true, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    blockChance: 0
+  },
+  {
+    id: "builtin-grappler", builtin: true, name: "Grappler", color: "#d98c0f", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: false, punch: defaultPunch(),
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: true, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    blockChance: 0
+  },
+  {
+    id: "builtin-powerpuncher", builtin: true, name: "Power Puncher", color: "#16a34a", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: false, punch: defaultPunch(),
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: true, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    blockChance: 0
+  },
+  {
+    id: "builtin-seesred", builtin: true, name: "Sees Red", color: "#b91c1c", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: false, punch: defaultPunch(),
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: true, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    blockChance: 0
+  },
+  {
+    id: "builtin-watcher", builtin: true, name: "Watcher", color: "#0891b2", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: false, punch: defaultPunch(),
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: true, watcher: defaultWatcher(),
+    blockChance: 0
+  }
+];
+
+function defaultProj() { return { size: 7, speed: 460, damage: 10, cooldown: 1.6, imgData: null }; }
+function defaultPunch() { return { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40 }; }
+function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 17, knockback: 450, reach: 75 }; }
+function defaultGrapple() { return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25 }; }
+function defaultPowerPunch() { return { damageMin: 50, damageMax: 100, cooldown: 3, chargeDur: 3, spinDur: 0.9, knockback: 850 }; }
+function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, chargeDur: 1.5, speed: 520, reach: 20, vulnMult: 2 }; }
+function defaultWatcher() {
+  return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.25, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
+}
+
+// Fills in fields for characters saved before an ability existed (e.g. kick, grapple, power punch, rage charge, corner watch).
+function normalizeChar(ch) {
+  if (ch.hasKick === undefined) ch.hasKick = false;
+  if (!ch.kick) ch.kick = defaultKick();
+  if (ch.hasGrapple === undefined) ch.hasGrapple = false;
+  if (!ch.grapple) ch.grapple = defaultGrapple();
+  if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;
+  if (!ch.powerPunch) ch.powerPunch = defaultPowerPunch();
+  if (ch.hasRage === undefined) ch.hasRage = false;
+  if (!ch.rage) ch.rage = defaultRage();
+  if (ch.hasWatcher === undefined) ch.hasWatcher = false;
+  if (!ch.watcher) ch.watcher = defaultWatcher();
+  else if (ch.watcher.lasers == null) ch.watcher.lasers = defaultWatcher().lasers;
+  if (ch.blockChance == null) ch.blockChance = 0;
+  return ch;
+}
+
+function loadCustom() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    var list = raw ? JSON.parse(raw) : [];
+    return list.map(normalizeChar);
+  } catch (e) { return []; }
+}
+function saveCustom(list) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+var customChars = loadCustom();
+function allChars() { return builtins.concat(customChars); }
+function findChar(id) {
+  var all = allChars();
+  for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
+  return null;
+}
+
+// image cache: dataURL -> Image
+var imgCache = {};
+function getImg(dataURL) {
+  if (!dataURL) return null;
+  var cached = imgCache[dataURL];
+  if (cached) return cached.complete ? cached : null;
+  var im = new Image();
+  im.src = dataURL;
+  imgCache[dataURL] = im;
+  return null;
+}
+
+// Screen switching and the character select screen.
+"use strict";
+
+// ---------------------------------------------------------------
+// Screen switching
+// ---------------------------------------------------------------
+var screens = {
+  select: document.getElementById("screenSelect"),
+  editor: document.getElementById("screenEditor"),
+  game: document.getElementById("screenGame")
+};
+function showScreen(name) {
+  Object.keys(screens).forEach(function (k) { screens[k].hidden = k !== name; });
+  if (name === "select") renderSelect();
+  if (name === "game") { resize(); }
+}
+
+// ---------------------------------------------------------------
+// Select screen
+// ---------------------------------------------------------------
+var slotChar = [null, null];
+
+function abilitySummary(ch) {
+  var parts = [];
+  if (ch.hasProjectile) parts.push("\uD83C\uDFAF " + ch.proj.damage + " dmg / " + ch.proj.cooldown.toFixed(1) + "s");
+  if (ch.hasPunch) parts.push("\uD83D\uDC4A " + ch.punch.damage + " dmg");
+  if (ch.hasKick) parts.push("\uD83E\uDDB5 " + ch.kick.damage + " dmg");
+  if (ch.hasGrapple) parts.push("\uD83E\uDD3C " + ch.grapple.damage + " dmg");
+  if (ch.hasPowerPunch) parts.push("\uD83D\uDCA5 " + ch.powerPunch.damageMin + "-" + ch.powerPunch.damageMax + " dmg");
+  if (ch.hasRage) parts.push("\uD83D\uDE21 " + ch.rage.punchCount + "\u00D7" + ch.rage.punchDamage + " dmg");
+  if (ch.hasWatcher) parts.push("\uD83D\uDC41\uFE0F " + ch.watcher.lasers + "\u00D7" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
+  if (ch.blockChance > 0) parts.push("\uD83D\uDEE1\uFE0F " + ch.blockChance + "% block");
+  return parts.length ? parts.join(" \u00B7 ") : "No attacks yet";
+}
+
+function avatarStyle(ch) {
+  var img = getImg(ch.imgData);
+  if (img) return "background-image:url(" + ch.imgData + ");background-color:" + ch.color + ";";
+  return "background-color:" + ch.color + ";";
+}
+
+function renderSlot(side) {
+  var el = document.getElementById("slot" + side);
+  var ch = slotChar[side];
+  if (!ch) {
+    el.className = "slot empty";
+    el.innerHTML = '<div class="sname">Choose fighter</div>';
+    return;
+  }
+  el.className = "slot";
+  el.innerHTML =
+    '<div class="avatar" style="' + avatarStyle(ch) + '"></div>' +
+    '<div class="sname">' + escapeHtml(ch.name) + "</div>" +
+    '<div class="sabilities">' + escapeHtml(abilitySummary(ch)) + "</div>";
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function assignSlot(ch) {
+  if (slotChar[0] && slotChar[0].id === ch.id) { slotChar[0] = null; renderSlot(0); updateFightBtn(); return; }
+  if (slotChar[1] && slotChar[1].id === ch.id) { slotChar[1] = null; renderSlot(1); updateFightBtn(); return; }
+  var side = !slotChar[0] ? 0 : (!slotChar[1] ? 1 : 0);
+  slotChar[side] = ch;
+  renderSlot(side);
+  updateFightBtn();
+}
+
+function updateFightBtn() {
+  document.getElementById("fightBtn").disabled = !(slotChar[0] && slotChar[1]);
+}
+
+function renderSelect() {
+  // keep slot selections valid if a character was deleted
+  slotChar = slotChar.map(function (ch) { return ch && findChar(ch.id) ? findChar(ch.id) : null; });
+  renderSlot(0); renderSlot(1); updateFightBtn();
+
+  var roster = document.getElementById("roster");
+  roster.innerHTML = "";
+  allChars().forEach(function (ch) {
+    var card = document.createElement("div");
+    card.className = "rcard";
+    var inSlot = (slotChar[0] && slotChar[0].id === ch.id) || (slotChar[1] && slotChar[1].id === ch.id);
+    card.innerHTML =
+      '<div class="top"><div class="avatar" style="' + avatarStyle(ch) + '"></div>' +
+      '<div class="rname">' + escapeHtml(ch.name) + "</div></div>" +
+      '<div class="rabilities">' + escapeHtml(abilitySummary(ch)) + "</div>" +
+      '<div class="rbtns"></div>';
+    var btns = card.querySelector(".rbtns");
+
+    var pick = document.createElement("button");
+    pick.className = "small";
+    pick.textContent = inSlot ? "Remove" : "Select";
+    pick.addEventListener("click", function () { assignSlot(ch); });
+    btns.appendChild(pick);
+
+    if (!ch.builtin) {
+      var editBtn = document.createElement("button");
+      editBtn.className = "small secondary";
+      editBtn.textContent = "Edit";
+      editBtn.addEventListener("click", function () { openEditor(ch.id); });
+      btns.appendChild(editBtn);
+    }
+
+    roster.appendChild(card);
+  });
+}
+
+document.getElementById("newCharBtn").addEventListener("click", function () { openEditor(null); });
+document.getElementById("fightBtn").addEventListener("click", function () {
+  if (!slotChar[0] || !slotChar[1]) return;
+  // A real click, so this is a safe place to unlock audio playback.
+  var ctx = getAudioCtx();
+  if (ctx && ctx.state === "suspended") ctx.resume();
+  startMatchWith(slotChar[0], slotChar[1]);
+});
+
+// Character editor: form, toggles, sliders, save/delete.
+"use strict";
+
+// ---------------------------------------------------------------
+// Editor screen
+// ---------------------------------------------------------------
+var editingId = null;
+var editState = null;
+
+function blankChar() {
+  return {
+    id: "c" + Date.now() + Math.floor(Math.random() * 1000),
+    builtin: false,
+    name: "New Fighter",
+    color: "#e5483b",
+    label: "",
+    imgData: null,
+    hasProjectile: false,
+    proj: defaultProj(),
+    hasPunch: false,
+    punch: defaultPunch(),
+    hasKick: false,
+    kick: defaultKick(),
+    hasGrapple: false,
+    grapple: defaultGrapple(),
+    hasPowerPunch: false,
+    powerPunch: defaultPowerPunch(),
+    hasRage: false,
+    rage: defaultRage(),
+    hasWatcher: false,
+    watcher: defaultWatcher(),
+    blockChance: 0
+  };
+}
+
+function openEditor(id) {
+  editingId = id;
+  var ch = id ? findChar(id) : null;
+  editState = ch ? JSON.parse(JSON.stringify(ch)) : blankChar();
+  document.getElementById("editorTitle").textContent = id ? "Edit character" : "New character";
+  document.getElementById("editorDelete").hidden = !id;
+  fillEditorForm(editState);
+  showScreen("editor");
+}
+
+function fillEditorForm(s) {
+  // Always open every ability section so its sliders are immediately
+  // visible and reachable, regardless of any prior collapsed state.
+  Array.prototype.forEach.call(document.querySelectorAll(".abilityBlock"), function (block) { block.open = true; });
+
+  document.getElementById("fName").value = s.name;
+  document.getElementById("fColor").value = s.color;
+  document.getElementById("fLabel").value = s.label || "";
+  document.getElementById("fBlockChance").value = s.blockChance || 0;
+  document.getElementById("fBlockChanceVal").textContent = (s.blockChance || 0) + "%";
+  document.getElementById("fThumb").style.backgroundImage = s.imgData ? "url(" + s.imgData + ")" : "";
+
+  document.getElementById("projOn").setAttribute("aria-checked", String(s.hasProjectile));
+  document.getElementById("projBlock").setAttribute("data-on", String(s.hasProjectile));
+  document.getElementById("projSize").value = s.proj.size;
+  document.getElementById("projSizeVal").textContent = s.proj.size;
+  document.getElementById("projSpeed").value = s.proj.speed;
+  document.getElementById("projSpeedVal").textContent = s.proj.speed;
+  document.getElementById("projDamage").value = s.proj.damage;
+  document.getElementById("projDamageVal").textContent = s.proj.damage;
+  document.getElementById("projCooldown").value = s.proj.cooldown;
+  document.getElementById("projCooldownVal").textContent = s.proj.cooldown.toFixed(1) + "s";
+  document.getElementById("projThumb").style.backgroundImage = s.proj.imgData ? "url(" + s.proj.imgData + ")" : "";
+
+  document.getElementById("punchOn").setAttribute("aria-checked", String(s.hasPunch));
+  document.getElementById("punchBlock").setAttribute("data-on", String(s.hasPunch));
+  document.getElementById("punchDamage").value = s.punch.damage;
+  document.getElementById("punchDamageVal").textContent = s.punch.damage;
+  document.getElementById("punchCooldown").value = s.punch.cooldown;
+  document.getElementById("punchCooldownVal").textContent = s.punch.cooldown.toFixed(1) + "s";
+  document.getElementById("punchSpeed").value = s.punch.speed;
+  document.getElementById("punchSpeedVal").textContent = s.punch.speed.toFixed(2) + "s";
+  document.getElementById("punchSize").value = s.punch.size;
+  document.getElementById("punchSizeVal").textContent = s.punch.size;
+  document.getElementById("punchKnockback").value = s.punch.knockback;
+  document.getElementById("punchKnockbackVal").textContent = s.punch.knockback;
+  document.getElementById("punchReach").value = s.punch.reach;
+  document.getElementById("punchReachVal").textContent = s.punch.reach;
+
+  document.getElementById("kickOn").setAttribute("aria-checked", String(s.hasKick));
+  document.getElementById("kickBlock").setAttribute("data-on", String(s.hasKick));
+  document.getElementById("kickDamage").value = s.kick.damage;
+  document.getElementById("kickDamageVal").textContent = s.kick.damage;
+  document.getElementById("kickCooldown").value = s.kick.cooldown;
+  document.getElementById("kickCooldownVal").textContent = s.kick.cooldown.toFixed(1) + "s";
+  document.getElementById("kickSpeed").value = s.kick.speed;
+  document.getElementById("kickSpeedVal").textContent = s.kick.speed.toFixed(2) + "s";
+  document.getElementById("kickSize").value = s.kick.size;
+  document.getElementById("kickSizeVal").textContent = s.kick.size;
+  document.getElementById("kickKnockback").value = s.kick.knockback;
+  document.getElementById("kickKnockbackVal").textContent = s.kick.knockback;
+  document.getElementById("kickReach").value = s.kick.reach;
+  document.getElementById("kickReachVal").textContent = s.kick.reach;
+
+  document.getElementById("grappleOn").setAttribute("aria-checked", String(s.hasGrapple));
+  document.getElementById("grappleBlock").setAttribute("data-on", String(s.hasGrapple));
+  document.getElementById("grappleDamage").value = s.grapple.damage;
+  document.getElementById("grappleDamageVal").textContent = s.grapple.damage;
+  document.getElementById("grappleCooldown").value = s.grapple.cooldown;
+  document.getElementById("grappleCooldownVal").textContent = s.grapple.cooldown.toFixed(1) + "s";
+  document.getElementById("grappleSpeed").value = s.grapple.speed;
+  document.getElementById("grappleSpeedVal").textContent = s.grapple.speed.toFixed(2) + "s";
+  document.getElementById("grappleReach").value = s.grapple.reach;
+  document.getElementById("grappleReachVal").textContent = s.grapple.reach;
+  document.getElementById("grappleCounter").value = s.grapple.counterChance;
+  document.getElementById("grappleCounterVal").textContent = s.grapple.counterChance + "%";
+
+  document.getElementById("powerOn").setAttribute("aria-checked", String(s.hasPowerPunch));
+  document.getElementById("powerBlock").setAttribute("data-on", String(s.hasPowerPunch));
+  document.getElementById("powerDamageMin").value = s.powerPunch.damageMin;
+  document.getElementById("powerDamageMinVal").textContent = s.powerPunch.damageMin;
+  document.getElementById("powerDamageMax").value = s.powerPunch.damageMax;
+  document.getElementById("powerDamageMaxVal").textContent = s.powerPunch.damageMax;
+  document.getElementById("powerInterval").value = s.powerPunch.cooldown;
+  document.getElementById("powerIntervalVal").textContent = s.powerPunch.cooldown.toFixed(1) + "s";
+  document.getElementById("powerCharge").value = s.powerPunch.chargeDur;
+  document.getElementById("powerChargeVal").textContent = s.powerPunch.chargeDur.toFixed(1) + "s";
+  document.getElementById("powerSpin").value = s.powerPunch.spinDur;
+  document.getElementById("powerSpinVal").textContent = s.powerPunch.spinDur.toFixed(1) + "s";
+  document.getElementById("powerKnockback").value = s.powerPunch.knockback;
+  document.getElementById("powerKnockbackVal").textContent = s.powerPunch.knockback;
+
+  document.getElementById("rageOn").setAttribute("aria-checked", String(s.hasRage));
+  document.getElementById("rageBlock").setAttribute("data-on", String(s.hasRage));
+  document.getElementById("ragePunchDamage").value = s.rage.punchDamage;
+  document.getElementById("ragePunchDamageVal").textContent = s.rage.punchDamage;
+  document.getElementById("ragePunchCount").value = s.rage.punchCount;
+  document.getElementById("ragePunchCountVal").textContent = s.rage.punchCount;
+  document.getElementById("rageInterval").value = s.rage.cooldown;
+  document.getElementById("rageIntervalVal").textContent = s.rage.cooldown.toFixed(1) + "s";
+  document.getElementById("rageCharge").value = s.rage.chargeDur;
+  document.getElementById("rageChargeVal").textContent = s.rage.chargeDur.toFixed(1) + "s";
+  document.getElementById("rageSpeed").value = s.rage.speed;
+  document.getElementById("rageSpeedVal").textContent = s.rage.speed;
+  document.getElementById("rageReach").value = s.rage.reach;
+  document.getElementById("rageReachVal").textContent = s.rage.reach;
+  document.getElementById("rageVuln").value = s.rage.vulnMult;
+  document.getElementById("rageVulnVal").textContent = s.rage.vulnMult + "x";
+
+  document.getElementById("watcherOn").setAttribute("aria-checked", String(s.hasWatcher));
+  document.getElementById("watcherBlock").setAttribute("data-on", String(s.hasWatcher));
+  document.getElementById("watcherDelay").value = s.watcher.preDelay;
+  document.getElementById("watcherDelayVal").textContent = s.watcher.preDelay.toFixed(1) + "s";
+  document.getElementById("watcherCharge").value = s.watcher.chargeDur;
+  document.getElementById("watcherChargeVal").textContent = s.watcher.chargeDur.toFixed(1) + "s";
+  document.getElementById("watcherDuration").value = s.watcher.fireDur;
+  document.getElementById("watcherDurationVal").textContent = s.watcher.fireDur.toFixed(1) + "s";
+  document.getElementById("watcherTickDamage").value = s.watcher.tickDamage;
+  document.getElementById("watcherTickDamageVal").textContent = s.watcher.tickDamage;
+  document.getElementById("watcherTickInterval").value = s.watcher.tickInterval;
+  document.getElementById("watcherTickIntervalVal").textContent = s.watcher.tickInterval.toFixed(2) + "s";
+  document.getElementById("watcherRest").value = s.watcher.restDur;
+  document.getElementById("watcherRestVal").textContent = s.watcher.restDur.toFixed(1) + "s";
+  document.getElementById("watcherSpeed").value = s.watcher.approachSpeed;
+  document.getElementById("watcherSpeedVal").textContent = s.watcher.approachSpeed;
+  document.getElementById("watcherLasers").value = s.watcher.lasers;
+  document.getElementById("watcherLasersVal").textContent = s.watcher.lasers;
+}
+
+document.getElementById("fName").addEventListener("input", function (e) { editState.name = e.target.value || "Fighter"; });
+document.getElementById("fColor").addEventListener("input", function (e) { editState.color = e.target.value; });
+document.getElementById("fLabel").addEventListener("input", function (e) { editState.label = e.target.value; });
+document.getElementById("fBlockChance").addEventListener("input", function (e) {
+  var v = parseFloat(e.target.value) || 0;
+  editState.blockChance = v;
+  document.getElementById("fBlockChanceVal").textContent = v + "%";
+});
+
+function loadPng(input, onLoaded) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (file.type !== "image/png") { input.value = ""; return; }
+  var reader = new FileReader();
+  reader.onload = function () { onLoaded(reader.result); };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById("fImg").addEventListener("change", function (e) {
+  loadPng(e.target, function (dataUrl) {
+    editState.imgData = dataUrl;
+    document.getElementById("fThumb").style.backgroundImage = "url(" + dataUrl + ")";
+  });
+});
+document.getElementById("fImgClear").addEventListener("click", function () {
+  editState.imgData = null;
+  document.getElementById("fThumb").style.backgroundImage = "";
+  document.getElementById("fImg").value = "";
+});
+
+document.getElementById("projImg").addEventListener("change", function (e) {
+  loadPng(e.target, function (dataUrl) {
+    editState.proj.imgData = dataUrl;
+    document.getElementById("projThumb").style.backgroundImage = "url(" + dataUrl + ")";
+  });
+});
+document.getElementById("projImgClear").addEventListener("click", function () {
+  editState.proj.imgData = null;
+  document.getElementById("projThumb").style.backgroundImage = "";
+  document.getElementById("projImg").value = "";
+});
+
+var abilityToggles = [
+  ["projOn", "projBlock", "hasProjectile"],
+  ["punchOn", "punchBlock", "hasPunch"],
+  ["kickOn", "kickBlock", "hasKick"],
+  ["grappleOn", "grappleBlock", "hasGrapple"],
+  ["powerOn", "powerBlock", "hasPowerPunch"],
+  ["rageOn", "rageBlock", "hasRage"],
+  ["watcherOn", "watcherBlock", "hasWatcher"]
+];
+// Each switch is a real button, not a draggable control — one press
+// flips it on or off immediately, and the sliding knob is purely a
+// confirmation animation of that press, not something you need to drag.
+abilityToggles.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var block = document.getElementById(row[1]);
+  el.addEventListener("click", function (e) {
+    // A click on a button inside <summary> would otherwise also fire the
+    // <details>'s native open/close toggle — stop that.
+    e.preventDefault();
+    e.stopPropagation();
+    var next = el.getAttribute("aria-checked") !== "true";
+    el.setAttribute("aria-checked", String(next));
+    editState[row[2]] = next;
+    block.setAttribute("data-on", String(next));
+    if (next) block.open = true;
+  });
+  el.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+});
+
+// Belt-and-suspenders: a summary's native toggle can still fire from a
+// stray tap; force it back open immediately if that ability is on.
+Array.prototype.forEach.call(document.querySelectorAll(".abilityBlock"), function (block) {
+  block.addEventListener("toggle", function () {
+    if (!block.open && block.getAttribute("data-on") === "true") block.open = true;
+  });
+});
+
+var projSliders = [
+  ["projSize", "size", function (v) { return v; }],
+  ["projSpeed", "speed", function (v) { return v; }],
+  ["projDamage", "damage", function (v) { return v; }],
+  ["projCooldown", "cooldown", function (v) { return v; }]
+];
+projSliders.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var out = document.getElementById(row[0] + "Val");
+  el.addEventListener("input", function () {
+    var v = parseFloat(el.value);
+    editState.proj[row[1]] = row[2](v);
+    out.textContent = row[1] === "cooldown" ? v.toFixed(1) + "s" : v;
+  });
+});
+
+var punchSliders = [
+  ["punchDamage", "damage"],
+  ["punchCooldown", "cooldown"],
+  ["punchSpeed", "speed"],
+  ["punchSize", "size"],
+  ["punchKnockback", "knockback"],
+  ["punchReach", "reach"]
+];
+punchSliders.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var out = document.getElementById(row[0] + "Val");
+  el.addEventListener("input", function () {
+    var v = parseFloat(el.value);
+    editState.punch[row[1]] = v;
+    if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
+    else if (row[1] === "speed") out.textContent = v.toFixed(2) + "s";
+    else out.textContent = v;
+  });
+});
+
+var kickSliders = [
+  ["kickDamage", "damage"],
+  ["kickCooldown", "cooldown"],
+  ["kickSpeed", "speed"],
+  ["kickSize", "size"],
+  ["kickKnockback", "knockback"],
+  ["kickReach", "reach"]
+];
+kickSliders.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var out = document.getElementById(row[0] + "Val");
+  el.addEventListener("input", function () {
+    var v = parseFloat(el.value);
+    editState.kick[row[1]] = v;
+    if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
+    else if (row[1] === "speed") out.textContent = v.toFixed(2) + "s";
+    else out.textContent = v;
+  });
+});
+
+var grappleSliders = [
+  ["grappleDamage", "damage"],
+  ["grappleCooldown", "cooldown"],
+  ["grappleSpeed", "speed"],
+  ["grappleReach", "reach"],
+  ["grappleCounter", "counterChance"]
+];
+grappleSliders.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var out = document.getElementById(row[0] + "Val");
+  el.addEventListener("input", function () {
+    var v = parseFloat(el.value);
+    editState.grapple[row[1]] = v;
+    if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
+    else if (row[1] === "speed") out.textContent = v.toFixed(2) + "s";
+    else if (row[1] === "counterChance") out.textContent = v + "%";
+    else out.textContent = v;
+  });
+});
+
+var powerSliders = [
+  ["powerDamageMin", "damageMin"],
+  ["powerDamageMax", "damageMax"],
+  ["powerInterval", "cooldown"],
+  ["powerCharge", "chargeDur"],
+  ["powerSpin", "spinDur"],
+  ["powerKnockback", "knockback"]
+];
+powerSliders.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var out = document.getElementById(row[0] + "Val");
+  el.addEventListener("input", function () {
+    var v = parseFloat(el.value);
+    editState.powerPunch[row[1]] = v;
+    if (row[1] === "cooldown" || row[1] === "chargeDur" || row[1] === "spinDur") out.textContent = v.toFixed(1) + "s";
+    else out.textContent = v;
+  });
+});
+
+var rageSliders = [
+  ["ragePunchDamage", "punchDamage"],
+  ["ragePunchCount", "punchCount"],
+  ["rageInterval", "cooldown"],
+  ["rageCharge", "chargeDur"],
+  ["rageSpeed", "speed"],
+  ["rageReach", "reach"],
+  ["rageVuln", "vulnMult"]
+];
+rageSliders.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var out = document.getElementById(row[0] + "Val");
+  el.addEventListener("input", function () {
+    var v = parseFloat(el.value);
+    editState.rage[row[1]] = v;
+    if (row[1] === "cooldown" || row[1] === "chargeDur") out.textContent = v.toFixed(1) + "s";
+    else if (row[1] === "vulnMult") out.textContent = v + "x";
+    else out.textContent = v;
+  });
+});
+
+var watcherSliders = [
+  ["watcherLasers", "lasers"],
+  ["watcherDelay", "preDelay"],
+  ["watcherCharge", "chargeDur"],
+  ["watcherDuration", "fireDur"],
+  ["watcherTickDamage", "tickDamage"],
+  ["watcherTickInterval", "tickInterval"],
+  ["watcherRest", "restDur"],
+  ["watcherSpeed", "approachSpeed"]
+];
+watcherSliders.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var out = document.getElementById(row[0] + "Val");
+  el.addEventListener("input", function () {
+    var v = parseFloat(el.value);
+    editState.watcher[row[1]] = v;
+    if (row[1] === "preDelay" || row[1] === "chargeDur" || row[1] === "fireDur" || row[1] === "restDur") out.textContent = v.toFixed(1) + "s";
+    else if (row[1] === "tickInterval") out.textContent = v.toFixed(2) + "s";
+    else out.textContent = v;
+  });
+});
+
+document.getElementById("editorCancel").addEventListener("click", function () { showScreen("select"); });
+document.getElementById("editorSave").addEventListener("click", function () {
+  if (!editState.name.trim()) editState.name = "Fighter";
+  var idx = customChars.findIndex(function (c) { return c.id === editState.id; });
+  if (idx >= 0) customChars[idx] = editState; else customChars.push(editState);
+  saveCustom(customChars);
+  showScreen("select");
+});
+document.getElementById("editorDelete").addEventListener("click", function () {
+  customChars = customChars.filter(function (c) { return c.id !== editingId; });
+  saveCustom(customChars);
+  showScreen("select");
+});
+
+// Match state: fighters, starting a match, damage, win check.
+"use strict";
+
+// ---------------------------------------------------------------
+// Game screen: canvas, physics, drawing
+// ---------------------------------------------------------------
+var canvas = document.getElementById("c");
+var ctx = canvas.getContext("2d");
+var banner = document.getElementById("banner");
+var startBtn = document.getElementById("startBtn");
+var bannerText = document.getElementById("bannerText");
+
+var theme = {};
+function readTheme() {
+  var cs = getComputedStyle(document.documentElement);
+  ["floor", "grid", "wall", "ink", "hit", "dodge"].forEach(function (k) { theme[k] = cs.getPropertyValue("--" + k).trim(); });
+}
+
+var balls, projectiles, floaters, particles, shake, over, started;
+
+function makeBall(id, ch) {
+  return {
+    id: id, char: ch,
+    x: id === 0 ? W * 0.27 : W * 0.73,
+    y: H / 2 + (Math.random() - 0.5) * 160,
+    vx: 0, vy: 0, r: RADIUS,
+    hp: MAX_HP, shown: MAX_HP, alive: true, flash: 0,
+    shotTimer: ch.proj.cooldown, punchCd: 0, punch: null, kickCd: 0, kick: null,
+    grappleCd: 0, grapple: null, grappled: false, throwAnim: null,
+    powerCd: ch.powerPunch.cooldown, powerState: null,
+    rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
+    watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0
+  };
+}
+
+function startMatchWith(ch0, ch1) {
+  balls = [makeBall(0, ch0), makeBall(1, ch1)];
+  projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
+
+  document.getElementById("name0").textContent = ch0.name;
+  document.getElementById("name1").textContent = ch1.name;
+  ["0", "1"].forEach(function (i) {
+    var ch = i === "0" ? ch0 : ch1;
+    document.getElementById("name" + i).style.color = ch.color;
+    document.getElementById("fill" + i).style.background = ch.color;
+    document.getElementById("role" + i).textContent = abilitySummary(ch);
+    document.getElementById("hud" + i).classList.remove("dead");
+  });
+
+  bannerText.hidden = true;
+  startBtn.textContent = "Start match";
+  banner.hidden = false;
+  updateHud(true);
+  showScreen("game");
+}
+
+function start() {
+  balls.forEach(function (b) {
+    var angle = Math.random() * Math.PI * 2;
+    b.vx = Math.cos(angle) * SPEED;
+    b.vy = Math.sin(angle) * SPEED;
+  });
+  started = true;
+  banner.hidden = true;
+}
+
+function floater(x, y, text, kind) {
+  var life = kind === "tick" ? 0.4 : 0.9;
+  floaters.push({ x: x, y: y, text: text, kind: kind, life: life, max: life });
+}
+
+function burst(b) {
+  for (var i = 0; i < 28; i++) {
+    var a = Math.random() * Math.PI * 2, s = 80 + Math.random() * 260;
+    particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.6 + Math.random() * 0.4, max: 1, size: 3 + Math.random() * 5, color: b.char.color });
+  }
+}
+
+// Grabs `target`, drags it to whichever wall is closest, and slams it there.
+function beginGrapple(attacker, target) {
+  var gr = attacker.char.grapple;
+  var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
+  var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;
+  var min = Math.min(distLeft, distRight, distTop, distBottom);
+  var endX = target.x, endY = target.y, nx = 0, ny = 0;
+  if (min === distLeft) { endX = target.r + 2; nx = 1; }
+  else if (min === distRight) { endX = W - target.r - 2; nx = -1; }
+  else if (min === distTop) { endY = target.r + 2; ny = 1; }
+  else { endY = H - target.r - 2; ny = -1; }
+  attacker.grapple = {
+    targetId: target.id, startX: target.x, startY: target.y,
+    endX: endX, endY: endY, t: 0, dur: gr.speed, nx: nx, ny: ny, dealt: false
+  };
+  attacker.grappleCd = gr.cooldown;
+  target.grappled = true;
+  target.vx = 0; target.vy = 0;
+}
+
+function hurt(b, amount, source, attackerId) {
+  if (!b.alive) return 0;
+  // A seated Watcher can't be hurt by anything at all.
+  if (b.invincible) {
+    if (source !== "laser" && b.immuneCd <= 0) {
+      floater(b.x, b.y - b.r - 8, "IMMUNE", "dodge");
+      b.immuneCd = 0.5;
+    }
+    return 0;
+  }
+  // A passive chance to block an incoming attack outright and take no
+  // damage at all (laser ticks are too frequent/small to bother blocking).
+  if (b.char.blockChance > 0 && source !== "laser" && Math.random() < b.char.blockChance / 100) {
+    floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
+    b.flash = 0.1;
+    return 0;
+  }
+  // Sees Red is wide open mid wind-up: anything that lands while it's
+  // charging (not the dash itself) does extra damage.
+  if (b.rageState && b.rageState.phase === "charge") {
+    var vm = b.char.rage.vulnMult != null ? b.char.rage.vulnMult : 2;
+    // Whole-number hits stay whole numbers; tiny fractional hits (like
+    // laser ticks) keep their fractions instead of rounding up to 1.
+    amount = amount % 1 === 0 ? Math.round(amount * vm) : Math.round(amount * vm * 100) / 100;
+  }
+  b.hp = Math.max(0, b.hp - amount);
+  if (b.hp < 0.001) b.hp = 0;
+  if (source === "laser") {
+    // Laser ticks land constantly, so they only give a soft pulse; the
+    // running total floats up about once a second instead.
+    b.flash = Math.max(b.flash, 0.07);
+  } else {
+    b.flash = 0.16;
+    floater(b.x, b.y - b.r - 8, "-" + amount, "hit");
+  }
+  if (b.hp === 0) {
+    b.alive = false;
+    burst(b);
+    document.getElementById("hud" + b.id).classList.add("dead");
+  }
+  // Grappler's counter: a chance to grab back whoever just hit it, as long
+  // as the hit wasn't a projectile or laser and it isn't already grappling.
+  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" &&
+      b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
+    var atk = balls[attackerId];
+    if (atk && atk.alive && !atk.invincible) {
+      var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
+      if (Math.random() < chance) beginGrapple(b, atk);
+    }
+  }
+  return amount;
+}
+
+function checkEnd() {
+  if (over) return;
+  var alive = balls.filter(function (b) { return b.alive; });
+  if (alive.length > 1) return;
+  over = true;
+  if (alive.length === 1) {
+    bannerText.textContent = alive[0].char.name + " wins";
+    bannerText.style.color = alive[0].char.color;
+  } else {
+    bannerText.textContent = "Draw";
+    bannerText.style.color = "var(--ink)";
+  }
+  bannerText.hidden = false;
+  startBtn.textContent = "New match";
+  banner.hidden = false;
+}
+
+// Movement, wall bounces and ball-vs-ball collisions.
+"use strict";
+
+function step(dt) {
+  var i, b;
+  for (i = 0; i < balls.length; i++) {
+    b = balls[i];
+    var spinning = b.powerState && b.powerState.phase === "attack";
+    var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
+    if (!b.alive || b.grappled || b.grapple || spinning || sitting) continue;
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); playBounce(); }
+    else if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx); playBounce(); }
+    if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); playBounce(); }
+    else if (b.y > H - b.r) { b.y = H - b.r; b.vy = -Math.abs(b.vy); playBounce(); }
+  }
+  var a = balls[0], c = balls[1];
+  var aSpin = a.powerState && a.powerState.phase === "attack";
+  var cSpin = c.powerState && c.powerState.phase === "attack";
+  var aSit = a.watcherState && (a.watcherState.phase === "charge" || a.watcherState.phase === "laser");
+  var cSit = c.watcherState && (c.watcherState.phase === "charge" || c.watcherState.phase === "laser");
+  // Sees Red keeps a normal collision box even mid-charge-dash, so it
+  // still bounces off the opponent on contact like any other pair of
+  // balls; only its punch damage is handled separately, on a timer.
+  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || aSpin || cSpin) return;
+  // A seated Watcher is an immovable, solid object: whoever runs into it
+  // just bounces off, the way they would off a wall.
+  if (aSit || cSit) {
+    if (aSit && cSit) return;
+    var fixedB = aSit ? a : c, mover = aSit ? c : a;
+    var fdx = mover.x - fixedB.x, fdy = mover.y - fixedB.y, fdist = Math.sqrt(fdx * fdx + fdy * fdy);
+    var fmin = fixedB.r + mover.r;
+    if (fdist >= fmin || fdist === 0) return;
+    var fnx = fdx / fdist, fny = fdy / fdist;
+    mover.x = fixedB.x + fnx * fmin; mover.y = fixedB.y + fny * fmin;
+    var fvn = mover.vx * fnx + mover.vy * fny;
+    if (fvn < 0) {
+      mover.vx -= 2 * fvn * fnx; mover.vy -= 2 * fvn * fny;
+      if (!reduceMotion) shake = Math.max(shake, 2);
+    }
+    return;
+  }
+  var dx = c.x - a.x, dy = c.y - a.y, dist = Math.sqrt(dx * dx + dy * dy), minDist = a.r + c.r;
+  if (dist >= minDist || dist === 0) return;
+  var nx = dx / dist, ny = dy / dist, push = (minDist - dist) / 2;
+  a.x -= nx * push; a.y -= ny * push; c.x += nx * push; c.y += ny * push;
+  var vn = (c.vx - a.vx) * nx + (c.vy - a.vy) * ny;
+  if (vn < 0) {
+    a.vx += nx * vn; a.vy += ny * vn; c.vx -= nx * vn; c.vy -= ny * vn;
+    if (!reduceMotion) shake = Math.max(shake, 2);
+  }
+}
+
+// Every attack's logic: projectile, punch, kick, grapple, power punch, rage, corner watch.
+"use strict";
+
+function updateAbilities(dt) {
+  for (var i = 0; i < 2; i++) {
+    var self = balls[i], other = balls[1 - i];
+    if (!self.alive || self.grappled) continue;
+    var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+
+    if (self.throwAnim) {
+      var ta = self.throwAnim;
+      ta.t += dt;
+      var tp = Math.min(1, ta.t / ta.dur);
+      if (!ta.fired && tp >= ta.relEnd) {
+        ta.fired = true;
+        if (other.alive) {
+          var pr2 = self.char.proj;
+          var tdx = other.x - self.x, tdy = other.y - self.y, tdd = Math.sqrt(tdx * tdx + tdy * tdy) || 1;
+          projectiles.push({
+            x: self.x + tdx / tdd * (self.r + 8), y: self.y + tdy / tdd * (self.r + 8),
+            vx: tdx / tdd * pr2.speed, vy: tdy / tdd * pr2.speed,
+            r: pr2.size, damage: pr2.damage, color: self.char.color, imgData: pr2.imgData,
+            ownerId: self.id
+          });
+        }
+      }
+      if (tp >= 1) self.throwAnim = null;
+    }
+
+    if (self.char.hasProjectile) {
+      self.shotTimer -= dt;
+      if (self.shotTimer <= 0 && other.alive && !self.throwAnim) {
+        self.shotTimer += self.char.proj.cooldown;
+        // Windup, then a fast whip-forward release (projectile fires at
+        // relEnd), then a short follow-through back to guard.
+        self.throwAnim = { t: 0, dur: 0.5, wEnd: 0.55, relEnd: 0.72, fired: false };
+      }
+    }
+
+    if (self.char.hasPunch) {
+      self.punchCd = Math.max(0, self.punchCd - dt);
+      var pu = self.char.punch;
+      if (!self.punch && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) {
+        self.punch = { t: 0, hit: false };
+        self.punchCd = pu.cooldown;
+      }
+      if (self.punch) {
+        self.punch.t += dt;
+        var windup = pu.speed * 0.35;
+        if (!self.punch.hit && self.punch.t >= windup) {
+          self.punch.hit = true;
+          if (other.alive) {
+            hurt(other, pu.damage, "punch", self.id);
+            if (pu.knockback > 0) {
+              var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
+              other.vx += kx / kd * pu.knockback;
+              other.vy += ky / kd * pu.knockback;
+            }
+            if (!reduceMotion) shake = 10;
+            checkEnd();
+          }
+        }
+        if (self.punch.t >= pu.speed) self.punch = null;
+      }
+    }
+
+    if (self.char.hasKick) {
+      self.kickCd = Math.max(0, self.kickCd - dt);
+      var ki = self.char.kick;
+      if (!self.kick && self.kickCd === 0 && other.alive && d < self.r + other.r + ki.reach) {
+        self.kick = { t: 0, hit: false };
+        self.kickCd = ki.cooldown;
+      }
+      if (self.kick) {
+        self.kick.t += dt;
+        var kwindup = ki.speed * 0.35;
+        if (!self.kick.hit && self.kick.t >= kwindup) {
+          self.kick.hit = true;
+          if (other.alive) {
+            hurt(other, ki.damage, "kick", self.id);
+            if (ki.knockback > 0) {
+              var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;
+              other.vx += kkx / kkd * ki.knockback;
+              other.vy += kky / kkd * ki.knockback;
+            }
+            if (!reduceMotion) shake = 12;
+            checkEnd();
+          }
+        }
+        if (self.kick.t >= ki.speed) self.kick = null;
+      }
+    }
+
+    if (self.char.hasGrapple) {
+      self.grappleCd = Math.max(0, self.grappleCd - dt);
+      var gr = self.char.grapple;
+      if (!self.grapple && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && d < self.r + other.r + gr.reach) {
+        beginGrapple(self, other);
+      }
+      if (self.grapple) {
+        var g = self.grapple;
+        g.t += dt;
+        var pt = Math.min(1, g.t / g.dur);
+        g.pt = pt;
+        // Brief hold while both hands grab on, then a hard, fast throw into the wall.
+        var holdFrac = 0.22;
+        var ease;
+        if (pt < holdFrac) {
+          ease = 0;
+        } else {
+          var tt = (pt - holdFrac) / (1 - holdFrac);
+          ease = 1 - Math.pow(1 - tt, 3);
+        }
+        var tgt = balls[g.targetId];
+        if (tgt.alive) {
+          tgt.x = g.startX + (g.endX - g.startX) * ease;
+          tgt.y = g.startY + (g.endY - g.startY) * ease;
+          // The grappler itself follows the throw, staying attached right
+          // behind the ball it's slamming instead of standing still.
+          var dx0 = g.endX - g.startX, dy0 = g.endY - g.startY, dlen0 = Math.sqrt(dx0 * dx0 + dy0 * dy0) || 1;
+          self.x = tgt.x - (dx0 / dlen0) * (self.r + tgt.r - 2);
+          self.y = tgt.y - (dy0 / dlen0) * (self.r + tgt.r - 2);
+        }
+        if (!g.dealt && pt >= 1) {
+          g.dealt = true;
+          if (tgt.alive) {
+            hurt(tgt, gr.damage, "grapple", self.id);
+            if (!reduceMotion) shake = 14;
+            burst(tgt);
+            // Launch angle is randomized every time (within a spread off
+            // the wall's own direction) so the pair doesn't fly off in the
+            // exact same straight line on every slam.
+            var wallAngle = Math.atan2(g.ny, g.nx);
+            var spread = 65 * Math.PI / 180;
+            var tgtAngle = wallAngle + (Math.random() * 2 - 1) * spread;
+            var selfAngle = wallAngle + Math.PI + (Math.random() * 2 - 1) * spread;
+            tgt.vx = Math.cos(tgtAngle) * 260; tgt.vy = Math.sin(tgtAngle) * 260;
+            // The grappler never takes damage from its own slam, and
+            // launches off with real speed of its own once it lets go,
+            // rather than drifting away at a crawl.
+            self.vx = Math.cos(selfAngle) * 320; self.vy = Math.sin(selfAngle) * 320;
+            checkEnd();
+          }
+          tgt.grappled = false;
+        }
+        if (pt >= 1) self.grapple = null;
+      }
+    }
+
+    if (self.char.hasPowerPunch) {
+      var pp = self.char.powerPunch;
+      if (!self.powerState) {
+        self.powerCd -= dt;
+        if (self.powerCd <= 0) {
+          self.powerCd += pp.cooldown;
+          var spd0 = Math.sqrt(self.vx * self.vx + self.vy * self.vy);
+          self.powerState = {
+            phase: "charge", t: 0,
+            preVX: self.vx, preVY: self.vy,
+            crawlSpeed: Math.max(spd0 * 0.12, 12)
+          };
+        }
+      } else if (self.powerState.phase === "charge") {
+        var ps = self.powerState;
+        ps.t += dt;
+        var spd = Math.sqrt(self.vx * self.vx + self.vy * self.vy);
+        if (spd > 0.001) {
+          self.vx = self.vx / spd * ps.crawlSpeed;
+          self.vy = self.vy / spd * ps.crawlSpeed;
+        }
+        if (ps.t >= pp.chargeDur) {
+          ps.phase = "attack";
+          ps.t = 0;
+          ps.dmg = Math.round(pp.damageMin + Math.random() * (pp.damageMax - pp.damageMin));
+          ps.hitCd = 0;
+          self.vx = 0; self.vy = 0;
+        }
+      } else if (self.powerState.phase === "attack") {
+        var ps2 = self.powerState;
+        ps2.t += dt;
+        ps2.hitCd = Math.max(0, ps2.hitCd - dt);
+        // The hitbox tracks the actual swinging fist (same math as its
+        // drawing) rather than a static ring around the body, so contact
+        // lines up with what's on screen. Stays live for the whole spin.
+        if (ps2.hitCd === 0 && other.alive) {
+          var spinAngle = (ps2.t / pp.spinDur) * Math.PI * 2 * 3;
+          var armLen = self.r * POWER_ARM_LEN_MULT;
+          var fistX = self.x + Math.cos(spinAngle) * (self.r + armLen);
+          var fistY = self.y + Math.sin(spinAngle) * (self.r + armLen);
+          var pdx = other.x - fistX, pdy = other.y - fistY, pdd = Math.sqrt(pdx * pdx + pdy * pdy);
+          var fistR = self.r * POWER_FIST_R_MULT;
+          var reach = other.r + fistR + self.r * 0.35;
+          if (pdd < reach) {
+            ps2.hitCd = 0.2;
+            hurt(other, ps2.dmg, "power", self.id);
+            var kx = other.x - self.x, ky = other.y - self.y, kdd = Math.sqrt(kx * kx + ky * ky) || 1;
+            other.vx += kx / kdd * pp.knockback;
+            other.vy += ky / kdd * pp.knockback;
+            if (!reduceMotion) shake = 16;
+            checkEnd();
+          }
+        }
+        if (ps2.t >= pp.spinDur) {
+          self.vx = self.powerState.preVX;
+          self.vy = self.powerState.preVY;
+          self.powerState = null;
+        }
+      }
+    }
+
+    if (self.char.hasRage) {
+      var rg = self.char.rage;
+      var jabInterval = 0.13;
+      if (!self.rageState) {
+        self.rageCd -= dt;
+        if (self.rageCd <= 0) {
+          self.rageCd += rg.cooldown;
+          var rspd0 = Math.sqrt(self.vx * self.vx + self.vy * self.vy);
+          self.rageState = {
+            phase: "charge", t: 0,
+            crawlSpeed: Math.max(rspd0 * 0.12, 12)
+          };
+        }
+      } else if (self.rageState.phase === "charge") {
+        var rs = self.rageState;
+        rs.t += dt;
+        var rspd = Math.sqrt(self.vx * self.vx + self.vy * self.vy);
+        if (rspd > 0.001) {
+          self.vx = self.vx / rspd * rs.crawlSpeed;
+          self.vy = self.vy / rspd * rs.crawlSpeed;
+        }
+        if (rs.t >= rg.chargeDur) {
+          rs.phase = "attack";
+          rs.t = 0;
+          rs.hitTimer = 0;
+          rs.thrown = 0;
+          // Always launches straight at wherever the opponent currently
+          // is, rather than a random heading — only falls back to random
+          // if there's no one left to aim at.
+          var rAngle;
+          if (other.alive) {
+            rAngle = Math.atan2(other.y - self.y, other.x - self.x);
+          } else {
+            rAngle = Math.random() * Math.PI * 2;
+          }
+          self.vx = Math.cos(rAngle) * rg.speed;
+          self.vy = Math.sin(rAngle) * rg.speed;
+        }
+      } else if (self.rageState.phase === "attack") {
+        var rs2 = self.rageState;
+        rs2.t += dt;
+        rs2.hitTimer -= dt;
+        if (rs2.hitTimer <= 0 && rs2.thrown < rg.punchCount) {
+          rs2.hitTimer += jabInterval;
+          rs2.thrown++;
+          self.jabAnim = { t: 0, dur: 0.11, sign: (rs2.thrown % 2 === 0) ? 1 : -1 };
+          if (other.alive) {
+            var rdx = other.x - self.x, rdy = other.y - self.y, rdd = Math.sqrt(rdx * rdx + rdy * rdy);
+            if (rdd < self.r + other.r + rg.reach) {
+              hurt(other, rg.punchDamage, "punch", self.id);
+              if (!reduceMotion) shake = Math.max(shake, 4);
+            }
+          }
+        }
+        if (rs2.thrown >= rg.punchCount) {
+          self.rageState = null;
+        }
+      }
+    }
+
+    if (self.char.hasWatcher) {
+      var wc = self.char.watcher;
+      var wst = self.watcherState;
+      if (!wst) {
+        // Up and about between sits.
+        self.watcherCd -= dt;
+        if (self.watcherCd <= 0) {
+          self.watcherState = { phase: "travel", t: 0, spot: SIT_SPOTS[Math.floor(Math.random() * SIT_SPOTS.length)] };
+        }
+      } else if (wst.phase === "travel") {
+        // Heading for one of the four corner seats.
+        wst.t += dt;
+        var wdx = wst.spot.x - self.x, wdy = wst.spot.y - self.y, wdd = Math.sqrt(wdx * wdx + wdy * wdy);
+        if (wdd < 10) {
+          // Arrived: plant in the corner, sit down, and become invincible.
+          self.x = wst.spot.x; self.y = wst.spot.y;
+          self.vx = 0; self.vy = 0;
+          wst.phase = "charge"; wst.t = 0; wst.tickTimer = 0;
+          self.invincible = true;
+        } else if (wst.t > 6) {
+          // Couldn't get there (something's in the way): give up and rest.
+          self.watcherState = null;
+          self.watcherCd = wc.restDur;
+        } else {
+          self.vx = wdx / wdd * wc.approachSpeed;
+          self.vy = wdy / wdd * wc.approachSpeed;
+        }
+      } else {
+        // Seated ("charge" then "laser"): rooted to the seat, invincible.
+        self.x = wst.spot.x; self.y = wst.spot.y;
+        self.vx = 0; self.vy = 0;
+        self.invincible = true;
+        wst.t += dt;
+        if (wst.phase === "charge") {
+          // The charge starts preDelay seconds after sitting and takes chargeDur.
+          if (wst.t >= wc.preDelay + wc.chargeDur) {
+            wst.phase = "laser"; wst.t = 0; wst.tickTimer = 0;
+          }
+        } else {
+          // Lasers are up: each laser ticks on its own for tickDamage, and
+          // every single tick pops its own small number right away — a
+          // flurry of tiny hits rather than one lumped total per second.
+          if (other.alive) {
+            wst.tickTimer -= dt;
+            while (wst.tickTimer <= 0 && other.alive) {
+              wst.tickTimer += wc.tickInterval;
+              var lasersN = Math.max(1, Math.round(wc.lasers));
+              for (var li = 0; li < lasersN && other.alive; li++) {
+                var dealtAmt = hurt(other, wc.tickDamage, "laser", self.id);
+                if (dealtAmt > 0) {
+                  var jx = (Math.random() - 0.5) * other.r * 1.3;
+                  var jy = -other.r - 6 - Math.random() * 10;
+                  var amtStr = (Math.round(dealtAmt * 100) / 100).toString();
+                  floater(other.x + jx, other.y + jy, "-" + amtStr, "tick");
+                }
+              }
+            }
+            if (!other.alive) checkEnd();
+          }
+          if (wst.t >= wc.fireDur) {
+            // Stand up and head back out toward the middle of the arena.
+            var wang = Math.atan2(H / 2 - self.y, W / 2 - self.x) + (Math.random() - 0.5) * (Math.PI / 2);
+            self.vx = Math.cos(wang) * SPEED; self.vy = Math.sin(wang) * SPEED;
+            self.watcherState = null;
+            self.invincible = false;
+            self.watcherCd = wc.restDur;
+          }
+        }
+      }
+    }
+  }
+
+  projectiles = projectiles.filter(function (p) {
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return false;
+    var target = balls[1 - p.ownerId];
+    if (target.alive) {
+      var px = p.x - target.x, py = p.y - target.y;
+      if (px * px + py * py < (target.r + p.r) * (target.r + p.r)) {
+        hurt(target, p.damage, "proj", p.ownerId);
+        for (var i = 0; i < 6; i++) {
+          var a = Math.random() * Math.PI * 2, sp = 60 + Math.random() * 120;
+          particles.push({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.3, max: 0.3, size: 2.5, color: p.color });
+        }
+        checkEnd();
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+// Per-frame update, HUD health bars and canvas sizing.
+"use strict";
+
+function update(dt) {
+  var h = dt / SUBSTEPS;
+  for (var s = 0; s < SUBSTEPS; s++) step(h);
+  updateAbilities(dt);
+
+  balls.forEach(function (b) {
+    b.flash = Math.max(0, b.flash - dt);
+    b.immuneCd = Math.max(0, b.immuneCd - dt);
+    if (b.jabAnim) {
+      b.jabAnim.t += dt;
+      if (b.jabAnim.t >= b.jabAnim.dur) b.jabAnim = null;
+    }
+    if (b.rageState && b.rageState.phase === "attack" && !reduceMotion) {
+      // A faint trail behind Sees Red while it's charging through the arena.
+      particles.push({
+        x: b.x, y: b.y, vx: -b.vx * 0.15, vy: -b.vy * 0.15,
+        life: 0.22, max: 0.22, size: b.r * 0.45, color: b.char.color
+      });
+    }
+    b.shown += (b.hp - b.shown) * Math.min(1, dt * 4);
+    if (Math.abs(b.hp - b.shown) < 0.1) b.shown = b.hp;
+  });
+  floaters = floaters.filter(function (f) { f.life -= dt; f.y -= 46 * dt; return f.life > 0; });
+  particles = particles.filter(function (p) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.96; p.vy *= 0.96; return p.life > 0; });
+  shake = Math.max(0, shake - dt * 30);
+}
+
+var hudCache = [];
+function updateHud(force) {
+  for (var i = 0; i < 2; i++) {
+    var b = balls[i];
+    var rounded = Math.ceil(b.hp);
+    var key = rounded + "/" + Math.round(b.shown);
+    if (!force && hudCache[i] === key) continue;
+    hudCache[i] = key;
+    document.getElementById("hp" + i).textContent = rounded;
+    document.getElementById("fill" + i).style.width = b.hp + "%";
+    document.getElementById("ghost" + i).style.width = b.shown + "%";
+    document.getElementById("bar" + i).setAttribute("aria-valuenow", rounded);
+  }
+}
+
+function resize() {
+  var rect = canvas.getBoundingClientRect();
+  if (!rect.width) return;
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.width * (H / W) * dpr);
+}
+
+// Drawing each attack: fists, kicks, hands, throws, lasers, spins, grabs.
+"use strict";
+
+function drawFist(self, other) {
+  if (!self.punch || !other.alive) return;
+  var pu = self.char.punch;
+  var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
+  var qnx = qx / qd, qny = qy / qd;
+  var windup = pu.speed * 0.35;
+  var pt = self.punch.t < windup ? self.punch.t / windup : 1 - (self.punch.t - windup) / (pu.speed - windup);
+  pt = Math.max(0, Math.min(1, pt));
+  var restDist = self.r + 4;
+  var fullDist = Math.max(restDist, qd - other.r + 4);
+  var fistDist = restDist + (fullDist - restDist) * pt;
+  // Punch always launches from the same shoulder slot the guard hand rests
+  // in (drawHands hides that one hand while this animates), so it reads as
+  // one hand throwing the punch while the other stays up.
+  var perpx = -qny, perpy = qnx, gap = self.r * 0.4;
+  var fistX = self.x + qnx * fistDist + perpx * gap, fistY = self.y + qny * fistDist + perpy * gap;
+  var armX = self.x + qnx * (self.r - 2) + perpx * gap, armY = self.y + qny * (self.r - 2) + perpy * gap;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = theme.wall;
+  ctx.lineWidth = pu.size * 0.9 + 6;
+  ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
+  ctx.strokeStyle = self.char.color;
+  ctx.lineWidth = pu.size * 0.6;
+  ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
+  ctx.fillStyle = self.char.color;
+  ctx.strokeStyle = theme.wall;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(fistX, fistY, pu.size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+function drawKick(self, other) {
+  if (!self.kick || !other.alive) return;
+  var ki = self.char.kick;
+  var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
+  var baseAngle = Math.atan2(qy, qx);
+  var dur = ki.speed;
+  var pt = Math.max(0, Math.min(1, self.kick.t / dur));
+  // Quick roundhouse: the leg sweeps through a 180-degree arc, passing
+  // through the opponent's direction around the midpoint of the swing.
+  var dir = self.id === 0 ? 1 : -1;
+  var angle = baseAngle - dir * (Math.PI / 2) + dir * Math.PI * pt;
+  var restDist = self.r + 4;
+  var fullDist = Math.max(restDist, Math.min(qd - other.r + 4, ki.reach * 1.15), ki.reach * 0.9);
+  var extT = Math.min(1, self.kick.t / (dur * 0.22));
+  var legDist = restDist + (fullDist - restDist) * extT;
+  var tipX = self.x + Math.cos(angle) * legDist, tipY = self.y + Math.sin(angle) * legDist;
+  var hipX = self.x + Math.cos(angle) * (self.r - 4), hipY = self.y + Math.sin(angle) * (self.r - 4);
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = theme.wall;
+  ctx.lineWidth = ki.size * 0.9 + 7;
+  ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(tipX, tipY); ctx.stroke();
+  ctx.strokeStyle = self.char.color;
+  ctx.lineWidth = ki.size * 0.62;
+  ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(tipX, tipY); ctx.stroke();
+
+  // Foot: a rectangle oriented with the swing, planted at the tip of the leg.
+  var fw = ki.size * 1.9, fh = ki.size * 1.15;
+  ctx.translate(tipX, tipY);
+  ctx.rotate(angle);
+  ctx.fillStyle = self.char.color;
+  ctx.strokeStyle = theme.wall;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.rect(-fw * 0.25, -fh / 2, fw, fh);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+// Every fighter keeps a pair of hands up in front of it, facing whichever
+// way it's currently moving (or the opponent, if it's holding still).
+// A projectile-thrower's hands always track its opponent instead, since
+// it's constantly aiming. During a punch or a throw, only the off-side
+// hand stays up here; drawFist/drawThrow animates the other one. During a
+// kick, grab, being grabbed, a power-punch throw, or a rage charge dash,
+// both are replaced by that attack's own visual.
+function drawHands(b, other) {
+  var spinning = b.powerState && b.powerState.phase === "attack";
+  var raging = b.rageState && b.rageState.phase === "attack";
+  var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
+  if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging) return;
+  if (sitting) {
+    // Seated: both hands rest down at the sides instead of guarding.
+    ctx.save();
+    ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    [-1, 1].forEach(function (sgn) {
+      ctx.beginPath();
+      ctx.arc(b.x + sgn * b.r * 0.95, b.y + b.r * 0.62, b.r * 0.3, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
+  var fx, fy;
+  if (b.char.hasProjectile && other && other.alive) {
+    var dx2 = other.x - b.x, dy2 = other.y - b.y, dd2 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
+    fx = dx2 / dd2; fy = dy2 / dd2;
+  } else {
+    var spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+    if (spd > 1) {
+      fx = b.vx / spd; fy = b.vy / spd;
+    } else if (other && other.alive) {
+      var dx = other.x - b.x, dy = other.y - b.y, dd = Math.sqrt(dx * dx + dy * dy) || 1;
+      fx = dx / dd; fy = dy / dd;
+    } else {
+      fx = b.id === 0 ? 1 : -1; fy = 0;
+    }
+  }
+  var perpx = -fy, perpy = fx;
+  var fwd = b.r * 0.8, gap = b.r * 0.4, hr = b.r * 0.3;
+  var sides = (b.punch || b.throwAnim) ? [-1] : [1, -1];
+  ctx.save();
+  ctx.fillStyle = b.char.color;
+  ctx.strokeStyle = theme.wall;
+  ctx.lineWidth = 2.5;
+  sides.forEach(function (sgn) {
+    var hx = b.x + fx * fwd + perpx * gap * sgn, hy = b.y + fy * fwd + perpy * gap * sgn;
+    ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
+  ctx.restore();
+}
+
+// A telegraphed throw: the hand pulls back to wind up, whips forward hard
+// right as the projectile releases, then eases back to guard. The other
+// hand stays up per drawHands above.
+function drawThrow(self, other) {
+  if (!self.throwAnim || !other) return;
+  var ta = self.throwAnim;
+  var pt = Math.min(1, ta.t / ta.dur);
+  var dx = other.x - self.x, dy = other.y - self.y, dd = Math.sqrt(dx * dx + dy * dy) || 1;
+  var fx = dx / dd, fy = dy / dd, perpx = -fy, perpy = fx;
+
+  var restFwd = self.r * 0.8, cockFwd = -self.r * 0.35, throwFwd = self.r * 1.85;
+  var gapRest = self.r * 0.4, gapCock = self.r * 0.85, gapThrow = self.r * 0.15;
+  var fwd, gap, trail = false;
+  if (pt < ta.wEnd) {
+    // Windup: pull the hand back and out wide.
+    var t1 = pt / ta.wEnd;
+    var e1 = t1 * t1 * (3 - 2 * t1); // smoothstep
+    fwd = restFwd + (cockFwd - restFwd) * e1;
+    gap = gapRest + (gapCock - gapRest) * e1;
+  } else if (pt < ta.relEnd) {
+    // Whip forward hard — this is the release.
+    var t2 = (pt - ta.wEnd) / (ta.relEnd - ta.wEnd);
+    var e2 = 1 - Math.pow(1 - t2, 2);
+    fwd = cockFwd + (throwFwd - cockFwd) * e2;
+    gap = gapCock + (gapThrow - gapCock) * e2;
+    trail = true;
+  } else {
+    // Follow-through back to guard.
+    var t3 = (pt - ta.relEnd) / (1 - ta.relEnd);
+    var e3 = t3 * t3 * (3 - 2 * t3);
+    fwd = throwFwd + (restFwd - throwFwd) * e3;
+    gap = gapThrow + (gapRest - gapThrow) * e3;
+  }
+
+  var hx = self.x + fx * fwd + perpx * gap, hy = self.y + fy * fwd + perpy * gap;
+  var shx = self.x + fx * (self.r * 0.25) + perpx * gap * 0.6, shy = self.y + fy * (self.r * 0.25) + perpy * gap * 0.6;
+
+  if (trail) {
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.strokeStyle = self.char.color;
+    for (var k = 1; k <= 2; k++) {
+      ctx.globalAlpha = 0.3 - k * 0.1;
+      var back = k * 9;
+      ctx.beginPath();
+      ctx.moveTo(hx - fx * back, hy - fy * back);
+      ctx.lineTo(hx - fx * (back + 7), hy - fy * (back + 7));
+      ctx.lineWidth = self.r * 0.22;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = self.char.color;
+  ctx.lineWidth = self.r * 0.28;
+  ctx.beginPath(); ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); ctx.stroke();
+  ctx.fillStyle = self.char.color;
+  ctx.strokeStyle = theme.wall;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+// Marks the four corner seats the Watcher can sit in (only shown when a
+// Watcher is in the match); a seat lights up while it's in use.
+function drawSitSpots() {
+  var watchers = balls.filter(function (b) { return b.char.hasWatcher; });
+  if (!watchers.length) return;
+  ctx.save();
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([5, 5]);
+  SIT_SPOTS.forEach(function (sp) {
+    var owner = null;
+    watchers.forEach(function (w) { if (w.watcherState && w.watcherState.spot === sp) owner = w; });
+    var col = (owner || watchers[0]).char.color;
+    ctx.strokeStyle = col;
+    ctx.globalAlpha = owner ? 0.9 : 0.4;
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, RADIUS + 3, 0, Math.PI * 2); ctx.stroke();
+    if (owner) {
+      ctx.globalAlpha = 0.14; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(sp.x, sp.y, RADIUS + 3, 0, Math.PI * 2); ctx.fill();
+    }
+  });
+  ctx.restore();
+}
+
+// The Watcher's weapon: a fan of beams from the middle of its body that
+// lock onto the opponent and follow them (they're redrawn from wherever
+// the opponent is, every frame). While it's still charging, a glowing orb
+// swells at its center and faint aim lines hint at where they'll go.
+function drawWatcherLasers() {
+  var now = performance.now();
+  balls.forEach(function (w) {
+    var ws = w.watcherState;
+    if (!w.alive || !w.char.hasWatcher || !ws) return;
+    if (ws.phase !== "charge" && ws.phase !== "laser") return;
+    var wc = w.char.watcher;
+    var tgt = balls[1 - w.id];
+    var n = Math.max(1, Math.round(wc.lasers));
+    var firing = ws.phase === "laser";
+    var p = firing ? 1 : Math.max(0, Math.min(1, (ws.t - wc.preDelay) / wc.chargeDur));
+    if (p <= 0) return;
+    ctx.save();
+    ctx.lineCap = "round";
+    if (tgt.alive) {
+      var dx = tgt.x - w.x, dy = tgt.y - w.y, dd = Math.sqrt(dx * dx + dy * dy) || 1;
+      var px = -dy / dd, py = dx / dd;
+      var spread = tgt.r * 1.3;
+      for (var i = 0; i < n; i++) {
+        var off = n === 1 ? 0 : (i / (n - 1) - 0.5) * spread;
+        var ex = tgt.x + px * off, ey = tgt.y + py * off;
+        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(ex, ey);
+        if (firing) {
+          var flick = 0.85 + 0.15 * Math.sin(now / 45 + i * 1.7);
+          ctx.strokeStyle = w.char.color;
+          ctx.globalAlpha = 0.28 * flick; ctx.lineWidth = 13; ctx.stroke();
+          ctx.globalAlpha = 0.85 * flick; ctx.lineWidth = 5; ctx.stroke();
+          ctx.strokeStyle = "#ffffff";
+          ctx.globalAlpha = 1; ctx.lineWidth = 1.8; ctx.stroke();
+          ctx.fillStyle = w.char.color; ctx.globalAlpha = 0.65 * flick;
+          ctx.beginPath(); ctx.arc(ex, ey, 6 + 2 * Math.sin(now / 60 + i), 0, Math.PI * 2); ctx.fill();
+        } else {
+          ctx.strokeStyle = w.char.color;
+          ctx.globalAlpha = 0.08 + 0.3 * p; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+      }
+    }
+    // The emitter at the fighter's center, swelling as it charges.
+    var orbR = 3 + 10 * p;
+    ctx.globalAlpha = 0.35 + 0.35 * p; ctx.fillStyle = w.char.color;
+    ctx.beginPath(); ctx.arc(w.x, w.y, orbR + 4, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1; ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(w.x, w.y, orbR * 0.55, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
+}
+
+// A quick single-hand jab flash, one per punch thrown during Sees Red's
+// charge dash — fast enough to read as a flurry rather than one big swing.
+function drawJab(self) {
+  if (!self.jabAnim) return;
+  var ja = self.jabAnim;
+  var pt = Math.min(1, ja.t / ja.dur);
+  var ease = pt < 0.5 ? pt / 0.5 : 1 - (pt - 0.5) / 0.5;
+  var spd = Math.sqrt(self.vx * self.vx + self.vy * self.vy);
+  var fx = 1, fy = 0;
+  if (spd > 1) { fx = self.vx / spd; fy = self.vy / spd; }
+  var perpx = -fy, perpy = fx, gap = self.r * 0.4 * ja.sign;
+  var restFwd = self.r * 0.8, jabFwd = self.r * 1.5;
+  var fwd = restFwd + (jabFwd - restFwd) * ease;
+  var hx = self.x + fx * fwd + perpx * gap, hy = self.y + fy * fwd + perpy * gap;
+  ctx.save();
+  ctx.fillStyle = self.char.color;
+  ctx.strokeStyle = theme.wall;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+// A wild windmill haymaker: one arm spins around the fighter through the
+// full 3 turns of the throw, with a couple of trailing ghost-fists behind
+// it to sell the force. No hand is left up guarding during this.
+function drawPowerSpin(self) {
+  if (!self.powerState || self.powerState.phase !== "attack") return;
+  var pp = self.char.powerPunch;
+  var angle = (self.powerState.t / pp.spinDur) * Math.PI * 2 * 3;
+  var armLen = self.r * POWER_ARM_LEN_MULT;
+  var fistR = self.r * POWER_FIST_R_MULT;
+  ctx.save();
+  ctx.lineCap = "round";
+  for (var k = 2; k >= 0; k--) {
+    var a = angle - k * 0.3;
+    var hx = self.x + Math.cos(a) * (self.r + armLen), hy = self.y + Math.sin(a) * (self.r + armLen);
+    if (k === 0) {
+      var sx = self.x + Math.cos(a) * (self.r - 2), sy = self.y + Math.sin(a) * (self.r - 2);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = theme.wall;
+      ctx.lineWidth = self.r * 0.5;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.strokeStyle = self.char.color;
+      ctx.lineWidth = self.r * 0.34;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.fillStyle = self.char.color;
+      ctx.strokeStyle = theme.wall;
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(hx, hy, fistR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    } else {
+      ctx.globalAlpha = 0.3 - k * 0.09;
+      ctx.fillStyle = self.char.color;
+      ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.42, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawGrapple(self) {
+  var g = self.grapple;
+  if (!g) return;
+  var tgt = balls[g.targetId];
+  if (!tgt) return;
+  var pt = g.pt || 0;
+  var dx = g.endX - g.startX, dy = g.endY - g.startY, dlen = Math.sqrt(dx * dx + dy * dy) || 1;
+  var dirx = dx / dlen, diry = dy / dlen, perpx = -diry, perpy = dirx;
+
+  // Speed streaks trailing behind the ball once the throw is under way.
+  if (pt > 0.18) {
+    ctx.save();
+    ctx.strokeStyle = self.char.color;
+    ctx.lineCap = "round";
+    ctx.lineWidth = 3;
+    for (var k = 1; k <= 3; k++) {
+      var back = tgt.r + k * 13;
+      ctx.globalAlpha = 0.45 - k * 0.1;
+      ctx.beginPath();
+      ctx.moveTo(tgt.x - dirx * back, tgt.y - diry * back);
+      ctx.lineTo(tgt.x - dirx * (back + 11), tgt.y - diry * (back + 11));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Two hands gripping the ball while it's held, released just before impact.
+  if (pt < 0.82) {
+    var hr = tgt.r * 0.34, ho = tgt.r * 0.82;
+    ctx.save();
+    ctx.fillStyle = self.char.color;
+    ctx.strokeStyle = theme.wall;
+    ctx.lineWidth = 2.5;
+    [1, -1].forEach(function (sgn) {
+      var hx = tgt.x + perpx * ho * sgn, hy = tgt.y + perpy * ho * sgn;
+      ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    ctx.restore();
+  }
+}
+
+// Drawing the arena, fighters, projectiles and damage numbers.
+"use strict";
+
+function draw() {
+  readTheme();
+  var s = canvas.width / W;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = theme.floor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  var sx = 0, sy = 0;
+  if (shake > 0) { sx = (Math.random() - 0.5) * shake * 2 * s; sy = (Math.random() - 0.5) * shake * 2 * s; }
+  ctx.setTransform(s, 0, 0, s, sx, sy);
+
+  ctx.strokeStyle = theme.grid; ctx.lineWidth = 1.5; ctx.beginPath();
+  for (var gx = 50; gx < W; gx += 50) { ctx.moveTo(gx, 0); ctx.lineTo(gx, H); }
+  for (var gy = 50; gy < H; gy += 50) { ctx.moveTo(0, gy); ctx.lineTo(W, gy); }
+  ctx.stroke();
+  ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, 90, 0, Math.PI * 2); ctx.stroke();
+
+  drawSitSpots();
+
+  particles.forEach(function (p) {
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  balls.forEach(function (b) {
+    if (!b.alive) return;
+    var other = balls[1 - b.id];
+
+    // While charging a power punch or rage attack, the ball jitters with
+    // rising intensity; while throwing the power punch specifically, the
+    // whole body spins through the same 3 turns as the windmilling fist.
+    var jx = 0, jy = 0, spinAngle = 0, spinning = false;
+    if (b.powerState) {
+      if (b.powerState.phase === "charge") {
+        var prog = b.powerState.t / b.char.powerPunch.chargeDur;
+        var mag = 1 + 5 * prog;
+        jx = (Math.random() - 0.5) * mag;
+        jy = (Math.random() - 0.5) * mag;
+      } else if (b.powerState.phase === "attack") {
+        spinning = true;
+        spinAngle = (b.powerState.t / b.char.powerPunch.spinDur) * Math.PI * 2 * 3;
+      }
+    } else if (b.rageState && b.rageState.phase === "charge") {
+      var rprog = b.rageState.t / b.char.rage.chargeDur;
+      var rmag = 1 + 5 * rprog;
+      jx = (Math.random() - 0.5) * rmag;
+      jy = (Math.random() - 0.5) * rmag;
+    }
+
+    ctx.save();
+    ctx.translate(b.x + jx, b.y + jy);
+    if (spinning) ctx.rotate(spinAngle);
+    ctx.translate(-b.x, -b.y);
+    if (b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser")) {
+      // Sitting: squashed down toward the ground, a little wider.
+      ctx.translate(b.x, b.y + b.r);
+      ctx.scale(1.08, 0.88);
+      ctx.translate(-b.x, -(b.y + b.r));
+    }
+
+    var img = getImg(b.char.imgData);
+    if (img) {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      ctx.drawImage(img, b.x - b.r, b.y - b.r, b.r * 2, b.r * 2);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = b.char.color;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.28)";
+      ctx.beginPath(); ctx.ellipse(b.x - b.r * 0.35, b.y - b.r * 0.4, b.r * 0.32, b.r * 0.2, -0.6, 0, Math.PI * 2); ctx.fill();
+    }
+    if (b.flash > 0) {
+      ctx.fillStyle = "rgba(255,255,255," + (b.flash / 0.16) * 0.85 + ")";
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.lineWidth = 3; ctx.strokeStyle = theme.wall;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
+
+    if (b.char.label) {
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = "700 13px \"Barlow Condensed\", \"Arial Narrow\", sans-serif";
+      ctx.lineWidth = 3; ctx.lineJoin = "round";
+      ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.strokeText(b.char.label, b.x, b.y);
+      ctx.fillStyle = "#fff"; ctx.fillText(b.char.label, b.x, b.y);
+    }
+
+    if (b.powerState && b.powerState.phase === "charge") {
+      var prog2 = b.powerState.t / b.char.powerPunch.chargeDur;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = b.char.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 9, -Math.PI / 2, -Math.PI / 2 + prog2 * Math.PI * 2);
+      ctx.stroke();
+    } else if (b.rageState && b.rageState.phase === "charge") {
+      var rprog2 = b.rageState.t / b.char.rage.chargeDur;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = b.char.color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 9, -Math.PI / 2, -Math.PI / 2 + rprog2 * Math.PI * 2);
+      ctx.stroke();
+    } else if (b.watcherState && b.watcherState.phase === "charge") {
+      // The charge itself only begins once the sit delay has passed.
+      var wch = b.char.watcher;
+      var wprog2 = Math.max(0, Math.min(1, (b.watcherState.t - wch.preDelay) / wch.chargeDur));
+      if (wprog2 > 0) {
+        ctx.lineCap = "round";
+        ctx.strokeStyle = b.char.color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r + 9, -Math.PI / 2, -Math.PI / 2 + wprog2 * Math.PI * 2);
+        ctx.stroke();
+      }
+    } else if (b.watcherState && b.watcherState.phase === "laser") {
+      // A ring that drains as the lasers' time runs out.
+      var wleft = Math.max(0, 1 - b.watcherState.t / b.char.watcher.fireDur);
+      ctx.lineCap = "round";
+      ctx.strokeStyle = b.char.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 9, -Math.PI / 2, -Math.PI / 2 + wleft * Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // A bright pulsing ring whenever a fighter is invincible (the Watcher,
+    // sitting in its corner), so it's obvious hits won't land.
+    if (b.invincible) {
+      var pulse = 0.55 + 0.35 * Math.sin(performance.now() / 140);
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(255,255,255," + pulse + ")";
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.restore();
+
+    var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
+    if (by < 4) by = b.y + b.r + 10;
+    ctx.fillStyle = theme.grid; ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = b.char.color; ctx.fillRect(bx, by, bw * (b.hp / MAX_HP), bh);
+    ctx.lineWidth = 2; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+
+    drawFist(b, other);
+    drawKick(b, other);
+    drawGrapple(b);
+    drawThrow(b, other);
+    drawPowerSpin(b);
+    drawJab(b);
+    drawHands(b, other);
+  });
+
+  drawWatcherLasers();
+
+  projectiles.forEach(function (p) {
+    var pimg = getImg(p.imgData);
+    if (pimg) {
+      ctx.drawImage(pimg, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+    } else {
+      ctx.fillStyle = p.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+  });
+
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  floaters.forEach(function (f) {
+    var t = f.life / f.max;
+    ctx.globalAlpha = Math.min(1, t * 2);
+    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : 28);
+    ctx.font = "800 " + size + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
+    var fx = Math.min(W - 50, Math.max(50, f.x)), fy = Math.max(18, f.y);
+    ctx.lineWidth = f.kind === "tick" ? 3 : 6; ctx.lineJoin = "round";
+    ctx.strokeStyle = theme.floor; ctx.strokeText(f.text, fx, fy);
+    ctx.fillStyle = f.kind === "dodge" ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
+  });
+  ctx.globalAlpha = 1;
+}
+
+// Game loop, buttons, tap-to-set sliders, and startup. Load this last.
+"use strict";
+
+var last = null;
+function frame(t) {
+  if (last === null) last = t;
+  var dt = Math.min((t - last) / 1000, 1 / 30);
+  last = t;
+  if (!screens.game.hidden) {
+    if (started) update(dt);
+    updateHud(false);
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
+document.getElementById("backBtn").addEventListener("click", function () { showScreen("select"); });
+startBtn.addEventListener("click", function () {
+  var ctx = getAudioCtx();
+  if (ctx && ctx.state === "suspended") ctx.resume();
+  if (over) startMatchWith(balls[0].char, balls[1].char); else start();
+});
+window.addEventListener("resize", resize);
+if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
+
+// Every slider in the editor jumps to wherever you tap along its track,
+// instead of requiring a precise drag on the small thumb (the default
+// range-input behavior on some mobile browsers, which made them feel
+// unresponsive).
+Array.prototype.forEach.call(document.querySelectorAll('input[type="range"]'), function (el) {
+  function setFromClientX(clientX) {
+    var rect = el.getBoundingClientRect();
+    if (!rect.width) return;
+    var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    var min = parseFloat(el.min) || 0, max = parseFloat(el.max) || 100, step = parseFloat(el.step) || 1;
+    var raw = min + frac * (max - min);
+    var stepped = Math.round(raw / step) * step;
+    stepped = Math.min(max, Math.max(min, stepped));
+    var decimals = (String(step).split(".")[1] || "").length;
+    stepped = parseFloat(stepped.toFixed(decimals));
+    if (parseFloat(el.value) !== stepped) {
+      el.value = stepped;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }
+  el.addEventListener("pointerdown", function (e) {
+    setFromClientX(e.clientX);
+    if (el.setPointerCapture && e.pointerId != null) {
+      try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+  });
+});
+
+showScreen("select");
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>

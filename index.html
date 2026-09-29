@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ball Brawl V2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<main>
+
+  <!-- ================= SELECT SCREEN ================= -->
+  <section id="screenSelect">
+    <h1>Ball Brawl</h1>
+    <p class="lede">Pick a fighter for each side, or build your own.</p>
+
+    <div class="slots">
+      <div class="slot empty" id="slot0"><div class="sname">Choose fighter</div></div>
+      <div class="vs">VS</div>
+      <div class="slot empty" id="slot1"><div class="sname">Choose fighter</div></div>
+    </div>
+
+    <div class="rosterHead">
+      <h2>Roster</h2>
+      <button id="newCharBtn" class="small">+ New character</button>
+    </div>
+    <div class="roster" id="roster"></div>
+
+    <div class="fightRow">
+      <button id="fightBtn" disabled>Fight</button>
+    </div>
+  </section>
+
+  <!-- ================= EDITOR SCREEN ================= -->
+  <section id="screenEditor" hidden>
+    <h1 id="editorTitle">New character</h1>
+    <p class="lede">Set their look, then turn on the attacks they use.</p>
+
+    <div class="editorGrid">
+      <div class="field">
+        <label for="fName">Name</label>
+        <input type="text" id="fName" maxlength="16" placeholder="Fighter name">
+      </div>
+      <div class="field">
+        <label for="fColor">Color</label>
+        <input type="color" id="fColor" value="#e5483b">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="fLabel">Text on ball</label>
+      <input type="text" id="fLabel" maxlength="10" placeholder="Optional">
+    </div>
+    <div class="field">
+      <label for="fBlockChance">Block chance <span class="val" id="fBlockChanceVal">0%</span></label>
+      <input type="range" id="fBlockChance" min="0" max="100" step="1" value="0">
+    </div>
+    <div class="field">
+      <label>Ball appearance</label>
+      <div class="uploadRow">
+        <span class="thumb" id="fThumb"></span>
+        <span class="fileLabel"><input type="file" id="fImg" accept="image/png"></span>
+        <button type="button" class="linkbtn" id="fImgClear">Clear</button>
+      </div>
+    </div>
+
+    <details class="abilityBlock" id="projBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Projectile attack</span>
+            <span class="hsub">Fires at the other fighter from range</span>
+          </div>
+          <button type="button" class="switch" id="projOn" role="switch" aria-checked="false" aria-label="Toggle projectile attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="projSize">Size <span class="val" id="projSizeVal">7</span></label>
+          <input type="range" id="projSize" min="3" max="90" step="1" value="7">
+        </div>
+        <div class="field">
+          <label for="projSpeed">Speed <span class="val" id="projSpeedVal">460</span></label>
+          <input type="range" id="projSpeed" min="120" max="900" step="10" value="460">
+        </div>
+        <div class="field">
+          <label for="projDamage">Damage <span class="val" id="projDamageVal">10</span></label>
+          <input type="range" id="projDamage" min="1" max="50" step="1" value="10">
+        </div>
+        <div class="field">
+          <label for="projCooldown">Cooldown <span class="val" id="projCooldownVal">1.6s</span></label>
+          <input type="range" id="projCooldown" min="0.2" max="5" step="0.1" value="1.6">
+        </div>
+        <div class="field">
+          <label>Projectile appearance</label>
+          <div class="uploadRow">
+            <span class="thumb" id="projThumb"></span>
+            <span class="fileLabel"><input type="file" id="projImg" accept="image/png"></span>
+            <button type="button" class="linkbtn" id="projImgClear">Clear</button>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="punchBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Punch attack</span>
+            <span class="hsub">Hits the other fighter up close</span>
+          </div>
+          <button type="button" class="switch" id="punchOn" role="switch" aria-checked="false" aria-label="Toggle punch attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="punchDamage">Damage <span class="val" id="punchDamageVal">25</span></label>
+          <input type="range" id="punchDamage" min="1" max="50" step="1" value="25">
+        </div>
+        <div class="field">
+          <label for="punchCooldown">Cooldown <span class="val" id="punchCooldownVal">1.2s</span></label>
+          <input type="range" id="punchCooldown" min="0.2" max="4" step="0.1" value="1.2">
+        </div>
+        <div class="field">
+          <label for="punchSpeed">Speed <span class="val" id="punchSpeedVal">0.32s</span></label>
+          <input type="range" id="punchSpeed" min="0.1" max="1" step="0.02" value="0.32">
+        </div>
+        <div class="field">
+          <label for="punchSize">Fist size <span class="val" id="punchSizeVal">15</span></label>
+          <input type="range" id="punchSize" min="6" max="30" step="1" value="15">
+        </div>
+        <div class="field">
+          <label for="punchKnockback">Knockback <span class="val" id="punchKnockbackVal">300</span></label>
+          <input type="range" id="punchKnockback" min="0" max="900" step="10" value="300">
+        </div>
+        <div class="field">
+          <label for="punchReach">Reach <span class="val" id="punchReachVal">40</span></label>
+          <input type="range" id="punchReach" min="0" max="150" step="5" value="40">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="kickBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Kick attack</span>
+            <span class="hsub">A sweeping leg attack — longer reach than the punch, but a long recovery</span>
+          </div>
+          <button type="button" class="switch" id="kickOn" role="switch" aria-checked="false" aria-label="Toggle kick attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="kickDamage">Damage <span class="val" id="kickDamageVal">40</span></label>
+          <input type="range" id="kickDamage" min="1" max="60" step="1" value="40">
+        </div>
+        <div class="field">
+          <label for="kickCooldown">Recovery <span class="val" id="kickCooldownVal">2.8s</span></label>
+          <input type="range" id="kickCooldown" min="0.5" max="6" step="0.1" value="2.8">
+        </div>
+        <div class="field">
+          <label for="kickSpeed">Speed <span class="val" id="kickSpeedVal">0.5s</span></label>
+          <input type="range" id="kickSpeed" min="0.15" max="1.2" step="0.02" value="0.5">
+        </div>
+        <div class="field">
+          <label for="kickSize">Leg size <span class="val" id="kickSizeVal">17</span></label>
+          <input type="range" id="kickSize" min="6" max="30" step="1" value="17">
+        </div>
+        <div class="field">
+          <label for="kickKnockback">Knockback <span class="val" id="kickKnockbackVal">450</span></label>
+          <input type="range" id="kickKnockback" min="0" max="900" step="10" value="450">
+        </div>
+        <div class="field">
+          <label for="kickReach">Reach <span class="val" id="kickReachVal">75</span></label>
+          <input type="range" id="kickReach" min="0" max="220" step="5" value="75">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="grappleBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Grapple attack</span>
+            <span class="hsub">Grabs a fighter on direct contact and slams them into the nearest wall</span>
+          </div>
+          <button type="button" class="switch" id="grappleOn" role="switch" aria-checked="false" aria-label="Toggle grapple attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="grappleDamage">Slam damage <span class="val" id="grappleDamageVal">50</span></label>
+          <input type="range" id="grappleDamage" min="1" max="80" step="1" value="50">
+        </div>
+        <div class="field">
+          <label for="grappleCooldown">Recovery <span class="val" id="grappleCooldownVal">1.5s</span></label>
+          <input type="range" id="grappleCooldown" min="0.3" max="5" step="0.1" value="1.5">
+        </div>
+        <div class="field">
+          <label for="grappleSpeed">Slam speed <span class="val" id="grappleSpeedVal">0.45s</span></label>
+          <input type="range" id="grappleSpeed" min="0.15" max="1.2" step="0.05" value="0.45">
+        </div>
+        <div class="field">
+          <label for="grappleReach">Grab range <span class="val" id="grappleReachVal">6</span></label>
+          <input type="range" id="grappleReach" min="0" max="30" step="1" value="6">
+        </div>
+        <div class="field">
+          <label for="grappleCounter">Counter chance <span class="val" id="grappleCounterVal">25%</span></label>
+          <input type="range" id="grappleCounter" min="0" max="100" step="5" value="25">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="powerBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Power punch</span>
+            <span class="hsub">Charges up on a timer, slowing to a crawl, then spins into a huge haymaker on contact</span>
+          </div>
+          <button type="button" class="switch" id="powerOn" role="switch" aria-checked="false" aria-label="Toggle power punch attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="powerDamageMin">Min damage <span class="val" id="powerDamageMinVal">50</span></label>
+          <input type="range" id="powerDamageMin" min="1" max="100" step="1" value="50">
+        </div>
+        <div class="field">
+          <label for="powerDamageMax">Max damage <span class="val" id="powerDamageMaxVal">100</span></label>
+          <input type="range" id="powerDamageMax" min="1" max="100" step="1" value="100">
+        </div>
+        <div class="field">
+          <label for="powerInterval">Attacks every <span class="val" id="powerIntervalVal">3s</span></label>
+          <input type="range" id="powerInterval" min="2" max="15" step="0.5" value="3">
+        </div>
+        <div class="field">
+          <label for="powerCharge">Charge time <span class="val" id="powerChargeVal">3s</span></label>
+          <input type="range" id="powerCharge" min="0.5" max="8" step="0.1" value="3">
+        </div>
+        <div class="field">
+          <label for="powerSpin">Throw speed <span class="val" id="powerSpinVal">0.9s</span></label>
+          <input type="range" id="powerSpin" min="0.3" max="2" step="0.1" value="0.9">
+        </div>
+        <div class="field">
+          <label for="powerKnockback">Knockback <span class="val" id="powerKnockbackVal">850</span></label>
+          <input type="range" id="powerKnockback" min="0" max="900" step="10" value="850">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="rageBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Rage charge</span>
+            <span class="hsub">Charges off in a random direction throwing a flurry of quick punches, but takes extra damage while it's happening</span>
+          </div>
+          <button type="button" class="switch" id="rageOn" role="switch" aria-checked="false" aria-label="Toggle rage charge attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="ragePunchDamage">Damage per punch <span class="val" id="ragePunchDamageVal">2</span></label>
+          <input type="range" id="ragePunchDamage" min="1" max="10" step="1" value="2">
+        </div>
+        <div class="field">
+          <label for="ragePunchCount">Number of punches <span class="val" id="ragePunchCountVal">10</span></label>
+          <input type="range" id="ragePunchCount" min="1" max="20" step="1" value="10">
+        </div>
+        <div class="field">
+          <label for="rageInterval">Attacks every <span class="val" id="rageIntervalVal">5s</span></label>
+          <input type="range" id="rageInterval" min="2" max="15" step="0.5" value="5">
+        </div>
+        <div class="field">
+          <label for="rageCharge">Charge time <span class="val" id="rageChargeVal">1.5s</span></label>
+          <input type="range" id="rageCharge" min="0.5" max="4" step="0.1" value="1.5">
+        </div>
+        <div class="field">
+          <label for="rageSpeed">Charge speed <span class="val" id="rageSpeedVal">520</span></label>
+          <input type="range" id="rageSpeed" min="200" max="900" step="10" value="520">
+        </div>
+        <div class="field">
+          <label for="rageReach">Reach <span class="val" id="rageReachVal">20</span></label>
+          <input type="range" id="rageReach" min="0" max="60" step="2" value="20">
+        </div>
+        <div class="field">
+          <label for="rageVuln">Damage taken while charging <span class="val" id="rageVulnVal">2x</span></label>
+          <input type="range" id="rageVuln" min="1" max="4" step="0.5" value="2">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="watcherBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Corner watch</span>
+            <span class="hsub">Retreats to a corner and sits — invincible the whole time — then locks tracking lasers onto the opponent</span>
+          </div>
+          <button type="button" class="switch" id="watcherOn" role="switch" aria-checked="false" aria-label="Toggle corner watch attack"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="watcherDelay">Sit delay before charging <span class="val" id="watcherDelayVal">1s</span></label>
+          <input type="range" id="watcherDelay" min="0" max="3" step="0.1" value="1">
+        </div>
+        <div class="field">
+          <label for="watcherCharge">Charge time <span class="val" id="watcherChargeVal">2s</span></label>
+          <input type="range" id="watcherCharge" min="0.5" max="5" step="0.1" value="2">
+        </div>
+        <div class="field">
+          <label for="watcherDuration">Laser duration <span class="val" id="watcherDurationVal">10s</span></label>
+          <input type="range" id="watcherDuration" min="2" max="20" step="0.5" value="10">
+        </div>
+        <div class="field">
+          <label for="watcherLasers">Number of lasers <span class="val" id="watcherLasersVal">2</span></label>
+          <input type="range" id="watcherLasers" min="1" max="8" step="1" value="2">
+        </div>
+        <div class="field">
+          <label for="watcherTickDamage">Damage per laser tick <span class="val" id="watcherTickDamageVal">0.25</span></label>
+          <input type="range" id="watcherTickDamage" min="0.1" max="5" step="0.05" value="0.25">
+        </div>
+        <div class="field">
+          <label for="watcherTickInterval">Tick every <span class="val" id="watcherTickIntervalVal">0.25s</span></label>
+          <input type="range" id="watcherTickInterval" min="0.1" max="2" step="0.05" value="0.25">
+        </div>
+        <div class="field">
+          <label for="watcherRest">Roams for before sitting <span class="val" id="watcherRestVal">6s</span></label>
+          <input type="range" id="watcherRest" min="0" max="20" step="0.5" value="6">
+        </div>
+        <div class="field">
+          <label for="watcherSpeed">Approach speed <span class="val" id="watcherSpeedVal">420</span></label>
+          <input type="range" id="watcherSpeed" min="200" max="900" step="10" value="420">
+        </div>
+      </div>
+    </details>
+
+    <div class="editorBtns">
+      <button id="editorSave">Save character</button>
+      <button id="editorCancel" class="secondary">Cancel</button>
+      <span class="spacer"></span>
+      <button id="editorDelete" class="secondary" hidden>Delete</button>
+    </div>
+  </section>
+
+  <!-- ================= GAME SCREEN ================= -->
+  <section id="screenGame" hidden>
+    <header class="hud" aria-label="Health">
+      <div class="fighter" data-id="0" id="hud0">
+        <div class="row"><span class="name" id="name0">Red</span><span class="hp" id="hp0">100</span></div>
+        <div class="bar" role="progressbar" aria-label="Left fighter health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="bar0">
+          <div class="ghost" id="ghost0"></div><div class="fill" id="fill0"></div>
+        </div>
+        <div class="role" id="role0"></div>
+      </div>
+      <div class="fighter right" data-id="1" id="hud1">
+        <div class="row"><span class="name" id="name1">Blue</span><span class="hp" id="hp1">100</span></div>
+        <div class="bar" role="progressbar" aria-label="Right fighter health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="bar1">
+          <div class="ghost" id="ghost1"></div><div class="fill" id="fill1"></div>
+        </div>
+        <div class="role" id="role1"></div>
+      </div>
+    </header>
+
+    <div class="arena">
+      <canvas id="c" aria-label="Square arena with two bouncing fighters"></canvas>
+      <div class="banner" id="banner">
+        <span id="bannerText" hidden></span>
+        <button id="startBtn" type="button">Start match</button>
+      </div>
+    </div>
+
+    <div class="gameFooter">
+      <button id="backBtn" class="secondary">Change fighters</button>
+      <button id="rematch" class="secondary">Reset</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Scripts share one global scope and must load in this order. -->
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/ui/select.js"></script>
+<script src="js/ui/editor.js"></script>
+<script src="js/game/match.js"></script>
+<script src="js/game/physics.js"></script>
+<script src="js/game/abilities.js"></script>
+<script src="js/game/update.js"></script>
+<script src="js/game/draw-attacks.js"></script>
+<script src="js/game/draw.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
