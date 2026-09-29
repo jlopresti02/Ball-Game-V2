@@ -1816,8 +1816,42 @@ function checkEnd() {
   banner.hidden = false;
 }
 
-// Movement, wall bounces and ball-vs-ball collisions.
+// Movement, wall bounces, ball-vs-ball collisions and the speed regulator.
 "use strict";
+
+// ---------------------------------------------------------------
+// Speed regulator: during ordinary movement a ball never drops below
+// MIN_SPEED, builds back up to its normal SPEED if it's slow, and eases
+// back down to SPEED if something (a punch, a kick, a launch) sent it
+// flying faster. Attacks that set their own speed on purpose (charging
+// crawls, dashes, slams, combos, sitting, being held) are left alone.
+// ---------------------------------------------------------------
+var MIN_SPEED = 120;      // slowest a ball can ever roll in ordinary movement
+var SPEED_UP = 320;       // units/second gained each second while below normal speed
+var SLOW_DOWN = 1.1;      // how quickly extra speed bleeds off (higher = faster)
+
+function inOrdinaryMovement(b) {
+  if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.knockFly > 0) return false;
+  if (b.powerState || b.rageState) return false;
+  if (b.watcherState) return false; // heading to a corner seat, or sitting in one
+  return true;
+}
+
+function regulateSpeed(b, dt) {
+  if (!inOrdinaryMovement(b)) return;
+  var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  var target;
+  if (s < SPEED - 0.5) {
+    // Too slow: pick up momentum, starting from at least a steady crawl.
+    target = Math.min(SPEED, Math.max(s, MIN_SPEED) + SPEED_UP * dt);
+  } else if (s > SPEED + 0.5) {
+    // Too fast: lose the extra speed gradually.
+    target = SPEED + (s - SPEED) * Math.exp(-SLOW_DOWN * dt);
+  } else {
+    return;
+  }
+  setSpeed(b, target);
+}
 
 function step(dt) {
   var i, b;
@@ -2479,13 +2513,11 @@ function update(dt) {
       if (b.weaveAnim.t >= b.weaveAnim.dur) b.weaveAnim = null;
     }
     if (b.knockFly > 0) {
-      // Launched by a combo finisher: fly hard, then settle back to normal speed.
-      b.knockFly -= dt;
-      if (b.knockFly <= 0) {
-        b.knockFly = 0;
-        if (b.alive && !b.slam && !b.grappled && !b.combo) setSpeed(b, SPEED);
-      }
+      // Launched by a combo finisher: flies at full launch speed for a moment
+      // before the speed regulator starts easing it back down.
+      b.knockFly = Math.max(0, b.knockFly - dt);
     }
+    regulateSpeed(b, dt);
     if ((b.combo || (b.jabAnim && b.jabAnim.big)) && !reduceMotion) {
       // Streak behind a fighter hunting down its combo.
       particles.push({

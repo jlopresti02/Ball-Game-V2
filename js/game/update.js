@@ -26,13 +26,11 @@ function update(dt) {
       if (b.weaveAnim.t >= b.weaveAnim.dur) b.weaveAnim = null;
     }
     if (b.knockFly > 0) {
-      // Launched by a combo finisher: fly hard, then settle back to normal speed.
-      b.knockFly -= dt;
-      if (b.knockFly <= 0) {
-        b.knockFly = 0;
-        if (b.alive && !b.slam && !b.grappled && !b.combo) setSpeed(b, SPEED);
-      }
+      // Launched by a combo finisher: flies at full launch speed for a moment
+      // before the speed regulator starts easing it back down.
+      b.knockFly = Math.max(0, b.knockFly - dt);
     }
+    regulateSpeed(b, dt);
     if ((b.combo || (b.jabAnim && b.jabAnim.big)) && !reduceMotion) {
       // Streak behind a fighter hunting down its combo.
       particles.push({
