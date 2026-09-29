@@ -356,6 +356,7 @@ function drawPowerSpin(self) {
 function drawGrapple(self) {
   var g = self.grapple;
   if (!g) return;
+  if (g.finisher && g.phase !== "carry") return; // the pin is drawn by drawFinishers
   var tgt = balls[g.targetId];
   if (!tgt) return;
   var pt = g.pt || 0;

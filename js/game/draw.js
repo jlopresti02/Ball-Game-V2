@@ -199,11 +199,16 @@ function draw() {
 
     ctx.restore();
 
-    var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
-    if (by < 4) by = b.y + b.r + 10;
-    ctx.fillStyle = theme.grid; ctx.fillRect(bx, by, bw, bh);
-    ctx.fillStyle = b.char.color; ctx.fillRect(bx, by, bw * (b.hp / MAX_HP), bh);
-    ctx.lineWidth = 2; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+    // Small health bar over the ball (hidden while pinned by a finisher,
+    // where it would sit on top of the Grappler).
+    var pinned = balls[1 - b.id].grapple && balls[1 - b.id].grapple.finisher && balls[1 - b.id].grapple.phase !== "carry";
+    if (!pinned) {
+      var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
+      if (by < 4) by = b.y + b.r + 10;
+      ctx.fillStyle = theme.grid; ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = b.char.color; ctx.fillRect(bx, by, bw * (b.hp / MAX_HP), bh);
+      ctx.lineWidth = 2; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+    }
 
     drawFist(b, other);
     drawKick(b, other);
@@ -216,6 +221,7 @@ function draw() {
   });
 
   drawWatcherLasers();
+  drawFinishers();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

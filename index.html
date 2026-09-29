@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260929143356">
+<link rel="stylesheet" href="css/styles.css?v=20260929144756">
 </head>
 <body>
 <main>
@@ -261,6 +261,19 @@
           <label for="grappleCounter">Counter chance <span class="val" id="grappleCounterVal">25%</span></label>
           <input type="range" id="grappleCounter" min="0" max="100" step="5" value="25">
         </div>
+        <p class="fieldNote">Finisher: when a grab would knock the opponent out, it's slammed into the bottom wall, pinned and punched instead.</p>
+        <div class="field">
+          <label for="grappleFinSlam">Finisher slam damage <span class="val" id="grappleFinSlamVal">20</span></label>
+          <input type="range" id="grappleFinSlam" min="0" max="60" step="1" value="20">
+        </div>
+        <div class="field">
+          <label for="grappleFinPunches">Finisher punches <span class="val" id="grappleFinPunchesVal">3</span></label>
+          <input type="range" id="grappleFinPunches" min="0" max="6" step="1" value="3">
+        </div>
+        <div class="field">
+          <label for="grappleFinPunchDmg">Finisher punch damage <span class="val" id="grappleFinPunchDmgVal">10</span></label>
+          <input type="range" id="grappleFinPunchDmg" min="1" max="40" step="1" value="10">
+        </div>
       </div>
     </details>
 
@@ -488,19 +501,20 @@
 </main>
 
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20260929143356"></script>
-<script src="js/audio.js?v=20260929143356"></script>
-<script src="js/characters.js?v=20260929143356"></script>
-<script src="js/ui/select.js?v=20260929143356"></script>
-<script src="js/ui/cropper.js?v=20260929143356"></script>
-<script src="js/ui/editor.js?v=20260929143356"></script>
-<script src="js/game/match.js?v=20260929143356"></script>
-<script src="js/game/physics.js?v=20260929143356"></script>
-<script src="js/game/abilities.js?v=20260929143356"></script>
-<script src="js/game/weave.js?v=20260929143356"></script>
-<script src="js/game/update.js?v=20260929143356"></script>
-<script src="js/game/draw-attacks.js?v=20260929143356"></script>
-<script src="js/game/draw.js?v=20260929143356"></script>
-<script src="js/main.js?v=20260929143356"></script>
+<script src="js/config.js?v=20260929144756"></script>
+<script src="js/audio.js?v=20260929144756"></script>
+<script src="js/characters.js?v=20260929144756"></script>
+<script src="js/ui/select.js?v=20260929144756"></script>
+<script src="js/ui/cropper.js?v=20260929144756"></script>
+<script src="js/ui/editor.js?v=20260929144756"></script>
+<script src="js/game/match.js?v=20260929144756"></script>
+<script src="js/game/physics.js?v=20260929144756"></script>
+<script src="js/game/abilities.js?v=20260929144756"></script>
+<script src="js/game/weave.js?v=20260929144756"></script>
+<script src="js/game/finisher.js?v=20260929144756"></script>
+<script src="js/game/update.js?v=20260929144756"></script>
+<script src="js/game/draw-attacks.js?v=20260929144756"></script>
+<script src="js/game/draw.js?v=20260929144756"></script>
+<script src="js/main.js?v=20260929144756"></script>
 </body>
 </html>

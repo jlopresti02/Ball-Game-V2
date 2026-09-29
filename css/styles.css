@@ -189,6 +189,7 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
   background: var(--track) center/cover no-repeat; flex: none;
 }
 .fileLabel { font-size: 15px; }
+.fieldNote { margin: 4px 0 12px; font-size: 14px; color: var(--muted); }
 #fThumb { width: 52px; height: 52px; }
 
 /* Photo cropper: a square stage with a circle showing what lands on the ball. */

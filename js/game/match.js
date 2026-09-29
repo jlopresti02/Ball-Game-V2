@@ -31,7 +31,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown, powerState: null,
     rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0,
-    slam: null,
+    slam: null, holdAtOne: false,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -93,13 +93,35 @@ function beginGrapple(attacker, target) {
   else if (min === distRight) { endX = W - target.r - 2; nx = -1; }
   else if (min === distTop) { endY = target.r + 2; ny = 1; }
   else { endY = H - target.r - 2; ny = -1; }
+  // A grab that would finish the opponent becomes the finisher: always
+  // driven straight down into the bottom wall, then pinned there.
+  var finisher = wouldKill(target, gr.damage);
+  if (finisher) {
+    endX = Math.min(W - target.r - 2, Math.max(target.r + 2, target.x));
+    endY = H - target.r - 2; nx = 0; ny = -1;
+    target.holdAtOne = true; // survives until the last punch
+    floater(target.x, target.y - target.r - 8, "FINISHER", "crit");
+  }
   attacker.grapple = {
     targetId: target.id, startX: target.x, startY: target.y,
-    endX: endX, endY: endY, t: 0, dur: gr.speed, nx: nx, ny: ny, dealt: false
+    endX: endX, endY: endY, t: 0, dur: finisher ? Math.max(gr.speed, 0.5) : gr.speed,
+    nx: nx, ny: ny, dealt: false, finisher: finisher, phase: "carry"
   };
   attacker.grappleCd = gr.cooldown;
   target.grappled = true;
   target.vx = 0; target.vy = 0;
+}
+
+// Extra damage a fighter is currently taking (Sees Red winding up,
+// a BMF celebrating).
+function incomingMultiplier(b) {
+  var m = 1;
+  if (b.rageState && b.rageState.phase === "charge") m *= (b.char.rage.vulnMult != null ? b.char.rage.vulnMult : 2);
+  if (b.taunt && b.char.hasWeave) m *= (b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2);
+  return m;
+}
+function wouldKill(b, amount) {
+  return b.alive && b.hp <= amount * incomingMultiplier(b);
 }
 
 function hurt(b, amount, source, attackerId) {
@@ -117,14 +139,14 @@ function hurt(b, amount, source, attackerId) {
   // Weave: slips the attack completely (grabs are weaved when they're
   // attempted, not when the slam lands). Callers check justDodged to skip
   // knockback, and projectiles fly on through.
-  if (source !== "laser" && source !== "slam" && source !== "grapple" && tryWeave(b, attackerId)) {
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && tryWeave(b, attackerId)) {
     b.justDodged = true;
     return 0;
   }
   // A passive chance to block an incoming attack outright and take no
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
-  if (b.char.blockChance > 0 && source !== "laser" && source !== "slam" && Math.random() < b.char.blockChance / 100) {
+  if (b.char.blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && Math.random() < b.char.blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -144,6 +166,7 @@ function hurt(b, amount, source, attackerId) {
     amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }
   b.hp = Math.max(0, b.hp - amount);
+  if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
   if (source === "laser") {
     // Laser ticks land constantly, so they only give a soft pulse; the
@@ -160,7 +183,7 @@ function hurt(b, amount, source, attackerId) {
   }
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
-  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" &&
+  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" &&
       b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible) {

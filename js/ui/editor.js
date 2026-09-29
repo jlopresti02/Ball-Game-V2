@@ -113,6 +113,10 @@ function fillEditorForm(s) {
   document.getElementById("grappleReachVal").textContent = s.grapple.reach;
   document.getElementById("grappleCounter").value = s.grapple.counterChance;
   document.getElementById("grappleCounterVal").textContent = s.grapple.counterChance + "%";
+  [["grappleFinSlam", "finSlamDamage"], ["grappleFinPunches", "finPunches"], ["grappleFinPunchDmg", "finPunchDamage"]].forEach(function (row) {
+    document.getElementById(row[0]).value = s.grapple[row[1]];
+    document.getElementById(row[0] + "Val").textContent = s.grapple[row[1]];
+  });
 
   document.getElementById("powerOn").setAttribute("aria-checked", String(s.hasPowerPunch));
   document.getElementById("powerBlock").setAttribute("data-on", String(s.hasPowerPunch));
@@ -310,7 +314,10 @@ var grappleSliders = [
   ["grappleCooldown", "cooldown"],
   ["grappleSpeed", "speed"],
   ["grappleReach", "reach"],
-  ["grappleCounter", "counterChance"]
+  ["grappleCounter", "counterChance"],
+  ["grappleFinSlam", "finSlamDamage"],
+  ["grappleFinPunches", "finPunches"],
+  ["grappleFinPunchDmg", "finPunchDamage"]
 ];
 grappleSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);

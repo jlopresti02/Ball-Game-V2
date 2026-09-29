@@ -20,7 +20,7 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 | Gunner | Throws projectiles from range |
 | Brawler | Close-range punch, 10% block chance |
 | Kicker | Sweeping kick with long reach and long recovery |
-| Grappler | Grabs on contact and slams the opponent into the nearest wall; can counter-grab |
+| Grappler | Grabs on contact and slams the opponent into the nearest wall; can counter-grab. If a grab would be the knockout, it becomes a finisher: a 20-damage slam into the bottom wall, then the opponent is pinned and hit with three 10-damage punches |
 | Power Puncher | Charges up, then spins into a 30-damage haymaker that sends the opponent pinballing into 4 walls for 5 damage each |
 | Sees Red | Charges at the opponent throwing a flurry of jabs, but takes extra damage while winding up |
 | Watcher | Sits in a corner seat (invincible), charges, then fires tracking lasers |
@@ -43,6 +43,7 @@ js/game/match.js        Match setup, damage, blocking, win check
 js/game/physics.js      Movement, wall bounces, ball-vs-ball collisions
 js/game/abilities.js    Logic for every attack
 js/game/weave.js        Weave dodge, critical-weave combo and the celebration taunt
+js/game/finisher.js     Grappler finisher: bottom-wall slam, pin and punches
 js/game/update.js       Per-frame update, HUD, canvas sizing
 js/game/draw-attacks.js Drawing each attack's animation
 js/game/draw.js         Drawing the arena, fighters, projectiles, damage numbers

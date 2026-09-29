@@ -199,6 +199,7 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
   background: var(--track) center/cover no-repeat; flex: none;
 }
 .fileLabel { font-size: 15px; }
+.fieldNote { margin: 4px 0 12px; font-size: 14px; color: var(--muted); }
 #fThumb { width: 52px; height: 52px; }
 
 /* Photo cropper: a square stage with a circle showing what lands on the ball. */
@@ -533,6 +534,19 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <div class="field">
           <label for="grappleCounter">Counter chance <span class="val" id="grappleCounterVal">25%</span></label>
           <input type="range" id="grappleCounter" min="0" max="100" step="5" value="25">
+        </div>
+        <p class="fieldNote">Finisher: when a grab would knock the opponent out, it's slammed into the bottom wall, pinned and punched instead.</p>
+        <div class="field">
+          <label for="grappleFinSlam">Finisher slam damage <span class="val" id="grappleFinSlamVal">20</span></label>
+          <input type="range" id="grappleFinSlam" min="0" max="60" step="1" value="20">
+        </div>
+        <div class="field">
+          <label for="grappleFinPunches">Finisher punches <span class="val" id="grappleFinPunchesVal">3</span></label>
+          <input type="range" id="grappleFinPunches" min="0" max="6" step="1" value="3">
+        </div>
+        <div class="field">
+          <label for="grappleFinPunchDmg">Finisher punch damage <span class="val" id="grappleFinPunchDmgVal">10</span></label>
+          <input type="range" id="grappleFinPunchDmg" min="1" max="40" step="1" value="10">
         </div>
       </div>
     </details>
@@ -1338,7 +1352,12 @@ var builtins = [
 function defaultProj() { return { size: 7, speed: 460, damage: 10, cooldown: 1.6, imgData: null }; }
 function defaultPunch() { return { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40 }; }
 function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 17, knockback: 450, reach: 75 }; }
-function defaultGrapple() { return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25 }; }
+// When a grab would be the killing blow, the grapple becomes a finisher:
+// a slam into the bottom wall for finSlamDamage, then the opponent is pinned
+// and hit with finPunches heavy punches of finPunchDamage each.
+function defaultGrapple() {
+  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10 };
+}
 // knockback is the speed the victim flies at during the wall slams; wallSlams
 // is how many walls it smashes into (0 turns the slams off), each dealing
 // slamDamage before it drops back to normal speed.
@@ -1364,6 +1383,9 @@ function normalizeChar(ch) {
   if (!ch.kick) ch.kick = defaultKick();
   if (ch.hasGrapple === undefined) ch.hasGrapple = false;
   if (!ch.grapple) ch.grapple = defaultGrapple();
+  ["finSlamDamage", "finPunches", "finPunchDamage"].forEach(function (k) {
+    if (ch.grapple[k] == null) ch.grapple[k] = defaultGrapple()[k];
+  });
   if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;
   if (!ch.powerPunch) ch.powerPunch = defaultPowerPunch();
   if (ch.powerPunch.wallSlams == null) ch.powerPunch.wallSlams = defaultPowerPunch().wallSlams;
@@ -1903,6 +1925,10 @@ function fillEditorForm(s) {
   document.getElementById("grappleReachVal").textContent = s.grapple.reach;
   document.getElementById("grappleCounter").value = s.grapple.counterChance;
   document.getElementById("grappleCounterVal").textContent = s.grapple.counterChance + "%";
+  [["grappleFinSlam", "finSlamDamage"], ["grappleFinPunches", "finPunches"], ["grappleFinPunchDmg", "finPunchDamage"]].forEach(function (row) {
+    document.getElementById(row[0]).value = s.grapple[row[1]];
+    document.getElementById(row[0] + "Val").textContent = s.grapple[row[1]];
+  });
 
   document.getElementById("powerOn").setAttribute("aria-checked", String(s.hasPowerPunch));
   document.getElementById("powerBlock").setAttribute("data-on", String(s.hasPowerPunch));
@@ -2100,7 +2126,10 @@ var grappleSliders = [
   ["grappleCooldown", "cooldown"],
   ["grappleSpeed", "speed"],
   ["grappleReach", "reach"],
-  ["grappleCounter", "counterChance"]
+  ["grappleCounter", "counterChance"],
+  ["grappleFinSlam", "finSlamDamage"],
+  ["grappleFinPunches", "finPunches"],
+  ["grappleFinPunchDmg", "finPunchDamage"]
 ];
 grappleSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);
@@ -2247,7 +2276,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown, powerState: null,
     rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0,
-    slam: null,
+    slam: null, holdAtOne: false,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -2309,13 +2338,35 @@ function beginGrapple(attacker, target) {
   else if (min === distRight) { endX = W - target.r - 2; nx = -1; }
   else if (min === distTop) { endY = target.r + 2; ny = 1; }
   else { endY = H - target.r - 2; ny = -1; }
+  // A grab that would finish the opponent becomes the finisher: always
+  // driven straight down into the bottom wall, then pinned there.
+  var finisher = wouldKill(target, gr.damage);
+  if (finisher) {
+    endX = Math.min(W - target.r - 2, Math.max(target.r + 2, target.x));
+    endY = H - target.r - 2; nx = 0; ny = -1;
+    target.holdAtOne = true; // survives until the last punch
+    floater(target.x, target.y - target.r - 8, "FINISHER", "crit");
+  }
   attacker.grapple = {
     targetId: target.id, startX: target.x, startY: target.y,
-    endX: endX, endY: endY, t: 0, dur: gr.speed, nx: nx, ny: ny, dealt: false
+    endX: endX, endY: endY, t: 0, dur: finisher ? Math.max(gr.speed, 0.5) : gr.speed,
+    nx: nx, ny: ny, dealt: false, finisher: finisher, phase: "carry"
   };
   attacker.grappleCd = gr.cooldown;
   target.grappled = true;
   target.vx = 0; target.vy = 0;
+}
+
+// Extra damage a fighter is currently taking (Sees Red winding up,
+// a BMF celebrating).
+function incomingMultiplier(b) {
+  var m = 1;
+  if (b.rageState && b.rageState.phase === "charge") m *= (b.char.rage.vulnMult != null ? b.char.rage.vulnMult : 2);
+  if (b.taunt && b.char.hasWeave) m *= (b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2);
+  return m;
+}
+function wouldKill(b, amount) {
+  return b.alive && b.hp <= amount * incomingMultiplier(b);
 }
 
 function hurt(b, amount, source, attackerId) {
@@ -2333,14 +2384,14 @@ function hurt(b, amount, source, attackerId) {
   // Weave: slips the attack completely (grabs are weaved when they're
   // attempted, not when the slam lands). Callers check justDodged to skip
   // knockback, and projectiles fly on through.
-  if (source !== "laser" && source !== "slam" && source !== "grapple" && tryWeave(b, attackerId)) {
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && tryWeave(b, attackerId)) {
     b.justDodged = true;
     return 0;
   }
   // A passive chance to block an incoming attack outright and take no
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
-  if (b.char.blockChance > 0 && source !== "laser" && source !== "slam" && Math.random() < b.char.blockChance / 100) {
+  if (b.char.blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && Math.random() < b.char.blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -2360,6 +2411,7 @@ function hurt(b, amount, source, attackerId) {
     amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }
   b.hp = Math.max(0, b.hp - amount);
+  if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
   if (source === "laser") {
     // Laser ticks land constantly, so they only give a soft pulse; the
@@ -2376,7 +2428,7 @@ function hurt(b, amount, source, attackerId) {
   }
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
-  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" &&
+  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" &&
       b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible) {
@@ -2691,7 +2743,9 @@ function updateAbilities(dt) {
         if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
         else beginGrapple(self, other);
       }
-      if (self.grapple) {
+      if (self.grapple && self.grapple.finisher) {
+        updateFinisher(self, self.grapple, dt);
+      } else if (self.grapple) {
         var g = self.grapple;
         g.t += dt;
         var pt = Math.min(1, g.t / g.dur);
@@ -3072,6 +3126,166 @@ function updateWeave(self, other, dt) {
     checkEnd();
   }
   return true;
+}
+
+// Grappler finisher: when a grab would be the killing blow, the Grappler
+// drives the opponent straight down into the bottom wall, pins them there
+// and hammers them with heavy punches. The opponent can't drop below 1
+// health until the last punch, so the full sequence always plays out.
+"use strict";
+
+var FIN_PUNCH_GAP = 0.55;  // seconds per punch (raise the fist, then drive it down)
+var FIN_WINDUP = 0.38;     // how far into each punch the fist lands
+var FIN_AFTER = 0.5;       // pause on the knockout before letting go
+
+function updateFinisher(self, g, dt) {
+  var gr = self.char.grapple, tgt = balls[g.targetId];
+  g.t += dt;
+
+  if (g.phase === "carry") {
+    // Same grab-and-drag as the normal slam, but always to the bottom wall.
+    var pt = Math.min(1, g.t / g.dur);
+    g.pt = pt;
+    var holdFrac = 0.22, ease = 0;
+    if (pt >= holdFrac) {
+      var tt = (pt - holdFrac) / (1 - holdFrac);
+      ease = 1 - Math.pow(1 - tt, 3);
+    }
+    tgt.x = g.startX + (g.endX - g.startX) * ease;
+    tgt.y = g.startY + (g.endY - g.startY) * ease;
+    var dx0 = g.endX - g.startX, dy0 = g.endY - g.startY, dl = Math.sqrt(dx0 * dx0 + dy0 * dy0) || 1;
+    self.x = tgt.x - (dx0 / dl) * (self.r + tgt.r - 2);
+    self.y = tgt.y - (dy0 / dl) * (self.r + tgt.r - 2);
+    if (pt >= 1) {
+      // The slam into the floor.
+      tgt.x = g.endX; tgt.y = g.endY;
+      hurt(tgt, gr.finSlamDamage, "finisher", self.id);
+      playSlam();
+      if (!reduceMotion) { shake = Math.max(shake, 18); hitStop = Math.max(hitStop, 0.08); }
+      impacts.push({ x: tgt.x, y: H, nx: 0, ny: -1, life: 0.4, max: 0.4, color: self.char.color });
+      tgt.squash = { t: 0.18, max: 0.18, nx: 0, ny: -1 };
+      burst(tgt);
+      g.phase = "pin"; g.t = 0; g.thrown = 0; g.punchT = 0; g.landed = false;
+      if (gr.finPunches < 1) finishOff(self, tgt); // no punches set: the slam is the finish
+      checkEnd();
+    }
+    return;
+  }
+
+  // Pinned: the opponent is held flat against the bottom wall with the
+  // Grappler on top of it.
+  tgt.x = g.endX; tgt.y = g.endY;
+  self.x = tgt.x; self.y = tgt.y - (self.r + tgt.r - 2);
+  self.vx = 0; self.vy = 0;
+
+  if (g.phase === "done") {
+    if (g.t >= FIN_AFTER) endFinisher(self, g, tgt);
+    return;
+  }
+
+  var total = Math.max(1, Math.round(gr.finPunches));
+  g.punchT += dt;
+  if (!g.landed && g.punchT >= FIN_WINDUP) {
+    g.landed = true;
+    var last = g.thrown === total - 1;
+    var amount = gr.finPunchDamage;
+    if (last) {
+      // The last punch always finishes it, even if something (like a
+      // celebration's damage bonus wearing off) changed the math mid-way.
+      tgt.holdAtOne = false;
+      amount = Math.max(amount, Math.ceil(tgt.hp / incomingMultiplier(tgt)));
+    }
+    hurt(tgt, amount, "finisher", self.id);
+    playPunch(40);
+    if (last) playSlam();
+    if (!reduceMotion) {
+      shake = Math.max(shake, last ? 22 : 15);
+      hitStop = Math.max(hitStop, last ? 0.14 : 0.06);
+    }
+    tgt.squash = { t: 0.14, max: 0.14, nx: 0, ny: -1 };
+    var cx = tgt.x, cy = tgt.y - tgt.r * 0.6;
+    for (var i = 0; i < (last ? 26 : 14); i++) {
+      var a = -Math.PI / 2 + (Math.random() - 0.5) * 2.6, sp = 120 + Math.random() * 300;
+      particles.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.3 + Math.random() * 0.3, max: 0.6, size: 2.5 + Math.random() * 4, color: tgt.char.color });
+    }
+    if (last) impacts.push({ x: cx, y: cy, nx: 0, ny: -1, life: 0.45, max: 0.45, color: self.char.color });
+    checkEnd();
+  }
+  if (g.punchT >= FIN_PUNCH_GAP) {
+    g.thrown++;
+    g.punchT = 0;
+    g.landed = false;
+    if (g.thrown >= total || !tgt.alive) { g.phase = "done"; g.t = 0; }
+  }
+}
+
+function finishOff(self, tgt) {
+  tgt.holdAtOne = false;
+  if (tgt.alive) hurt(tgt, Math.ceil(tgt.hp / incomingMultiplier(tgt)), "finisher", self.id);
+  self.grapple.phase = "done";
+  self.grapple.t = 0;
+}
+
+function endFinisher(self, g, tgt) {
+  self.grapple = null;
+  tgt.grappled = false;
+  tgt.holdAtOne = false;
+  // Hops off the pinned opponent and gets moving again.
+  var a = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
+  self.vx = Math.cos(a) * SPEED; self.vy = Math.sin(a) * SPEED;
+  if (tgt.alive) {
+    var b = -Math.PI / 2 + (Math.random() - 0.5) * 1.2;
+    tgt.vx = Math.cos(b) * SPEED; tgt.vy = Math.sin(b) * SPEED;
+  }
+}
+
+// Drawn after both fighters so the punching arm sits on top of everything.
+function drawFinishers() {
+  balls.forEach(function (self) {
+    var g = self.grapple;
+    if (!g || !g.finisher || g.phase === "carry") return;
+    var tgt = balls[g.targetId];
+    var r = self.r;
+    ctx.save();
+    ctx.lineCap = "round";
+
+    // Pinning hand pressing the opponent down.
+    var px = self.x - r * 0.95, py = tgt.y - tgt.r * 0.35;
+    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(px, py, r * 0.36, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    // Punching fist: raised high, then driven down onto the opponent.
+    var up = { x: self.x + r * 0.9, y: self.y - r * 1.7 };
+    var down = { x: tgt.x + r * 0.25, y: tgt.y - tgt.r * 0.45 };
+    var k;
+    if (g.phase === "done") {
+      k = 1; // stays planted on the knockout
+    } else if (g.punchT < FIN_WINDUP - 0.07) {
+      var w = g.punchT / (FIN_WINDUP - 0.07);
+      k = -0.15 * Math.sin(Math.PI * w); // pulls back up
+    } else if (g.punchT < FIN_WINDUP) {
+      k = (g.punchT - (FIN_WINDUP - 0.07)) / 0.07; // drives down fast
+    } else {
+      k = 1 - (g.punchT - FIN_WINDUP) / (FIN_PUNCH_GAP - FIN_WINDUP); // lifts back up
+    }
+    var fx = up.x + (down.x - up.x) * k, fy = up.y + (down.y - up.y) * k;
+    var sx = self.x + r * 0.55, sy = self.y - r * 0.3;
+    ctx.strokeStyle = theme.wall; ctx.lineWidth = r * 0.42;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fx, fy); ctx.stroke();
+    ctx.strokeStyle = self.char.color; ctx.lineWidth = r * 0.26;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fx, fy); ctx.stroke();
+    // Motion lines while it's coming down.
+    if (k > 0.2 && k < 0.99 && g.punchT >= FIN_WINDUP - 0.07 && g.punchT < FIN_WINDUP) {
+      ctx.globalAlpha = 0.4; ctx.lineWidth = 3; ctx.strokeStyle = self.char.color;
+      for (var m = 1; m <= 3; m++) {
+        ctx.beginPath(); ctx.moveTo(fx - r * 0.5 + m * r * 0.25, fy - r * 0.9); ctx.lineTo(fx - r * 0.5 + m * r * 0.25, fy - r * 0.4); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(fx, fy, r * 0.52, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  });
 }
 
 // Per-frame update, HUD health bars and canvas sizing.
@@ -3540,6 +3754,7 @@ function drawPowerSpin(self) {
 function drawGrapple(self) {
   var g = self.grapple;
   if (!g) return;
+  if (g.finisher && g.phase !== "carry") return; // the pin is drawn by drawFinishers
   var tgt = balls[g.targetId];
   if (!tgt) return;
   var pt = g.pt || 0;
@@ -3779,11 +3994,16 @@ function draw() {
 
     ctx.restore();
 
-    var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
-    if (by < 4) by = b.y + b.r + 10;
-    ctx.fillStyle = theme.grid; ctx.fillRect(bx, by, bw, bh);
-    ctx.fillStyle = b.char.color; ctx.fillRect(bx, by, bw * (b.hp / MAX_HP), bh);
-    ctx.lineWidth = 2; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+    // Small health bar over the ball (hidden while pinned by a finisher,
+    // where it would sit on top of the Grappler).
+    var pinned = balls[1 - b.id].grapple && balls[1 - b.id].grapple.finisher && balls[1 - b.id].grapple.phase !== "carry";
+    if (!pinned) {
+      var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
+      if (by < 4) by = b.y + b.r + 10;
+      ctx.fillStyle = theme.grid; ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = b.char.color; ctx.fillRect(bx, by, bw * (b.hp / MAX_HP), bh);
+      ctx.lineWidth = 2; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+    }
 
     drawFist(b, other);
     drawKick(b, other);
@@ -3796,6 +4016,7 @@ function draw() {
   });
 
   drawWatcherLasers();
+  drawFinishers();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

@@ -192,7 +192,9 @@ function updateAbilities(dt) {
         if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
         else beginGrapple(self, other);
       }
-      if (self.grapple) {
+      if (self.grapple && self.grapple.finisher) {
+        updateFinisher(self, self.grapple, dt);
+      } else if (self.grapple) {
         var g = self.grapple;
         g.t += dt;
         var pt = Math.min(1, g.t / g.dur);
