@@ -691,15 +691,15 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
   <section id="screenGame" hidden>
     <header class="hud" aria-label="Health">
       <div class="fighter" data-id="0" id="hud0">
-        <div class="row"><span class="name" id="name0">Red</span><span class="hp" id="hp0">100</span></div>
-        <div class="bar" role="progressbar" aria-label="Left fighter health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="bar0">
+        <div class="row"><span class="name" id="name0">Red</span><span class="hp" id="hp0">200</span></div>
+        <div class="bar" role="progressbar" aria-label="Left fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar0">
           <div class="ghost" id="ghost0"></div><div class="fill" id="fill0"></div>
         </div>
         <div class="role" id="role0"></div>
       </div>
       <div class="fighter right" data-id="1" id="hud1">
-        <div class="row"><span class="name" id="name1">Blue</span><span class="hp" id="hp1">100</span></div>
-        <div class="bar" role="progressbar" aria-label="Right fighter health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="bar1">
+        <div class="row"><span class="name" id="name1">Blue</span><span class="hp" id="hp1">200</span></div>
+        <div class="bar" role="progressbar" aria-label="Right fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar1">
           <div class="ghost" id="ghost1"></div><div class="fill" id="fill1"></div>
         </div>
         <div class="role" id="role1"></div>
@@ -730,7 +730,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
 
 var STORAGE_KEY = "ballbrawl_roster_v1";
 // W and H are the play area in game units (the canvas scales it to fit the screen).
-var W = 500, H = 500, RADIUS = 30, SPEED = 340, MAX_HP = 100, SUBSTEPS = 4;
+var W = 500, H = 500, RADIUS = 30, SPEED = 340, MAX_HP = 200, SUBSTEPS = 4;
 // Shared by the power punch's hit detection and its drawing, so the fist
 // you see is exactly the fist that can land a hit.
 var POWER_ARM_LEN_MULT = 2.9, POWER_FIST_R_MULT = 0.62;
@@ -2560,8 +2560,8 @@ function updateHud(force) {
     if (!force && hudCache[i] === key) continue;
     hudCache[i] = key;
     document.getElementById("hp" + i).textContent = rounded;
-    document.getElementById("fill" + i).style.width = b.hp + "%";
-    document.getElementById("ghost" + i).style.width = b.shown + "%";
+    document.getElementById("fill" + i).style.width = (b.hp / MAX_HP * 100) + "%";
+    document.getElementById("ghost" + i).style.width = (b.shown / MAX_HP * 100) + "%";
     document.getElementById("bar" + i).setAttribute("aria-valuenow", rounded);
   }
 }

@@ -73,8 +73,8 @@ function updateHud(force) {
     if (!force && hudCache[i] === key) continue;
     hudCache[i] = key;
     document.getElementById("hp" + i).textContent = rounded;
-    document.getElementById("fill" + i).style.width = b.hp + "%";
-    document.getElementById("ghost" + i).style.width = b.shown + "%";
+    document.getElementById("fill" + i).style.width = (b.hp / MAX_HP * 100) + "%";
+    document.getElementById("ghost" + i).style.width = (b.shown / MAX_HP * 100) + "%";
     document.getElementById("bar" + i).setAttribute("aria-valuenow", rounded);
   }
 }
