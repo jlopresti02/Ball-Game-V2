@@ -29,21 +29,44 @@ function beginWallSlam(target, dirX, dirY, pp) {
   }
 }
 
-// Called by the physics step each time a ball bounces off a wall.
-function onWallImpact(b) {
+// Called by the physics step each time a ball bounces off a wall. (nx, ny)
+// is the wall's direction pointing back into the arena (a corner combines both).
+function onWallImpact(b, nx, ny) {
   var sl = b.slam;
   if (!sl || !b.alive) return;
   hurt(b, sl.damage, "slam", sl.attackerId);
-  if (!reduceMotion) shake = Math.max(shake, 9);
-  for (var i = 0; i < 10; i++) {
-    var a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 180;
-    particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.35, max: 0.35, size: 2 + Math.random() * 3, color: b.char.color });
+  playSlam();
+  var nl = Math.sqrt(nx * nx + ny * ny) || 1;
+  nx /= nl; ny /= nl;
+  var cx = b.x - nx * b.r, cy = b.y - ny * b.r; // where the ball meets the wall
+  var attackerColor = balls[sl.attackerId].char.color;
+
+  if (!reduceMotion) {
+    shake = Math.max(shake, 18);
+    hitStop = Math.max(hitStop, 0.06); // a split-second freeze sells the crunch
   }
+  impacts.push({ x: cx, y: cy, nx: nx, ny: ny, life: 0.4, max: 0.4, color: attackerColor });
+  b.squash = { t: 0.14, max: 0.14, nx: nx, ny: ny };
+
+  // Debris sprays back off the wall: chunks of the ball plus dark wall chips.
+  var baseAngle = Math.atan2(ny, nx);
+  for (var i = 0; i < 26; i++) {
+    var a = baseAngle + (Math.random() - 0.5) * 2.4, s = 140 + Math.random() * 360;
+    var chip = i % 3 === 0;
+    particles.push({
+      x: cx, y: cy, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+      life: 0.35 + Math.random() * 0.3, max: 0.65,
+      size: chip ? 1.5 + Math.random() * 2.5 : 2.5 + Math.random() * 4.5,
+      color: chip ? theme.wall : b.char.color
+    });
+  }
+
   sl.hitsLeft--;
   if (sl.hitsLeft <= 0 || !b.alive) {
     endWallSlam(b);
   } else {
-    setSpeed(b, sl.speed); // stays at full slam speed between walls
+    sl.speed *= 1.1; // each rebound comes off the wall even harder
+    setSpeed(b, sl.speed);
   }
   checkEnd();
 }

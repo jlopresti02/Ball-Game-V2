@@ -67,3 +67,44 @@ function playBounce() {
     });
   } catch (e) { /* audio is a nice-to-have, never let it break the game */ }
 }
+
+// A heavy crunch for power-punch wall slams: a low body thud that drops in
+// pitch plus a short burst of filtered noise for the crack of the impact.
+var noiseBuffer = null;
+function playSlam() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+
+    var thud = ctx.createOscillator();
+    thud.type = "sine";
+    thud.frequency.setValueAtTime(150, now);
+    thud.frequency.exponentialRampToValueAtTime(42, now + 0.22);
+    var tg = ctx.createGain();
+    tg.gain.setValueAtTime(0.0001, now);
+    tg.gain.exponentialRampToValueAtTime(0.7, now + 0.004);
+    tg.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+    thud.connect(tg); tg.connect(ctx.destination);
+    thud.start(now); thud.stop(now + 0.3);
+
+    if (!noiseBuffer) {
+      noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.2), ctx.sampleRate);
+      var data = noiseBuffer.getChannelData(0);
+      for (var i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    }
+    var noise = ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    var bp = ctx.createBiquadFilter();
+    bp.type = "lowpass";
+    bp.frequency.setValueAtTime(2600, now);
+    bp.frequency.exponentialRampToValueAtTime(300, now + 0.12);
+    var ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.0001, now);
+    ng.gain.exponentialRampToValueAtTime(0.45, now + 0.003);
+    ng.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+    noise.connect(bp); bp.connect(ng); ng.connect(ctx.destination);
+    noise.start(now); noise.stop(now + 0.15);
+  } catch (e) { /* never let audio break the game */ }
+}

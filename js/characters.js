@@ -92,7 +92,7 @@ function defaultGrapple() { return { damage: 50, cooldown: 1.5, speed: 0.45, rea
 // is how many walls it smashes into (0 turns the slams off), each dealing
 // slamDamage before it drops back to normal speed.
 function defaultPowerPunch() {
-  return { damageMin: 30, damageMax: 30, cooldown: 3, chargeDur: 3, spinDur: 0.9, knockback: 850, wallSlams: 4, slamDamage: 5 };
+  return { damageMin: 30, damageMax: 30, cooldown: 3, chargeDur: 3, spinDur: 0.9, knockback: 1300, wallSlams: 4, slamDamage: 5 };
 }
 function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, chargeDur: 1.5, speed: 520, reach: 20, vulnMult: 2 }; }
 function defaultWatcher() {

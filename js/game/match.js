@@ -17,6 +17,7 @@ function readTheme() {
 }
 
 var balls, projectiles, floaters, particles, shake, over, started;
+var impacts = [], hitStop = 0; // wall-slam shockwaves and the brief freeze on each slam
 
 function makeBall(id, ch) {
   return {
@@ -37,6 +38,7 @@ function makeBall(id, ch) {
 function startMatchWith(ch0, ch1) {
   balls = [makeBall(0, ch0), makeBall(1, ch1)];
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
+  impacts = []; hitStop = 0;
 
   document.getElementById("name0").textContent = ch0.name;
   document.getElementById("name1").textContent = ch1.name;

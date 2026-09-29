@@ -28,6 +28,36 @@ function draw() {
   });
   ctx.globalAlpha = 1;
 
+  // Wall-slam shockwaves: a ring blasting out from the point of impact and
+  // jagged crack lines spiking off the wall.
+  impacts.forEach(function (im) {
+    var k = Math.max(0, im.life / im.max), grow = 1 - k;
+    var base = Math.atan2(im.ny, im.nx);
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.globalAlpha = k;
+    ctx.strokeStyle = im.color;
+    ctx.lineWidth = 7 * k + 1;
+    ctx.beginPath(); ctx.arc(im.x, im.y, 12 + 78 * grow, base - Math.PI / 2, base + Math.PI / 2); ctx.stroke();
+    ctx.strokeStyle = theme.wall;
+    ctx.lineWidth = 3;
+    for (var ci = 0; ci < 6; ci++) {
+      var ca = base + (ci / 5 - 0.5) * 2.6 + Math.sin(ci * 12.9 + im.x) * 0.12;
+      var len = (22 + (ci % 3) * 12) * Math.min(1, grow * 4);
+      var midA = ca + 0.25 * (ci % 2 ? 1 : -1);
+      ctx.beginPath();
+      ctx.moveTo(im.x, im.y);
+      ctx.lineTo(im.x + Math.cos(midA) * len * 0.5, im.y + Math.sin(midA) * len * 0.5);
+      ctx.lineTo(im.x + Math.cos(ca) * len, im.y + Math.sin(ca) * len);
+      ctx.stroke();
+    }
+    // White-hot flash right at the contact point.
+    ctx.globalAlpha = k * k;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(im.x, im.y, 18 * k + 4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
+
   balls.forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
@@ -62,6 +92,16 @@ function draw() {
       ctx.translate(b.x, b.y + b.r);
       ctx.scale(1.08, 0.88);
       ctx.translate(-b.x, -(b.y + b.r));
+    }
+    if (b.squash) {
+      // Just slammed into a wall: flattened against it, bulging sideways.
+      var sq = b.squash, k = sq.t / sq.max;
+      var ax = b.x - sq.nx * b.r, ay = b.y - sq.ny * b.r;
+      ctx.translate(ax, ay);
+      ctx.rotate(Math.atan2(sq.ny, sq.nx));
+      ctx.scale(1 - 0.38 * k, 1 + 0.28 * k);
+      ctx.rotate(-Math.atan2(sq.ny, sq.nx));
+      ctx.translate(-ax, -ay);
     }
 
     var img = getImg(b.char.imgData);

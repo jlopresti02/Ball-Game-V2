@@ -2,9 +2,17 @@
 "use strict";
 
 function update(dt) {
+  if (hitStop > 0) {
+    // Frozen for a split second after a wall slam; only the camera shake
+    // and shockwaves keep moving so the impact still reads.
+    hitStop -= dt;
+    impacts.forEach(function (im) { im.life -= dt; });
+    return;
+  }
   var h = dt / SUBSTEPS;
   for (var s = 0; s < SUBSTEPS; s++) step(h);
   updateAbilities(dt);
+  impacts = impacts.filter(function (im) { im.life -= dt; return im.life > 0; });
 
   balls.forEach(function (b) {
     b.flash = Math.max(0, b.flash - dt);
@@ -20,11 +28,15 @@ function update(dt) {
         life: 0.22, max: 0.22, size: b.r * 0.45, color: b.char.color
       });
     }
+    if (b.squash) {
+      b.squash.t -= dt;
+      if (b.squash.t <= 0) b.squash = null;
+    }
     if (b.slam && b.alive && !reduceMotion) {
       // A streak in the attacker's color while the victim pinballs off the walls.
       particles.push({
         x: b.x, y: b.y, vx: -b.vx * 0.1, vy: -b.vy * 0.1,
-        life: 0.25, max: 0.25, size: b.r * 0.55, color: balls[b.slam.attackerId].char.color
+        life: 0.3, max: 0.3, size: b.r * 0.75, color: balls[b.slam.attackerId].char.color
       });
     }
     b.shown += (b.hp - b.shown) * Math.min(1, dt * 4);
