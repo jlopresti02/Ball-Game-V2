@@ -1,7 +1,8 @@
 // Per-frame update, HUD health bars and canvas sizing.
 "use strict";
 
-// Which attack a fighter is charging right now, and how far along it is.
+// Which attack a fighter is charging (or, for the Watcher, firing) right
+// now, and how far along it is. Drives the looping attack sounds.
 function chargeProgress(b) {
   if (b.powerState && b.powerState.phase === "charge")
     return { kind: "power", p: b.powerState.t / b.char.powerPunch.chargeDur };
@@ -11,6 +12,9 @@ function chargeProgress(b) {
   // The Watcher sits quietly for its sit delay, then the lasers charge.
   if (ws && ws.phase === "charge" && ws.t >= wc.preDelay)
     return { kind: "watcher", p: (ws.t - wc.preDelay) / wc.chargeDur };
+  // Then the lasers fire.
+  if (ws && ws.phase === "laser")
+    return { kind: "laser", p: ws.t / wc.fireDur, n: wc.lasers };
   return null;
 }
 
@@ -29,7 +33,7 @@ function update(dt) {
 
   balls.forEach(function (b) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;
-    updateChargeSound(b.id, charging ? charging.kind : null, charging ? charging.p : 0);
+    updateChargeSound(b.id, charging ? charging.kind : null, charging ? charging.p : 0, charging ? charging.n : 0);
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);
     if (b.jabAnim) {

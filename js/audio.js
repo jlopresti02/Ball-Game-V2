@@ -253,22 +253,124 @@ function stopChargeVoice(v, when) {
   [v.o1, v.o2, v.lfo].forEach(function (o) { try { o.stop(when + 0.12); } catch (e) {} });
 }
 
+// ---------------------------------------------------------------
+// Watcher laser sound: a sharp zap when the beams lock on, then a buzzing
+// beam hum for as long as they fire. Each laser adds its own high tone, so
+// more lasers sound thicker. A faint sizzle and a fast flicker match the
+// beams' shimmer, and the hum fades out as the laser timer runs down.
+// ---------------------------------------------------------------
+var laserNoise = null;
+
+function playLaserZap(ctx, dest, when) {
+  var z = ctx.createOscillator();
+  z.type = "sawtooth";
+  z.frequency.setValueAtTime(2600, when);
+  z.frequency.exponentialRampToValueAtTime(260, when + 0.2);
+  var zf = ctx.createBiquadFilter();
+  zf.type = "lowpass"; zf.frequency.value = 5000;
+  var zg = ctx.createGain();
+  zg.gain.setValueAtTime(0.0001, when);
+  zg.gain.exponentialRampToValueAtTime(0.2, when + 0.005);
+  zg.gain.exponentialRampToValueAtTime(0.0001, when + 0.22);
+  z.connect(zf); zf.connect(zg); zg.connect(dest);
+  z.start(when); z.stop(when + 0.25);
+}
+
+function makeLaserVoice(ctx, dest, lasers, when) {
+  playLaserZap(ctx, dest, when);
+  var out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, when);
+  out.connect(dest);
+  // Flicker: a fast wobble in volume, like the beams' shimmer on screen.
+  var flick = ctx.createGain();
+  flick.gain.value = 0.85;
+  flick.connect(out);
+  var flickLfo = ctx.createOscillator();
+  flickLfo.frequency.value = 23;
+  var flickDepth = ctx.createGain();
+  flickDepth.gain.value = 0.15;
+  flickLfo.connect(flickDepth); flickDepth.connect(flick.gain);
+
+  // Core: a low electric buzz.
+  var buzz = ctx.createOscillator();
+  buzz.type = "sawtooth";
+  buzz.frequency.value = 98;
+  var buzzF = ctx.createBiquadFilter();
+  buzzF.type = "lowpass"; buzzF.frequency.value = 1200; buzzF.Q.value = 2;
+  var buzzG = ctx.createGain();
+  buzzG.gain.value = 0.55;
+  buzz.connect(buzzF); buzzF.connect(buzzG); buzzG.connect(flick);
+
+  // Beams: one high tone per laser (up to 4), gently warbling.
+  var vib = ctx.createOscillator();
+  vib.frequency.value = 6.5;
+  var vibDepth = ctx.createGain();
+  vibDepth.gain.value = 9;
+  vib.connect(vibDepth);
+  var n = Math.max(1, Math.min(4, Math.round(lasers || 1)));
+  var ratios = [1, 1.5, 2.01, 1.26];
+  var beams = [];
+  for (var i = 0; i < n; i++) {
+    var o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.value = 880 * ratios[i];
+    vibDepth.connect(o.frequency);
+    var g = ctx.createGain();
+    g.gain.value = 0.2 / Math.sqrt(n);
+    o.connect(g); g.connect(flick);
+    beams.push(o);
+  }
+
+  // Sizzle: soft high noise, the beam burning where it lands.
+  if (!laserNoise) laserNoise = makeNoiseBuffer(ctx, 1);
+  var hiss = ctx.createBufferSource();
+  hiss.buffer = laserNoise; hiss.loop = true;
+  var hissF = ctx.createBiquadFilter();
+  hissF.type = "bandpass"; hissF.frequency.value = 3600; hissF.Q.value = 1.4;
+  var hissG = ctx.createGain();
+  hissG.gain.value = 0.22;
+  hiss.connect(hissF); hissF.connect(hissG); hissG.connect(flick);
+
+  var sources = [flickLfo, buzz, vib, hiss].concat(beams);
+  sources.forEach(function (src) { src.start(when); });
+  return { kind: "laser", out: out, sources: sources };
+}
+
+// p is how much of the laser time has passed, from 0 to 1.
+function setLaserVoice(v, p, when) {
+  var fade = Math.max(0, Math.min(1, (1 - p) / 0.08)); // fades over the last 8%
+  v.out.gain.setTargetAtTime(0.0001 + 0.085 * fade, when, 0.03);
+}
+
+function stopLaserVoice(v, when) {
+  v.out.gain.setTargetAtTime(0.0001, when, 0.02);
+  v.sources.forEach(function (src) { try { src.stop(when + 0.15); } catch (e) {} });
+}
+
 var chargeVoices = [null, null];
 
 // Called every frame for each fighter: kind is "power", "rage", "watcher"
-// or null when it isn't charging anything.
-function updateChargeSound(id, kind, p) {
+// (charging), "laser" (the Watcher's lasers firing) or null when neither.
+// extra is the number of lasers.
+function updateChargeSound(id, kind, p, extra) {
   try {
     var v = chargeVoices[id];
     if (v && v.kind !== kind) {
-      stopChargeVoice(v, audioCtx.currentTime);
+      if (v.kind === "laser") stopLaserVoice(v, audioCtx.currentTime);
+      else stopChargeVoice(v, audioCtx.currentTime);
       chargeVoices[id] = v = null;
     }
     if (!kind) return;
     var ctx = getAudioCtx();
     if (!ctx) return;
-    if (!v) v = chargeVoices[id] = makeChargeVoice(ctx, ctx.destination, kind, ctx.currentTime);
-    setChargeVoice(v, p, ctx.currentTime);
+    var now = ctx.currentTime;
+    if (!v) {
+      v = chargeVoices[id] = kind === "laser"
+        ? makeLaserVoice(ctx, ctx.destination, extra, now)
+        : makeChargeVoice(ctx, ctx.destination, kind, now);
+    }
+    if (kind === "laser") setLaserVoice(v, p, now);
+    else setChargeVoice(v, p, now);
   } catch (e) { /* never let audio break the game */ }
 }
 
