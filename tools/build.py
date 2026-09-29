@@ -20,12 +20,13 @@ def read(rel):
 
 html = read("index.html")
 
-html = html.replace(
-    '<link rel="stylesheet" href="css/styles.css">',
-    "<style>\n" + read("css/styles.css") + "</style>",
+html = re.sub(
+    r'<link rel="stylesheet" href="css/styles.css(?:\?v=[^"]*)?">',
+    lambda m: "<style>\n" + read("css/styles.css") + "</style>",
+    html,
 )
 
-scripts = re.findall(r'<script src="([^"]+)"></script>', html)
+scripts = [src.split("?")[0] for src in re.findall(r'<script src="([^"]+)"></script>', html)]
 bundle = "\n".join(read(src) for src in scripts)
 # Wrap everything in one function so nothing leaks onto window.
 bundled_tag = "<script>\n(function () {\n" + bundle + "\n})();\n</script>"
