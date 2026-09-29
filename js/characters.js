@@ -15,6 +15,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -27,6 +29,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 10
   },
   {
@@ -39,6 +43,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -51,6 +57,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -63,6 +71,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -75,6 +85,8 @@ var builtins = [
     hasRage: true, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -87,6 +99,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: true, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -100,6 +114,24 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: true, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
+    blockChance: 0
+  },
+  {
+    // Wide, telegraphed haymakers that can whiff on spacing, with no
+    // cooldown between them; forgets some damage every few seconds.
+    id: "builtin-cte", builtin: true, name: "CTE", color: "#7c6f64", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: false, punch: defaultPunch(),
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
+    hasSwing: true, swing: defaultSwing(),
+    hasForget: true, forget: defaultForget(),
     blockChance: 0
   }
 ];
@@ -128,6 +160,17 @@ function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, c
 function defaultWeave() {
   return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2, tauntVuln: 2 };
 }
+// Swing: a telegraphed punch thrown at anyone in the general vicinity. The
+// aim is committed at the end of the windup with some error, so it can whiff
+// on spacing. After the strike the arm hangs extended for a moment (an
+// opening), then the next swing starts right away with no cooldown.
+// Opponents block it blockMult times as often and weave it weaveMult times
+// as often.
+function defaultSwing() {
+  return { damage: 25, windup: 0.55, extend: 0.45, recover: 0.25, reach: 55, vicinity: 90, aimError: 18, blockMult: 2, weaveMult: 1.15 };
+}
+// Forget: every `every` seconds, forgets some damage and regains `heal` health.
+function defaultForget() { return { heal: 12, every: 7 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
 }
@@ -153,6 +196,10 @@ function normalizeChar(ch) {
   if (ch.hasWeave === undefined) ch.hasWeave = false;
   if (!ch.weave) ch.weave = defaultWeave();
   else if (ch.weave.tauntVuln == null) ch.weave.tauntVuln = defaultWeave().tauntVuln;
+  if (ch.hasSwing === undefined) ch.hasSwing = false;
+  if (!ch.swing) ch.swing = defaultSwing();
+  if (ch.hasForget === undefined) ch.hasForget = false;
+  if (!ch.forget) ch.forget = defaultForget();
   if (ch.blockChance == null) ch.blockChance = 0;
   return ch;
 }

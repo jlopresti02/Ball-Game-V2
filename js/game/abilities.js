@@ -20,7 +20,7 @@ function beginWallSlam(target, dirX, dirY, pp) {
   target.vx = dirX * target.slam.speed;
   target.vy = dirY * target.slam.speed;
   // Getting launched interrupts whatever the victim was in the middle of.
-  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null;
+  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null;
   if (target.powerState) target.powerState = null;
   if (target.rageState) target.rageState = null;
   if (target.watcherState && target.watcherState.phase === "travel") {
@@ -157,6 +157,8 @@ function updateAbilities(dt) {
         if (self.punch.t >= pu.speed) self.punch = null;
       }
     }
+
+    if (self.char.hasSwing) updateSwing(self, other, dt);
 
     if (self.char.hasKick) {
       self.kickCd = Math.max(0, self.kickCd - dt);

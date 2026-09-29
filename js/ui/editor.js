@@ -31,6 +31,10 @@ function blankChar() {
     watcher: defaultWatcher(),
     hasWeave: false,
     weave: defaultWeave(),
+    hasSwing: false,
+    swing: defaultSwing(),
+    hasForget: false,
+    forget: defaultForget(),
     blockChance: 0
   };
 }
@@ -173,6 +177,16 @@ function fillEditorForm(s) {
   document.getElementById("watcherLasers").value = s.watcher.lasers;
   document.getElementById("watcherLasersVal").textContent = s.watcher.lasers;
 
+  [["swing", "hasSwing", swingSliders], ["forget", "hasForget", forgetSliders]].forEach(function (grp) {
+    document.getElementById(grp[0] + "On").setAttribute("aria-checked", String(s[grp[1]]));
+    document.getElementById(grp[0] + "Block").setAttribute("data-on", String(s[grp[1]]));
+    grp[2].forEach(function (row) {
+      var v = s[grp[0]][row[1]];
+      document.getElementById(row[0]).value = v;
+      document.getElementById(row[0] + "Val").textContent = row[2](v);
+    });
+  });
+
   document.getElementById("weaveOn").setAttribute("aria-checked", String(s.hasWeave));
   document.getElementById("weaveBlock").setAttribute("data-on", String(s.hasWeave));
   weaveSliders.forEach(function (row) {
@@ -223,7 +237,9 @@ var abilityToggles = [
   ["powerOn", "powerBlock", "hasPowerPunch"],
   ["rageOn", "rageBlock", "hasRage"],
   ["watcherOn", "watcherBlock", "hasWatcher"],
-  ["weaveOn", "weaveBlock", "hasWeave"]
+  ["weaveOn", "weaveBlock", "hasWeave"],
+  ["swingOn", "swingBlock", "hasSwing"],
+  ["forgetOn", "forgetBlock", "hasForget"]
 ];
 // Each switch is a real button, not a draggable control — one press
 // flips it on or off immediately, and the sliding knob is purely a
@@ -393,6 +409,33 @@ watcherSliders.forEach(function (row) {
     if (row[1] === "preDelay" || row[1] === "chargeDur" || row[1] === "fireDur" || row[1] === "restDur") out.textContent = v.toFixed(1) + "s";
     else if (row[1] === "tickInterval") out.textContent = v.toFixed(2) + "s";
     else out.textContent = v;
+  });
+});
+
+// [slider id, field, how to show the value]
+var swingSliders = [
+  ["swingDamage", "damage", function (v) { return v; }],
+  ["swingWindup", "windup", function (v) { return Number(v).toFixed(2) + "s"; }],
+  ["swingExtend", "extend", function (v) { return Number(v).toFixed(2) + "s"; }],
+  ["swingReach", "reach", function (v) { return v; }],
+  ["swingVicinity", "vicinity", function (v) { return v; }],
+  ["swingAim", "aimError", function (v) { return v + "\u00B0"; }],
+  ["swingBlockMult", "blockMult", function (v) { return v + "x"; }],
+  ["swingWeaveMult", "weaveMult", function (v) { return v + "x"; }]
+];
+var forgetSliders = [
+  ["forgetHeal", "heal", function (v) { return v; }],
+  ["forgetEvery", "every", function (v) { return Number(v).toFixed(1) + "s"; }]
+];
+[["swing", swingSliders], ["forget", forgetSliders]].forEach(function (grp) {
+  grp[1].forEach(function (row) {
+    var el = document.getElementById(row[0]);
+    var out = document.getElementById(row[0] + "Val");
+    el.addEventListener("input", function () {
+      var v = parseFloat(el.value);
+      editState[grp[0]][row[1]] = v;
+      out.textContent = row[2](v);
+    });
   });
 });
 

@@ -15,6 +15,7 @@ var SLOW_DOWN = 1.1;      // how quickly extra speed bleeds off (higher = faster
 function inOrdinaryMovement(b) {
   if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.knockFly > 0) return false;
   if (b.powerState || b.rageState) return false;
+  if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
   return true;
 }

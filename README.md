@@ -24,6 +24,7 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 | Power Puncher | Charges up, then spins into a 30-damage haymaker that sends the opponent pinballing into 4 walls for 5 damage each |
 | Sees Red | Charges at the opponent throwing a flurry of jabs, but takes extra damage while winding up |
 | Watcher | Sits in a corner seat (invincible), charges, then fires tracking lasers |
+| CTE | Telegraphed 25-damage swings at anyone nearby with no cooldown between them. The aim is a guess, so swings can whiff on spacing, and the arm hangs extended after each one. Opponents block his swings twice as often and weave them 1.15x as often. Every 7 seconds he forgets some damage and regains 12 health |
 | BMF | Rapid 5-damage jabs up close; weaves (dodges) 75% of attacks, and 20% of weaves are critical: a 5-punch chase combo ending in a launching blow, then a 2-second hands-in-the-air celebration during which it takes double damage |
 
 Roster fighters can mix any of these abilities, with sliders for every stat. They're saved in the browser's local storage.
@@ -44,6 +45,7 @@ js/game/physics.js      Movement, wall bounces, ball-vs-ball collisions
 js/game/abilities.js    Logic for every attack
 js/game/weave.js        Weave dodge, critical-weave combo and the celebration taunt
 js/game/finisher.js     Grappler finisher: bottom-wall slam, pin and punches
+js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/update.js       Per-frame update, HUD, canvas sizing
 js/game/draw-attacks.js Drawing each attack's animation
 js/game/draw.js         Drawing the arena, fighters, projectiles, damage numbers

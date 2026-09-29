@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260929144756">
+<link rel="stylesheet" href="css/styles.css?v=20260929191822">
 </head>
 <body>
 <main>
@@ -457,6 +457,74 @@
       </div>
     </details>
 
+    <details class="abilityBlock" id="swingBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Wild swing</span>
+            <span class="hsub">Telegraphed punches at anyone nearby, with no cooldown. The aim is a guess, so they can whiff on spacing, and the arm hangs out after each one</span>
+          </div>
+          <button type="button" class="switch" id="swingOn" role="switch" aria-checked="false" aria-label="Toggle wild swing"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="swingDamage">Damage <span class="val" id="swingDamageVal">25</span></label>
+          <input type="range" id="swingDamage" min="1" max="60" step="1" value="25">
+        </div>
+        <div class="field">
+          <label for="swingWindup">Windup (telegraph) <span class="val" id="swingWindupVal">0.55s</span></label>
+          <input type="range" id="swingWindup" min="0.15" max="1.5" step="0.05" value="0.55">
+        </div>
+        <div class="field">
+          <label for="swingExtend">Arm stays extended <span class="val" id="swingExtendVal">0.45s</span></label>
+          <input type="range" id="swingExtend" min="0" max="1.5" step="0.05" value="0.45">
+        </div>
+        <div class="field">
+          <label for="swingReach">Reach <span class="val" id="swingReachVal">55</span></label>
+          <input type="range" id="swingReach" min="20" max="140" step="5" value="55">
+        </div>
+        <div class="field">
+          <label for="swingVicinity">Swings at opponents within <span class="val" id="swingVicinityVal">90</span></label>
+          <input type="range" id="swingVicinity" min="10" max="220" step="5" value="90">
+        </div>
+        <div class="field">
+          <label for="swingAim">Aim error <span class="val" id="swingAimVal">18&deg;</span></label>
+          <input type="range" id="swingAim" min="0" max="45" step="1" value="18">
+        </div>
+        <div class="field">
+          <label for="swingBlockMult">Easier to block <span class="val" id="swingBlockMultVal">2x</span></label>
+          <input type="range" id="swingBlockMult" min="1" max="4" step="0.05" value="2">
+        </div>
+        <div class="field">
+          <label for="swingWeaveMult">Easier to weave <span class="val" id="swingWeaveMultVal">1.15x</span></label>
+          <input type="range" id="swingWeaveMult" min="1" max="3" step="0.05" value="1.15">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="forgetBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Forget</span>
+            <span class="hsub">Every few seconds, forgets some of the damage it's taken and regains health</span>
+          </div>
+          <button type="button" class="switch" id="forgetOn" role="switch" aria-checked="false" aria-label="Toggle forget"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="forgetHeal">Health regained <span class="val" id="forgetHealVal">12</span></label>
+          <input type="range" id="forgetHeal" min="1" max="50" step="1" value="12">
+        </div>
+        <div class="field">
+          <label for="forgetEvery">Every <span class="val" id="forgetEveryVal">7.0s</span></label>
+          <input type="range" id="forgetEvery" min="2" max="20" step="0.5" value="7">
+        </div>
+      </div>
+    </details>
+
     <div class="editorBtns">
       <button id="editorSave">Save character</button>
       <button id="editorCancel" class="secondary">Cancel</button>
@@ -501,20 +569,21 @@
 </main>
 
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20260929144756"></script>
-<script src="js/audio.js?v=20260929144756"></script>
-<script src="js/characters.js?v=20260929144756"></script>
-<script src="js/ui/select.js?v=20260929144756"></script>
-<script src="js/ui/cropper.js?v=20260929144756"></script>
-<script src="js/ui/editor.js?v=20260929144756"></script>
-<script src="js/game/match.js?v=20260929144756"></script>
-<script src="js/game/physics.js?v=20260929144756"></script>
-<script src="js/game/abilities.js?v=20260929144756"></script>
-<script src="js/game/weave.js?v=20260929144756"></script>
-<script src="js/game/finisher.js?v=20260929144756"></script>
-<script src="js/game/update.js?v=20260929144756"></script>
-<script src="js/game/draw-attacks.js?v=20260929144756"></script>
-<script src="js/game/draw.js?v=20260929144756"></script>
-<script src="js/main.js?v=20260929144756"></script>
+<script src="js/config.js?v=20260929191822"></script>
+<script src="js/audio.js?v=20260929191822"></script>
+<script src="js/characters.js?v=20260929191822"></script>
+<script src="js/ui/select.js?v=20260929191822"></script>
+<script src="js/ui/cropper.js?v=20260929191822"></script>
+<script src="js/ui/editor.js?v=20260929191822"></script>
+<script src="js/game/match.js?v=20260929191822"></script>
+<script src="js/game/physics.js?v=20260929191822"></script>
+<script src="js/game/abilities.js?v=20260929191822"></script>
+<script src="js/game/weave.js?v=20260929191822"></script>
+<script src="js/game/finisher.js?v=20260929191822"></script>
+<script src="js/game/cte.js?v=20260929191822"></script>
+<script src="js/game/update.js?v=20260929191822"></script>
+<script src="js/game/draw-attacks.js?v=20260929191822"></script>
+<script src="js/game/draw.js?v=20260929191822"></script>
+<script src="js/main.js?v=20260929191822"></script>
 </body>
 </html>

@@ -11,12 +11,12 @@ var KNOCK_FLY_TIME = 0.8;      // how long a launched fighter flies before slowi
 
 // Rolls the weave for `b` against an attack from `attackerId`. Returns true
 // if the attack was dodged (and kicks off a critical combo if that rolls too).
-function tryWeave(b, attackerId) {
+function tryWeave(b, attackerId, mult) {
   if (!b || !b.alive || !b.char.hasWeave) return false;
   // Can't slip anything while held, being slammed around, or mid-celebration.
   if (b.grappled || b.slam || b.taunt) return false;
   var wv = b.char.weave;
-  if (Math.random() >= wv.dodgeChance / 100) return false;
+  if (Math.random() >= Math.min(95, wv.dodgeChance * (mult || 1)) / 100) return false;
 
   b.weaveAnim = { t: 0, dur: 0.26, sign: Math.random() < 0.5 ? -1 : 1 };
   var atk = attackerId != null ? balls[attackerId] : null;
@@ -64,7 +64,7 @@ function updateWeave(self, other, dt) {
   if (cb.fresh) {
     // Drop whatever else it was doing and go.
     cb.fresh = false;
-    self.punch = null; self.kick = null; self.throwAnim = null;
+    self.punch = null; self.kick = null; self.throwAnim = null; self.swing = null;
     if (self.powerState && self.powerState.phase === "attack") { self.vx = self.powerState.preVX; self.vy = self.powerState.preVY; }
     self.powerState = null; self.rageState = null;
     if (self.watcherState && self.watcherState.phase === "travel") {

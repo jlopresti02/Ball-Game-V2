@@ -183,6 +183,18 @@ function draw() {
       ctx.stroke();
     }
 
+    // A soft glow when CTE forgets some damage and heals.
+    if (b.healGlow > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, b.healGlow / 0.7);
+      ctx.strokeStyle = theme.dodge;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 6 + (0.7 - b.healGlow) * 20, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // A bright pulsing ring whenever a fighter is invincible (the Watcher,
     // sitting in its corner), so it's obvious hits won't land.
     if (b.invincible) {
@@ -211,6 +223,7 @@ function draw() {
     }
 
     drawFist(b, other);
+    drawSwing(b);
     drawKick(b, other);
     drawGrapple(b);
     drawThrow(b, other);
@@ -242,7 +255,7 @@ function draw() {
     var fx = Math.min(W - 50, Math.max(50, f.x)), fy = Math.max(18, f.y);
     ctx.lineWidth = f.kind === "tick" ? 3 : 6; ctx.lineJoin = "round";
     ctx.strokeStyle = theme.floor; ctx.strokeText(f.text, fx, fy);
-    ctx.fillStyle = (f.kind === "dodge" || f.kind === "crit") ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
+    ctx.fillStyle = (f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
 }

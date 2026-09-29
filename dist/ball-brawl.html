@@ -731,6 +731,74 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       </div>
     </details>
 
+    <details class="abilityBlock" id="swingBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Wild swing</span>
+            <span class="hsub">Telegraphed punches at anyone nearby, with no cooldown. The aim is a guess, so they can whiff on spacing, and the arm hangs out after each one</span>
+          </div>
+          <button type="button" class="switch" id="swingOn" role="switch" aria-checked="false" aria-label="Toggle wild swing"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="swingDamage">Damage <span class="val" id="swingDamageVal">25</span></label>
+          <input type="range" id="swingDamage" min="1" max="60" step="1" value="25">
+        </div>
+        <div class="field">
+          <label for="swingWindup">Windup (telegraph) <span class="val" id="swingWindupVal">0.55s</span></label>
+          <input type="range" id="swingWindup" min="0.15" max="1.5" step="0.05" value="0.55">
+        </div>
+        <div class="field">
+          <label for="swingExtend">Arm stays extended <span class="val" id="swingExtendVal">0.45s</span></label>
+          <input type="range" id="swingExtend" min="0" max="1.5" step="0.05" value="0.45">
+        </div>
+        <div class="field">
+          <label for="swingReach">Reach <span class="val" id="swingReachVal">55</span></label>
+          <input type="range" id="swingReach" min="20" max="140" step="5" value="55">
+        </div>
+        <div class="field">
+          <label for="swingVicinity">Swings at opponents within <span class="val" id="swingVicinityVal">90</span></label>
+          <input type="range" id="swingVicinity" min="10" max="220" step="5" value="90">
+        </div>
+        <div class="field">
+          <label for="swingAim">Aim error <span class="val" id="swingAimVal">18&deg;</span></label>
+          <input type="range" id="swingAim" min="0" max="45" step="1" value="18">
+        </div>
+        <div class="field">
+          <label for="swingBlockMult">Easier to block <span class="val" id="swingBlockMultVal">2x</span></label>
+          <input type="range" id="swingBlockMult" min="1" max="4" step="0.05" value="2">
+        </div>
+        <div class="field">
+          <label for="swingWeaveMult">Easier to weave <span class="val" id="swingWeaveMultVal">1.15x</span></label>
+          <input type="range" id="swingWeaveMult" min="1" max="3" step="0.05" value="1.15">
+        </div>
+      </div>
+    </details>
+
+    <details class="abilityBlock" id="forgetBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Forget</span>
+            <span class="hsub">Every few seconds, forgets some of the damage it's taken and regains health</span>
+          </div>
+          <button type="button" class="switch" id="forgetOn" role="switch" aria-checked="false" aria-label="Toggle forget"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="forgetHeal">Health regained <span class="val" id="forgetHealVal">12</span></label>
+          <input type="range" id="forgetHeal" min="1" max="50" step="1" value="12">
+        </div>
+        <div class="field">
+          <label for="forgetEvery">Every <span class="val" id="forgetEveryVal">7.0s</span></label>
+          <input type="range" id="forgetEvery" min="2" max="20" step="0.5" value="7">
+        </div>
+      </div>
+    </details>
+
     <div class="editorBtns">
       <button id="editorSave">Save character</button>
       <button id="editorCancel" class="secondary">Cancel</button>
@@ -1243,6 +1311,60 @@ function stopAllChargeSounds() {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// ---------------------------------------------------------------
+// CTE sounds: a big air whoosh as each wild swing is thrown (it plays
+// whether it lands or not; a hit adds the punch sound on top), and a soft
+// rising shimmer when CTE forgets some damage and heals.
+// ---------------------------------------------------------------
+var whooshNoise = null;
+function synthWhoosh(ctx, dest, now) {
+  if (!whooshNoise) whooshNoise = makeNoiseBuffer(ctx, 0.4);
+  var src = ctx.createBufferSource();
+  src.buffer = whooshNoise;
+  var bp = ctx.createBiquadFilter();
+  bp.type = "bandpass"; bp.Q.value = 1.2;
+  bp.frequency.setValueAtTime(500, now);
+  bp.frequency.exponentialRampToValueAtTime(1900, now + 0.16);
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(0.32, now + 0.07);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+  src.connect(bp); bp.connect(g); g.connect(dest);
+  src.start(now); src.stop(now + 0.3);
+}
+function playWhoosh() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    synthWhoosh(ctx, ctx.destination, ctx.currentTime);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+function synthForget(ctx, dest, now) {
+  [0, 0.09, 0.18].forEach(function (off, i) {
+    var o = ctx.createOscillator();
+    o.type = "sine";
+    var f = [523, 659, 880][i];
+    o.frequency.setValueAtTime(f, now + off);
+    o.frequency.exponentialRampToValueAtTime(f * 1.02, now + off + 0.3);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now + off);
+    g.gain.exponentialRampToValueAtTime(0.09, now + off + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + off + 0.45);
+    o.connect(g); g.connect(dest);
+    o.start(now + off); o.stop(now + off + 0.5);
+  });
+}
+function playForget() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    synthForget(ctx, ctx.destination, ctx.currentTime);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // Built-in roster, ability defaults, saving custom characters, image cache.
 "use strict";
 
@@ -1260,6 +1382,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -1272,6 +1396,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 10
   },
   {
@@ -1284,6 +1410,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -1296,6 +1424,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -1308,6 +1438,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -1320,6 +1452,8 @@ var builtins = [
     hasRage: true, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -1332,6 +1466,8 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: true, watcher: defaultWatcher(),
     hasWeave: false, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
     blockChance: 0
   },
   {
@@ -1345,6 +1481,24 @@ var builtins = [
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
     hasWeave: true, weave: defaultWeave(),
+    hasSwing: false, swing: defaultSwing(),
+    hasForget: false, forget: defaultForget(),
+    blockChance: 0
+  },
+  {
+    // Wide, telegraphed haymakers that can whiff on spacing, with no
+    // cooldown between them; forgets some damage every few seconds.
+    id: "builtin-cte", builtin: true, name: "CTE", color: "#7c6f64", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: false, punch: defaultPunch(),
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
+    hasSwing: true, swing: defaultSwing(),
+    hasForget: true, forget: defaultForget(),
     blockChance: 0
   }
 ];
@@ -1373,6 +1527,17 @@ function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, c
 function defaultWeave() {
   return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2, tauntVuln: 2 };
 }
+// Swing: a telegraphed punch thrown at anyone in the general vicinity. The
+// aim is committed at the end of the windup with some error, so it can whiff
+// on spacing. After the strike the arm hangs extended for a moment (an
+// opening), then the next swing starts right away with no cooldown.
+// Opponents block it blockMult times as often and weave it weaveMult times
+// as often.
+function defaultSwing() {
+  return { damage: 25, windup: 0.55, extend: 0.45, recover: 0.25, reach: 55, vicinity: 90, aimError: 18, blockMult: 2, weaveMult: 1.15 };
+}
+// Forget: every `every` seconds, forgets some damage and regains `heal` health.
+function defaultForget() { return { heal: 12, every: 7 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
 }
@@ -1398,6 +1563,10 @@ function normalizeChar(ch) {
   if (ch.hasWeave === undefined) ch.hasWeave = false;
   if (!ch.weave) ch.weave = defaultWeave();
   else if (ch.weave.tauntVuln == null) ch.weave.tauntVuln = defaultWeave().tauntVuln;
+  if (ch.hasSwing === undefined) ch.hasSwing = false;
+  if (!ch.swing) ch.swing = defaultSwing();
+  if (ch.hasForget === undefined) ch.hasForget = false;
+  if (!ch.forget) ch.forget = defaultForget();
   if (ch.blockChance == null) ch.blockChance = 0;
   return ch;
 }
@@ -1497,6 +1666,8 @@ function abilitySummary(ch) {
   if (ch.hasRage) parts.push("😡 " + ch.rage.punchCount + "×" + ch.rage.punchDamage + " dmg");
   if (ch.hasWatcher) parts.push("👁️ " + ch.watcher.lasers + "×" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
   if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
+  if (ch.hasSwing) parts.push("\uD83E\uDD74 " + ch.swing.damage + " dmg swing");
+  if (ch.hasForget) parts.push("\uD83E\uDDE0 +" + ch.forget.heal + " / " + ch.forget.every + "s");
   if (ch.blockChance > 0) parts.push("🛡️ " + ch.blockChance + "% block");
   return parts.length ? parts.join(" · ") : "No attacks yet";
 }
@@ -1843,6 +2014,10 @@ function blankChar() {
     watcher: defaultWatcher(),
     hasWeave: false,
     weave: defaultWeave(),
+    hasSwing: false,
+    swing: defaultSwing(),
+    hasForget: false,
+    forget: defaultForget(),
     blockChance: 0
   };
 }
@@ -1985,6 +2160,16 @@ function fillEditorForm(s) {
   document.getElementById("watcherLasers").value = s.watcher.lasers;
   document.getElementById("watcherLasersVal").textContent = s.watcher.lasers;
 
+  [["swing", "hasSwing", swingSliders], ["forget", "hasForget", forgetSliders]].forEach(function (grp) {
+    document.getElementById(grp[0] + "On").setAttribute("aria-checked", String(s[grp[1]]));
+    document.getElementById(grp[0] + "Block").setAttribute("data-on", String(s[grp[1]]));
+    grp[2].forEach(function (row) {
+      var v = s[grp[0]][row[1]];
+      document.getElementById(row[0]).value = v;
+      document.getElementById(row[0] + "Val").textContent = row[2](v);
+    });
+  });
+
   document.getElementById("weaveOn").setAttribute("aria-checked", String(s.hasWeave));
   document.getElementById("weaveBlock").setAttribute("data-on", String(s.hasWeave));
   weaveSliders.forEach(function (row) {
@@ -2035,7 +2220,9 @@ var abilityToggles = [
   ["powerOn", "powerBlock", "hasPowerPunch"],
   ["rageOn", "rageBlock", "hasRage"],
   ["watcherOn", "watcherBlock", "hasWatcher"],
-  ["weaveOn", "weaveBlock", "hasWeave"]
+  ["weaveOn", "weaveBlock", "hasWeave"],
+  ["swingOn", "swingBlock", "hasSwing"],
+  ["forgetOn", "forgetBlock", "hasForget"]
 ];
 // Each switch is a real button, not a draggable control — one press
 // flips it on or off immediately, and the sliding knob is purely a
@@ -2208,6 +2395,33 @@ watcherSliders.forEach(function (row) {
   });
 });
 
+// [slider id, field, how to show the value]
+var swingSliders = [
+  ["swingDamage", "damage", function (v) { return v; }],
+  ["swingWindup", "windup", function (v) { return Number(v).toFixed(2) + "s"; }],
+  ["swingExtend", "extend", function (v) { return Number(v).toFixed(2) + "s"; }],
+  ["swingReach", "reach", function (v) { return v; }],
+  ["swingVicinity", "vicinity", function (v) { return v; }],
+  ["swingAim", "aimError", function (v) { return v + "\u00B0"; }],
+  ["swingBlockMult", "blockMult", function (v) { return v + "x"; }],
+  ["swingWeaveMult", "weaveMult", function (v) { return v + "x"; }]
+];
+var forgetSliders = [
+  ["forgetHeal", "heal", function (v) { return v; }],
+  ["forgetEvery", "every", function (v) { return Number(v).toFixed(1) + "s"; }]
+];
+[["swing", swingSliders], ["forget", forgetSliders]].forEach(function (grp) {
+  grp[1].forEach(function (row) {
+    var el = document.getElementById(row[0]);
+    var out = document.getElementById(row[0] + "Val");
+    el.addEventListener("input", function () {
+      var v = parseFloat(el.value);
+      editState[grp[0]][row[1]] = v;
+      out.textContent = row[2](v);
+    });
+  });
+});
+
 // [slider id, weave field, how to show the value]
 var weaveSliders = [
   ["weaveDodge", "dodgeChance", function (v) { return v + "%"; }],
@@ -2276,7 +2490,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown, powerState: null,
     rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false,
+    slam: null, holdAtOne: false, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -2329,6 +2543,7 @@ function burst(b) {
 // Grabs `target`, drags it to whichever wall is closest, and slams it there.
 function beginGrapple(attacker, target) {
   target.slam = null; // a grab ends any wall slam in progress
+  target.swing = null;
   var gr = attacker.char.grapple;
   var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
   var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;
@@ -2384,14 +2599,18 @@ function hurt(b, amount, source, attackerId) {
   // Weave: slips the attack completely (grabs are weaved when they're
   // attempted, not when the slam lands). Callers check justDodged to skip
   // knockback, and projectiles fly on through.
-  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && tryWeave(b, attackerId)) {
+  // CTE's wild swings are easier to see coming.
+  var swinger = source === "swing" && attackerId != null ? balls[attackerId].char.swing : null;
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" &&
+      tryWeave(b, attackerId, swinger ? swinger.weaveMult : 1)) {
     b.justDodged = true;
     return 0;
   }
   // A passive chance to block an incoming attack outright and take no
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
-  if (b.char.blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && Math.random() < b.char.blockChance / 100) {
+  var blockChance = Math.min(100, b.char.blockChance * (swinger ? swinger.blockMult : 1));
+  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && Math.random() < blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -2473,6 +2692,7 @@ var SLOW_DOWN = 1.1;      // how quickly extra speed bleeds off (higher = faster
 function inOrdinaryMovement(b) {
   if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.knockFly > 0) return false;
   if (b.powerState || b.rageState) return false;
+  if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
   return true;
 }
@@ -2571,7 +2791,7 @@ function beginWallSlam(target, dirX, dirY, pp) {
   target.vx = dirX * target.slam.speed;
   target.vy = dirY * target.slam.speed;
   // Getting launched interrupts whatever the victim was in the middle of.
-  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null;
+  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null;
   if (target.powerState) target.powerState = null;
   if (target.rageState) target.rageState = null;
   if (target.watcherState && target.watcherState.phase === "travel") {
@@ -2708,6 +2928,8 @@ function updateAbilities(dt) {
         if (self.punch.t >= pu.speed) self.punch = null;
       }
     }
+
+    if (self.char.hasSwing) updateSwing(self, other, dt);
 
     if (self.char.hasKick) {
       self.kickCd = Math.max(0, self.kickCd - dt);
@@ -3032,12 +3254,12 @@ var KNOCK_FLY_TIME = 0.8;      // how long a launched fighter flies before slowi
 
 // Rolls the weave for `b` against an attack from `attackerId`. Returns true
 // if the attack was dodged (and kicks off a critical combo if that rolls too).
-function tryWeave(b, attackerId) {
+function tryWeave(b, attackerId, mult) {
   if (!b || !b.alive || !b.char.hasWeave) return false;
   // Can't slip anything while held, being slammed around, or mid-celebration.
   if (b.grappled || b.slam || b.taunt) return false;
   var wv = b.char.weave;
-  if (Math.random() >= wv.dodgeChance / 100) return false;
+  if (Math.random() >= Math.min(95, wv.dodgeChance * (mult || 1)) / 100) return false;
 
   b.weaveAnim = { t: 0, dur: 0.26, sign: Math.random() < 0.5 ? -1 : 1 };
   var atk = attackerId != null ? balls[attackerId] : null;
@@ -3085,7 +3307,7 @@ function updateWeave(self, other, dt) {
   if (cb.fresh) {
     // Drop whatever else it was doing and go.
     cb.fresh = false;
-    self.punch = null; self.kick = null; self.throwAnim = null;
+    self.punch = null; self.kick = null; self.throwAnim = null; self.swing = null;
     if (self.powerState && self.powerState.phase === "attack") { self.vx = self.powerState.preVX; self.vy = self.powerState.preVY; }
     self.powerState = null; self.rageState = null;
     if (self.watcherState && self.watcherState.phase === "travel") {
@@ -3288,6 +3510,173 @@ function drawFinishers() {
   });
 }
 
+// CTE's abilities.
+//
+// Swing: whenever an opponent is in the general vicinity, CTE winds up a big
+// telegraphed punch, tracking them while the fist is cocked back. At the end
+// of the windup it commits to a direction (with some aim error) and throws.
+// The fist travels a fixed reach, so if the opponent moved or was too far
+// away, it whiffs. After the throw the arm hangs extended for a moment (an
+// opening for the opponent), then retracts, and the next swing can start
+// immediately: there's no cooldown. CTE stalks in while winding up, steps
+// into the punch as it's thrown, and shuffles slowly while stuck extended.
+//
+// Forget: every few seconds CTE forgets some of the damage it's taken and
+// regains health.
+"use strict";
+
+var SWING_STRIKE_TIME = 0.08;  // how fast the fist shoots out
+var SWING_FIST_R = 15;         // fist size, which is also its hit area
+var SWING_STALK = 0.5;         // share of normal speed while stalking in during the windup
+var SWING_SHUFFLE = 0.35;      // share of normal speed while stuck extended
+var SWING_LUNGE = 520;         // speed of the step into the punch as it's thrown
+var SWING_KNOCKBACK = 260;
+
+function swingFistDist(self) {
+  return self.r + self.char.swing.reach;
+}
+
+function updateSwing(self, other, dt) {
+  var sw = self.char.swing;
+  var st = self.swing;
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+
+  if (!st) {
+    // Starts a swing at anyone in the general vicinity, no cooldown.
+    if (other.alive && !other.invincible && d - self.r - other.r < sw.vicinity) {
+      self.swing = { phase: "windup", t: 0, ang: Math.atan2(dy, dx), hit: false };
+    }
+    return;
+  }
+
+  st.t += dt;
+  if (st.phase === "extend") setSpeed(self, SPEED * SWING_SHUFFLE);
+
+  if (st.phase === "windup") {
+    // Keeps watching the opponent and stalks in while the fist is cocked back.
+    if (other.alive) st.ang = Math.atan2(dy, dx);
+    self.vx = Math.cos(st.ang) * SPEED * SWING_STALK;
+    self.vy = Math.sin(st.ang) * SPEED * SWING_STALK;
+    if (st.t >= sw.windup) {
+      // Commits: the aim is a guess, and the reach is fixed.
+      st.ang += (Math.random() * 2 - 1) * sw.aimError * Math.PI / 180;
+      st.phase = "strike"; st.t = 0;
+      playWhoosh();
+    }
+    return;
+  }
+
+  if (st.phase === "strike") {
+    // Steps into the punch along the committed aim.
+    self.vx = Math.cos(st.ang) * SWING_LUNGE;
+    self.vy = Math.sin(st.ang) * SWING_LUNGE;
+    var k = Math.min(1, st.t / SWING_STRIKE_TIME);
+    var reachNow = self.r + (swingFistDist(self) - self.r) * k;
+    var fx = self.x + Math.cos(st.ang) * reachNow, fy = self.y + Math.sin(st.ang) * reachNow;
+    if (!st.hit && other.alive) {
+      var ox = other.x - fx, oy = other.y - fy;
+      if (ox * ox + oy * oy < (other.r + SWING_FIST_R) * (other.r + SWING_FIST_R)) {
+        st.hit = true;
+        var dealt = hurt(other, sw.damage, "swing", self.id);
+        if (dealt > 0) {
+          playPunch(dealt);
+          if (!other.justDodged && !other.grappled) {
+            other.vx += Math.cos(st.ang) * SWING_KNOCKBACK;
+            other.vy += Math.sin(st.ang) * SWING_KNOCKBACK;
+          }
+          if (!reduceMotion) shake = Math.max(shake, 10);
+        }
+        checkEnd();
+      }
+    }
+    if (st.t >= SWING_STRIKE_TIME) {
+      if (!st.hit) floater(fx, fy - 20, "MISS", "dodge");
+      st.phase = "extend"; st.t = 0;
+    }
+    return;
+  }
+
+  if (st.phase === "extend") {
+    if (st.t >= sw.extend) { st.phase = "recover"; st.t = 0; }
+    return;
+  }
+
+  // recover: the arm comes back, then the next swing can start right away.
+  if (st.t >= sw.recover) self.swing = null;
+}
+
+function updateForget(b, dt) {
+  if (!b.char.hasForget || !b.alive || over) return;
+  var fg = b.char.forget;
+  b.forgetT = (b.forgetT || 0) + dt;
+  if (b.forgetT < fg.every) return;
+  b.forgetT -= fg.every;
+  var gain = Math.min(fg.heal, MAX_HP - b.hp);
+  if (gain <= 0) return;
+  b.hp += gain;
+  b.healGlow = 0.7;
+  floater(b.x, b.y - b.r - 8, "+" + Math.round(gain * 100) / 100, "heal");
+  playForget();
+}
+
+// The swinging arm. During the windup the fist is pulled back behind the
+// body with a faint aim line showing where the shot is headed (the
+// telegraph); then it shoots out, hangs extended, and comes back.
+function drawSwing(self) {
+  var st = self.swing;
+  if (!st || !self.alive) return;
+  var sw = self.char.swing, r = self.r;
+  var ax = Math.cos(st.ang), ay = Math.sin(st.ang), px = -ay, py = ax;
+  var gap = r * 0.4;
+  var dist;
+  if (st.phase === "windup") {
+    var w = Math.min(1, st.t / sw.windup);
+    dist = r * (0.8 - 1.3 * w); // pulls further back the longer it winds up
+  } else if (st.phase === "strike") {
+    dist = r * -0.5 + (swingFistDist(self) + r * 0.5) * Math.min(1, st.t / SWING_STRIKE_TIME);
+  } else if (st.phase === "extend") {
+    dist = swingFistDist(self);
+  } else {
+    dist = swingFistDist(self) + (r * 0.8 - swingFistDist(self)) * Math.min(1, st.t / sw.recover);
+  }
+  var fx = self.x + ax * dist + px * gap, fy = self.y + ay * dist + py * gap;
+  var sx = self.x + ax * r * 0.2 + px * gap, sy = self.y + ay * r * 0.2 + py * gap;
+
+  ctx.save();
+  ctx.lineCap = "round";
+  if (st.phase === "windup") {
+    // Telegraph: a dashed line out to where the fist will land, and a ring
+    // on the landing spot, both getting bolder as the windup builds.
+    var w2 = Math.min(1, st.t / sw.windup);
+    var tx = self.x + ax * swingFistDist(self), ty = self.y + ay * swingFistDist(self);
+    ctx.setLineDash([7, 6]);
+    ctx.globalAlpha = 0.35 + 0.55 * w2;
+    ctx.strokeStyle = theme.hit;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(self.x + ax * r, self.y + ay * r);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(tx, ty, SWING_FIST_R + 2, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+  if (st.phase !== "windup") {
+    ctx.strokeStyle = theme.wall; ctx.lineWidth = SWING_FIST_R * 0.9 + 6;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fx, fy); ctx.stroke();
+    ctx.strokeStyle = self.char.color; ctx.lineWidth = SWING_FIST_R * 0.6;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fx, fy); ctx.stroke();
+  }
+  // Trembles while it's cocked back.
+  var jx = 0, jy = 0;
+  if (st.phase === "windup") { jx = (Math.random() - 0.5) * 2.5; jy = (Math.random() - 0.5) * 2.5; }
+  ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(fx + jx, fy + jy, SWING_FIST_R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
 // Per-frame update, HUD health bars and canvas sizing.
 "use strict";
 
@@ -3324,6 +3713,8 @@ function update(dt) {
   balls.forEach(function (b) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;
     updateChargeSound(b.id, charging ? charging.kind : null, charging ? charging.p : 0, charging ? charging.n : 0);
+    updateForget(b, dt);
+    b.healGlow = Math.max(0, (b.healGlow || 0) - dt);
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);
     if (b.jabAnim) {
@@ -3531,7 +3922,7 @@ function drawHands(b, other) {
   }
   var perpx = -fy, perpy = fx;
   var fwd = b.r * 0.8, gap = b.r * 0.4, hr = b.r * 0.3;
-  var sides = (b.punch || b.throwAnim) ? [-1] : [1, -1];
+  var sides = (b.punch || b.throwAnim || b.swing) ? [-1] : [1, -1];
   ctx.save();
   ctx.fillStyle = b.char.color;
   ctx.strokeStyle = theme.wall;
@@ -3978,6 +4369,18 @@ function draw() {
       ctx.stroke();
     }
 
+    // A soft glow when CTE forgets some damage and heals.
+    if (b.healGlow > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, b.healGlow / 0.7);
+      ctx.strokeStyle = theme.dodge;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 6 + (0.7 - b.healGlow) * 20, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // A bright pulsing ring whenever a fighter is invincible (the Watcher,
     // sitting in its corner), so it's obvious hits won't land.
     if (b.invincible) {
@@ -4006,6 +4409,7 @@ function draw() {
     }
 
     drawFist(b, other);
+    drawSwing(b);
     drawKick(b, other);
     drawGrapple(b);
     drawThrow(b, other);
@@ -4037,7 +4441,7 @@ function draw() {
     var fx = Math.min(W - 50, Math.max(50, f.x)), fy = Math.max(18, f.y);
     ctx.lineWidth = f.kind === "tick" ? 3 : 6; ctx.lineJoin = "round";
     ctx.strokeStyle = theme.floor; ctx.strokeText(f.text, fx, fy);
-    ctx.fillStyle = (f.kind === "dodge" || f.kind === "crit") ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
+    ctx.fillStyle = (f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
 }

@@ -443,3 +443,57 @@ function stopAllChargeSounds() {
     }
   } catch (e) { /* never let audio break the game */ }
 }
+
+// ---------------------------------------------------------------
+// CTE sounds: a big air whoosh as each wild swing is thrown (it plays
+// whether it lands or not; a hit adds the punch sound on top), and a soft
+// rising shimmer when CTE forgets some damage and heals.
+// ---------------------------------------------------------------
+var whooshNoise = null;
+function synthWhoosh(ctx, dest, now) {
+  if (!whooshNoise) whooshNoise = makeNoiseBuffer(ctx, 0.4);
+  var src = ctx.createBufferSource();
+  src.buffer = whooshNoise;
+  var bp = ctx.createBiquadFilter();
+  bp.type = "bandpass"; bp.Q.value = 1.2;
+  bp.frequency.setValueAtTime(500, now);
+  bp.frequency.exponentialRampToValueAtTime(1900, now + 0.16);
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(0.32, now + 0.07);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+  src.connect(bp); bp.connect(g); g.connect(dest);
+  src.start(now); src.stop(now + 0.3);
+}
+function playWhoosh() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    synthWhoosh(ctx, ctx.destination, ctx.currentTime);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+function synthForget(ctx, dest, now) {
+  [0, 0.09, 0.18].forEach(function (off, i) {
+    var o = ctx.createOscillator();
+    o.type = "sine";
+    var f = [523, 659, 880][i];
+    o.frequency.setValueAtTime(f, now + off);
+    o.frequency.exponentialRampToValueAtTime(f * 1.02, now + off + 0.3);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now + off);
+    g.gain.exponentialRampToValueAtTime(0.09, now + off + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + off + 0.45);
+    o.connect(g); g.connect(dest);
+    o.start(now + off); o.stop(now + off + 0.5);
+  });
+}
+function playForget() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    synthForget(ctx, ctx.destination, ctx.currentTime);
+  } catch (e) { /* never let audio break the game */ }
+}
