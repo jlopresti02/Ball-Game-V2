@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260929005447">
+<link rel="stylesheet" href="css/styles.css?v=20260929010913">
 </head>
 <body>
 <main>
@@ -93,11 +93,26 @@
       <input type="range" id="fBlockChance" min="0" max="100" step="1" value="0">
     </div>
     <div class="field">
-      <label>Ball appearance</label>
+      <label for="fImg">Ball appearance</label>
       <div class="uploadRow">
         <span class="thumb" id="fThumb"></span>
-        <span class="fileLabel"><input type="file" id="fImg" accept="image/png"></span>
+        <span class="fileLabel"><input type="file" id="fImg" accept="image/*"></span>
+        <button type="button" class="linkbtn" id="fImgRecrop" hidden>Adjust crop</button>
         <button type="button" class="linkbtn" id="fImgClear">Clear</button>
+      </div>
+      <div class="cropper" id="cropper" hidden>
+        <p class="cropHint">Drag the photo so the face sits inside the circle. Use the slider, a pinch or the mouse wheel to zoom.</p>
+        <div class="cropStage">
+          <canvas id="cropCanvas" width="560" height="560" aria-label="Crop area: drag to move the photo"></canvas>
+        </div>
+        <div class="cropZoomRow">
+          <label for="cropZoom">Zoom</label>
+          <input type="range" id="cropZoom" min="1" max="6" step="0.01" value="1">
+        </div>
+        <div class="cropBtns">
+          <button type="button" id="cropUse">Use this crop</button>
+          <button type="button" class="secondary" id="cropCancel">Cancel</button>
+        </div>
       </div>
     </div>
 
@@ -132,7 +147,7 @@
           <label>Projectile appearance</label>
           <div class="uploadRow">
             <span class="thumb" id="projThumb"></span>
-            <span class="fileLabel"><input type="file" id="projImg" accept="image/png"></span>
+            <span class="fileLabel"><input type="file" id="projImg" accept="image/*"></span>
             <button type="button" class="linkbtn" id="projImgClear">Clear</button>
           </div>
         </div>
@@ -473,18 +488,19 @@
 </main>
 
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20260929005447"></script>
-<script src="js/audio.js?v=20260929005447"></script>
-<script src="js/characters.js?v=20260929005447"></script>
-<script src="js/ui/select.js?v=20260929005447"></script>
-<script src="js/ui/editor.js?v=20260929005447"></script>
-<script src="js/game/match.js?v=20260929005447"></script>
-<script src="js/game/physics.js?v=20260929005447"></script>
-<script src="js/game/abilities.js?v=20260929005447"></script>
-<script src="js/game/weave.js?v=20260929005447"></script>
-<script src="js/game/update.js?v=20260929005447"></script>
-<script src="js/game/draw-attacks.js?v=20260929005447"></script>
-<script src="js/game/draw.js?v=20260929005447"></script>
-<script src="js/main.js?v=20260929005447"></script>
+<script src="js/config.js?v=20260929010913"></script>
+<script src="js/audio.js?v=20260929010913"></script>
+<script src="js/characters.js?v=20260929010913"></script>
+<script src="js/ui/select.js?v=20260929010913"></script>
+<script src="js/ui/cropper.js?v=20260929010913"></script>
+<script src="js/ui/editor.js?v=20260929010913"></script>
+<script src="js/game/match.js?v=20260929010913"></script>
+<script src="js/game/physics.js?v=20260929010913"></script>
+<script src="js/game/abilities.js?v=20260929010913"></script>
+<script src="js/game/weave.js?v=20260929010913"></script>
+<script src="js/game/update.js?v=20260929010913"></script>
+<script src="js/game/draw-attacks.js?v=20260929010913"></script>
+<script src="js/game/draw.js?v=20260929010913"></script>
+<script src="js/main.js?v=20260929010913"></script>
 </body>
 </html>

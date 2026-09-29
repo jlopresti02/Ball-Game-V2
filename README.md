@@ -37,6 +37,7 @@ js/config.js            Arena size, physics constants, Watcher corner seats
 js/audio.js             Synthesized wall-bounce sound
 js/characters.js        Character bases, ability defaults, saving roster fighters
 js/ui/select.js         Screen switching, the roster screen and The Dev Corner
+js/ui/cropper.js        Photo cropper for the ball's appearance
 js/ui/editor.js         Character editor
 js/game/match.js        Match setup, damage, blocking, win check
 js/game/physics.js      Movement, wall bounces, ball-vs-ball collisions

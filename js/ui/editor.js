@@ -56,6 +56,8 @@ function fillEditorForm(s) {
   document.getElementById("fBlockChance").value = s.blockChance || 0;
   document.getElementById("fBlockChanceVal").textContent = (s.blockChance || 0) + "%";
   document.getElementById("fThumb").style.backgroundImage = s.imgData ? "url(" + s.imgData + ")" : "";
+  document.getElementById("fImg").value = "";
+  resetCropper();
 
   document.getElementById("projOn").setAttribute("aria-checked", String(s.hasProjectile));
   document.getElementById("projBlock").setAttribute("data-on", String(s.hasProjectile));
@@ -185,29 +187,20 @@ document.getElementById("fBlockChance").addEventListener("input", function (e) {
   document.getElementById("fBlockChanceVal").textContent = v + "%";
 });
 
-function loadPng(input, onLoaded) {
-  var file = input.files && input.files[0];
-  if (!file) return;
-  if (file.type !== "image/png") { input.value = ""; return; }
-  var reader = new FileReader();
-  reader.onload = function () { onLoaded(reader.result); };
-  reader.readAsDataURL(file);
+// The ball's own picture is picked and cropped in cropper.js. Projectile
+// pictures take any image type too, shrunk so saved characters stay small.
+function shrinkImage(img, maxSize, keepsTransparency) {
+  var k = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
+  var c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(img.naturalWidth * k));
+  c.height = Math.max(1, Math.round(img.naturalHeight * k));
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return keepsTransparency ? c.toDataURL("image/png") : c.toDataURL("image/jpeg", 0.9);
 }
 
-document.getElementById("fImg").addEventListener("change", function (e) {
-  loadPng(e.target, function (dataUrl) {
-    editState.imgData = dataUrl;
-    document.getElementById("fThumb").style.backgroundImage = "url(" + dataUrl + ")";
-  });
-});
-document.getElementById("fImgClear").addEventListener("click", function () {
-  editState.imgData = null;
-  document.getElementById("fThumb").style.backgroundImage = "";
-  document.getElementById("fImg").value = "";
-});
-
 document.getElementById("projImg").addEventListener("change", function (e) {
-  loadPng(e.target, function (dataUrl) {
+  readImageFile(e.target.files && e.target.files[0], function (img, type) {
+    var dataUrl = shrinkImage(img, 160, /png|webp|gif/.test(type));
     editState.proj.imgData = dataUrl;
     document.getElementById("projThumb").style.backgroundImage = "url(" + dataUrl + ")";
   });
