@@ -95,6 +95,8 @@ function updateAbilities(dt) {
       if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
       continue; // stunned while flying
     }
+    // A critical-weave combo or the celebration after it takes over completely.
+    if (updateWeave(self, other, dt)) continue;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
 
     if (self.throwAnim) {
@@ -141,12 +143,13 @@ function updateAbilities(dt) {
           self.punch.hit = true;
           if (other.alive) {
             hurt(other, pu.damage, "punch", self.id);
-            if (pu.knockback > 0) {
+            if (pu.knockback > 0 && !other.justDodged) {
               var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
               other.vx += kx / kd * pu.knockback;
               other.vy += ky / kd * pu.knockback;
             }
-            if (!reduceMotion) shake = 10;
+            // Light, rapid jabs (like the BMF's) only rattle the screen a little.
+            if (!reduceMotion) shake = Math.max(shake, Math.min(10, 2 + pu.damage * 0.4));
             checkEnd();
           }
         }
@@ -168,7 +171,7 @@ function updateAbilities(dt) {
           self.kick.hit = true;
           if (other.alive) {
             hurt(other, ki.damage, "kick", self.id);
-            if (ki.knockback > 0) {
+            if (ki.knockback > 0 && !other.justDodged) {
               var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;
               other.vx += kkx / kkd * ki.knockback;
               other.vy += kky / kkd * ki.knockback;
@@ -185,7 +188,8 @@ function updateAbilities(dt) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
       if (!self.grapple && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && d < self.r + other.r + gr.reach) {
-        beginGrapple(self, other);
+        if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
+        else beginGrapple(self, other);
       }
       if (self.grapple) {
         var g = self.grapple;
@@ -288,7 +292,7 @@ function updateAbilities(dt) {
             var kx = other.x - self.x, ky = other.y - self.y, kdd = Math.sqrt(kx * kx + ky * ky) || 1;
             if (dealt > 0 && other.alive && !other.grappled && !other.grapple && pp.wallSlams > 0) {
               beginWallSlam(other, kx / kdd, ky / kdd, pp);
-            } else {
+            } else if (!other.justDodged) {
               // Blocked, or slams turned off: just a regular shove.
               other.vx += kx / kdd * pp.knockback;
               other.vy += ky / kdd * pp.knockback;
@@ -441,10 +445,14 @@ function updateAbilities(dt) {
     p.x += p.vx * dt; p.y += p.vy * dt;
     if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return false;
     var target = balls[1 - p.ownerId];
-    if (target.alive) {
+    if (target.alive && !p.weaved) {
       var px = p.x - target.x, py = p.y - target.y;
       if (px * px + py * py < (target.r + p.r) * (target.r + p.r)) {
         hurt(target, p.damage, "proj", p.ownerId);
+        if (target.justDodged && !target.invincible) {
+          p.weaved = true; // slipped: the shot flies on past
+          return true;
+        }
         for (var i = 0; i < 6; i++) {
           var a = Math.random() * Math.PI * 2, sp = 60 + Math.random() * 120;
           particles.push({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.3, max: 0.3, size: 2.5, color: p.color });

@@ -14,6 +14,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -25,6 +26,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 10
   },
   {
@@ -36,6 +38,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -47,6 +50,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -58,6 +62,7 @@ var builtins = [
     hasPowerPunch: true, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -69,6 +74,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: true, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -80,6 +86,20 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: true, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
+    blockChance: 0
+  },
+  {
+    // Rapid 2-damage jabs up close, and slips half of everything thrown at it.
+    id: "builtin-bmf", builtin: true, name: "BMF", color: "#db2777", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: true, punch: { damage: 2, cooldown: 0.12, speed: 0.11, size: 11, knockback: 0, reach: 40 },
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: true, weave: defaultWeave(),
     blockChance: 0
   }
 ];
@@ -95,6 +115,13 @@ function defaultPowerPunch() {
   return { damageMin: 30, damageMax: 30, cooldown: 3, chargeDur: 3, spinDur: 0.9, knockback: 1300, wallSlams: 4, slamDamage: 5 };
 }
 function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, chargeDur: 1.5, speed: 520, reach: 20, vulnMult: 2 }; }
+// Weave: dodgeChance% of incoming attacks are slipped entirely. critChance%
+// of those weaves are critical: a comboHits-punch chase combo, the last one
+// doing finalDamage and launching the opponent at finalKnockback speed,
+// followed by a tauntDur-second celebration.
+function defaultWeave() {
+  return { dodgeChance: 50, critChance: 10, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2 };
+}
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.25, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
 }
@@ -114,6 +141,8 @@ function normalizeChar(ch) {
   if (ch.hasWatcher === undefined) ch.hasWatcher = false;
   if (!ch.watcher) ch.watcher = defaultWatcher();
   else if (ch.watcher.lasers == null) ch.watcher.lasers = defaultWatcher().lasers;
+  if (ch.hasWeave === undefined) ch.hasWeave = false;
+  if (!ch.weave) ch.weave = defaultWeave();
   if (ch.blockChance == null) ch.blockChance = 0;
   return ch;
 }

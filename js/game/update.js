@@ -21,6 +21,25 @@ function update(dt) {
       b.jabAnim.t += dt;
       if (b.jabAnim.t >= b.jabAnim.dur) b.jabAnim = null;
     }
+    if (b.weaveAnim) {
+      b.weaveAnim.t += dt;
+      if (b.weaveAnim.t >= b.weaveAnim.dur) b.weaveAnim = null;
+    }
+    if (b.knockFly > 0) {
+      // Launched by a combo finisher: fly hard, then settle back to normal speed.
+      b.knockFly -= dt;
+      if (b.knockFly <= 0) {
+        b.knockFly = 0;
+        if (b.alive && !b.slam && !b.grappled && !b.combo) setSpeed(b, SPEED);
+      }
+    }
+    if ((b.combo || (b.jabAnim && b.jabAnim.big)) && !reduceMotion) {
+      // Streak behind a fighter hunting down its combo.
+      particles.push({
+        x: b.x, y: b.y, vx: -b.vx * 0.12, vy: -b.vy * 0.12,
+        life: 0.2, max: 0.2, size: b.r * 0.5, color: b.char.color
+      });
+    }
     if (b.rageState && b.rageState.phase === "attack" && !reduceMotion) {
       // A faint trail behind Sees Red while it's charging through the arena.
       particles.push({

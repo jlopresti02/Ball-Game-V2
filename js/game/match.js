@@ -31,7 +31,8 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown, powerState: null,
     rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0,
-    slam: null
+    slam: null,
+    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
 
@@ -68,7 +69,7 @@ function start() {
 }
 
 function floater(x, y, text, kind) {
-  var life = kind === "tick" ? 0.4 : 0.9;
+  var life = kind === "tick" ? 0.4 : (kind === "crit" ? 1.3 : 0.9);
   floaters.push({ x: x, y: y, text: text, kind: kind, life: life, max: life });
 }
 
@@ -102,12 +103,21 @@ function beginGrapple(attacker, target) {
 
 function hurt(b, amount, source, attackerId) {
   if (!b.alive) return 0;
+  b.justDodged = false;
   // A seated Watcher can't be hurt by anything at all.
   if (b.invincible) {
     if (source !== "laser" && b.immuneCd <= 0) {
       floater(b.x, b.y - b.r - 8, "IMMUNE", "dodge");
       b.immuneCd = 0.5;
     }
+    b.justDodged = true;
+    return 0;
+  }
+  // Weave: slips the attack completely (grabs are weaved when they're
+  // attempted, not when the slam lands). Callers check justDodged to skip
+  // knockback, and projectiles fly on through.
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && tryWeave(b, attackerId)) {
+    b.justDodged = true;
     return 0;
   }
   // A passive chance to block an incoming attack outright and take no
@@ -148,7 +158,7 @@ function hurt(b, amount, source, attackerId) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
-      if (Math.random() < chance) beginGrapple(b, atk);
+      if (Math.random() < chance && !tryWeave(atk, b.id)) beginGrapple(b, atk);
     }
   }
   return amount;

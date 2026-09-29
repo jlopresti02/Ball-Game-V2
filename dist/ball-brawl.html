@@ -637,6 +637,48 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       </div>
     </details>
 
+    <details class="abilityBlock" id="weaveBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Weave</span>
+            <span class="hsub">Slips attacks completely. A critical weave chases the opponent down with a punch combo that ends in a launching blow, then celebrates</span>
+          </div>
+          <button type="button" class="switch" id="weaveOn" role="switch" aria-checked="false" aria-label="Toggle weave"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="weaveDodge">Weave chance <span class="val" id="weaveDodgeVal">50%</span></label>
+          <input type="range" id="weaveDodge" min="0" max="90" step="5" value="50">
+        </div>
+        <div class="field">
+          <label for="weaveCrit">Critical weave chance (of weaves) <span class="val" id="weaveCritVal">10%</span></label>
+          <input type="range" id="weaveCrit" min="0" max="100" step="5" value="10">
+        </div>
+        <div class="field">
+          <label for="weaveHits">Combo punches <span class="val" id="weaveHitsVal">5</span></label>
+          <input type="range" id="weaveHits" min="1" max="10" step="1" value="5">
+        </div>
+        <div class="field">
+          <label for="weaveComboDamage">Combo punch damage <span class="val" id="weaveComboDamageVal">3</span></label>
+          <input type="range" id="weaveComboDamage" min="1" max="15" step="1" value="3">
+        </div>
+        <div class="field">
+          <label for="weaveFinalDamage">Final punch damage <span class="val" id="weaveFinalDamageVal">8</span></label>
+          <input type="range" id="weaveFinalDamage" min="1" max="40" step="1" value="8">
+        </div>
+        <div class="field">
+          <label for="weaveKnockback">Final punch knockback <span class="val" id="weaveKnockbackVal">950</span></label>
+          <input type="range" id="weaveKnockback" min="340" max="1600" step="10" value="950">
+        </div>
+        <div class="field">
+          <label for="weaveTaunt">Celebration time <span class="val" id="weaveTauntVal">2.0s</span></label>
+          <input type="range" id="weaveTaunt" min="0" max="5" step="0.5" value="2">
+        </div>
+      </div>
+    </details>
+
     <div class="editorBtns">
       <button id="editorSave">Save character</button>
       <button id="editorCancel" class="secondary">Cancel</button>
@@ -829,6 +871,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -840,6 +883,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 10
   },
   {
@@ -851,6 +895,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -862,6 +907,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -873,6 +919,7 @@ var builtins = [
     hasPowerPunch: true, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -884,6 +931,7 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: true, rage: defaultRage(),
     hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
     blockChance: 0
   },
   {
@@ -895,6 +943,20 @@ var builtins = [
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
     hasRage: false, rage: defaultRage(),
     hasWatcher: true, watcher: defaultWatcher(),
+    hasWeave: false, weave: defaultWeave(),
+    blockChance: 0
+  },
+  {
+    // Rapid 2-damage jabs up close, and slips half of everything thrown at it.
+    id: "builtin-bmf", builtin: true, name: "BMF", color: "#db2777", label: "", imgData: null,
+    hasProjectile: false, proj: defaultProj(),
+    hasPunch: true, punch: { damage: 2, cooldown: 0.12, speed: 0.11, size: 11, knockback: 0, reach: 40 },
+    hasKick: false, kick: defaultKick(),
+    hasGrapple: false, grapple: defaultGrapple(),
+    hasPowerPunch: false, powerPunch: defaultPowerPunch(),
+    hasRage: false, rage: defaultRage(),
+    hasWatcher: false, watcher: defaultWatcher(),
+    hasWeave: true, weave: defaultWeave(),
     blockChance: 0
   }
 ];
@@ -910,6 +972,13 @@ function defaultPowerPunch() {
   return { damageMin: 30, damageMax: 30, cooldown: 3, chargeDur: 3, spinDur: 0.9, knockback: 1300, wallSlams: 4, slamDamage: 5 };
 }
 function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, chargeDur: 1.5, speed: 520, reach: 20, vulnMult: 2 }; }
+// Weave: dodgeChance% of incoming attacks are slipped entirely. critChance%
+// of those weaves are critical: a comboHits-punch chase combo, the last one
+// doing finalDamage and launching the opponent at finalKnockback speed,
+// followed by a tauntDur-second celebration.
+function defaultWeave() {
+  return { dodgeChance: 50, critChance: 10, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2 };
+}
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.25, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
 }
@@ -929,6 +998,8 @@ function normalizeChar(ch) {
   if (ch.hasWatcher === undefined) ch.hasWatcher = false;
   if (!ch.watcher) ch.watcher = defaultWatcher();
   else if (ch.watcher.lasers == null) ch.watcher.lasers = defaultWatcher().lasers;
+  if (ch.hasWeave === undefined) ch.hasWeave = false;
+  if (!ch.weave) ch.weave = defaultWeave();
   if (ch.blockChance == null) ch.blockChance = 0;
   return ch;
 }
@@ -1026,6 +1097,7 @@ function abilitySummary(ch) {
   }
   if (ch.hasRage) parts.push("😡 " + ch.rage.punchCount + "×" + ch.rage.punchDamage + " dmg");
   if (ch.hasWatcher) parts.push("👁️ " + ch.watcher.lasers + "×" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
+  if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
   if (ch.blockChance > 0) parts.push("🛡️ " + ch.blockChance + "% block");
   return parts.length ? parts.join(" · ") : "No attacks yet";
 }
@@ -1159,6 +1231,8 @@ function blankChar() {
     rage: defaultRage(),
     hasWatcher: false,
     watcher: defaultWatcher(),
+    hasWeave: false,
+    weave: defaultWeave(),
     blockChance: 0
   };
 }
@@ -1294,6 +1368,14 @@ function fillEditorForm(s) {
   document.getElementById("watcherSpeedVal").textContent = s.watcher.approachSpeed;
   document.getElementById("watcherLasers").value = s.watcher.lasers;
   document.getElementById("watcherLasersVal").textContent = s.watcher.lasers;
+
+  document.getElementById("weaveOn").setAttribute("aria-checked", String(s.hasWeave));
+  document.getElementById("weaveBlock").setAttribute("data-on", String(s.hasWeave));
+  weaveSliders.forEach(function (row) {
+    var v = s.weave[row[1]];
+    document.getElementById(row[0]).value = v;
+    document.getElementById(row[0] + "Val").textContent = row[2](v);
+  });
 }
 
 document.getElementById("fName").addEventListener("input", function (e) { editState.name = e.target.value || "Fighter"; });
@@ -1345,7 +1427,8 @@ var abilityToggles = [
   ["grappleOn", "grappleBlock", "hasGrapple"],
   ["powerOn", "powerBlock", "hasPowerPunch"],
   ["rageOn", "rageBlock", "hasRage"],
-  ["watcherOn", "watcherBlock", "hasWatcher"]
+  ["watcherOn", "watcherBlock", "hasWatcher"],
+  ["weaveOn", "weaveBlock", "hasWeave"]
 ];
 // Each switch is a real button, not a draggable control — one press
 // flips it on or off immediately, and the sliding knob is purely a
@@ -1515,6 +1598,26 @@ watcherSliders.forEach(function (row) {
   });
 });
 
+// [slider id, weave field, how to show the value]
+var weaveSliders = [
+  ["weaveDodge", "dodgeChance", function (v) { return v + "%"; }],
+  ["weaveCrit", "critChance", function (v) { return v + "%"; }],
+  ["weaveHits", "comboHits", function (v) { return v; }],
+  ["weaveComboDamage", "comboDamage", function (v) { return v; }],
+  ["weaveFinalDamage", "finalDamage", function (v) { return v; }],
+  ["weaveKnockback", "finalKnockback", function (v) { return v; }],
+  ["weaveTaunt", "tauntDur", function (v) { return Number(v).toFixed(1) + "s"; }]
+];
+weaveSliders.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var out = document.getElementById(row[0] + "Val");
+  el.addEventListener("input", function () {
+    var v = parseFloat(el.value);
+    editState.weave[row[1]] = v;
+    out.textContent = row[2](v);
+  });
+});
+
 document.getElementById("editorCancel").addEventListener("click", function () { showMenu(); });
 document.getElementById("editorSave").addEventListener("click", function () {
   if (!editState.name.trim()) editState.name = "Fighter";
@@ -1562,7 +1665,8 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown, powerState: null,
     rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0,
-    slam: null
+    slam: null,
+    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
 
@@ -1599,7 +1703,7 @@ function start() {
 }
 
 function floater(x, y, text, kind) {
-  var life = kind === "tick" ? 0.4 : 0.9;
+  var life = kind === "tick" ? 0.4 : (kind === "crit" ? 1.3 : 0.9);
   floaters.push({ x: x, y: y, text: text, kind: kind, life: life, max: life });
 }
 
@@ -1633,12 +1737,21 @@ function beginGrapple(attacker, target) {
 
 function hurt(b, amount, source, attackerId) {
   if (!b.alive) return 0;
+  b.justDodged = false;
   // A seated Watcher can't be hurt by anything at all.
   if (b.invincible) {
     if (source !== "laser" && b.immuneCd <= 0) {
       floater(b.x, b.y - b.r - 8, "IMMUNE", "dodge");
       b.immuneCd = 0.5;
     }
+    b.justDodged = true;
+    return 0;
+  }
+  // Weave: slips the attack completely (grabs are weaved when they're
+  // attempted, not when the slam lands). Callers check justDodged to skip
+  // knockback, and projectiles fly on through.
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && tryWeave(b, attackerId)) {
+    b.justDodged = true;
     return 0;
   }
   // A passive chance to block an incoming attack outright and take no
@@ -1679,7 +1792,7 @@ function hurt(b, amount, source, attackerId) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
-      if (Math.random() < chance) beginGrapple(b, atk);
+      if (Math.random() < chance && !tryWeave(atk, b.id)) beginGrapple(b, atk);
     }
   }
   return amount;
@@ -1858,6 +1971,8 @@ function updateAbilities(dt) {
       if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
       continue; // stunned while flying
     }
+    // A critical-weave combo or the celebration after it takes over completely.
+    if (updateWeave(self, other, dt)) continue;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
 
     if (self.throwAnim) {
@@ -1904,12 +2019,13 @@ function updateAbilities(dt) {
           self.punch.hit = true;
           if (other.alive) {
             hurt(other, pu.damage, "punch", self.id);
-            if (pu.knockback > 0) {
+            if (pu.knockback > 0 && !other.justDodged) {
               var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
               other.vx += kx / kd * pu.knockback;
               other.vy += ky / kd * pu.knockback;
             }
-            if (!reduceMotion) shake = 10;
+            // Light, rapid jabs (like the BMF's) only rattle the screen a little.
+            if (!reduceMotion) shake = Math.max(shake, Math.min(10, 2 + pu.damage * 0.4));
             checkEnd();
           }
         }
@@ -1931,7 +2047,7 @@ function updateAbilities(dt) {
           self.kick.hit = true;
           if (other.alive) {
             hurt(other, ki.damage, "kick", self.id);
-            if (ki.knockback > 0) {
+            if (ki.knockback > 0 && !other.justDodged) {
               var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;
               other.vx += kkx / kkd * ki.knockback;
               other.vy += kky / kkd * ki.knockback;
@@ -1948,7 +2064,8 @@ function updateAbilities(dt) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
       if (!self.grapple && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && d < self.r + other.r + gr.reach) {
-        beginGrapple(self, other);
+        if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
+        else beginGrapple(self, other);
       }
       if (self.grapple) {
         var g = self.grapple;
@@ -2051,7 +2168,7 @@ function updateAbilities(dt) {
             var kx = other.x - self.x, ky = other.y - self.y, kdd = Math.sqrt(kx * kx + ky * ky) || 1;
             if (dealt > 0 && other.alive && !other.grappled && !other.grapple && pp.wallSlams > 0) {
               beginWallSlam(other, kx / kdd, ky / kdd, pp);
-            } else {
+            } else if (!other.justDodged) {
               // Blocked, or slams turned off: just a regular shove.
               other.vx += kx / kdd * pp.knockback;
               other.vy += ky / kdd * pp.knockback;
@@ -2204,10 +2321,14 @@ function updateAbilities(dt) {
     p.x += p.vx * dt; p.y += p.vy * dt;
     if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return false;
     var target = balls[1 - p.ownerId];
-    if (target.alive) {
+    if (target.alive && !p.weaved) {
       var px = p.x - target.x, py = p.y - target.y;
       if (px * px + py * py < (target.r + p.r) * (target.r + p.r)) {
         hurt(target, p.damage, "proj", p.ownerId);
+        if (target.justDodged && !target.invincible) {
+          p.weaved = true; // slipped: the shot flies on past
+          return true;
+        }
         for (var i = 0; i < 6; i++) {
           var a = Math.random() * Math.PI * 2, sp = 60 + Math.random() * 120;
           particles.push({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.3, max: 0.3, size: 2.5, color: p.color });
@@ -2218,6 +2339,115 @@ function updateAbilities(dt) {
     }
     return true;
   });
+}
+
+// Weave (the BMF's defense): a chance to slip any attack completely. Some
+// weaves are critical: the fighter dodges, chases the opponent down with a
+// punch combo that ends in a launching blow, then celebrates.
+"use strict";
+
+var COMBO_CHASE_SPEED = 640;  // how fast it hunts the opponent during a combo
+var COMBO_REACH = 26;          // gap between the two balls a combo punch can land from
+var COMBO_PUNCH_GAP = 0.14;    // seconds between combo punches
+var COMBO_TIMEOUT = 3;         // gives up if it can't finish the combo in time
+var KNOCK_FLY_TIME = 0.8;      // how long a launched fighter flies before slowing to normal
+
+// Rolls the weave for `b` against an attack from `attackerId`. Returns true
+// if the attack was dodged (and kicks off a critical combo if that rolls too).
+function tryWeave(b, attackerId) {
+  if (!b || !b.alive || !b.char.hasWeave) return false;
+  // Can't slip anything while held, being slammed around, or mid-celebration.
+  if (b.grappled || b.slam || b.taunt) return false;
+  var wv = b.char.weave;
+  if (Math.random() >= wv.dodgeChance / 100) return false;
+
+  b.weaveAnim = { t: 0, dur: 0.26, sign: Math.random() < 0.5 ? -1 : 1 };
+  var atk = attackerId != null ? balls[attackerId] : null;
+  var canCrit = atk && atk.alive && !atk.invincible && !b.combo && !b.grapple;
+  if (canCrit && Math.random() < wv.critChance / 100) {
+    floater(b.x, b.y - b.r - 8, "CRITICAL WEAVE", "crit");
+    beginCombo(b, atk);
+  } else {
+    floater(b.x, b.y - b.r - 8, "WEAVE", "dodge");
+  }
+  return true;
+}
+
+function beginCombo(b, target) {
+  // A weave can happen in the middle of the fighter's own attack code (e.g.
+  // slipping a counter-grab), so the attack it was doing is dropped at the
+  // start of its next turn in updateWeave, not right here.
+  b.combo = { targetId: target.id, thrown: 0, timer: 0, t: 0, fresh: true };
+  if (!reduceMotion) shake = Math.max(shake, 6);
+}
+
+// Launches `b` at `speed` along (nx, ny); it slows back to normal speed
+// after KNOCK_FLY_TIME instead of keeping that speed forever.
+function launch(b, nx, ny, speed) {
+  b.vx = nx * speed; b.vy = ny * speed;
+  b.knockFly = KNOCK_FLY_TIME;
+}
+
+// Runs the combo and the taunt. Returns true while either is going, which
+// means the fighter's other abilities sit this frame out.
+function updateWeave(self, other, dt) {
+  if (self.taunt) {
+    self.taunt.t += dt;
+    self.vx = 0; self.vy = 0; // stands and celebrates
+    if (self.taunt.t >= self.taunt.dur) {
+      self.taunt = null;
+      var a = Math.random() * Math.PI * 2;
+      self.vx = Math.cos(a) * SPEED; self.vy = Math.sin(a) * SPEED;
+    }
+    return true;
+  }
+  if (!self.combo) return false;
+
+  var cb = self.combo, wv = self.char.weave;
+  if (cb.fresh) {
+    // Drop whatever else it was doing and go.
+    cb.fresh = false;
+    self.punch = null; self.kick = null; self.throwAnim = null;
+    if (self.powerState && self.powerState.phase === "attack") { self.vx = self.powerState.preVX; self.vy = self.powerState.preVY; }
+    self.powerState = null; self.rageState = null;
+    if (self.watcherState && self.watcherState.phase === "travel") {
+      self.watcherState = null;
+      self.watcherCd = self.char.watcher.restDur;
+    }
+  }
+  cb.t += dt;
+  if (!other.alive || other.grappled || cb.t > COMBO_TIMEOUT) {
+    self.combo = null;
+    setSpeed(self, SPEED);
+    return false;
+  }
+
+  // Chase: close in fast, then stick to the opponent while swinging.
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var nx = dx / d, ny = dy / d;
+  var inReach = d < self.r + other.r + COMBO_REACH;
+  var chase = inReach ? Math.max(Math.sqrt(other.vx * other.vx + other.vy * other.vy), 160) : COMBO_CHASE_SPEED;
+  self.vx = nx * chase; self.vy = ny * chase;
+
+  cb.timer -= dt;
+  if (cb.timer <= 0 && inReach) {
+    cb.timer = COMBO_PUNCH_GAP;
+    cb.thrown++;
+    var last = cb.thrown >= Math.max(1, Math.round(wv.comboHits));
+    self.jabAnim = { t: 0, dur: last ? 0.24 : 0.11, sign: cb.thrown % 2 ? 1 : -1, big: last, dx: nx, dy: ny };
+    hurt(other, last ? wv.finalDamage : wv.comboDamage, "combo", self.id);
+    if (last) {
+      if (!other.justDodged && other.alive) launch(other, nx, ny, Math.max(wv.finalKnockback, SPEED));
+      if (!reduceMotion) shake = Math.max(shake, 14);
+      self.combo = null;
+      self.taunt = { t: 0, dur: wv.tauntDur };
+      self.vx = 0; self.vy = 0;
+    } else if (!reduceMotion) {
+      shake = Math.max(shake, 4);
+    }
+    checkEnd();
+  }
+  return true;
 }
 
 // Per-frame update, HUD health bars and canvas sizing.
@@ -2242,6 +2472,25 @@ function update(dt) {
     if (b.jabAnim) {
       b.jabAnim.t += dt;
       if (b.jabAnim.t >= b.jabAnim.dur) b.jabAnim = null;
+    }
+    if (b.weaveAnim) {
+      b.weaveAnim.t += dt;
+      if (b.weaveAnim.t >= b.weaveAnim.dur) b.weaveAnim = null;
+    }
+    if (b.knockFly > 0) {
+      // Launched by a combo finisher: fly hard, then settle back to normal speed.
+      b.knockFly -= dt;
+      if (b.knockFly <= 0) {
+        b.knockFly = 0;
+        if (b.alive && !b.slam && !b.grappled && !b.combo) setSpeed(b, SPEED);
+      }
+    }
+    if ((b.combo || (b.jabAnim && b.jabAnim.big)) && !reduceMotion) {
+      // Streak behind a fighter hunting down its combo.
+      particles.push({
+        x: b.x, y: b.y, vx: -b.vx * 0.12, vy: -b.vy * 0.12,
+        life: 0.2, max: 0.2, size: b.r * 0.5, color: b.char.color
+      });
     }
     if (b.rageState && b.rageState.phase === "attack" && !reduceMotion) {
       // A faint trail behind Sees Red while it's charging through the arena.
@@ -2378,7 +2627,26 @@ function drawHands(b, other) {
   var spinning = b.powerState && b.powerState.phase === "attack";
   var raging = b.rageState && b.rageState.phase === "attack";
   var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-  if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging) return;
+  if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging || b.combo) return;
+  if (b.taunt) {
+    // Celebrating: both hands thrown up in the air, pumping in turn.
+    var tt = b.taunt.t;
+    ctx.save();
+    ctx.lineCap = "round";
+    [-1, 1].forEach(function (sgn, i) {
+      var pump = Math.max(0, Math.sin(tt * 11 + i * Math.PI)) * b.r * 0.4;
+      var hx = b.x + sgn * b.r * 0.85, hy = b.y - b.r * 1.05 - pump;
+      var sx = b.x + sgn * b.r * 0.62, sy = b.y - b.r * 0.55;
+      ctx.strokeStyle = theme.wall; ctx.lineWidth = b.r * 0.34;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.strokeStyle = b.char.color; ctx.lineWidth = b.r * 0.2;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(hx, hy, b.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
   if (sitting) {
     // Seated: both hands rest down at the sides instead of guarding.
     ctx.save();
@@ -2568,16 +2836,27 @@ function drawJab(self) {
   var ease = pt < 0.5 ? pt / 0.5 : 1 - (pt - 0.5) / 0.5;
   var spd = Math.sqrt(self.vx * self.vx + self.vy * self.vy);
   var fx = 1, fy = 0;
-  if (spd > 1) { fx = self.vx / spd; fy = self.vy / spd; }
+  if (ja.dx != null) { fx = ja.dx; fy = ja.dy; } // aimed at a target (combo punches)
+  else if (spd > 1) { fx = self.vx / spd; fy = self.vy / spd; }
   var perpx = -fy, perpy = fx, gap = self.r * 0.4 * ja.sign;
-  var restFwd = self.r * 0.8, jabFwd = self.r * 1.5;
+  // The combo's finishing blow reaches much further with a bigger fist.
+  var restFwd = self.r * 0.8, jabFwd = self.r * (ja.big ? 2.3 : 1.5);
   var fwd = restFwd + (jabFwd - restFwd) * ease;
   var hx = self.x + fx * fwd + perpx * gap, hy = self.y + fy * fwd + perpy * gap;
+  var fistR = self.r * (ja.big ? 0.48 : 0.3);
   ctx.save();
+  if (ja.big) {
+    ctx.lineCap = "round";
+    var sx = self.x + fx * self.r * 0.6 + perpx * gap, sy = self.y + fy * self.r * 0.6 + perpy * gap;
+    ctx.strokeStyle = theme.wall; ctx.lineWidth = self.r * 0.38;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.strokeStyle = self.char.color; ctx.lineWidth = self.r * 0.24;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+  }
   ctx.fillStyle = self.char.color;
   ctx.strokeStyle = theme.wall;
-  ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.lineWidth = ja.big ? 3.5 : 2.5;
+  ctx.beginPath(); ctx.arc(hx, hy, fistR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
 
@@ -2722,6 +3001,19 @@ function draw() {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
+    // Weaving slips the whole fighter sideways for a moment, and a taunting
+    // fighter bounces on the spot. Everything below draws at the shifted spot.
+    var wox = 0, woy = 0;
+    if (b.weaveAnim) {
+      var wa = b.weaveAnim, wk = Math.sin(Math.PI * wa.t / wa.dur);
+      var wsp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), wfx = 1, wfy = 0;
+      if (wsp > 1) { wfx = b.vx / wsp; wfy = b.vy / wsp; }
+      wox = -wfy * wa.sign * b.r * 0.75 * wk;
+      woy = wfx * wa.sign * b.r * 0.75 * wk;
+    }
+    if (b.taunt) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
+    b.x += wox; b.y += woy;
+
     // While charging a power punch or rage attack, the ball jitters with
     // rising intensity; while throwing the power punch specifically, the
     // whole body spins through the same 3 turns as the windmilling fist.
@@ -2859,6 +3151,7 @@ function draw() {
     drawPowerSpin(b);
     drawJab(b);
     drawHands(b, other);
+    b.x -= wox; b.y -= woy;
   });
 
   drawWatcherLasers();
@@ -2877,12 +3170,12 @@ function draw() {
   floaters.forEach(function (f) {
     var t = f.life / f.max;
     ctx.globalAlpha = Math.min(1, t * 2);
-    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : 28);
+    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : (f.kind === "crit" ? 32 : 28));
     ctx.font = "800 " + size + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
     var fx = Math.min(W - 50, Math.max(50, f.x)), fy = Math.max(18, f.y);
     ctx.lineWidth = f.kind === "tick" ? 3 : 6; ctx.lineJoin = "round";
     ctx.strokeStyle = theme.floor; ctx.strokeText(f.text, fx, fy);
-    ctx.fillStyle = f.kind === "dodge" ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
+    ctx.fillStyle = (f.kind === "dodge" || f.kind === "crit") ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
 }

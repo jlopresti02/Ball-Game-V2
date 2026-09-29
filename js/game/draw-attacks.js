@@ -84,7 +84,26 @@ function drawHands(b, other) {
   var spinning = b.powerState && b.powerState.phase === "attack";
   var raging = b.rageState && b.rageState.phase === "attack";
   var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-  if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging) return;
+  if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging || b.combo) return;
+  if (b.taunt) {
+    // Celebrating: both hands thrown up in the air, pumping in turn.
+    var tt = b.taunt.t;
+    ctx.save();
+    ctx.lineCap = "round";
+    [-1, 1].forEach(function (sgn, i) {
+      var pump = Math.max(0, Math.sin(tt * 11 + i * Math.PI)) * b.r * 0.4;
+      var hx = b.x + sgn * b.r * 0.85, hy = b.y - b.r * 1.05 - pump;
+      var sx = b.x + sgn * b.r * 0.62, sy = b.y - b.r * 0.55;
+      ctx.strokeStyle = theme.wall; ctx.lineWidth = b.r * 0.34;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.strokeStyle = b.char.color; ctx.lineWidth = b.r * 0.2;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(hx, hy, b.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
   if (sitting) {
     // Seated: both hands rest down at the sides instead of guarding.
     ctx.save();
@@ -274,16 +293,27 @@ function drawJab(self) {
   var ease = pt < 0.5 ? pt / 0.5 : 1 - (pt - 0.5) / 0.5;
   var spd = Math.sqrt(self.vx * self.vx + self.vy * self.vy);
   var fx = 1, fy = 0;
-  if (spd > 1) { fx = self.vx / spd; fy = self.vy / spd; }
+  if (ja.dx != null) { fx = ja.dx; fy = ja.dy; } // aimed at a target (combo punches)
+  else if (spd > 1) { fx = self.vx / spd; fy = self.vy / spd; }
   var perpx = -fy, perpy = fx, gap = self.r * 0.4 * ja.sign;
-  var restFwd = self.r * 0.8, jabFwd = self.r * 1.5;
+  // The combo's finishing blow reaches much further with a bigger fist.
+  var restFwd = self.r * 0.8, jabFwd = self.r * (ja.big ? 2.3 : 1.5);
   var fwd = restFwd + (jabFwd - restFwd) * ease;
   var hx = self.x + fx * fwd + perpx * gap, hy = self.y + fy * fwd + perpy * gap;
+  var fistR = self.r * (ja.big ? 0.48 : 0.3);
   ctx.save();
+  if (ja.big) {
+    ctx.lineCap = "round";
+    var sx = self.x + fx * self.r * 0.6 + perpx * gap, sy = self.y + fy * self.r * 0.6 + perpy * gap;
+    ctx.strokeStyle = theme.wall; ctx.lineWidth = self.r * 0.38;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.strokeStyle = self.char.color; ctx.lineWidth = self.r * 0.24;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+  }
   ctx.fillStyle = self.char.color;
   ctx.strokeStyle = theme.wall;
-  ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.lineWidth = ja.big ? 3.5 : 2.5;
+  ctx.beginPath(); ctx.arc(hx, hy, fistR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
 

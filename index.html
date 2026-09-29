@@ -383,6 +383,48 @@
       </div>
     </details>
 
+    <details class="abilityBlock" id="weaveBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Weave</span>
+            <span class="hsub">Slips attacks completely. A critical weave chases the opponent down with a punch combo that ends in a launching blow, then celebrates</span>
+          </div>
+          <button type="button" class="switch" id="weaveOn" role="switch" aria-checked="false" aria-label="Toggle weave"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="weaveDodge">Weave chance <span class="val" id="weaveDodgeVal">50%</span></label>
+          <input type="range" id="weaveDodge" min="0" max="90" step="5" value="50">
+        </div>
+        <div class="field">
+          <label for="weaveCrit">Critical weave chance (of weaves) <span class="val" id="weaveCritVal">10%</span></label>
+          <input type="range" id="weaveCrit" min="0" max="100" step="5" value="10">
+        </div>
+        <div class="field">
+          <label for="weaveHits">Combo punches <span class="val" id="weaveHitsVal">5</span></label>
+          <input type="range" id="weaveHits" min="1" max="10" step="1" value="5">
+        </div>
+        <div class="field">
+          <label for="weaveComboDamage">Combo punch damage <span class="val" id="weaveComboDamageVal">3</span></label>
+          <input type="range" id="weaveComboDamage" min="1" max="15" step="1" value="3">
+        </div>
+        <div class="field">
+          <label for="weaveFinalDamage">Final punch damage <span class="val" id="weaveFinalDamageVal">8</span></label>
+          <input type="range" id="weaveFinalDamage" min="1" max="40" step="1" value="8">
+        </div>
+        <div class="field">
+          <label for="weaveKnockback">Final punch knockback <span class="val" id="weaveKnockbackVal">950</span></label>
+          <input type="range" id="weaveKnockback" min="340" max="1600" step="10" value="950">
+        </div>
+        <div class="field">
+          <label for="weaveTaunt">Celebration time <span class="val" id="weaveTauntVal">2.0s</span></label>
+          <input type="range" id="weaveTaunt" min="0" max="5" step="0.5" value="2">
+        </div>
+      </div>
+    </details>
+
     <div class="editorBtns">
       <button id="editorSave">Save character</button>
       <button id="editorCancel" class="secondary">Cancel</button>
@@ -435,6 +477,7 @@
 <script src="js/game/match.js"></script>
 <script src="js/game/physics.js"></script>
 <script src="js/game/abilities.js"></script>
+<script src="js/game/weave.js"></script>
 <script src="js/game/update.js"></script>
 <script src="js/game/draw-attacks.js"></script>
 <script src="js/game/draw.js"></script>

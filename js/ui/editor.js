@@ -29,6 +29,8 @@ function blankChar() {
     rage: defaultRage(),
     hasWatcher: false,
     watcher: defaultWatcher(),
+    hasWeave: false,
+    weave: defaultWeave(),
     blockChance: 0
   };
 }
@@ -164,6 +166,14 @@ function fillEditorForm(s) {
   document.getElementById("watcherSpeedVal").textContent = s.watcher.approachSpeed;
   document.getElementById("watcherLasers").value = s.watcher.lasers;
   document.getElementById("watcherLasersVal").textContent = s.watcher.lasers;
+
+  document.getElementById("weaveOn").setAttribute("aria-checked", String(s.hasWeave));
+  document.getElementById("weaveBlock").setAttribute("data-on", String(s.hasWeave));
+  weaveSliders.forEach(function (row) {
+    var v = s.weave[row[1]];
+    document.getElementById(row[0]).value = v;
+    document.getElementById(row[0] + "Val").textContent = row[2](v);
+  });
 }
 
 document.getElementById("fName").addEventListener("input", function (e) { editState.name = e.target.value || "Fighter"; });
@@ -215,7 +225,8 @@ var abilityToggles = [
   ["grappleOn", "grappleBlock", "hasGrapple"],
   ["powerOn", "powerBlock", "hasPowerPunch"],
   ["rageOn", "rageBlock", "hasRage"],
-  ["watcherOn", "watcherBlock", "hasWatcher"]
+  ["watcherOn", "watcherBlock", "hasWatcher"],
+  ["weaveOn", "weaveBlock", "hasWeave"]
 ];
 // Each switch is a real button, not a draggable control — one press
 // flips it on or off immediately, and the sliding knob is purely a
@@ -382,6 +393,26 @@ watcherSliders.forEach(function (row) {
     if (row[1] === "preDelay" || row[1] === "chargeDur" || row[1] === "fireDur" || row[1] === "restDur") out.textContent = v.toFixed(1) + "s";
     else if (row[1] === "tickInterval") out.textContent = v.toFixed(2) + "s";
     else out.textContent = v;
+  });
+});
+
+// [slider id, weave field, how to show the value]
+var weaveSliders = [
+  ["weaveDodge", "dodgeChance", function (v) { return v + "%"; }],
+  ["weaveCrit", "critChance", function (v) { return v + "%"; }],
+  ["weaveHits", "comboHits", function (v) { return v; }],
+  ["weaveComboDamage", "comboDamage", function (v) { return v; }],
+  ["weaveFinalDamage", "finalDamage", function (v) { return v; }],
+  ["weaveKnockback", "finalKnockback", function (v) { return v; }],
+  ["weaveTaunt", "tauntDur", function (v) { return Number(v).toFixed(1) + "s"; }]
+];
+weaveSliders.forEach(function (row) {
+  var el = document.getElementById(row[0]);
+  var out = document.getElementById(row[0] + "Val");
+  el.addEventListener("input", function () {
+    var v = parseFloat(el.value);
+    editState.weave[row[1]] = v;
+    out.textContent = row[2](v);
   });
 });
 

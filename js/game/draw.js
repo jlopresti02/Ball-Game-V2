@@ -62,6 +62,19 @@ function draw() {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
+    // Weaving slips the whole fighter sideways for a moment, and a taunting
+    // fighter bounces on the spot. Everything below draws at the shifted spot.
+    var wox = 0, woy = 0;
+    if (b.weaveAnim) {
+      var wa = b.weaveAnim, wk = Math.sin(Math.PI * wa.t / wa.dur);
+      var wsp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), wfx = 1, wfy = 0;
+      if (wsp > 1) { wfx = b.vx / wsp; wfy = b.vy / wsp; }
+      wox = -wfy * wa.sign * b.r * 0.75 * wk;
+      woy = wfx * wa.sign * b.r * 0.75 * wk;
+    }
+    if (b.taunt) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
+    b.x += wox; b.y += woy;
+
     // While charging a power punch or rage attack, the ball jitters with
     // rising intensity; while throwing the power punch specifically, the
     // whole body spins through the same 3 turns as the windmilling fist.
@@ -199,6 +212,7 @@ function draw() {
     drawPowerSpin(b);
     drawJab(b);
     drawHands(b, other);
+    b.x -= wox; b.y -= woy;
   });
 
   drawWatcherLasers();
@@ -217,12 +231,12 @@ function draw() {
   floaters.forEach(function (f) {
     var t = f.life / f.max;
     ctx.globalAlpha = Math.min(1, t * 2);
-    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : 28);
+    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : (f.kind === "crit" ? 32 : 28));
     ctx.font = "800 " + size + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
     var fx = Math.min(W - 50, Math.max(50, f.x)), fy = Math.max(18, f.y);
     ctx.lineWidth = f.kind === "tick" ? 3 : 6; ctx.lineJoin = "round";
     ctx.strokeStyle = theme.floor; ctx.strokeText(f.text, fx, fy);
-    ctx.fillStyle = f.kind === "dodge" ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
+    ctx.fillStyle = (f.kind === "dodge" || f.kind === "crit") ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
 }
