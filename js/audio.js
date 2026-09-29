@@ -188,3 +188,90 @@ function playSlam() {
     noise.start(now); noise.stop(now + 0.15);
   } catch (e) { /* never let audio break the game */ }
 }
+
+// ---------------------------------------------------------------
+// Charge-up sounds: a rising hum that builds while a fighter charges an
+// attack (the Power Puncher's haymaker, Sees Red's rage charge, the
+// Watcher's lasers) and cuts off the moment the charge ends or is
+// interrupted. Each has its own character: a deep rumble, a snarling
+// growl and an electric whine. The game updates them every frame from the
+// charge's progress, so they always peak exactly when the charge finishes.
+// ---------------------------------------------------------------
+var CHARGE_SOUNDS = {
+  power:   { wave: "sawtooth", wave2: "square",   f0: 55,  f1: 220,  cut0: 180,  cut1: 2000, q: 5, trem0: 4, trem1: 18, vol0: 0.05, vol1: 0.17 },
+  rage:    { wave: "sawtooth", wave2: "sawtooth", f0: 82,  f1: 247,  cut0: 350,  cut1: 3200, q: 3, trem0: 9, trem1: 32, vol0: 0.05, vol1: 0.15 },
+  watcher: { wave: "sine",     wave2: "triangle", f0: 330, f1: 1320, cut0: 1500, cut1: 6000, q: 8, trem0: 6, trem1: 24, vol0: 0.03, vol1: 0.10 }
+};
+
+function makeChargeVoice(ctx, dest, kind, when) {
+  var cfg = CHARGE_SOUNDS[kind];
+  var out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, when);
+  out.connect(dest);
+  // Tremolo: the wobble speeds up as the charge builds.
+  var trem = ctx.createGain();
+  trem.gain.value = 0.7;
+  trem.connect(out);
+  var filt = ctx.createBiquadFilter();
+  filt.type = "lowpass";
+  filt.Q.value = cfg.q;
+  filt.frequency.setValueAtTime(cfg.cut0, when);
+  filt.connect(trem);
+  var o1 = ctx.createOscillator();
+  o1.type = cfg.wave;
+  o1.frequency.setValueAtTime(cfg.f0, when);
+  var o2 = ctx.createOscillator(); // slightly detuned twin for thickness
+  o2.type = cfg.wave2;
+  o2.frequency.setValueAtTime(cfg.f0 * 1.007, when);
+  var g2 = ctx.createGain();
+  g2.gain.value = 0.5;
+  o1.connect(filt); o2.connect(g2); g2.connect(filt);
+  var lfo = ctx.createOscillator();
+  lfo.type = "sine";
+  lfo.frequency.setValueAtTime(cfg.trem0, when);
+  var depth = ctx.createGain();
+  depth.gain.value = 0.3;
+  lfo.connect(depth); depth.connect(trem.gain);
+  o1.start(when); o2.start(when); lfo.start(when);
+  return { kind: kind, cfg: cfg, out: out, filt: filt, o1: o1, o2: o2, lfo: lfo };
+}
+
+// p is the charge's progress from 0 to 1. Pitch, brightness and wobble
+// climb steadily; volume swells hardest near the end.
+function setChargeVoice(v, p, when) {
+  var c = v.cfg, k = Math.max(0, Math.min(1, p));
+  var f = c.f0 * Math.pow(c.f1 / c.f0, k);
+  v.o1.frequency.setTargetAtTime(f, when, 0.03);
+  v.o2.frequency.setTargetAtTime(f * 1.007, when, 0.03);
+  v.filt.frequency.setTargetAtTime(c.cut0 * Math.pow(c.cut1 / c.cut0, k), when, 0.03);
+  v.lfo.frequency.setTargetAtTime(c.trem0 + (c.trem1 - c.trem0) * k, when, 0.05);
+  v.out.gain.setTargetAtTime(c.vol0 + (c.vol1 - c.vol0) * k * k, when, 0.04);
+}
+
+function stopChargeVoice(v, when) {
+  v.out.gain.setTargetAtTime(0.0001, when, 0.015);
+  [v.o1, v.o2, v.lfo].forEach(function (o) { try { o.stop(when + 0.12); } catch (e) {} });
+}
+
+var chargeVoices = [null, null];
+
+// Called every frame for each fighter: kind is "power", "rage", "watcher"
+// or null when it isn't charging anything.
+function updateChargeSound(id, kind, p) {
+  try {
+    var v = chargeVoices[id];
+    if (v && v.kind !== kind) {
+      stopChargeVoice(v, audioCtx.currentTime);
+      chargeVoices[id] = v = null;
+    }
+    if (!kind) return;
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (!v) v = chargeVoices[id] = makeChargeVoice(ctx, ctx.destination, kind, ctx.currentTime);
+    setChargeVoice(v, p, ctx.currentTime);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+function stopAllChargeSounds() {
+  for (var i = 0; i < chargeVoices.length; i++) updateChargeSound(i, null, 0);
+}

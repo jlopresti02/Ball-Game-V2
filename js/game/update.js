@@ -1,6 +1,19 @@
 // Per-frame update, HUD health bars and canvas sizing.
 "use strict";
 
+// Which attack a fighter is charging right now, and how far along it is.
+function chargeProgress(b) {
+  if (b.powerState && b.powerState.phase === "charge")
+    return { kind: "power", p: b.powerState.t / b.char.powerPunch.chargeDur };
+  if (b.rageState && b.rageState.phase === "charge")
+    return { kind: "rage", p: b.rageState.t / b.char.rage.chargeDur };
+  var ws = b.watcherState, wc = b.char.watcher;
+  // The Watcher sits quietly for its sit delay, then the lasers charge.
+  if (ws && ws.phase === "charge" && ws.t >= wc.preDelay)
+    return { kind: "watcher", p: (ws.t - wc.preDelay) / wc.chargeDur };
+  return null;
+}
+
 function update(dt) {
   if (hitStop > 0) {
     // Frozen for a split second after a wall slam; only the camera shake
@@ -15,6 +28,8 @@ function update(dt) {
   impacts = impacts.filter(function (im) { im.life -= dt; return im.life > 0; });
 
   balls.forEach(function (b) {
+    var charging = (!over && b.alive) ? chargeProgress(b) : null;
+    updateChargeSound(b.id, charging ? charging.kind : null, charging ? charging.p : 0);
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);
     if (b.jabAnim) {
