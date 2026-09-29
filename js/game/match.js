@@ -136,6 +136,12 @@ function hurt(b, amount, source, attackerId) {
     // laser ticks) keep their fractions instead of rounding up to 1.
     amount = amount % 1 === 0 ? Math.round(amount * vm) : Math.round(amount * vm * 100) / 100;
   }
+  // Celebrating after a critical-weave combo leaves the fighter wide open:
+  // every hit that lands during the taunt does extra damage.
+  if (b.taunt && b.char.hasWeave) {
+    var tm = b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2;
+    amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
+  }
   b.hp = Math.max(0, b.hp - amount);
   if (b.hp < 0.001) b.hp = 0;
   if (source === "laser") {

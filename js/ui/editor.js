@@ -404,7 +404,8 @@ var weaveSliders = [
   ["weaveComboDamage", "comboDamage", function (v) { return v; }],
   ["weaveFinalDamage", "finalDamage", function (v) { return v; }],
   ["weaveKnockback", "finalKnockback", function (v) { return v; }],
-  ["weaveTaunt", "tauntDur", function (v) { return Number(v).toFixed(1) + "s"; }]
+  ["weaveTaunt", "tauntDur", function (v) { return Number(v).toFixed(1) + "s"; }],
+  ["weaveTauntVuln", "tauntVuln", function (v) { return v + "x"; }]
 ];
 weaveSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);

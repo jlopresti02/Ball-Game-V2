@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260929005208">
+<link rel="stylesheet" href="css/styles.css?v=20260929005447">
 </head>
 <body>
 <main>
@@ -388,7 +388,7 @@
         <div class="abilityHead">
           <div class="htext">
             <span class="htitle">Weave</span>
-            <span class="hsub">Slips attacks completely. A critical weave chases the opponent down with a punch combo that ends in a launching blow, then celebrates</span>
+            <span class="hsub">Slips attacks completely. A critical weave chases the opponent down with a punch combo that ends in a launching blow, then celebrates, taking extra damage while it does</span>
           </div>
           <button type="button" class="switch" id="weaveOn" role="switch" aria-checked="false" aria-label="Toggle weave"><span class="knob"></span></button>
         </div>
@@ -421,6 +421,10 @@
         <div class="field">
           <label for="weaveTaunt">Celebration time <span class="val" id="weaveTauntVal">2.0s</span></label>
           <input type="range" id="weaveTaunt" min="0" max="5" step="0.5" value="2">
+        </div>
+        <div class="field">
+          <label for="weaveTauntVuln">Damage taken while celebrating <span class="val" id="weaveTauntVulnVal">2x</span></label>
+          <input type="range" id="weaveTauntVuln" min="1" max="4" step="0.5" value="2">
         </div>
       </div>
     </details>
@@ -469,18 +473,18 @@
 </main>
 
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20260929005208"></script>
-<script src="js/audio.js?v=20260929005208"></script>
-<script src="js/characters.js?v=20260929005208"></script>
-<script src="js/ui/select.js?v=20260929005208"></script>
-<script src="js/ui/editor.js?v=20260929005208"></script>
-<script src="js/game/match.js?v=20260929005208"></script>
-<script src="js/game/physics.js?v=20260929005208"></script>
-<script src="js/game/abilities.js?v=20260929005208"></script>
-<script src="js/game/weave.js?v=20260929005208"></script>
-<script src="js/game/update.js?v=20260929005208"></script>
-<script src="js/game/draw-attacks.js?v=20260929005208"></script>
-<script src="js/game/draw.js?v=20260929005208"></script>
-<script src="js/main.js?v=20260929005208"></script>
+<script src="js/config.js?v=20260929005447"></script>
+<script src="js/audio.js?v=20260929005447"></script>
+<script src="js/characters.js?v=20260929005447"></script>
+<script src="js/ui/select.js?v=20260929005447"></script>
+<script src="js/ui/editor.js?v=20260929005447"></script>
+<script src="js/game/match.js?v=20260929005447"></script>
+<script src="js/game/physics.js?v=20260929005447"></script>
+<script src="js/game/abilities.js?v=20260929005447"></script>
+<script src="js/game/weave.js?v=20260929005447"></script>
+<script src="js/game/update.js?v=20260929005447"></script>
+<script src="js/game/draw-attacks.js?v=20260929005447"></script>
+<script src="js/game/draw.js?v=20260929005447"></script>
+<script src="js/main.js?v=20260929005447"></script>
 </body>
 </html>

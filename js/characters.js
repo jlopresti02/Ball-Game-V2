@@ -118,9 +118,10 @@ function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, c
 // Weave: dodgeChance% of incoming attacks are slipped entirely. critChance%
 // of those weaves are critical: a comboHits-punch chase combo, the last one
 // doing finalDamage and launching the opponent at finalKnockback speed,
-// followed by a tauntDur-second celebration.
+// followed by a tauntDur-second celebration, during which hits on it do
+// tauntVuln times their damage.
 function defaultWeave() {
-  return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2 };
+  return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2, tauntVuln: 2 };
 }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.25, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -143,6 +144,7 @@ function normalizeChar(ch) {
   else if (ch.watcher.lasers == null) ch.watcher.lasers = defaultWatcher().lasers;
   if (ch.hasWeave === undefined) ch.hasWeave = false;
   if (!ch.weave) ch.weave = defaultWeave();
+  else if (ch.weave.tauntVuln == null) ch.weave.tauntVuln = defaultWeave().tauntVuln;
   if (ch.blockChance == null) ch.blockChance = 0;
   return ch;
 }

@@ -642,7 +642,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <div class="abilityHead">
           <div class="htext">
             <span class="htitle">Weave</span>
-            <span class="hsub">Slips attacks completely. A critical weave chases the opponent down with a punch combo that ends in a launching blow, then celebrates</span>
+            <span class="hsub">Slips attacks completely. A critical weave chases the opponent down with a punch combo that ends in a launching blow, then celebrates, taking extra damage while it does</span>
           </div>
           <button type="button" class="switch" id="weaveOn" role="switch" aria-checked="false" aria-label="Toggle weave"><span class="knob"></span></button>
         </div>
@@ -675,6 +675,10 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <div class="field">
           <label for="weaveTaunt">Celebration time <span class="val" id="weaveTauntVal">2.0s</span></label>
           <input type="range" id="weaveTaunt" min="0" max="5" step="0.5" value="2">
+        </div>
+        <div class="field">
+          <label for="weaveTauntVuln">Damage taken while celebrating <span class="val" id="weaveTauntVulnVal">2x</span></label>
+          <input type="range" id="weaveTauntVuln" min="1" max="4" step="0.5" value="2">
         </div>
       </div>
     </details>
@@ -976,9 +980,10 @@ function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, c
 // Weave: dodgeChance% of incoming attacks are slipped entirely. critChance%
 // of those weaves are critical: a comboHits-punch chase combo, the last one
 // doing finalDamage and launching the opponent at finalKnockback speed,
-// followed by a tauntDur-second celebration.
+// followed by a tauntDur-second celebration, during which hits on it do
+// tauntVuln times their damage.
 function defaultWeave() {
-  return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2 };
+  return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2, tauntVuln: 2 };
 }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.25, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -1001,6 +1006,7 @@ function normalizeChar(ch) {
   else if (ch.watcher.lasers == null) ch.watcher.lasers = defaultWatcher().lasers;
   if (ch.hasWeave === undefined) ch.hasWeave = false;
   if (!ch.weave) ch.weave = defaultWeave();
+  else if (ch.weave.tauntVuln == null) ch.weave.tauntVuln = defaultWeave().tauntVuln;
   if (ch.blockChance == null) ch.blockChance = 0;
   return ch;
 }
@@ -1607,7 +1613,8 @@ var weaveSliders = [
   ["weaveComboDamage", "comboDamage", function (v) { return v; }],
   ["weaveFinalDamage", "finalDamage", function (v) { return v; }],
   ["weaveKnockback", "finalKnockback", function (v) { return v; }],
-  ["weaveTaunt", "tauntDur", function (v) { return Number(v).toFixed(1) + "s"; }]
+  ["weaveTaunt", "tauntDur", function (v) { return Number(v).toFixed(1) + "s"; }],
+  ["weaveTauntVuln", "tauntVuln", function (v) { return v + "x"; }]
 ];
 weaveSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);
@@ -1770,6 +1777,12 @@ function hurt(b, amount, source, attackerId) {
     // Whole-number hits stay whole numbers; tiny fractional hits (like
     // laser ticks) keep their fractions instead of rounding up to 1.
     amount = amount % 1 === 0 ? Math.round(amount * vm) : Math.round(amount * vm * 100) / 100;
+  }
+  // Celebrating after a critical-weave combo leaves the fighter wide open:
+  // every hit that lands during the taunt does extra damage.
+  if (b.taunt && b.char.hasWeave) {
+    var tm = b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2;
+    amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }
   b.hp = Math.max(0, b.hp - amount);
   if (b.hp < 0.001) b.hp = 0;
