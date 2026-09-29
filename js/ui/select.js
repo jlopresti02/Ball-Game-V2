@@ -26,7 +26,12 @@ function abilitySummary(ch) {
   if (ch.hasPunch) parts.push("\uD83D\uDC4A " + ch.punch.damage + " dmg");
   if (ch.hasKick) parts.push("\uD83E\uDDB5 " + ch.kick.damage + " dmg");
   if (ch.hasGrapple) parts.push("\uD83E\uDD3C " + ch.grapple.damage + " dmg");
-  if (ch.hasPowerPunch) parts.push("\uD83D\uDCA5 " + ch.powerPunch.damageMin + "-" + ch.powerPunch.damageMax + " dmg");
+  if (ch.hasPowerPunch) {
+    var pp = ch.powerPunch;
+    var ppText = "\uD83D\uDCA5 " + (pp.damageMin === pp.damageMax ? pp.damageMin : pp.damageMin + "-" + pp.damageMax) + " dmg";
+    if (pp.wallSlams > 0) ppText += " + " + pp.wallSlams + "\u00D7" + pp.slamDamage + " wall";
+    parts.push(ppText);
+  }
   if (ch.hasRage) parts.push("\uD83D\uDE21 " + ch.rage.punchCount + "\u00D7" + ch.rage.punchDamage + " dmg");
   if (ch.hasWatcher) parts.push("\uD83D\uDC41\uFE0F " + ch.watcher.lasers + "\u00D7" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
   if (ch.blockChance > 0) parts.push("\uD83D\uDEE1\uFE0F " + ch.blockChance + "% block");

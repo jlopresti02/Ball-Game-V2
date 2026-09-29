@@ -220,19 +220,19 @@
         <div class="abilityHead">
           <div class="htext">
             <span class="htitle">Power punch</span>
-            <span class="hsub">Charges up on a timer, slowing to a crawl, then spins into a huge haymaker on contact</span>
+            <span class="hsub">Charges up on a timer, slowing to a crawl, then spins into a haymaker that sends the opponent pinballing off the walls</span>
           </div>
           <button type="button" class="switch" id="powerOn" role="switch" aria-checked="false" aria-label="Toggle power punch attack"><span class="knob"></span></button>
         </div>
       </summary>
       <div class="abilityBody">
         <div class="field">
-          <label for="powerDamageMin">Min damage <span class="val" id="powerDamageMinVal">50</span></label>
-          <input type="range" id="powerDamageMin" min="1" max="100" step="1" value="50">
+          <label for="powerDamageMin">Min damage <span class="val" id="powerDamageMinVal">30</span></label>
+          <input type="range" id="powerDamageMin" min="1" max="100" step="1" value="30">
         </div>
         <div class="field">
-          <label for="powerDamageMax">Max damage <span class="val" id="powerDamageMaxVal">100</span></label>
-          <input type="range" id="powerDamageMax" min="1" max="100" step="1" value="100">
+          <label for="powerDamageMax">Max damage <span class="val" id="powerDamageMaxVal">30</span></label>
+          <input type="range" id="powerDamageMax" min="1" max="100" step="1" value="30">
         </div>
         <div class="field">
           <label for="powerInterval">Attacks every <span class="val" id="powerIntervalVal">3s</span></label>
@@ -247,8 +247,16 @@
           <input type="range" id="powerSpin" min="0.3" max="2" step="0.1" value="0.9">
         </div>
         <div class="field">
-          <label for="powerKnockback">Knockback <span class="val" id="powerKnockbackVal">850</span></label>
-          <input type="range" id="powerKnockback" min="0" max="900" step="10" value="850">
+          <label for="powerKnockback">Knockback speed <span class="val" id="powerKnockbackVal">850</span></label>
+          <input type="range" id="powerKnockback" min="0" max="1400" step="10" value="850">
+        </div>
+        <div class="field">
+          <label for="powerWallSlams">Wall slams <span class="val" id="powerWallSlamsVal">4</span></label>
+          <input type="range" id="powerWallSlams" min="0" max="10" step="1" value="4">
+        </div>
+        <div class="field">
+          <label for="powerSlamDamage">Damage per wall slam <span class="val" id="powerSlamDamageVal">5</span></label>
+          <input type="range" id="powerSlamDamage" min="1" max="20" step="1" value="5">
         </div>
       </div>
     </details>

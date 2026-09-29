@@ -88,7 +88,12 @@ function defaultProj() { return { size: 7, speed: 460, damage: 10, cooldown: 1.6
 function defaultPunch() { return { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40 }; }
 function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 17, knockback: 450, reach: 75 }; }
 function defaultGrapple() { return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25 }; }
-function defaultPowerPunch() { return { damageMin: 50, damageMax: 100, cooldown: 3, chargeDur: 3, spinDur: 0.9, knockback: 850 }; }
+// knockback is the speed the victim flies at during the wall slams; wallSlams
+// is how many walls it smashes into (0 turns the slams off), each dealing
+// slamDamage before it drops back to normal speed.
+function defaultPowerPunch() {
+  return { damageMin: 30, damageMax: 30, cooldown: 3, chargeDur: 3, spinDur: 0.9, knockback: 850, wallSlams: 4, slamDamage: 5 };
+}
 function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, chargeDur: 1.5, speed: 520, reach: 20, vulnMult: 2 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.25, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -102,6 +107,8 @@ function normalizeChar(ch) {
   if (!ch.grapple) ch.grapple = defaultGrapple();
   if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;
   if (!ch.powerPunch) ch.powerPunch = defaultPowerPunch();
+  if (ch.powerPunch.wallSlams == null) ch.powerPunch.wallSlams = defaultPowerPunch().wallSlams;
+  if (ch.powerPunch.slamDamage == null) ch.powerPunch.slamDamage = defaultPowerPunch().slamDamage;
   if (ch.hasRage === undefined) ch.hasRage = false;
   if (!ch.rage) ch.rage = defaultRage();
   if (ch.hasWatcher === undefined) ch.hasWatcher = false;

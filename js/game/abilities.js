@@ -1,10 +1,77 @@
 // Every attack's logic: projectile, punch, kick, grapple, power punch, rage, corner watch.
 "use strict";
 
+// ---------------------------------------------------------------
+// Power punch wall slam: the victim is launched at high speed and
+// pinballs off the walls, taking damage on every impact, then drops
+// back to normal speed after the last one. While it's flying it's
+// stunned: anything it was doing is cancelled and it can't attack.
+// ---------------------------------------------------------------
+var SLAM_MAX_TIME = 5; // safety net in case it somehow stops hitting walls
+
+function beginWallSlam(target, dirX, dirY, pp) {
+  target.slam = {
+    hitsLeft: Math.max(1, Math.round(pp.wallSlams)),
+    damage: pp.slamDamage,
+    speed: Math.max(pp.knockback, SPEED),
+    attackerId: 1 - target.id,
+    t: 0
+  };
+  target.vx = dirX * target.slam.speed;
+  target.vy = dirY * target.slam.speed;
+  // Getting launched interrupts whatever the victim was in the middle of.
+  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null;
+  if (target.powerState) target.powerState = null;
+  if (target.rageState) target.rageState = null;
+  if (target.watcherState && target.watcherState.phase === "travel") {
+    target.watcherState = null;
+    target.watcherCd = target.char.watcher.restDur;
+  }
+}
+
+// Called by the physics step each time a ball bounces off a wall.
+function onWallImpact(b) {
+  var sl = b.slam;
+  if (!sl || !b.alive) return;
+  hurt(b, sl.damage, "slam", sl.attackerId);
+  if (!reduceMotion) shake = Math.max(shake, 9);
+  for (var i = 0; i < 10; i++) {
+    var a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 180;
+    particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.35, max: 0.35, size: 2 + Math.random() * 3, color: b.char.color });
+  }
+  sl.hitsLeft--;
+  if (sl.hitsLeft <= 0 || !b.alive) {
+    endWallSlam(b);
+  } else {
+    setSpeed(b, sl.speed); // stays at full slam speed between walls
+  }
+  checkEnd();
+}
+
+function endWallSlam(b) {
+  b.slam = null;
+  setSpeed(b, SPEED);
+}
+
+function setSpeed(b, speed) {
+  var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  if (s < 0.001) {
+    var a = Math.random() * Math.PI * 2;
+    b.vx = Math.cos(a) * speed; b.vy = Math.sin(a) * speed;
+  } else {
+    b.vx = b.vx / s * speed; b.vy = b.vy / s * speed;
+  }
+}
+
 function updateAbilities(dt) {
   for (var i = 0; i < 2; i++) {
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled) continue;
+    if (self.slam) {
+      self.slam.t += dt;
+      if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
+      continue; // stunned while flying
+    }
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
 
     if (self.throwAnim) {
@@ -190,12 +257,19 @@ function updateAbilities(dt) {
           var pdx = other.x - fistX, pdy = other.y - fistY, pdd = Math.sqrt(pdx * pdx + pdy * pdy);
           var fistR = self.r * POWER_FIST_R_MULT;
           var reach = other.r + fistR + self.r * 0.35;
-          if (pdd < reach) {
+          // A fighter already being slammed around the walls can't be hit again
+          // by the same spin, so one haymaker = one combo.
+          if (pdd < reach && !other.slam) {
             ps2.hitCd = 0.2;
-            hurt(other, ps2.dmg, "power", self.id);
+            var dealt = hurt(other, ps2.dmg, "power", self.id);
             var kx = other.x - self.x, ky = other.y - self.y, kdd = Math.sqrt(kx * kx + ky * ky) || 1;
-            other.vx += kx / kdd * pp.knockback;
-            other.vy += ky / kdd * pp.knockback;
+            if (dealt > 0 && other.alive && !other.grappled && !other.grapple && pp.wallSlams > 0) {
+              beginWallSlam(other, kx / kdd, ky / kdd, pp);
+            } else {
+              // Blocked, or slams turned off: just a regular shove.
+              other.vx += kx / kdd * pp.knockback;
+              other.vy += ky / kdd * pp.knockback;
+            }
             if (!reduceMotion) shake = 16;
             checkEnd();
           }

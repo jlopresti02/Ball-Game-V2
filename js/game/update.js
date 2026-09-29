@@ -20,6 +20,13 @@ function update(dt) {
         life: 0.22, max: 0.22, size: b.r * 0.45, color: b.char.color
       });
     }
+    if (b.slam && b.alive && !reduceMotion) {
+      // A streak in the attacker's color while the victim pinballs off the walls.
+      particles.push({
+        x: b.x, y: b.y, vx: -b.vx * 0.1, vy: -b.vy * 0.1,
+        life: 0.25, max: 0.25, size: b.r * 0.55, color: balls[b.slam.attackerId].char.color
+      });
+    }
     b.shown += (b.hp - b.shown) * Math.min(1, dt * 4);
     if (Math.abs(b.hp - b.shown) < 0.1) b.shown = b.hp;
   });

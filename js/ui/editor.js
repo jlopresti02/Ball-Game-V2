@@ -124,6 +124,10 @@ function fillEditorForm(s) {
   document.getElementById("powerSpinVal").textContent = s.powerPunch.spinDur.toFixed(1) + "s";
   document.getElementById("powerKnockback").value = s.powerPunch.knockback;
   document.getElementById("powerKnockbackVal").textContent = s.powerPunch.knockback;
+  document.getElementById("powerWallSlams").value = s.powerPunch.wallSlams;
+  document.getElementById("powerWallSlamsVal").textContent = s.powerPunch.wallSlams;
+  document.getElementById("powerSlamDamage").value = s.powerPunch.slamDamage;
+  document.getElementById("powerSlamDamageVal").textContent = s.powerPunch.slamDamage;
 
   document.getElementById("rageOn").setAttribute("aria-checked", String(s.hasRage));
   document.getElementById("rageBlock").setAttribute("data-on", String(s.hasRage));
@@ -323,7 +327,9 @@ var powerSliders = [
   ["powerInterval", "cooldown"],
   ["powerCharge", "chargeDur"],
   ["powerSpin", "spinDur"],
-  ["powerKnockback", "knockback"]
+  ["powerKnockback", "knockback"],
+  ["powerWallSlams", "wallSlams"],
+  ["powerSlamDamage", "slamDamage"]
 ];
 powerSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);

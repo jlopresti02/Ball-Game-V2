@@ -467,19 +467,19 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <div class="abilityHead">
           <div class="htext">
             <span class="htitle">Power punch</span>
-            <span class="hsub">Charges up on a timer, slowing to a crawl, then spins into a huge haymaker on contact</span>
+            <span class="hsub">Charges up on a timer, slowing to a crawl, then spins into a haymaker that sends the opponent pinballing off the walls</span>
           </div>
           <button type="button" class="switch" id="powerOn" role="switch" aria-checked="false" aria-label="Toggle power punch attack"><span class="knob"></span></button>
         </div>
       </summary>
       <div class="abilityBody">
         <div class="field">
-          <label for="powerDamageMin">Min damage <span class="val" id="powerDamageMinVal">50</span></label>
-          <input type="range" id="powerDamageMin" min="1" max="100" step="1" value="50">
+          <label for="powerDamageMin">Min damage <span class="val" id="powerDamageMinVal">30</span></label>
+          <input type="range" id="powerDamageMin" min="1" max="100" step="1" value="30">
         </div>
         <div class="field">
-          <label for="powerDamageMax">Max damage <span class="val" id="powerDamageMaxVal">100</span></label>
-          <input type="range" id="powerDamageMax" min="1" max="100" step="1" value="100">
+          <label for="powerDamageMax">Max damage <span class="val" id="powerDamageMaxVal">30</span></label>
+          <input type="range" id="powerDamageMax" min="1" max="100" step="1" value="30">
         </div>
         <div class="field">
           <label for="powerInterval">Attacks every <span class="val" id="powerIntervalVal">3s</span></label>
@@ -494,8 +494,16 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
           <input type="range" id="powerSpin" min="0.3" max="2" step="0.1" value="0.9">
         </div>
         <div class="field">
-          <label for="powerKnockback">Knockback <span class="val" id="powerKnockbackVal">850</span></label>
-          <input type="range" id="powerKnockback" min="0" max="900" step="10" value="850">
+          <label for="powerKnockback">Knockback speed <span class="val" id="powerKnockbackVal">850</span></label>
+          <input type="range" id="powerKnockback" min="0" max="1400" step="10" value="850">
+        </div>
+        <div class="field">
+          <label for="powerWallSlams">Wall slams <span class="val" id="powerWallSlamsVal">4</span></label>
+          <input type="range" id="powerWallSlams" min="0" max="10" step="1" value="4">
+        </div>
+        <div class="field">
+          <label for="powerSlamDamage">Damage per wall slam <span class="val" id="powerSlamDamageVal">5</span></label>
+          <input type="range" id="powerSlamDamage" min="1" max="20" step="1" value="5">
         </div>
       </div>
     </details>
@@ -813,7 +821,12 @@ function defaultProj() { return { size: 7, speed: 460, damage: 10, cooldown: 1.6
 function defaultPunch() { return { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40 }; }
 function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 17, knockback: 450, reach: 75 }; }
 function defaultGrapple() { return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25 }; }
-function defaultPowerPunch() { return { damageMin: 50, damageMax: 100, cooldown: 3, chargeDur: 3, spinDur: 0.9, knockback: 850 }; }
+// knockback is the speed the victim flies at during the wall slams; wallSlams
+// is how many walls it smashes into (0 turns the slams off), each dealing
+// slamDamage before it drops back to normal speed.
+function defaultPowerPunch() {
+  return { damageMin: 30, damageMax: 30, cooldown: 3, chargeDur: 3, spinDur: 0.9, knockback: 850, wallSlams: 4, slamDamage: 5 };
+}
 function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, chargeDur: 1.5, speed: 520, reach: 20, vulnMult: 2 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.25, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -827,6 +840,8 @@ function normalizeChar(ch) {
   if (!ch.grapple) ch.grapple = defaultGrapple();
   if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;
   if (!ch.powerPunch) ch.powerPunch = defaultPowerPunch();
+  if (ch.powerPunch.wallSlams == null) ch.powerPunch.wallSlams = defaultPowerPunch().wallSlams;
+  if (ch.powerPunch.slamDamage == null) ch.powerPunch.slamDamage = defaultPowerPunch().slamDamage;
   if (ch.hasRage === undefined) ch.hasRage = false;
   if (!ch.rage) ch.rage = defaultRage();
   if (ch.hasWatcher === undefined) ch.hasWatcher = false;
@@ -895,7 +910,12 @@ function abilitySummary(ch) {
   if (ch.hasPunch) parts.push("\uD83D\uDC4A " + ch.punch.damage + " dmg");
   if (ch.hasKick) parts.push("\uD83E\uDDB5 " + ch.kick.damage + " dmg");
   if (ch.hasGrapple) parts.push("\uD83E\uDD3C " + ch.grapple.damage + " dmg");
-  if (ch.hasPowerPunch) parts.push("\uD83D\uDCA5 " + ch.powerPunch.damageMin + "-" + ch.powerPunch.damageMax + " dmg");
+  if (ch.hasPowerPunch) {
+    var pp = ch.powerPunch;
+    var ppText = "\uD83D\uDCA5 " + (pp.damageMin === pp.damageMax ? pp.damageMin : pp.damageMin + "-" + pp.damageMax) + " dmg";
+    if (pp.wallSlams > 0) ppText += " + " + pp.wallSlams + "\u00D7" + pp.slamDamage + " wall";
+    parts.push(ppText);
+  }
   if (ch.hasRage) parts.push("\uD83D\uDE21 " + ch.rage.punchCount + "\u00D7" + ch.rage.punchDamage + " dmg");
   if (ch.hasWatcher) parts.push("\uD83D\uDC41\uFE0F " + ch.watcher.lasers + "\u00D7" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
   if (ch.blockChance > 0) parts.push("\uD83D\uDEE1\uFE0F " + ch.blockChance + "% block");
@@ -1113,6 +1133,10 @@ function fillEditorForm(s) {
   document.getElementById("powerSpinVal").textContent = s.powerPunch.spinDur.toFixed(1) + "s";
   document.getElementById("powerKnockback").value = s.powerPunch.knockback;
   document.getElementById("powerKnockbackVal").textContent = s.powerPunch.knockback;
+  document.getElementById("powerWallSlams").value = s.powerPunch.wallSlams;
+  document.getElementById("powerWallSlamsVal").textContent = s.powerPunch.wallSlams;
+  document.getElementById("powerSlamDamage").value = s.powerPunch.slamDamage;
+  document.getElementById("powerSlamDamageVal").textContent = s.powerPunch.slamDamage;
 
   document.getElementById("rageOn").setAttribute("aria-checked", String(s.hasRage));
   document.getElementById("rageBlock").setAttribute("data-on", String(s.hasRage));
@@ -1312,7 +1336,9 @@ var powerSliders = [
   ["powerInterval", "cooldown"],
   ["powerCharge", "chargeDur"],
   ["powerSpin", "spinDur"],
-  ["powerKnockback", "knockback"]
+  ["powerKnockback", "knockback"],
+  ["powerWallSlams", "wallSlams"],
+  ["powerSlamDamage", "slamDamage"]
 ];
 powerSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);
@@ -1413,7 +1439,8 @@ function makeBall(id, ch) {
     grappleCd: 0, grapple: null, grappled: false, throwAnim: null,
     powerCd: ch.powerPunch.cooldown, powerState: null,
     rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
-    watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0
+    watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0,
+    slam: null
   };
 }
 
@@ -1462,6 +1489,7 @@ function burst(b) {
 
 // Grabs `target`, drags it to whichever wall is closest, and slams it there.
 function beginGrapple(attacker, target) {
+  target.slam = null; // a grab ends any wall slam in progress
   var gr = attacker.char.grapple;
   var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
   var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;
@@ -1491,8 +1519,9 @@ function hurt(b, amount, source, attackerId) {
     return 0;
   }
   // A passive chance to block an incoming attack outright and take no
-  // damage at all (laser ticks are too frequent/small to bother blocking).
-  if (b.char.blockChance > 0 && source !== "laser" && Math.random() < b.char.blockChance / 100) {
+  // damage at all (laser ticks are too frequent/small to bother blocking,
+  // and you can't block a wall you're being slammed into).
+  if (b.char.blockChance > 0 && source !== "laser" && source !== "slam" && Math.random() < b.char.blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -1521,8 +1550,8 @@ function hurt(b, amount, source, attackerId) {
     document.getElementById("hud" + b.id).classList.add("dead");
   }
   // Grappler's counter: a chance to grab back whoever just hit it, as long
-  // as the hit wasn't a projectile or laser and it isn't already grappling.
-  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" &&
+  // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
+  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" &&
       b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible) {
@@ -1561,10 +1590,16 @@ function step(dt) {
     var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
     if (!b.alive || b.grappled || b.grapple || spinning || sitting) continue;
     b.x += b.vx * dt; b.y += b.vy * dt;
-    if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); playBounce(); }
-    else if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx); playBounce(); }
-    if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); playBounce(); }
-    else if (b.y > H - b.r) { b.y = H - b.r; b.vy = -Math.abs(b.vy); playBounce(); }
+    var hitWall = false;
+    if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); hitWall = true; }
+    else if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx); hitWall = true; }
+    if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); hitWall = true; }
+    else if (b.y > H - b.r) { b.y = H - b.r; b.vy = -Math.abs(b.vy); hitWall = true; }
+    if (hitWall) {
+      playBounce();
+      // A corner (two walls in the same instant) counts as one impact.
+      if (b.slam) onWallImpact(b);
+    }
   }
   var a = balls[0], c = balls[1];
   var aSpin = a.powerState && a.powerState.phase === "attack";
@@ -1606,10 +1641,77 @@ function step(dt) {
 // Every attack's logic: projectile, punch, kick, grapple, power punch, rage, corner watch.
 "use strict";
 
+// ---------------------------------------------------------------
+// Power punch wall slam: the victim is launched at high speed and
+// pinballs off the walls, taking damage on every impact, then drops
+// back to normal speed after the last one. While it's flying it's
+// stunned: anything it was doing is cancelled and it can't attack.
+// ---------------------------------------------------------------
+var SLAM_MAX_TIME = 5; // safety net in case it somehow stops hitting walls
+
+function beginWallSlam(target, dirX, dirY, pp) {
+  target.slam = {
+    hitsLeft: Math.max(1, Math.round(pp.wallSlams)),
+    damage: pp.slamDamage,
+    speed: Math.max(pp.knockback, SPEED),
+    attackerId: 1 - target.id,
+    t: 0
+  };
+  target.vx = dirX * target.slam.speed;
+  target.vy = dirY * target.slam.speed;
+  // Getting launched interrupts whatever the victim was in the middle of.
+  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null;
+  if (target.powerState) target.powerState = null;
+  if (target.rageState) target.rageState = null;
+  if (target.watcherState && target.watcherState.phase === "travel") {
+    target.watcherState = null;
+    target.watcherCd = target.char.watcher.restDur;
+  }
+}
+
+// Called by the physics step each time a ball bounces off a wall.
+function onWallImpact(b) {
+  var sl = b.slam;
+  if (!sl || !b.alive) return;
+  hurt(b, sl.damage, "slam", sl.attackerId);
+  if (!reduceMotion) shake = Math.max(shake, 9);
+  for (var i = 0; i < 10; i++) {
+    var a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 180;
+    particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.35, max: 0.35, size: 2 + Math.random() * 3, color: b.char.color });
+  }
+  sl.hitsLeft--;
+  if (sl.hitsLeft <= 0 || !b.alive) {
+    endWallSlam(b);
+  } else {
+    setSpeed(b, sl.speed); // stays at full slam speed between walls
+  }
+  checkEnd();
+}
+
+function endWallSlam(b) {
+  b.slam = null;
+  setSpeed(b, SPEED);
+}
+
+function setSpeed(b, speed) {
+  var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  if (s < 0.001) {
+    var a = Math.random() * Math.PI * 2;
+    b.vx = Math.cos(a) * speed; b.vy = Math.sin(a) * speed;
+  } else {
+    b.vx = b.vx / s * speed; b.vy = b.vy / s * speed;
+  }
+}
+
 function updateAbilities(dt) {
   for (var i = 0; i < 2; i++) {
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled) continue;
+    if (self.slam) {
+      self.slam.t += dt;
+      if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
+      continue; // stunned while flying
+    }
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
 
     if (self.throwAnim) {
@@ -1795,12 +1897,19 @@ function updateAbilities(dt) {
           var pdx = other.x - fistX, pdy = other.y - fistY, pdd = Math.sqrt(pdx * pdx + pdy * pdy);
           var fistR = self.r * POWER_FIST_R_MULT;
           var reach = other.r + fistR + self.r * 0.35;
-          if (pdd < reach) {
+          // A fighter already being slammed around the walls can't be hit again
+          // by the same spin, so one haymaker = one combo.
+          if (pdd < reach && !other.slam) {
             ps2.hitCd = 0.2;
-            hurt(other, ps2.dmg, "power", self.id);
+            var dealt = hurt(other, ps2.dmg, "power", self.id);
             var kx = other.x - self.x, ky = other.y - self.y, kdd = Math.sqrt(kx * kx + ky * ky) || 1;
-            other.vx += kx / kdd * pp.knockback;
-            other.vy += ky / kdd * pp.knockback;
+            if (dealt > 0 && other.alive && !other.grappled && !other.grapple && pp.wallSlams > 0) {
+              beginWallSlam(other, kx / kdd, ky / kdd, pp);
+            } else {
+              // Blocked, or slams turned off: just a regular shove.
+              other.vx += kx / kdd * pp.knockback;
+              other.vy += ky / kdd * pp.knockback;
+            }
             if (!reduceMotion) shake = 16;
             checkEnd();
           }
@@ -1985,6 +2094,13 @@ function update(dt) {
       particles.push({
         x: b.x, y: b.y, vx: -b.vx * 0.15, vy: -b.vy * 0.15,
         life: 0.22, max: 0.22, size: b.r * 0.45, color: b.char.color
+      });
+    }
+    if (b.slam && b.alive && !reduceMotion) {
+      // A streak in the attacker's color while the victim pinballs off the walls.
+      particles.push({
+        x: b.x, y: b.y, vx: -b.vx * 0.1, vy: -b.vy * 0.1,
+        life: 0.25, max: 0.25, size: b.r * 0.55, color: balls[b.slam.attackerId].char.color
       });
     }
     b.shown += (b.hp - b.shown) * Math.min(1, dt * 4);

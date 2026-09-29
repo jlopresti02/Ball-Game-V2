@@ -29,7 +29,8 @@ function makeBall(id, ch) {
     grappleCd: 0, grapple: null, grappled: false, throwAnim: null,
     powerCd: ch.powerPunch.cooldown, powerState: null,
     rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
-    watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0
+    watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0,
+    slam: null
   };
 }
 
@@ -78,6 +79,7 @@ function burst(b) {
 
 // Grabs `target`, drags it to whichever wall is closest, and slams it there.
 function beginGrapple(attacker, target) {
+  target.slam = null; // a grab ends any wall slam in progress
   var gr = attacker.char.grapple;
   var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
   var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;
@@ -107,8 +109,9 @@ function hurt(b, amount, source, attackerId) {
     return 0;
   }
   // A passive chance to block an incoming attack outright and take no
-  // damage at all (laser ticks are too frequent/small to bother blocking).
-  if (b.char.blockChance > 0 && source !== "laser" && Math.random() < b.char.blockChance / 100) {
+  // damage at all (laser ticks are too frequent/small to bother blocking,
+  // and you can't block a wall you're being slammed into).
+  if (b.char.blockChance > 0 && source !== "laser" && source !== "slam" && Math.random() < b.char.blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -137,8 +140,8 @@ function hurt(b, amount, source, attackerId) {
     document.getElementById("hud" + b.id).classList.add("dead");
   }
   // Grappler's counter: a chance to grab back whoever just hit it, as long
-  // as the hit wasn't a projectile or laser and it isn't already grappling.
-  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" &&
+  // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
+  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" &&
       b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible) {

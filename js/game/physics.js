@@ -9,10 +9,16 @@ function step(dt) {
     var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
     if (!b.alive || b.grappled || b.grapple || spinning || sitting) continue;
     b.x += b.vx * dt; b.y += b.vy * dt;
-    if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); playBounce(); }
-    else if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx); playBounce(); }
-    if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); playBounce(); }
-    else if (b.y > H - b.r) { b.y = H - b.r; b.vy = -Math.abs(b.vy); playBounce(); }
+    var hitWall = false;
+    if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); hitWall = true; }
+    else if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx); hitWall = true; }
+    if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); hitWall = true; }
+    else if (b.y > H - b.r) { b.y = H - b.r; b.vy = -Math.abs(b.vy); hitWall = true; }
+    if (hitWall) {
+      playBounce();
+      // A corner (two walls in the same instant) counts as one impact.
+      if (b.slam) onWallImpact(b);
+    }
   }
   var a = balls[0], c = balls[1];
   var aSpin = a.powerState && a.powerState.phase === "attack";
