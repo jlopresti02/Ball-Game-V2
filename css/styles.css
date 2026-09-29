@@ -51,6 +51,13 @@ h1 {
 }
 h2 { margin: 0; font-size: 22px; font-weight: 800; }
 .lede { margin: 0 0 18px; color: var(--muted); font-size: 17px; }
+.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.titleRow h1 { margin: 0; }
+.emptyNote {
+  margin: 0 0 22px; padding: 16px; text-align: center; color: var(--muted); font-size: 17px;
+  border: 3px dashed var(--wall); border-radius: 8px;
+}
+.emptyNote strong { color: var(--ink); }
 
 button {
   font: inherit;
@@ -122,7 +129,7 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .rcard .rbtns button { flex: 1 1 auto; }
 
 .fightRow { display: flex; justify-content: center; }
-#fightBtn { font-size: 26px; padding: 12px 40px 15px; }
+#fightBtn, #devFightBtn { font-size: 26px; padding: 12px 40px 15px; }
 
 /* ---------- editor ---------- */
 .field { margin-bottom: 14px; }

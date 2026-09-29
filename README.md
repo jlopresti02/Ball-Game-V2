@@ -1,6 +1,6 @@
 # Ball Brawl
 
-A browser game where two balls fight in a square arena. Pick two fighters from the roster (or build your own in the character editor) and watch them brawl.
+A browser game where two balls fight in a square arena. Build fighters in the character editor, pick two from your roster, and watch them brawl.
 
 ## Play it
 
@@ -8,9 +8,14 @@ Open `index.html` in a browser. No install or build step is needed.
 
 For a single self-contained file (handy for sharing or pasting into a Claude artifact), use `dist/ball-brawl.html`.
 
-## Roster
+## Menus
 
-| Fighter | Attack |
+- **Roster** (the main screen) holds the custom fighters you've built and saved. Roster fighters will later get their own textures, audio and special moves on top of the character bases.
+- **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters.
+
+## Character Bases
+
+| Base | Attack |
 | --- | --- |
 | Gunner | Throws projectiles from range |
 | Brawler | Close-range punch, 10% block chance |
@@ -20,17 +25,17 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 | Sees Red | Charges at the opponent throwing a flurry of jabs, but takes extra damage while winding up |
 | Watcher | Sits in a corner seat (invincible), charges, then fires tracking lasers |
 
-Custom characters can mix any of these abilities, with sliders for every stat. They're saved in the browser's local storage.
+Roster fighters can mix any of these abilities, with sliders for every stat. They're saved in the browser's local storage.
 
 ## Project layout
 
 ```
-index.html              Page markup for all three screens (select, editor, game)
+index.html              Page markup for every screen (roster, Dev Corner, editor, game)
 css/styles.css          All styling, including light and dark themes
 js/config.js            Arena size, physics constants, Watcher corner seats
 js/audio.js             Synthesized wall-bounce sound
-js/characters.js        Built-in roster, ability defaults, saving custom characters
-js/ui/select.js         Screen switching and the character select screen
+js/characters.js        Character bases, ability defaults, saving roster fighters
+js/ui/select.js         Screen switching, the roster screen and The Dev Corner
 js/ui/editor.js         Character editor
 js/game/match.js        Match setup, damage, blocking, win check
 js/game/physics.js      Movement, wall bounces, ball-vs-ball collisions

@@ -15,7 +15,7 @@ function frame(t) {
 }
 
 document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
-document.getElementById("backBtn").addEventListener("click", function () { showScreen("select"); });
+document.getElementById("backBtn").addEventListener("click", function () { showMenu(); });
 startBtn.addEventListener("click", function () {
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();

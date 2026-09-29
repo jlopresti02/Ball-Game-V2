@@ -14,8 +14,11 @@
 
   <!-- ================= SELECT SCREEN ================= -->
   <section id="screenSelect">
-    <h1>Ball Brawl</h1>
-    <p class="lede">Pick a fighter for each side, or build your own.</p>
+    <div class="titleRow">
+      <h1>Ball Brawl</h1>
+      <button id="devCornerBtn" class="small secondary">The Dev Corner</button>
+    </div>
+    <p class="lede">Pick a fighter from your roster for each side, or build a new one.</p>
 
     <div class="slots">
       <div class="slot empty" id="slot0"><div class="sname">Choose fighter</div></div>
@@ -28,9 +31,40 @@
       <button id="newCharBtn" class="small">+ New character</button>
     </div>
     <div class="roster" id="roster"></div>
+    <p class="emptyNote" id="rosterEmpty" hidden>No fighters yet. Tap <strong>+ New character</strong> to build your first one.</p>
 
     <div class="fightRow">
       <button id="fightBtn" disabled>Fight</button>
+    </div>
+  </section>
+
+  <!-- ================= DEV CORNER ================= -->
+  <section id="screenDev" hidden>
+    <div class="titleRow">
+      <h1>The Dev Corner</h1>
+      <button id="devBackBtn" class="small secondary">Back to roster</button>
+    </div>
+    <p class="lede">Put the character bases into battle, against each other or against your roster fighters.</p>
+
+    <div class="slots">
+      <div class="slot empty" id="devSlot0"><div class="sname">Choose fighter</div></div>
+      <div class="vs">VS</div>
+      <div class="slot empty" id="devSlot1"><div class="sname">Choose fighter</div></div>
+    </div>
+
+    <div class="rosterHead">
+      <h2>Character Bases</h2>
+    </div>
+    <div class="roster" id="basesList"></div>
+
+    <div class="rosterHead">
+      <h2>Roster</h2>
+    </div>
+    <div class="roster" id="devRoster"></div>
+    <p class="emptyNote" id="devRosterEmpty" hidden>No roster fighters yet.</p>
+
+    <div class="fightRow">
+      <button id="devFightBtn" disabled>Fight</button>
     </div>
   </section>
 
