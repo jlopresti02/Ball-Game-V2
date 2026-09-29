@@ -853,6 +853,86 @@ function playBounce() {
   } catch (e) { /* audio is a nice-to-have, never let it break the game */ }
 }
 
+// ---------------------------------------------------------------
+// Punch sound: a landed punch (the Brawler base's punch ability, and every
+// fighter built with it). It's three layers: a sharp slap of filtered
+// noise for the glove, a low thump for the body hit, and a tiny click at the
+// very start for the snap. Heavier punches sound deeper and louder; light,
+// rapid jabs (like the BMF's) come out as quicker, higher taps.
+// ---------------------------------------------------------------
+var lastPunchSound = 0;
+
+function punchWeight(damage) {
+  return Math.min(1, Math.max(0.2, damage / 30));
+}
+
+function makeNoiseBuffer(ctx, seconds) {
+  var buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate);
+  var data = buf.getChannelData(0);
+  for (var i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  return buf;
+}
+
+// Builds one punch into `out` starting at `now`. Kept separate from
+// playPunch so it can also be rendered offline for previews.
+function synthPunch(ctx, out, now, weight, noise) {
+  var vary = 0.92 + Math.random() * 0.16; // no two punches sound identical
+
+  // Slap: a short burst of noise through a falling low-pass filter.
+  var slap = ctx.createBufferSource();
+  slap.buffer = noise;
+  var lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.Q.value = 0.8;
+  lp.frequency.setValueAtTime((3200 - 1400 * weight) * vary, now);
+  lp.frequency.exponentialRampToValueAtTime(350, now + 0.05 + 0.05 * weight);
+  var sg = ctx.createGain();
+  sg.gain.setValueAtTime(0.0001, now);
+  sg.gain.exponentialRampToValueAtTime(0.35 + 0.35 * weight, now + 0.002);
+  sg.gain.exponentialRampToValueAtTime(0.0001, now + 0.05 + 0.07 * weight);
+  slap.connect(lp); lp.connect(sg); sg.connect(out);
+  slap.start(now); slap.stop(now + 0.14);
+
+  // Thump: a low sine that drops in pitch, the weight behind the hit.
+  var thump = ctx.createOscillator();
+  thump.type = "sine";
+  var f0 = (190 - 90 * weight) * vary;
+  thump.frequency.setValueAtTime(f0, now);
+  thump.frequency.exponentialRampToValueAtTime(f0 * 0.45, now + 0.08 + 0.08 * weight);
+  var tg = ctx.createGain();
+  tg.gain.setValueAtTime(0.0001, now);
+  tg.gain.exponentialRampToValueAtTime(0.2 + 0.55 * weight, now + 0.004);
+  tg.gain.exponentialRampToValueAtTime(0.0001, now + 0.08 + 0.12 * weight);
+  thump.connect(tg); tg.connect(out);
+  thump.start(now); thump.stop(now + 0.25);
+
+  // Snap: a very short high click right at contact.
+  var snap = ctx.createOscillator();
+  snap.type = "triangle";
+  snap.frequency.setValueAtTime(1800 * vary, now);
+  snap.frequency.exponentialRampToValueAtTime(600, now + 0.012);
+  var cg = ctx.createGain();
+  cg.gain.setValueAtTime(0.0001, now);
+  cg.gain.exponentialRampToValueAtTime(0.18, now + 0.001);
+  cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
+  snap.connect(cg); cg.connect(out);
+  snap.start(now); snap.stop(now + 0.03);
+}
+
+var punchNoise = null;
+function playPunch(damage) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (now - lastPunchSound < 0.05) return; // rapid jabs don't pile into a buzz
+    lastPunchSound = now;
+    if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+    synthPunch(ctx, ctx.destination, now, punchWeight(damage), punchNoise);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // A heavy crunch for power-punch wall slams: a low body thud that drops in
 // pitch plus a short burst of filtered noise for the crack of the impact.
 var noiseBuffer = null;
@@ -2304,7 +2384,8 @@ function updateAbilities(dt) {
         if (!self.punch.hit && self.punch.t >= windup) {
           self.punch.hit = true;
           if (other.alive) {
-            hurt(other, pu.damage, "punch", self.id);
+            var punchDealt = hurt(other, pu.damage, "punch", self.id);
+            if (punchDealt > 0) playPunch(punchDealt);
             if (pu.knockback > 0 && !other.justDodged) {
               var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
               other.vx += kx / kd * pu.knockback;

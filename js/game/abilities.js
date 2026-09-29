@@ -142,7 +142,8 @@ function updateAbilities(dt) {
         if (!self.punch.hit && self.punch.t >= windup) {
           self.punch.hit = true;
           if (other.alive) {
-            hurt(other, pu.damage, "punch", self.id);
+            var punchDealt = hurt(other, pu.damage, "punch", self.id);
+            if (punchDealt > 0) playPunch(punchDealt);
             if (pu.knockback > 0 && !other.justDodged) {
               var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
               other.vx += kx / kd * pu.knockback;
