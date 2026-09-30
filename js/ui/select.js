@@ -95,6 +95,32 @@ function renderSlot(menu, side) {
     '<div class="sabilities">' + escapeHtml(abilitySummary(ch)) + "</div>";
 }
 
+// Mirror matches (Dev Corner): the same fighter on both sides. The second
+// copy is a separate fighter named "<name> 2" in a lighter or darker shade
+// so the two can be told apart in the arena and the health bars.
+function mirrorColor(hex) {
+  var m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return "#888888";
+  var n = parseInt(m[1], 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  var t = lum < 0.55 ? 255 : 0, k = 0.42;
+  r = Math.round(r + (t - r) * k); g = Math.round(g + (t - g) * k); b = Math.round(b + (t - b) * k);
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+function mirrorCopy(ch) {
+  var copy = JSON.parse(JSON.stringify(ch));
+  copy.id = ch.id + "#mirror";
+  copy.mirrorOf = ch.id;
+  copy.name = ch.name + " 2";
+  copy.color = mirrorColor(ch.color);
+  return copy;
+}
+function setMirror(name, ch) {
+  var menu = menus[name];
+  menu.picks = [ch, mirrorCopy(ch)];
+  renderMenu(name);
+}
+
 function isPicked(menu, ch) {
   return (menu.picks[0] && menu.picks[0].id === ch.id) || (menu.picks[1] && menu.picks[1].id === ch.id);
 }
@@ -124,6 +150,15 @@ function renderCard(name, ch) {
   pick.addEventListener("click", function () { togglePick(name, ch); });
   btns.appendChild(pick);
 
+  if (name === "dev") {
+    var mirrorBtn = document.createElement("button");
+    mirrorBtn.className = "small secondary";
+    mirrorBtn.textContent = "Mirror";
+    mirrorBtn.title = "Put " + ch.name + " on both sides";
+    mirrorBtn.addEventListener("click", function () { setMirror(name, ch); });
+    btns.appendChild(mirrorBtn);
+  }
+
   if (!ch.builtin) {
     var editBtn = document.createElement("button");
     editBtn.className = "small secondary";
@@ -137,7 +172,11 @@ function renderCard(name, ch) {
 function renderMenu(name) {
   var menu = menus[name];
   // Drop picks for fighters that were deleted, and pick up any edits.
-  menu.picks = menu.picks.map(function (ch) { return ch ? findChar(ch.id) : null; });
+  menu.picks = menu.picks.map(function (ch) {
+    if (!ch) return null;
+    if (ch.mirrorOf) { var src = findChar(ch.mirrorOf); return src ? mirrorCopy(src) : null; }
+    return findChar(ch.id);
+  });
   renderSlot(menu, 0); renderSlot(menu, 1);
   document.getElementById(menu.fightId).disabled = !(menu.picks[0] && menu.picks[1]);
 

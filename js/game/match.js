@@ -19,6 +19,11 @@ function readTheme() {
 var balls, projectiles, floaters, particles, shake, over, started;
 var impacts = [], hitStop = 0; // wall-slam shockwaves and the brief freeze on each slam
 
+// Each fighter's first charge-up comes a little earlier or later than its
+// normal interval, so two identical fighters (a mirror match) don't charge,
+// dash or sit in perfect sync for the whole fight.
+function stagger() { return 0.6 + Math.random() * 0.8; }
+
 function makeBall(id, ch) {
   return {
     id: id, char: ch,
@@ -26,11 +31,11 @@ function makeBall(id, ch) {
     y: H / 2 + (Math.random() - 0.5) * 160,
     vx: 0, vy: 0, r: RADIUS,
     hp: MAX_HP, shown: MAX_HP, alive: true, flash: 0,
-    shotTimer: ch.proj.cooldown, punchCd: 0, punch: null, kickCd: 0, kick: null,
+    shotTimer: ch.proj.cooldown * stagger(), punchCd: 0, punch: null, kickCd: 0, kick: null,
     grappleCd: 0, grapple: null, grappled: false, throwAnim: null,
-    powerCd: ch.powerPunch.cooldown, powerState: null,
-    rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
-    watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0,
+    powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
+    rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
+    watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
     slam: null, holdAtOne: false, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };

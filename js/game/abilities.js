@@ -87,7 +87,11 @@ function setSpeed(b, speed) {
 }
 
 function updateAbilities(dt) {
-  for (var i = 0; i < 2; i++) {
+  // Which fighter acts first flips randomly every frame, so neither side
+  // always wins ties (like two identical fighters swinging at the same moment).
+  var order = Math.random() < 0.5 ? [0, 1] : [1, 0];
+  for (var oi = 0; oi < 2; oi++) {
+    var i = order[oi];
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled) continue;
     if (self.slam) {
@@ -381,7 +385,11 @@ function updateAbilities(dt) {
         // Up and about between sits.
         self.watcherCd -= dt;
         if (self.watcherCd <= 0) {
-          self.watcherState = { phase: "travel", t: 0, spot: SIT_SPOTS[Math.floor(Math.random() * SIT_SPOTS.length)] };
+          // Picks a corner the other fighter isn't already sitting in or heading
+          // to (matters when two Watchers are in the same match).
+          var takenSpot = other.watcherState && other.watcherState.spot;
+          var freeSpots = SIT_SPOTS.filter(function (sp) { return sp !== takenSpot; });
+          self.watcherState = { phase: "travel", t: 0, spot: freeSpots[Math.floor(Math.random() * freeSpots.length)] };
         }
       } else if (wst.phase === "travel") {
         // Heading for one of the four corner seats.

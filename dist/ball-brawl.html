@@ -328,7 +328,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       <h1>The Dev Corner</h1>
       <button id="devBackBtn" class="small secondary">Back to roster</button>
     </div>
-    <p class="lede">Put the character bases into battle, against each other or against your roster fighters.</p>
+    <p class="lede">Put the character bases into battle, against each other or against your roster fighters. Tap <strong>Mirror</strong> to put a fighter on both sides.</p>
 
     <div class="slots">
       <div class="slot empty" id="devSlot0"><div class="sname">Choose fighter</div></div>
@@ -1717,6 +1717,32 @@ function renderSlot(menu, side) {
     '<div class="sabilities">' + escapeHtml(abilitySummary(ch)) + "</div>";
 }
 
+// Mirror matches (Dev Corner): the same fighter on both sides. The second
+// copy is a separate fighter named "<name> 2" in a lighter or darker shade
+// so the two can be told apart in the arena and the health bars.
+function mirrorColor(hex) {
+  var m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return "#888888";
+  var n = parseInt(m[1], 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  var t = lum < 0.55 ? 255 : 0, k = 0.42;
+  r = Math.round(r + (t - r) * k); g = Math.round(g + (t - g) * k); b = Math.round(b + (t - b) * k);
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+function mirrorCopy(ch) {
+  var copy = JSON.parse(JSON.stringify(ch));
+  copy.id = ch.id + "#mirror";
+  copy.mirrorOf = ch.id;
+  copy.name = ch.name + " 2";
+  copy.color = mirrorColor(ch.color);
+  return copy;
+}
+function setMirror(name, ch) {
+  var menu = menus[name];
+  menu.picks = [ch, mirrorCopy(ch)];
+  renderMenu(name);
+}
+
 function isPicked(menu, ch) {
   return (menu.picks[0] && menu.picks[0].id === ch.id) || (menu.picks[1] && menu.picks[1].id === ch.id);
 }
@@ -1746,6 +1772,15 @@ function renderCard(name, ch) {
   pick.addEventListener("click", function () { togglePick(name, ch); });
   btns.appendChild(pick);
 
+  if (name === "dev") {
+    var mirrorBtn = document.createElement("button");
+    mirrorBtn.className = "small secondary";
+    mirrorBtn.textContent = "Mirror";
+    mirrorBtn.title = "Put " + ch.name + " on both sides";
+    mirrorBtn.addEventListener("click", function () { setMirror(name, ch); });
+    btns.appendChild(mirrorBtn);
+  }
+
   if (!ch.builtin) {
     var editBtn = document.createElement("button");
     editBtn.className = "small secondary";
@@ -1759,7 +1794,11 @@ function renderCard(name, ch) {
 function renderMenu(name) {
   var menu = menus[name];
   // Drop picks for fighters that were deleted, and pick up any edits.
-  menu.picks = menu.picks.map(function (ch) { return ch ? findChar(ch.id) : null; });
+  menu.picks = menu.picks.map(function (ch) {
+    if (!ch) return null;
+    if (ch.mirrorOf) { var src = findChar(ch.mirrorOf); return src ? mirrorCopy(src) : null; }
+    return findChar(ch.id);
+  });
   renderSlot(menu, 0); renderSlot(menu, 1);
   document.getElementById(menu.fightId).disabled = !(menu.picks[0] && menu.picks[1]);
 
@@ -2496,6 +2535,11 @@ function readTheme() {
 var balls, projectiles, floaters, particles, shake, over, started;
 var impacts = [], hitStop = 0; // wall-slam shockwaves and the brief freeze on each slam
 
+// Each fighter's first charge-up comes a little earlier or later than its
+// normal interval, so two identical fighters (a mirror match) don't charge,
+// dash or sit in perfect sync for the whole fight.
+function stagger() { return 0.6 + Math.random() * 0.8; }
+
 function makeBall(id, ch) {
   return {
     id: id, char: ch,
@@ -2503,11 +2547,11 @@ function makeBall(id, ch) {
     y: H / 2 + (Math.random() - 0.5) * 160,
     vx: 0, vy: 0, r: RADIUS,
     hp: MAX_HP, shown: MAX_HP, alive: true, flash: 0,
-    shotTimer: ch.proj.cooldown, punchCd: 0, punch: null, kickCd: 0, kick: null,
+    shotTimer: ch.proj.cooldown * stagger(), punchCd: 0, punch: null, kickCd: 0, kick: null,
     grappleCd: 0, grapple: null, grappled: false, throwAnim: null,
-    powerCd: ch.powerPunch.cooldown, powerState: null,
-    rageCd: ch.rage.cooldown, rageState: null, jabAnim: null,
-    watcherCd: ch.watcher.restDur, watcherState: null, invincible: false, immuneCd: 0,
+    powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
+    rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
+    watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
     slam: null, holdAtOne: false, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
@@ -2877,7 +2921,11 @@ function setSpeed(b, speed) {
 }
 
 function updateAbilities(dt) {
-  for (var i = 0; i < 2; i++) {
+  // Which fighter acts first flips randomly every frame, so neither side
+  // always wins ties (like two identical fighters swinging at the same moment).
+  var order = Math.random() < 0.5 ? [0, 1] : [1, 0];
+  for (var oi = 0; oi < 2; oi++) {
+    var i = order[oi];
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled) continue;
     if (self.slam) {
@@ -3171,7 +3219,11 @@ function updateAbilities(dt) {
         // Up and about between sits.
         self.watcherCd -= dt;
         if (self.watcherCd <= 0) {
-          self.watcherState = { phase: "travel", t: 0, spot: SIT_SPOTS[Math.floor(Math.random() * SIT_SPOTS.length)] };
+          // Picks a corner the other fighter isn't already sitting in or heading
+          // to (matters when two Watchers are in the same match).
+          var takenSpot = other.watcherState && other.watcherState.spot;
+          var freeSpots = SIT_SPOTS.filter(function (sp) { return sp !== takenSpot; });
+          self.watcherState = { phase: "travel", t: 0, spot: freeSpots[Math.floor(Math.random() * freeSpots.length)] };
         }
       } else if (wst.phase === "travel") {
         // Heading for one of the four corner seats.
