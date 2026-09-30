@@ -125,7 +125,7 @@ function beginGrapple(attacker, target) {
 function incomingMultiplier(b) {
   var m = 1;
   if (b.rageState && b.rageState.phase === "charge") m *= (b.char.rage.vulnMult != null ? b.char.rage.vulnMult : 2);
-  if (b.taunt && b.char.hasWeave) m *= (b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2);
+  if (b.taunt && b.taunt.t >= 0 && b.char.hasWeave) m *= (b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2);
   return m;
 }
 function wouldKill(b, amount) {
@@ -173,7 +173,7 @@ function hurt(b, amount, source, attackerId) {
   }
   // Celebrating after a critical-weave combo leaves the fighter wide open:
   // every hit that lands during the taunt does extra damage.
-  if (b.taunt && b.char.hasWeave) {
+  if (b.taunt && b.taunt.t >= 0 && b.char.hasWeave) {
     var tm = b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2;
     amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }

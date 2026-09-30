@@ -2,7 +2,7 @@
 "use strict";
 
 function drawFist(self, other) {
-  if (!self.punch || !other.alive) return;
+  if (!self.punch || !other.alive || self.taunt || self.flow || self.combo) return;
   var pu = self.char.punch;
   var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var qnx = qx / qd, qny = qy / qd;
@@ -34,7 +34,7 @@ function drawFist(self, other) {
 }
 
 function drawKick(self, other) {
-  if (!self.kick || !other.alive) return;
+  if (!self.kick || !other.alive || self.taunt || self.flow || self.combo) return;
   var ki = self.char.kick;
   var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var baseAngle = Math.atan2(qy, qx);
@@ -85,6 +85,7 @@ function drawHands(b, other) {
   var raging = b.rageState && b.rageState.phase === "attack";
   var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
   if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging || b.combo || b.swing) return;
+  if (b.taunt && b.taunt.t < 0) return; // the punch is still finishing
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.
     var tt = b.taunt.t;

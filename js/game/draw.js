@@ -72,7 +72,7 @@ function draw() {
       wox = -wfy * wa.sign * b.r * 0.75 * wk;
       woy = wfx * wa.sign * b.r * 0.75 * wk;
     }
-    if (b.taunt) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
+    if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with

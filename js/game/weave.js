@@ -7,7 +7,10 @@ var COMBO_CHASE_SPEED = 640;  // how fast it hunts the opponent during a combo
 var COMBO_REACH = 26;          // gap between the two balls a combo punch can land from
 var COMBO_PUNCH_GAP = 0.14;    // seconds between combo punches
 var COMBO_TIMEOUT = 3;         // gives up if it can't finish the combo in time
-var KNOCK_FLY_TIME = 0.8;      // how long a launched fighter flies before slowing to normal
+var KNOCK_FLY_TIME = 0.8;
+// The celebration waits this long after the final punch so the punching arm
+// finishes before both hands go up (otherwise an extra arm shows).
+var TAUNT_LEADIN = 0.26;      // how long a launched fighter flies before slowing to normal
 
 // Rolls the weave for `b` against an attack from `attackerId`. Returns true
 // if the attack was dodged (and kicks off a critical combo if that rolls too).
@@ -36,6 +39,9 @@ function tryWeave(b, attackerId, mult) {
       if (Math.random() < wv.flowChance / 100) {
         floater(b.x, b.y - b.r - 8, "FLOW COUNTER", "crit");
         b.flow = { attackerId: atk.id, phase: "slip", t: 0 };
+        // Drops anything it was mid-way through (a half-thrown jab would
+        // otherwise freeze in place and keep being drawn).
+        b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null;
       } else {
         floater(b.x, b.y - b.r - 8, "REVERSAL", "crit");
         atk.combo = null; // its combo is broken off
@@ -124,7 +130,7 @@ function updateWeave(self, other, dt) {
         // Against another weaver there's no celebrating after a combo.
         setSpeed(self, SPEED);
       } else {
-        self.taunt = { t: 0, dur: wv.tauntDur };
+        self.taunt = { t: -TAUNT_LEADIN, dur: wv.tauntDur };
         self.vx = 0; self.vy = 0;
       }
     } else if (!reduceMotion) {
@@ -163,7 +169,7 @@ function updateFlow(self, dt) {
     }
     if (!reduceMotion) { shake = Math.max(shake, 16); hitStop = Math.max(hitStop, 0.08); }
     self.flow = null;
-    self.taunt = { t: 0, dur: wv.tauntDur };
+    self.taunt = { t: -TAUNT_LEADIN, dur: wv.tauntDur };
     self.vx = 0; self.vy = 0;
     checkEnd();
     return true;
