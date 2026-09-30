@@ -196,7 +196,7 @@ function updateAbilities(dt) {
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
-      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && d < self.r + other.r + gr.reach) {
+      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
         if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
         else {
           beginGrapple(self, other);

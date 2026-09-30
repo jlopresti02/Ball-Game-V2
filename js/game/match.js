@@ -36,7 +36,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, swing: null, forgetT: 0, healGlow: 0,
+    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -198,7 +198,7 @@ function hurt(b, amount, source, attackerId) {
   if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" &&
       b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
-    if (atk && atk.alive && !atk.invincible) {
+    if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
       if (Math.random() < chance && !tryWeave(atk, b.id)) beginGrapple(b, atk);
     }

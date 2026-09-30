@@ -18,6 +18,7 @@ var SPEED_TIE = 2;                      // speeds within this much count as equa
 var HEALTH_TIE = 0.5;                   // health within this much counts as equal
 var IOWA_PRESS_TIME = 0.4;              // how long it keeps pressing them into the wall
 var IOWA_DISENGAGE_SPEED = 380;
+var IOWA_IMPUNITY = 1.5;                // after disengaging, the slammed Grappler can't grab back for this long
 
 function isGrapplerDuel(a, b) {
   return a.char.hasGrapple && b.char.hasGrapple;
@@ -45,6 +46,7 @@ function readyToGrab(self, other, dt) {
   if (self.slam || self.combo || self.taunt || self.flow) return false;
   if (self.grappleCd - dt > 0) return false;
   if (!other.alive || other.grappled || other.invincible) return false;
+  if (grabBlockedByImpunity(self, other)) return false;
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
   return d < self.r + other.r + self.char.grapple.reach;
 }
@@ -98,8 +100,11 @@ function updateIowaStyle(self, g, dt) {
     tgt.squash = { t: 0.1, max: 0.1, nx: g.nx, ny: g.ny };
   }
   if (g.pressT >= IOWA_PRESS_TIME) {
-    // Disengage: pushes off straight back out into the arena.
+    // Disengage: pushes off straight back out into the arena. Having landed
+    // the slam, it gets away clean: the slammed Grappler can't grab it back
+    // (no back-to-back wall slams) until it's had time to get clear.
     self.grapple = null;
+    self.iowaSafe = { from: tgt.id, t: IOWA_IMPUNITY };
     tgt.grappled = false;
     self.vx = g.nx * IOWA_DISENGAGE_SPEED; self.vy = g.ny * IOWA_DISENGAGE_SPEED;
     // The one who got slammed peels off along the wall.
@@ -107,4 +112,10 @@ function updateIowaStyle(self, g, dt) {
     var tx = -g.ny * side, ty = g.nx * side;
     tgt.vx = (tx * 0.9 + g.nx * 0.45) * 260; tgt.vy = (ty * 0.9 + g.ny * 0.45) * 260;
   }
+}
+
+// True while `target` is still getting away clean from an Iowa Style slam
+// it landed on `grabber`.
+function grabBlockedByImpunity(grabber, target) {
+  return !!(target.iowaSafe && target.iowaSafe.from === grabber.id && target.iowaSafe.t > 0);
 }
