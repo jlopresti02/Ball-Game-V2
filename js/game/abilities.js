@@ -20,7 +20,7 @@ function beginWallSlam(target, dirX, dirY, pp) {
   target.vx = dirX * target.slam.speed;
   target.vy = dirY * target.slam.speed;
   // Getting launched interrupts whatever the victim was in the middle of.
-  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null;
+  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null; target.flow = null;
   if (target.powerState) target.powerState = null;
   if (target.rageState) target.rageState = null;
   if (target.watcherState && target.watcherState.phase === "travel") {

@@ -158,7 +158,7 @@ function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, c
 // followed by a tauntDur-second celebration, during which hits on it do
 // tauntVuln times their damage.
 function defaultWeave() {
-  return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2, tauntVuln: 2 };
+  return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2, tauntVuln: 2, flowChance: 25, flowDamage: 15 };
 }
 // Swing: a telegraphed punch thrown at anyone in the general vicinity. The
 // aim is committed at the end of the windup with some error, so it can whiff
@@ -195,7 +195,9 @@ function normalizeChar(ch) {
   else if (ch.watcher.lasers == null) ch.watcher.lasers = defaultWatcher().lasers;
   if (ch.hasWeave === undefined) ch.hasWeave = false;
   if (!ch.weave) ch.weave = defaultWeave();
-  else if (ch.weave.tauntVuln == null) ch.weave.tauntVuln = defaultWeave().tauntVuln;
+  ["tauntVuln", "flowChance", "flowDamage"].forEach(function (k) {
+    if (ch.weave[k] == null) ch.weave[k] = defaultWeave()[k];
+  });
   if (ch.hasSwing === undefined) ch.hasSwing = false;
   if (!ch.swing) ch.swing = defaultSwing();
   if (ch.hasForget === undefined) ch.hasForget = false;

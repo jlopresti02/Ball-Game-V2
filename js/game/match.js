@@ -36,7 +36,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false, swing: null, forgetT: 0, healGlow: 0,
+    slam: null, holdAtOne: false, flow: null, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -91,6 +91,7 @@ function burst(b) {
 function beginGrapple(attacker, target) {
   target.slam = null; // a grab ends any wall slam in progress
   target.swing = null;
+  target.flow = null;
   var gr = attacker.char.grapple;
   var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
   var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;
@@ -148,7 +149,7 @@ function hurt(b, amount, source, attackerId) {
   // knockback, and projectiles fly on through.
   // CTE's wild swings are easier to see coming.
   var swinger = source === "swing" && attackerId != null ? balls[attackerId].char.swing : null;
-  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" &&
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" &&
       tryWeave(b, attackerId, swinger ? swinger.weaveMult : 1)) {
     b.justDodged = true;
     return 0;
@@ -157,7 +158,7 @@ function hurt(b, amount, source, attackerId) {
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
   var blockChance = Math.min(100, b.char.blockChance * (swinger ? swinger.blockMult : 1));
-  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && Math.random() < blockChance / 100) {
+  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && Math.random() < blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -194,7 +195,7 @@ function hurt(b, amount, source, attackerId) {
   }
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
-  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" &&
+  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" &&
       b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible) {

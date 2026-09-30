@@ -738,6 +738,15 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
           <label for="weaveTauntVuln">Damage taken while celebrating <span class="val" id="weaveTauntVulnVal">2x</span></label>
           <input type="range" id="weaveTauntVuln" min="1" max="4" step="0.5" value="2">
         </div>
+        <p class="fieldNote">Against another fighter with weave: a critical weave in the middle of their combo is a reversal (a combo of its own) or, sometimes, a flow counter that slips the rest of their combo and answers with one strike. No celebrating after combos in these fights, only after a flow counter.</p>
+        <div class="field">
+          <label for="weaveFlowChance">Flow counter chance <span class="val" id="weaveFlowChanceVal">25%</span></label>
+          <input type="range" id="weaveFlowChance" min="0" max="100" step="5" value="25">
+        </div>
+        <div class="field">
+          <label for="weaveFlowDamage">Flow counter strike damage <span class="val" id="weaveFlowDamageVal">15</span></label>
+          <input type="range" id="weaveFlowDamage" min="1" max="50" step="1" value="15">
+        </div>
       </div>
     </details>
 
@@ -1543,7 +1552,7 @@ function defaultRage() { return { punchDamage: 2, punchCount: 10, cooldown: 5, c
 // followed by a tauntDur-second celebration, during which hits on it do
 // tauntVuln times their damage.
 function defaultWeave() {
-  return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2, tauntVuln: 2 };
+  return { dodgeChance: 75, critChance: 20, comboHits: 5, comboDamage: 3, finalDamage: 8, finalKnockback: 950, tauntDur: 2, tauntVuln: 2, flowChance: 25, flowDamage: 15 };
 }
 // Swing: a telegraphed punch thrown at anyone in the general vicinity. The
 // aim is committed at the end of the windup with some error, so it can whiff
@@ -1580,7 +1589,9 @@ function normalizeChar(ch) {
   else if (ch.watcher.lasers == null) ch.watcher.lasers = defaultWatcher().lasers;
   if (ch.hasWeave === undefined) ch.hasWeave = false;
   if (!ch.weave) ch.weave = defaultWeave();
-  else if (ch.weave.tauntVuln == null) ch.weave.tauntVuln = defaultWeave().tauntVuln;
+  ["tauntVuln", "flowChance", "flowDamage"].forEach(function (k) {
+    if (ch.weave[k] == null) ch.weave[k] = defaultWeave()[k];
+  });
   if (ch.hasSwing === undefined) ch.hasSwing = false;
   if (!ch.swing) ch.swing = defaultSwing();
   if (ch.hasForget === undefined) ch.hasForget = false;
@@ -2488,7 +2499,9 @@ var weaveSliders = [
   ["weaveFinalDamage", "finalDamage", function (v) { return v; }],
   ["weaveKnockback", "finalKnockback", function (v) { return v; }],
   ["weaveTaunt", "tauntDur", function (v) { return Number(v).toFixed(1) + "s"; }],
-  ["weaveTauntVuln", "tauntVuln", function (v) { return v + "x"; }]
+  ["weaveTauntVuln", "tauntVuln", function (v) { return v + "x"; }],
+  ["weaveFlowChance", "flowChance", function (v) { return v + "%"; }],
+  ["weaveFlowDamage", "flowDamage", function (v) { return v; }]
 ];
 weaveSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);
@@ -2552,7 +2565,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false, swing: null, forgetT: 0, healGlow: 0,
+    slam: null, holdAtOne: false, flow: null, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -2607,6 +2620,7 @@ function burst(b) {
 function beginGrapple(attacker, target) {
   target.slam = null; // a grab ends any wall slam in progress
   target.swing = null;
+  target.flow = null;
   var gr = attacker.char.grapple;
   var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
   var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;
@@ -2664,7 +2678,7 @@ function hurt(b, amount, source, attackerId) {
   // knockback, and projectiles fly on through.
   // CTE's wild swings are easier to see coming.
   var swinger = source === "swing" && attackerId != null ? balls[attackerId].char.swing : null;
-  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" &&
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" &&
       tryWeave(b, attackerId, swinger ? swinger.weaveMult : 1)) {
     b.justDodged = true;
     return 0;
@@ -2673,7 +2687,7 @@ function hurt(b, amount, source, attackerId) {
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
   var blockChance = Math.min(100, b.char.blockChance * (swinger ? swinger.blockMult : 1));
-  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && Math.random() < blockChance / 100) {
+  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && Math.random() < blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -2710,7 +2724,7 @@ function hurt(b, amount, source, attackerId) {
   }
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
-  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" &&
+  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" &&
       b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible) {
@@ -2753,7 +2767,7 @@ var SPEED_UP = 320;       // units/second gained each second while below normal 
 var SLOW_DOWN = 1.1;      // how quickly extra speed bleeds off (higher = faster)
 
 function inOrdinaryMovement(b) {
-  if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.knockFly > 0) return false;
+  if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.flow || b.knockFly > 0) return false;
   if (b.powerState || b.rageState) return false;
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
@@ -2854,7 +2868,7 @@ function beginWallSlam(target, dirX, dirY, pp) {
   target.vx = dirX * target.slam.speed;
   target.vy = dirY * target.slam.speed;
   // Getting launched interrupts whatever the victim was in the middle of.
-  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null;
+  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null; target.flow = null;
   if (target.powerState) target.powerState = null;
   if (target.rageState) target.rageState = null;
   if (target.watcherState && target.watcherState.phase === "travel") {
@@ -3330,14 +3344,35 @@ function tryWeave(b, attackerId, mult) {
   // Can't slip anything while held, being slammed around, or mid-celebration.
   if (b.grappled || b.slam || b.taunt) return false;
   var wv = b.char.weave;
+  // In a flow counter: every attack is slipped until the combo is over.
+  if (b.flow && b.flow.phase === "slip") {
+    b.weaveAnim = { t: 0, dur: 0.2, sign: Math.random() < 0.5 ? -1 : 1 };
+    floater(b.x, b.y - b.r - 8, "FLOW", "dodge");
+    return true;
+  }
   if (Math.random() >= Math.min(95, wv.dodgeChance * (mult || 1)) / 100) return false;
 
   b.weaveAnim = { t: 0, dur: 0.26, sign: Math.random() < 0.5 ? -1 : 1 };
   var atk = attackerId != null ? balls[attackerId] : null;
   var canCrit = atk && atk.alive && !atk.invincible && !b.combo && !b.grapple;
   if (canCrit && Math.random() < wv.critChance / 100) {
-    floater(b.x, b.y - b.r - 8, "CRITICAL WEAVE", "crit");
-    beginCombo(b, atk);
+    if (atk.combo && atk.combo.targetId === b.id) {
+      // Weaver vs weaver (e.g. BMF vs BMF): a critical weave in the middle of
+      // the other one's combo. Usually it's a reversal, taking over with a
+      // combo of its own; sometimes it's a flow counter, which slips the
+      // rest of the combo and ends the exchange with one clean strike.
+      if (Math.random() < wv.flowChance / 100) {
+        floater(b.x, b.y - b.r - 8, "FLOW COUNTER", "crit");
+        b.flow = { attackerId: atk.id, phase: "slip", t: 0 };
+      } else {
+        floater(b.x, b.y - b.r - 8, "REVERSAL", "crit");
+        atk.combo = null; // its combo is broken off
+        beginCombo(b, atk);
+      }
+    } else {
+      floater(b.x, b.y - b.r - 8, "CRITICAL WEAVE", "crit");
+      beginCombo(b, atk);
+    }
   } else {
     floater(b.x, b.y - b.r - 8, "WEAVE", "dodge");
   }
@@ -3372,6 +3407,7 @@ function updateWeave(self, other, dt) {
     }
     return true;
   }
+  if (self.flow) return updateFlow(self, dt);
   if (!self.combo) return false;
 
   var cb = self.combo, wv = self.char.weave;
@@ -3407,17 +3443,60 @@ function updateWeave(self, other, dt) {
     var last = cb.thrown >= Math.max(1, Math.round(wv.comboHits));
     self.jabAnim = { t: 0, dur: last ? 0.24 : 0.11, sign: cb.thrown % 2 ? 1 : -1, big: last, dx: nx, dy: ny };
     hurt(other, last ? wv.finalDamage : wv.comboDamage, "combo", self.id);
+    if (self.combo !== cb) { checkEnd(); return true; } // reversed by the opponent mid-combo
     if (last) {
       if (!other.justDodged && other.alive) launch(other, nx, ny, Math.max(wv.finalKnockback, SPEED));
       if (!reduceMotion) shake = Math.max(shake, 14);
       self.combo = null;
-      self.taunt = { t: 0, dur: wv.tauntDur };
-      self.vx = 0; self.vy = 0;
+      if (other.char.hasWeave) {
+        // Against another weaver there's no celebrating after a combo.
+        setSpeed(self, SPEED);
+      } else {
+        self.taunt = { t: 0, dur: wv.tauntDur };
+        self.vx = 0; self.vy = 0;
+      }
     } else if (!reduceMotion) {
       shake = Math.max(shake, 4);
     }
     checkEnd();
   }
+  return true;
+}
+
+// Flow counter: slips every punch of the opponent's combo ("slip"), then as
+// soon as the combo ends darts in ("strike") and lands one clean strike for
+// flowDamage that knocks the opponent away, then celebrates.
+var FLOW_STRIKE_TIMEOUT = 1.2; // gives up if it can't reach them in time
+
+function updateFlow(self, dt) {
+  var fl = self.flow, wv = self.char.weave, atk = balls[fl.attackerId];
+  fl.t += dt;
+  if (!atk || !atk.alive) { self.flow = null; return false; }
+
+  if (fl.phase === "slip") {
+    // Waits out the combo, slipping everything (handled in tryWeave).
+    if (!atk.combo || atk.combo.targetId !== self.id) { fl.phase = "strike"; fl.t = 0; }
+    return true;
+  }
+
+  var dx = atk.x - self.x, dy = atk.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var nx = dx / d, ny = dy / d;
+  self.vx = nx * COMBO_CHASE_SPEED; self.vy = ny * COMBO_CHASE_SPEED;
+  if (d < self.r + atk.r + COMBO_REACH) {
+    self.jabAnim = { t: 0, dur: 0.24, sign: 1, big: true, dx: nx, dy: ny };
+    var dealt = hurt(atk, wv.flowDamage, "flow", self.id);
+    if (dealt > 0) {
+      playPunch(dealt + 15); // lands heavy
+      if (atk.alive) launch(atk, nx, ny, Math.max(wv.finalKnockback, SPEED));
+    }
+    if (!reduceMotion) { shake = Math.max(shake, 16); hitStop = Math.max(hitStop, 0.08); }
+    self.flow = null;
+    self.taunt = { t: 0, dur: wv.tauntDur };
+    self.vx = 0; self.vy = 0;
+    checkEnd();
+    return true;
+  }
+  if (fl.t > FLOW_STRIKE_TIMEOUT) { self.flow = null; setSpeed(self, SPEED); return false; }
   return true;
 }
 
@@ -3837,7 +3916,7 @@ function update(dt) {
       b.knockFly = Math.max(0, b.knockFly - dt);
     }
     regulateSpeed(b, dt);
-    if ((b.combo || (b.jabAnim && b.jabAnim.big)) && !reduceMotion) {
+    if ((b.combo || b.flow || (b.jabAnim && b.jabAnim.big)) && !reduceMotion) {
       // Streak behind a fighter hunting down its combo.
       particles.push({
         x: b.x, y: b.y, vx: -b.vx * 0.12, vy: -b.vy * 0.12,

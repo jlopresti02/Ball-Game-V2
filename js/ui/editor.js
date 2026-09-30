@@ -448,7 +448,9 @@ var weaveSliders = [
   ["weaveFinalDamage", "finalDamage", function (v) { return v; }],
   ["weaveKnockback", "finalKnockback", function (v) { return v; }],
   ["weaveTaunt", "tauntDur", function (v) { return Number(v).toFixed(1) + "s"; }],
-  ["weaveTauntVuln", "tauntVuln", function (v) { return v + "x"; }]
+  ["weaveTauntVuln", "tauntVuln", function (v) { return v + "x"; }],
+  ["weaveFlowChance", "flowChance", function (v) { return v + "%"; }],
+  ["weaveFlowDamage", "flowDamage", function (v) { return v; }]
 ];
 weaveSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);

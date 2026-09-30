@@ -25,7 +25,7 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 | Sees Red | Charges at the opponent throwing a flurry of jabs, but takes extra damage while winding up |
 | Watcher | Sits in a corner seat (invincible), charges, then fires tracking lasers |
 | CTE | Telegraphed 25-damage sweeping hooks, alternating left and right, at anyone nearby with no cooldown between them. The aim is a guess, so hooks can whiff on spacing, and the arm hangs across his body after each one. Opponents block his swings twice as often and weave them 1.15x as often. Every 7 seconds he forgets some damage and regains 12 health (CTE Rejuvenation), with a bar under his health that fills up toward the next heal |
-| BMF | Rapid 5-damage jabs up close; weaves (dodges) 75% of attacks, and 20% of weaves are critical: a 5-punch chase combo ending in a launching blow, then a 2-second hands-in-the-air celebration during which it takes double damage |
+| BMF | Rapid 5-damage jabs up close; weaves (dodges) 75% of attacks, and 20% of weaves are critical: a 5-punch chase combo ending in a launching blow, then a 2-second hands-in-the-air celebration during which it takes double damage. Against another weaver (e.g. BMF vs BMF), a critical weave in the middle of the other's combo is a reversal (75%) or a flow counter (25%): it slips the rest of the combo, then lands one 15-damage strike that knocks them away and celebrates. Combos don't end in a celebration in those fights |
 
 Roster fighters can mix any of these abilities, with sliders for every stat. They're saved in the browser's local storage.
 

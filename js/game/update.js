@@ -52,7 +52,7 @@ function update(dt) {
       b.knockFly = Math.max(0, b.knockFly - dt);
     }
     regulateSpeed(b, dt);
-    if ((b.combo || (b.jabAnim && b.jabAnim.big)) && !reduceMotion) {
+    if ((b.combo || b.flow || (b.jabAnim && b.jabAnim.big)) && !reduceMotion) {
       // Streak behind a fighter hunting down its combo.
       particles.push({
         x: b.x, y: b.y, vx: -b.vx * 0.12, vy: -b.vy * 0.12,
