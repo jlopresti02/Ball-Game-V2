@@ -84,7 +84,7 @@ function drawHands(b, other) {
   var spinning = b.powerState && b.powerState.phase === "attack";
   var raging = b.rageState && b.rageState.phase === "attack";
   var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-  if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging || b.combo || b.swing) return;
+  if (!b.alive || b.kick || b.grappled || b.grapple || b.sprawl || spinning || raging || b.combo || b.swing) return;
   if (b.taunt && b.taunt.t < 0) return; // the punch is still finishing
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.

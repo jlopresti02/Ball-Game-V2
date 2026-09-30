@@ -143,7 +143,7 @@ function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 1
 // a slam into the bottom wall for finSlamDamage, then the opponent is pinned
 // and hit with finPunches heavy punches of finPunchDamage each.
 function defaultGrapple() {
-  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10 };
+  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50 };
 }
 // knockback is the speed the victim flies at during the wall slams; wallSlams
 // is how many walls it smashes into (0 turns the slams off), each dealing
@@ -181,7 +181,7 @@ function normalizeChar(ch) {
   if (!ch.kick) ch.kick = defaultKick();
   if (ch.hasGrapple === undefined) ch.hasGrapple = false;
   if (!ch.grapple) ch.grapple = defaultGrapple();
-  ["finSlamDamage", "finPunches", "finPunchDamage"].forEach(function (k) {
+  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance"].forEach(function (k) {
     if (ch.grapple[k] == null) ch.grapple[k] = defaultGrapple()[k];
   });
   if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;

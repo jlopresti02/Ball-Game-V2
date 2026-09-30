@@ -117,9 +117,10 @@ function fillEditorForm(s) {
   document.getElementById("grappleReachVal").textContent = s.grapple.reach;
   document.getElementById("grappleCounter").value = s.grapple.counterChance;
   document.getElementById("grappleCounterVal").textContent = s.grapple.counterChance + "%";
-  [["grappleFinSlam", "finSlamDamage"], ["grappleFinPunches", "finPunches"], ["grappleFinPunchDmg", "finPunchDamage"]].forEach(function (row) {
+  [["grappleFinSlam", "finSlamDamage"], ["grappleFinPunches", "finPunches"], ["grappleFinPunchDmg", "finPunchDamage"],
+   ["grappleSprawl", "sprawlChance", "%"], ["grappleReattack", "reattackChance", "%"]].forEach(function (row) {
     document.getElementById(row[0]).value = s.grapple[row[1]];
-    document.getElementById(row[0] + "Val").textContent = s.grapple[row[1]];
+    document.getElementById(row[0] + "Val").textContent = s.grapple[row[1]] + (row[2] || "");
   });
 
   document.getElementById("powerOn").setAttribute("aria-checked", String(s.hasPowerPunch));
@@ -333,7 +334,9 @@ var grappleSliders = [
   ["grappleCounter", "counterChance"],
   ["grappleFinSlam", "finSlamDamage"],
   ["grappleFinPunches", "finPunches"],
-  ["grappleFinPunchDmg", "finPunchDamage"]
+  ["grappleFinPunchDmg", "finPunchDamage"],
+  ["grappleSprawl", "sprawlChance"],
+  ["grappleReattack", "reattackChance"]
 ];
 grappleSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);
@@ -343,7 +346,7 @@ grappleSliders.forEach(function (row) {
     editState.grapple[row[1]] = v;
     if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
     else if (row[1] === "speed") out.textContent = v.toFixed(2) + "s";
-    else if (row[1] === "counterChance") out.textContent = v + "%";
+    else if (row[1] === "counterChance" || row[1] === "sprawlChance" || row[1] === "reattackChance") out.textContent = v + "%";
     else out.textContent = v;
   });
 });

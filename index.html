@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260930150112">
+<link rel="stylesheet" href="css/styles.css?v=20260930151344">
 </head>
 <body>
 <main>
@@ -273,6 +273,15 @@
         <div class="field">
           <label for="grappleFinPunchDmg">Finisher punch damage <span class="val" id="grappleFinPunchDmgVal">10</span></label>
           <input type="range" id="grappleFinPunchDmg" min="1" max="40" step="1" value="10">
+        </div>
+        <p class="fieldNote">Sprawl: when another fighter goes for a grab on this one, it can stuff the grab, tie up, then scramble. Either one can come out of it with a Reattack slam.</p>
+        <div class="field">
+          <label for="grappleSprawl">Sprawl chance <span class="val" id="grappleSprawlVal">30%</span></label>
+          <input type="range" id="grappleSprawl" min="0" max="100" step="5" value="30">
+        </div>
+        <div class="field">
+          <label for="grappleReattack">Wins the Reattack after its own sprawl <span class="val" id="grappleReattackVal">50%</span></label>
+          <input type="range" id="grappleReattack" min="0" max="100" step="5" value="50">
         </div>
       </div>
     </details>
@@ -586,22 +595,22 @@
 </main>
 
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20260930150112"></script>
-<script src="js/audio.js?v=20260930150112"></script>
-<script src="js/characters.js?v=20260930150112"></script>
-<script src="js/ui/select.js?v=20260930150112"></script>
-<script src="js/ui/cropper.js?v=20260930150112"></script>
-<script src="js/ui/editor.js?v=20260930150112"></script>
-<script src="js/game/match.js?v=20260930150112"></script>
-<script src="js/game/physics.js?v=20260930150112"></script>
-<script src="js/game/abilities.js?v=20260930150112"></script>
-<script src="js/game/weave.js?v=20260930150112"></script>
-<script src="js/game/finisher.js?v=20260930150112"></script>
-<script src="js/game/grapple-duel.js?v=20260930150112"></script>
-<script src="js/game/cte.js?v=20260930150112"></script>
-<script src="js/game/update.js?v=20260930150112"></script>
-<script src="js/game/draw-attacks.js?v=20260930150112"></script>
-<script src="js/game/draw.js?v=20260930150112"></script>
-<script src="js/main.js?v=20260930150112"></script>
+<script src="js/config.js?v=20260930151344"></script>
+<script src="js/audio.js?v=20260930151344"></script>
+<script src="js/characters.js?v=20260930151344"></script>
+<script src="js/ui/select.js?v=20260930151344"></script>
+<script src="js/ui/cropper.js?v=20260930151344"></script>
+<script src="js/ui/editor.js?v=20260930151344"></script>
+<script src="js/game/match.js?v=20260930151344"></script>
+<script src="js/game/physics.js?v=20260930151344"></script>
+<script src="js/game/abilities.js?v=20260930151344"></script>
+<script src="js/game/weave.js?v=20260930151344"></script>
+<script src="js/game/finisher.js?v=20260930151344"></script>
+<script src="js/game/grapple-duel.js?v=20260930151344"></script>
+<script src="js/game/cte.js?v=20260930151344"></script>
+<script src="js/game/update.js?v=20260930151344"></script>
+<script src="js/game/draw-attacks.js?v=20260930151344"></script>
+<script src="js/game/draw.js?v=20260930151344"></script>
+<script src="js/main.js?v=20260930151344"></script>
 </body>
 </html>

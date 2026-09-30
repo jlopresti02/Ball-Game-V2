@@ -558,6 +558,15 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
           <label for="grappleFinPunchDmg">Finisher punch damage <span class="val" id="grappleFinPunchDmgVal">10</span></label>
           <input type="range" id="grappleFinPunchDmg" min="1" max="40" step="1" value="10">
         </div>
+        <p class="fieldNote">Sprawl: when another fighter goes for a grab on this one, it can stuff the grab, tie up, then scramble. Either one can come out of it with a Reattack slam.</p>
+        <div class="field">
+          <label for="grappleSprawl">Sprawl chance <span class="val" id="grappleSprawlVal">30%</span></label>
+          <input type="range" id="grappleSprawl" min="0" max="100" step="5" value="30">
+        </div>
+        <div class="field">
+          <label for="grappleReattack">Wins the Reattack after its own sprawl <span class="val" id="grappleReattackVal">50%</span></label>
+          <input type="range" id="grappleReattack" min="0" max="100" step="5" value="50">
+        </div>
       </div>
     </details>
 
@@ -1537,7 +1546,7 @@ function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 1
 // a slam into the bottom wall for finSlamDamage, then the opponent is pinned
 // and hit with finPunches heavy punches of finPunchDamage each.
 function defaultGrapple() {
-  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10 };
+  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50 };
 }
 // knockback is the speed the victim flies at during the wall slams; wallSlams
 // is how many walls it smashes into (0 turns the slams off), each dealing
@@ -1575,7 +1584,7 @@ function normalizeChar(ch) {
   if (!ch.kick) ch.kick = defaultKick();
   if (ch.hasGrapple === undefined) ch.hasGrapple = false;
   if (!ch.grapple) ch.grapple = defaultGrapple();
-  ["finSlamDamage", "finPunches", "finPunchDamage"].forEach(function (k) {
+  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance"].forEach(function (k) {
     if (ch.grapple[k] == null) ch.grapple[k] = defaultGrapple()[k];
   });
   if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;
@@ -2168,9 +2177,10 @@ function fillEditorForm(s) {
   document.getElementById("grappleReachVal").textContent = s.grapple.reach;
   document.getElementById("grappleCounter").value = s.grapple.counterChance;
   document.getElementById("grappleCounterVal").textContent = s.grapple.counterChance + "%";
-  [["grappleFinSlam", "finSlamDamage"], ["grappleFinPunches", "finPunches"], ["grappleFinPunchDmg", "finPunchDamage"]].forEach(function (row) {
+  [["grappleFinSlam", "finSlamDamage"], ["grappleFinPunches", "finPunches"], ["grappleFinPunchDmg", "finPunchDamage"],
+   ["grappleSprawl", "sprawlChance", "%"], ["grappleReattack", "reattackChance", "%"]].forEach(function (row) {
     document.getElementById(row[0]).value = s.grapple[row[1]];
-    document.getElementById(row[0] + "Val").textContent = s.grapple[row[1]];
+    document.getElementById(row[0] + "Val").textContent = s.grapple[row[1]] + (row[2] || "");
   });
 
   document.getElementById("powerOn").setAttribute("aria-checked", String(s.hasPowerPunch));
@@ -2384,7 +2394,9 @@ var grappleSliders = [
   ["grappleCounter", "counterChance"],
   ["grappleFinSlam", "finSlamDamage"],
   ["grappleFinPunches", "finPunches"],
-  ["grappleFinPunchDmg", "finPunchDamage"]
+  ["grappleFinPunchDmg", "finPunchDamage"],
+  ["grappleSprawl", "sprawlChance"],
+  ["grappleReattack", "reattackChance"]
 ];
 grappleSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);
@@ -2394,7 +2406,7 @@ grappleSliders.forEach(function (row) {
     editState.grapple[row[1]] = v;
     if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
     else if (row[1] === "speed") out.textContent = v.toFixed(2) + "s";
-    else if (row[1] === "counterChance") out.textContent = v + "%";
+    else if (row[1] === "counterChance" || row[1] === "sprawlChance" || row[1] === "reattackChance") out.textContent = v + "%";
     else out.textContent = v;
   });
 });
@@ -2565,7 +2577,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, swing: null, forgetT: 0, healGlow: 0,
+    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -2621,6 +2633,7 @@ function beginGrapple(attacker, target) {
   target.slam = null; // a grab ends any wall slam in progress
   target.swing = null;
   target.flow = null;
+  target.sprawl = null; target.sprawled = false;
   var gr = attacker.char.grapple;
   var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
   var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;
@@ -2729,7 +2742,7 @@ function hurt(b, amount, source, attackerId) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
-      if (Math.random() < chance && !tryWeave(atk, b.id)) beginGrapple(b, atk);
+      if (Math.random() < chance && !tryWeave(atk, b.id)) attemptGrab(b, atk);
     }
   }
   return amount;
@@ -2767,7 +2780,7 @@ var SPEED_UP = 320;       // units/second gained each second while below normal 
 var SLOW_DOWN = 1.1;      // how quickly extra speed bleeds off (higher = faster)
 
 function inOrdinaryMovement(b) {
-  if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.flow || b.knockFly > 0) return false;
+  if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.flow || b.sprawl || b.sprawled || b.knockFly > 0) return false;
   if (b.powerState || b.rageState) return false;
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
@@ -2796,7 +2809,7 @@ function step(dt) {
     b = balls[i];
     var spinning = b.powerState && b.powerState.phase === "attack";
     var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-    if (!b.alive || b.grappled || b.grapple || spinning || sitting) continue;
+    if (!b.alive || b.grappled || b.grapple || b.sprawl || b.sprawled || spinning || sitting) continue;
     b.x += b.vx * dt; b.y += b.vy * dt;
     var hitWall = false, wnx = 0, wny = 0;
     if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); hitWall = true; wnx = 1; }
@@ -2817,7 +2830,7 @@ function step(dt) {
   // Sees Red keeps a normal collision box even mid-charge-dash, so it
   // still bounces off the opponent on contact like any other pair of
   // balls; only its punch damage is handled separately, on a timer.
-  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || aSpin || cSpin) return;
+  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || aSpin || cSpin) return;
   // A seated Watcher is an immovable, solid object: whoever runs into it
   // just bounces off, the way they would off a wall.
   if (aSit || cSit) {
@@ -2943,7 +2956,8 @@ function updateAbilities(dt) {
   for (var oi = 0; oi < 2; oi++) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
-    if (!self.alive || self.grappled) continue;
+    if (!self.alive || self.grappled || self.sprawled) continue;
+    if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.slam) {
       self.slam.t += dt;
       if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
@@ -3044,15 +3058,16 @@ function updateAbilities(dt) {
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
-      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
+      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
         if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
-        else {
-          beginGrapple(self, other);
+        else if (attemptGrab(self, other)) {
           if (self.initiativeReason) {
             // Shows why this Grappler won the race to the grab.
             floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
             self.initiativeReason = null;
           }
+        } else {
+          self.initiativeReason = null; // sprawled
         }
       }
       if (self.grapple && self.grapple.phase === "iowa") {
@@ -3734,6 +3749,7 @@ function readyToGrab(self, other, dt) {
   if (self.slam || self.combo || self.taunt || self.flow) return false;
   if (self.grappleCd - dt > 0) return false;
   if (!other.alive || other.grappled || other.invincible) return false;
+  if (self.sprawl || self.sprawled || other.sprawl || other.sprawled) return false;
   if (grabBlockedByImpunity(self, other)) return false;
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
   return d < self.r + other.r + self.char.grapple.reach;
@@ -3806,6 +3822,88 @@ function updateIowaStyle(self, g, dt) {
 // it landed on `grabber`.
 function grabBlockedByImpunity(grabber, target) {
   return !!(target.iowaSafe && target.iowaSafe.from === grabber.id && target.iowaSafe.t > 0);
+}
+
+// ---------------------------------------------------------------
+// Sprawl and Reattack. When a Grappler goes for a grab on another
+// Grappler, the defender has a chance to sprawl: it drops its weight onto
+// the attacker and stuffs the grab, and the two tie up for a moment. Then
+// it's a scramble: either one (50/50 by default) comes out of it and
+// slams the other (the Reattack). A Reattack can't itself be sprawled.
+// ---------------------------------------------------------------
+var SPRAWL_TIME = 0.6;
+
+// Every grab on a Grappler goes through here (normal grabs and counter-grabs).
+function attemptGrab(attacker, target) {
+  var gr = target.char.grapple;
+  if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100) {
+    beginSprawl(attacker, target);
+    return false;
+  }
+  beginGrapple(attacker, target);
+  return true;
+}
+
+function beginSprawl(attacker, defender) {
+  defender.sprawl = { attackerId: attacker.id, t: 0 };
+  attacker.sprawled = true;
+  attacker.grappleCd = attacker.char.grapple.cooldown;
+  // Both stop what they were doing and lock up.
+  [attacker, defender].forEach(function (b) {
+    b.vx = 0; b.vy = 0;
+    b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null;
+  });
+  floater(defender.x, Math.min(attacker.y, defender.y) - defender.r - 30, "SPRAWL", "crit");
+  playPunch(20);
+  if (!reduceMotion) shake = Math.max(shake, 8);
+  attacker.squash = { t: 0.2, max: 0.2, nx: (attacker.x - defender.x), ny: (attacker.y - defender.y) };
+  var l = Math.sqrt(attacker.squash.nx * attacker.squash.nx + attacker.squash.ny * attacker.squash.ny) || 1;
+  attacker.squash.nx /= l; attacker.squash.ny /= l;
+}
+
+// Runs on the sprawling defender each frame; the attacker is held still.
+function updateSprawl(self, dt) {
+  var sp = self.sprawl, atk = balls[sp.attackerId];
+  sp.t += dt;
+  // The defender stays draped over the attacker, pressing down.
+  var dx = atk.x - self.x, dy = atk.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var gap = self.r + atk.r - 10;
+  self.x = atk.x - dx / d * gap; self.y = atk.y - dy / d * gap;
+  self.vx = 0; self.vy = 0; atk.vx = 0; atk.vy = 0;
+  if (sp.t < SPRAWL_TIME) return;
+
+  // The scramble: who comes out on top and slams the other.
+  self.sprawl = null;
+  atk.sprawled = false;
+  var sprawlerWins = Math.random() < self.char.grapple.reattackChance / 100;
+  var winner = sprawlerWins ? self : atk, loser = sprawlerWins ? atk : self;
+  if (grabBlockedByImpunity(winner, loser)) { var tmp = winner; winner = loser; loser = tmp; }
+  if (!winner.alive || !loser.alive) return;
+  floater(winner.x, Math.min(winner.y, loser.y) - winner.r - 30, "REATTACK", "crit");
+  beginGrapple(winner, loser);
+}
+
+function drawSprawls() {
+  balls.forEach(function (self) {
+    if (!self.sprawl) return;
+    var atk = balls[self.sprawl.attackerId];
+    var dx = atk.x - self.x, dy = atk.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var nx = dx / d, ny = dy / d, px = -ny, py = nx;
+    // Both hands pressing down on the attacker's back.
+    ctx.save();
+    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    [1, -1].forEach(function (sgn) {
+      var hx = atk.x - nx * atk.r * 0.1 + px * atk.r * 0.72 * sgn, hy = atk.y - ny * atk.r * 0.1 + py * atk.r * 0.72 * sgn;
+      ctx.beginPath(); ctx.arc(hx, hy, atk.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    // A tie-up ring around the pair, filling up until the scramble.
+    var k = Math.min(1, self.sprawl.t / SPRAWL_TIME);
+    ctx.strokeStyle = theme.ink; ctx.globalAlpha = 0.5; ctx.lineWidth = 3; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc((self.x + atk.x) / 2, (self.y + atk.y) / 2, self.r + atk.r + 6, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  });
 }
 
 // CTE's abilities.
@@ -4226,7 +4324,7 @@ function drawHands(b, other) {
   var spinning = b.powerState && b.powerState.phase === "attack";
   var raging = b.rageState && b.rageState.phase === "attack";
   var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-  if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging || b.combo || b.swing) return;
+  if (!b.alive || b.kick || b.grappled || b.grapple || b.sprawl || spinning || raging || b.combo || b.swing) return;
   if (b.taunt && b.taunt.t < 0) return; // the punch is still finishing
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.
@@ -4788,6 +4886,7 @@ function draw() {
 
   drawWatcherLasers();
   drawFinishers();
+  drawSprawls();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

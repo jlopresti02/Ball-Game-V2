@@ -235,6 +235,7 @@ function draw() {
 
   drawWatcherLasers();
   drawFinishers();
+  drawSprawls();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

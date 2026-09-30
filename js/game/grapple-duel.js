@@ -46,6 +46,7 @@ function readyToGrab(self, other, dt) {
   if (self.slam || self.combo || self.taunt || self.flow) return false;
   if (self.grappleCd - dt > 0) return false;
   if (!other.alive || other.grappled || other.invincible) return false;
+  if (self.sprawl || self.sprawled || other.sprawl || other.sprawled) return false;
   if (grabBlockedByImpunity(self, other)) return false;
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
   return d < self.r + other.r + self.char.grapple.reach;
@@ -118,4 +119,86 @@ function updateIowaStyle(self, g, dt) {
 // it landed on `grabber`.
 function grabBlockedByImpunity(grabber, target) {
   return !!(target.iowaSafe && target.iowaSafe.from === grabber.id && target.iowaSafe.t > 0);
+}
+
+// ---------------------------------------------------------------
+// Sprawl and Reattack. When a Grappler goes for a grab on another
+// Grappler, the defender has a chance to sprawl: it drops its weight onto
+// the attacker and stuffs the grab, and the two tie up for a moment. Then
+// it's a scramble: either one (50/50 by default) comes out of it and
+// slams the other (the Reattack). A Reattack can't itself be sprawled.
+// ---------------------------------------------------------------
+var SPRAWL_TIME = 0.6;
+
+// Every grab on a Grappler goes through here (normal grabs and counter-grabs).
+function attemptGrab(attacker, target) {
+  var gr = target.char.grapple;
+  if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100) {
+    beginSprawl(attacker, target);
+    return false;
+  }
+  beginGrapple(attacker, target);
+  return true;
+}
+
+function beginSprawl(attacker, defender) {
+  defender.sprawl = { attackerId: attacker.id, t: 0 };
+  attacker.sprawled = true;
+  attacker.grappleCd = attacker.char.grapple.cooldown;
+  // Both stop what they were doing and lock up.
+  [attacker, defender].forEach(function (b) {
+    b.vx = 0; b.vy = 0;
+    b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null;
+  });
+  floater(defender.x, Math.min(attacker.y, defender.y) - defender.r - 30, "SPRAWL", "crit");
+  playPunch(20);
+  if (!reduceMotion) shake = Math.max(shake, 8);
+  attacker.squash = { t: 0.2, max: 0.2, nx: (attacker.x - defender.x), ny: (attacker.y - defender.y) };
+  var l = Math.sqrt(attacker.squash.nx * attacker.squash.nx + attacker.squash.ny * attacker.squash.ny) || 1;
+  attacker.squash.nx /= l; attacker.squash.ny /= l;
+}
+
+// Runs on the sprawling defender each frame; the attacker is held still.
+function updateSprawl(self, dt) {
+  var sp = self.sprawl, atk = balls[sp.attackerId];
+  sp.t += dt;
+  // The defender stays draped over the attacker, pressing down.
+  var dx = atk.x - self.x, dy = atk.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var gap = self.r + atk.r - 10;
+  self.x = atk.x - dx / d * gap; self.y = atk.y - dy / d * gap;
+  self.vx = 0; self.vy = 0; atk.vx = 0; atk.vy = 0;
+  if (sp.t < SPRAWL_TIME) return;
+
+  // The scramble: who comes out on top and slams the other.
+  self.sprawl = null;
+  atk.sprawled = false;
+  var sprawlerWins = Math.random() < self.char.grapple.reattackChance / 100;
+  var winner = sprawlerWins ? self : atk, loser = sprawlerWins ? atk : self;
+  if (grabBlockedByImpunity(winner, loser)) { var tmp = winner; winner = loser; loser = tmp; }
+  if (!winner.alive || !loser.alive) return;
+  floater(winner.x, Math.min(winner.y, loser.y) - winner.r - 30, "REATTACK", "crit");
+  beginGrapple(winner, loser);
+}
+
+function drawSprawls() {
+  balls.forEach(function (self) {
+    if (!self.sprawl) return;
+    var atk = balls[self.sprawl.attackerId];
+    var dx = atk.x - self.x, dy = atk.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var nx = dx / d, ny = dy / d, px = -ny, py = nx;
+    // Both hands pressing down on the attacker's back.
+    ctx.save();
+    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    [1, -1].forEach(function (sgn) {
+      var hx = atk.x - nx * atk.r * 0.1 + px * atk.r * 0.72 * sgn, hy = atk.y - ny * atk.r * 0.1 + py * atk.r * 0.72 * sgn;
+      ctx.beginPath(); ctx.arc(hx, hy, atk.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    // A tie-up ring around the pair, filling up until the scramble.
+    var k = Math.min(1, self.sprawl.t / SPRAWL_TIME);
+    ctx.strokeStyle = theme.ink; ctx.globalAlpha = 0.5; ctx.lineWidth = 3; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.arc((self.x + atk.x) / 2, (self.y + atk.y) / 2, self.r + atk.r + 6, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  });
 }

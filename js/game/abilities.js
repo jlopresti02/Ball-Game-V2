@@ -95,7 +95,8 @@ function updateAbilities(dt) {
   for (var oi = 0; oi < 2; oi++) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
-    if (!self.alive || self.grappled) continue;
+    if (!self.alive || self.grappled || self.sprawled) continue;
+    if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.slam) {
       self.slam.t += dt;
       if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
@@ -196,15 +197,16 @@ function updateAbilities(dt) {
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
-      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
+      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
         if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
-        else {
-          beginGrapple(self, other);
+        else if (attemptGrab(self, other)) {
           if (self.initiativeReason) {
             // Shows why this Grappler won the race to the grab.
             floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
             self.initiativeReason = null;
           }
+        } else {
+          self.initiativeReason = null; // sprawled
         }
       }
       if (self.grapple && self.grapple.phase === "iowa") {
