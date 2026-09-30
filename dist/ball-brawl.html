@@ -2565,7 +2565,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false, flow: null, swing: null, forgetT: 0, healGlow: 0,
+    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -2605,7 +2605,7 @@ function start() {
 }
 
 function floater(x, y, text, kind) {
-  var life = kind === "tick" ? 0.4 : (kind === "crit" ? 1.3 : 0.9);
+  var life = kind === "tick" ? 0.4 : (kind === "crit" ? 1.3 : (kind === "note" ? 1.1 : 0.9));
   floaters.push({ x: x, y: y, text: text, kind: kind, life: life, max: life });
 }
 
@@ -2938,6 +2938,8 @@ function updateAbilities(dt) {
   // Which fighter acts first flips randomly every frame, so neither side
   // always wins ties (like two identical fighters swinging at the same moment).
   var order = Math.random() < 0.5 ? [0, 1] : [1, 0];
+  // Grappler vs Grappler: if both could grab this frame, only one may.
+  resolveGrabInitiative(dt);
   for (var oi = 0; oi < 2; oi++) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
@@ -3042,11 +3044,20 @@ function updateAbilities(dt) {
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
-      if (!self.grapple && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && d < self.r + other.r + gr.reach) {
+      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && d < self.r + other.r + gr.reach) {
         if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
-        else beginGrapple(self, other);
+        else {
+          beginGrapple(self, other);
+          if (self.initiativeReason) {
+            // Shows why this Grappler won the race to the grab.
+            floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
+            self.initiativeReason = null;
+          }
+        }
       }
-      if (self.grapple && self.grapple.finisher) {
+      if (self.grapple && self.grapple.phase === "iowa") {
+        updateIowaStyle(self, self.grapple, dt);
+      } else if (self.grapple && self.grapple.finisher) {
         updateFinisher(self, self.grapple, dt);
       } else if (self.grapple) {
         var g = self.grapple;
@@ -3074,27 +3085,36 @@ function updateAbilities(dt) {
         }
         if (!g.dealt && pt >= 1) {
           g.dealt = true;
+          var iowa = false;
           if (tgt.alive) {
             hurt(tgt, gr.damage, "grapple", self.id);
             if (!reduceMotion) shake = 14;
             burst(tgt);
-            // Launch angle is randomized every time (within a spread off
-            // the wall's own direction) so the pair doesn't fly off in the
-            // exact same straight line on every slam.
-            var wallAngle = Math.atan2(g.ny, g.nx);
-            var spread = 65 * Math.PI / 180;
-            var tgtAngle = wallAngle + (Math.random() * 2 - 1) * spread;
-            var selfAngle = wallAngle + Math.PI + (Math.random() * 2 - 1) * spread;
-            tgt.vx = Math.cos(tgtAngle) * 260; tgt.vy = Math.sin(tgtAngle) * 260;
-            // The grappler never takes damage from its own slam, and
-            // launches off with real speed of its own once it lets go,
-            // rather than drifting away at a crawl.
-            self.vx = Math.cos(selfAngle) * 320; self.vy = Math.sin(selfAngle) * 320;
             checkEnd();
+            if (tgt.alive && isGrapplerDuel(self, tgt)) {
+              // Grappler vs Grappler: keeps pressing them into the wall,
+              // then disengages (Iowa Style, see grapple-duel.js).
+              beginIowaStyle(self, tgt, g);
+              iowa = true;
+            } else if (tgt.alive) {
+              // Launch angle is randomized every time (within a spread off
+              // the wall's own direction) so the pair doesn't fly off in the
+              // exact same straight line on every slam.
+              var wallAngle = Math.atan2(g.ny, g.nx);
+              var spread = 65 * Math.PI / 180;
+              var tgtAngle = wallAngle + (Math.random() * 2 - 1) * spread;
+              var selfAngle = wallAngle + Math.PI + (Math.random() * 2 - 1) * spread;
+              tgt.vx = Math.cos(tgtAngle) * 260; tgt.vy = Math.sin(tgtAngle) * 260;
+              // The grappler never takes damage from its own slam, and
+              // launches off with real speed of its own once it lets go,
+              // rather than drifting away at a crawl.
+              self.vx = Math.cos(selfAngle) * 320; self.vy = Math.sin(selfAngle) * 320;
+            }
           }
-          tgt.grappled = false;
+          if (!iowa) { tgt.grappled = false; self.grapple = null; }
+        } else if (pt >= 1 && !g.dealt) {
+          self.grapple = null;
         }
-        if (pt >= 1) self.grapple = null;
       }
     }
 
@@ -3664,6 +3684,117 @@ function drawFinishers() {
     ctx.beginPath(); ctx.arc(fx, fy, r * 0.52, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.restore();
   });
+}
+
+// Grappler vs Grappler.
+//
+// Initiative: when both Grapplers could grab each other in the same moment,
+// only one gets to.
+//   - Blindside: if one is coming at the other from the side or behind
+//     (it's facing its opponent but its opponent isn't facing it), it grabs.
+//   - Otherwise (face to face): the one moving faster grabs; if their speeds
+//     are equal, the one with more health; if that's equal too, a coin flip.
+//   (A stats system for character designs will be added to the tie breakers
+//   later.)
+//
+// Iowa Style: after one Grappler slams the other into a wall, it keeps
+// pressing them into it for a moment, then disengages cleanly, unharmed.
+"use strict";
+
+var FACING_CONE = 60 * Math.PI / 180;   // how far to either side still counts as "in front"
+var SPEED_TIE = 2;                      // speeds within this much count as equal
+var HEALTH_TIE = 0.5;                   // health within this much counts as equal
+var IOWA_PRESS_TIME = 0.4;              // how long it keeps pressing them into the wall
+var IOWA_DISENGAGE_SPEED = 380;
+
+function isGrapplerDuel(a, b) {
+  return a.char.hasGrapple && b.char.hasGrapple;
+}
+
+// Which way a fighter is facing: where it's moving, or toward the opponent
+// if it's standing still (the same rule its guard hands follow).
+function facingOf(b, other) {
+  var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  if (s > 1) return { x: b.vx / s, y: b.vy / s };
+  var dx = other.x - b.x, dy = other.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  return { x: dx / d, y: dy / d };
+}
+
+function isFacing(a, b) {
+  var f = facingOf(a, b);
+  var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var cos = (f.x * dx + f.y * dy) / d;
+  return cos >= Math.cos(FACING_CONE);
+}
+
+// Would this Grappler start a grab this frame if nothing stopped it?
+function readyToGrab(self, other, dt) {
+  if (!self.char.hasGrapple || !self.alive || self.grappled || self.grapple) return false;
+  if (self.slam || self.combo || self.taunt || self.flow) return false;
+  if (self.grappleCd - dt > 0) return false;
+  if (!other.alive || other.grappled || other.invincible) return false;
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
+  return d < self.r + other.r + self.char.grapple.reach;
+}
+
+// Runs once per frame before either fighter acts. If both Grapplers are
+// ready to grab each other right now, picks who gets initiative and holds
+// the other back for this frame.
+function resolveGrabInitiative(dt) {
+  var a = balls[0], b = balls[1];
+  a.grabHold = false; b.grabHold = false;
+  if (!isGrapplerDuel(a, b) || !readyToGrab(a, b, dt) || !readyToGrab(b, a, dt)) return;
+
+  var winner, reason;
+  var aSees = isFacing(a, b), bSees = isFacing(b, a);
+  if (aSees && !bSees) { winner = a; reason = "BLINDSIDE"; }
+  else if (bSees && !aSees) { winner = b; reason = "BLINDSIDE"; }
+  else {
+    var sa = Math.sqrt(a.vx * a.vx + a.vy * a.vy), sb = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+    if (Math.abs(sa - sb) > SPEED_TIE) { winner = sa > sb ? a : b; reason = "FASTER"; }
+    else if (Math.abs(a.hp - b.hp) > HEALTH_TIE) { winner = a.hp > b.hp ? a : b; reason = "MORE HEALTH"; }
+    else { winner = Math.random() < 0.5 ? a : b; reason = "COIN FLIP"; }
+  }
+  var loser = winner === a ? b : a;
+  loser.grabHold = true;
+  winner.initiativeReason = reason; // shown when the grab starts
+}
+
+// Called when a grab's slam lands in a Grappler vs Grappler match.
+function beginIowaStyle(self, tgt, g) {
+  g.phase = "iowa";
+  g.pressT = 0;
+  tgt.grappled = true;
+  floater((self.x + tgt.x) / 2, Math.min(self.y, tgt.y) - self.r - 34, "IOWA STYLE", "crit");
+}
+
+// Keeps the opponent pinned against the wall with the Grappler leaning into
+// them, then the Grappler pushes off and backs away.
+function updateIowaStyle(self, g, dt) {
+  var tgt = balls[g.targetId];
+  g.pressT += dt;
+  // The pinned fighter stays flat against the wall.
+  tgt.x = g.endX; tgt.y = g.endY;
+  tgt.vx = 0; tgt.vy = 0;
+  // The Grappler leans in, pulsing like it's shoving them into the wall.
+  var shove = Math.max(0, Math.sin(g.pressT * 22)) * 4;
+  var gap = self.r + tgt.r - 4 - shove;
+  self.x = tgt.x + g.nx * gap;
+  self.y = tgt.y + g.ny * gap;
+  self.vx = 0; self.vy = 0;
+  if (g.pressT < 0.3 && Math.floor(g.pressT * 22 / Math.PI) !== Math.floor((g.pressT - dt) * 22 / Math.PI)) {
+    tgt.squash = { t: 0.1, max: 0.1, nx: g.nx, ny: g.ny };
+  }
+  if (g.pressT >= IOWA_PRESS_TIME) {
+    // Disengage: pushes off straight back out into the arena.
+    self.grapple = null;
+    tgt.grappled = false;
+    self.vx = g.nx * IOWA_DISENGAGE_SPEED; self.vy = g.ny * IOWA_DISENGAGE_SPEED;
+    // The one who got slammed peels off along the wall.
+    var side = Math.random() < 0.5 ? -1 : 1;
+    var tx = -g.ny * side, ty = g.nx * side;
+    tgt.vx = (tx * 0.9 + g.nx * 0.45) * 260; tgt.vy = (ty * 0.9 + g.ny * 0.45) * 260;
+  }
 }
 
 // CTE's abilities.
@@ -4357,6 +4488,19 @@ function drawGrapple(self) {
   var g = self.grapple;
   if (!g) return;
   if (g.finisher && g.phase !== "carry") return; // the pin is drawn by drawFinishers
+  if (g.phase === "iowa") {
+    // Iowa Style: both hands shoving the opponent flat into the wall.
+    var tg = balls[g.targetId];
+    var px = -g.ny, py = g.nx, hr0 = tg.r * 0.36;
+    ctx.save();
+    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    [1, -1].forEach(function (sgn) {
+      var hx = tg.x + g.nx * tg.r * 0.55 + px * tg.r * 0.62 * sgn, hy = tg.y + g.ny * tg.r * 0.55 + py * tg.r * 0.62 * sgn;
+      ctx.beginPath(); ctx.arc(hx, hy, hr0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
   var tgt = balls[g.targetId];
   if (!tgt) return;
   var pt = g.pt || 0;
@@ -4647,12 +4791,13 @@ function draw() {
   floaters.forEach(function (f) {
     var t = f.life / f.max;
     ctx.globalAlpha = Math.min(1, t * 2);
-    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : (f.kind === "crit" ? 32 : 28));
+    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : (f.kind === "crit" ? 32 : (f.kind === "note" ? 17 : 28)));
     ctx.font = "800 " + size + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
-    var fx = Math.min(W - 50, Math.max(50, f.x)), fy = Math.max(18, f.y);
+    var halfW = ctx.measureText(f.text).width / 2 + 6; // keeps wide text fully inside the arena
+    var fx = Math.min(W - halfW, Math.max(halfW, f.x)), fy = Math.max(18, f.y);
     ctx.lineWidth = f.kind === "tick" ? 3 : 6; ctx.lineJoin = "round";
     ctx.strokeStyle = theme.floor; ctx.strokeText(f.text, fx, fy);
-    ctx.fillStyle = (f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
+    ctx.fillStyle = f.kind === "note" ? theme.ink : ((f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit); ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
 }

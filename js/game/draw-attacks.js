@@ -358,6 +358,19 @@ function drawGrapple(self) {
   var g = self.grapple;
   if (!g) return;
   if (g.finisher && g.phase !== "carry") return; // the pin is drawn by drawFinishers
+  if (g.phase === "iowa") {
+    // Iowa Style: both hands shoving the opponent flat into the wall.
+    var tg = balls[g.targetId];
+    var px = -g.ny, py = g.nx, hr0 = tg.r * 0.36;
+    ctx.save();
+    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    [1, -1].forEach(function (sgn) {
+      var hx = tg.x + g.nx * tg.r * 0.55 + px * tg.r * 0.62 * sgn, hy = tg.y + g.ny * tg.r * 0.55 + py * tg.r * 0.62 * sgn;
+      ctx.beginPath(); ctx.arc(hx, hy, hr0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    ctx.restore();
+    return;
+  }
   var tgt = balls[g.targetId];
   if (!tgt) return;
   var pt = g.pt || 0;

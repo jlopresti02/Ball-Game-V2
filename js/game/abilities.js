@@ -90,6 +90,8 @@ function updateAbilities(dt) {
   // Which fighter acts first flips randomly every frame, so neither side
   // always wins ties (like two identical fighters swinging at the same moment).
   var order = Math.random() < 0.5 ? [0, 1] : [1, 0];
+  // Grappler vs Grappler: if both could grab this frame, only one may.
+  resolveGrabInitiative(dt);
   for (var oi = 0; oi < 2; oi++) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
@@ -194,11 +196,20 @@ function updateAbilities(dt) {
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
-      if (!self.grapple && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && d < self.r + other.r + gr.reach) {
+      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.invincible && d < self.r + other.r + gr.reach) {
         if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
-        else beginGrapple(self, other);
+        else {
+          beginGrapple(self, other);
+          if (self.initiativeReason) {
+            // Shows why this Grappler won the race to the grab.
+            floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
+            self.initiativeReason = null;
+          }
+        }
       }
-      if (self.grapple && self.grapple.finisher) {
+      if (self.grapple && self.grapple.phase === "iowa") {
+        updateIowaStyle(self, self.grapple, dt);
+      } else if (self.grapple && self.grapple.finisher) {
         updateFinisher(self, self.grapple, dt);
       } else if (self.grapple) {
         var g = self.grapple;
@@ -226,27 +237,36 @@ function updateAbilities(dt) {
         }
         if (!g.dealt && pt >= 1) {
           g.dealt = true;
+          var iowa = false;
           if (tgt.alive) {
             hurt(tgt, gr.damage, "grapple", self.id);
             if (!reduceMotion) shake = 14;
             burst(tgt);
-            // Launch angle is randomized every time (within a spread off
-            // the wall's own direction) so the pair doesn't fly off in the
-            // exact same straight line on every slam.
-            var wallAngle = Math.atan2(g.ny, g.nx);
-            var spread = 65 * Math.PI / 180;
-            var tgtAngle = wallAngle + (Math.random() * 2 - 1) * spread;
-            var selfAngle = wallAngle + Math.PI + (Math.random() * 2 - 1) * spread;
-            tgt.vx = Math.cos(tgtAngle) * 260; tgt.vy = Math.sin(tgtAngle) * 260;
-            // The grappler never takes damage from its own slam, and
-            // launches off with real speed of its own once it lets go,
-            // rather than drifting away at a crawl.
-            self.vx = Math.cos(selfAngle) * 320; self.vy = Math.sin(selfAngle) * 320;
             checkEnd();
+            if (tgt.alive && isGrapplerDuel(self, tgt)) {
+              // Grappler vs Grappler: keeps pressing them into the wall,
+              // then disengages (Iowa Style, see grapple-duel.js).
+              beginIowaStyle(self, tgt, g);
+              iowa = true;
+            } else if (tgt.alive) {
+              // Launch angle is randomized every time (within a spread off
+              // the wall's own direction) so the pair doesn't fly off in the
+              // exact same straight line on every slam.
+              var wallAngle = Math.atan2(g.ny, g.nx);
+              var spread = 65 * Math.PI / 180;
+              var tgtAngle = wallAngle + (Math.random() * 2 - 1) * spread;
+              var selfAngle = wallAngle + Math.PI + (Math.random() * 2 - 1) * spread;
+              tgt.vx = Math.cos(tgtAngle) * 260; tgt.vy = Math.sin(tgtAngle) * 260;
+              // The grappler never takes damage from its own slam, and
+              // launches off with real speed of its own once it lets go,
+              // rather than drifting away at a crawl.
+              self.vx = Math.cos(selfAngle) * 320; self.vy = Math.sin(selfAngle) * 320;
+            }
           }
-          tgt.grappled = false;
+          if (!iowa) { tgt.grappled = false; self.grapple = null; }
+        } else if (pt >= 1 && !g.dealt) {
+          self.grapple = null;
         }
-        if (pt >= 1) self.grapple = null;
       }
     }
 

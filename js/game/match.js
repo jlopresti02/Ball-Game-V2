@@ -36,7 +36,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false, flow: null, swing: null, forgetT: 0, healGlow: 0,
+    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -76,7 +76,7 @@ function start() {
 }
 
 function floater(x, y, text, kind) {
-  var life = kind === "tick" ? 0.4 : (kind === "crit" ? 1.3 : 0.9);
+  var life = kind === "tick" ? 0.4 : (kind === "crit" ? 1.3 : (kind === "note" ? 1.1 : 0.9));
   floaters.push({ x: x, y: y, text: text, kind: kind, life: life, max: life });
 }
 

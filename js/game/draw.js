@@ -250,12 +250,13 @@ function draw() {
   floaters.forEach(function (f) {
     var t = f.life / f.max;
     ctx.globalAlpha = Math.min(1, t * 2);
-    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : (f.kind === "crit" ? 32 : 28));
+    var size = f.kind === "hit" ? 34 : (f.kind === "tick" ? 15 : (f.kind === "crit" ? 32 : (f.kind === "note" ? 17 : 28)));
     ctx.font = "800 " + size + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
-    var fx = Math.min(W - 50, Math.max(50, f.x)), fy = Math.max(18, f.y);
+    var halfW = ctx.measureText(f.text).width / 2 + 6; // keeps wide text fully inside the arena
+    var fx = Math.min(W - halfW, Math.max(halfW, f.x)), fy = Math.max(18, f.y);
     ctx.lineWidth = f.kind === "tick" ? 3 : 6; ctx.lineJoin = "round";
     ctx.strokeStyle = theme.floor; ctx.strokeText(f.text, fx, fy);
-    ctx.fillStyle = (f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit; ctx.fillText(f.text, fx, fy);
+    ctx.fillStyle = f.kind === "note" ? theme.ink : ((f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit); ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
 }
