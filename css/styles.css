@@ -255,6 +255,16 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .bar .ghost { background: var(--ink); opacity: 0.35; }
 .role { margin-top: 5px; min-height: 1.2em; font-size: 16px; line-height: 1.2; color: var(--muted); }
 .fighter.right .role { text-align: right; }
+
+/* CTE Rejuvenation: fills up toward the next heal, then empties. */
+.rejuv { margin-top: 6px; }
+.rejuvLabel { font-size: 14px; font-weight: 700; color: var(--muted); letter-spacing: 0.02em; margin-bottom: 2px; }
+.fighter.right .rejuvLabel { text-align: right; }
+.rejuvBar { position: relative; height: 12px; background: var(--track); border: 2px solid var(--wall); border-radius: 3px; overflow: hidden; }
+.rejuvFill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--dodge); }
+.fighter.right .rejuvFill { left: auto; right: 0; }
+.rejuv.healing .rejuvBar { box-shadow: 0 0 0 3px var(--dodge); }
+.rejuv.healing .rejuvLabel { color: var(--dodge); }
 .fighter.dead .name { opacity: 0.45; text-decoration: line-through; }
 
 .arena { position: relative; border: 6px solid var(--wall); border-radius: 8px; overflow: hidden; background: var(--floor); }

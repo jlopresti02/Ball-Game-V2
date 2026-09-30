@@ -49,6 +49,7 @@ function startMatchWith(ch0, ch1) {
     document.getElementById("name" + i).style.color = ch.color;
     document.getElementById("fill" + i).style.background = ch.color;
     document.getElementById("role" + i).textContent = abilitySummary(ch);
+    document.getElementById("rejuv" + i).hidden = !ch.hasForget;
     document.getElementById("hud" + i).classList.remove("dead");
   });
 

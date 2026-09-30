@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260929210947">
+<link rel="stylesheet" href="css/styles.css?v=20260929212008">
 </head>
 <body>
 <main>
@@ -507,7 +507,7 @@
       <summary>
         <div class="abilityHead">
           <div class="htext">
-            <span class="htitle">Forget</span>
+            <span class="htitle">CTE Rejuvenation</span>
             <span class="hsub">Every few seconds, forgets some of the damage it's taken and regains health</span>
           </div>
           <button type="button" class="switch" id="forgetOn" role="switch" aria-checked="false" aria-label="Toggle forget"><span class="knob"></span></button>
@@ -541,12 +541,20 @@
         <div class="bar" role="progressbar" aria-label="Left fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar0">
           <div class="ghost" id="ghost0"></div><div class="fill" id="fill0"></div>
         </div>
+        <div class="rejuv" id="rejuv0" hidden>
+          <div class="rejuvLabel">CTE Rejuvenation</div>
+          <div class="rejuvBar" role="progressbar" aria-label="CTE Rejuvenation charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="rejuvBar0"><div class="rejuvFill" id="rejuvFill0"></div></div>
+        </div>
         <div class="role" id="role0"></div>
       </div>
       <div class="fighter right" data-id="1" id="hud1">
         <div class="row"><span class="name" id="name1">Blue</span><span class="hp" id="hp1">200</span></div>
         <div class="bar" role="progressbar" aria-label="Right fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar1">
           <div class="ghost" id="ghost1"></div><div class="fill" id="fill1"></div>
+        </div>
+        <div class="rejuv" id="rejuv1" hidden>
+          <div class="rejuvLabel">CTE Rejuvenation</div>
+          <div class="rejuvBar" role="progressbar" aria-label="CTE Rejuvenation charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="rejuvBar1"><div class="rejuvFill" id="rejuvFill1"></div></div>
         </div>
         <div class="role" id="role1"></div>
       </div>
@@ -569,21 +577,21 @@
 </main>
 
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20260929210947"></script>
-<script src="js/audio.js?v=20260929210947"></script>
-<script src="js/characters.js?v=20260929210947"></script>
-<script src="js/ui/select.js?v=20260929210947"></script>
-<script src="js/ui/cropper.js?v=20260929210947"></script>
-<script src="js/ui/editor.js?v=20260929210947"></script>
-<script src="js/game/match.js?v=20260929210947"></script>
-<script src="js/game/physics.js?v=20260929210947"></script>
-<script src="js/game/abilities.js?v=20260929210947"></script>
-<script src="js/game/weave.js?v=20260929210947"></script>
-<script src="js/game/finisher.js?v=20260929210947"></script>
-<script src="js/game/cte.js?v=20260929210947"></script>
-<script src="js/game/update.js?v=20260929210947"></script>
-<script src="js/game/draw-attacks.js?v=20260929210947"></script>
-<script src="js/game/draw.js?v=20260929210947"></script>
-<script src="js/main.js?v=20260929210947"></script>
+<script src="js/config.js?v=20260929212008"></script>
+<script src="js/audio.js?v=20260929212008"></script>
+<script src="js/characters.js?v=20260929212008"></script>
+<script src="js/ui/select.js?v=20260929212008"></script>
+<script src="js/ui/cropper.js?v=20260929212008"></script>
+<script src="js/ui/editor.js?v=20260929212008"></script>
+<script src="js/game/match.js?v=20260929212008"></script>
+<script src="js/game/physics.js?v=20260929212008"></script>
+<script src="js/game/abilities.js?v=20260929212008"></script>
+<script src="js/game/weave.js?v=20260929212008"></script>
+<script src="js/game/finisher.js?v=20260929212008"></script>
+<script src="js/game/cte.js?v=20260929212008"></script>
+<script src="js/game/update.js?v=20260929212008"></script>
+<script src="js/game/draw-attacks.js?v=20260929212008"></script>
+<script src="js/game/draw.js?v=20260929212008"></script>
+<script src="js/main.js?v=20260929212008"></script>
 </body>
 </html>

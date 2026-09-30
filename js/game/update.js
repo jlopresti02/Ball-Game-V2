@@ -98,6 +98,25 @@ function updateHud(force) {
     document.getElementById("ghost" + i).style.width = (b.shown / MAX_HP * 100) + "%";
     document.getElementById("bar" + i).setAttribute("aria-valuenow", rounded);
   }
+  updateRejuvHud(force);
+}
+
+// CTE Rejuvenation bar: fills as the next heal gets closer, then empties
+// when the timer resets, glowing for a moment as the heal lands.
+var rejuvCache = [];
+function updateRejuvHud(force) {
+  for (var i = 0; i < 2; i++) {
+    var b = balls[i];
+    if (!b.char.hasForget) continue;
+    var p = Math.max(0, Math.min(1, (b.forgetT || 0) / b.char.forget.every));
+    var healing = b.healGlow > 0;
+    var key = Math.round(p * 400) + (healing ? "h" : "");
+    if (!force && rejuvCache[i] === key) continue;
+    rejuvCache[i] = key;
+    document.getElementById("rejuvFill" + i).style.width = (p * 100) + "%";
+    document.getElementById("rejuvBar" + i).setAttribute("aria-valuenow", Math.round(p * 100));
+    document.getElementById("rejuv" + i).classList.toggle("healing", healing);
+  }
 }
 
 function resize() {

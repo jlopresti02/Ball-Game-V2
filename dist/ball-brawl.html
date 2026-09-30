@@ -265,6 +265,16 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .bar .ghost { background: var(--ink); opacity: 0.35; }
 .role { margin-top: 5px; min-height: 1.2em; font-size: 16px; line-height: 1.2; color: var(--muted); }
 .fighter.right .role { text-align: right; }
+
+/* CTE Rejuvenation: fills up toward the next heal, then empties. */
+.rejuv { margin-top: 6px; }
+.rejuvLabel { font-size: 14px; font-weight: 700; color: var(--muted); letter-spacing: 0.02em; margin-bottom: 2px; }
+.fighter.right .rejuvLabel { text-align: right; }
+.rejuvBar { position: relative; height: 12px; background: var(--track); border: 2px solid var(--wall); border-radius: 3px; overflow: hidden; }
+.rejuvFill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--dodge); }
+.fighter.right .rejuvFill { left: auto; right: 0; }
+.rejuv.healing .rejuvBar { box-shadow: 0 0 0 3px var(--dodge); }
+.rejuv.healing .rejuvLabel { color: var(--dodge); }
 .fighter.dead .name { opacity: 0.45; text-decoration: line-through; }
 
 .arena { position: relative; border: 6px solid var(--wall); border-radius: 8px; overflow: hidden; background: var(--floor); }
@@ -781,7 +791,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       <summary>
         <div class="abilityHead">
           <div class="htext">
-            <span class="htitle">Forget</span>
+            <span class="htitle">CTE Rejuvenation</span>
             <span class="hsub">Every few seconds, forgets some of the damage it's taken and regains health</span>
           </div>
           <button type="button" class="switch" id="forgetOn" role="switch" aria-checked="false" aria-label="Toggle forget"><span class="knob"></span></button>
@@ -815,12 +825,20 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <div class="bar" role="progressbar" aria-label="Left fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar0">
           <div class="ghost" id="ghost0"></div><div class="fill" id="fill0"></div>
         </div>
+        <div class="rejuv" id="rejuv0" hidden>
+          <div class="rejuvLabel">CTE Rejuvenation</div>
+          <div class="rejuvBar" role="progressbar" aria-label="CTE Rejuvenation charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="rejuvBar0"><div class="rejuvFill" id="rejuvFill0"></div></div>
+        </div>
         <div class="role" id="role0"></div>
       </div>
       <div class="fighter right" data-id="1" id="hud1">
         <div class="row"><span class="name" id="name1">Blue</span><span class="hp" id="hp1">200</span></div>
         <div class="bar" role="progressbar" aria-label="Right fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar1">
           <div class="ghost" id="ghost1"></div><div class="fill" id="fill1"></div>
+        </div>
+        <div class="rejuv" id="rejuv1" hidden>
+          <div class="rejuvLabel">CTE Rejuvenation</div>
+          <div class="rejuvBar" role="progressbar" aria-label="CTE Rejuvenation charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="rejuvBar1"><div class="rejuvFill" id="rejuvFill1"></div></div>
         </div>
         <div class="role" id="role1"></div>
       </div>
@@ -2508,6 +2526,7 @@ function startMatchWith(ch0, ch1) {
     document.getElementById("name" + i).style.color = ch.color;
     document.getElementById("fill" + i).style.background = ch.color;
     document.getElementById("role" + i).textContent = abilitySummary(ch);
+    document.getElementById("rejuv" + i).hidden = !ch.hasForget;
     document.getElementById("hud" + i).classList.remove("dead");
   });
 
@@ -3811,6 +3830,25 @@ function updateHud(force) {
     document.getElementById("fill" + i).style.width = (b.hp / MAX_HP * 100) + "%";
     document.getElementById("ghost" + i).style.width = (b.shown / MAX_HP * 100) + "%";
     document.getElementById("bar" + i).setAttribute("aria-valuenow", rounded);
+  }
+  updateRejuvHud(force);
+}
+
+// CTE Rejuvenation bar: fills as the next heal gets closer, then empties
+// when the timer resets, glowing for a moment as the heal lands.
+var rejuvCache = [];
+function updateRejuvHud(force) {
+  for (var i = 0; i < 2; i++) {
+    var b = balls[i];
+    if (!b.char.hasForget) continue;
+    var p = Math.max(0, Math.min(1, (b.forgetT || 0) / b.char.forget.every));
+    var healing = b.healGlow > 0;
+    var key = Math.round(p * 400) + (healing ? "h" : "");
+    if (!force && rejuvCache[i] === key) continue;
+    rejuvCache[i] = key;
+    document.getElementById("rejuvFill" + i).style.width = (p * 100) + "%";
+    document.getElementById("rejuvBar" + i).setAttribute("aria-valuenow", Math.round(p * 100));
+    document.getElementById("rejuv" + i).classList.toggle("healing", healing);
   }
 }
 
