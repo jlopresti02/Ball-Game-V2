@@ -84,7 +84,7 @@ function drawHands(b, other) {
   var spinning = b.powerState && b.powerState.phase === "attack";
   var raging = b.rageState && b.rageState.phase === "attack";
   var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-  if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging || b.combo) return;
+  if (!b.alive || b.kick || b.grappled || b.grapple || spinning || raging || b.combo || b.swing) return;
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.
     var tt = b.taunt.t;
@@ -133,7 +133,7 @@ function drawHands(b, other) {
   }
   var perpx = -fy, perpy = fx;
   var fwd = b.r * 0.8, gap = b.r * 0.4, hr = b.r * 0.3;
-  var sides = (b.punch || b.throwAnim || b.swing) ? [-1] : [1, -1];
+  var sides = (b.punch || b.throwAnim) ? [-1] : [1, -1];
   ctx.save();
   ctx.fillStyle = b.char.color;
   ctx.strokeStyle = theme.wall;
