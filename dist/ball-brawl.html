@@ -4243,9 +4243,13 @@ function drawSwing(self) {
 // them with the knockout punch.
 "use strict";
 
-var KO_RUSH_SPEED = 640;      // sprint speed toward the opponent
+var KO_RUSH_SPEED = 500;      // sprint speed toward the opponent
 var KO_RUSH_GIVEUP = 3;       // seconds before an unreachable rush is called off
-var KO_PUNCH_DUR = 0.34, KO_PUNCH_HIT = 0.16;
+var KO_PUNCH_DUR = 0.42, KO_PUNCH_HIT = 0.18; // the knockout hook: sweep lands at HIT
+var KO_HOOK_OPEN = 1.9;       // how far round to the side the hook starts (radians)
+var KO_HOOK_FOLLOW = 0.6;     // how far it carries through past the target
+var KO_HOOK_SWEEP = 0.24;     // seconds from the start of the sweep to full follow-through
+var KO_BACKPEDAL = 75;        // how fast the shocked opponent backs away
 var SLUG_TIME = 5;            // seconds of trading punches
 var SLUG_MIN = 10, SLUG_MAX = 30;
 var SLUG_GAP = 44;            // how far each fighter stands from the centre
@@ -4322,14 +4326,19 @@ function updateKoRush(self, other, dt) {
   var kr = self.koRush;
   if (!kr) return false;
   kr.t += dt;
-  if (!other.alive) { self.koRush = null; releaseShock(other); return false; }
-  if (other.shocked) { other.vx = 0; other.vy = 0; }
+  if (!other.alive && kr.phase === "run") { self.koRush = null; releaseShock(other); return false; }
   var d = koDistance(self, other);
+  if (other.shocked && other.alive) {
+    // Startled: slowly backs away from the charging Brawler.
+    var bp = KO_BACKPEDAL * Math.min(1, kr.t / 0.2 + (kr.phase === "throw" ? 1 : 0));
+    other.vx = (other.x - self.x) / d * bp;
+    other.vy = (other.y - self.y) / d * bp;
+  }
   if (kr.phase === "run") {
     var pu = self.char.punch;
     if (d < self.r + other.r + pu.reach) {
       kr.phase = "throw"; kr.t = 0;
-      self.koPunch = { t: 0, dur: KO_PUNCH_DUR, hitAt: KO_PUNCH_HIT, hit: false, targetId: other.id, size: pu.size * 1.25 };
+      self.koPunch = { t: 0, dur: KO_PUNCH_DUR, hitAt: KO_PUNCH_HIT, hit: false, targetId: other.id, size: pu.size * 1.25, kind: "hook", side: 1 };
       self.vx *= 0.15; self.vy *= 0.15;
     } else if (kr.t > KO_RUSH_GIVEUP || !self.alive) {
       self.koRush = null; releaseShock(other); return false;
@@ -4512,8 +4521,10 @@ function landSlugPunch(self, target, kp) {
 
 // The KO punch fist (rush, slugfest jabs, the big wind-up and the finisher).
 function drawKoPunch(b) {
+  if (!b.alive) return;
+  if (b.koRush) { drawKoHook(b); return; }
   var kp = b.koPunch;
-  if (!kp || !b.alive) return;
+  if (!kp) return;
   var tgt = balls[kp.targetId];
   var qx = tgt.x - b.x, qy = tgt.y - b.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var nx = qx / qd, ny = qy / qd, px = -ny, py = nx;
@@ -4562,6 +4573,74 @@ function drawKoPunch(b) {
     ctx.strokeStyle = theme.hit; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(fx, fy, size + 5, 0, Math.PI * 2); ctx.stroke();
   }
+  ctx.restore();
+}
+
+// The KO Rush hook. While running in, the fist is cocked way back out to the
+// side and trembling, with a dashed arc showing the path it will sweep; then
+// it whips round in a big sweeping hook and carries through past the target.
+function drawKoHook(b) {
+  var kr = b.koRush, kp = b.koPunch, other = balls[1 - b.id];
+  var qx = other.x - b.x, qy = other.y - b.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
+  var ang = Math.atan2(qy, qx), side = 1, r = b.r;
+  var size = b.char.punch.size * 1.25;
+  var reachR = Math.max(r + 6, Math.min(qd - other.r + 4, r + b.char.punch.reach + 10));
+  var fist, trail = [], windup = kr.phase === "run";
+  function hookAt(k) {
+    var a = ang + side * (KO_HOOK_OPEN - (KO_HOOK_OPEN + KO_HOOK_FOLLOW) * k);
+    var rr = r * 1.2 + (reachR - r * 1.2) * Math.sin(Math.min(1, k / 0.76) * Math.PI / 2);
+    return { x: b.x + Math.cos(a) * rr, y: b.y + Math.sin(a) * rr };
+  }
+  var w = Math.min(1, kr.t / 0.35);
+  if (windup) {
+    // Coiled further and further back the closer the charge gets.
+    var ca = ang + side * (KO_HOOK_OPEN + 0.35 * w);
+    fist = { x: b.x + Math.cos(ca) * r * 1.25 + (Math.random() - 0.5) * 4 * w, y: b.y + Math.sin(ca) * r * 1.25 + (Math.random() - 0.5) * 4 * w };
+  } else {
+    var start = KO_PUNCH_HIT - KO_HOOK_SWEEP * 0.76; // the sweep reaches the target at hitAt
+    var k = Math.max(0, Math.min(1, (kp.t - start) / KO_HOOK_SWEEP));
+    if (kp.t < start) {
+      var ca2 = ang + side * (KO_HOOK_OPEN + 0.35);
+      fist = { x: b.x + Math.cos(ca2) * r * 1.25, y: b.y + Math.sin(ca2) * r * 1.25 };
+    } else if (k < 1) {
+      fist = hookAt(k);
+      [0.12, 0.24, 0.36].forEach(function (back) { if (k - back > 0) trail.push(hookAt(k - back)); });
+    } else {
+      // Recover back to guard.
+      var e = hookAt(1), rest = { x: b.x + Math.cos(ang) * r * 0.8, y: b.y + Math.sin(ang) * r * 0.8 };
+      var q = Math.min(1, (kp.t - start - KO_HOOK_SWEEP) / Math.max(0.01, kp.dur - start - KO_HOOK_SWEEP));
+      fist = { x: e.x + (rest.x - e.x) * q, y: e.y + (rest.y - e.y) * q };
+    }
+  }
+  var shA = ang + side * Math.PI / 2;
+  var sx = b.x + Math.cos(shA) * r * 0.55, sy = b.y + Math.sin(shA) * r * 0.55;
+  ctx.save();
+  ctx.lineCap = "round";
+  if (windup) {
+    // Telegraph: the arc the hook will sweep through, aimed at the opponent.
+    var a0 = ang + side * KO_HOOK_OPEN, a1 = ang - side * KO_HOOK_FOLLOW;
+    ctx.setLineDash([8, 6]);
+    ctx.globalAlpha = 0.3 + 0.6 * w;
+    ctx.strokeStyle = theme.hit; ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.arc(b.x, b.y, reachR, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+  trail.forEach(function (t, i) {
+    ctx.globalAlpha = 0.35 - i * 0.09;
+    ctx.fillStyle = b.char.color;
+    ctx.beginPath(); ctx.arc(t.x, t.y, size * 0.95, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
+  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
+  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
+  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(fist.x, fist.y, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.globalAlpha = 0.35 + 0.25 * Math.sin(performance.now() / 60);
+  ctx.strokeStyle = theme.hit; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(fist.x, fist.y, size + 5, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();
 }
 
@@ -4849,7 +4928,7 @@ function drawHands(b, other) {
   }
   var perpx = -fy, perpy = fx;
   var fwd = b.r * 0.8, gap = b.r * 0.4, hr = b.r * 0.3;
-  var sides = (b.punch || b.throwAnim || b.koPunch) ? [-1] : [1, -1];
+  var sides = (b.punch || b.throwAnim || b.koPunch || b.koRush) ? [-1] : [1, -1];
   ctx.save();
   ctx.fillStyle = b.char.color;
   ctx.strokeStyle = theme.wall;
