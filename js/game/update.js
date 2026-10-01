@@ -37,6 +37,8 @@ function update(dt) {
     updateForget(b, dt);
     b.healGlow = Math.max(0, (b.healGlow || 0) - dt);
     updateCheck(b, dt);
+    if (b.checkStun > 0) { b.checkStun = Math.max(0, b.checkStun - dt); b.vx = 0; b.vy = 0; }
+    if (b.checkAnim) stepInForKickBack(b, balls[b.checkAnim.towardId]);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);

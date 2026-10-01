@@ -21,10 +21,28 @@ function tryCheckKick(defender, attacker) {
   defender.checkAnim = { t: 0, towardId: attacker.id };
   // Pulls its own kick (if it was throwing one) to check instead.
   defender.kick = null; defender.punch = null; defender.swing = null; defender.throwAnim = null;
+  // The kicker whose kick got checked is stuck planted on that leg until the
+  // kick back lands, so it always connects.
+  attacker.checkStun = CHECK_TIME + defender.char.kick.speed * 0.35 + 0.08;
+  attacker.vx = 0; attacker.vy = 0; defender.vx = 0; defender.vy = 0;
   floater(defender.x, defender.y - defender.r - 8, "CHECKED", "dodge");
   playPunch(14);
   if (!reduceMotion) shake = Math.max(shake, 6);
   return true;
+}
+
+// Through the check and the kick back windup, the checker closes in on the
+// planted kicker so the kick back's leg physically reaches.
+var KICKBACK_RANGE = 26;     // gap it closes to before kicking back
+var KICKBACK_STEP = 650;     // how fast it steps in
+
+function stepInForKickBack(b, atk) {
+  var dx = atk.x - b.x, dy = atk.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var gap = d - b.r - atk.r;
+  if (gap > KICKBACK_RANGE) {
+    var sp = Math.min(KICKBACK_STEP, (gap - KICKBACK_RANGE) * 30);
+    b.vx = dx / d * sp; b.vy = dy / d * sp;
+  } else { b.vx = 0; b.vy = 0; }
 }
 
 // Runs every frame: once the shin comes down, the kick back starts.
@@ -137,6 +155,7 @@ function updateAbilities(dt) {
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
+    if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
       self.slam.t += dt;
       if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
@@ -214,6 +233,7 @@ function updateAbilities(dt) {
         self.kick = { t: 0, hit: false };
         self.kickCd = ki.cooldown;
       }
+      if (self.kick && self.kick.counter && !self.kick.hit) stepInForKickBack(self, other);
       if (self.kick) {
         self.kick.t += dt;
         var kwindup = ki.speed * 0.35;
@@ -222,7 +242,7 @@ function updateAbilities(dt) {
           if (other.alive && tryCheckKick(other, self)) {
             // Checked: no damage, no knockback; the defender kicks back.
           } else if (other.alive) {
-            hurt(other, ki.damage, "kick", self.id);
+            hurt(other, ki.damage, self.kick.counter ? "kickback" : "kick", self.id);
             if (ki.knockback > 0 && !other.justDodged) {
               var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;
               other.vx += kkx / kkd * ki.knockback;

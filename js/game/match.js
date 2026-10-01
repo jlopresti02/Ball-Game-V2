@@ -36,7 +36,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, swing: null, forgetT: 0, healGlow: 0,
+    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -93,7 +93,7 @@ function beginGrapple(attacker, target) {
   target.swing = null;
   target.flow = null;
   target.sprawl = null; target.sprawled = false;
-  target.checkAnim = null;
+  target.checkAnim = null; target.checkStun = 0;
   var gr = attacker.char.grapple;
   var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
   var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;
@@ -151,7 +151,7 @@ function hurt(b, amount, source, attackerId) {
   // knockback, and projectiles fly on through.
   // CTE's wild swings are easier to see coming.
   var swinger = source === "swing" && attackerId != null ? balls[attackerId].char.swing : null;
-  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" &&
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" &&
       tryWeave(b, attackerId, swinger ? swinger.weaveMult : 1)) {
     b.justDodged = true;
     return 0;
@@ -160,7 +160,7 @@ function hurt(b, amount, source, attackerId) {
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
   var blockChance = Math.min(100, b.char.blockChance * (swinger ? swinger.blockMult : 1));
-  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && Math.random() < blockChance / 100) {
+  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "kickback" && Math.random() < blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
