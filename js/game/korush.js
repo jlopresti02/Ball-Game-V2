@@ -19,6 +19,9 @@ var KO_HOOK_OPEN = 1.9;       // how far round to the side the hook starts (radi
 var KO_HOOK_FOLLOW = 0.6;     // how far it carries through past the target
 var KO_HOOK_SWEEP = 0.24;     // seconds from the start of the sweep to full follow-through
 var KO_BACKPEDAL = 75;        // how fast the shocked opponent backs away
+var KO_FOLLOWUPS = 3;         // little shots on the knocked-out opponent
+var KO_FOLLOW_MIN = 3, KO_FOLLOW_MAX = 6;
+var KO_CELEBRATE = 1.7;       // seconds of celebrating before the result
 var SLUG_TIME = 5;            // seconds of trading punches
 var SLUG_MIN = 10, SLUG_MAX = 30;
 var SLUG_GAP = 44;            // how far each fighter stands from the centre
@@ -81,13 +84,36 @@ function knockoutFx(attacker, target) {
 
 // The single KO punch at the end of a rush. Goes through every normal
 // defence (weave, block, flow counter, counter grab, ...).
+// If it lands, the opponent is out cold (koOut): it stays on the canvas,
+// slumped with stars over its head, while the Brawler gets a few more shots
+// in and celebrates. The fight ends once the celebration is over.
 function throwKoPunch(self, target) {
   var amount = Math.ceil(target.hp / incomingMultiplier(target));
+  var wasHolding = target.holdAtOne;
+  target.holdAtOne = true;
   var dealt = hurt(target, amount, "kopunch", self.id);
+  target.holdAtOne = wasHolding;
   if (dealt > 0) {
     playPunch(dealt);
-    if (!target.alive) { knockoutFx(self, target); endAfterKnockout(); }
+    target.hp = 0;
+    target.koOut = true;
+    target.punch = null; target.kick = null; target.swing = null; target.throwAnim = null; target.jabAnim = null;
+    // Sent sliding back a little by the hook.
+    var dx = target.x - self.x, dy = target.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    target.vx = dx / d * 260; target.vy = dy / d * 260;
+    knockoutFx(self, target);
+    return true;
   }
+  return false;
+}
+
+// The unconscious fighter finally drops once the Brawler is done celebrating.
+function finishKnockedOut(b) {
+  if (!b.koOut) return;
+  b.koOut = false;
+  b.hp = 0; b.alive = false;
+  burst(b);
+  document.getElementById("hud" + b.id).classList.add("dead");
 }
 
 // Returns true while the rush is still running (the Brawler does nothing else).
@@ -96,6 +122,12 @@ function updateKoRush(self, other, dt) {
   if (!kr) return false;
   kr.t += dt;
   if (!other.alive && kr.phase === "run") { self.koRush = null; releaseShock(other); return false; }
+  if (other.koOut) {
+    // Out cold: slides to a stop and stays there.
+    var damp = Math.exp(-5 * dt);
+    other.vx *= damp; other.vy *= damp;
+  }
+  if (kr.phase === "followup" || kr.phase === "celebrate") return updateKoAftermath(self, other, kr, dt);
   var d = koDistance(self, other);
   if (other.shocked && other.alive) {
     // Startled: slowly backs away from the charging Brawler.
@@ -124,12 +156,69 @@ function updateKoRush(self, other, dt) {
   if (!kp.hit && kp.t >= kp.hitAt) {
     kp.hit = true;
     releaseShock(other); // the punch is out: the opponent can act again
-    throwKoPunch(self, other);
+    kr.landed = throwKoPunch(self, other);
+  }
+  if (kp.t >= kp.dur && kr.landed) {
+    self.koPunch = null;
+    kr.phase = "followup"; kr.t = 0; kr.shots = 0; kr.next = 0.15;
+    return true;
   }
   if (kp.t >= kp.dur) {
     self.koPunch = null; self.koRush = null;
     self.punchCd = self.char.punch.cooldown;
     if (self.alive) setSpeed(self, SPEED);
+    return false;
+  }
+  return true;
+}
+
+// After the knockout: a few quick little shots on the slumped opponent,
+// then hands up in celebration.
+function updateKoAftermath(self, other, kr, dt) {
+  self.vx = 0; self.vy = 0;
+  if (kr.phase === "followup") {
+    var kp = self.koPunch;
+    if (kp) {
+      kp.t += dt;
+      if (!kp.hit && kp.t >= kp.hitAt) {
+        kp.hit = true;
+        var dmg = KO_FOLLOW_MIN + Math.floor(Math.random() * (KO_FOLLOW_MAX - KO_FOLLOW_MIN + 1));
+        other.flash = 0.16;
+        floater(other.x + (Math.random() - 0.5) * 16, other.y - other.r - 8, "-" + dmg, "hit");
+        playPunch(dmg * 2);
+        if (!reduceMotion) shake = Math.max(shake, 3);
+        var nx = other.x - self.x, ny = other.y - self.y, nd = Math.sqrt(nx * nx + ny * ny) || 1;
+        other.x += nx / nd * 3; other.y += ny / nd * 3; // a little jolt
+      }
+      if (kp.t >= kp.dur) self.koPunch = null;
+      return true;
+    }
+    var d = koDistance(self, other), want = self.r + other.r + 18;
+    if (d > want + 2) {
+      // Step back in to finish the job.
+      var stepLen = Math.min(d - want, 420 * dt);
+      self.x += (other.x - self.x) / d * stepLen; self.y += (other.y - self.y) / d * stepLen;
+      return true;
+    }
+    kr.next -= dt;
+    if (kr.next <= 0) {
+      if (kr.shots >= KO_FOLLOWUPS) {
+        kr.phase = "celebrate"; kr.t = 0;
+        floater(self.x, self.y - self.r - 26, "LIGHTS OUT!", "crit");
+        return true;
+      }
+      kr.shots++;
+      self.koPunch = { t: 0, dur: 0.2, hitAt: 0.09, hit: false, targetId: other.id, size: self.char.punch.size * 0.85, kind: "jab", side: kr.shots % 2 ? -1 : 1 };
+      kr.next = 0.12 + Math.random() * 0.08;
+    }
+    return true;
+  }
+  // Celebrating.
+  if (kr.t >= KO_CELEBRATE) {
+    self.koRush = null;
+    finishKnockedOut(other);
+    if (self.alive) setSpeed(self, SPEED);
+    checkEnd();
     return false;
   }
   return true;
@@ -291,13 +380,14 @@ function landSlugPunch(self, target, kp) {
 // The KO punch fist (rush, slugfest jabs, the big wind-up and the finisher).
 function drawKoPunch(b) {
   if (!b.alive) return;
-  if (b.koRush) { drawKoHook(b); return; }
+  if (b.koRush && (b.koRush.phase === "run" || b.koRush.phase === "throw")) { drawKoHook(b); return; }
+  if (b.koRush && b.koRush.phase === "celebrate") { drawKoCelebrate(b); return; }
   var kp = b.koPunch;
   if (!kp) return;
   var tgt = balls[kp.targetId];
   var qx = tgt.x - b.x, qy = tgt.y - b.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var nx = qx / qd, ny = qy / qd, px = -ny, py = nx;
-  var gap = b.r * 0.4; // same shoulder as a normal punch (drawHands keeps the other hand up)
+  var gap = b.r * 0.4 * (kp.side || 1); // same shoulder as a normal punch (drawHands keeps the other hand up)
   var rest = b.r + 4, full = Math.max(rest, qd - tgt.r + 4), back = -b.r * 0.15;
   var dist, jitter = 0;
   if (kp.t < kp.hitAt) {
@@ -410,6 +500,47 @@ function drawKoHook(b) {
   ctx.globalAlpha = 0.35 + 0.25 * Math.sin(performance.now() / 60);
   ctx.strokeStyle = theme.hit; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fist.x, fist.y, size + 5, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+
+// Hands up, pumping, bouncing on the spot.
+function drawKoCelebrate(b) {
+  var tt = b.koRush.t, r = b.r;
+  ctx.save();
+  ctx.lineCap = "round";
+  [-1, 1].forEach(function (sgn, i) {
+    var pump = Math.max(0, Math.sin(tt * 11 + i * Math.PI)) * r * 0.4;
+    var hx = b.x + sgn * r * 0.85, hy = b.y - r * 1.05 - pump;
+    var sx = b.x + sgn * r * 0.62, sy = b.y - r * 0.55;
+    ctx.strokeStyle = theme.wall; ctx.lineWidth = r * 0.34;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.strokeStyle = b.char.color; ctx.lineWidth = r * 0.2;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(hx, hy, r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
+  ctx.restore();
+}
+
+// Stars circling the head of a knocked-out fighter.
+function drawKoOut(b) {
+  if (!b.koOut) return;
+  var t = performance.now() / 1000;
+  ctx.save();
+  // Dimmed: out cold.
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
+  ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.font = '900 18px "Barlow Condensed", "Arial Narrow", sans-serif';
+  var cy = b.y - b.r - 32;
+  if (cy < 14) cy = b.y + b.r + 30;
+  for (var i = 0; i < 3; i++) {
+    var a = t * 5 + i * Math.PI * 2 / 3;
+    var sx = b.x + Math.cos(a) * b.r * 0.8, sy = cy + Math.sin(a) * 6;
+    ctx.lineWidth = 4; ctx.lineJoin = "round";
+    ctx.strokeStyle = theme.floor; ctx.strokeText("\u2605", sx, sy);
+    ctx.fillStyle = "#f5c518"; ctx.fillText("\u2605", sx, sy);
+  }
   ctx.restore();
 }
 

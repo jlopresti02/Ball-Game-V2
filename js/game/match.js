@@ -38,7 +38,7 @@ function makeBall(id, ch) {
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false,
-    koRush: null, koPunch: null, shocked: false, koDuel: false
+    koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false
   };
 }
 
@@ -137,7 +137,7 @@ function wouldKill(b, amount) {
 }
 
 function hurt(b, amount, source, attackerId) {
-  if (!b.alive) return 0;
+  if (!b.alive || b.koOut) return 0;
   b.justDodged = false;
   // A seated Watcher can't be hurt by anything at all.
   if (b.invincible) {
@@ -199,7 +199,7 @@ function hurt(b, amount, source, attackerId) {
   }
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
-  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && !b.koDuel &&
+  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && !b.koDuel &&
       b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {

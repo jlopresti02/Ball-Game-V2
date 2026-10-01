@@ -84,8 +84,9 @@ function drawHands(b, other) {
   var spinning = b.powerState && b.powerState.phase === "attack";
   var raging = b.rageState && b.rageState.phase === "attack";
   var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-  if (!b.alive || b.kick || b.grappled || b.grapple || b.sprawl || spinning || raging || b.combo || b.swing) return;
+  if (!b.alive || b.koOut || b.kick || b.grappled || b.grapple || b.sprawl || spinning || raging || b.combo || b.swing) return;
   if (b.taunt && b.taunt.t < 0) return; // the punch is still finishing
+  if (b.koRush && b.koRush.phase === "celebrate") return; // hands up (drawn by drawKoCelebrate)
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.
     var tt = b.taunt.t;
@@ -134,7 +135,8 @@ function drawHands(b, other) {
   }
   var perpx = -fy, perpy = fx;
   var fwd = b.r * 0.8, gap = b.r * 0.4, hr = b.r * 0.3;
-  var sides = (b.punch || b.throwAnim || b.koPunch || b.koRush) ? [-1] : [1, -1];
+  var koHook = b.koRush && (b.koRush.phase === "run" || b.koRush.phase === "throw");
+  var sides = (b.punch || b.throwAnim || koHook) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : [1, -1]);
   ctx.save();
   ctx.fillStyle = b.char.color;
   ctx.strokeStyle = theme.wall;

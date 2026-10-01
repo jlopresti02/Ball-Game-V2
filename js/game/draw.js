@@ -225,6 +225,7 @@ function draw() {
     drawFist(b, other);
     drawKoPunch(b);
     drawShock(b);
+    drawKoOut(b);
     drawSwing(b);
     drawCheck(b);
     drawKick(b, other);
