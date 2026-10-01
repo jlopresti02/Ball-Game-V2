@@ -106,6 +106,7 @@ function updateIowaStyle(self, g, dt) {
     // (no back-to-back wall slams) until it's had time to get clear.
     self.grapple = null;
     self.iowaSafe = { from: tgt.id, t: IOWA_IMPUNITY };
+    self.slamSafe = SLAM_SAFE_TIME; // landed the slam: can't be punished for it
     tgt.grappled = false;
     self.vx = g.nx * IOWA_DISENGAGE_SPEED; self.vy = g.ny * IOWA_DISENGAGE_SPEED;
     // The one who got slammed peels off along the wall.
@@ -131,7 +132,30 @@ function grabBlockedByImpunity(grabber, target) {
 var SPRAWL_TIME = 0.6;
 
 // Every grab on a Grappler goes through here (normal grabs and counter-grabs).
+// A grab can be slipped (weave) or blocked like any other attack. Either way
+// the target isn't slammed at all: it breaks free and the pair push apart.
+var SLAM_SAFE_TIME = 0.8; // after landing a slam the Grappler can't be hit for this long
+
+function grabEscaped(attacker, target) {
+  var how = null;
+  if (tryWeave(target, attacker.id)) how = "weave";
+  else if (target.char.blockChance > 0 && Math.random() < target.char.blockChance / 100) {
+    how = "block";
+    floater(target.x, target.y - target.r - 8, "BLOCK", "dodge");
+    target.flash = 0.1;
+  }
+  if (!how) return false;
+  floater((attacker.x + target.x) / 2, Math.min(attacker.y, target.y) - target.r - 30, "ESCAPE", "note");
+  var dx = target.x - attacker.x, dy = target.y - attacker.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  if (!target.combo) { target.vx = dx / d * 380; target.vy = dy / d * 380; }
+  attacker.vx = -dx / d * 220; attacker.vy = -dy / d * 220;
+  attacker.grappleCd = attacker.char.grapple.cooldown;
+  return true;
+}
+
 function attemptGrab(attacker, target) {
+  if (target.slamSafe > 0) return false;
+  if (grabEscaped(attacker, target)) return false;
   var gr = target.char.grapple;
   if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100) {
     beginSprawl(attacker, target);
@@ -177,6 +201,7 @@ function updateSprawl(self, dt) {
   if (grabBlockedByImpunity(winner, loser)) { var tmp = winner; winner = loser; loser = tmp; }
   if (!winner.alive || !loser.alive) return;
   floater(winner.x, Math.min(winner.y, loser.y) - winner.r - 30, "REATTACK", "crit");
+  if (loser.slamSafe > 0 || grabEscaped(winner, loser)) return;
   beginGrapple(winner, loser);
 }
 

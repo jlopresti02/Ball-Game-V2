@@ -37,7 +37,7 @@ function makeBall(id, ch) {
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
-    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false,
+    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false
   };
 }
@@ -148,6 +148,11 @@ function hurt(b, amount, source, attackerId) {
     b.justDodged = true;
     return 0;
   }
+  // A Grappler that just landed a slam can't be hit for a moment.
+  if (b.slamSafe > 0) {
+    b.justDodged = true;
+    return 0;
+  }
   // Weave: slips the attack completely (grabs are weaved when they're
   // attempted, not when the slam lands). Callers check justDodged to skip
   // knockback, and projectiles fly on through.
@@ -162,7 +167,7 @@ function hurt(b, amount, source, attackerId) {
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
   var blockChance = Math.min(100, b.char.blockChance * (swinger ? swinger.blockMult : 1));
-  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && Math.random() < blockChance / 100) {
+  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && Math.random() < blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -204,7 +209,7 @@ function hurt(b, amount, source, attackerId) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
-      if (Math.random() < chance && !tryWeave(atk, b.id)) attemptGrab(b, atk);
+      if (Math.random() < chance) attemptGrab(b, atk); // can be weaved or blocked (an escape)
     }
   }
   return amount;

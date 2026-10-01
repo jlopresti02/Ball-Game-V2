@@ -265,8 +265,8 @@ function updateAbilities(dt) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
       if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
-        if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
-        else if (attemptGrab(self, other)) {
+        // (attemptGrab handles the grab being weaved or blocked: an escape.)
+        if (attemptGrab(self, other)) {
           if (self.initiativeReason) {
             // Shows why this Grappler won the race to the grab.
             floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
@@ -330,6 +330,7 @@ function updateAbilities(dt) {
               // launches off with real speed of its own once it lets go,
               // rather than drifting away at a crawl.
               self.vx = Math.cos(selfAngle) * 320; self.vy = Math.sin(selfAngle) * 320;
+              self.slamSafe = SLAM_SAFE_TIME; // landed the slam: can't be punished for it
             }
           }
           if (!iowa) { tgt.grappled = false; self.grapple = null; }

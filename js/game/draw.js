@@ -195,6 +195,18 @@ function draw() {
       ctx.restore();
     }
 
+    // A fading ring while a Grappler is untouchable right after a slam.
+    if (b.slamSafe > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, b.slamSafe / SLAM_SAFE_TIME) * 0.8;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = b.char.color;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // A bright pulsing ring whenever a fighter is invincible (the Watcher,
     // sitting in its corner), so it's obvious hits won't land.
     if (b.invincible) {

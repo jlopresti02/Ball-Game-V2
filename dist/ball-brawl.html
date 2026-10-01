@@ -2627,7 +2627,7 @@ function makeBall(id, ch) {
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
-    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false,
+    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false
   };
 }
@@ -2738,6 +2738,11 @@ function hurt(b, amount, source, attackerId) {
     b.justDodged = true;
     return 0;
   }
+  // A Grappler that just landed a slam can't be hit for a moment.
+  if (b.slamSafe > 0) {
+    b.justDodged = true;
+    return 0;
+  }
   // Weave: slips the attack completely (grabs are weaved when they're
   // attempted, not when the slam lands). Callers check justDodged to skip
   // knockback, and projectiles fly on through.
@@ -2752,7 +2757,7 @@ function hurt(b, amount, source, attackerId) {
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
   var blockChance = Math.min(100, b.char.blockChance * (swinger ? swinger.blockMult : 1));
-  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && Math.random() < blockChance / 100) {
+  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && Math.random() < blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -2794,7 +2799,7 @@ function hurt(b, amount, source, attackerId) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
-      if (Math.random() < chance && !tryWeave(atk, b.id)) attemptGrab(b, atk);
+      if (Math.random() < chance) attemptGrab(b, atk); // can be weaved or blocked (an escape)
     }
   }
   return amount;
@@ -3180,8 +3185,8 @@ function updateAbilities(dt) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
       if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
-        if (tryWeave(other, self.id)) self.grappleCd = gr.cooldown; // grab slipped
-        else if (attemptGrab(self, other)) {
+        // (attemptGrab handles the grab being weaved or blocked: an escape.)
+        if (attemptGrab(self, other)) {
           if (self.initiativeReason) {
             // Shows why this Grappler won the race to the grab.
             floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
@@ -3245,6 +3250,7 @@ function updateAbilities(dt) {
               // launches off with real speed of its own once it lets go,
               // rather than drifting away at a crawl.
               self.vx = Math.cos(selfAngle) * 320; self.vy = Math.sin(selfAngle) * 320;
+              self.slamSafe = SLAM_SAFE_TIME; // landed the slam: can't be punished for it
             }
           }
           if (!iowa) { tgt.grappled = false; self.grapple = null; }
@@ -3930,6 +3936,7 @@ function updateIowaStyle(self, g, dt) {
     // (no back-to-back wall slams) until it's had time to get clear.
     self.grapple = null;
     self.iowaSafe = { from: tgt.id, t: IOWA_IMPUNITY };
+    self.slamSafe = SLAM_SAFE_TIME; // landed the slam: can't be punished for it
     tgt.grappled = false;
     self.vx = g.nx * IOWA_DISENGAGE_SPEED; self.vy = g.ny * IOWA_DISENGAGE_SPEED;
     // The one who got slammed peels off along the wall.
@@ -3955,7 +3962,30 @@ function grabBlockedByImpunity(grabber, target) {
 var SPRAWL_TIME = 0.6;
 
 // Every grab on a Grappler goes through here (normal grabs and counter-grabs).
+// A grab can be slipped (weave) or blocked like any other attack. Either way
+// the target isn't slammed at all: it breaks free and the pair push apart.
+var SLAM_SAFE_TIME = 0.8; // after landing a slam the Grappler can't be hit for this long
+
+function grabEscaped(attacker, target) {
+  var how = null;
+  if (tryWeave(target, attacker.id)) how = "weave";
+  else if (target.char.blockChance > 0 && Math.random() < target.char.blockChance / 100) {
+    how = "block";
+    floater(target.x, target.y - target.r - 8, "BLOCK", "dodge");
+    target.flash = 0.1;
+  }
+  if (!how) return false;
+  floater((attacker.x + target.x) / 2, Math.min(attacker.y, target.y) - target.r - 30, "ESCAPE", "note");
+  var dx = target.x - attacker.x, dy = target.y - attacker.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  if (!target.combo) { target.vx = dx / d * 380; target.vy = dy / d * 380; }
+  attacker.vx = -dx / d * 220; attacker.vy = -dy / d * 220;
+  attacker.grappleCd = attacker.char.grapple.cooldown;
+  return true;
+}
+
 function attemptGrab(attacker, target) {
+  if (target.slamSafe > 0) return false;
+  if (grabEscaped(attacker, target)) return false;
   var gr = target.char.grapple;
   if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100) {
     beginSprawl(attacker, target);
@@ -4001,6 +4031,7 @@ function updateSprawl(self, dt) {
   if (grabBlockedByImpunity(winner, loser)) { var tmp = winner; winner = loser; loser = tmp; }
   if (!winner.alive || !loser.alive) return;
   floater(winner.x, Math.min(winner.y, loser.y) - winner.r - 30, "REATTACK", "crit");
+  if (loser.slamSafe > 0 || grabEscaped(winner, loser)) return;
   beginGrapple(winner, loser);
 }
 
@@ -4913,6 +4944,7 @@ function update(dt) {
     updateCheck(b, dt);
     if (b.checkStun > 0) { b.checkStun = Math.max(0, b.checkStun - dt); b.vx = 0; b.vy = 0; }
     if (b.checkAnim) stepInForKickBack(b, balls[b.checkAnim.towardId]);
+    if (b.slamSafe > 0) b.slamSafe = Math.max(0, b.slamSafe - dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);
@@ -5638,6 +5670,18 @@ function draw() {
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.arc(b.x, b.y, b.r + 6 + (0.7 - b.healGlow) * 20, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // A fading ring while a Grappler is untouchable right after a slam.
+    if (b.slamSafe > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, b.slamSafe / SLAM_SAFE_TIME) * 0.8;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = b.char.color;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 6, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
     }
