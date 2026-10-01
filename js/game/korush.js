@@ -21,7 +21,8 @@ var KO_HOOK_SWEEP = 0.24;     // seconds from the start of the sweep to full fol
 var KO_BACKPEDAL = 75;        // how fast the shocked opponent backs away
 var KO_FOLLOWUPS = 3;         // little shots on the knocked-out opponent
 var KO_FOLLOW_MIN = 3, KO_FOLLOW_MAX = 6;
-var KO_CELEBRATE = 1.7;       // seconds of celebrating before the result
+var KO_CELEBRATE = 1.7;
+var QHOOK_DUR = 0.26, QHOOK_OPEN = 1.5, QHOOK_FOLLOW = 0.5; // the quick follow-up hooks       // seconds of celebrating before the result
 var SLUG_TIME = 5;            // seconds of trading punches
 var SLUG_MIN = 10, SLUG_MAX = 30;
 var SLUG_GAP = 44;            // how far each fighter stands from the centre
@@ -208,8 +209,11 @@ function updateKoAftermath(self, other, kr, dt) {
         return true;
       }
       kr.shots++;
-      self.koPunch = { t: 0, dur: 0.2, hitAt: 0.09, hit: false, targetId: other.id, size: self.char.punch.size * 0.85, kind: "jab", side: kr.shots % 2 ? -1 : 1 };
-      kr.next = 0.12 + Math.random() * 0.08;
+      // A quick little hook, alternating hands.
+      var sweep = QHOOK_DUR * 0.75;
+      self.koPunch = { t: 0, dur: QHOOK_DUR, hitAt: sweep * QHOOK_OPEN / (QHOOK_OPEN + QHOOK_FOLLOW), sweep: sweep, hit: false,
+        targetId: other.id, size: self.char.punch.size * 0.85, kind: "qhook", side: kr.shots % 2 ? 1 : -1 };
+      kr.next = 0.08 + Math.random() * 0.08;
     }
     return true;
   }
@@ -384,6 +388,7 @@ function drawKoPunch(b) {
   if (b.koRush && b.koRush.phase === "celebrate") { drawKoCelebrate(b); return; }
   var kp = b.koPunch;
   if (!kp) return;
+  if (kp.kind === "qhook") { drawQuickHook(b, kp); return; }
   var tgt = balls[kp.targetId];
   var qx = tgt.x - b.x, qy = tgt.y - b.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var nx = qx / qd, ny = qy / qd, px = -ny, py = nx;
@@ -500,6 +505,49 @@ function drawKoHook(b) {
   ctx.globalAlpha = 0.35 + 0.25 * Math.sin(performance.now() / 60);
   ctx.strokeStyle = theme.hit; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fist.x, fist.y, size + 5, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+
+// A short, quick hook: swings round from the side, through the target, and
+// snaps back to guard.
+function drawQuickHook(b, kp) {
+  var tgt = balls[kp.targetId], r = b.r, side = kp.side || 1;
+  var ang = Math.atan2(tgt.y - b.y, tgt.x - b.x);
+  var qd = koDistance(b, tgt);
+  var reachR = Math.max(r + 6, qd - tgt.r + 4);
+  function at(k) {
+    var a = ang + side * (QHOOK_OPEN - (QHOOK_OPEN + QHOOK_FOLLOW) * k);
+    var rr = r * 1.1 + (reachR - r * 1.1) * Math.sin(Math.min(1, k / 0.75) * Math.PI / 2);
+    return { x: b.x + Math.cos(a) * rr, y: b.y + Math.sin(a) * rr };
+  }
+  var fist, trail = [];
+  if (kp.t < kp.sweep) {
+    var k = kp.t / kp.sweep;
+    fist = at(k);
+    [0.15, 0.3].forEach(function (back) { if (k - back > 0) trail.push(at(k - back)); });
+  } else {
+    var e = at(1), q = Math.min(1, (kp.t - kp.sweep) / (kp.dur - kp.sweep));
+    var gx = b.x + Math.cos(ang) * r * 0.8 + Math.cos(ang + side * Math.PI / 2) * r * 0.4;
+    var gy = b.y + Math.sin(ang) * r * 0.8 + Math.sin(ang + side * Math.PI / 2) * r * 0.4;
+    fist = { x: e.x + (gx - e.x) * q, y: e.y + (gy - e.y) * q };
+  }
+  var shA = ang + side * Math.PI / 2;
+  var sx = b.x + Math.cos(shA) * r * 0.55, sy = b.y + Math.sin(shA) * r * 0.55;
+  var size = kp.size;
+  ctx.save();
+  ctx.lineCap = "round";
+  trail.forEach(function (t, i) {
+    ctx.globalAlpha = 0.3 - i * 0.12;
+    ctx.fillStyle = b.char.color;
+    ctx.beginPath(); ctx.arc(t.x, t.y, size * 0.9, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
+  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
+  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
+  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(fist.x, fist.y, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
 
