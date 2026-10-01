@@ -235,6 +235,14 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .switch[aria-checked="true"] { background: var(--ink); }
 .switch[aria-checked="true"] .knob { transform: translateX(18px); }
 .abilityBody { margin-top: 14px; }
+
+.devOption {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 3px solid var(--wall); border-radius: 8px; padding: 10px 14px; margin: 0 0 16px; background: var(--floor);
+}
+.devOption > div { display: flex; flex-direction: column; }
+.devOption .htitle { font-weight: 800; font-size: 19px; }
+.devOption .hsub { font-size: 13px; color: var(--muted); }
 .abilityBlock[data-on="false"] .abilityBody { display: none; }
 
 .editorGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }

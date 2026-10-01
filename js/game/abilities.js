@@ -148,12 +148,17 @@ function updateAbilities(dt) {
   // Which fighter acts first flips randomly every frame, so neither side
   // always wins ties (like two identical fighters swinging at the same moment).
   var order = Math.random() < 0.5 ? [0, 1] : [1, 0];
+  // Two Brawlers trading in the middle after both opened with a KO Rush.
+  tickKoEnd(dt);
+  if (updateSlugfest(dt)) return;
   // Grappler vs Grappler: if both could grab this frame, only one may.
   resolveGrabInitiative(dt);
   for (var oi = 0; oi < 2; oi++) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled) continue;
+    if (self.shocked) continue; // frozen by an incoming KO Rush
+    if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {

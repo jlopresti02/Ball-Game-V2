@@ -51,6 +51,7 @@ function abilitySummary(ch) {
   var parts = [];
   if (ch.hasProjectile) parts.push("🎯 " + ch.proj.damage + " dmg / " + ch.proj.cooldown.toFixed(1) + "s");
   if (ch.hasPunch) parts.push("👊 " + ch.punch.damage + " dmg");
+  if (ch.hasPunch && ch.punch.koChance > 0) parts.push("⚡ " + ch.punch.koChance + "% KO rush");
   if (ch.hasKick) parts.push("🦵 " + ch.kick.damage + " dmg");
   if (ch.hasGrapple) parts.push("🤼 " + ch.grapple.damage + " dmg");
   if (ch.hasPowerPunch) {
@@ -202,5 +203,19 @@ function fightFrom(name) {
 document.getElementById("newCharBtn").addEventListener("click", function () { openEditor(null); });
 document.getElementById("fightBtn").addEventListener("click", function () { fightFrom("select"); });
 document.getElementById("devFightBtn").addEventListener("click", function () { fightFrom("dev"); });
+
+// Dev Corner switch: Brawlers always open with the KO Rush (every fighter
+// with a KO Rush chance uses it at the start of every Dev Corner fight).
+var devForceKo = false;
+try { devForceKo = localStorage.getItem("ballBrawl.devForceKo") === "1"; } catch (e) {}
+(function () {
+  var sw = document.getElementById("devForceKo");
+  sw.setAttribute("aria-checked", String(devForceKo));
+  sw.addEventListener("click", function () {
+    devForceKo = !devForceKo;
+    sw.setAttribute("aria-checked", String(devForceKo));
+    try { localStorage.setItem("ballBrawl.devForceKo", devForceKo ? "1" : "0"); } catch (e) {}
+  });
+})();
 document.getElementById("devCornerBtn").addEventListener("click", function () { showScreen("dev"); });
 document.getElementById("devBackBtn").addEventListener("click", function () { showScreen("select"); });

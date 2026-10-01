@@ -22,7 +22,7 @@ var builtins = [
   {
     id: "builtin-brawler", builtin: true, name: "Brawler", color: "#2e64f0", label: "", imgData: null,
     hasProjectile: false, proj: defaultProj(),
-    hasPunch: true, punch: { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40 },
+    hasPunch: true, punch: { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40, koChance: 1 },
     hasKick: false, kick: defaultKick(),
     hasGrapple: false, grapple: defaultGrapple(),
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
@@ -137,7 +137,7 @@ var builtins = [
 ];
 
 function defaultProj() { return { size: 7, speed: 460, damage: 10, cooldown: 1.6, imgData: null }; }
-function defaultPunch() { return { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40 }; }
+function defaultPunch() { return { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40, koChance: 0 }; }
 function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 17, knockback: 450, reach: 75, checkChance: 25 }; }
 // When a grab would be the killing blow, the grapple becomes a finisher:
 // a slam into the bottom wall for finSlamDamage, then the opponent is pinned
@@ -177,6 +177,7 @@ function defaultWatcher() {
 
 // Fills in fields for characters saved before an ability existed (e.g. kick, grapple, power punch, rage charge, corner watch).
 function normalizeChar(ch) {
+  if (ch.punch && ch.punch.koChance == null) ch.punch.koChance = 0;
   if (ch.hasKick === undefined) ch.hasKick = false;
   if (!ch.kick) ch.kick = defaultKick();
   if (ch.kick.checkChance == null) ch.kick.checkChance = defaultKick().checkChance;

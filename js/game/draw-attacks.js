@@ -134,7 +134,7 @@ function drawHands(b, other) {
   }
   var perpx = -fy, perpy = fx;
   var fwd = b.r * 0.8, gap = b.r * 0.4, hr = b.r * 0.3;
-  var sides = (b.punch || b.throwAnim) ? [-1] : [1, -1];
+  var sides = (b.punch || b.throwAnim || b.koPunch) ? [-1] : [1, -1];
   ctx.save();
   ctx.fillStyle = b.char.color;
   ctx.strokeStyle = theme.wall;

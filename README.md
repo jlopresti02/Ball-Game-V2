@@ -11,14 +11,14 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 ## Menus
 
 - **Roster** (the main screen) holds the custom fighters you've built and saved. Roster fighters will later get their own textures, audio and special moves on top of the character bases.
-- **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters. Every card there has a **Mirror** button that puts that fighter on both sides; the second copy is named "<name> 2" and drawn in a lighter or darker shade.
+- **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters. Every card there has a **Mirror** button that puts that fighter on both sides; the second copy is named "<name> 2" and drawn in a lighter or darker shade. The **Always KO Rush** switch makes every Brawler open each Dev Corner fight with the KO Rush (100% instead of 1%).
 
 ## Character Bases
 
 | Base | Attack |
 | --- | --- |
 | Gunner | Throws projectiles from range |
-| Brawler | Close-range punch, 10% block chance |
+| Brawler | Close-range punch, 10% block chance. 1% chance to open the fight with a **KO Rush**: sprints at the opponent (who is shocked, shown by a "!", and can't attack until the punch is thrown) and throws one punch that knocks them out if it isn't weaved, blocked or countered. If both fighters KO Rush at once they **Slugfest**: 5 seconds of trading 10-30 damage punches in the middle, then whoever took less damage winds up a 10-damage punch that sends the other into the wall behind them and finishes them with the knockout punch |
 | Kicker | Sweeping kick with long reach and long recovery. When kicked by another kicker it has a 25% chance to check the kick (no damage) and kick right back |
 | Grappler | Grabs on contact and slams the opponent into the nearest wall; can counter-grab. If a grab would be the knockout, it becomes a finisher: a 20-damage slam into the bottom wall, then the opponent is pinned and hit with three 10-damage punches. Grappler vs Grappler: if both can grab at once, the one coming from the side or behind wins; face to face, the faster one, then the one with more health, then a coin flip. After a slam it presses the other into the wall and disengages unharmed ("Iowa Style"); the slammed Grappler can't grab it back for 1.5 seconds, so there are no back-to-back wall slams. A Grappler being grabbed has a 30% chance to Sprawl (stuff the grab and tie up); after a moment either one comes out with a Reattack slam (50/50) |
 | Power Puncher | Charges up, then spins into a 30-damage haymaker that sends the opponent pinballing into 4 walls for 5 damage each |
@@ -47,6 +47,7 @@ js/game/weave.js        Weave dodge, critical-weave combo and the celebration ta
 js/game/finisher.js     Grappler finisher: bottom-wall slam, pin and punches
 js/game/grapple-duel.js Grappler vs Grappler: grab initiative, Iowa Style, Sprawl and Reattack
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
+js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest
 js/game/update.js       Per-frame update, HUD, canvas sizing
 js/game/draw-attacks.js Drawing each attack's animation
 js/game/draw.js         Drawing the arena, fighters, projectiles, damage numbers

@@ -89,6 +89,8 @@ function fillEditorForm(s) {
   document.getElementById("punchKnockbackVal").textContent = s.punch.knockback;
   document.getElementById("punchReach").value = s.punch.reach;
   document.getElementById("punchReachVal").textContent = s.punch.reach;
+  document.getElementById("punchKoChance").value = s.punch.koChance || 0;
+  document.getElementById("punchKoChanceVal").textContent = (s.punch.koChance || 0) + "%";
 
   document.getElementById("kickOn").setAttribute("aria-checked", String(s.hasKick));
   document.getElementById("kickBlock").setAttribute("data-on", String(s.hasKick));
@@ -294,7 +296,8 @@ var punchSliders = [
   ["punchSpeed", "speed"],
   ["punchSize", "size"],
   ["punchKnockback", "knockback"],
-  ["punchReach", "reach"]
+  ["punchReach", "reach"],
+  ["punchKoChance", "koChance"]
 ];
 punchSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);
@@ -304,6 +307,7 @@ punchSliders.forEach(function (row) {
     editState.punch[row[1]] = v;
     if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
     else if (row[1] === "speed") out.textContent = v.toFixed(2) + "s";
+    else if (row[1] === "koChance") out.textContent = v + "%";
     else out.textContent = v;
   });
 });
