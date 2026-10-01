@@ -249,6 +249,20 @@ function beginSlugfest() {
   playWhoosh();
 }
 
+// A big, exaggerated looping hook: a quick coil way back, then a huge sweep
+// that carries well through the target. Alternates hands.
+var SLUG_HOOK_COIL = 0.07, SLUG_HOOK_SWEEP = 0.2, SLUG_HOOK_OPEN = 2.5, SLUG_HOOK_FOLLOW = 1.0;
+function slugHook(b, targetId, dmg) {
+  b.slugHand = -(b.slugHand || -1);
+  var kHit = SLUG_HOOK_OPEN / (SLUG_HOOK_OPEN + SLUG_HOOK_FOLLOW);
+  b.koPunch = {
+    t: 0, coil: SLUG_HOOK_COIL, sweep: SLUG_HOOK_SWEEP, dur: SLUG_HOOK_COIL + SLUG_HOOK_SWEEP + 0.08,
+    hitAt: SLUG_HOOK_COIL + SLUG_HOOK_SWEEP * kHit, hit: false, targetId: targetId,
+    size: b.char.punch.size * 1.3, dmg: dmg, kind: "slug", side: b.slugHand,
+    open: SLUG_HOOK_OPEN, follow: SLUG_HOOK_FOLLOW, heavy: true
+  };
+}
+
 function slugPunch(b, targetId, dur, hitAt, sizeMult, dmg, kind) {
   b.koPunch = { t: 0, dur: dur, hitAt: hitAt, hit: false, targetId: targetId, size: b.char.punch.size * sizeMult, dmg: dmg, kind: kind };
 }
@@ -294,13 +308,19 @@ function updateSlugfest(dt) {
       floater(W / 2, H / 2 - RADIUS - 70, "SLUGFEST!", "crit");
     }
   } else if (kd.phase === "exchange") {
+    // Recover back to their spots after getting rocked by a hook.
+    [a, c].forEach(function (b) {
+      var sp = kd.spots[b.id], ex = sp.x - b.x, ey = sp.y - b.y;
+      var f = 1 - Math.exp(-9 * dt);
+      b.x += ex * f; b.y += ey * f;
+    });
     kd.next -= dt;
     if (kd.next <= 0 && kd.t < SLUG_TIME - 0.3) {
       var p = balls[kd.turn];
       var dmg = SLUG_MIN + Math.floor(Math.random() * (SLUG_MAX - SLUG_MIN + 1));
-      slugPunch(p, 1 - kd.turn, 0.28, 0.13, 1.1, dmg, "slug");
+      slugHook(p, 1 - kd.turn, dmg);
       kd.turn = 1 - kd.turn;
-      kd.next = 0.45 + Math.random() * 0.3;
+      kd.next = 0.36 + Math.random() * 0.22;
     }
     if (kd.t >= SLUG_TIME && !a.koPunch && !c.koPunch) {
       kd.winner = kd.taken[0] < kd.taken[1] ? 0 : (kd.taken[1] < kd.taken[0] ? 1 : (Math.random() < 0.5 ? 0 : 1));
@@ -326,7 +346,7 @@ function updateSlugfest(dt) {
   } else if (kd.phase === "rush") {
     var Wn = balls[kd.winner], Ls = balls[kd.loser];
     var d = koDistance(Wn, Ls), reach = Wn.r + Ls.r + Wn.char.punch.reach * 0.6;
-    if (d > reach) {
+    if (d > reach + 0.5) {
       var step = Math.min(d - reach, KO_RUSH_SPEED * dt);
       Wn.x += (Ls.x - Wn.x) / d * step; Wn.y += (Ls.y - Wn.y) / d * step;
       if (!reduceMotion) particles.push({ x: Wn.x, y: Wn.y, vx: 0, vy: 0, life: 0.22, max: 0.22, size: Wn.r * 0.6, color: Wn.char.color });
@@ -346,8 +366,16 @@ function landSlugPunch(self, target, kp) {
   if (kp.kind === "slug") {
     var dealt = hurt(target, kp.dmg, "slugfest", self.id);
     kd.taken[target.id] += dealt;
-    if (dealt > 0) playPunch(dealt);
-    if (!reduceMotion) shake = Math.max(shake, 4);
+    if (dealt > 0) playPunch(dealt * 1.6);
+    // Heavy: the head snaps sideways with the hook, a shockwave, a tiny freeze.
+    var dx = target.x - self.x, dy = target.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var ux = dx / d, uy = dy / d, tx = uy * kp.side, ty = -ux * kp.side; // direction the hook is sweeping
+    var jolt = 6 + kp.dmg * 0.45;
+    target.x += (tx * 0.8 + ux * 0.5) * jolt; target.y += (ty * 0.8 + uy * 0.5) * jolt;
+    target.squash = { t: 0.12, max: 0.12, nx: -tx, ny: -ty };
+    impacts.push({ x: target.x - ux * target.r, y: target.y - uy * target.r, nx: -ux, ny: -uy, life: 0.25, max: 0.25, color: self.char.color });
+    hitStop = Math.max(hitStop, 0.035 + kp.dmg * 0.0015);
+    if (!reduceMotion) shake = Math.max(shake, 5 + kp.dmg * 0.25);
     return;
   }
   if (kp.kind === "big") {
@@ -388,7 +416,7 @@ function drawKoPunch(b) {
   if (b.koRush && b.koRush.phase === "celebrate") { drawKoCelebrate(b); return; }
   var kp = b.koPunch;
   if (!kp) return;
-  if (kp.kind === "qhook") { drawQuickHook(b, kp); return; }
+  if (kp.kind === "qhook" || kp.kind === "slug") { drawQuickHook(b, kp); return; }
   var tgt = balls[kp.targetId];
   var qx = tgt.x - b.x, qy = tgt.y - b.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var nx = qx / qd, ny = qy / qd, px = -ny, py = nx;
@@ -515,18 +543,24 @@ function drawQuickHook(b, kp) {
   var ang = Math.atan2(tgt.y - b.y, tgt.x - b.x);
   var qd = koDistance(b, tgt);
   var reachR = Math.max(r + 6, qd - tgt.r + 4);
+  var open = kp.open || QHOOK_OPEN, follow = kp.follow || QHOOK_FOLLOW, coil = kp.coil || 0;
+  var kHit = open / (open + follow);
   function at(k) {
-    var a = ang + side * (QHOOK_OPEN - (QHOOK_OPEN + QHOOK_FOLLOW) * k);
-    var rr = r * 1.1 + (reachR - r * 1.1) * Math.sin(Math.min(1, k / 0.75) * Math.PI / 2);
+    var a = ang + side * (open - (open + follow) * k);
+    var rr = r * 1.1 + (reachR - r * 1.1) * Math.sin(Math.min(1, k / kHit) * Math.PI / 2);
     return { x: b.x + Math.cos(a) * rr, y: b.y + Math.sin(a) * rr };
   }
-  var fist, trail = [];
-  if (kp.t < kp.sweep) {
-    var k = kp.t / kp.sweep;
+  var fist, trail = [], st = kp.t - coil;
+  if (st < 0) {
+    // Coiling way back before the hook loops round.
+    var c = kp.t / coil, ca = ang + side * (open + 0.35 * c);
+    fist = { x: b.x + Math.cos(ca) * r * 1.15, y: b.y + Math.sin(ca) * r * 1.15 };
+  } else if (st < kp.sweep) {
+    var k = st / kp.sweep;
     fist = at(k);
-    [0.15, 0.3].forEach(function (back) { if (k - back > 0) trail.push(at(k - back)); });
+    (kp.heavy ? [0.08, 0.16, 0.24, 0.32] : [0.15, 0.3]).forEach(function (back) { if (k - back > 0) trail.push(at(k - back)); });
   } else {
-    var e = at(1), q = Math.min(1, (kp.t - kp.sweep) / (kp.dur - kp.sweep));
+    var e = at(1), q = Math.min(1, (st - kp.sweep) / (kp.dur - coil - kp.sweep));
     var gx = b.x + Math.cos(ang) * r * 0.8 + Math.cos(ang + side * Math.PI / 2) * r * 0.4;
     var gy = b.y + Math.sin(ang) * r * 0.8 + Math.sin(ang + side * Math.PI / 2) * r * 0.4;
     fist = { x: e.x + (gx - e.x) * q, y: e.y + (gy - e.y) * q };
@@ -537,7 +571,7 @@ function drawQuickHook(b, kp) {
   ctx.save();
   ctx.lineCap = "round";
   trail.forEach(function (t, i) {
-    ctx.globalAlpha = 0.3 - i * 0.12;
+    ctx.globalAlpha = kp.heavy ? 0.4 - i * 0.09 : 0.3 - i * 0.12;
     ctx.fillStyle = b.char.color;
     ctx.beginPath(); ctx.arc(t.x, t.y, size * 0.9, 0, Math.PI * 2); ctx.fill();
   });
