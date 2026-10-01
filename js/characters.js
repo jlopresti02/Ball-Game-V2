@@ -22,7 +22,7 @@ var builtins = [
   {
     id: "builtin-brawler", builtin: true, name: "Brawler", color: "#2e64f0", label: "", imgData: null,
     hasProjectile: false, proj: defaultProj(),
-    hasPunch: true, punch: { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40, koChance: 1 },
+    hasPunch: true, punch: { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40, koChance: 5 },
     hasKick: false, kick: defaultKick(),
     hasGrapple: false, grapple: defaultGrapple(),
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),

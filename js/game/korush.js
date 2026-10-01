@@ -1,7 +1,7 @@
 // Brawler's opening KO Rush, and the Slugfest when two Brawlers both go for it.
 //
 // At the very start of a fight a fighter with a KO rush chance (the Brawler,
-// 1%) may sprint straight at the opponent and throw a single punch that
+// 5%) may sprint straight at the opponent and throw a single punch that
 // knocks them out cold. The opponent is shocked ("!") and can't attack until
 // that punch is thrown. The punch can still be weaved, blocked or countered
 // like any other punch.

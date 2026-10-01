@@ -358,7 +358,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
     <div class="devOption">
       <div>
         <span class="htitle">Always KO Rush</span>
-        <span class="hsub">Brawlers open every Dev Corner fight with the KO Rush (100% instead of 1%)</span>
+        <span class="hsub">Brawlers open every Dev Corner fight with the KO Rush (100% instead of 5%)</span>
       </div>
       <button type="button" class="switch" id="devForceKo" role="switch" aria-checked="false" aria-label="Brawlers always open with the KO Rush"><span class="knob"></span></button>
     </div>
@@ -1449,7 +1449,7 @@ var builtins = [
   {
     id: "builtin-brawler", builtin: true, name: "Brawler", color: "#2e64f0", label: "", imgData: null,
     hasProjectile: false, proj: defaultProj(),
-    hasPunch: true, punch: { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40, koChance: 1 },
+    hasPunch: true, punch: { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40, koChance: 5 },
     hasKick: false, kick: defaultKick(),
     hasGrapple: false, grapple: defaultGrapple(),
     hasPowerPunch: false, powerPunch: defaultPowerPunch(),
@@ -4232,7 +4232,7 @@ function drawSwing(self) {
 // Brawler's opening KO Rush, and the Slugfest when two Brawlers both go for it.
 //
 // At the very start of a fight a fighter with a KO rush chance (the Brawler,
-// 1%) may sprint straight at the opponent and throw a single punch that
+// 5%) may sprint straight at the opponent and throw a single punch that
 // knocks them out cold. The opponent is shocked ("!") and can't attack until
 // that punch is thrown. The punch can still be weaved, blocked or countered
 // like any other punch.
