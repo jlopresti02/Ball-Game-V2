@@ -511,6 +511,10 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
           <label for="kickReach">Reach <span class="val" id="kickReachVal">75</span></label>
           <input type="range" id="kickReach" min="0" max="220" step="5" value="75">
         </div>
+        <div class="field">
+          <label for="kickCheck">Check chance (when kicked) <span class="val" id="kickCheckVal">25%</span></label>
+          <input type="range" id="kickCheck" min="0" max="100" step="5" value="25">
+        </div>
       </div>
     </details>
 
@@ -1541,7 +1545,7 @@ var builtins = [
 
 function defaultProj() { return { size: 7, speed: 460, damage: 10, cooldown: 1.6, imgData: null }; }
 function defaultPunch() { return { damage: 25, cooldown: 1.2, speed: 0.32, size: 15, knockback: 300, reach: 40 }; }
-function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 17, knockback: 450, reach: 75 }; }
+function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 17, knockback: 450, reach: 75, checkChance: 25 }; }
 // When a grab would be the killing blow, the grapple becomes a finisher:
 // a slam into the bottom wall for finSlamDamage, then the opponent is pinned
 // and hit with finPunches heavy punches of finPunchDamage each.
@@ -1582,6 +1586,7 @@ function defaultWatcher() {
 function normalizeChar(ch) {
   if (ch.hasKick === undefined) ch.hasKick = false;
   if (!ch.kick) ch.kick = defaultKick();
+  if (ch.kick.checkChance == null) ch.kick.checkChance = defaultKick().checkChance;
   if (ch.hasGrapple === undefined) ch.hasGrapple = false;
   if (!ch.grapple) ch.grapple = defaultGrapple();
   ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance"].forEach(function (k) {
@@ -2164,6 +2169,8 @@ function fillEditorForm(s) {
   document.getElementById("kickKnockbackVal").textContent = s.kick.knockback;
   document.getElementById("kickReach").value = s.kick.reach;
   document.getElementById("kickReachVal").textContent = s.kick.reach;
+  document.getElementById("kickCheck").value = s.kick.checkChance;
+  document.getElementById("kickCheckVal").textContent = s.kick.checkChance + "%";
 
   document.getElementById("grappleOn").setAttribute("aria-checked", String(s.hasGrapple));
   document.getElementById("grappleBlock").setAttribute("data-on", String(s.hasGrapple));
@@ -2372,7 +2379,8 @@ var kickSliders = [
   ["kickSpeed", "speed"],
   ["kickSize", "size"],
   ["kickKnockback", "knockback"],
-  ["kickReach", "reach"]
+  ["kickReach", "reach"],
+  ["kickCheck", "checkChance"]
 ];
 kickSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);
@@ -2380,7 +2388,8 @@ kickSliders.forEach(function (row) {
   el.addEventListener("input", function () {
     var v = parseFloat(el.value);
     editState.kick[row[1]] = v;
-    if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
+    if (row[1] === "checkChance") out.textContent = v + "%";
+    else if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
     else if (row[1] === "speed") out.textContent = v.toFixed(2) + "s";
     else out.textContent = v;
   });
@@ -2577,7 +2586,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, swing: null, forgetT: 0, healGlow: 0,
+    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false
   };
 }
@@ -2634,6 +2643,7 @@ function beginGrapple(attacker, target) {
   target.swing = null;
   target.flow = null;
   target.sprawl = null; target.sprawled = false;
+  target.checkAnim = null;
   var gr = attacker.char.grapple;
   var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
   var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;
@@ -2863,6 +2873,46 @@ function step(dt) {
 "use strict";
 
 // ---------------------------------------------------------------
+// Kick checks: a fighter with the kick ability that gets kicked has a
+// chance (checkChance) to check it, raising its shin to take it with no
+// damage or knockback, then kicking right back. It can check even while
+// throwing its own kick (it pulls the kick to check). The kick back can't be
+// checked, so exchanges can't loop.
+// ---------------------------------------------------------------
+var CHECK_TIME = 0.22; // the shin stays up this long before the kick back
+
+function canCheck(b) {
+  return b.char.hasKick && b.alive && !b.checkAnim && !(b.kick && b.kick.counter) && !b.grappled && !b.grapple && !b.slam &&
+    !b.combo && !b.taunt && !b.flow && !b.sprawl && !b.sprawled && !b.invincible;
+}
+
+function tryCheckKick(defender, attacker) {
+  if (attacker.kick && attacker.kick.counter) return false; // kick backs can't be checked
+  if (!canCheck(defender) || Math.random() >= defender.char.kick.checkChance / 100) return false;
+  defender.checkAnim = { t: 0, towardId: attacker.id };
+  // Pulls its own kick (if it was throwing one) to check instead.
+  defender.kick = null; defender.punch = null; defender.swing = null; defender.throwAnim = null;
+  floater(defender.x, defender.y - defender.r - 8, "CHECKED", "dodge");
+  playPunch(14);
+  if (!reduceMotion) shake = Math.max(shake, 6);
+  return true;
+}
+
+// Runs every frame: once the shin comes down, the kick back starts.
+function updateCheck(b, dt) {
+  var ca = b.checkAnim;
+  if (!ca) return;
+  ca.t += dt;
+  if (ca.t < CHECK_TIME) return;
+  b.checkAnim = null;
+  var atk = balls[ca.towardId];
+  if (b.alive && atk && atk.alive && !b.grappled && !b.slam && !b.sprawl && !b.sprawled) {
+    b.kick = { t: 0, hit: false, counter: true };
+    b.kickCd = b.char.kick.cooldown;
+  }
+}
+
+// ---------------------------------------------------------------
 // Power punch wall slam: the victim is launched at high speed and
 // pinballs off the walls, taking damage on every impact, then drops
 // back to normal speed after the last one. While it's flying it's
@@ -2881,7 +2931,7 @@ function beginWallSlam(target, dirX, dirY, pp) {
   target.vx = dirX * target.slam.speed;
   target.vy = dirY * target.slam.speed;
   // Getting launched interrupts whatever the victim was in the middle of.
-  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null; target.flow = null;
+  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null; target.flow = null; target.checkAnim = null;
   if (target.powerState) target.powerState = null;
   if (target.rageState) target.rageState = null;
   if (target.watcherState && target.watcherState.phase === "travel") {
@@ -3040,7 +3090,9 @@ function updateAbilities(dt) {
         var kwindup = ki.speed * 0.35;
         if (!self.kick.hit && self.kick.t >= kwindup) {
           self.kick.hit = true;
-          if (other.alive) {
+          if (other.alive && tryCheckKick(other, self)) {
+            // Checked: no damage, no knockback; the defender kicks back.
+          } else if (other.alive) {
             hurt(other, ki.damage, "kick", self.id);
             if (ki.knockback > 0 && !other.justDodged) {
               var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;
@@ -4146,6 +4198,7 @@ function update(dt) {
     updateChargeSound(b.id, charging ? charging.kind : null, charging ? charging.p : 0, charging ? charging.n : 0);
     updateForget(b, dt);
     b.healGlow = Math.max(0, (b.healGlow || 0) - dt);
+    updateCheck(b, dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);
@@ -4649,6 +4702,33 @@ function drawGrapple(self) {
   }
 }
 
+// A checked kick: the shin raised and turned out toward the kicker.
+function drawCheck(b) {
+  var ca = b.checkAnim;
+  if (!ca || !b.alive) return;
+  var atk = balls[ca.towardId];
+  var dx = atk.x - b.x, dy = atk.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var nx = dx / d, ny = dy / d, px = -ny, py = nx;
+  var k = Math.sin(Math.PI * Math.min(1, ca.t / CHECK_TIME)); // up, then back down
+  var hipX = b.x + nx * b.r * 0.6 + px * b.r * 0.35, hipY = b.y + ny * b.r * 0.6 + py * b.r * 0.35;
+  var len = b.r * (0.5 + 0.55 * k);
+  var kx = hipX + (nx * 0.8 + px * 0.6) * len, ky = hipY + (ny * 0.8 + py * 0.6) * len;
+  var size = b.char.kick.size;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 7;
+  ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
+  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.62;
+  ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
+  // A small impact flash on the shin.
+  if (ca.t < 0.1) {
+    ctx.globalAlpha = 1 - ca.t / 0.1;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(kx, ky, size * 0.9, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
 // Drawing the arena, fighters, projectiles and damage numbers.
 "use strict";
 
@@ -4875,6 +4955,7 @@ function draw() {
 
     drawFist(b, other);
     drawSwing(b);
+    drawCheck(b);
     drawKick(b, other);
     drawGrapple(b);
     drawThrow(b, other);

@@ -408,3 +408,30 @@ function drawGrapple(self) {
     ctx.restore();
   }
 }
+
+// A checked kick: the shin raised and turned out toward the kicker.
+function drawCheck(b) {
+  var ca = b.checkAnim;
+  if (!ca || !b.alive) return;
+  var atk = balls[ca.towardId];
+  var dx = atk.x - b.x, dy = atk.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var nx = dx / d, ny = dy / d, px = -ny, py = nx;
+  var k = Math.sin(Math.PI * Math.min(1, ca.t / CHECK_TIME)); // up, then back down
+  var hipX = b.x + nx * b.r * 0.6 + px * b.r * 0.35, hipY = b.y + ny * b.r * 0.6 + py * b.r * 0.35;
+  var len = b.r * (0.5 + 0.55 * k);
+  var kx = hipX + (nx * 0.8 + px * 0.6) * len, ky = hipY + (ny * 0.8 + py * 0.6) * len;
+  var size = b.char.kick.size;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 7;
+  ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
+  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.62;
+  ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
+  // A small impact flash on the shin.
+  if (ca.t < 0.1) {
+    ctx.globalAlpha = 1 - ca.t / 0.1;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(kx, ky, size * 0.9, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}

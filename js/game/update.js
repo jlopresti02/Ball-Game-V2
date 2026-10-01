@@ -36,6 +36,7 @@ function update(dt) {
     updateChargeSound(b.id, charging ? charging.kind : null, charging ? charging.p : 0, charging ? charging.n : 0);
     updateForget(b, dt);
     b.healGlow = Math.max(0, (b.healGlow || 0) - dt);
+    updateCheck(b, dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);

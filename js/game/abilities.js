@@ -2,6 +2,46 @@
 "use strict";
 
 // ---------------------------------------------------------------
+// Kick checks: a fighter with the kick ability that gets kicked has a
+// chance (checkChance) to check it, raising its shin to take it with no
+// damage or knockback, then kicking right back. It can check even while
+// throwing its own kick (it pulls the kick to check). The kick back can't be
+// checked, so exchanges can't loop.
+// ---------------------------------------------------------------
+var CHECK_TIME = 0.22; // the shin stays up this long before the kick back
+
+function canCheck(b) {
+  return b.char.hasKick && b.alive && !b.checkAnim && !(b.kick && b.kick.counter) && !b.grappled && !b.grapple && !b.slam &&
+    !b.combo && !b.taunt && !b.flow && !b.sprawl && !b.sprawled && !b.invincible;
+}
+
+function tryCheckKick(defender, attacker) {
+  if (attacker.kick && attacker.kick.counter) return false; // kick backs can't be checked
+  if (!canCheck(defender) || Math.random() >= defender.char.kick.checkChance / 100) return false;
+  defender.checkAnim = { t: 0, towardId: attacker.id };
+  // Pulls its own kick (if it was throwing one) to check instead.
+  defender.kick = null; defender.punch = null; defender.swing = null; defender.throwAnim = null;
+  floater(defender.x, defender.y - defender.r - 8, "CHECKED", "dodge");
+  playPunch(14);
+  if (!reduceMotion) shake = Math.max(shake, 6);
+  return true;
+}
+
+// Runs every frame: once the shin comes down, the kick back starts.
+function updateCheck(b, dt) {
+  var ca = b.checkAnim;
+  if (!ca) return;
+  ca.t += dt;
+  if (ca.t < CHECK_TIME) return;
+  b.checkAnim = null;
+  var atk = balls[ca.towardId];
+  if (b.alive && atk && atk.alive && !b.grappled && !b.slam && !b.sprawl && !b.sprawled) {
+    b.kick = { t: 0, hit: false, counter: true };
+    b.kickCd = b.char.kick.cooldown;
+  }
+}
+
+// ---------------------------------------------------------------
 // Power punch wall slam: the victim is launched at high speed and
 // pinballs off the walls, taking damage on every impact, then drops
 // back to normal speed after the last one. While it's flying it's
@@ -20,7 +60,7 @@ function beginWallSlam(target, dirX, dirY, pp) {
   target.vx = dirX * target.slam.speed;
   target.vy = dirY * target.slam.speed;
   // Getting launched interrupts whatever the victim was in the middle of.
-  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null; target.flow = null;
+  target.punch = null; target.kick = null; target.throwAnim = null; target.jabAnim = null; target.swing = null; target.flow = null; target.checkAnim = null;
   if (target.powerState) target.powerState = null;
   if (target.rageState) target.rageState = null;
   if (target.watcherState && target.watcherState.phase === "travel") {
@@ -179,7 +219,9 @@ function updateAbilities(dt) {
         var kwindup = ki.speed * 0.35;
         if (!self.kick.hit && self.kick.t >= kwindup) {
           self.kick.hit = true;
-          if (other.alive) {
+          if (other.alive && tryCheckKick(other, self)) {
+            // Checked: no damage, no knockback; the defender kicks back.
+          } else if (other.alive) {
             hurt(other, ki.damage, "kick", self.id);
             if (ki.knockback > 0 && !other.justDodged) {
               var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;

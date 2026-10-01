@@ -19,7 +19,7 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 | --- | --- |
 | Gunner | Throws projectiles from range |
 | Brawler | Close-range punch, 10% block chance |
-| Kicker | Sweeping kick with long reach and long recovery |
+| Kicker | Sweeping kick with long reach and long recovery. When kicked by another kicker it has a 25% chance to check the kick (no damage) and kick right back |
 | Grappler | Grabs on contact and slams the opponent into the nearest wall; can counter-grab. If a grab would be the knockout, it becomes a finisher: a 20-damage slam into the bottom wall, then the opponent is pinned and hit with three 10-damage punches. Grappler vs Grappler: if both can grab at once, the one coming from the side or behind wins; face to face, the faster one, then the one with more health, then a coin flip. After a slam it presses the other into the wall and disengages unharmed ("Iowa Style"); the slammed Grappler can't grab it back for 1.5 seconds, so there are no back-to-back wall slams. A Grappler being grabbed has a 30% chance to Sprawl (stuff the grab and tie up); after a moment either one comes out with a Reattack slam (50/50) |
 | Power Puncher | Charges up, then spins into a 30-damage haymaker that sends the opponent pinballing into 4 walls for 5 damage each |
 | Sees Red | Charges at the opponent throwing a flurry of jabs, but takes extra damage while winding up |

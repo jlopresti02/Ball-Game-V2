@@ -104,6 +104,8 @@ function fillEditorForm(s) {
   document.getElementById("kickKnockbackVal").textContent = s.kick.knockback;
   document.getElementById("kickReach").value = s.kick.reach;
   document.getElementById("kickReachVal").textContent = s.kick.reach;
+  document.getElementById("kickCheck").value = s.kick.checkChance;
+  document.getElementById("kickCheckVal").textContent = s.kick.checkChance + "%";
 
   document.getElementById("grappleOn").setAttribute("aria-checked", String(s.hasGrapple));
   document.getElementById("grappleBlock").setAttribute("data-on", String(s.hasGrapple));
@@ -312,7 +314,8 @@ var kickSliders = [
   ["kickSpeed", "speed"],
   ["kickSize", "size"],
   ["kickKnockback", "knockback"],
-  ["kickReach", "reach"]
+  ["kickReach", "reach"],
+  ["kickCheck", "checkChance"]
 ];
 kickSliders.forEach(function (row) {
   var el = document.getElementById(row[0]);
@@ -320,7 +323,8 @@ kickSliders.forEach(function (row) {
   el.addEventListener("input", function () {
     var v = parseFloat(el.value);
     editState.kick[row[1]] = v;
-    if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
+    if (row[1] === "checkChance") out.textContent = v + "%";
+    else if (row[1] === "cooldown") out.textContent = v.toFixed(1) + "s";
     else if (row[1] === "speed") out.textContent = v.toFixed(2) + "s";
     else out.textContent = v;
   });
