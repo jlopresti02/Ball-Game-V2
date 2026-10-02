@@ -159,14 +159,24 @@ function initRosterStore() {
 // Backup: the whole roster as a file, and the same text on the clipboard.
 function exportRoster() {
   var text = JSON.stringify({ ballBrawlRoster: 1, fighters: customChars }, null, 1);
-  try {
+  var n = customChars.length + " fighter" + (customChars.length === 1 ? "" : "s");
+  if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {});
+  var useDl = window.claude && typeof window.claude.use === "function" ? window.claude.use("downloads") : Promise.resolve(null);
+  useDl.then(function (dl) {
+    if (dl) {
+      // Inside the claude.ai artifact: files go through the viewer's save prompt.
+      return dl.save({ filename: "ball-brawl-roster.json", data: text }).then(function () {
+        setRosterStatus(rosterStatus, "Exported " + n + ".");
+      }, function (e) {
+        if (e && e.code !== "declined") setRosterStatus(rosterStatus, "Couldn't save the file here; the roster was copied instead.");
+      });
+    }
     var a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
     a.download = "ball-brawl-roster.json";
     document.body.appendChild(a); a.click(); a.remove();
-  } catch (e) {}
-  if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {});
-  setRosterStatus(rosterStatus, "Exported " + customChars.length + " fighter" + (customChars.length === 1 ? "" : "s") + " (downloaded and copied).");
+    setRosterStatus(rosterStatus, "Exported " + n + " (downloaded and copied).");
+  });
 }
 
 function importRoster(file) {
