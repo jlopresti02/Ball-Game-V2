@@ -102,7 +102,11 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .slot .sabilities { font-size: 13px; color: var(--muted); }
 .vs { font-weight: 800; font-size: 20px; color: var(--muted); }
 
-.rosterHead { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
+.rosterHead { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+.rosterBtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.saveStatus { margin: -4px 0 12px; font-size: 14px; color: var(--muted); }
+.saveStatus.cloud { color: var(--dodge); }
+.saveStatus.error { color: var(--hit); font-weight: 700; }
 .roster {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

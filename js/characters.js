@@ -211,7 +211,7 @@ function normalizeChar(ch) {
   // until he's saved with a choice of his own.
   if (!ch.special) {
     ch.special = defaultSpecial();
-    ch.hasSpecial = !ch.builtin && /^\s*dustin\s*$/i.test(ch.name || "");
+    ch.hasSpecial = !ch.builtin && /^\s*dustin\b/i.test(ch.name || "");
   }
   ch.hasSpecial = !!ch.hasSpecial && !ch.builtin;
   return ch;

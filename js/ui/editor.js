@@ -486,13 +486,10 @@ weaveSliders.forEach(function (row) {
 document.getElementById("editorCancel").addEventListener("click", function () { showMenu(); });
 document.getElementById("editorSave").addEventListener("click", function () {
   if (!editState.name.trim()) editState.name = "Fighter";
-  var idx = customChars.findIndex(function (c) { return c.id === editState.id; });
-  if (idx >= 0) customChars[idx] = editState; else customChars.push(editState);
-  saveCustom(customChars);
+  saveFighter(editState); // this browser + the cloud roster (roster-store.js)
   showMenu();
 });
 document.getElementById("editorDelete").addEventListener("click", function () {
-  customChars = customChars.filter(function (c) { return c.id !== editingId; });
-  saveCustom(customChars);
+  deleteFighter(editingId);
   showMenu();
 });

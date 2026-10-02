@@ -52,5 +52,6 @@ Array.prototype.forEach.call(document.querySelectorAll('input[type="range"]'), f
   });
 });
 
+initRosterStore(); // pull in saved fighters (repo + cloud roster)
 showScreen("select");
 requestAnimationFrame(frame);

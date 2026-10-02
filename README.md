@@ -29,6 +29,16 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 
 Roster fighters can mix any of these abilities, with sliders for every stat. They're saved in the browser's local storage.
 
+## Saving your fighters
+
+Every fighter you build in the character creator is saved as soon as you tap **Save character**:
+
+- **In this browser**, always (GitHub Pages and the claude.ai artifact).
+- **In the cloud roster**, when you play the claude.ai artifact version. This copy survives cleared browser data and new versions of the game, works on any device signed in to claude.ai, and Claude can read it to build on your fighters. Fighters already saved in the browser are copied up the first time the artifact opens.
+- **In the repo** (`js/roster-data.js`): Claude copies fighters from the cloud roster into the repo so the GitHub Pages version has them too.
+
+The line under the Roster heading shows where your fighters are saved. **Export** downloads the whole roster as a file (and copies it), and **Import** loads one back in, e.g. to move fighters from GitHub Pages into the artifact or to send them to Claude.
+
 ## Special moves (created characters)
 
 Roster fighters can have a special move, set in the editor's **Special move** section. It has a charge bar under the fighter's health (like CTE Rejuvenation) that fills over time and fills faster with every clean hit the fighter lands. When it's full the move goes off.
@@ -57,6 +67,8 @@ js/game/grapple-duel.js Grappler vs Grappler: grab initiative, Iowa Style, Spraw
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest
 js/game/special.js      Special moves for created characters (IGBB)
+js/roster-store.js      Saving fighters: browser, cloud roster, repo; export/import
+js/roster-data.js       Fighters saved into the repo
 js/game/update.js       Per-frame update, HUD, canvas sizing
 js/game/draw-attacks.js Drawing each attack's animation
 js/game/draw.js         Drawing the arena, fighters, projectiles, damage numbers

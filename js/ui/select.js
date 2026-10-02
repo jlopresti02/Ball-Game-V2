@@ -202,6 +202,12 @@ function fightFrom(name) {
 }
 
 document.getElementById("newCharBtn").addEventListener("click", function () { openEditor(null); });
+document.getElementById("exportBtn").addEventListener("click", exportRoster);
+document.getElementById("importBtn").addEventListener("click", function () { document.getElementById("importFile").click(); });
+document.getElementById("importFile").addEventListener("change", function (e) {
+  if (e.target.files && e.target.files[0]) importRoster(e.target.files[0]);
+  e.target.value = "";
+});
 document.getElementById("fightBtn").addEventListener("click", function () { fightFrom("select"); });
 document.getElementById("devFightBtn").addEventListener("click", function () { fightFrom("dev"); });
 

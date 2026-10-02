@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20261001204610">
+<link rel="stylesheet" href="css/styles.css?v=20261001210146">
 </head>
 <body>
 <main>
@@ -28,8 +28,14 @@
 
     <div class="rosterHead">
       <h2>Roster</h2>
-      <button id="newCharBtn" class="small">+ New character</button>
+      <div class="rosterBtns">
+        <button id="exportBtn" class="small secondary">Export</button>
+        <button id="importBtn" class="small secondary">Import</button>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+        <button id="newCharBtn" class="small">+ New character</button>
+      </div>
     </div>
+    <p class="saveStatus local" id="rosterSave" role="status"></p>
     <div class="roster" id="roster"></div>
     <p class="emptyNote" id="rosterEmpty" hidden>No fighters yet. Tap <strong>+ New character</strong> to build your first one.</p>
 
@@ -653,24 +659,26 @@
 </main>
 
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20261001204610"></script>
-<script src="js/audio.js?v=20261001204610"></script>
-<script src="js/characters.js?v=20261001204610"></script>
-<script src="js/ui/select.js?v=20261001204610"></script>
-<script src="js/ui/cropper.js?v=20261001204610"></script>
-<script src="js/ui/editor.js?v=20261001204610"></script>
-<script src="js/game/match.js?v=20261001204610"></script>
-<script src="js/game/physics.js?v=20261001204610"></script>
-<script src="js/game/abilities.js?v=20261001204610"></script>
-<script src="js/game/weave.js?v=20261001204610"></script>
-<script src="js/game/finisher.js?v=20261001204610"></script>
-<script src="js/game/grapple-duel.js?v=20261001204610"></script>
-<script src="js/game/cte.js?v=20261001204610"></script>
-<script src="js/game/korush.js?v=20261001204610"></script>
-<script src="js/game/special.js?v=20261001204610"></script>
-<script src="js/game/update.js?v=20261001204610"></script>
-<script src="js/game/draw-attacks.js?v=20261001204610"></script>
-<script src="js/game/draw.js?v=20261001204610"></script>
-<script src="js/main.js?v=20261001204610"></script>
+<script src="js/config.js?v=20261001210146"></script>
+<script src="js/audio.js?v=20261001210146"></script>
+<script src="js/characters.js?v=20261001210146"></script>
+<script src="js/roster-data.js?v=20261001210146"></script>
+<script src="js/roster-store.js?v=20261001210146"></script>
+<script src="js/ui/select.js?v=20261001210146"></script>
+<script src="js/ui/cropper.js?v=20261001210146"></script>
+<script src="js/ui/editor.js?v=20261001210146"></script>
+<script src="js/game/match.js?v=20261001210146"></script>
+<script src="js/game/physics.js?v=20261001210146"></script>
+<script src="js/game/abilities.js?v=20261001210146"></script>
+<script src="js/game/weave.js?v=20261001210146"></script>
+<script src="js/game/finisher.js?v=20261001210146"></script>
+<script src="js/game/grapple-duel.js?v=20261001210146"></script>
+<script src="js/game/cte.js?v=20261001210146"></script>
+<script src="js/game/korush.js?v=20261001210146"></script>
+<script src="js/game/special.js?v=20261001210146"></script>
+<script src="js/game/update.js?v=20261001210146"></script>
+<script src="js/game/draw-attacks.js?v=20261001210146"></script>
+<script src="js/game/draw.js?v=20261001210146"></script>
+<script src="js/main.js?v=20261001210146"></script>
 </body>
 </html>
