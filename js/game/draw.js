@@ -251,6 +251,7 @@ function draw() {
 
   drawWatcherLasers();
   drawFinishers();
+  balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSprawls();
 
   projectiles.forEach(function (p) {

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20261001002430">
+<link rel="stylesheet" href="css/styles.css?v=20261001204610">
 </head>
 <body>
 <main>
@@ -559,6 +559,40 @@
       </div>
     </details>
 
+    <details class="abilityBlock specialBlock" id="specialBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Special move: IGBB</span>
+            <span class="hsub">A bar charges up over time, faster with every clean hit. When it fills: a one-handed throw into a corner, then a flurry of punches while they shell up. If they survive, backs away with the guard up</span>
+          </div>
+          <button type="button" class="switch" id="specialOn" role="switch" aria-checked="false" aria-label="Toggle special move"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="specialCharge">Charge time <span class="val" id="specialChargeVal">45s</span></label>
+          <input type="range" id="specialCharge" min="10" max="120" step="1" value="45">
+        </div>
+        <div class="field">
+          <label for="specialHitCut">Each clean hit takes off <span class="val" id="specialHitCutVal">5.0s</span></label>
+          <input type="range" id="specialHitCut" min="0" max="20" step="0.5" value="5">
+        </div>
+        <div class="field">
+          <label for="specialPunches">Punches in the flurry <span class="val" id="specialPunchesVal">7</span></label>
+          <input type="range" id="specialPunches" min="1" max="15" step="1" value="7">
+        </div>
+        <div class="field">
+          <label for="specialDamage">Damage per punch <span class="val" id="specialDamageVal">10</span></label>
+          <input type="range" id="specialDamage" min="1" max="30" step="1" value="10">
+        </div>
+        <div class="field">
+          <label for="specialShell">Shelled up for <span class="val" id="specialShellVal">5.0s</span></label>
+          <input type="range" id="specialShell" min="2" max="10" step="0.5" value="5">
+        </div>
+      </div>
+    </details>
+
     <div class="editorBtns">
       <button id="editorSave">Save character</button>
       <button id="editorCancel" class="secondary">Cancel</button>
@@ -575,6 +609,10 @@
         <div class="bar" role="progressbar" aria-label="Left fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar0">
           <div class="ghost" id="ghost0"></div><div class="fill" id="fill0"></div>
         </div>
+        <div class="rejuv special" id="special0" hidden>
+          <div class="rejuvLabel" id="specialLabel0">Special</div>
+          <div class="rejuvBar" role="progressbar" aria-label="Special move charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="specialBar0"><div class="rejuvFill" id="specialFill0"></div></div>
+        </div>
         <div class="rejuv" id="rejuv0" hidden>
           <div class="rejuvLabel">CTE Rejuvenation</div>
           <div class="rejuvBar" role="progressbar" aria-label="CTE Rejuvenation charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="rejuvBar0"><div class="rejuvFill" id="rejuvFill0"></div></div>
@@ -585,6 +623,10 @@
         <div class="row"><span class="name" id="name1">Blue</span><span class="hp" id="hp1">200</span></div>
         <div class="bar" role="progressbar" aria-label="Right fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar1">
           <div class="ghost" id="ghost1"></div><div class="fill" id="fill1"></div>
+        </div>
+        <div class="rejuv special" id="special1" hidden>
+          <div class="rejuvLabel" id="specialLabel1">Special</div>
+          <div class="rejuvBar" role="progressbar" aria-label="Special move charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="specialBar1"><div class="rejuvFill" id="specialFill1"></div></div>
         </div>
         <div class="rejuv" id="rejuv1" hidden>
           <div class="rejuvLabel">CTE Rejuvenation</div>
@@ -611,23 +653,24 @@
 </main>
 
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20261001002430"></script>
-<script src="js/audio.js?v=20261001002430"></script>
-<script src="js/characters.js?v=20261001002430"></script>
-<script src="js/ui/select.js?v=20261001002430"></script>
-<script src="js/ui/cropper.js?v=20261001002430"></script>
-<script src="js/ui/editor.js?v=20261001002430"></script>
-<script src="js/game/match.js?v=20261001002430"></script>
-<script src="js/game/physics.js?v=20261001002430"></script>
-<script src="js/game/abilities.js?v=20261001002430"></script>
-<script src="js/game/weave.js?v=20261001002430"></script>
-<script src="js/game/finisher.js?v=20261001002430"></script>
-<script src="js/game/grapple-duel.js?v=20261001002430"></script>
-<script src="js/game/cte.js?v=20261001002430"></script>
-<script src="js/game/korush.js?v=20261001002430"></script>
-<script src="js/game/update.js?v=20261001002430"></script>
-<script src="js/game/draw-attacks.js?v=20261001002430"></script>
-<script src="js/game/draw.js?v=20261001002430"></script>
-<script src="js/main.js?v=20261001002430"></script>
+<script src="js/config.js?v=20261001204610"></script>
+<script src="js/audio.js?v=20261001204610"></script>
+<script src="js/characters.js?v=20261001204610"></script>
+<script src="js/ui/select.js?v=20261001204610"></script>
+<script src="js/ui/cropper.js?v=20261001204610"></script>
+<script src="js/ui/editor.js?v=20261001204610"></script>
+<script src="js/game/match.js?v=20261001204610"></script>
+<script src="js/game/physics.js?v=20261001204610"></script>
+<script src="js/game/abilities.js?v=20261001204610"></script>
+<script src="js/game/weave.js?v=20261001204610"></script>
+<script src="js/game/finisher.js?v=20261001204610"></script>
+<script src="js/game/grapple-duel.js?v=20261001204610"></script>
+<script src="js/game/cte.js?v=20261001204610"></script>
+<script src="js/game/korush.js?v=20261001204610"></script>
+<script src="js/game/special.js?v=20261001204610"></script>
+<script src="js/game/update.js?v=20261001204610"></script>
+<script src="js/game/draw-attacks.js?v=20261001204610"></script>
+<script src="js/game/draw.js?v=20261001204610"></script>
+<script src="js/main.js?v=20261001204610"></script>
 </body>
 </html>

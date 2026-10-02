@@ -851,6 +851,40 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       </div>
     </details>
 
+    <details class="abilityBlock specialBlock" id="specialBlock" data-on="false" open>
+      <summary>
+        <div class="abilityHead">
+          <div class="htext">
+            <span class="htitle">Special move: IGBB</span>
+            <span class="hsub">A bar charges up over time, faster with every clean hit. When it fills: a one-handed throw into a corner, then a flurry of punches while they shell up. If they survive, backs away with the guard up</span>
+          </div>
+          <button type="button" class="switch" id="specialOn" role="switch" aria-checked="false" aria-label="Toggle special move"><span class="knob"></span></button>
+        </div>
+      </summary>
+      <div class="abilityBody">
+        <div class="field">
+          <label for="specialCharge">Charge time <span class="val" id="specialChargeVal">45s</span></label>
+          <input type="range" id="specialCharge" min="10" max="120" step="1" value="45">
+        </div>
+        <div class="field">
+          <label for="specialHitCut">Each clean hit takes off <span class="val" id="specialHitCutVal">5.0s</span></label>
+          <input type="range" id="specialHitCut" min="0" max="20" step="0.5" value="5">
+        </div>
+        <div class="field">
+          <label for="specialPunches">Punches in the flurry <span class="val" id="specialPunchesVal">7</span></label>
+          <input type="range" id="specialPunches" min="1" max="15" step="1" value="7">
+        </div>
+        <div class="field">
+          <label for="specialDamage">Damage per punch <span class="val" id="specialDamageVal">10</span></label>
+          <input type="range" id="specialDamage" min="1" max="30" step="1" value="10">
+        </div>
+        <div class="field">
+          <label for="specialShell">Shelled up for <span class="val" id="specialShellVal">5.0s</span></label>
+          <input type="range" id="specialShell" min="2" max="10" step="0.5" value="5">
+        </div>
+      </div>
+    </details>
+
     <div class="editorBtns">
       <button id="editorSave">Save character</button>
       <button id="editorCancel" class="secondary">Cancel</button>
@@ -867,6 +901,10 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <div class="bar" role="progressbar" aria-label="Left fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar0">
           <div class="ghost" id="ghost0"></div><div class="fill" id="fill0"></div>
         </div>
+        <div class="rejuv special" id="special0" hidden>
+          <div class="rejuvLabel" id="specialLabel0">Special</div>
+          <div class="rejuvBar" role="progressbar" aria-label="Special move charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="specialBar0"><div class="rejuvFill" id="specialFill0"></div></div>
+        </div>
         <div class="rejuv" id="rejuv0" hidden>
           <div class="rejuvLabel">CTE Rejuvenation</div>
           <div class="rejuvBar" role="progressbar" aria-label="CTE Rejuvenation charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="rejuvBar0"><div class="rejuvFill" id="rejuvFill0"></div></div>
@@ -877,6 +915,10 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <div class="row"><span class="name" id="name1">Blue</span><span class="hp" id="hp1">200</span></div>
         <div class="bar" role="progressbar" aria-label="Right fighter health" aria-valuemin="0" aria-valuemax="200" aria-valuenow="200" id="bar1">
           <div class="ghost" id="ghost1"></div><div class="fill" id="fill1"></div>
+        </div>
+        <div class="rejuv special" id="special1" hidden>
+          <div class="rejuvLabel" id="specialLabel1">Special</div>
+          <div class="rejuvBar" role="progressbar" aria-label="Special move charge" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="specialBar1"><div class="rejuvFill" id="specialFill1"></div></div>
         </div>
         <div class="rejuv" id="rejuv1" hidden>
           <div class="rejuvLabel">CTE Rejuvenation</div>
@@ -1598,6 +1640,7 @@ function defaultSwing() {
 }
 // Forget: every `every` seconds, forgets some damage and regains `heal` health.
 function defaultForget() { return { heal: 12, every: 7 }; }
+function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
 }
@@ -1632,6 +1675,14 @@ function normalizeChar(ch) {
   if (ch.hasForget === undefined) ch.hasForget = false;
   if (!ch.forget) ch.forget = defaultForget();
   if (ch.blockChance == null) ch.blockChance = 0;
+  // Special moves are for created characters. Dustin was set up with IGBB
+  // before the editor had a special-move section, so he gets it switched on
+  // until he's saved with a choice of his own.
+  if (!ch.special) {
+    ch.special = defaultSpecial();
+    ch.hasSpecial = !ch.builtin && /^\s*dustin\s*$/i.test(ch.name || "");
+  }
+  ch.hasSpecial = !!ch.hasSpecial && !ch.builtin;
   return ch;
 }
 
@@ -1732,6 +1783,7 @@ function abilitySummary(ch) {
   if (ch.hasWatcher) parts.push("👁️ " + ch.watcher.lasers + "×" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
   if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
   if (ch.hasSwing) parts.push("\uD83E\uDD74 " + ch.swing.damage + " dmg swing");
+  if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
   if (ch.hasForget) parts.push("\uD83E\uDDE0 +" + ch.forget.heal + " / " + ch.forget.every + "s");
   if (ch.blockChance > 0) parts.push("🛡️ " + ch.blockChance + "% block");
   return parts.length ? parts.join(" · ") : "No attacks yet";
@@ -2136,6 +2188,8 @@ function blankChar() {
     swing: defaultSwing(),
     hasForget: false,
     forget: defaultForget(),
+    hasSpecial: false,
+    special: defaultSpecial(),
     blockChance: 0
   };
 }
@@ -2283,7 +2337,7 @@ function fillEditorForm(s) {
   document.getElementById("watcherLasers").value = s.watcher.lasers;
   document.getElementById("watcherLasersVal").textContent = s.watcher.lasers;
 
-  [["swing", "hasSwing", swingSliders], ["forget", "hasForget", forgetSliders]].forEach(function (grp) {
+  [["swing", "hasSwing", swingSliders], ["forget", "hasForget", forgetSliders], ["special", "hasSpecial", specialSliders]].forEach(function (grp) {
     document.getElementById(grp[0] + "On").setAttribute("aria-checked", String(s[grp[1]]));
     document.getElementById(grp[0] + "Block").setAttribute("data-on", String(s[grp[1]]));
     grp[2].forEach(function (row) {
@@ -2345,7 +2399,8 @@ var abilityToggles = [
   ["watcherOn", "watcherBlock", "hasWatcher"],
   ["weaveOn", "weaveBlock", "hasWeave"],
   ["swingOn", "swingBlock", "hasSwing"],
-  ["forgetOn", "forgetBlock", "hasForget"]
+  ["forgetOn", "forgetBlock", "hasForget"],
+  ["specialOn", "specialBlock", "hasSpecial"]
 ];
 // Each switch is a real button, not a draggable control — one press
 // flips it on or off immediately, and the sliding knob is purely a
@@ -2539,7 +2594,14 @@ var forgetSliders = [
   ["forgetHeal", "heal", function (v) { return v; }],
   ["forgetEvery", "every", function (v) { return Number(v).toFixed(1) + "s"; }]
 ];
-[["swing", swingSliders], ["forget", forgetSliders]].forEach(function (grp) {
+var specialSliders = [
+  ["specialCharge", "chargeTime", function (v) { return v + "s"; }],
+  ["specialHitCut", "hitCut", function (v) { return Number(v).toFixed(1) + "s"; }],
+  ["specialPunches", "punches", function (v) { return v; }],
+  ["specialDamage", "damage", function (v) { return v; }],
+  ["specialShell", "shellTime", function (v) { return Number(v).toFixed(1) + "s"; }]
+];
+[["swing", swingSliders], ["forget", forgetSliders], ["special", specialSliders]].forEach(function (grp) {
   grp[1].forEach(function (row) {
     var el = document.getElementById(row[0]);
     var out = document.getElementById(row[0] + "Val");
@@ -2627,7 +2689,7 @@ function makeBall(id, ch) {
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
-    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0,
+    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false
   };
 }
@@ -2646,6 +2708,9 @@ function startMatchWith(ch0, ch1) {
     document.getElementById("fill" + i).style.background = ch.color;
     document.getElementById("role" + i).textContent = abilitySummary(ch);
     document.getElementById("rejuv" + i).hidden = !ch.hasForget;
+    document.getElementById("special" + i).hidden = !ch.hasSpecial;
+    if (ch.hasSpecial) document.getElementById("specialLabel" + i).textContent = specialName(ch);
+    if (ch.hasSpecial) document.getElementById("specialFill" + i).style.background = ch.color;
     document.getElementById("hud" + i).classList.remove("dead");
   });
 
@@ -2743,12 +2808,21 @@ function hurt(b, amount, source, attackerId) {
     b.justDodged = true;
     return 0;
   }
+  // Mid special move (IGBB): hands full or guard up, blocks everything.
+  if (specialGuarding(b)) {
+    if (source !== "laser" && b.immuneCd <= 0) {
+      floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
+      b.immuneCd = 0.3;
+    }
+    b.justDodged = true;
+    return 0;
+  }
   // Weave: slips the attack completely (grabs are weaved when they're
   // attempted, not when the slam lands). Callers check justDodged to skip
   // knockback, and projectiles fly on through.
   // CTE's wild swings are easier to see coming.
   var swinger = source === "swing" && attackerId != null ? balls[attackerId].char.swing : null;
-  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" &&
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" &&
       tryWeave(b, attackerId, swinger ? swinger.weaveMult : 1)) {
     b.justDodged = true;
     return 0;
@@ -2757,7 +2831,7 @@ function hurt(b, amount, source, attackerId) {
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
   var blockChance = Math.min(100, b.char.blockChance * (swinger ? swinger.blockMult : 1));
-  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && Math.random() < blockChance / 100) {
+  if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" && Math.random() < blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
     return 0;
@@ -2779,6 +2853,8 @@ function hurt(b, amount, source, attackerId) {
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
+  // A clean hit charges the attacker's special move.
+  if (amount > 0 && attackerId != null && attackerId !== b.id && source !== "laser" && source !== "igbb") addSpecialCharge(balls[attackerId]);
   if (source === "laser") {
     // Laser ticks land constantly, so they only give a soft pulse; the
     // running total floats up about once a second instead.
@@ -2794,7 +2870,7 @@ function hurt(b, amount, source, attackerId) {
   }
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
-  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && !b.koDuel &&
+  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && source !== "igbb" && !b.koDuel &&
       b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
@@ -2838,7 +2914,7 @@ var SLOW_DOWN = 1.1;      // how quickly extra speed bleeds off (higher = faster
 
 function inOrdinaryMovement(b) {
   if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.flow || b.sprawl || b.sprawled || b.knockFly > 0) return false;
-  if (b.koRush || b.shocked || b.koOut || b.koDuel) return false;
+  if (b.koRush || b.shocked || b.koOut || b.koDuel || b.igbb || b.shelled) return false;
   if (b.checkStun > 0 || b.checkAnim || (b.kick && b.kick.counter && !b.kick.hit)) return false;
   if (b.powerState || b.rageState) return false;
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
@@ -2868,7 +2944,7 @@ function step(dt) {
     b = balls[i];
     var spinning = b.powerState && b.powerState.phase === "attack";
     var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-    if (!b.alive || b.grappled || b.grapple || b.sprawl || b.sprawled || b.koDuel || spinning || sitting) continue;
+    if (!b.alive || b.grappled || b.grapple || b.sprawl || b.sprawled || b.koDuel || igbbLocked(b) || spinning || sitting) continue;
     b.x += b.vx * dt; b.y += b.vy * dt;
     var hitWall = false, wnx = 0, wny = 0;
     if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); hitWall = true; wnx = 1; }
@@ -2889,7 +2965,7 @@ function step(dt) {
   // Sees Red keeps a normal collision box even mid-charge-dash, so it
   // still bounces off the opponent on contact like any other pair of
   // balls; only its punch damage is handled separately, on a timer.
-  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || a.koDuel || c.koDuel || aSpin || cSpin) return;
+  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || a.koDuel || c.koDuel || igbbLocked(a) || igbbLocked(c) || aSpin || cSpin) return;
   // A seated Watcher is an immovable, solid object: whoever runs into it
   // just bounces off, the way they would off a wall.
   if (aSit || cSit) {
@@ -3077,7 +3153,8 @@ function updateAbilities(dt) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled) continue;
-    if (self.shocked || self.koOut) continue; // frozen by an incoming KO Rush, or knocked out by it
+    if (self.shocked || self.koOut || self.shelled) continue; // frozen by a KO Rush, knocked out, or shelled up under IGBB
+    if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
@@ -4903,6 +4980,269 @@ function drawShock(b) {
   ctx.restore();
 }
 
+// Special moves for created (roster) characters.
+//
+// A special has a bar that charges over time (like CTE Rejuvenation) and
+// fills faster with every clean hit the fighter lands. When it's full the
+// move goes off.
+//
+// IGBB: grabs the opponent with one hand and throws them into a corner,
+// then unloads a flurry of fast, heavy punches while they shell up. If they
+// survive, the fighter backs away with its guard up, blocking everything.
+"use strict";
+
+var SPECIAL_MOVES = { igbb: "IGBB" };
+
+var IGBB_CLOSE_SPEED = 640;   // dash in to grab
+var IGBB_CLOSE_GIVEUP = 3;
+var IGBB_GRAB_TIME = 0.28;    // one hand locks on
+var IGBB_THROW_TIME = 0.42;   // flight into the corner
+var IGBB_STEP_SPEED = 700;    // steps in after the throw
+var IGBB_RETREAT_TIME = 1.2;  // backing away, guard up
+var IGBB_RETREAT_SPEED = 210;
+
+function specialName(ch) { return SPECIAL_MOVES[ch.special && ch.special.move] || "Special"; }
+
+// Every clean hit the fighter lands knocks some time off the charge.
+function addSpecialCharge(b) {
+  if (!b || !b.char.hasSpecial || b.igbb) return;
+  var sp = b.char.special;
+  b.specialT = Math.min(sp.chargeTime, (b.specialT || 0) + sp.hitCut);
+}
+
+function tickSpecialCharge(b, dt) {
+  if (!b.char.hasSpecial || !b.alive || b.igbb || !started || over) return;
+  b.specialT = Math.min(b.char.special.chargeTime, (b.specialT || 0) + dt);
+}
+
+// Busy with something that shouldn't be interrupted.
+function specialBusy(b) {
+  return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || b.combo || b.taunt || b.flow ||
+    b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled;
+}
+function canStartIgbb(self, other) {
+  if (!other.alive || other.invincible || specialBusy(self) || specialBusy(other)) return false;
+  // Lets its own attack in progress finish first.
+  if (self.punch || self.kick || self.swing || self.throwAnim || self.powerState || self.rageState || self.watcherState) return false;
+  return true;
+}
+
+// Drops whatever a fighter was in the middle of.
+function clearActions(b) {
+  b.punch = null; b.kick = null; b.swing = null; b.throwAnim = null; b.jabAnim = null;
+  b.powerState = null; b.rageState = null; b.watcherState = null; b.invincible = false;
+  b.flow = null; b.taunt = null; b.combo = null; b.checkAnim = null; b.checkStun = 0; b.knockFly = 0;
+}
+
+// The corner the opponent gets thrown into: the one lying most in the
+// direction of the throw (away from the thrower).
+function throwCorner(thrower, b) {
+  var tx = b.x - thrower.x, ty = b.y - thrower.y, tl = Math.sqrt(tx * tx + ty * ty) || 1;
+  var best = null, bestScore = -Infinity;
+  [[b.r + 2, b.r + 2], [W - b.r - 2, b.r + 2], [b.r + 2, H - b.r - 2], [W - b.r - 2, H - b.r - 2]].forEach(function (c) {
+    var cx = c[0] - b.x, cy = c[1] - b.y, cl = Math.sqrt(cx * cx + cy * cy) || 1;
+    var score = (cx * tx + cy * ty) / (cl * tl) - cl / (W * 4);
+    if (score > bestScore) { bestScore = score; best = { x: c[0], y: c[1] }; }
+  });
+  return best;
+}
+
+// Runs for the special's owner each frame. Returns true while the move is
+// running (the fighter does nothing else).
+function updateSpecial(self, other, dt) {
+  if (!self.char.hasSpecial || self.char.special.move !== "igbb") return false;
+  var sp = self.char.special;
+  if (!self.igbb) {
+    if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
+    self.igbb = { phase: "close", t: 0 };
+    floater(self.x, self.y - self.r - 26, "IGBB!", "crit");
+    playWhoosh();
+  }
+  var m = self.igbb;
+  m.t += dt;
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+
+  if (m.phase === "close") {
+    // Called off (opponent became untouchable or got busy): stays charged.
+    if (!other.alive || other.invincible || specialBusy(other) || m.t > IGBB_CLOSE_GIVEUP) {
+      self.igbb = null;
+      return false;
+    }
+    if (d < self.r + other.r + 10) {
+      clearActions(other);
+      other.shelled = true; other.vx = 0; other.vy = 0;
+      self.vx = 0; self.vy = 0;
+      m.phase = "grab"; m.t = 0;
+    } else {
+      self.vx = dx / d * IGBB_CLOSE_SPEED; self.vy = dy / d * IGBB_CLOSE_SPEED;
+      if (!reduceMotion) particles.push({ x: self.x, y: self.y, vx: -self.vx * 0.1, vy: -self.vy * 0.1, life: 0.2, max: 0.2, size: self.r * 0.55, color: self.char.color });
+    }
+    return true;
+  }
+
+  self.vx = 0; self.vy = 0;
+  if (m.phase === "grab") {
+    if (m.t >= IGBB_GRAB_TIME) {
+      var c = throwCorner(self, other);
+      m.phase = "throw"; m.t = 0;
+      m.sx = other.x; m.sy = other.y; m.ex = c.x; m.ey = c.y;
+      playWhoosh();
+    }
+    return true;
+  }
+  if (m.phase === "throw") {
+    var k = Math.min(1, m.t / IGBB_THROW_TIME), e = k * k; // speeds up into the corner
+    other.x = m.sx + (m.ex - m.sx) * e; other.y = m.sy + (m.ey - m.sy) * e;
+    if (!reduceMotion) particles.push({ x: other.x, y: other.y, vx: 0, vy: 0, life: 0.25, max: 0.25, size: other.r * 0.7, color: self.char.color });
+    if (k >= 1) {
+      // Crashes into the corner.
+      var nx = other.x < W / 2 ? 1 : -1, ny = other.y < H / 2 ? 1 : -1;
+      other.squash = { t: 0.2, max: 0.2, nx: nx * 0.7071, ny: ny * 0.7071 };
+      impacts.push({ x: other.x - nx * other.r * 0.7, y: other.y - ny * other.r * 0.7, nx: nx * 0.7071, ny: ny * 0.7071, life: 0.45, max: 0.45, color: self.char.color });
+      hitStop = 0.1;
+      if (!reduceMotion) shake = Math.max(shake, 12);
+      playSlam();
+      m.phase = "step"; m.t = 0;
+      m.out = { x: nx * 0.7071, y: ny * 0.7071 }; // from the corner toward the middle
+    }
+    return true;
+  }
+  if (m.phase === "step") {
+    // Steps right in front of the cornered opponent.
+    var tx = other.x + m.out.x * (self.r + other.r + 8), ty = other.y + m.out.y * (self.r + other.r + 8);
+    var sx = tx - self.x, sy = ty - self.y, sd = Math.sqrt(sx * sx + sy * sy);
+    if (sd <= IGBB_STEP_SPEED * dt || sd < 1) {
+      self.x = tx; self.y = ty;
+      m.phase = "flurry"; m.t = 0; m.thrown = 0;
+      m.times = flurrySchedule(sp.punches, sp.shellTime);
+      floater(other.x, other.y - other.r - 30, "SHELLED UP", "note");
+    } else {
+      self.x += sx / sd * IGBB_STEP_SPEED * dt; self.y += sy / sd * IGBB_STEP_SPEED * dt;
+    }
+    return true;
+  }
+  if (m.phase === "flurry") {
+    // Little aggressive shuffle in front of them.
+    self.x = other.x + m.out.x * (self.r + other.r + 8) + Math.sin(m.t * 17) * 2;
+    self.y = other.y + m.out.y * (self.r + other.r + 8) + Math.cos(m.t * 13) * 2;
+    var kp = self.koPunch;
+    if (kp) {
+      kp.t += dt;
+      if (!kp.hit && kp.t >= kp.hitAt) { kp.hit = true; landIgbbPunch(self, other, kp); }
+      if (kp.t >= kp.dur) self.koPunch = null;
+    }
+    if (!other.alive) { endIgbb(self, other); checkEnd(); return false; }
+    if (!self.koPunch && m.thrown < sp.punches && m.t >= m.times[m.thrown]) {
+      var hook = Math.random() < 0.55;
+      var side = m.thrown % 2 ? -1 : 1;
+      if (hook) {
+        var sweep = 0.14;
+        self.koPunch = { t: 0, dur: 0.19, hitAt: sweep * QHOOK_OPEN / (QHOOK_OPEN + QHOOK_FOLLOW), sweep: sweep, hit: false,
+          targetId: other.id, size: self.char.punch.size, kind: "qhook", side: side };
+      } else {
+        self.koPunch = { t: 0, dur: 0.16, hitAt: 0.07, hit: false, targetId: other.id, size: self.char.punch.size, kind: "jab", side: side };
+      }
+      m.thrown++;
+    }
+    if (m.t >= sp.shellTime && !self.koPunch) {
+      // They survived it: back off behind a high guard.
+      other.shelled = false;
+      setSpeed(other, SPEED * 0.6);
+      other.vx = m.out.x * SPEED * 0.6; other.vy = m.out.y * SPEED * 0.6;
+      m.phase = "retreat"; m.t = 0;
+    }
+    return true;
+  }
+  if (m.phase === "retreat") {
+    self.vx = -dx / d * IGBB_RETREAT_SPEED; self.vy = -dy / d * IGBB_RETREAT_SPEED;
+    if (m.t >= IGBB_RETREAT_TIME) { endIgbb(self, other); setSpeed(self, SPEED); return false; }
+    return true;
+  }
+  return false;
+}
+
+// Punch times spread across the shell-up, in a stuttering, aggressive rhythm.
+function flurrySchedule(n, total) {
+  var gaps = [], sum = 0;
+  for (var i = 0; i < n; i++) { var g = 0.4 + Math.random(); gaps.push(g); sum += g; }
+  var span = Math.max(0.5, total - 0.5), t = 0.15, times = [];
+  for (var j = 0; j < n; j++) { times.push(t); t += gaps[j] / sum * span; }
+  return times;
+}
+
+function landIgbbPunch(self, other, kp) {
+  var dealt = hurt(other, self.char.special.damage, "igbb", self.id);
+  if (dealt > 0) playPunch(dealt * 1.4);
+  // Rocked back into the corner behind the shell.
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  other.squash = { t: 0.1, max: 0.1, nx: -dx / d, ny: -dy / d };
+  if (!reduceMotion) shake = Math.max(shake, 6);
+  hitStop = Math.max(hitStop, 0.03);
+}
+
+function endIgbb(self, other) {
+  self.igbb = null;
+  self.koPunch = null;
+  self.specialT = 0;
+  if (other) other.shelled = false;
+}
+
+// Blocks everything while the move is running (it's thrown them, then has
+// its hands full or its guard up), except while still dashing in to grab.
+// Positions are set by the move itself (no physics) while it has hold of them.
+function igbbLocked(b) {
+  return b.shelled || (b.igbb && b.igbb.phase !== "close" && b.igbb.phase !== "retreat");
+}
+
+function specialGuarding(b) {
+  return b.igbb && b.igbb.phase !== "close";
+}
+
+// ---------------------------------------------------------------
+// Drawing
+// ---------------------------------------------------------------
+
+// The one-handed grab and throw.
+function drawSpecial(b) {
+  var m = b.igbb;
+  if (!m || !b.alive || (m.phase !== "grab" && m.phase !== "throw")) return;
+  var o = balls[1 - b.id];
+  var dx = o.x - b.x, dy = o.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var nx = dx / d, ny = dy / d, px = -ny, py = nx, r = b.r;
+  var sx = b.x + nx * (r - 2) + px * r * 0.4, sy = b.y + ny * (r - 2) + py * r * 0.4;
+  // Hand on the opponent: gripping during the grab, then letting go at the
+  // end of the throw with the arm fully extended toward the corner.
+  var reach = m.phase === "grab" ? d - o.r * 0.6 : Math.min(d - o.r * 0.6, r + 46);
+  var hx = b.x + nx * reach + px * r * 0.2, hy = b.y + ny * reach + py * r * 0.2;
+  var size = b.char.punch.size || 15;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
+  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(hx, hy, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+// HUD charge bar (same look as CTE Rejuvenation).
+var specialCache = [];
+function updateSpecialHud(force) {
+  for (var i = 0; i < 2; i++) {
+    var b = balls[i];
+    if (!b.char.hasSpecial) continue;
+    var p = Math.max(0, Math.min(1, (b.specialT || 0) / b.char.special.chargeTime));
+    var live = !!b.igbb;
+    var key = Math.round(p * 400) + (live ? "l" : "") + (p >= 1 ? "f" : "");
+    if (!force && specialCache[i] === key) continue;
+    specialCache[i] = key;
+    document.getElementById("specialFill" + i).style.width = (live ? 100 : p * 100) + "%";
+    document.getElementById("specialBar" + i).setAttribute("aria-valuenow", Math.round(p * 100));
+    document.getElementById("special" + i).classList.toggle("healing", live || p >= 1);
+  }
+}
+
 // Per-frame update, HUD health bars and canvas sizing.
 "use strict";
 
@@ -4940,6 +5280,7 @@ function update(dt) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;
     updateChargeSound(b.id, charging ? charging.kind : null, charging ? charging.p : 0, charging ? charging.n : 0);
     if (!b.koOut) updateForget(b, dt);
+    tickSpecialCharge(b, dt);
     b.healGlow = Math.max(0, (b.healGlow || 0) - dt);
     updateCheck(b, dt);
     if (b.checkStun > 0) { b.checkStun = Math.max(0, b.checkStun - dt); b.vx = 0; b.vy = 0; }
@@ -5009,6 +5350,7 @@ function updateHud(force) {
     document.getElementById("bar" + i).setAttribute("aria-valuenow", rounded);
   }
   updateRejuvHud(force);
+  updateSpecialHud(force);
 }
 
 // CTE Rejuvenation bar: fills as the next heal gets closer, then empties
@@ -5158,7 +5500,9 @@ function drawHands(b, other) {
     return;
   }
   var fx, fy;
-  if (b.char.hasProjectile && other && other.alive) {
+  // Shelled up (or guarding while backing off after IGBB): faces the opponent.
+  var shell = b.shelled || (b.igbb && b.igbb.phase !== "close");
+  if ((b.char.hasProjectile || shell) && other && other.alive) {
     var dx2 = other.x - b.x, dy2 = other.y - b.y, dd2 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
     fx = dx2 / dd2; fy = dy2 / dd2;
   } else {
@@ -5174,8 +5518,10 @@ function drawHands(b, other) {
   }
   var perpx = -fy, perpy = fx;
   var fwd = b.r * 0.8, gap = b.r * 0.4, hr = b.r * 0.3;
+  if (b.shelled) { fwd = b.r * 0.9; gap = b.r * 0.22; hr = b.r * 0.34; } // tight shell, gloves together
   var koHook = b.koRush && (b.koRush.phase === "run" || b.koRush.phase === "throw");
-  var sides = (b.punch || b.throwAnim || koHook) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : [1, -1]);
+  var igbbGrab = b.igbb && (b.igbb.phase === "grab" || b.igbb.phase === "throw");
+  var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : [1, -1]);
   ctx.save();
   ctx.fillStyle = b.char.color;
   ctx.strokeStyle = theme.wall;
@@ -5730,6 +6076,7 @@ function draw() {
 
   drawWatcherLasers();
   drawFinishers();
+  balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSprawls();
 
   projectiles.forEach(function (p) {

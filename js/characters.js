@@ -171,6 +171,7 @@ function defaultSwing() {
 }
 // Forget: every `every` seconds, forgets some damage and regains `heal` health.
 function defaultForget() { return { heal: 12, every: 7 }; }
+function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
 }
@@ -205,6 +206,14 @@ function normalizeChar(ch) {
   if (ch.hasForget === undefined) ch.hasForget = false;
   if (!ch.forget) ch.forget = defaultForget();
   if (ch.blockChance == null) ch.blockChance = 0;
+  // Special moves are for created characters. Dustin was set up with IGBB
+  // before the editor had a special-move section, so he gets it switched on
+  // until he's saved with a choice of his own.
+  if (!ch.special) {
+    ch.special = defaultSpecial();
+    ch.hasSpecial = !ch.builtin && /^\s*dustin\s*$/i.test(ch.name || "");
+  }
+  ch.hasSpecial = !!ch.hasSpecial && !ch.builtin;
   return ch;
 }
 

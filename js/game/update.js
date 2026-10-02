@@ -35,6 +35,7 @@ function update(dt) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;
     updateChargeSound(b.id, charging ? charging.kind : null, charging ? charging.p : 0, charging ? charging.n : 0);
     if (!b.koOut) updateForget(b, dt);
+    tickSpecialCharge(b, dt);
     b.healGlow = Math.max(0, (b.healGlow || 0) - dt);
     updateCheck(b, dt);
     if (b.checkStun > 0) { b.checkStun = Math.max(0, b.checkStun - dt); b.vx = 0; b.vy = 0; }
@@ -104,6 +105,7 @@ function updateHud(force) {
     document.getElementById("bar" + i).setAttribute("aria-valuenow", rounded);
   }
   updateRejuvHud(force);
+  updateSpecialHud(force);
 }
 
 // CTE Rejuvenation bar: fills as the next heal gets closer, then empties

@@ -35,6 +35,8 @@ function blankChar() {
     swing: defaultSwing(),
     hasForget: false,
     forget: defaultForget(),
+    hasSpecial: false,
+    special: defaultSpecial(),
     blockChance: 0
   };
 }
@@ -182,7 +184,7 @@ function fillEditorForm(s) {
   document.getElementById("watcherLasers").value = s.watcher.lasers;
   document.getElementById("watcherLasersVal").textContent = s.watcher.lasers;
 
-  [["swing", "hasSwing", swingSliders], ["forget", "hasForget", forgetSliders]].forEach(function (grp) {
+  [["swing", "hasSwing", swingSliders], ["forget", "hasForget", forgetSliders], ["special", "hasSpecial", specialSliders]].forEach(function (grp) {
     document.getElementById(grp[0] + "On").setAttribute("aria-checked", String(s[grp[1]]));
     document.getElementById(grp[0] + "Block").setAttribute("data-on", String(s[grp[1]]));
     grp[2].forEach(function (row) {
@@ -244,7 +246,8 @@ var abilityToggles = [
   ["watcherOn", "watcherBlock", "hasWatcher"],
   ["weaveOn", "weaveBlock", "hasWeave"],
   ["swingOn", "swingBlock", "hasSwing"],
-  ["forgetOn", "forgetBlock", "hasForget"]
+  ["forgetOn", "forgetBlock", "hasForget"],
+  ["specialOn", "specialBlock", "hasSpecial"]
 ];
 // Each switch is a real button, not a draggable control — one press
 // flips it on or off immediately, and the sliding knob is purely a
@@ -438,7 +441,14 @@ var forgetSliders = [
   ["forgetHeal", "heal", function (v) { return v; }],
   ["forgetEvery", "every", function (v) { return Number(v).toFixed(1) + "s"; }]
 ];
-[["swing", swingSliders], ["forget", forgetSliders]].forEach(function (grp) {
+var specialSliders = [
+  ["specialCharge", "chargeTime", function (v) { return v + "s"; }],
+  ["specialHitCut", "hitCut", function (v) { return Number(v).toFixed(1) + "s"; }],
+  ["specialPunches", "punches", function (v) { return v; }],
+  ["specialDamage", "damage", function (v) { return v; }],
+  ["specialShell", "shellTime", function (v) { return Number(v).toFixed(1) + "s"; }]
+];
+[["swing", swingSliders], ["forget", forgetSliders], ["special", specialSliders]].forEach(function (grp) {
   grp[1].forEach(function (row) {
     var el = document.getElementById(row[0]);
     var out = document.getElementById(row[0] + "Val");

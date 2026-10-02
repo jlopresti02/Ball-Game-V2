@@ -119,7 +119,9 @@ function drawHands(b, other) {
     return;
   }
   var fx, fy;
-  if (b.char.hasProjectile && other && other.alive) {
+  // Shelled up (or guarding while backing off after IGBB): faces the opponent.
+  var shell = b.shelled || (b.igbb && b.igbb.phase !== "close");
+  if ((b.char.hasProjectile || shell) && other && other.alive) {
     var dx2 = other.x - b.x, dy2 = other.y - b.y, dd2 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
     fx = dx2 / dd2; fy = dy2 / dd2;
   } else {
@@ -135,8 +137,10 @@ function drawHands(b, other) {
   }
   var perpx = -fy, perpy = fx;
   var fwd = b.r * 0.8, gap = b.r * 0.4, hr = b.r * 0.3;
+  if (b.shelled) { fwd = b.r * 0.9; gap = b.r * 0.22; hr = b.r * 0.34; } // tight shell, gloves together
   var koHook = b.koRush && (b.koRush.phase === "run" || b.koRush.phase === "throw");
-  var sides = (b.punch || b.throwAnim || koHook) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : [1, -1]);
+  var igbbGrab = b.igbb && (b.igbb.phase === "grab" || b.igbb.phase === "throw");
+  var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : [1, -1]);
   ctx.save();
   ctx.fillStyle = b.char.color;
   ctx.strokeStyle = theme.wall;

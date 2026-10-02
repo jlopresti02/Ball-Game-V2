@@ -29,6 +29,14 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 
 Roster fighters can mix any of these abilities, with sliders for every stat. They're saved in the browser's local storage.
 
+## Special moves (created characters)
+
+Roster fighters can have a special move, set in the editor's **Special move** section. It has a charge bar under the fighter's health (like CTE Rejuvenation) that fills over time and fills faster with every clean hit the fighter lands. When it's full the move goes off.
+
+| Special | What it does |
+|---|---|
+| IGBB | Charges in 45 seconds; each clean hit takes 5 seconds off. Grabs the opponent with one hand and throws them into a corner, then throws a flurry of 7 fast 10-damage punches (hooks and straights) while they shell up for 5 seconds. If they survive, backs away with the guard up, blocking everything. Dustin has it switched on. |
+
 ## Project layout
 
 ```
@@ -48,6 +56,7 @@ js/game/finisher.js     Grappler finisher: bottom-wall slam, pin and punches
 js/game/grapple-duel.js Grappler vs Grappler: grab initiative, Iowa Style, Sprawl and Reattack
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest
+js/game/special.js      Special moves for created characters (IGBB)
 js/game/update.js       Per-frame update, HUD, canvas sizing
 js/game/draw-attacks.js Drawing each attack's animation
 js/game/draw.js         Drawing the arena, fighters, projectiles, damage numbers

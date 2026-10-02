@@ -157,7 +157,8 @@ function updateAbilities(dt) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled) continue;
-    if (self.shocked || self.koOut) continue; // frozen by an incoming KO Rush, or knocked out by it
+    if (self.shocked || self.koOut || self.shelled) continue; // frozen by a KO Rush, knocked out, or shelled up under IGBB
+    if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
