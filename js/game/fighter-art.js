@@ -36,18 +36,21 @@ function artSeed(str) {
 
 // Draws the body ball, then the head sitting on top of it. `ink` is the
 // outline color (theme.wall in game). opts.head: draw the head on top.
+// opts.layout "contained" keeps the whole fighter inside the ball instead:
+// head in the top third, torso in the middle, shorts in the bottom third.
 function drawFighterArt(c, x, y, r, look, ink, opts) {
   opts = opts || {};
   look = look || defaultLook();
   c.save();
   c.translate(x, y);
-  drawArtBody(c, r, look, ink, opts.name || "");
-  if (opts.head !== false) drawArtHead(c, r, look, ink);
+  var contained = opts.layout === "contained";
+  drawArtBody(c, r, look, ink, opts.name || "", contained);
+  if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
   c.restore();
 }
 
-function drawArtHead(c, r, look, ink) {
-  var hr = r * 0.4, hy = -r * 1.04;
+function drawArtHead(c, r, look, ink, hy, hr) {
+  if (hr === undefined) { hr = r * 0.4; hy = -r * 1.04; }
   c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.07);
   // Shadow the head casts on the chest
   c.fillStyle = "rgba(0,0,0,0.18)";
@@ -146,7 +149,7 @@ function drawArtHead(c, r, look, ink) {
   }
 }
 
-function drawArtBody(c, r, look, ink, name) {
+function drawArtBody(c, r, look, ink, name, contained) {
   var skin = look.skin, build = look.build;
   var line = shadeHex(skin, -0.38), hi = shadeHex(skin, 0.28);
   var def = build === "lean" ? 0.65 : build === "stocky" ? 0.55 : 1; // how cut the muscles look
@@ -161,6 +164,10 @@ function drawArtBody(c, r, look, ink, name) {
   c.fillStyle = g; c.fillRect(-r, -r, r * 2, r * 2);
 
   c.lineCap = "round"; c.lineJoin = "round";
+  if (contained) {
+    // Squeeze the torso into the middle third of the ball
+    c.save(); c.translate(0, r * 0.11); c.scale(0.86, 0.59);
+  }
   var pecW = build === "stocky" ? 0.68 : 0.6;
 
   // Shoulders (delts): curves bulging in from each side
@@ -301,8 +308,10 @@ function drawArtBody(c, r, look, ink, name) {
     c.stroke();
   }
 
+  if (contained) c.restore();
+
   // Fight shorts
-  var sTop = r * 0.42, band = r * 0.13;
+  var sTop = contained ? r * 0.36 : r * 0.42, band = r * 0.13;
   c.fillStyle = look.shorts;
   c.fillRect(-r, sTop, r * 2, r);
   if (look.shortsStyle === "split") {
@@ -333,6 +342,16 @@ function drawArtBody(c, r, look, ink, name) {
   c.globalAlpha = 1;
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
   c.beginPath(); c.moveTo(-r, sTop); c.lineTo(r, sTop); c.stroke();
+
+  if (contained) {
+    // Traps sloping off the neck, then the head in the top third
+    c.strokeStyle = line; c.lineWidth = lw(0.045); c.globalAlpha = 0.8;
+    [-1, 1].forEach(function (s) {
+      c.beginPath(); c.moveTo(s * r * 0.3, -r * 0.42); c.quadraticCurveTo(s * r * 0.55, -r * 0.4, s * r * 0.82, -r * 0.5); c.stroke();
+    });
+    c.globalAlpha = 1;
+    drawArtHead(c, r, look, ink, -r * 0.63, r * 0.33);
+  }
 
   // Overall roundness: rim shadow
   var rg = c.createRadialGradient(-r * 0.2, -r * 0.25, r * 0.6, 0, 0, r);
