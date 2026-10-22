@@ -99,6 +99,7 @@ function beginGrapple(attacker, target) {
   target.flow = null;
   target.sprawl = null; target.sprawled = false;
   target.checkAnim = null; target.checkStun = 0;
+  if (target.igbb) { target.igbb = null; target.koPunch = null; } // grabbed mid-dash: IGBB stays charged
   var gr = attacker.char.grapple;
   var distLeft = target.x - target.r, distRight = (W - target.r) - target.x;
   var distTop = target.y - target.r, distBottom = (H - target.r) - target.y;

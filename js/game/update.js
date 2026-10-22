@@ -29,6 +29,13 @@ function update(dt) {
   var h = dt / SUBSTEPS;
   for (var s = 0; s < SUBSTEPS; s++) step(h);
   updateAbilities(dt);
+  // Moves that place fighters directly (grabs, seats, throws) can't leave
+  // anyone partly through a wall.
+  balls.forEach(function (b) {
+    if (!b.alive) return;
+    b.x = Math.min(W - b.r, Math.max(b.r, b.x));
+    b.y = Math.min(H - b.r, Math.max(b.r, b.y));
+  });
   impacts = impacts.filter(function (im) { im.life -= dt; return im.life > 0; });
 
   balls.forEach(function (b) {

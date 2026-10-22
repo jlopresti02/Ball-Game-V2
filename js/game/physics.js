@@ -76,6 +76,9 @@ function step(dt) {
     if (fdist >= fmin || fdist === 0) return;
     var fnx = fdx / fdist, fny = fdy / fdist;
     mover.x = fixedB.x + fnx * fmin; mover.y = fixedB.y + fny * fmin;
+    // Never pushed out through a wall (a seat is right up in a corner).
+    mover.x = Math.min(W - mover.r, Math.max(mover.r, mover.x));
+    mover.y = Math.min(H - mover.r, Math.max(mover.r, mover.y));
     var fvn = mover.vx * fnx + mover.vy * fny;
     if (fvn < 0) {
       mover.vx -= 2 * fvn * fnx; mover.vy -= 2 * fvn * fny;
