@@ -26,13 +26,20 @@ function rememberDeleted(id) {
 }
 
 // Fighters committed to the repo come in on top of this browser's roster.
+// A character file with a higher "rev" than the saved copy is an update
+// from the repo (e.g. a new picture) and replaces it.
+function repoNewer(repoCh, saved) {
+  return !saved || (repoCh.rev || 0) > (saved.rev || 0);
+}
 function mergeSavedRoster() {
   if (typeof SAVED_ROSTER === "undefined" || !SAVED_ROSTER.length) return;
   var deleted = loadDeletedIds(), changed = false;
   SAVED_ROSTER.forEach(function (ch) {
     if (deleted.indexOf(ch.id) >= 0) return;
-    if (customChars.some(function (c) { return c.id === ch.id; })) return;
-    customChars.push(normalizeChar(JSON.parse(JSON.stringify(ch))));
+    var idx = customChars.findIndex(function (c) { return c.id === ch.id; });
+    if (idx >= 0 && !repoNewer(ch, customChars[idx])) return;
+    var copy = normalizeChar(JSON.parse(JSON.stringify(ch)));
+    if (idx >= 0) customChars[idx] = copy; else customChars.push(copy);
     changed = true;
   });
   if (changed) saveLocal(customChars);
@@ -138,7 +145,10 @@ function initRosterStore() {
         // existed, or saved while offline) are uploaded now.
         var toUpload = [];
         customChars.forEach(function (ch) {
-          if (byId[ch.id] || gone[ch.id]) return;
+          if (gone[ch.id]) return;
+          // Missing from the cloud roster, or a newer repo version of it.
+          var repoCh = typeof SAVED_ROSTER !== "undefined" && SAVED_ROSTER.find(function (r) { return r.id === ch.id; });
+          if (byId[ch.id] && !(repoCh && repoNewer(repoCh, byId[ch.id]))) return;
           byId[ch.id] = ch;
           toUpload.push(ch);
         });

@@ -41,11 +41,11 @@ The line under the Roster heading shows where your fighters are saved. **Export*
 
 ## Roster fighters in the repo
 
-Each saved roster fighter has a character file in `characters/` (one JSON file per fighter, with a short bio and the base it was built from). `python3 tools/build_roster.py` turns those files into `js/roster-data.js`, which every version of the game loads.
+Each saved roster fighter has a character file in `characters/` (one JSON file per fighter, with a short bio and the base it was built from). `python3 tools/build_roster.py` turns those files into `js/roster-data.js`, which every version of the game loads. Raising a file's `"rev"` pushes the change out to copies already saved in browsers and the cloud roster.
 
 | Fighter | Base | Build |
 |---|---|---|
-| Dustin Poirier ("DP") | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB |
+| Dustin Poirier (face picture) | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB |
 
 ## Special moves (created characters)
 
