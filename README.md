@@ -39,6 +39,14 @@ Every fighter you build in the character creator is saved as soon as you tap **S
 
 The line under the Roster heading shows where your fighters are saved. **Export** downloads the whole roster as a file (and copies it), and **Import** loads one back in, e.g. to move fighters from GitHub Pages into the artifact or to send them to Claude.
 
+## Roster fighters in the repo
+
+Each saved roster fighter has a character file in `characters/` (one JSON file per fighter, with a short bio and the base it was built from). `python3 tools/build_roster.py` turns those files into `js/roster-data.js`, which every version of the game loads.
+
+| Fighter | Base | Build |
+|---|---|---|
+| Dustin Poirier ("DP") | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB |
+
 ## Special moves (created characters)
 
 Roster fighters can have a special move, set in the editor's **Special move** section. It has a charge bar under the fighter's health (like CTE Rejuvenation) that fills over time and fills faster with every clean hit the fighter lands. When it's full the move goes off.
@@ -68,7 +76,9 @@ js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest
 js/game/special.js      Special moves for created characters (IGBB)
 js/roster-store.js      Saving fighters: browser, cloud roster, repo; export/import
-js/roster-data.js       Fighters saved into the repo
+js/roster-data.js       Fighters saved into the repo (generated from characters/)
+characters/             One character file per roster fighter
+tools/build_roster.py   Builds js/roster-data.js from characters/
 js/game/update.js       Per-frame update, HUD, canvas sizing
 js/game/draw-attacks.js Drawing each attack's animation
 js/game/draw.js         Drawing the arena, fighters, projectiles, damage numbers
