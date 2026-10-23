@@ -245,10 +245,10 @@ function drawArtHeadLayer(c, r, look, line, lw) {
     c.beginPath();
     c.moveTo(-r * 0.74, -r * 0.66);
     c.quadraticCurveTo(-r * 0.62, -r * 0.44, -r * 0.32, -r * 0.5);
-    c.quadraticCurveTo(0, -r * 0.56, r * 0.32, -r * 0.5);
+    c.quadraticCurveTo(0, -r * 0.4, r * 0.32, -r * 0.5);
     c.quadraticCurveTo(r * 0.62, -r * 0.44, r * 0.74, -r * 0.66);
     c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.3, jaw + r * 0.02);
-    c.quadraticCurveTo(0, jaw + r * 0.12, -r * 0.3, jaw + r * 0.02);
+    c.quadraticCurveTo(0, jaw + r * (look.beard === "full" ? 0.2 : 0.12), -r * 0.3, jaw + r * 0.02);
     c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.74, -r * 0.66);
     c.closePath(); c.fill();
     if (look.beard === "full") {

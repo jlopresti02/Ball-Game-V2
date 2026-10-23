@@ -1,0 +1,23 @@
+{
+  "name": "Khabib Nurmagomedov",
+  "status": "Design only. Not in the roster yet: stats, base and moves get decided when the character is built, then this moves to characters/ as a full character file.",
+  "look": {
+    "skin": "#d9a682",
+    "build": "muscular",
+    "bodyHair": "light",
+    "hair": "buzz",
+    "hairColor": "#1c1612",
+    "beard": "full",
+    "ears": "normal",
+    "tattoos": {},
+    "shorts": "#161616",
+    "trim": "#c9a646",
+    "shortsStyle": "stripe",
+    "gloves": "#151515"
+  },
+  "reference": "Joe's photos (2026-10-23): buzz cut, thick full dark beard, chest hair and a trail down the abs, no tattoos, black fight shorts with gold side lettering, black UFC gloves.",
+  "futureIdeas": [
+    "Papakha: the big curly white sheepskin hat he walks out in (walkout or celebration look). Not designed yet.",
+    "Cauliflower ears: the renderer has ears: \"cauliflower\", but Joe wants a proper mockup of it for Khabib first. Not designed yet."
+  ]
+}
