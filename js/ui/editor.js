@@ -45,6 +45,7 @@ function openEditor(id) {
   editingId = id;
   var ch = id ? findChar(id) : null;
   editState = ch ? JSON.parse(JSON.stringify(ch)) : blankChar();
+  showSpecialMove(editState);
   document.getElementById("editorTitle").textContent = id ? "Edit character" : "New character";
   document.getElementById("editorDelete").hidden = !id;
   fillEditorForm(editState);
@@ -441,6 +442,17 @@ var forgetSliders = [
   ["forgetHeal", "heal", function (v) { return v; }],
   ["forgetEvery", "every", function (v) { return Number(v).toFixed(1) + "s"; }]
 ];
+// The special-move block names the fighter's own move.
+var SPECIAL_BLURBS = {
+  igbb: document.getElementById("specialSub").textContent,
+  fathersplan: "A bar charges up over time, faster with every clean hit (punches count extra). When it fills: grabs them and hurls them off wall after wall, slams them down onto the floor, then ground and pound"
+};
+function showSpecialMove(ch) {
+  var move = ch.special && ch.special.move || "igbb";
+  document.getElementById("specialTitle").textContent = "Special move: " + specialName(ch);
+  document.getElementById("specialSub").textContent = SPECIAL_BLURBS[move] || SPECIAL_BLURBS.igbb;
+}
+
 var specialSliders = [
   ["specialCharge", "chargeTime", function (v) { return v + "s"; }],
   ["specialHitCut", "hitCut", function (v) { return Number(v).toFixed(1) + "s"; }],

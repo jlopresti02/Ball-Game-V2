@@ -46,6 +46,7 @@ Each saved roster fighter has a character file in `characters/` (one JSON file p
 | Fighter | Base | Build |
 |---|---|---|
 | Dustin Poirier (fighter art) | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB |
+| Khabib Nurmagomedov (fighter art) | Grappler | The Grappler's grab and wall slam, plus quick 5-damage punches every 0.7s that charge his special extra fast, 10% block, special move Father's Plan |
 
 ## Fighter art
 
@@ -69,6 +70,7 @@ Roster fighters can have a special move, set in the editor's **Special move** se
 | Special | What it does |
 |---|---|
 | IGBB | Charges in 45 seconds; each clean hit takes 5 seconds off. Grabs the opponent with one hand and throws them into a corner, then unloads a flurry of 7 fast 10-damage punches (hooks and straights, in quick bursts, the last one a big hook) while they shell up (5 seconds at most; the flurry takes about 2). Every punch caves them into the corner with a shockwave, sparks and a freeze-frame. If they survive, backs away with the guard up, blocking everything. Dustin has it switched on. |
+| Father's Plan | Charges in 40 seconds; each clean hit takes 4 seconds off, each punch 7. Grabs the opponent and hurls them off 4 walls in a row (6 damage each), then slams them down onto the floor (12) and climbs on top for 5 fast, brutal ground-and-pound punches (12 each). Every impact shakes the screen with a shockwave, sparks and a freeze-frame. If they survive, lets them up and backs off. Khabib has it switched on. Settings in the character file: `walls`, `wallDamage`, `slamDamage`, `punches`, `damage`, and `punchCut` (charge taken off per punch; other hits use `hitCut`). |
 
 ## Project layout
 

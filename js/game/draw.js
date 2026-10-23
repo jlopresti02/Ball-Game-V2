@@ -58,7 +58,9 @@ function draw() {
     ctx.restore();
   });
 
-  balls.forEach(function (b) {
+  // A fighter running its special move is drawn on top (e.g. mounted for
+  // Father's Plan's ground and pound).
+  (balls[0].igbb ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 

@@ -203,7 +203,7 @@ function hurt(b, amount, source, attackerId) {
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
   // A clean hit charges the attacker's special move.
-  if (amount > 0 && attackerId != null && attackerId !== b.id && source !== "laser" && source !== "igbb") addSpecialCharge(balls[attackerId]);
+  if (amount > 0 && attackerId != null && attackerId !== b.id && source !== "laser" && source !== "igbb") addSpecialCharge(balls[attackerId], source);
   if (source === "laser") {
     // Laser ticks land constantly, so they only give a soft pulse; the
     // running total floats up about once a second instead.

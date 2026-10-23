@@ -7,9 +7,17 @@
 // IGBB: grabs the opponent with one hand and throws them into a corner,
 // then unloads a flurry of fast, heavy punches while they shell up. If they
 // survive, the fighter backs away with its guard up, blocking everything.
+//
+// Father's Plan: grabs the opponent and hurls them wall to wall, then slams
+// them down onto the bottom wall and finishes with a burst of brutal
+// ground-and-pound punches.
+//
+// Both moves share the fighter's `igbb` state (move: "igbb" or
+// "fathersplan"), so everything that locks or guards during IGBB does the
+// same during Father's Plan.
 "use strict";
 
-var SPECIAL_MOVES = { igbb: "IGBB" };
+var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan" };
 
 var IGBB_CLOSE_SPEED = 820;   // dash in to grab
 var IGBB_CLOSE_GIVEUP = 3;
@@ -23,10 +31,12 @@ var IGBB_RETREAT_SPEED = 210;
 function specialName(ch) { return SPECIAL_MOVES[ch.special && ch.special.move] || "Special"; }
 
 // Every clean hit the fighter lands knocks some time off the charge.
-function addSpecialCharge(b) {
+// A special can set punchCut to make plain punches charge it faster.
+function addSpecialCharge(b, source) {
   if (!b || !b.char.hasSpecial || b.igbb) return;
   var sp = b.char.special;
-  b.specialT = Math.min(sp.chargeTime, (b.specialT || 0) + sp.hitCut);
+  var cut = source === "punch" && sp.punchCut != null ? sp.punchCut : sp.hitCut;
+  b.specialT = Math.min(sp.chargeTime, (b.specialT || 0) + cut);
 }
 
 function tickSpecialCharge(b, dt) {
@@ -69,12 +79,12 @@ function throwCorner(thrower, b) {
 // Runs for the special's owner each frame. Returns true while the move is
 // running (the fighter does nothing else).
 function updateSpecial(self, other, dt) {
-  if (!self.char.hasSpecial || self.char.special.move !== "igbb") return false;
+  if (!self.char.hasSpecial || !SPECIAL_MOVES[self.char.special.move]) return false;
   var sp = self.char.special;
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
-    self.igbb = { phase: "close", t: 0 };
-    floater(self.x, self.y - self.r - 26, "IGBB!", "crit");
+    self.igbb = { phase: "close", t: 0, move: sp.move };
+    floater(self.x, self.y - self.r - 26, sp.move === "fathersplan" ? "FATHER'S PLAN!" : "IGBB!", "crit");
     playWhoosh();
   }
   var m = self.igbb;
@@ -104,6 +114,7 @@ function updateSpecial(self, other, dt) {
   }
 
   self.vx = 0; self.vy = 0;
+  if (m.move === "fathersplan") return updateFathersPlan(self, other, m, sp, dt);
   if (m.phase === "grab") {
     if (m.t >= IGBB_GRAB_TIME) {
       var c = throwCorner(self, other);
@@ -260,13 +271,167 @@ function specialGuarding(b) {
 }
 
 // ---------------------------------------------------------------
+// Father's Plan
+// ---------------------------------------------------------------
+
+var FP_GRAB_TIME = 0.2;     // both hands lock on
+var FP_TOSS_TIME = 0.17;    // each flight into a wall
+var FP_SLAM_TIME = 0.22;    // the final slam down onto the bottom wall
+var FP_MOUNT_TIME = 0.25;   // climbs on top
+var FP_PUNCH_GAP = 0.17;    // ground and pound, one punch every this long
+var FP_RETREAT_TIME = 1;
+
+// Picks the next wall to throw them into: a different wall from the one
+// they're on (never the floor, which is saved for the final slam), the
+// farther the better, at a random spot along it.
+function fpWallTarget(b, lastWall) {
+  var r = b.r + 2, best = null, bestD = -1;
+  ["left", "right", "top"].forEach(function (w) {
+    if (w === lastWall) return;
+    var along = 0.2 + Math.random() * 0.6, p;
+    if (w === "left") p = { x: r, y: H * along * 0.85, nx: 1, ny: 0 };
+    else if (w === "right") p = { x: W - r, y: H * along * 0.85, nx: -1, ny: 0 };
+    else p = { x: W * along, y: r, nx: 0, ny: 1 };
+    var d = Math.hypot(p.x - b.x, p.y - b.y) + Math.random() * 60;
+    if (d > bestD) { bestD = d; best = p; best.wall = w; }
+  });
+  return best;
+}
+
+function fpStartFlight(m, other, target, dur) {
+  m.sx = other.x; m.sy = other.y; m.ex = target.x; m.ey = target.y;
+  m.nx = target.nx; m.ny = target.ny; m.wall = target.wall; m.dur = dur;
+  m.t = 0;
+  playWhoosh();
+}
+
+// The fighter stays hooked onto them, right behind the ball it's hurling.
+function fpFollow(self, other, dirx, diry, dt) {
+  var wx = other.x - dirx * (self.r + other.r - 2), wy = other.y - diry * (self.r + other.r - 2);
+  var k = Math.min(1, dt * 28);
+  self.x += (wx - self.x) * k; self.y += (wy - self.y) * k;
+  self.x = Math.max(self.r, Math.min(W - self.r, self.x));
+  self.y = Math.max(self.r, Math.min(H - self.r, self.y));
+}
+
+function fpImpact(self, other, m, dmg, big) {
+  var cx = other.x - m.nx * other.r, cy = other.y - m.ny * other.r;
+  other.squash = { t: big ? 0.26 : 0.18, max: big ? 0.26 : 0.18, nx: m.nx, ny: m.ny };
+  other.flash = 0.16;
+  impacts.push({ x: cx, y: cy, nx: m.nx, ny: m.ny, life: 0.5, max: 0.5, color: self.char.color });
+  impacts.push({ x: cx, y: cy, nx: m.nx, ny: m.ny, life: big ? 0.8 : 0.55, max: big ? 0.8 : 0.55, color: theme.hit });
+  igbbSparks(cx, cy, m.nx, m.ny, self.char.color, big ? 26 : 16, big ? 560 : 440);
+  if (!reduceMotion) shake = Math.max(shake, big ? 32 : 24);
+  hitStop = Math.max(hitStop, big ? 0.2 : 0.09);
+  playSlam(); playPunch(big ? 50 : 35);
+  hurt(other, dmg, "igbb", self.id);
+}
+
+function updateFathersPlan(self, other, m, sp, dt) {
+  var fdx, fdy, fl, k, e;
+  if (m.phase === "grab") {
+    if (m.t >= FP_GRAB_TIME) {
+      m.tossed = 0; m.wall = null;
+      fpStartFlight(m, other, fpWallTarget(other, null), FP_TOSS_TIME);
+      m.phase = "toss";
+    }
+    return true;
+  }
+  if (m.phase === "toss" || m.phase === "slamdown") {
+    k = Math.min(1, m.t / m.dur); e = k * k; // speeds up into the wall
+    other.x = m.sx + (m.ex - m.sx) * e; other.y = m.sy + (m.ey - m.sy) * e;
+    fdx = m.ex - m.sx; fdy = m.ey - m.sy; fl = Math.sqrt(fdx * fdx + fdy * fdy) || 1;
+    fpFollow(self, other, fdx / fl, fdy / fl, dt);
+    if (!reduceMotion) {
+      particles.push({ x: other.x, y: other.y, vx: 0, vy: 0, life: 0.25, max: 0.25, size: other.r * 0.8, color: self.char.color });
+      particles.push({ x: other.x - fdx / fl * other.r + (Math.random() - 0.5) * other.r, y: other.y - fdy / fl * other.r + (Math.random() - 0.5) * other.r,
+        vx: -fdx / fl * 300, vy: -fdy / fl * 300, life: 0.18, max: 0.18, size: 3, color: theme.ink });
+    }
+    if (k < 1) return true;
+    if (m.phase === "toss") {
+      fpImpact(self, other, m, sp.wallDamage, false);
+      if (!other.alive) { endIgbb(self, other); checkEnd(); return false; }
+      m.tossed++;
+      if (m.tossed < sp.walls) {
+        fpStartFlight(m, other, fpWallTarget(other, m.wall), FP_TOSS_TIME);
+      } else {
+        // Dragged down and slammed onto the floor.
+        var gx = Math.max(other.r + 40, Math.min(W - other.r - 40, other.x));
+        fpStartFlight(m, other, { x: gx, y: H - other.r - 2, nx: 0, ny: -1, wall: "bottom" }, FP_SLAM_TIME);
+        m.phase = "slamdown";
+      }
+      return true;
+    }
+    fpImpact(self, other, m, sp.slamDamage, true);
+    floater(other.x, other.y - other.r - 30, "TAKEDOWN", "note");
+    if (!other.alive) { endIgbb(self, other); checkEnd(); return false; }
+    m.phase = "mount"; m.t = 0;
+    m.mx = self.x; m.my = self.y;
+    return true;
+  }
+  if (m.phase === "mount" || m.phase === "pound") {
+    // On top of them, pinning them to the floor.
+    var tx = other.x, ty = other.y - (self.r + other.r - 6);
+    if (m.phase === "mount") {
+      k = Math.min(1, m.t / FP_MOUNT_TIME);
+      self.x = m.mx + (tx - m.mx) * k; self.y = m.my + (ty - m.my) * k;
+      if (k >= 1) { m.phase = "pound"; m.t = 0; m.thrown = 0; }
+      return true;
+    }
+    var kp = self.koPunch;
+    var lean = kp ? Math.max(0, Math.sin(Math.PI * Math.min(1, kp.t / kp.dur))) * 10 : 0;
+    self.x = tx + Math.sin(m.t * 31) * 2; self.y = ty + lean;
+    if (kp) {
+      kp.t += dt;
+      if (!kp.hit && kp.t >= kp.hitAt) { kp.hit = true; landFpPunch(self, other, kp); }
+      if (kp.t >= kp.dur) self.koPunch = null;
+    }
+    if (!other.alive) { endIgbb(self, other); checkEnd(); return false; }
+    if (!self.koPunch && m.thrown < sp.punches && m.t >= m.thrown * FP_PUNCH_GAP) {
+      var last = m.thrown === sp.punches - 1;
+      self.koPunch = { t: 0, dur: last ? 0.16 : 0.11, hitAt: last ? 0.09 : 0.05, hit: false, targetId: other.id,
+        size: self.char.punch.size * (last ? 1.6 : 1.3), kind: "jab", side: m.thrown % 2 ? -1 : 1, last: last };
+      m.thrown++;
+    }
+    if (m.thrown >= sp.punches && !self.koPunch) {
+      // They survived it: lets them up and backs off.
+      other.shelled = false;
+      setSpeed(other, SPEED * 0.6);
+      other.vx = 0; other.vy = -SPEED * 0.6;
+      m.phase = "retreat"; m.t = 0;
+    }
+    return true;
+  }
+  if (m.phase === "retreat") {
+    var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    self.vx = -dx / d * IGBB_RETREAT_SPEED; self.vy = -dy / d * IGBB_RETREAT_SPEED;
+    if (m.t >= FP_RETREAT_TIME) { endIgbb(self, other); setSpeed(self, SPEED); return false; }
+    return true;
+  }
+  return false;
+}
+
+function landFpPunch(self, other, kp) {
+  var dealt = hurt(other, self.char.special.damage, "igbb", self.id);
+  if (dealt > 0) playPunch(dealt * (kp.last ? 3.2 : 2.2));
+  var cx = other.x, cy = other.y - other.r;
+  other.squash = { t: kp.last ? 0.24 : 0.15, max: kp.last ? 0.24 : 0.15, nx: 0, ny: -1 };
+  other.flash = 0.16;
+  impacts.push({ x: other.x, y: H, nx: 0, ny: -1, life: kp.last ? 0.6 : 0.3, max: kp.last ? 0.6 : 0.3, color: kp.last ? theme.hit : self.char.color });
+  igbbSparks(cx, cy, 0, -1, self.char.color, kp.last ? 24 : 12, kp.last ? 560 : 380);
+  if (!reduceMotion) shake = Math.max(shake, kp.last ? 26 : 15);
+  hitStop = Math.max(hitStop, kp.last ? 0.18 : 0.06);
+  if (kp.last && other.alive) floater(other.x, other.y - other.r - 34, "FATHER'S PLAN!", "crit");
+}
+
+// ---------------------------------------------------------------
 // Drawing
 // ---------------------------------------------------------------
 
 // The one-handed grab and throw.
 function drawSpecial(b) {
   var m = b.igbb;
-  if (!m || !b.alive || (m.phase !== "grab" && m.phase !== "throw")) return;
+  if (!m || !b.alive || (m.phase !== "grab" && m.phase !== "throw" && m.phase !== "toss" && m.phase !== "slamdown")) return;
   var o = balls[1 - b.id];
   var dx = o.x - b.x, dy = o.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   var nx = dx / d, ny = dy / d, px = -ny, py = nx, r = b.r;
