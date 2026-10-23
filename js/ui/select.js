@@ -71,6 +71,8 @@ function abilitySummary(ch) {
 }
 
 function avatarStyle(ch) {
+  var art = fighterArtUrl(ch);
+  if (art) return "background-image:url(" + art + ");background-color:" + ch.color + ";";
   var img = getImg(ch.imgData);
   if (img) return "background-image:url(" + ch.imgData + ");background-color:" + ch.color + ";";
   return "background-color:" + ch.color + ";";
@@ -115,6 +117,7 @@ function mirrorCopy(ch) {
   copy.mirrorOf = ch.id;
   copy.name = ch.name + " 2";
   copy.color = mirrorColor(ch.color);
+  if (copy.look) copy.look.shorts = mirrorColor(copy.look.shorts); // tell the two apart
   return copy;
 }
 function setMirror(name, ch) {

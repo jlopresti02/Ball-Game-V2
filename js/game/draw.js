@@ -118,7 +118,10 @@ function draw() {
     }
 
     var img = getImg(b.char.imgData);
-    if (img) {
+    if (b.char.look) {
+      // Fighter art: the muscled ball in its fight kit (beats a face photo)
+      drawFighterArt(ctx, b.x, b.y, b.r, b.char.look, theme.wall, { layout: "contained", name: b.char.name });
+    } else if (img) {
       ctx.save();
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
       ctx.drawImage(img, b.x - b.r, b.y - b.r, b.r * 2, b.r * 2);

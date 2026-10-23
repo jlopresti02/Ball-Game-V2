@@ -23,10 +23,10 @@ function drawFist(self, other) {
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = pu.size * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
-  ctx.strokeStyle = self.char.color;
+  ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = pu.size * 0.6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
-  ctx.fillStyle = self.char.color;
+  ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fistX, fistY, pu.size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -56,7 +56,7 @@ function drawKick(self, other) {
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = ki.size * 0.9 + 7;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(tipX, tipY); ctx.stroke();
-  ctx.strokeStyle = self.char.color;
+  ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = ki.size * 0.62;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(tipX, tipY); ctx.stroke();
 
@@ -64,7 +64,7 @@ function drawKick(self, other) {
   var fw = ki.size * 1.9, fh = ki.size * 1.15;
   ctx.translate(tipX, tipY);
   ctx.rotate(angle);
-  ctx.fillStyle = self.char.color;
+  ctx.fillStyle = armColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -98,9 +98,9 @@ function drawHands(b, other) {
       var sx = b.x + sgn * b.r * 0.62, sy = b.y - b.r * 0.55;
       ctx.strokeStyle = theme.wall; ctx.lineWidth = b.r * 0.34;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.strokeStyle = b.char.color; ctx.lineWidth = b.r * 0.2;
+      ctx.strokeStyle = armColor(b.char); ctx.lineWidth = b.r * 0.2;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+      ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(hx, hy, b.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     });
     ctx.restore();
@@ -109,7 +109,7 @@ function drawHands(b, other) {
   if (sitting) {
     // Seated: both hands rest down at the sides instead of guarding.
     ctx.save();
-    ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     [-1, 1].forEach(function (sgn) {
       ctx.beginPath();
       ctx.arc(b.x + sgn * b.r * 0.95, b.y + b.r * 0.62, b.r * 0.3, 0, Math.PI * 2);
@@ -142,11 +142,12 @@ function drawHands(b, other) {
   var igbbGrab = b.igbb && (b.igbb.phase === "grab" || b.igbb.phase === "throw");
   var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : [1, -1]);
   ctx.save();
-  ctx.fillStyle = b.char.color;
+  ctx.fillStyle = gloveColor(b.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 2.5;
   sides.forEach(function (sgn) {
     var hx = b.x + fx * fwd + perpx * gap * sgn, hy = b.y + fy * fwd + perpy * gap * sgn;
+    if (b.char.look) { drawGlove(ctx, hx, hy, hr, b.char.look, theme.wall, Math.atan2(fy, fx)); return; }
     ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   });
   ctx.restore();
@@ -207,10 +208,10 @@ function drawThrow(self, other) {
 
   ctx.save();
   ctx.lineCap = "round";
-  ctx.strokeStyle = self.char.color;
+  ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = self.r * 0.28;
   ctx.beginPath(); ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); ctx.stroke();
-  ctx.fillStyle = self.char.color;
+  ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -314,10 +315,10 @@ function drawJab(self) {
     var sx = self.x + fx * self.r * 0.6 + perpx * gap, sy = self.y + fy * self.r * 0.6 + perpy * gap;
     ctx.strokeStyle = theme.wall; ctx.lineWidth = self.r * 0.38;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-    ctx.strokeStyle = self.char.color; ctx.lineWidth = self.r * 0.24;
+    ctx.strokeStyle = armColor(self.char); ctx.lineWidth = self.r * 0.24;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
   }
-  ctx.fillStyle = self.char.color;
+  ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = ja.big ? 3.5 : 2.5;
   ctx.beginPath(); ctx.arc(hx, hy, fistR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -344,16 +345,16 @@ function drawPowerSpin(self) {
       ctx.strokeStyle = theme.wall;
       ctx.lineWidth = self.r * 0.5;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.strokeStyle = self.char.color;
+      ctx.strokeStyle = armColor(self.char);
       ctx.lineWidth = self.r * 0.34;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.fillStyle = self.char.color;
+      ctx.fillStyle = gloveColor(self.char);
       ctx.strokeStyle = theme.wall;
       ctx.lineWidth = 4;
       ctx.beginPath(); ctx.arc(hx, hy, fistR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     } else {
       ctx.globalAlpha = 0.3 - k * 0.09;
-      ctx.fillStyle = self.char.color;
+      ctx.fillStyle = gloveColor(self.char);
       ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.42, 0, Math.PI * 2); ctx.fill();
     }
   }
@@ -369,7 +370,7 @@ function drawGrapple(self) {
     var tg = balls[g.targetId];
     var px = -g.ny, py = g.nx, hr0 = tg.r * 0.36;
     ctx.save();
-    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     [1, -1].forEach(function (sgn) {
       var hx = tg.x + g.nx * tg.r * 0.55 + px * tg.r * 0.62 * sgn, hy = tg.y + g.ny * tg.r * 0.55 + py * tg.r * 0.62 * sgn;
       ctx.beginPath(); ctx.arc(hx, hy, hr0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -404,7 +405,7 @@ function drawGrapple(self) {
   if (pt < 0.82) {
     var hr = tgt.r * 0.34, ho = tgt.r * 0.82;
     ctx.save();
-    ctx.fillStyle = self.char.color;
+    ctx.fillStyle = gloveColor(self.char);
     ctx.strokeStyle = theme.wall;
     ctx.lineWidth = 2.5;
     [1, -1].forEach(function (sgn) {
@@ -431,7 +432,7 @@ function drawCheck(b) {
   ctx.lineCap = "round";
   ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 7;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
-  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.62;
+  ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.62;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
   // A small impact flash on the shin.
   if (ca.t < 0.1) {

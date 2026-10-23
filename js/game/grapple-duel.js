@@ -213,7 +213,7 @@ function drawSprawls() {
     var nx = dx / d, ny = dy / d, px = -ny, py = nx;
     // Both hands pressing down on the attacker's back.
     ctx.save();
-    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     [1, -1].forEach(function (sgn) {
       var hx = atk.x - nx * atk.r * 0.1 + px * atk.r * 0.72 * sgn, hy = atk.y - ny * atk.r * 0.1 + py * atk.r * 0.72 * sgn;
       ctx.beginPath(); ctx.arc(hx, hy, atk.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();

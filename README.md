@@ -45,7 +45,22 @@ Each saved roster fighter has a character file in `characters/` (one JSON file p
 
 | Fighter | Base | Build |
 |---|---|---|
-| Dustin Poirier (face picture) | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB |
+| Dustin Poirier (fighter art) | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB |
+
+## Fighter art
+
+A roster fighter with a `"look"` in its character file is drawn as a muscled ball in its fight kit instead of a flat colour or face photo: the top third of the ball is the head (hair, ears, beard, no face), the middle is the torso, the bottom is the shorts. Arms and legs are drawn in the fighter's skin tone and fists in its glove colour. The fighter's `color` still drives the health bar, sparks and damage numbers. Drawing lives in `js/game/fighter-art.js`.
+
+| Look field | Values |
+|---|---|
+| `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours |
+| `build` | `muscular`, `lean`, `stocky` |
+| `hair` | `bald`, `buzz`, `short`, `long`, `mohawk`, `dreads` |
+| `beard` | `none`, `stubble`, `full` |
+| `ears` | `normal`, `cauliflower` |
+| `bodyHair` | `none`, `light`, `heavy` |
+| `shortsStyle` | `plain`, `stripe`, `split`, `print` |
+| `tattoos` | any of `chest`, `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true |
 
 ## Special moves (created characters)
 
@@ -81,6 +96,7 @@ characters/             One character file per roster fighter
 tools/build_roster.py   Builds js/roster-data.js from characters/
 js/game/update.js       Per-frame update, HUD, canvas sizing
 js/game/draw-attacks.js Drawing each attack's animation
+js/game/fighter-art.js  Fighter art: muscled ball, head, tattoos, shorts, gloves
 js/game/draw.js         Drawing the arena, fighters, projectiles, damage numbers
 js/main.js              Game loop, button wiring, startup (loads last)
 tools/build.py          Bundles everything into dist/ball-brawl.html

@@ -179,19 +179,19 @@ function drawSwing(self) {
   // Blur of the fist sweeping around.
   trail.forEach(function (t, i) {
     ctx.globalAlpha = 0.3 - i * 0.08;
-    ctx.fillStyle = self.char.color;
+    ctx.fillStyle = gloveColor(self.char);
     ctx.beginPath(); ctx.arc(t.x, t.y, SWING_FIST_R * 0.9, 0, Math.PI * 2); ctx.fill();
   });
   ctx.globalAlpha = 1;
   // Arm from the shoulder to the fist.
   ctx.strokeStyle = theme.wall; ctx.lineWidth = SWING_FIST_R * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.strokeStyle = self.char.color; ctx.lineWidth = SWING_FIST_R * 0.6;
+  ctx.strokeStyle = armColor(self.char); ctx.lineWidth = SWING_FIST_R * 0.6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
   // Trembles while it's cocked back.
   var jx = 0, jy = 0;
   if (st.phase === "windup") { jx = (Math.random() - 0.5) * 2.5; jy = (Math.random() - 0.5) * 2.5; }
-  ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fist.x + jx, fist.y + jy, SWING_FIST_R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   // The other hand stays up guarding on the opposite side.
   var ga = st.ang + st.side * 0.9;
