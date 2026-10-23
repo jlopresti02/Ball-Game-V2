@@ -149,6 +149,106 @@ function drawArtHead(c, r, look, ink, hy, hr) {
   }
 }
 
+// Contained layout: the ball's top third is the head itself. No outline of
+// its own, just layers painted onto the ball: hair on top, ears at the
+// edges, beard along the jaw, a chin shadow where it meets the chest.
+function drawArtHeadLayer(c, r, look, line, lw) {
+  var hc = look.hairColor, jaw = -r * 0.3;
+  // Chin shadow and neck line into the chest
+  c.fillStyle = "rgba(0,0,0,0.2)";
+  c.beginPath(); c.ellipse(0, jaw + r * 0.08, r * 0.45, r * 0.08, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = line; c.lineWidth = lw(0.045);
+  c.beginPath(); c.moveTo(-r * 0.66, jaw - r * 0.14); c.quadraticCurveTo(-r * 0.5, jaw + r * 0.1, 0, jaw + r * 0.1); c.quadraticCurveTo(r * 0.5, jaw + r * 0.1, r * 0.66, jaw - r * 0.14); c.stroke();
+
+  // Ears at the edges of the ball
+  var cauli = look.ears === "cauliflower";
+  [-1, 1].forEach(function (s) {
+    var ex = s * r * 0.84, ey = -r * 0.56, er = r * (cauli ? 0.13 : 0.1);
+    c.fillStyle = shadeHex(look.skin, -0.08);
+    c.beginPath(); c.ellipse(ex, ey, er * 0.75, er, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = line; c.lineWidth = lw(0.035);
+    c.beginPath(); c.arc(ex - s * er * 0.1, ey, er * 0.55, s > 0 ? Math.PI * 0.5 : -Math.PI * 0.5, s > 0 ? Math.PI * 1.5 : Math.PI * 0.5); c.stroke();
+    if (cauli) {
+      c.beginPath(); c.arc(ex, ey - er * 0.35, er * 0.28, 0, Math.PI * 2); c.stroke();
+      c.beginPath(); c.arc(ex + s * er * 0.1, ey + er * 0.3, er * 0.22, 0, Math.PI * 2); c.stroke();
+    }
+  });
+
+  // Hair across the top of the ball
+  var hairline = function () {
+    c.beginPath();
+    c.moveTo(-r, -r * 0.5);
+    c.lineTo(-r * 0.74, -r * 0.6);
+    c.quadraticCurveTo(-r * 0.62, -r * 0.76, -r * 0.4, -r * 0.74);
+    c.quadraticCurveTo(0, -r * 0.82, r * 0.4, -r * 0.74);
+    c.quadraticCurveTo(r * 0.62, -r * 0.76, r * 0.74, -r * 0.6);
+    c.lineTo(r, -r * 0.5); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
+  };
+  c.fillStyle = hc;
+  if (look.hair === "buzz") {
+    c.globalAlpha = 0.6; hairline(); c.fill(); c.globalAlpha = 1;
+  } else if (look.hair === "short" || look.hair === "long" || look.hair === "dreads") {
+    hairline(); c.fill();
+    c.strokeStyle = shadeHex(hc, 0.25); c.lineWidth = lw(0.025); c.globalAlpha = 0.6;
+    for (var i = -3; i <= 3; i++) {
+      c.beginPath(); c.moveTo(i * r * 0.12, -r * 0.97); c.quadraticCurveTo(i * r * 0.15 + r * 0.05, -r * 0.88, i * r * 0.13, -r * 0.8); c.stroke();
+    }
+    c.globalAlpha = 1;
+    if (look.hair === "long") {
+      [-1, 1].forEach(function (s) {
+        c.beginPath();
+        c.moveTo(s * r * 0.6, -r * 0.74);
+        c.quadraticCurveTo(s * r * 0.78, -r * 0.45, s * r * 0.68, -r * 0.2);
+        c.lineTo(s * r, -r * 0.2); c.lineTo(s * r, -r * 0.74); c.closePath(); c.fill();
+      });
+    } else if (look.hair === "dreads") {
+      c.lineCap = "round";
+      [-1, 1].forEach(function (s) {
+        for (var d = 0; d < 3; d++) {
+          var x0 = s * r * (0.52 + d * 0.12), len = r * (0.32 - d * 0.05);
+          c.strokeStyle = line; c.lineWidth = lw(0.12);
+          c.beginPath(); c.moveTo(x0, -r * 0.72); c.lineTo(x0 + s * r * 0.04, -r * 0.72 + len); c.stroke();
+          c.strokeStyle = hc; c.lineWidth = lw(0.08);
+          c.beginPath(); c.moveTo(x0, -r * 0.72); c.lineTo(x0 + s * r * 0.04, -r * 0.72 + len); c.stroke();
+        }
+      });
+    }
+  } else if (look.hair === "mohawk") {
+    c.globalAlpha = 0.3; hairline(); c.fill(); c.globalAlpha = 1;
+    c.beginPath(); c.ellipse(0, -r * 0.9, r * 0.13, r * 0.2, 0, 0, Math.PI * 2); c.fill();
+  } else {
+    // Bald: a shine on the scalp
+    c.fillStyle = "rgba(255,255,255,0.35)";
+    c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
+  }
+  if (look.hair !== "bald") {
+    c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "mohawk" ? 0.3 : 0.8;
+    hairline(); c.stroke(); c.globalAlpha = 1;
+  }
+
+  // Beard: sideburns down around the jaw to a full chin
+  if (look.beard !== "none") {
+    c.globalAlpha = look.beard === "stubble" ? 0.42 : 1;
+    c.fillStyle = hc;
+    c.beginPath();
+    c.moveTo(-r * 0.74, -r * 0.66);
+    c.quadraticCurveTo(-r * 0.62, -r * 0.44, -r * 0.32, -r * 0.5);
+    c.quadraticCurveTo(0, -r * 0.56, r * 0.32, -r * 0.5);
+    c.quadraticCurveTo(r * 0.62, -r * 0.44, r * 0.74, -r * 0.66);
+    c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.3, jaw + r * 0.02);
+    c.quadraticCurveTo(0, jaw + r * 0.12, -r * 0.3, jaw + r * 0.02);
+    c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.74, -r * 0.66);
+    c.closePath(); c.fill();
+    if (look.beard === "full") {
+      c.globalAlpha = 0.5; c.strokeStyle = shadeHex(hc, 0.3); c.lineWidth = lw(0.022);
+      for (var k = -3; k <= 3; k++) {
+        c.beginPath(); c.moveTo(k * r * 0.13, -r * 0.44); c.lineTo(k * r * 0.15, -r * 0.3); c.stroke();
+      }
+    }
+    c.globalAlpha = 1;
+  }
+}
+
 function drawArtBody(c, r, look, ink, name, contained) {
   var skin = look.skin, build = look.build;
   var line = shadeHex(skin, -0.38), hi = shadeHex(skin, 0.28);
@@ -343,15 +443,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
   c.beginPath(); c.moveTo(-r, sTop); c.lineTo(r, sTop); c.stroke();
 
-  if (contained) {
-    // Traps sloping off the neck, then the head in the top third
-    c.strokeStyle = line; c.lineWidth = lw(0.045); c.globalAlpha = 0.8;
-    [-1, 1].forEach(function (s) {
-      c.beginPath(); c.moveTo(s * r * 0.3, -r * 0.42); c.quadraticCurveTo(s * r * 0.55, -r * 0.4, s * r * 0.82, -r * 0.5); c.stroke();
-    });
-    c.globalAlpha = 1;
-    drawArtHead(c, r, look, ink, -r * 0.63, r * 0.33);
-  }
+  if (contained) drawArtHeadLayer(c, r, look, line, lw);
 
   // Overall roundness: rim shadow
   var rg = c.createRadialGradient(-r * 0.2, -r * 0.25, r * 0.6, 0, 0, r);
