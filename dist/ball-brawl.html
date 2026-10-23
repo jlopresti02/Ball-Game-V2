@@ -5739,7 +5739,12 @@ var FP_GRAB_TIME = 0.2;     // both hands lock on
 var FP_TOSS_TIME = 0.17;    // each flight into a wall
 var FP_SLAM_TIME = 0.22;    // the final slam down onto the bottom wall
 var FP_MOUNT_TIME = 0.25;   // climbs on top
-var FP_PUNCH_GAP = 0.17;    // ground and pound, one punch every this long
+// Ground and pound: each punch is wound up high where the viewer can see
+// it coming (fist cocked over the head, trembling, a target ring closing in
+// on them), then hammered straight down.
+var FP_WIND = 0.26, FP_WIND_LAST = 0.5;  // wind-up
+var FP_STRIKE = 0.06;                     // the drop onto them
+var FP_RECOIL = 0.1;                      // fist bounces back up
 var FP_RETREAT_TIME = 1;
 
 // Picks the next wall to throw them into: a different wall from the one
@@ -5831,30 +5836,35 @@ function updateFathersPlan(self, other, m, sp, dt) {
     return true;
   }
   if (m.phase === "mount" || m.phase === "pound") {
-    // On top of them, pinning them to the floor.
-    var tx = other.x, ty = other.y - (self.r + other.r - 6);
+    // Kneeling over them from the side nearer the middle, pinning them to
+    // the floor, so the punches land where the viewer can see them.
+    if (!m.dir) m.dir = other.x > W / 2 ? -1 : 1;
+    var tx = other.x + m.dir * (self.r + other.r) * 0.62, ty = other.y - (self.r + other.r) * 0.62;
     if (m.phase === "mount") {
       k = Math.min(1, m.t / FP_MOUNT_TIME);
       self.x = m.mx + (tx - m.mx) * k; self.y = m.my + (ty - m.my) * k;
       if (k >= 1) { m.phase = "pound"; m.t = 0; m.thrown = 0; }
       return true;
     }
-    var kp = self.koPunch;
-    var lean = kp ? Math.max(0, Math.sin(Math.PI * Math.min(1, kp.t / kp.dur))) * 10 : 0;
-    self.x = tx + Math.sin(m.t * 31) * 2; self.y = ty + lean;
-    if (kp) {
-      kp.t += dt;
-      if (!kp.hit && kp.t >= kp.hitAt) { kp.hit = true; landFpPunch(self, other, kp); }
-      if (kp.t >= kp.dur) self.koPunch = null;
+    // Leans back while winding up, then drops their whole weight in.
+    var gp = m.gp, lean = 0;
+    if (gp) {
+      gp.t += dt;
+      if (gp.t < gp.wind) lean = -6 * (gp.t / gp.wind);
+      else if (gp.t < gp.wind + FP_STRIKE) lean = 12;
+      else lean = 12 * Math.max(0, 1 - (gp.t - gp.wind - FP_STRIKE) / FP_RECOIL);
+      if (!gp.hit && gp.t >= gp.wind + FP_STRIKE) { gp.hit = true; landFpPunch(self, other, gp); }
+      if (gp.t >= gp.wind + FP_STRIKE + FP_RECOIL) m.gp = null;
     }
-    if (!other.alive) { endIgbb(self, other); checkEnd(); return false; }
-    if (!self.koPunch && m.thrown < sp.punches && m.t >= m.thrown * FP_PUNCH_GAP) {
+    self.x = tx + Math.sin(m.t * 31) * 1.5; self.y = ty + lean;
+    if (!other.alive) { m.gp = null; endIgbb(self, other); checkEnd(); return false; }
+    if (!m.gp && m.thrown < sp.punches) {
       var last = m.thrown === sp.punches - 1;
-      self.koPunch = { t: 0, dur: last ? 0.16 : 0.11, hitAt: last ? 0.09 : 0.05, hit: false, targetId: other.id,
-        size: self.char.punch.size * (last ? 1.6 : 1.3), kind: "jab", side: m.thrown % 2 ? -1 : 1, last: last };
+      m.gp = { t: 0, wind: last ? FP_WIND_LAST : FP_WIND, hit: false, last: last, side: m.thrown % 2 ? -1 : 1 };
       m.thrown++;
+      playWhoosh();
     }
-    if (m.thrown >= sp.punches && !self.koPunch) {
+    if (m.thrown >= sp.punches && !m.gp) {
       // They survived it: lets them up and backs off.
       other.shelled = false;
       setSpeed(other, SPEED * 0.6);
@@ -5872,17 +5882,30 @@ function updateFathersPlan(self, other, m, sp, dt) {
   return false;
 }
 
-function landFpPunch(self, other, kp) {
+function landFpPunch(self, other, gp) {
+  var big = gp.last;
   var dealt = hurt(other, self.char.special.damage, "igbb", self.id);
-  if (dealt > 0) playPunch(dealt * (kp.last ? 3.2 : 2.2));
-  var cx = other.x, cy = other.y - other.r;
-  other.squash = { t: kp.last ? 0.24 : 0.15, max: kp.last ? 0.24 : 0.15, nx: 0, ny: -1 };
-  other.flash = 0.16;
-  impacts.push({ x: other.x, y: H, nx: 0, ny: -1, life: kp.last ? 0.6 : 0.3, max: kp.last ? 0.6 : 0.3, color: kp.last ? theme.hit : self.char.color });
-  igbbSparks(cx, cy, 0, -1, self.char.color, kp.last ? 24 : 12, kp.last ? 560 : 380);
-  if (!reduceMotion) shake = Math.max(shake, kp.last ? 26 : 15);
-  hitStop = Math.max(hitStop, kp.last ? 0.18 : 0.06);
-  if (kp.last && other.alive) floater(other.x, other.y - other.r - 34, "FATHER'S PLAN!", "crit");
+  if (dealt > 0) playPunch(dealt * (big ? 4 : 3));
+  if (big) playSlam();
+  var cx = other.x, cy = other.y - other.r * 0.45;
+  // Flattened into the floor, a white flash, a shockwave at the fist and
+  // cracks in the floor under them.
+  other.squash = { t: big ? 0.32 : 0.2, max: big ? 0.32 : 0.2, nx: 0, ny: -1 };
+  other.flash = big ? 0.22 : 0.16;
+  impacts.push({ x: cx, y: cy, nx: 0, ny: -1, life: big ? 0.6 : 0.4, max: big ? 0.6 : 0.4, color: theme.hit });
+  impacts.push({ x: other.x, y: H, nx: 0, ny: -1, life: big ? 0.8 : 0.45, max: big ? 0.8 : 0.45, color: self.char.color });
+  igbbSparks(cx, cy, 0, -1, self.char.color, big ? 34 : 20, big ? 640 : 460);
+  if (!reduceMotion) {
+    // Dust kicked out along the floor to both sides.
+    for (var i = 0; i < (big ? 18 : 10); i++) {
+      var sgn = i % 2 ? 1 : -1;
+      particles.push({ x: other.x + sgn * other.r * 0.8, y: H - 4, vx: sgn * (120 + Math.random() * 260), vy: -Math.random() * 120,
+        life: 0.35 + Math.random() * 0.25, max: 0.6, size: 3 + Math.random() * 4, color: theme.wall });
+    }
+    shake = Math.max(shake, big ? 36 : 22);
+  }
+  hitStop = Math.max(hitStop, big ? 0.28 : 0.1);
+  if (big && other.alive) floater(other.x, other.y - other.r - 34, "FATHER'S PLAN!", "crit");
 }
 
 // ---------------------------------------------------------------
@@ -5892,6 +5915,7 @@ function landFpPunch(self, other, kp) {
 // The one-handed grab and throw.
 function drawSpecial(b) {
   var m = b.igbb;
+  if (m && m.gp && b.alive) { drawFpPound(b, m.gp); return; }
   if (!m || !b.alive || (m.phase !== "grab" && m.phase !== "throw" && m.phase !== "toss" && m.phase !== "slamdown")) return;
   var o = balls[1 - b.id];
   var dx = o.x - b.x, dy = o.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -5910,6 +5934,66 @@ function drawSpecial(b) {
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
   ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(hx, hy, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+// Father's Plan ground and pound: the fist cocked high over the head and
+// trembling (with a target ring closing in on the opponent), then driven
+// straight down with speed lines behind it.
+function drawFpPound(b, gp) {
+  var o = balls[1 - b.id], r = b.r;
+  var size = (b.char.punch.size || 15) * (gp.last ? 1.9 : 1.5);
+  var toward = o.x < b.x ? -1 : 1; // which side the opponent is on
+  var shx = b.x + toward * gp.side * r * 0.45, shy = b.y - r * 0.15;
+  var cockX = b.x + toward * r * (gp.side > 0 ? 0.55 : 0.1), cockY = b.y - r * (gp.last ? 1.9 : 1.55);
+  var hitX = o.x - toward * o.r * 0.1, hitY = o.y - o.r * 0.45;
+  var fx, fy, k;
+  if (gp.t < gp.wind) {
+    k = gp.t / gp.wind; k = k * k * (3 - 2 * k);
+    fx = shx + (cockX - shx) * k; fy = shy + (cockY - shy) * k;
+    var tr = (gp.last ? 5 : 3) * k;
+    fx += (Math.random() - 0.5) * tr; fy += (Math.random() - 0.5) * tr;
+  } else if (gp.t < gp.wind + FP_STRIKE) {
+    k = (gp.t - gp.wind) / FP_STRIKE;
+    fx = cockX + (hitX - cockX) * k; fy = cockY + (hitY - cockY) * k;
+  } else {
+    k = Math.min(1, (gp.t - gp.wind - FP_STRIKE) / FP_RECOIL);
+    fx = hitX + (shx - hitX) * k * 0.6; fy = hitY + (cockY - hitY) * k * 0.35;
+  }
+  ctx.save();
+  // Target ring closing in on the spot the punch will land.
+  if (gp.t < gp.wind) {
+    var w = gp.t / gp.wind;
+    ctx.globalAlpha = 0.35 + 0.5 * w;
+    ctx.strokeStyle = theme.hit; ctx.lineWidth = 3 + 2 * w;
+    ctx.beginPath(); ctx.arc(hitX, hitY, o.r * (1.6 - 1.1 * w), 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  // Speed lines behind the fist on the way down (and just after it lands).
+  if (gp.t >= gp.wind && gp.t < gp.wind + FP_STRIKE + 0.05) {
+    ctx.strokeStyle = theme.ink; ctx.lineWidth = 3; ctx.globalAlpha = 0.55;
+    for (var i = -2; i <= 2; i++) {
+      ctx.beginPath(); ctx.moveTo(fx + i * size * 0.4, fy - size * 1.2); ctx.lineTo(fx + i * size * 0.4, fy - size * 3.2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  ctx.lineCap = "round";
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
+  ctx.beginPath(); ctx.moveTo(shx, shy); ctx.lineTo(fx, fy); ctx.stroke();
+  ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.6;
+  ctx.beginPath(); ctx.moveTo(shx, shy); ctx.lineTo(fx, fy); ctx.stroke();
+  // A pulsing glow around the cocked fist on the big last one.
+  if (gp.last && gp.t < gp.wind) {
+    ctx.fillStyle = theme.hit; ctx.globalAlpha = 0.25 + 0.2 * Math.sin(gp.t * 40);
+    ctx.beginPath(); ctx.arc(fx, fy, size * 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  var ang = Math.atan2(hitY - fy, hitX - fx);
+  if (b.char.look) drawGlove(ctx, fx, fy, size, b.char.look, theme.wall, ang);
+  else {
+    ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(fx, fy, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -6785,7 +6869,7 @@ function drawHands(b, other) {
   if (b.shelled) { fwd = b.r * 0.9; gap = b.r * 0.22; hr = b.r * 0.34; } // tight shell, gloves together
   var koHook = b.koRush && (b.koRush.phase === "run" || b.koRush.phase === "throw");
   var igbbGrab = b.igbb && (b.igbb.phase === "grab" || b.igbb.phase === "throw");
-  var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : [1, -1]);
+  var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : (b.igbb && b.igbb.gp ? [] : [1, -1]));
   ctx.save();
   ctx.fillStyle = gloveColor(b.char);
   ctx.strokeStyle = theme.wall;

@@ -140,7 +140,7 @@ function drawHands(b, other) {
   if (b.shelled) { fwd = b.r * 0.9; gap = b.r * 0.22; hr = b.r * 0.34; } // tight shell, gloves together
   var koHook = b.koRush && (b.koRush.phase === "run" || b.koRush.phase === "throw");
   var igbbGrab = b.igbb && (b.igbb.phase === "grab" || b.igbb.phase === "throw");
-  var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : [1, -1]);
+  var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : (b.igbb && b.igbb.gp ? [] : [1, -1]));
   ctx.save();
   ctx.fillStyle = gloveColor(b.char);
   ctx.strokeStyle = theme.wall;
