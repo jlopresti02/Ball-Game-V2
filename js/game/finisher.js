@@ -121,7 +121,7 @@ function drawFinishers() {
 
     // Pinning hand pressing the opponent down.
     var px = self.x - r * 0.95, py = tgt.y - tgt.r * 0.35;
-    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(px, py, r * 0.36, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
     // Punching fist: raised high, then driven down onto the opponent.
@@ -142,7 +142,7 @@ function drawFinishers() {
     var sx = self.x + r * 0.55, sy = self.y - r * 0.3;
     ctx.strokeStyle = theme.wall; ctx.lineWidth = r * 0.42;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fx, fy); ctx.stroke();
-    ctx.strokeStyle = self.char.color; ctx.lineWidth = r * 0.26;
+    ctx.strokeStyle = armColor(self.char); ctx.lineWidth = r * 0.26;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fx, fy); ctx.stroke();
     // Motion lines while it's coming down.
     if (k > 0.2 && k < 0.99 && g.punchT >= FIN_WINDUP - 0.07 && g.punchT < FIN_WINDUP) {
@@ -152,7 +152,7 @@ function drawFinishers() {
       }
       ctx.globalAlpha = 1;
     }
-    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 4;
+    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(fx, fy, r * 0.52, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.restore();
   });

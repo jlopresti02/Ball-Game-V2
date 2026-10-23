@@ -14,6 +14,11 @@ function defaultLook() {
   };
 }
 
+// Arms, legs and fists of fighters with art use skin and glove colours;
+// everyone else keeps their fighter colour.
+function armColor(ch) { return ch.look ? ch.look.skin : ch.color; }
+function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
+
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
 function shadeHex(hex, amt) {
   var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
@@ -547,4 +552,18 @@ function drawGlove(c, x, y, gr, look, ink, ang) {
   c.fillStyle = shadeHex(col, 0.75); c.lineWidth = Math.max(1.2, gr * 0.14);
   c.beginPath(); c.rect(-gr * 0.72, -gr * 0.62, gr * 0.3, gr * 1.24); c.fill(); c.stroke();
   c.restore();
+}
+
+// The fighter art as an image, for the roster cards. Cached per look.
+var artUrlCache = {};
+function fighterArtUrl(ch) {
+  if (!ch.look) return null;
+  var key = ch.name + JSON.stringify(ch.look);
+  if (!artUrlCache[key]) {
+    var cv = document.createElement("canvas");
+    cv.width = cv.height = 128;
+    drawFighterArt(cv.getContext("2d"), 64, 64, 64, ch.look, "#16211f", { layout: "contained", name: ch.name });
+    artUrlCache[key] = cv.toDataURL();
+  }
+  return artUrlCache[key];
 }

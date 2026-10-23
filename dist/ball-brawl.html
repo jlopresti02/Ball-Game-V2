@@ -1735,12 +1735,34 @@ function getImg(dataURL) {
 var SAVED_ROSTER = [
   {
     "id": "c-dustin-poirier",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "name": "Dustin Poirier",
     "base": "Brawler",
     "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB.",
     "color": "#1e3a8a",
+    "look": {
+      "skin": "#d9a07a",
+      "build": "muscular",
+      "bodyHair": "none",
+      "hair": "buzz",
+      "hairColor": "#3a2a1e",
+      "beard": "stubble",
+      "ears": "normal",
+      "tattoos": {
+        "chest": false,
+        "script": true,
+        "claws": true,
+        "leftArm": true,
+        "rightArm": true,
+        "ribs": false,
+        "color": true
+      },
+      "shorts": "#1a1a1a",
+      "trim": "#ffffff",
+      "shortsStyle": "print",
+      "gloves": "#151515"
+    },
     "label": "",
     "imgData": "data:image/jpeg;base64,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",
     "hasProjectile": false,
@@ -2066,6 +2088,8 @@ function abilitySummary(ch) {
 }
 
 function avatarStyle(ch) {
+  var art = fighterArtUrl(ch);
+  if (art) return "background-image:url(" + art + ");background-color:" + ch.color + ";";
   var img = getImg(ch.imgData);
   if (img) return "background-image:url(" + ch.imgData + ");background-color:" + ch.color + ";";
   return "background-color:" + ch.color + ";";
@@ -2110,6 +2134,7 @@ function mirrorCopy(ch) {
   copy.mirrorOf = ch.id;
   copy.name = ch.name + " 2";
   copy.color = mirrorColor(ch.color);
+  if (copy.look) copy.look.shorts = mirrorColor(copy.look.shorts); // tell the two apart
   return copy;
 }
 function setMirror(name, ch) {
@@ -4151,7 +4176,7 @@ function drawFinishers() {
 
     // Pinning hand pressing the opponent down.
     var px = self.x - r * 0.95, py = tgt.y - tgt.r * 0.35;
-    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(px, py, r * 0.36, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
     // Punching fist: raised high, then driven down onto the opponent.
@@ -4172,7 +4197,7 @@ function drawFinishers() {
     var sx = self.x + r * 0.55, sy = self.y - r * 0.3;
     ctx.strokeStyle = theme.wall; ctx.lineWidth = r * 0.42;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fx, fy); ctx.stroke();
-    ctx.strokeStyle = self.char.color; ctx.lineWidth = r * 0.26;
+    ctx.strokeStyle = armColor(self.char); ctx.lineWidth = r * 0.26;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fx, fy); ctx.stroke();
     // Motion lines while it's coming down.
     if (k > 0.2 && k < 0.99 && g.punchT >= FIN_WINDUP - 0.07 && g.punchT < FIN_WINDUP) {
@@ -4182,7 +4207,7 @@ function drawFinishers() {
       }
       ctx.globalAlpha = 1;
     }
-    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 4;
+    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(fx, fy, r * 0.52, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.restore();
   });
@@ -4403,7 +4428,7 @@ function drawSprawls() {
     var nx = dx / d, ny = dy / d, px = -ny, py = nx;
     // Both hands pressing down on the attacker's back.
     ctx.save();
-    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     [1, -1].forEach(function (sgn) {
       var hx = atk.x - nx * atk.r * 0.1 + px * atk.r * 0.72 * sgn, hy = atk.y - ny * atk.r * 0.1 + py * atk.r * 0.72 * sgn;
       ctx.beginPath(); ctx.arc(hx, hy, atk.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -4599,19 +4624,19 @@ function drawSwing(self) {
   // Blur of the fist sweeping around.
   trail.forEach(function (t, i) {
     ctx.globalAlpha = 0.3 - i * 0.08;
-    ctx.fillStyle = self.char.color;
+    ctx.fillStyle = gloveColor(self.char);
     ctx.beginPath(); ctx.arc(t.x, t.y, SWING_FIST_R * 0.9, 0, Math.PI * 2); ctx.fill();
   });
   ctx.globalAlpha = 1;
   // Arm from the shoulder to the fist.
   ctx.strokeStyle = theme.wall; ctx.lineWidth = SWING_FIST_R * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.strokeStyle = self.char.color; ctx.lineWidth = SWING_FIST_R * 0.6;
+  ctx.strokeStyle = armColor(self.char); ctx.lineWidth = SWING_FIST_R * 0.6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
   // Trembles while it's cocked back.
   var jx = 0, jy = 0;
   if (st.phase === "windup") { jx = (Math.random() - 0.5) * 2.5; jy = (Math.random() - 0.5) * 2.5; }
-  ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fist.x + jx, fist.y + jy, SWING_FIST_R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   // The other hand stays up guarding on the opposite side.
   var ga = st.ang + st.side * 0.9;
@@ -5076,10 +5101,10 @@ function drawKoPunch(b) {
   if (dist > b.r) {
     ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
     ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(fx, fy); ctx.stroke();
-    ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+    ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.6;
     ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(fx, fy); ctx.stroke();
   }
-  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fx, fy, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   if (kp.kind === "big" || kp.kind === "ko" || !kp.kind) {
     // A charged glow around the knockout fist.
@@ -5142,15 +5167,15 @@ function drawKoHook(b) {
   }
   trail.forEach(function (t, i) {
     ctx.globalAlpha = 0.35 - i * 0.09;
-    ctx.fillStyle = b.char.color;
+    ctx.fillStyle = gloveColor(b.char);
     ctx.beginPath(); ctx.arc(t.x, t.y, size * 0.95, 0, Math.PI * 2); ctx.fill();
   });
   ctx.globalAlpha = 1;
   ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+  ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fist.x, fist.y, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.globalAlpha = 0.35 + 0.25 * Math.sin(performance.now() / 60);
   ctx.strokeStyle = theme.hit; ctx.lineWidth = 3;
@@ -5194,15 +5219,15 @@ function drawQuickHook(b, kp) {
   ctx.lineCap = "round";
   trail.forEach(function (t, i) {
     ctx.globalAlpha = kp.heavy ? 0.4 - i * 0.09 : 0.3 - i * 0.12;
-    ctx.fillStyle = b.char.color;
+    ctx.fillStyle = gloveColor(b.char);
     ctx.beginPath(); ctx.arc(t.x, t.y, size * 0.9, 0, Math.PI * 2); ctx.fill();
   });
   ctx.globalAlpha = 1;
   ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+  ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fist.x, fist.y, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
@@ -5218,9 +5243,9 @@ function drawKoCelebrate(b) {
     var sx = b.x + sgn * r * 0.62, sy = b.y - r * 0.55;
     ctx.strokeStyle = theme.wall; ctx.lineWidth = r * 0.34;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-    ctx.strokeStyle = b.char.color; ctx.lineWidth = r * 0.2;
+    ctx.strokeStyle = armColor(b.char); ctx.lineWidth = r * 0.2;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-    ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(hx, hy, r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   });
   ctx.restore();
@@ -5545,9 +5570,9 @@ function drawSpecial(b) {
   ctx.lineCap = "round";
   ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+  ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(hx, hy, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
@@ -5712,6 +5737,576 @@ function resize() {
   canvas.height = Math.round(rect.width * (H / W) * dpr);
 }
 
+// Fighter art: draws a roster fighter as a muscled ball in its fight kit,
+// from the fighter's `look` (skin, build, hair, beard, body hair, tattoos,
+// shorts, gloves). No faces: likeness comes from the build, hair, beard,
+// ink and kit. Everything is drawn in units of the ball's radius so it
+// holds up at any size.
+"use strict";
+
+function defaultLook() {
+  return {
+    skin: "#d9a27e", build: "muscular", bodyHair: "none",
+    hair: "short", hairColor: "#2b2019", beard: "none", ears: "normal",
+    tattoos: { chest: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
+    shorts: "#1e3a8a", trim: "#f2f2f2", shortsStyle: "stripe", gloves: "#141414"
+  };
+}
+
+// Arms, legs and fists of fighters with art use skin and glove colours;
+// everyone else keeps their fighter colour.
+function armColor(ch) { return ch.look ? ch.look.skin : ch.color; }
+function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
+
+// Mix a hex color toward black (amt < 0) or white (amt > 0).
+function shadeHex(hex, amt) {
+  var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  var t = amt < 0 ? 0 : 255, p = Math.abs(amt);
+  r = Math.round(r + (t - r) * p); g = Math.round(g + (t - g) * p); b = Math.round(b + (t - b) * p);
+  return "rgb(" + r + "," + g + "," + b + ")";
+}
+
+// Small seeded random, so a fighter's body hair and ink land in the same
+// spots every frame.
+function artRand(seed) {
+  var s = seed >>> 0 || 1;
+  return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+function artSeed(str) {
+  var h = 2166136261;
+  for (var i = 0; i < (str || "").length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+// Draws the body ball, then the head sitting on top of it. `ink` is the
+// outline color (theme.wall in game). opts.head: draw the head on top.
+// opts.layout "contained" keeps the whole fighter inside the ball instead:
+// head in the top third, torso in the middle, shorts in the bottom third.
+function drawFighterArt(c, x, y, r, look, ink, opts) {
+  opts = opts || {};
+  look = look || defaultLook();
+  c.save();
+  c.translate(x, y);
+  var contained = opts.layout === "contained";
+  drawArtBody(c, r, look, ink, opts.name || "", contained);
+  if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
+  c.restore();
+}
+
+function drawArtHead(c, r, look, ink, hy, hr) {
+  if (hr === undefined) { hr = r * 0.4; hy = -r * 1.04; }
+  c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.07);
+  // Shadow the head casts on the chest
+  c.fillStyle = "rgba(0,0,0,0.18)";
+  c.beginPath(); c.ellipse(0, hy + hr * 0.95, hr * 0.85, hr * 0.3, 0, 0, Math.PI * 2); c.fill();
+
+  // Ears, puffed up and lumpy when cauliflowered
+  var cauli = look.ears === "cauliflower";
+  [-1, 1].forEach(function (s) {
+    var er = hr * (cauli ? 0.3 : 0.22);
+    c.fillStyle = shadeHex(look.skin, -0.05);
+    c.beginPath(); c.ellipse(s * hr * 0.95, hy + hr * 0.08, er * 0.8, er, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+    if (cauli) {
+      c.save(); c.strokeStyle = shadeHex(look.skin, -0.35); c.lineWidth = Math.max(1, r * 0.035);
+      c.beginPath(); c.arc(s * hr * 0.97, hy + hr * 0.02, er * 0.35, 0, Math.PI * 2); c.stroke();
+      c.beginPath(); c.arc(s * hr * 0.93, hy + hr * 0.2, er * 0.25, 0, Math.PI * 2); c.stroke();
+      c.restore();
+    }
+  });
+
+  // Skull
+  var g = c.createRadialGradient(-hr * 0.35, hy - hr * 0.4, hr * 0.1, 0, hy, hr * 1.1);
+  g.addColorStop(0, shadeHex(look.skin, 0.18)); g.addColorStop(1, shadeHex(look.skin, -0.15));
+  c.fillStyle = g;
+  c.beginPath(); c.arc(0, hy, hr, 0, Math.PI * 2); c.fill();
+
+  c.save();
+  c.beginPath(); c.arc(0, hy, hr, 0, Math.PI * 2); c.clip();
+  var hc = look.hairColor;
+  if (look.hair === "buzz") {
+    c.globalAlpha = 0.6; c.fillStyle = hc;
+    c.beginPath(); c.ellipse(0, hy - hr * 0.35, hr * 1.1, hr * 0.75, 0, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 1;
+  } else if (look.hair === "short" || look.hair === "long" || look.hair === "dreads") {
+    c.fillStyle = hc;
+    c.beginPath();
+    c.moveTo(-hr * 1.1, hy + hr * 0.15);
+    c.quadraticCurveTo(-hr * 0.9, hy - hr * 0.35, -hr * 0.4, hy - hr * 0.28);
+    c.quadraticCurveTo(0, hy - hr * 0.42, hr * 0.45, hy - hr * 0.26);
+    c.quadraticCurveTo(hr * 0.9, hy - hr * 0.35, hr * 1.1, hy + hr * 0.15);
+    c.lineTo(hr * 1.1, hy - hr * 1.2); c.lineTo(-hr * 1.1, hy - hr * 1.2); c.closePath();
+    c.fill();
+  } else if (look.hair === "mohawk") {
+    c.globalAlpha = 0.35; c.fillStyle = hc;
+    c.beginPath(); c.ellipse(0, hy - hr * 0.35, hr * 1.1, hr * 0.75, 0, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 1;
+  }
+  // Beard: fills the lower half of the head, no face drawn
+  if (look.beard !== "none") {
+    c.globalAlpha = look.beard === "stubble" ? 0.4 : 1;
+    c.fillStyle = hc;
+    c.beginPath();
+    c.moveTo(-hr * 1.1, hy - hr * 0.05);
+    c.quadraticCurveTo(-hr * 0.55, hy + hr * 0.1, -hr * 0.5, hy + hr * 0.42);
+    c.quadraticCurveTo(0, hy + hr * 0.2, hr * 0.5, hy + hr * 0.42);
+    c.quadraticCurveTo(hr * 0.55, hy + hr * 0.1, hr * 1.1, hy - hr * 0.05);
+    c.lineTo(hr * 1.1, hy + hr * 1.2); c.lineTo(-hr * 1.1, hy + hr * 1.2); c.closePath();
+    c.fill();
+    c.globalAlpha = 1;
+  }
+  c.restore();
+
+  c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.07);
+  c.beginPath(); c.arc(0, hy, hr, 0, Math.PI * 2); c.stroke();
+
+  // Hair that sticks out past the skull
+  c.fillStyle = hc; c.strokeStyle = ink; c.lineWidth = Math.max(1.5, r * 0.05);
+  if (look.hair === "mohawk") {
+    c.beginPath();
+    c.moveTo(-hr * 0.22, hy - hr * 0.55);
+    for (var i = 0; i <= 4; i++) {
+      var a = -Math.PI * 0.8 + i * Math.PI * 0.15;
+      c.lineTo(Math.cos(a) * hr * 1.35, hy + Math.sin(a) * hr * 1.35);
+      c.lineTo(Math.cos(a + 0.07) * hr * 0.9, hy + Math.sin(a + 0.07) * hr * 0.9);
+    }
+    c.closePath(); c.fill(); c.stroke();
+  } else if (look.hair === "long") {
+    [-1, 1].forEach(function (s) {
+      c.beginPath();
+      c.moveTo(s * hr * 0.75, hy - hr * 0.6);
+      c.quadraticCurveTo(s * hr * 1.35, hy, s * hr * 1.05, hy + hr * 1.1);
+      c.lineTo(s * hr * 0.8, hy + hr * 0.3);
+      c.closePath(); c.fill(); c.stroke();
+    });
+  } else if (look.hair === "dreads") {
+    for (var d = 0; d < 7; d++) {
+      var da = -Math.PI + 0.2 + d * (Math.PI - 0.4) / 6;
+      var sx = Math.cos(da) * hr * 0.92, sy = hy + Math.sin(da) * hr * 0.92;
+      var len = hr * (0.35 + (d % 2) * 0.15);
+      c.save(); c.lineCap = "round";
+      c.strokeStyle = ink; c.lineWidth = hr * 0.3;
+      c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx + Math.cos(da) * len, sy + Math.sin(da) * len * 0.6 + len * 0.5); c.stroke();
+      c.strokeStyle = hc; c.lineWidth = hr * 0.18;
+      c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx + Math.cos(da) * len, sy + Math.sin(da) * len * 0.6 + len * 0.5); c.stroke();
+      c.restore();
+    }
+  }
+}
+
+// Contained layout: the ball's top third is the head itself. No outline of
+// its own, just layers painted onto the ball: hair on top, ears at the
+// edges, beard along the jaw, a chin shadow where it meets the chest.
+function drawArtHeadLayer(c, r, look, line, lw) {
+  var hc = look.hairColor, jaw = -r * 0.3;
+  // Chin shadow and neck line into the chest
+  c.fillStyle = "rgba(0,0,0,0.2)";
+  c.beginPath(); c.ellipse(0, jaw + r * 0.08, r * 0.45, r * 0.08, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = line; c.lineWidth = lw(0.045);
+  c.beginPath(); c.moveTo(-r * 0.66, jaw - r * 0.14); c.quadraticCurveTo(-r * 0.5, jaw + r * 0.1, 0, jaw + r * 0.1); c.quadraticCurveTo(r * 0.5, jaw + r * 0.1, r * 0.66, jaw - r * 0.14); c.stroke();
+
+  // Ears at the edges of the ball
+  var cauli = look.ears === "cauliflower";
+  [-1, 1].forEach(function (s) {
+    var ex = s * r * 0.76, ey = -r * 0.56, er = r * (cauli ? 0.14 : 0.12);
+    c.fillStyle = shadeHex(look.skin, -0.06);
+    c.strokeStyle = line; c.lineWidth = lw(0.035);
+    c.beginPath(); c.ellipse(ex, ey, er * 0.7, er, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+    c.beginPath(); c.arc(ex - s * er * 0.1, ey, er * 0.55, s > 0 ? Math.PI * 0.5 : -Math.PI * 0.5, s > 0 ? Math.PI * 1.5 : Math.PI * 0.5); c.stroke();
+    if (cauli) {
+      c.beginPath(); c.arc(ex, ey - er * 0.35, er * 0.28, 0, Math.PI * 2); c.stroke();
+      c.beginPath(); c.arc(ex + s * er * 0.1, ey + er * 0.3, er * 0.22, 0, Math.PI * 2); c.stroke();
+    }
+  });
+
+  // Hair across the top of the ball
+  var hairline = function () {
+    c.beginPath();
+    c.moveTo(-r, -r * 0.5);
+    c.lineTo(-r * 0.74, -r * 0.6);
+    c.quadraticCurveTo(-r * 0.62, -r * 0.76, -r * 0.4, -r * 0.74);
+    c.quadraticCurveTo(0, -r * 0.82, r * 0.4, -r * 0.74);
+    c.quadraticCurveTo(r * 0.62, -r * 0.76, r * 0.74, -r * 0.6);
+    c.lineTo(r, -r * 0.5); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
+  };
+  c.fillStyle = hc;
+  if (look.hair === "buzz") {
+    c.globalAlpha = 0.88; hairline(); c.fill();
+    var br = artRand(7);
+    c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.5;
+    for (var bz = 0; bz < 70; bz++) {
+      var bx = (br() * 2 - 1) * r * 0.7, by = -r * (0.78 + br() * 0.2);
+      c.fillRect(bx, by, r * 0.018, r * 0.018);
+    }
+    c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "short" || look.hair === "long" || look.hair === "dreads") {
+    hairline(); c.fill();
+    c.strokeStyle = shadeHex(hc, 0.25); c.lineWidth = lw(0.025); c.globalAlpha = 0.6;
+    for (var i = -3; i <= 3; i++) {
+      c.beginPath(); c.moveTo(i * r * 0.12, -r * 0.97); c.quadraticCurveTo(i * r * 0.15 + r * 0.05, -r * 0.88, i * r * 0.13, -r * 0.8); c.stroke();
+    }
+    c.globalAlpha = 1;
+    if (look.hair === "long") {
+      [-1, 1].forEach(function (s) {
+        c.beginPath();
+        c.moveTo(s * r * 0.6, -r * 0.74);
+        c.quadraticCurveTo(s * r * 0.78, -r * 0.45, s * r * 0.68, -r * 0.2);
+        c.lineTo(s * r, -r * 0.2); c.lineTo(s * r, -r * 0.74); c.closePath(); c.fill();
+      });
+    } else if (look.hair === "dreads") {
+      c.lineCap = "round";
+      [-1, 1].forEach(function (s) {
+        for (var d = 0; d < 3; d++) {
+          var x0 = s * r * (0.52 + d * 0.12), len = r * (0.32 - d * 0.05);
+          c.strokeStyle = line; c.lineWidth = lw(0.12);
+          c.beginPath(); c.moveTo(x0, -r * 0.72); c.lineTo(x0 + s * r * 0.04, -r * 0.72 + len); c.stroke();
+          c.strokeStyle = hc; c.lineWidth = lw(0.08);
+          c.beginPath(); c.moveTo(x0, -r * 0.72); c.lineTo(x0 + s * r * 0.04, -r * 0.72 + len); c.stroke();
+        }
+      });
+    }
+  } else if (look.hair === "mohawk") {
+    c.globalAlpha = 0.3; hairline(); c.fill(); c.globalAlpha = 1;
+    c.beginPath(); c.ellipse(0, -r * 0.9, r * 0.13, r * 0.2, 0, 0, Math.PI * 2); c.fill();
+  } else {
+    // Bald: a shine on the scalp
+    c.fillStyle = "rgba(255,255,255,0.35)";
+    c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
+  }
+  if (look.hair !== "bald") {
+    c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "mohawk" ? 0.3 : 0.8;
+    hairline(); c.stroke(); c.globalAlpha = 1;
+  }
+
+  // Beard: sideburns down around the jaw to a full chin
+  if (look.beard !== "none") {
+    c.globalAlpha = look.beard === "stubble" ? 0.28 : 1;
+    c.fillStyle = hc;
+    c.beginPath();
+    c.moveTo(-r * 0.74, -r * 0.66);
+    c.quadraticCurveTo(-r * 0.62, -r * 0.44, -r * 0.32, -r * 0.5);
+    c.quadraticCurveTo(0, -r * 0.56, r * 0.32, -r * 0.5);
+    c.quadraticCurveTo(r * 0.62, -r * 0.44, r * 0.74, -r * 0.66);
+    c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.3, jaw + r * 0.02);
+    c.quadraticCurveTo(0, jaw + r * 0.12, -r * 0.3, jaw + r * 0.02);
+    c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.74, -r * 0.66);
+    c.closePath(); c.fill();
+    if (look.beard === "full") {
+      c.globalAlpha = 0.5; c.strokeStyle = shadeHex(hc, 0.3); c.lineWidth = lw(0.022);
+      for (var k = -3; k <= 3; k++) {
+        c.beginPath(); c.moveTo(k * r * 0.13, -r * 0.44); c.lineTo(k * r * 0.15, -r * 0.3); c.stroke();
+      }
+    }
+    c.globalAlpha = 1;
+  }
+}
+
+function drawArtBody(c, r, look, ink, name, contained) {
+  var skin = look.skin, build = look.build;
+  var line = shadeHex(skin, -0.38), hi = shadeHex(skin, 0.28);
+  var def = build === "lean" ? 0.65 : build === "stocky" ? 0.55 : 1; // how cut the muscles look
+  var lw = function (k) { return Math.max(1, r * k); };
+
+  c.save();
+  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.clip();
+
+  // Skin base with a light from the top left
+  var g = c.createRadialGradient(-r * 0.35, -r * 0.45, r * 0.1, 0, 0, r * 1.05);
+  g.addColorStop(0, shadeHex(skin, 0.14)); g.addColorStop(0.7, skin); g.addColorStop(1, shadeHex(skin, -0.22));
+  c.fillStyle = g; c.fillRect(-r, -r, r * 2, r * 2);
+
+  c.lineCap = "round"; c.lineJoin = "round";
+  if (contained) {
+    // Squeeze the torso into the middle third of the ball
+    c.save(); c.translate(0, r * 0.11); c.scale(0.86, 0.59);
+  }
+  var pecW = build === "stocky" ? 0.68 : 0.6;
+
+  // Shoulders (delts): curves bulging in from each side
+  c.strokeStyle = line; c.lineWidth = lw(0.055);
+  c.globalAlpha = 0.85 * def + 0.15;
+  [-1, 1].forEach(function (s) {
+    c.beginPath(); c.arc(s * r * 1.02, -r * 0.3, r * 0.4, s > 0 ? Math.PI - 1.05 : -1.05, s > 0 ? Math.PI + 1.05 : 1.05); c.stroke();
+  });
+
+  // Collarbones
+  c.lineWidth = lw(0.035);
+  [-1, 1].forEach(function (s) {
+    c.beginPath(); c.moveTo(s * r * 0.08, -r * 0.7); c.quadraticCurveTo(s * r * 0.3, -r * 0.62, s * r * 0.58, -r * 0.74); c.stroke();
+  });
+
+  // Pecs: highlight on top, deep shadow line underneath
+  [-1, 1].forEach(function (s) {
+    c.globalAlpha = 0.45;
+    c.fillStyle = hi;
+    c.beginPath(); c.ellipse(s * r * 0.3, -r * 0.38, r * pecW * 0.42, r * 0.18, s * 0.15, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 0.35 * def;
+    c.fillStyle = line;
+    c.beginPath();
+    c.moveTo(s * r * 0.04, -r * 0.12);
+    c.quadraticCurveTo(s * r * 0.35, r * 0.02, s * r * (pecW + 0.05), -r * 0.24);
+    c.quadraticCurveTo(s * r * 0.35, -r * 0.08, s * r * 0.04, -r * 0.2);
+    c.closePath(); c.fill();
+    c.globalAlpha = 0.9 * def + 0.1;
+    c.strokeStyle = line; c.lineWidth = lw(0.06);
+    c.beginPath();
+    c.moveTo(s * r * 0.04, -r * 0.14);
+    c.quadraticCurveTo(s * r * 0.35, r * 0.0, s * r * (pecW + 0.04), -r * 0.26);
+    c.stroke();
+  });
+  // Sternum
+  c.lineWidth = lw(0.035);
+  c.beginPath(); c.moveTo(0, -r * 0.6); c.lineTo(0, -r * 0.14); c.stroke();
+
+  if (build === "stocky") {
+    // Thick midsection: a rounded gut, faint centre line
+    c.globalAlpha = 0.3; c.fillStyle = hi;
+    c.beginPath(); c.ellipse(0, r * 0.14, r * 0.36, r * 0.2, 0, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 0.4; c.strokeStyle = line; c.lineWidth = lw(0.04);
+    c.beginPath(); c.moveTo(0, -r * 0.05); c.lineTo(0, r * 0.32); c.stroke();
+    c.beginPath(); c.arc(0, r * 0.1, r * 0.42, 0.35, Math.PI - 0.35); c.stroke();
+  } else {
+    // Six pack
+    var top = -r * 0.06, bot = r * 0.4, half = r * 0.2;
+    c.globalAlpha = 0.4;
+    c.fillStyle = hi;
+    for (var row = 0; row < 3; row++) {
+      for (var col = -1; col <= 1; col += 2) {
+        var yy = top + (row + 0.5) * (bot - top) / 3;
+        c.beginPath(); c.ellipse(col * half * 0.55, yy - r * 0.01, half * 0.36, (bot - top) / 8, 0, 0, Math.PI * 2); c.fill();
+      }
+    }
+    c.globalAlpha = 0.9 * def + 0.1;
+    c.strokeStyle = line; c.lineWidth = lw(0.045);
+    c.beginPath(); c.moveTo(0, top); c.lineTo(0, bot); c.stroke();
+    c.lineWidth = lw(0.035);
+    for (var k = 1; k < 3; k++) {
+      var ly = top + k * (bot - top) / 3;
+      c.beginPath(); c.moveTo(-half, ly + r * 0.02); c.quadraticCurveTo(0, ly - r * 0.03, half, ly + r * 0.02); c.stroke();
+    }
+    // Outer edge of the abs and the obliques / serratus
+    c.lineWidth = lw(0.045);
+    [-1, 1].forEach(function (s) {
+      c.beginPath(); c.moveTo(s * half * 1.05, top - r * 0.02); c.quadraticCurveTo(s * half * 1.3, (top + bot) / 2, s * half * 0.95, bot); c.stroke();
+      c.lineWidth = lw(0.03);
+      for (var j = 0; j < 3; j++) {
+        var sy = -r * 0.05 + j * r * 0.1;
+        c.beginPath(); c.moveTo(s * r * 0.52, sy); c.lineTo(s * r * 0.4, sy + r * 0.06); c.stroke();
+      }
+      c.lineWidth = lw(0.045);
+    });
+  }
+  c.globalAlpha = 1;
+
+  var rnd = artRand(artSeed(name));
+
+  // Body hair: chest patch and a trail down to the waistband
+  if (look.bodyHair && look.bodyHair !== "none") {
+    var heavy = look.bodyHair === "heavy";
+    c.strokeStyle = look.hairColor; c.lineWidth = lw(0.022); c.globalAlpha = heavy ? 0.85 : 0.6;
+    var n = heavy ? 60 : 26;
+    for (var h = 0; h < n; h++) {
+      var ang = rnd() * Math.PI * 2, rad = Math.sqrt(rnd());
+      var px = Math.cos(ang) * rad * r * (heavy ? 0.42 : 0.22), py = -r * 0.32 + Math.sin(ang) * rad * r * (heavy ? 0.22 : 0.14);
+      var tilt = (px > 0 ? 1 : -1) * 0.6 + (rnd() - 0.5);
+      c.beginPath(); c.moveTo(px, py); c.lineTo(px + Math.sin(tilt) * r * 0.06, py + Math.cos(tilt) * r * 0.06); c.stroke();
+    }
+    for (var t = 0; t < (heavy ? 18 : 9); t++) {
+      var ty = -r * 0.05 + t * r * 0.045, tx = (rnd() - 0.5) * r * 0.06;
+      c.beginPath(); c.moveTo(tx, ty); c.lineTo(tx + (rnd() - 0.5) * r * 0.04, ty + r * 0.05); c.stroke();
+    }
+    c.globalAlpha = 1;
+  }
+
+  // Tattoos
+  var tat = look.tattoos || {};
+  var inkCol = "rgba(28,34,52,0.62)";
+  c.strokeStyle = inkCol; c.fillStyle = inkCol;
+  if (tat.chest) {
+    // A spread-wing chest piece under the collarbones
+    c.lineWidth = lw(0.03);
+    [-1, 1].forEach(function (s) {
+      for (var f = 0; f < 4; f++) {
+        c.beginPath();
+        c.moveTo(s * r * 0.08, -r * 0.48 + f * r * 0.035);
+        c.quadraticCurveTo(s * r * (0.3 + f * 0.04), -r * (0.62 - f * 0.05), s * r * (0.52 - f * 0.05), -r * (0.5 - f * 0.07));
+        c.stroke();
+      }
+    });
+    c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
+  }
+  [["leftArm", -1], ["rightArm", 1]].forEach(function (p) {
+    if (!tat[p[0]]) return;
+    var s = p[1];
+    // Sleeve running over the shoulder: bands and curls
+    c.save();
+    c.beginPath(); c.arc(s * r * 1.02, -r * 0.3, r * 0.4, 0, Math.PI * 2); c.clip();
+    c.globalAlpha = 0.38; c.fillRect(s > 0 ? r * 0.6 : -r, -r, r * 0.4, r * 1.2);
+    if (tat.color) {
+      // Coloured ink: a couple of red roses in the sleeve
+      c.globalAlpha = 0.7; c.fillStyle = "#b8322a";
+      c.beginPath(); c.arc(s * r * 0.8, -r * 0.5, r * 0.08, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(s * r * 0.9, -r * 0.12, r * 0.07, 0, Math.PI * 2); c.fill();
+      c.fillStyle = inkCol;
+    }
+    c.globalAlpha = 1; c.lineWidth = lw(0.035);
+    for (var q = 0; q < 4; q++) {
+      c.beginPath(); c.arc(s * r * 0.86, -r * 0.62 + q * r * 0.17, r * 0.08, 0, Math.PI * 1.6); c.stroke();
+    }
+    c.beginPath(); c.moveTo(s * r * 0.7, -r * 0.7); c.quadraticCurveTo(s * r * 0.62, -r * 0.3, s * r * 0.72, r * 0.05); c.stroke();
+    c.restore();
+  });
+  if (tat.script) {
+    // Two lines of cursive (a name) across the left side of the chest
+    c.lineWidth = lw(0.028);
+    [[-0.5, 0], [-0.43, 0.06]].forEach(function (ln) {
+      c.beginPath();
+      for (var u = 0; u <= 24; u++) {
+        var ux = -r * (0.52 - ln[1]) + u * r * 0.016;
+        var uy = r * ln[0] + Math.sin(u * 1.7) * r * 0.022 - (u % 6 === 0 ? r * 0.03 : 0);
+        if (u === 0) c.moveTo(ux, uy); else c.lineTo(ux, uy);
+      }
+      c.stroke();
+    });
+  }
+  if (tat.claws) {
+    // Claw marks raking down the right pec, red showing through
+    [0, 1, 2, 3].forEach(function (k) {
+      var x0 = r * (0.2 + k * 0.09), y0 = -r * 0.62 + k * r * 0.02;
+      var x1 = x0 + r * 0.12, y1 = y0 + r * 0.38;
+      c.lineWidth = lw(0.055); c.strokeStyle = inkCol;
+      c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(x0 + r * 0.02, (y0 + y1) / 2, x1, y1); c.stroke();
+      if (tat.color) {
+        c.lineWidth = lw(0.022); c.strokeStyle = "rgba(200,60,40,0.85)";
+        c.beginPath(); c.moveTo(x0 + r * 0.02, y0 + r * 0.06); c.quadraticCurveTo(x0 + r * 0.03, (y0 + y1) / 2, x1 - r * 0.01, y1 - r * 0.06); c.stroke();
+      }
+    });
+    c.strokeStyle = inkCol;
+  }
+  if (tat.ribs) {
+    // Script running down the right ribs
+    c.lineWidth = lw(0.025);
+    c.beginPath();
+    for (var w = 0; w < 14; w++) {
+      var wy = -r * 0.2 + w * r * 0.035, wx = r * 0.58 + Math.sin(w * 1.9) * r * 0.035;
+      if (w === 0) c.moveTo(wx, wy); else c.lineTo(wx, wy);
+    }
+    c.stroke();
+  }
+
+  if (contained) c.restore();
+
+  // Fight shorts
+  var sTop = contained ? r * 0.36 : r * 0.42, band = r * 0.13;
+  c.fillStyle = look.shorts;
+  c.fillRect(-r, sTop, r * 2, r);
+  if (look.shortsStyle === "split") {
+    c.fillStyle = look.trim; c.fillRect(0, sTop, r, r);
+  }
+  // Fabric shading
+  var sg = c.createLinearGradient(0, sTop, 0, r);
+  sg.addColorStop(0, "rgba(255,255,255,0.12)"); sg.addColorStop(1, "rgba(0,0,0,0.3)");
+  c.fillStyle = sg; c.fillRect(-r, sTop, r * 2, r);
+  if (look.shortsStyle === "print") {
+    // Loud printed shorts: splashes of colour over the base
+    var pr = artRand(artSeed(name + "shorts"));
+    var pal = ["#e8452c", "#f2a32b", "#2fae5f", "#2c7be5", "#e94f9a", "#f4e04d", look.trim];
+    for (var sp = 0; sp < 26; sp++) {
+      // Little five-petal flowers and leaves
+      var spx = (pr() * 2 - 1) * r, spy = sTop + band + pr() * (r - sTop), pz = r * (0.035 + pr() * 0.04);
+      c.globalAlpha = 0.9;
+      if (sp % 3 === 2) {
+        c.fillStyle = "#2fae5f";
+        c.beginPath(); c.ellipse(spx, spy, pz * 1.6, pz * 0.6, pr() * Math.PI, 0, Math.PI * 2); c.fill();
+        continue;
+      }
+      c.fillStyle = pal[sp % pal.length];
+      for (var pe = 0; pe < 5; pe++) {
+        var pa = pe * Math.PI * 0.4 + sp;
+        c.beginPath(); c.arc(spx + Math.cos(pa) * pz * 0.8, spy + Math.sin(pa) * pz * 0.8, pz * 0.6, 0, Math.PI * 2); c.fill();
+      }
+      c.fillStyle = "#f4e04d";
+      c.beginPath(); c.arc(spx, spy, pz * 0.4, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+  }
+  if (look.shortsStyle === "stripe") {
+    c.fillStyle = look.trim;
+    [-1, 1].forEach(function (s) {
+      c.beginPath();
+      c.moveTo(s * r * 0.62, sTop + band); c.lineTo(s * r * 0.74, sTop + band);
+      c.lineTo(s * r * 0.86, r); c.lineTo(s * r * 0.72, r); c.closePath(); c.fill();
+    });
+  }
+  // Waistband
+  c.fillStyle = look.shortsStyle === "split" ? shadeHex(look.shorts, -0.35) : look.shortsStyle === "print" ? "#111111" : look.trim;
+  c.fillRect(-r, sTop, r * 2, band);
+  c.fillStyle = "rgba(0,0,0,0.18)"; c.fillRect(-r, sTop + band * 0.75, r * 2, band * 0.25);
+  if (look.shortsStyle === "print") {
+    // Logo patch on the front of the waistband
+    c.fillStyle = "#111111"; c.fillRect(r * 0.08, sTop, r * 0.4, band + r * 0.12);
+    c.fillStyle = "#f2f2f2"; c.fillRect(r * 0.14, sTop + band * 0.45, r * 0.28, r * 0.07);
+  }
+  // Leg split and a patch on the left leg
+  c.fillStyle = ink;
+  c.beginPath(); c.moveTo(-r * 0.07, r); c.lineTo(0, r * 0.8); c.lineTo(r * 0.07, r); c.closePath(); c.fill();
+  c.fillStyle = look.shortsStyle === "split" ? look.shorts : look.trim;
+  c.globalAlpha = look.shortsStyle === "print" ? 0 : 0.85;
+  c.fillRect(-r * 0.42, sTop + band + r * 0.1, r * 0.18, r * 0.09);
+  c.globalAlpha = 1;
+  c.strokeStyle = ink; c.lineWidth = lw(0.05);
+  c.beginPath(); c.moveTo(-r, sTop); c.lineTo(r, sTop); c.stroke();
+
+  if (contained) drawArtHeadLayer(c, r, look, line, lw);
+
+  // Overall roundness: rim shadow
+  var rg = c.createRadialGradient(-r * 0.2, -r * 0.25, r * 0.6, 0, 0, r);
+  rg.addColorStop(0, "rgba(0,0,0,0)"); rg.addColorStop(1, "rgba(0,0,0,0.25)");
+  c.fillStyle = rg; c.fillRect(-r, -r, r * 2, r * 2);
+  c.restore();
+
+  c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.077);
+  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.stroke();
+}
+
+// An open-finger MMA glove. (x, y) is its centre, `ang` points the way the
+// knuckles face.
+function drawGlove(c, x, y, gr, look, ink, ang) {
+  c.save();
+  c.translate(x, y); c.rotate(ang);
+  var col = look.gloves;
+  // Wrist and forearm stub in skin
+  c.fillStyle = look.skin; c.strokeStyle = ink; c.lineWidth = Math.max(1.5, gr * 0.2);
+  c.beginPath(); c.ellipse(-gr * 0.95, 0, gr * 0.45, gr * 0.42, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  // Padding
+  var g = c.createRadialGradient(gr * 0.2, -gr * 0.35, gr * 0.1, 0, 0, gr * 1.1);
+  g.addColorStop(0, shadeHex(col, 0.35)); g.addColorStop(1, shadeHex(col, -0.2));
+  c.fillStyle = g;
+  c.beginPath(); c.arc(0, 0, gr, 0, Math.PI * 2); c.fill(); c.stroke();
+  // Curled fingers showing at the front
+  c.fillStyle = look.skin; c.lineWidth = Math.max(1, gr * 0.12);
+  for (var i = -1.5; i <= 1.5; i++) {
+    c.beginPath(); c.arc(gr * 0.82, i * gr * 0.3, gr * 0.17, 0, Math.PI * 2); c.fill(); c.stroke();
+  }
+  // Wrist strap
+  c.fillStyle = shadeHex(col, 0.75); c.lineWidth = Math.max(1.2, gr * 0.14);
+  c.beginPath(); c.rect(-gr * 0.72, -gr * 0.62, gr * 0.3, gr * 1.24); c.fill(); c.stroke();
+  c.restore();
+}
+
+// The fighter art as an image, for the roster cards. Cached per look.
+var artUrlCache = {};
+function fighterArtUrl(ch) {
+  if (!ch.look) return null;
+  var key = ch.name + JSON.stringify(ch.look);
+  if (!artUrlCache[key]) {
+    var cv = document.createElement("canvas");
+    cv.width = cv.height = 128;
+    drawFighterArt(cv.getContext("2d"), 64, 64, 64, ch.look, "#16211f", { layout: "contained", name: ch.name });
+    artUrlCache[key] = cv.toDataURL();
+  }
+  return artUrlCache[key];
+}
+
 // Drawing each attack: fists, kicks, hands, throws, lasers, spins, grabs.
 "use strict";
 
@@ -5737,10 +6332,10 @@ function drawFist(self, other) {
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = pu.size * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
-  ctx.strokeStyle = self.char.color;
+  ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = pu.size * 0.6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
-  ctx.fillStyle = self.char.color;
+  ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fistX, fistY, pu.size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -5770,7 +6365,7 @@ function drawKick(self, other) {
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = ki.size * 0.9 + 7;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(tipX, tipY); ctx.stroke();
-  ctx.strokeStyle = self.char.color;
+  ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = ki.size * 0.62;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(tipX, tipY); ctx.stroke();
 
@@ -5778,7 +6373,7 @@ function drawKick(self, other) {
   var fw = ki.size * 1.9, fh = ki.size * 1.15;
   ctx.translate(tipX, tipY);
   ctx.rotate(angle);
-  ctx.fillStyle = self.char.color;
+  ctx.fillStyle = armColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -5812,9 +6407,9 @@ function drawHands(b, other) {
       var sx = b.x + sgn * b.r * 0.62, sy = b.y - b.r * 0.55;
       ctx.strokeStyle = theme.wall; ctx.lineWidth = b.r * 0.34;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.strokeStyle = b.char.color; ctx.lineWidth = b.r * 0.2;
+      ctx.strokeStyle = armColor(b.char); ctx.lineWidth = b.r * 0.2;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+      ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(hx, hy, b.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     });
     ctx.restore();
@@ -5823,7 +6418,7 @@ function drawHands(b, other) {
   if (sitting) {
     // Seated: both hands rest down at the sides instead of guarding.
     ctx.save();
-    ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     [-1, 1].forEach(function (sgn) {
       ctx.beginPath();
       ctx.arc(b.x + sgn * b.r * 0.95, b.y + b.r * 0.62, b.r * 0.3, 0, Math.PI * 2);
@@ -5856,11 +6451,12 @@ function drawHands(b, other) {
   var igbbGrab = b.igbb && (b.igbb.phase === "grab" || b.igbb.phase === "throw");
   var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : [1, -1]);
   ctx.save();
-  ctx.fillStyle = b.char.color;
+  ctx.fillStyle = gloveColor(b.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 2.5;
   sides.forEach(function (sgn) {
     var hx = b.x + fx * fwd + perpx * gap * sgn, hy = b.y + fy * fwd + perpy * gap * sgn;
+    if (b.char.look) { drawGlove(ctx, hx, hy, hr, b.char.look, theme.wall, Math.atan2(fy, fx)); return; }
     ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   });
   ctx.restore();
@@ -5921,10 +6517,10 @@ function drawThrow(self, other) {
 
   ctx.save();
   ctx.lineCap = "round";
-  ctx.strokeStyle = self.char.color;
+  ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = self.r * 0.28;
   ctx.beginPath(); ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); ctx.stroke();
-  ctx.fillStyle = self.char.color;
+  ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -6028,10 +6624,10 @@ function drawJab(self) {
     var sx = self.x + fx * self.r * 0.6 + perpx * gap, sy = self.y + fy * self.r * 0.6 + perpy * gap;
     ctx.strokeStyle = theme.wall; ctx.lineWidth = self.r * 0.38;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-    ctx.strokeStyle = self.char.color; ctx.lineWidth = self.r * 0.24;
+    ctx.strokeStyle = armColor(self.char); ctx.lineWidth = self.r * 0.24;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
   }
-  ctx.fillStyle = self.char.color;
+  ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = ja.big ? 3.5 : 2.5;
   ctx.beginPath(); ctx.arc(hx, hy, fistR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -6058,16 +6654,16 @@ function drawPowerSpin(self) {
       ctx.strokeStyle = theme.wall;
       ctx.lineWidth = self.r * 0.5;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.strokeStyle = self.char.color;
+      ctx.strokeStyle = armColor(self.char);
       ctx.lineWidth = self.r * 0.34;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.fillStyle = self.char.color;
+      ctx.fillStyle = gloveColor(self.char);
       ctx.strokeStyle = theme.wall;
       ctx.lineWidth = 4;
       ctx.beginPath(); ctx.arc(hx, hy, fistR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     } else {
       ctx.globalAlpha = 0.3 - k * 0.09;
-      ctx.fillStyle = self.char.color;
+      ctx.fillStyle = gloveColor(self.char);
       ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.42, 0, Math.PI * 2); ctx.fill();
     }
   }
@@ -6083,7 +6679,7 @@ function drawGrapple(self) {
     var tg = balls[g.targetId];
     var px = -g.ny, py = g.nx, hr0 = tg.r * 0.36;
     ctx.save();
-    ctx.fillStyle = self.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     [1, -1].forEach(function (sgn) {
       var hx = tg.x + g.nx * tg.r * 0.55 + px * tg.r * 0.62 * sgn, hy = tg.y + g.ny * tg.r * 0.55 + py * tg.r * 0.62 * sgn;
       ctx.beginPath(); ctx.arc(hx, hy, hr0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -6118,7 +6714,7 @@ function drawGrapple(self) {
   if (pt < 0.82) {
     var hr = tgt.r * 0.34, ho = tgt.r * 0.82;
     ctx.save();
-    ctx.fillStyle = self.char.color;
+    ctx.fillStyle = gloveColor(self.char);
     ctx.strokeStyle = theme.wall;
     ctx.lineWidth = 2.5;
     [1, -1].forEach(function (sgn) {
@@ -6145,7 +6741,7 @@ function drawCheck(b) {
   ctx.lineCap = "round";
   ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 7;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
-  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.62;
+  ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.62;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kx, ky); ctx.stroke();
   // A small impact flash on the shin.
   if (ca.t < 0.1) {
@@ -6276,7 +6872,10 @@ function draw() {
     }
 
     var img = getImg(b.char.imgData);
-    if (img) {
+    if (b.char.look) {
+      // Fighter art: the muscled ball in its fight kit (beats a face photo)
+      drawFighterArt(ctx, b.x, b.y, b.r, b.char.look, theme.wall, { layout: "contained", name: b.char.name });
+    } else if (img) {
       ctx.save();
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
       ctx.drawImage(img, b.x - b.r, b.y - b.r, b.r * 2, b.r * 2);

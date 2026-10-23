@@ -454,10 +454,10 @@ function drawKoPunch(b) {
   if (dist > b.r) {
     ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
     ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(fx, fy); ctx.stroke();
-    ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+    ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.6;
     ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(fx, fy); ctx.stroke();
   }
-  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fx, fy, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   if (kp.kind === "big" || kp.kind === "ko" || !kp.kind) {
     // A charged glow around the knockout fist.
@@ -520,15 +520,15 @@ function drawKoHook(b) {
   }
   trail.forEach(function (t, i) {
     ctx.globalAlpha = 0.35 - i * 0.09;
-    ctx.fillStyle = b.char.color;
+    ctx.fillStyle = gloveColor(b.char);
     ctx.beginPath(); ctx.arc(t.x, t.y, size * 0.95, 0, Math.PI * 2); ctx.fill();
   });
   ctx.globalAlpha = 1;
   ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+  ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fist.x, fist.y, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.globalAlpha = 0.35 + 0.25 * Math.sin(performance.now() / 60);
   ctx.strokeStyle = theme.hit; ctx.lineWidth = 3;
@@ -572,15 +572,15 @@ function drawQuickHook(b, kp) {
   ctx.lineCap = "round";
   trail.forEach(function (t, i) {
     ctx.globalAlpha = kp.heavy ? 0.4 - i * 0.09 : 0.3 - i * 0.12;
-    ctx.fillStyle = b.char.color;
+    ctx.fillStyle = gloveColor(b.char);
     ctx.beginPath(); ctx.arc(t.x, t.y, size * 0.9, 0, Math.PI * 2); ctx.fill();
   });
   ctx.globalAlpha = 1;
   ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+  ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
-  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fist.x, fist.y, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
@@ -596,9 +596,9 @@ function drawKoCelebrate(b) {
     var sx = b.x + sgn * r * 0.62, sy = b.y - r * 0.55;
     ctx.strokeStyle = theme.wall; ctx.lineWidth = r * 0.34;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-    ctx.strokeStyle = b.char.color; ctx.lineWidth = r * 0.2;
+    ctx.strokeStyle = armColor(b.char); ctx.lineWidth = r * 0.2;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-    ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(hx, hy, r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   });
   ctx.restore();

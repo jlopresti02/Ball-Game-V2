@@ -280,9 +280,9 @@ function drawSpecial(b) {
   ctx.lineCap = "round";
   ctx.strokeStyle = theme.wall; ctx.lineWidth = size * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-  ctx.strokeStyle = b.char.color; ctx.lineWidth = size * 0.6;
+  ctx.strokeStyle = armColor(b.char); ctx.lineWidth = size * 0.6;
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-  ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(hx, hy, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.restore();
 }
