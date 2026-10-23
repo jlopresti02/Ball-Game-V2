@@ -9,7 +9,7 @@ function defaultLook() {
   return {
     skin: "#d9a27e", build: "muscular", bodyHair: "none",
     hair: "short", hairColor: "#2b2019", beard: "none", ears: "normal",
-    tattoos: { chest: false, leftArm: false, rightArm: false, ribs: false },
+    tattoos: { chest: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
     shorts: "#1e3a8a", trim: "#f2f2f2", shortsStyle: "stripe", gloves: "#141414"
   };
 }
@@ -163,10 +163,10 @@ function drawArtHeadLayer(c, r, look, line, lw) {
   // Ears at the edges of the ball
   var cauli = look.ears === "cauliflower";
   [-1, 1].forEach(function (s) {
-    var ex = s * r * 0.84, ey = -r * 0.56, er = r * (cauli ? 0.13 : 0.1);
-    c.fillStyle = shadeHex(look.skin, -0.08);
-    c.beginPath(); c.ellipse(ex, ey, er * 0.75, er, 0, 0, Math.PI * 2); c.fill();
+    var ex = s * r * 0.76, ey = -r * 0.56, er = r * (cauli ? 0.14 : 0.12);
+    c.fillStyle = shadeHex(look.skin, -0.06);
     c.strokeStyle = line; c.lineWidth = lw(0.035);
+    c.beginPath(); c.ellipse(ex, ey, er * 0.7, er, 0, 0, Math.PI * 2); c.fill(); c.stroke();
     c.beginPath(); c.arc(ex - s * er * 0.1, ey, er * 0.55, s > 0 ? Math.PI * 0.5 : -Math.PI * 0.5, s > 0 ? Math.PI * 1.5 : Math.PI * 0.5); c.stroke();
     if (cauli) {
       c.beginPath(); c.arc(ex, ey - er * 0.35, er * 0.28, 0, Math.PI * 2); c.stroke();
@@ -186,7 +186,14 @@ function drawArtHeadLayer(c, r, look, line, lw) {
   };
   c.fillStyle = hc;
   if (look.hair === "buzz") {
-    c.globalAlpha = 0.6; hairline(); c.fill(); c.globalAlpha = 1;
+    c.globalAlpha = 0.88; hairline(); c.fill();
+    var br = artRand(7);
+    c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.5;
+    for (var bz = 0; bz < 70; bz++) {
+      var bx = (br() * 2 - 1) * r * 0.7, by = -r * (0.78 + br() * 0.2);
+      c.fillRect(bx, by, r * 0.018, r * 0.018);
+    }
+    c.globalAlpha = 1; c.fillStyle = hc;
   } else if (look.hair === "short" || look.hair === "long" || look.hair === "dreads") {
     hairline(); c.fill();
     c.strokeStyle = shadeHex(hc, 0.25); c.lineWidth = lw(0.025); c.globalAlpha = 0.6;
@@ -228,7 +235,7 @@ function drawArtHeadLayer(c, r, look, line, lw) {
 
   // Beard: sideburns down around the jaw to a full chin
   if (look.beard !== "none") {
-    c.globalAlpha = look.beard === "stubble" ? 0.42 : 1;
+    c.globalAlpha = look.beard === "stubble" ? 0.28 : 1;
     c.fillStyle = hc;
     c.beginPath();
     c.moveTo(-r * 0.74, -r * 0.66);
@@ -389,7 +396,14 @@ function drawArtBody(c, r, look, ink, name, contained) {
     // Sleeve running over the shoulder: bands and curls
     c.save();
     c.beginPath(); c.arc(s * r * 1.02, -r * 0.3, r * 0.4, 0, Math.PI * 2); c.clip();
-    c.globalAlpha = 0.25; c.fillRect(s > 0 ? r * 0.6 : -r, -r, r * 0.4, r);
+    c.globalAlpha = 0.38; c.fillRect(s > 0 ? r * 0.6 : -r, -r, r * 0.4, r * 1.2);
+    if (tat.color) {
+      // Coloured ink: a couple of red roses in the sleeve
+      c.globalAlpha = 0.7; c.fillStyle = "#b8322a";
+      c.beginPath(); c.arc(s * r * 0.8, -r * 0.5, r * 0.08, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(s * r * 0.9, -r * 0.12, r * 0.07, 0, Math.PI * 2); c.fill();
+      c.fillStyle = inkCol;
+    }
     c.globalAlpha = 1; c.lineWidth = lw(0.035);
     for (var q = 0; q < 4; q++) {
       c.beginPath(); c.arc(s * r * 0.86, -r * 0.62 + q * r * 0.17, r * 0.08, 0, Math.PI * 1.6); c.stroke();
@@ -397,6 +411,33 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.beginPath(); c.moveTo(s * r * 0.7, -r * 0.7); c.quadraticCurveTo(s * r * 0.62, -r * 0.3, s * r * 0.72, r * 0.05); c.stroke();
     c.restore();
   });
+  if (tat.script) {
+    // Two lines of cursive (a name) across the left side of the chest
+    c.lineWidth = lw(0.028);
+    [[-0.5, 0], [-0.43, 0.06]].forEach(function (ln) {
+      c.beginPath();
+      for (var u = 0; u <= 24; u++) {
+        var ux = -r * (0.52 - ln[1]) + u * r * 0.016;
+        var uy = r * ln[0] + Math.sin(u * 1.7) * r * 0.022 - (u % 6 === 0 ? r * 0.03 : 0);
+        if (u === 0) c.moveTo(ux, uy); else c.lineTo(ux, uy);
+      }
+      c.stroke();
+    });
+  }
+  if (tat.claws) {
+    // Claw marks raking down the right pec, red showing through
+    [0, 1, 2, 3].forEach(function (k) {
+      var x0 = r * (0.2 + k * 0.09), y0 = -r * 0.62 + k * r * 0.02;
+      var x1 = x0 + r * 0.12, y1 = y0 + r * 0.38;
+      c.lineWidth = lw(0.055); c.strokeStyle = inkCol;
+      c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(x0 + r * 0.02, (y0 + y1) / 2, x1, y1); c.stroke();
+      if (tat.color) {
+        c.lineWidth = lw(0.022); c.strokeStyle = "rgba(200,60,40,0.85)";
+        c.beginPath(); c.moveTo(x0 + r * 0.02, y0 + r * 0.06); c.quadraticCurveTo(x0 + r * 0.03, (y0 + y1) / 2, x1 - r * 0.01, y1 - r * 0.06); c.stroke();
+      }
+    });
+    c.strokeStyle = inkCol;
+  }
   if (tat.ribs) {
     // Script running down the right ribs
     c.lineWidth = lw(0.025);
@@ -421,6 +462,29 @@ function drawArtBody(c, r, look, ink, name, contained) {
   var sg = c.createLinearGradient(0, sTop, 0, r);
   sg.addColorStop(0, "rgba(255,255,255,0.12)"); sg.addColorStop(1, "rgba(0,0,0,0.3)");
   c.fillStyle = sg; c.fillRect(-r, sTop, r * 2, r);
+  if (look.shortsStyle === "print") {
+    // Loud printed shorts: splashes of colour over the base
+    var pr = artRand(artSeed(name + "shorts"));
+    var pal = ["#e8452c", "#f2a32b", "#2fae5f", "#2c7be5", "#e94f9a", "#f4e04d", look.trim];
+    for (var sp = 0; sp < 26; sp++) {
+      // Little five-petal flowers and leaves
+      var spx = (pr() * 2 - 1) * r, spy = sTop + band + pr() * (r - sTop), pz = r * (0.035 + pr() * 0.04);
+      c.globalAlpha = 0.9;
+      if (sp % 3 === 2) {
+        c.fillStyle = "#2fae5f";
+        c.beginPath(); c.ellipse(spx, spy, pz * 1.6, pz * 0.6, pr() * Math.PI, 0, Math.PI * 2); c.fill();
+        continue;
+      }
+      c.fillStyle = pal[sp % pal.length];
+      for (var pe = 0; pe < 5; pe++) {
+        var pa = pe * Math.PI * 0.4 + sp;
+        c.beginPath(); c.arc(spx + Math.cos(pa) * pz * 0.8, spy + Math.sin(pa) * pz * 0.8, pz * 0.6, 0, Math.PI * 2); c.fill();
+      }
+      c.fillStyle = "#f4e04d";
+      c.beginPath(); c.arc(spx, spy, pz * 0.4, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+  }
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {
@@ -430,14 +494,19 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
   }
   // Waistband
-  c.fillStyle = look.shortsStyle === "split" ? shadeHex(look.shorts, -0.35) : look.trim;
+  c.fillStyle = look.shortsStyle === "split" ? shadeHex(look.shorts, -0.35) : look.shortsStyle === "print" ? "#111111" : look.trim;
   c.fillRect(-r, sTop, r * 2, band);
   c.fillStyle = "rgba(0,0,0,0.18)"; c.fillRect(-r, sTop + band * 0.75, r * 2, band * 0.25);
+  if (look.shortsStyle === "print") {
+    // Logo patch on the front of the waistband
+    c.fillStyle = "#111111"; c.fillRect(r * 0.08, sTop, r * 0.4, band + r * 0.12);
+    c.fillStyle = "#f2f2f2"; c.fillRect(r * 0.14, sTop + band * 0.45, r * 0.28, r * 0.07);
+  }
   // Leg split and a patch on the left leg
   c.fillStyle = ink;
   c.beginPath(); c.moveTo(-r * 0.07, r); c.lineTo(0, r * 0.8); c.lineTo(r * 0.07, r); c.closePath(); c.fill();
   c.fillStyle = look.shortsStyle === "split" ? look.shorts : look.trim;
-  c.globalAlpha = 0.85;
+  c.globalAlpha = look.shortsStyle === "print" ? 0 : 0.85;
   c.fillRect(-r * 0.42, sTop + band + r * 0.1, r * 0.18, r * 0.09);
   c.globalAlpha = 1;
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
