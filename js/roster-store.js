@@ -31,9 +31,25 @@ function rememberDeleted(id) {
 function repoNewer(repoCh, saved) {
   return !saved || (repoCh.rev || 0) > (saved.rev || 0);
 }
+// An old copy of a repo fighter saved under another id, from before it had
+// fighter art (e.g. the photo-face Dustin). The repo version replaces it;
+// the old look lives on in The Dev Corner.
+function isOldRepoCopy(ch) {
+  if (typeof SAVED_ROSTER === "undefined" || ch.look) return false;
+  var name = String(ch.name || "").trim().toLowerCase();
+  return SAVED_ROSTER.some(function (r) {
+    return r.id !== ch.id && r.look && String(r.name).trim().toLowerCase() === name;
+  });
+}
+
 function mergeSavedRoster() {
   if (typeof SAVED_ROSTER === "undefined" || !SAVED_ROSTER.length) return;
   var deleted = loadDeletedIds(), changed = false;
+  customChars = customChars.filter(function (ch) {
+    if (!isOldRepoCopy(ch)) return true;
+    rememberDeleted(ch.id); changed = true;
+    return false;
+  });
   SAVED_ROSTER.forEach(function (ch) {
     if (deleted.indexOf(ch.id) >= 0) return;
     var idx = customChars.findIndex(function (c) { return c.id === ch.id; });
@@ -141,6 +157,8 @@ function initRosterStore() {
           if (ch.proj) ch.proj.imgData = imgs[d.id + "-proj"] || null;
           byId[d.id] = normalizeChar(ch);
         });
+        var stale = Object.keys(byId).filter(function (id) { return isOldRepoCopy(byId[id]); });
+        stale.forEach(function (id) { delete byId[id]; gone[id] = true; rememberDeleted(id); });
         // Fighters only this browser has (built before the cloud roster
         // existed, or saved while offline) are uploaded now.
         var toUpload = [];
@@ -158,7 +176,8 @@ function initRosterStore() {
         saveLocal(customChars);
         if (!screens.select.hidden) renderMenu("select");
         if (!screens.dev.hidden) renderMenu("dev");
-        return toUpload.reduce(function (p, ch) { return p.then(function () { return pushChar(ch); }); }, Promise.resolve());
+        var work = toUpload.reduce(function (p, ch) { return p.then(function () { return pushChar(ch); }); }, Promise.resolve());
+        return stale.reduce(function (p, id) { return p.then(function () { return dropChar(id); }); }, work);
       })
       .then(function () { setRosterStatus("cloud"); }, function (e) {
         setRosterStatus("error", "Couldn't reach your cloud roster (" + (e && e.code || "error") + "). Fighters are still saved in this browser.");

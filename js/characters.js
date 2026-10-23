@@ -229,7 +229,7 @@ function saveCustom(list) {
 }
 
 var customChars = loadCustom();
-function allChars() { return builtins.concat(customChars); }
+function allChars() { return builtins.concat(devFighters, customChars); }
 function findChar(id) {
   var all = allChars();
   for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i];
