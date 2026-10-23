@@ -42,6 +42,7 @@ var menus = {
     fightId: "devFightBtn",
     lists: [
       { id: "basesList", chars: function () { return builtins; } },
+      { id: "devFightersList", chars: function () { return devFighters; } },
       { id: "devRoster", emptyId: "devRosterEmpty", chars: function () { return customChars; } }
     ]
   }
