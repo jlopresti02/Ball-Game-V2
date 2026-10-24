@@ -14,7 +14,9 @@
 // way it can't pull guard again for `cooldown` seconds once it's up.
 "use strict";
 
-var GUARD_GETUP_SPEED = 220;
+var GUARD_ARM_TIME = 0.5;     // the opponent has to stay out of the circle this long before stepping in counts
+var GUARD_GETUP_TIME = 0.45;  // rolling back up onto its feet
+var GUARD_GETUP_SPEED = 300;  // backs away from the opponent once it's up
 
 // Strikes that can knock it down into guard (not grabs, slams, specials or
 // anything that's already moving it around).
@@ -42,14 +44,20 @@ function beginGuard(b, atk) {
   b.guard = {
     t: 0, dur: gd.time, radius: gd.radius,
     side: atk.x >= b.x ? 1 : -1,  // hips toward the opponent
-    armed: false                   // the opponent has to be outside the circle before it can step in
+    outT: 0,                       // how long the opponent has been outside the circle
+    getup: -1                      // time into the get-up, once the guard runs out
   };
   b.guardCd = gd.cooldown;
-  // Whoever knocked it down backs off out of the circle.
-  var dx = atk.x - b.x, dy = atk.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-  var out = gd.radius + 6;
-  atk.x = b.x + dx / d * out; atk.y = b.y + dy / d * out;
-  atk.vx = dx / d * SPEED; atk.vy = dy / d * SPEED;
+  // Whoever knocked it down backs off out of the circle, turning toward
+  // open floor if a wall is in the way.
+  var base = Math.atan2(atk.y - b.y, atk.x - b.x), out = gd.radius + 6, a = base;
+  for (var i = 0; i <= 12; i++) {
+    a = base + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * Math.PI / 6;
+    var px = b.x + Math.cos(a) * out, py = b.y + Math.sin(a) * out;
+    if (px > atk.r && px < W - atk.r && py > atk.r && py < H - atk.r) break;
+  }
+  atk.x = b.x + Math.cos(a) * out; atk.y = b.y + Math.sin(a) * out;
+  atk.vx = Math.cos(a) * SPEED; atk.vy = Math.sin(a) * SPEED;
   b.squash = { t: 0.18, max: 0.18, nx: 0, ny: -1 };
   floater(b.x, b.y - b.r - 30, "GUARD", "crit");
   playSlam();
@@ -60,22 +68,37 @@ function beginGuard(b, atk) {
 function updateGuard(self, other, dt) {
   var g = self.guard;
   self.vx = 0; self.vy = 0;
+  if (g.getup >= 0) {
+    // Nobody came in: rolls back up onto its feet, then backs away.
+    g.getup += dt;
+    if (g.getup >= GUARD_GETUP_TIME) endGuard(self, other);
+    return;
+  }
   g.t += dt;
-  if (g.t >= g.dur || !other.alive) { endGuard(self, "STANDS UP"); return; }
+  if (g.t >= g.dur || !other.alive) {
+    g.getup = 0;
+    floater(self.x, self.y - self.r - 30, "STANDS UP", "note");
+    playWhoosh();
+    return;
+  }
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
-  if (d >= g.radius) { g.armed = true; return; }
+  if (d >= g.radius) { g.outT += dt; return; }
   // Only an opponent that's free to engage steps in (not one flying off a
-  // slam, sitting in a seat, mid special and so on).
-  if (!g.armed || other.invincible || other.slam || specialBusy(other)) return;
+  // slam, sitting in a seat, mid special and so on), and only once it's
+  // been out of the circle for a moment, so the one that knocked it down
+  // can't just bounce straight back in.
+  if (g.outT < GUARD_ARM_TIME || other.invincible || other.slam || specialBusy(other)) return;
   clearActions(other);
   if (Math.random() < self.char.guard.passChance / 100) passGuard(self, other, g);
   else catchInGuard(self, other);
 }
 
-function endGuard(self, text) {
+// Back on its feet: pushes off away from the opponent, and the speed
+// regulator eases it back to its normal pace.
+function endGuard(self, other) {
   self.guard = null;
-  if (text) floater(self.x, self.y - self.r - 30, text, "note");
-  var a = Math.random() * Math.PI * 2;
+  var dx = self.x - other.x, dy = self.y - other.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var a = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.8;
   self.vx = Math.cos(a) * GUARD_GETUP_SPEED; self.vy = Math.sin(a) * GUARD_GETUP_SPEED;
 }
 
@@ -105,8 +128,13 @@ function catchInGuard(self, atk) {
 }
 
 // Flat on its back: in guard, or underneath after the guard's been passed.
+// Returns which way it's lying (0 when upright) scaled by how far down it
+// is, so it rolls back upright through a get-up.
 function onBack(b) {
-  if (b.guard) return b.guard.side;
+  if (b.guard) {
+    var g = b.guard, k = g.getup >= 0 ? Math.min(1, g.getup / GUARD_GETUP_TIME) : 0;
+    return g.side * (1 - k * k * (3 - 2 * k));
+  }
   if (b.guillo && b.guillo.fromGuard && (b.guillo.phase === "mount" || b.guillo.phase === "pound")) return b.guillo.side;
   return 0;
 }
@@ -129,10 +157,13 @@ function drawGuardZones() {
     if (!g || !b.alive) return;
     var left = Math.max(0, 1 - g.t / g.dur);
     ctx.save();
-    ctx.globalAlpha = 0.12;
+    // The circle fades out as it gets up.
+    if (g.getup >= 0) ctx.globalAlpha = Math.max(0, 1 - g.getup / GUARD_GETUP_TIME);
+    var fade = ctx.globalAlpha;
+    ctx.globalAlpha = 0.12 * fade;
     ctx.fillStyle = b.char.color;
     ctx.beginPath(); ctx.arc(b.x, b.y, g.radius, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 0.85;
+    ctx.globalAlpha = 0.85 * fade;
     ctx.setLineDash([10, 8]);
     ctx.lineDashOffset = -g.t * 30;
     ctx.lineWidth = 3;
