@@ -46,6 +46,7 @@ Each saved roster fighter has a character file in `characters/` (one JSON file p
 | Fighter | Base | Build |
 |---|---|---|
 | Dustin Poirier (fighter art) | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB |
+| Charles Oliveira (fighter art) | Grappler | The Grappler's grab and wall slam (but against another Grappler he only shoots for it half the time on contact), Khabib's quick 5-damage punches every 0.7s, 10% block, and the guard (25%) with the guillotine as its placeholder submission |
 | Khabib Nurmagomedov (fighter art) | Grappler | The Grappler's grab and wall slam, plus quick 5-damage punches every 0.7s that charge his special extra fast, 10% block, special move Father's Plan |
 
 ## Fighter art
@@ -70,6 +71,12 @@ BJJ submissions are switched on per fighter in its character file. So far there'
 | Submission | What it does |
 |---|---|
 | Guillotine | When a Grappler shoots for a grab, `chance`% of the time (35 by default) the defender catches its head in a guillotine instead. The two lock up and a tug-of-war bar over them swings between the choke (defender's colour) and the escape (shooter's colour), for about 3 to 4 seconds, while the shooter (bent over sideways off its shot, head driven in under the defender, who leans back with an arm locked over its neck) goes red. The shooter taps `tapBase`% of the time at full health (20), plus up to `tapLowHp`% more (60) the more damage it's taken: three pats and the fight is over, a win by submission. If it doesn't finish, `outcomes` picks what happens (relative odds): **escape** (20) they spin apart on an angle; **gnp** (70) the shooter pops its head out, drives the defender down to the floor and finishes its shot with 4 ground-and-pound punches adding up to the shot's own damage; **resink** (5) the defender sinks it back in for another go at the tap; **slam** (5) the shooter, still caught in the hold, stands up with the defender hanging off its neck, carries it up over the top and slams it down on the other side for `slamDamage` (75). After it's let go, the defender can't throw another guillotine for `cooldown` seconds (5). Set with `"hasGuillotine": true` and a `"guillotine"` block. Only the Dev Corner's Dustin Poirier (guillotine) has it for now. |
+
+### Guard
+
+A fighter with `"hasGuard": true` can fall into guard when it's hit. Any punch, kick, swing, combo punch or projectile that lands on it has a `chance`% (25) to drop it onto its back, legs up toward the opponent, planted on the spot for `time` seconds (6) with a circle of `radius` (130) drawn around it and a ring that drains as the time runs out. Whoever hit it is pushed back out of the circle first. The first time the opponent steps back into the circle it's a coin flip (`passChance`, 50): **guard passed**, the opponent gets on top for `passPunches` (4) free ground-and-pound punches of `passDamage` (10), or **caught**, the guard player goes for a submission picked at random from `subs`. Only `"guillotine"` exists so far, as a placeholder until the guard's own submissions are made. If nobody steps in before the time is up it stands back up. Once it's back on its feet it can't fall into guard again for `cooldown` seconds (3). The logic is in `js/game/guard.js`. Charles Oliveira has it.
+
+A Grappler's `grapple.vsGrapplerChance` (100 by default) is how often it shoots for the grab on contact when the opponent is also a Grappler. Charles's is 50.
 
 ## Special moves (created characters)
 
@@ -98,6 +105,7 @@ js/game/weave.js        Weave dodge, critical-weave combo and the celebration ta
 js/game/finisher.js     Grappler finisher: bottom-wall slam, pin and punches
 js/game/grapple-duel.js Grappler vs Grappler: grab initiative, Iowa Style, Sprawl and Reattack
 js/game/bjj.js          BJJ submissions: the guillotine off a shot
+js/game/guard.js        Falling into guard: on its back, the circle, pass or get caught
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest
 js/game/special.js      Special moves for created characters (IGBB)

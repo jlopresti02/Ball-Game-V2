@@ -24,9 +24,10 @@ var GUILLO_TAP_TIME = 0.75;  // three pats, then the fight's called
 var GUILLO_ESCAPE_SPEED = 360;
 var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching): the shooter's head is driven in under the defender
 
-// Locked up in a submission: either applying it or caught in it.
+// Locked up in a submission (either applying it or caught in it), or down
+// on its back in guard.
 function subLocked(b) {
-  return !!(b.guillo || b.choked);
+  return !!(b.guillo || b.choked || b.guard);
 }
 
 function canGuillotine(def) {

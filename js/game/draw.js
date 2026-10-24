@@ -58,6 +58,8 @@ function draw() {
     ctx.restore();
   });
 
+  drawGuardZones(); // the circle round a fighter down in guard
+
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).
   // A shooter caught in a guillotine goes underneath, its head buried
@@ -121,6 +123,7 @@ function draw() {
       ctx.translate(-ax, -ay);
     }
     applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
+    applyGuardPose(b);  // flat on its back in guard
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -230,6 +233,7 @@ function draw() {
     }
 
     ctx.restore();
+    drawGuardLegs(b);
 
     // Small health bar over the ball (hidden while pinned by a finisher,
     // where it would sit on top of the Grappler).

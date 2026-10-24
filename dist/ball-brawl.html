@@ -1626,8 +1626,10 @@ function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 1
 // When a grab would be the killing blow, the grapple becomes a finisher:
 // a slam into the bottom wall for finSlamDamage, then the opponent is pinned
 // and hit with finPunches heavy punches of finPunchDamage each.
+// vsGrapplerChance is how often it actually shoots for the grab on contact
+// when the opponent is a Grappler too.
 function defaultGrapple() {
-  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50 };
+  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50, vsGrapplerChance: 100 };
 }
 // knockback is the speed the victim flies at during the wall slams; wallSlams
 // is how many walls it smashes into (0 turns the slams off), each dealing
@@ -1663,6 +1665,15 @@ function defaultForget() { return { heal: 12, every: 7 }; }
 function defaultGuillotine() {
   return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5, outcomes: { escape: 20, gnp: 70, resink: 5, slam: 5 }, slamDamage: 75 };
 }
+// Guard: chance% of the strikes that land on this fighter drop it onto its
+// back in guard for `time` seconds, with a circle of `radius` around it.
+// The first opponent to step into the circle passes the guard passChance%
+// of the time (passPunches free ground-and-pound punches of passDamage);
+// otherwise it's caught in a submission picked from `subs` (see guard.js).
+// After getting back up it can't pull guard again for `cooldown` seconds.
+function defaultGuard() {
+  return { chance: 25, time: 6, radius: 130, passChance: 50, passPunches: 4, passDamage: 10, subs: ["guillotine"], cooldown: 3 };
+}
 function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -1676,7 +1687,7 @@ function normalizeChar(ch) {
   if (ch.kick.checkChance == null) ch.kick.checkChance = defaultKick().checkChance;
   if (ch.hasGrapple === undefined) ch.hasGrapple = false;
   if (!ch.grapple) ch.grapple = defaultGrapple();
-  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance"].forEach(function (k) {
+  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance", "vsGrapplerChance"].forEach(function (k) {
     if (ch.grapple[k] == null) ch.grapple[k] = defaultGrapple()[k];
   });
   if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;
@@ -1701,6 +1712,11 @@ function normalizeChar(ch) {
   if (!ch.guillotine) ch.guillotine = defaultGuillotine();
   ["outcomes", "slamDamage"].forEach(function (k) {
     if (ch.guillotine[k] == null) ch.guillotine[k] = defaultGuillotine()[k];
+  });
+  if (ch.hasGuard === undefined) ch.hasGuard = false;
+  if (!ch.guard) ch.guard = defaultGuard();
+  Object.keys(defaultGuard()).forEach(function (k) {
+    if (ch.guard[k] == null) ch.guard[k] = defaultGuard()[k];
   });
   if (ch.blockChance == null) ch.blockChance = 0;
   // Special moves are for created characters. Dustin was set up with IGBB
@@ -1751,6 +1767,90 @@ function getImg(dataURL) {
 "use strict";
 
 var SAVED_ROSTER = [
+  {
+    "id": "c-charles-oliveira",
+    "rev": 1,
+    "builtin": false,
+    "name": "Charles Oliveira",
+    "base": "Grappler",
+    "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in a submission (the guillotine for now, more to come).",
+    "color": "#d9a514",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#c48f68",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "short",
+      "hairColor": "#f4edd2",
+      "beard": "none",
+      "ears": "normal",
+      "tattoos": {
+        "portraits": true,
+        "leftArm": "dense",
+        "rightArm": "lion",
+        "armInk": true
+      },
+      "shorts": "#e9b824",
+      "trim": "#141414",
+      "shortsStyle": "chevron",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 5,
+      "cooldown": 0.7,
+      "speed": 0.22,
+      "size": 13,
+      "knockback": 80,
+      "reach": 30,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": true,
+    "grapple": {
+      "damage": 50,
+      "cooldown": 1.5,
+      "speed": 0.45,
+      "reach": 6,
+      "counterChance": 25,
+      "finSlamDamage": 20,
+      "finPunches": 3,
+      "finPunchDamage": 10,
+      "sprawlChance": 30,
+      "reattackChance": 50,
+      "vsGrapplerChance": 50
+    },
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "hasGuard": true,
+    "guard": {
+      "chance": 25,
+      "time": 6,
+      "radius": 130,
+      "passChance": 50,
+      "passPunches": 4,
+      "passDamage": 10,
+      "subs": [
+        "guillotine"
+      ],
+      "cooldown": 3
+    },
+    "hasSpecial": false,
+    "blockChance": 10
+  },
   {
     "id": "c-dustin-poirier",
     "rev": 3,
@@ -2278,6 +2378,7 @@ function abilitySummary(ch) {
   if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
   if (ch.hasSwing) parts.push("\uD83E\uDD74 " + ch.swing.damage + " dmg swing");
   if (ch.hasGuillotine) parts.push("\uD83D\uDD12 " + ch.guillotine.chance + "% guillotine");
+  if (ch.hasGuard) parts.push("\uD83E\uDD4B " + ch.guard.chance + "% guard");
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
   if (ch.hasForget) parts.push("\uD83E\uDDE0 +" + ch.forget.heal + " / " + ch.forget.every + "s");
   if (ch.blockChance > 0) parts.push("🛡️ " + ch.blockChance + "% block");
@@ -3205,7 +3306,7 @@ function makeBall(id, ch) {
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
-    guillo: null, choked: false, guilloCd: 0
+    guillo: null, choked: false, guilloCd: 0, guard: null, guardCd: 0
   };
 }
 
@@ -3387,13 +3488,15 @@ function hurt(b, amount, source, attackerId) {
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
   if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && source !== "igbb" && !b.koDuel &&
-      b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
+      b.char.hasGrapple && !b.grapple && !b.grappled && !subLocked(b) && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
       if (Math.random() < chance) attemptGrab(b, atk); // can be weaved or blocked (an escape)
     }
   }
+  // A strike can knock a fighter with the guard onto its back (guard.js).
+  if (b.alive && amount > 0) tryPullGuard(b, source, attackerId);
   return amount;
 }
 
@@ -3676,6 +3779,7 @@ function updateAbilities(dt) {
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
+    if (self.guard) { updateGuard(self, other, dt); continue; }
     if (self.guillo) { updateGuillotine(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
@@ -3782,8 +3886,12 @@ function updateAbilities(dt) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
       if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
-        // (attemptGrab handles the grab being weaved or blocked: an escape.)
-        if (attemptGrab(self, other)) {
+        // Against another Grappler it only shoots for the takedown
+        // vsGrapplerChance% of the time; otherwise it lets the moment pass.
+        if (other.char.hasGrapple && Math.random() >= gr.vsGrapplerChance / 100) {
+          self.grappleCd = gr.cooldown;
+          self.initiativeReason = null;
+        } else if (attemptGrab(self, other)) { // (handles the grab being weaved or blocked: an escape)
           if (self.initiativeReason) {
             // Shows why this Grappler won the race to the grab.
             floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
@@ -4683,9 +4791,10 @@ var GUILLO_TAP_TIME = 0.75;  // three pats, then the fight's called
 var GUILLO_ESCAPE_SPEED = 360;
 var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching): the shooter's head is driven in under the defender
 
-// Locked up in a submission: either applying it or caught in it.
+// Locked up in a submission (either applying it or caught in it), or down
+// on its back in guard.
 function subLocked(b) {
-  return !!(b.guillo || b.choked);
+  return !!(b.guillo || b.choked || b.guard);
 }
 
 function canGuillotine(def) {
@@ -5106,6 +5215,179 @@ function drawGuillotines() {
     ctx.fillRect(bx + split - 2, by - 4, 4, bh + 8);
     ctx.restore();
   });
+}
+
+// Guard: a BJJ fighter who gets hit can fall onto its back and play guard.
+//
+// When a strike lands on a fighter with the guard, there's a `chance`% it
+// drops onto its back in guard instead of staying on its feet. It's planted
+// there for `time` seconds with a circle of `radius` around it; whoever hit
+// it is shoved back out of the circle first. The first time the opponent
+// steps into the circle, it's a coin flip (passChance%):
+//   - Guard passed: the opponent gets on top for passPunches free
+//     ground-and-pound punches of passDamage each.
+//   - Caught: the guard player snatches a submission, picked at random from
+//     `subs`. For now that's only the guillotine (bjj.js), as a placeholder
+//     until the guard's own submissions are designed.
+// If nobody steps in before the time's up, it gets back to its feet. Either
+// way it can't pull guard again for `cooldown` seconds once it's up.
+"use strict";
+
+var GUARD_GETUP_SPEED = 220;
+
+// Strikes that can knock it down into guard (not grabs, slams, specials or
+// anything that's already moving it around).
+var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, proj: true, combo: true };
+
+// Starts a guard submission on `atk`. Each entry in `subs` names one.
+var GUARD_SUBS = {
+  guillotine: function (self, atk) { beginGuillotine(self, atk); }
+};
+
+// Called from hurt() after a hit lands.
+function tryPullGuard(b, source, attackerId) {
+  if (!b.char.hasGuard || !GUARD_SOURCES[source] || b.guardCd > 0 || attackerId == null) return;
+  var atk = balls[attackerId];
+  if (!atk || !atk.alive || specialBusy(b) || specialBusy(atk) || b.invincible) return;
+  if (Math.random() >= b.char.guard.chance / 100) return;
+  beginGuard(b, atk);
+}
+
+function beginGuard(b, atk) {
+  var gd = b.char.guard;
+  clearActions(b);
+  clearActions(atk);
+  b.vx = 0; b.vy = 0;
+  b.guard = {
+    t: 0, dur: gd.time, radius: gd.radius,
+    side: atk.x >= b.x ? 1 : -1,  // legs up toward the opponent
+    armed: false                   // the opponent has to be outside the circle before it can step in
+  };
+  b.guardCd = gd.cooldown;
+  // Whoever knocked it down backs off out of the circle.
+  var dx = atk.x - b.x, dy = atk.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var out = gd.radius + 6;
+  atk.x = b.x + dx / d * out; atk.y = b.y + dy / d * out;
+  atk.vx = dx / d * SPEED; atk.vy = dy / d * SPEED;
+  b.squash = { t: 0.18, max: 0.18, nx: 0, ny: -1 };
+  floater(b.x, b.y - b.r - 30, "GUARD", "crit");
+  playSlam();
+  if (!reduceMotion) shake = Math.max(shake, 8);
+}
+
+// Runs on the guard player each frame while it's on its back.
+function updateGuard(self, other, dt) {
+  var g = self.guard;
+  self.vx = 0; self.vy = 0;
+  g.t += dt;
+  if (g.t >= g.dur || !other.alive) { endGuard(self, "STANDS UP"); return; }
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
+  if (d >= g.radius) { g.armed = true; return; }
+  // Only an opponent that's free to engage steps in (not one flying off a
+  // slam, sitting in a seat, mid special and so on).
+  if (!g.armed || other.invincible || other.slam || specialBusy(other)) return;
+  clearActions(other);
+  if (Math.random() < self.char.guard.passChance / 100) passGuard(self, other, g);
+  else catchInGuard(self, other);
+}
+
+function endGuard(self, text) {
+  self.guard = null;
+  if (text) floater(self.x, self.y - self.r - 30, text, "note");
+  var a = Math.random() * Math.PI * 2;
+  self.vx = Math.cos(a) * GUARD_GETUP_SPEED; self.vy = Math.sin(a) * GUARD_GETUP_SPEED;
+}
+
+// Guard passed: the opponent climbs on top and gets free ground and pound.
+// This uses the guillotine's ground-and-pound (bjj.js), straight from the
+// mount, with the guard player still flat on its back underneath.
+function passGuard(self, atk, g) {
+  var gd = self.char.guard;
+  self.guard = null;
+  self.guillo = {
+    atkId: atk.id, t: 0, phase: "mount", fromGuard: true, side: g.side,
+    nx: g.side, ny: 0, mx: atk.x, my: atk.y, dir: g.side,
+    hits: Array.apply(null, Array(Math.max(1, gd.passPunches))).map(function () { return gd.passDamage; })
+  };
+  atk.choked = true;
+  atk.vx = 0; atk.vy = 0;
+  floater((self.x + atk.x) / 2, Math.min(self.y, atk.y) - self.r - 30, "GUARD PASSED", "crit");
+  playWhoosh();
+}
+
+// Caught: pulls the opponent in and goes for a submission.
+function catchInGuard(self, atk) {
+  var subs = self.char.guard.subs.filter(function (s) { return GUARD_SUBS[s]; });
+  self.guard = null;
+  floater(self.x, self.y - self.r - 60, "CAUGHT", "note");
+  GUARD_SUBS[subs.length ? subs[Math.floor(Math.random() * subs.length)] : "guillotine"](self, atk);
+}
+
+// Flat on its back: in guard, or underneath after the guard's been passed.
+function onBack(b) {
+  if (b.guard) return b.guard.side;
+  if (b.guillo && b.guillo.fromGuard && (b.guillo.phase === "mount" || b.guillo.phase === "pound")) return b.guillo.side;
+  return 0;
+}
+
+// Lays the ball on its back, head away from the opponent and hips toward
+// it. Called with the canvas already set up for that fighter.
+function applyGuardPose(b) {
+  var side = onBack(b);
+  if (!side) return;
+  ctx.translate(b.x, b.y);
+  ctx.rotate(-side * Math.PI / 2);
+  ctx.translate(-b.x, -b.y);
+}
+
+// The guard circle (with a ring that drains as the time runs out), drawn on
+// the floor under the fighters.
+function drawGuardZones() {
+  balls.forEach(function (b) {
+    var g = b.guard;
+    if (!g || !b.alive) return;
+    var left = Math.max(0, 1 - g.t / g.dur);
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = b.char.color;
+    ctx.beginPath(); ctx.arc(b.x, b.y, g.radius, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.85;
+    ctx.setLineDash([10, 8]);
+    ctx.lineDashOffset = -g.t * 30;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = b.char.color;
+    ctx.beginPath(); ctx.arc(b.x, b.y, g.radius, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineCap = "round";
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(b.x, b.y, g.radius + 7, -Math.PI / 2, -Math.PI / 2 + left * Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  });
+}
+
+// Both legs up in guard toward the opponent, feet pedalling a little.
+function drawGuardLegs(b) {
+  var g = b.guard;
+  if (!g || !b.alive) return;
+  var s = g.side, r = b.r, look = b.char.look;
+  var skin = look ? look.skin : b.char.color, shorts = look ? look.shorts : b.char.color;
+  ctx.save();
+  [-1, 1].forEach(function (k, i) {
+    var pedal = reduceMotion ? 0 : Math.sin(g.t * 6 + i * Math.PI) * r * 0.12;
+    var hipX = b.x + s * r * 0.55, hipY = b.y + k * r * 0.35;
+    var kneeX = b.x + s * r * 1.15, kneeY = b.y + k * r * 0.62 - r * 0.55 + pedal;
+    var footX = b.x + s * r * 1.5 + pedal * 0.5, footY = b.y + k * r * 0.3 - r * 0.95;
+    strokeLimb(r * 0.3, skin, function () {
+      ctx.moveTo(hipX, hipY); ctx.lineTo(kneeX, kneeY); ctx.lineTo(footX, footY);
+    });
+    // Shorts over the thigh
+    strokeLimb(r * 0.36, shorts, function () {
+      ctx.moveTo(hipX, hipY); ctx.lineTo(hipX + (kneeX - hipX) * 0.45, hipY + (kneeY - hipY) * 0.45);
+    });
+    ctx.fillStyle = skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.ellipse(footX, footY, r * 0.2, r * 0.13, -s * 0.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
+  ctx.restore();
 }
 
 // CTE's abilities.
@@ -6559,6 +6841,7 @@ function update(dt) {
     if (b.checkAnim) stepInForKickBack(b, balls[b.checkAnim.towardId]);
     if (b.slamSafe > 0) b.slamSafe = Math.max(0, b.slamSafe - dt);
     if (b.guilloCd > 0) b.guilloCd = Math.max(0, b.guilloCd - dt);
+    if (b.guardCd > 0 && !subLocked(b)) b.guardCd = Math.max(0, b.guardCd - dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);
@@ -6663,14 +6946,17 @@ function defaultLook() {
   return {
     skin: "#d9a27e", build: "muscular", bodyHair: "none",
     hair: "short", hairColor: "#2b2019", beard: "none", ears: "normal",
-    tattoos: { chest: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
+    tattoos: { chest: false, portraits: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
     shorts: "#1e3a8a", trim: "#f2f2f2", shortsStyle: "stripe", gloves: "#141414"
   };
 }
 
 // Arms, legs and fists of fighters with art use skin and glove colours;
 // everyone else keeps their fighter colour.
-function armColor(ch) { return ch.look ? ch.look.skin : ch.color; }
+function armColor(ch) {
+  if (!ch.look) return ch.color;
+  return ch.look.tattoos && ch.look.tattoos.armInk ? sleevePattern(ch.look) : ch.look.skin;
+}
 function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
 
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
@@ -7032,7 +7318,19 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.globalAlpha = 1;
   }
 
-  // Tattoos
+  // Tattoos. In the contained layout nothing is inked above the chin line,
+  // so clip to the area under it (the jaw curve, mapped into torso space).
+  c.save();
+  if (contained) {
+    var tx = function (x) { return x / 0.86; }, ty = function (y) { return (y - r * 0.11) / 0.59; };
+    c.beginPath();
+    c.moveTo(tx(-r), ty(-r * 0.44));
+    c.lineTo(tx(-r * 0.66), ty(-r * 0.44));
+    c.quadraticCurveTo(tx(-r * 0.5), ty(-r * 0.2), 0, ty(-r * 0.2));
+    c.quadraticCurveTo(tx(r * 0.5), ty(-r * 0.2), tx(r * 0.66), ty(-r * 0.44));
+    c.lineTo(tx(r), ty(-r * 0.44)); c.lineTo(tx(r), ty(r)); c.lineTo(tx(-r), ty(r)); c.closePath();
+    c.clip();
+  }
   var tat = look.tattoos || {};
   var inkCol = "rgba(28,34,52,0.62)";
   c.strokeStyle = inkCol; c.fillStyle = inkCol;
@@ -7049,11 +7347,80 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
+  if (tat.portraits) {
+    // Black-and-grey family portraits filling the upper chest: a woman with
+    // long hair, an older man with grey hair (lowest) and a girl with dark
+    // hair (highest), over smoky shading down to the pecs.
+    var tall = contained ? 0.86 / 0.59 : 1;  // undo the torso squeeze so faces stay round
+    var faceSkin = shadeHex(skin, 0.06), shade = "rgba(28,34,52,";
+    c.fillStyle = shade + "0.2)";
+    for (var sm = 0; sm < 7; sm++) {
+      c.beginPath(); c.ellipse(r * (-0.33 + sm * 0.11), -r * (0.24 + (sm % 2) * 0.04), r * 0.12, r * 0.07, 0, 0, Math.PI * 2); c.fill();
+    }
+    [{ x: -0.27, y: -0.4, w: 0.14, hair: "long" }, { x: 0, y: -0.36, w: 0.145, hair: "grey" }, { x: 0.27, y: -0.42, w: 0.135, hair: "girl" }].forEach(function (pt) {
+      var w = r * pt.w;
+      c.save(); c.translate(r * pt.x, r * pt.y); c.scale(1, tall / 1.15);
+      // Hair behind the face
+      if (pt.hair === "long") {
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 1.05, w * 1.15); c.quadraticCurveTo(-w * 1.25, -w * 1.25, 0, -w * 1.3);
+        c.quadraticCurveTo(w * 1.25, -w * 1.25, w * 1.05, w * 1.15); c.quadraticCurveTo(0, w * 0.9, -w * 1.05, w * 1.15); c.fill();
+      } else if (pt.hair === "girl") {
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.moveTo(-w * 1.02, w * 0.75); c.quadraticCurveTo(-w * 1.25, -w * 1.3, 0, -w * 1.32);
+        c.quadraticCurveTo(w * 1.25, -w * 1.3, w * 1.02, w * 0.75); c.quadraticCurveTo(0, w * 0.5, -w * 1.02, w * 0.75); c.fill();
+      } else {
+        c.fillStyle = shade + "0.35)";
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.98, w * 1.05, 0, Math.PI, Math.PI * 2); c.fill();
+      }
+      // Face, shaded round the edges
+      var fg = c.createRadialGradient(-w * 0.15, -w * 0.15, w * 0.1, 0, 0, w * 1.05);
+      fg.addColorStop(0, faceSkin); fg.addColorStop(0.65, shadeHex(skin, -0.08)); fg.addColorStop(1, shadeHex(skin, -0.3));
+      c.fillStyle = fg;
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = shade + "0.16)"; c.fill();  // grey ink wash
+      if (pt.hair === "girl") {
+        // Fringe across the forehead
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.ellipse(0, -w * 0.72, w * 0.76, w * 0.32, 0, 0, Math.PI * 2); c.fill();
+      } else if (pt.hair === "long") {
+        // Hair parted over the forehead
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 0.78, -w * 0.1); c.quadraticCurveTo(-w * 0.6, -w * 0.95, w * 0.1, -w * 0.92);
+        c.quadraticCurveTo(-w * 0.35, -w * 0.6, -w * 0.78, -w * 0.1); c.fill();
+      } else {
+        // Receding grey hairline
+        c.strokeStyle = shade + "0.45)"; c.lineWidth = lw(0.02);
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.8, w * 0.75, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+      }
+      // Soft shading only: brow line and the shadow of a smile
+      c.fillStyle = shade + "0.3)";
+      c.beginPath(); c.ellipse(0, -w * 0.2, w * 0.5, w * 0.1, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(0, w * 0.45, w * 0.32, w * 0.12, 0, 0, Math.PI); c.fill();
+      c.strokeStyle = shade + "0.55)"; c.lineWidth = lw(0.018);
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.stroke();
+      c.restore();
+    });
+    // A short line of script under the girl's portrait
+    c.strokeStyle = shade + "0.6)"; c.lineWidth = lw(0.016);
+    c.beginPath();
+    for (var sc = 0; sc <= 12; sc++) {
+      var sx = r * (0.18 + sc * 0.012), sy = -r * 0.2 + Math.sin(sc * 1.8) * r * 0.014;
+      if (sc === 0) c.moveTo(sx, sy); else c.lineTo(sx, sy);
+    }
+    c.stroke();
+    c.strokeStyle = inkCol; c.fillStyle = inkCol; c.globalAlpha = 1;
+  }
   [["leftArm", -1], ["rightArm", 1]].forEach(function (p) {
     if (!tat[p[0]]) return;
-    var s = p[1];
+    var s = p[1], style = tat[p[0]];
     // Sleeve running over the shoulder: bands and curls
     c.save();
+    if (style === "dense" || style === "lion") {
+      drawNamedSleeve(c, r, s, style, inkCol, lw, artSeed(name + p[0]), contained ? 0.86 / 0.59 : 1);
+      c.restore();
+      return;
+    }
     c.beginPath(); c.arc(s * r * 1.02, -r * 0.3, r * 0.4, 0, Math.PI * 2); c.clip();
     c.globalAlpha = 0.38; c.fillRect(s > 0 ? r * 0.6 : -r, -r, r * 0.4, r * 1.2);
     if (tat.color) {
@@ -7108,6 +7475,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.stroke();
   }
 
+  c.restore();
   if (contained) c.restore();
 
   // Fight shorts
@@ -7143,6 +7511,18 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.beginPath(); c.arc(spx, spy, pz * 0.4, 0, Math.PI * 2); c.fill();
     }
     c.globalAlpha = 1;
+  }
+  if (look.shortsStyle === "chevron") {
+    // A wide diagonal panel sweeping up the right leg, pinstripes on the left
+    c.fillStyle = look.trim;
+    c.beginPath();
+    c.moveTo(r * 0.06, r); c.lineTo(r * 0.4, r);
+    c.lineTo(r * 0.94, sTop + band); c.lineTo(r * 0.6, sTop + band); c.closePath(); c.fill();
+    c.strokeStyle = look.trim; c.lineWidth = lw(0.035);
+    c.beginPath(); c.moveTo(-r * 0.12, r); c.lineTo(r * 0.46, sTop + band); c.stroke();
+    [0, 1].forEach(function (k) {
+      c.beginPath(); c.moveTo(-r * (0.86 - k * 0.12), sTop + band); c.lineTo(-r * (0.5 - k * 0.12), r); c.stroke();
+    });
   }
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
@@ -7181,6 +7561,92 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.077);
   c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.stroke();
+}
+
+// Named sleeve styles, drawn inside the shoulder clip at side `s`.
+// "dense": near solid black-and-grey from shoulder down, dark emblem on the delt.
+// "lion": a lion's head with a shaggy mane on the delt, patchier ink below.
+function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
+  // The arm hangs down the side of the ball, from the shoulder to the shorts
+  var rnd = artRand(seed), inner = r * 0.64, x0 = s * r * 0.8;
+  c.beginPath();
+  c.moveTo(s * r, -r * 0.95);
+  c.quadraticCurveTo(s * (inner - r * 0.04), -r * 0.9, s * (inner - r * 0.04), -r * 0.35);
+  c.quadraticCurveTo(s * (inner - r * 0.04), r * 0.1, s * (inner + r * 0.02), r * 0.6);
+  c.lineTo(s * r, r * 0.6); c.closePath(); c.clip();
+  c.fillStyle = inkCol;
+  c.globalAlpha = style === "dense" ? 0.95 : 0.2;
+  c.fillRect(s > 0 ? inner - r * 0.1 : -r, -r, r * 0.5, r * 1.6);
+  if (style === "lion") {
+    // Heavier ink on the forearm, lighter patches higher up
+    c.globalAlpha = 0.35; c.fillRect(s > 0 ? inner - r * 0.1 : -r, r * 0.05, r * 0.5, r * 0.6);
+  }
+  // Smoky blotches so it reads as shaded ink, not a flat band
+  for (var i = 0; i < 22; i++) {
+    c.globalAlpha = (style === "dense" ? 0.3 : 0.2) + rnd() * 0.25;
+    c.beginPath(); c.ellipse(x0 + (rnd() - 0.5) * r * 0.3, -r * 0.75 + rnd() * r * 1.35, r * (0.03 + rnd() * 0.06), r * (0.03 + rnd() * 0.05), rnd() * 3, 0, Math.PI * 2); c.fill();
+  }
+  c.globalAlpha = 1;
+  c.save(); c.translate(s * r * 0.83, -r * 0.5); c.scale(1, tall);
+  if (style === "dense") {
+    // Dark emblem on the delt: a body with legs reaching out
+    c.fillStyle = "rgba(14,16,24,0.9)"; c.strokeStyle = "rgba(14,16,24,0.9)"; c.lineWidth = lw(0.022);
+    c.beginPath(); c.ellipse(0, 0, r * 0.05, r * 0.075, 0, 0, Math.PI * 2); c.fill();
+    for (var l = 0; l < 4; l++) {
+      [-1, 1].forEach(function (d) {
+        var a = -0.9 + l * 0.6;
+        c.beginPath(); c.moveTo(0, 0);
+        c.quadraticCurveTo(d * r * 0.08, a * r * 0.06, d * r * 0.13, a * r * 0.11); c.stroke();
+      });
+    }
+  } else {
+    // Lion's head: a ring of mane tufts round a shaded face
+    var lr = r * 0.11;
+    c.strokeStyle = "rgba(20,24,36,0.8)"; c.lineWidth = lw(0.022);
+    for (var m = 0; m < 14; m++) {
+      var ma = m / 14 * Math.PI * 2;
+      c.beginPath();
+      c.moveTo(Math.cos(ma) * lr * 0.7, Math.sin(ma) * lr * 0.7);
+      c.quadraticCurveTo(Math.cos(ma + 0.3) * lr * 1.3, Math.sin(ma + 0.3) * lr * 1.3, Math.cos(ma + 0.15) * lr * 1.6, Math.sin(ma + 0.15) * lr * 1.6);
+      c.stroke();
+    }
+    c.fillStyle = "rgba(20,24,36,0.35)";
+    c.beginPath(); c.ellipse(0, lr * 0.1, lr * 0.62, lr * 0.75, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(20,24,36,0.65)";
+    c.beginPath(); c.ellipse(0, lr * 0.45, lr * 0.25, lr * 0.16, 0, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
+
+// Inked arm texture for fighters whose look sets tattoos.armInk: a skin tile
+// with black-and-grey swirls and shading, used as the arm stroke in attacks.
+var sleevePatterns = {};
+function sleevePattern(look) {
+  var key = look.skin;
+  if (sleevePatterns[key]) return sleevePatterns[key];
+  if (typeof document === "undefined") return look.skin;
+  var n = 24, cv = document.createElement("canvas");
+  cv.width = cv.height = n;
+  var c = cv.getContext("2d"), rnd = artRand(artSeed(key + "sleeve"));
+  c.fillStyle = look.skin; c.fillRect(0, 0, n, n);
+  c.fillStyle = "rgba(28,34,52,0.38)"; c.fillRect(0, 0, n, n);
+  c.strokeStyle = "rgba(14,16,24,0.8)"; c.lineWidth = 1.3; c.lineCap = "round";
+  for (var i = 0; i < 9; i++) {
+    var x = rnd() * n, y = rnd() * n, rr = 2 + rnd() * 4, a = rnd() * 6;
+    // Draw each mark at its wrapped copies so the tile repeats seamlessly
+    [-n, 0, n].forEach(function (dx) {
+      [-n, 0, n].forEach(function (dy) {
+        if (i % 3 === 0) {
+          c.fillStyle = "rgba(14,16,24,0.45)";
+          c.beginPath(); c.ellipse(x + dx, y + dy, rr, rr * 0.7, a, 0, Math.PI * 2); c.fill();
+        } else {
+          c.beginPath(); c.arc(x + dx, y + dy, rr, a, a + 3.6); c.stroke();
+        }
+      });
+    });
+  }
+  sleevePatterns[key] = c.createPattern(cv, "repeat") || look.skin;
+  return sleevePatterns[key];
 }
 
 // An open-finger MMA glove. (x, y) is its centre, `ang` points the way the
@@ -7727,6 +8193,8 @@ function draw() {
     ctx.restore();
   });
 
+  drawGuardZones(); // the circle round a fighter down in guard
+
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).
   // A shooter caught in a guillotine goes underneath, its head buried
@@ -7790,6 +8258,7 @@ function draw() {
       ctx.translate(-ax, -ay);
     }
     applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
+    applyGuardPose(b);  // flat on its back in guard
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -7899,6 +8368,7 @@ function draw() {
     }
 
     ctx.restore();
+    drawGuardLegs(b);
 
     // Small health bar over the ball (hidden while pinned by a finisher,
     // where it would sit on top of the Grappler).
