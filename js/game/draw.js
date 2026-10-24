@@ -258,6 +258,7 @@ function draw() {
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSprawls();
+  drawGuillotines();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

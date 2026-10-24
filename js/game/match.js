@@ -18,6 +18,7 @@ function readTheme() {
 
 var balls, projectiles, floaters, particles, shake, over, started;
 var impacts = [], hitStop = 0; // wall-slam shockwaves and the brief freeze on each slam
+var winBy = null; // how the fight was won, when it isn't a knockout (e.g. "submission")
 
 // Each fighter's first charge-up comes a little earlier or later than its
 // normal interval, so two identical fighters (a mirror match) don't charge,
@@ -38,7 +39,8 @@ function makeBall(id, ch) {
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
-    koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false
+    koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
+    guillo: null, choked: false, guilloCd: 0
   };
 }
 
@@ -46,7 +48,7 @@ function startMatchWith(ch0, ch1) {
   stopAllChargeSounds();
   balls = [makeBall(0, ch0), makeBall(1, ch1)];
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
-  impacts = []; hitStop = 0; koDuel = null;
+  impacts = []; hitStop = 0; koDuel = null; winBy = null;
 
   document.getElementById("name0").textContent = ch0.name;
   document.getElementById("name1").textContent = ch1.name;
@@ -236,7 +238,7 @@ function checkEnd() {
   if (alive.length > 1) return;
   over = true;
   if (alive.length === 1) {
-    bannerText.textContent = alive[0].char.name + " wins";
+    bannerText.textContent = alive[0].char.name + " wins" + (winBy ? " by " + winBy : "");
     bannerText.style.color = alive[0].char.color;
   } else {
     bannerText.textContent = "Draw";
