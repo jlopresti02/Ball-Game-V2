@@ -171,6 +171,10 @@ function defaultSwing() {
 }
 // Forget: every `every` seconds, forgets some damage and regains `heal` health.
 function defaultForget() { return { heal: 12, every: 7 }; }
+// Guillotine: chance% of grabs shot at this fighter get caught in a
+// guillotine. The shooter taps tapBase% of the time at full health, up to
+// tapLowHp% more the more damage it's taken (see bjj.js).
+function defaultGuillotine() { return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5 }; }
 function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -205,6 +209,8 @@ function normalizeChar(ch) {
   if (!ch.swing) ch.swing = defaultSwing();
   if (ch.hasForget === undefined) ch.hasForget = false;
   if (!ch.forget) ch.forget = defaultForget();
+  if (ch.hasGuillotine === undefined) ch.hasGuillotine = false;
+  if (!ch.guillotine) ch.guillotine = defaultGuillotine();
   if (ch.blockChance == null) ch.blockChance = 0;
   // Special moves are for created characters. Dustin was set up with IGBB
   // before the editor had a special-move section, so he gets it switched on
