@@ -17,7 +17,7 @@ var GUILLO_MIN_TIME = 2.6;   // the struggle lasts this long...
 var GUILLO_MAX_EXTRA = 1.2;  // ...plus up to this much more
 var GUILLO_TAP_TIME = 0.75;  // three pats, then the fight's called
 var GUILLO_ESCAPE_SPEED = 360;
-var GUILLO_GAP = 0.94;        // how close the pair is held (1 = just touching)
+var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching): the shooter's head is driven in under the defender
 
 // Locked up in a submission: either applying it or caught in it.
 function subLocked(b) {
@@ -151,10 +151,10 @@ function applyGuilloPose(b) {
   ctx.translate(-b.x, -b.y);
 }
 
-// The defender leans over toward the shooter, its near shoulder rolling
-// down onto the shooter's neck, and a little further as the choke sinks in.
+// The defender leans back away from the shooter, pulling up on the choke,
+// and a little further as it sinks in.
 function guilloDefLean(g) {
-  return g.nx * (0.45 + 0.1 * guilloSqueeze(g));
+  return -g.nx * (0.35 + 0.15 * guilloSqueeze(g));
 }
 
 // An arm: a dark outline with the skin colour inside it.
@@ -183,39 +183,34 @@ function drawGuillotines() {
     function onDef(ox, oy) { return { x: self.x + ox * lc - oy * ls, y: self.y + ox * ls + oy * lc }; }
     ctx.save();
 
-    // The shooter's face (the end of its ball nearest the defender) goes
-    // red as the choke sinks in.
+    // The shooter's head is buried under the defender; what still shows of
+    // it, up to the neck, goes red as the choke sinks in.
     if (squeeze > 0) {
       ctx.save();
       ctx.beginPath(); ctx.arc(atk.x, atk.y, ar, 0, Math.PI * 2); ctx.clip();
+      ctx.beginPath();
+      ctx.arc(atk.x, atk.y, ar, 0, Math.PI * 2);
+      ctx.arc(self.x, self.y, r, 0, Math.PI * 2);
+      ctx.clip("evenodd"); // the shooter minus the part under the defender
       ctx.globalAlpha = 0.55 * squeeze;
       ctx.fillStyle = "#d62020";
-      ctx.beginPath(); ctx.arc(atk.x - s * ar * 0.68, atk.y, ar * 0.45, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(atk.x - s * ar * 0.68, atk.y, ar * 0.5, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
 
     // The defender's near arm: off its shoulder, over the top of the
-    // shooter's neck (where its head meets its torso), straight down across
-    // it and back under its chin to the defender's chest, where both hands
-    // lock together. The shooter's head is trapped inside the loop.
+    // shooter's neck (where its head meets its torso) and straight down
+    // across it, both hands locked together underneath.
     var neckX = atk.x - s * ar * 0.33;
-    var sh = onDef(s * r * 0.55, -r * 0.7), grip = onDef(s * r * 0.82, r * 0.3);
-    var shX = sh.x, shY = sh.y, gripX = grip.x, gripY = grip.y;
-    var arm = r * 0.24;
-    strokeLimb(arm, armColor(self.char), function () {
-      ctx.moveTo(shX, shY);
-      ctx.quadraticCurveTo(atk.x - s * ar * 0.75, atk.y - ar * 1.12, neckX, atk.y - ar * 0.92);
-      ctx.lineTo(neckX, atk.y + ar * 0.8);
-      ctx.quadraticCurveTo(atk.x - s * ar * 0.75, atk.y + ar * 1.1, gripX, gripY);
+    var sh = onDef(s * r * 0.45, -r * 0.72);
+    var top = atk.y - ar * 0.9, bottom = atk.y + ar * 0.62;
+    strokeLimb(r * 0.24, armColor(self.char), function () {
+      ctx.moveTo(sh.x, sh.y);
+      ctx.quadraticCurveTo(neckX - s * ar * 0.05, atk.y - ar * 1.2, neckX, top);
+      ctx.lineTo(neckX, bottom);
     });
-    // The shooter hand-fights the arm around its neck, trying to peel it off.
-    if (g.phase === "squeeze") {
-      var tug = Math.sin(g.t * 9 + g.wob) * ar * 0.06;
-      drawGloveAt(neckX + s * ar * 0.18, atk.y + ar * 0.45 + tug, ar * 0.24, atk.char);
-    }
-    // Both hands locked together at the defender's chest (gable grip).
-    drawGloveAt(gripX - s * r * 0.1, gripY + r * 0.05, r * 0.27, self.char);
-    drawGloveAt(gripX + s * r * 0.08, gripY - r * 0.12, r * 0.27, self.char);
+    drawGloveAt(neckX - s * r * 0.1, bottom + r * 0.06, r * 0.27, self.char);
+    drawGloveAt(neckX + s * r * 0.1, bottom + r * 0.12, r * 0.27, self.char);
 
     // Tapping: the shooter reaches up with a free hand and pats the
     // defender's back three times.
