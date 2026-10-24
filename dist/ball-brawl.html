@@ -4669,7 +4669,7 @@ var GUILLO_MIN_TIME = 2.6;   // the struggle lasts this long...
 var GUILLO_MAX_EXTRA = 1.2;  // ...plus up to this much more
 var GUILLO_TAP_TIME = 0.75;  // three pats, then the fight's called
 var GUILLO_ESCAPE_SPEED = 360;
-var GUILLO_GAP = 0.97;        // how close the pair is held (1 = just touching)
+var GUILLO_GAP = 0.94;        // how close the pair is held (1 = just touching)
 
 // Locked up in a submission: either applying it or caught in it.
 function subLocked(b) {
@@ -4797,10 +4797,16 @@ function applyGuilloPose(b) {
     if (!g) return;
   }
   // g.nx is +1 when the shooter is on the defender's right, -1 on its left.
-  var angle = b === def ? -g.nx * 0.25 * guilloSqueeze(g) : -g.nx * Math.PI / 2;
+  var angle = b === def ? guilloDefLean(g) : -g.nx * Math.PI / 2;
   ctx.translate(b.x, b.y);
   ctx.rotate(angle);
   ctx.translate(-b.x, -b.y);
+}
+
+// The defender leans over toward the shooter, its near shoulder rolling
+// down onto the shooter's neck, and a little further as the choke sinks in.
+function guilloDefLean(g) {
+  return g.nx * (0.45 + 0.1 * guilloSqueeze(g));
 }
 
 // An arm: a dark outline with the skin colour inside it.
@@ -4824,7 +4830,9 @@ function drawGuillotines() {
     var atk = balls[g.atkId];
     var squeeze = guilloSqueeze(g);
     var s = g.nx, r = self.r, ar = atk.r;
-    var lean = s * squeeze * r * 0.08; // the defender's lean back pulls the arm with it
+    // Points on the defender turn with its lean.
+    var la = guilloDefLean(g), lc = Math.cos(la), ls = Math.sin(la);
+    function onDef(ox, oy) { return { x: self.x + ox * lc - oy * ls, y: self.y + ox * ls + oy * lc }; }
     ctx.save();
 
     // The shooter's face (the end of its ball nearest the defender) goes
@@ -4842,9 +4850,9 @@ function drawGuillotines() {
     // shooter's neck (where its head meets its torso), straight down across
     // it and back under its chin to the defender's chest, where both hands
     // lock together. The shooter's head is trapped inside the loop.
-    var neckX = atk.x - s * ar * 0.33 - lean;
-    var shX = self.x + s * r * 0.7 - lean, shY = self.y - r * 0.55;
-    var gripX = self.x + s * r * 0.72 - lean, gripY = self.y + r * 0.45;
+    var neckX = atk.x - s * ar * 0.33;
+    var sh = onDef(s * r * 0.55, -r * 0.7), grip = onDef(s * r * 0.82, r * 0.3);
+    var shX = sh.x, shY = sh.y, gripX = grip.x, gripY = grip.y;
     var arm = r * 0.24;
     strokeLimb(arm, armColor(self.char), function () {
       ctx.moveTo(shX, shY);
@@ -4865,7 +4873,7 @@ function drawGuillotines() {
     // defender's back three times.
     if (g.phase === "tap") {
       var pat = Math.abs(Math.sin(g.tapT / GUILLO_TAP_TIME * Math.PI * 3));
-      var hx = self.x + s * r * 0.1 - lean, hy = self.y - r * 0.95 - pat * r * 0.35;
+      var hand = onDef(-s * r * 0.15, -r * 0.95 - pat * r * 0.35), hx = hand.x, hy = hand.y;
       strokeLimb(ar * 0.26, armColor(atk.char), function () {
         ctx.moveTo(atk.x + s * ar * 0.1, atk.y - ar * 0.8);
         ctx.quadraticCurveTo(atk.x - s * ar * 0.3, hy - r * 0.2, hx, hy);
