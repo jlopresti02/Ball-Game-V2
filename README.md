@@ -11,7 +11,7 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 ## Menus
 
 - **Roster** (the main screen) holds the custom fighters you've built and saved. Roster fighters will later get their own textures, audio and special moves on top of the character bases.
-- **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters. Every card there has a **Mirror** button that puts that fighter on both sides; the second copy is named "<name> 2" and drawn in a lighter or darker shade. Its **Dev Fighters** section holds older versions of roster fighters for testing (e.g. Dustin Poirier with his face photo, from before his fighter art). An old copy of a repo fighter saved under another id without fighter art is removed from the roster automatically. The **Always KO Rush** switch makes every Brawler open each Dev Corner fight with the KO Rush (100% instead of 5%).
+- **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters. Every card there has a **Mirror** button that puts that fighter on both sides; the second copy is named "<name> 2" and drawn in a lighter or darker shade. Its **Dev Fighters** section holds older versions of roster fighters for testing (e.g. Dustin Poirier with his face photo, from before his fighter art), and test versions of roster fighters trying out a new mechanic before the real one gets it (e.g. Dustin Poirier (guillotine)). An old copy of a repo fighter saved under another id without fighter art is removed from the roster automatically. The **Always KO Rush** switch makes every Brawler open each Dev Corner fight with the KO Rush (100% instead of 5%).
 
 ## Character Bases
 
@@ -63,6 +63,14 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg) |
 | `tattoos` | any of `chest`, `portraits`, `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt) or `"lion"` (lion head on the delt, patchy ink); `armInk` gives the punching arms an inked texture |
 
+## Submissions
+
+BJJ submissions are switched on per fighter in its character file. So far there's one:
+
+| Submission | What it does |
+|---|---|
+| Guillotine | When a Grappler shoots for a grab, `chance`% of the time (35 by default) the defender catches its head in a guillotine instead. The two lock up and a tug-of-war bar over them swings between the choke (defender's colour) and the escape (shooter's colour), for about 3 to 4 seconds, while the shooter (bent over sideways off its shot, head driven in under the defender, who leans back with an arm locked over its neck) goes red. The shooter taps `tapBase`% of the time at full health (20), plus up to `tapLowHp`% more (60) the more damage it's taken: three pats and the fight is over, a win by submission. If it doesn't finish, `outcomes` picks what happens (relative odds): **escape** (20) they spin apart on an angle; **gnp** (70) the shooter pops its head out, drives the defender down to the floor and finishes its shot with 4 ground-and-pound punches adding up to the shot's own damage; **resink** (5) the defender sinks it back in for another go at the tap; **slam** (5) the shooter, still caught in the hold, stands up with the defender hanging off its neck, carries it up over the top and slams it down on the other side for `slamDamage` (75). After it's let go, the defender can't throw another guillotine for `cooldown` seconds (5). Set with `"hasGuillotine": true` and a `"guillotine"` block. Only the Dev Corner's Dustin Poirier (guillotine) has it for now. |
+
 ## Special moves (created characters)
 
 Roster fighters can have a special move, set in the editor's **Special move** section. It has a charge bar under the fighter's health (like CTE Rejuvenation) that fills over time and fills faster with every clean hit the fighter lands. When it's full the move goes off.
@@ -89,10 +97,11 @@ js/game/abilities.js    Logic for every attack
 js/game/weave.js        Weave dodge, critical-weave combo and the celebration taunt
 js/game/finisher.js     Grappler finisher: bottom-wall slam, pin and punches
 js/game/grapple-duel.js Grappler vs Grappler: grab initiative, Iowa Style, Sprawl and Reattack
+js/game/bjj.js          BJJ submissions: the guillotine off a shot
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest
 js/game/special.js      Special moves for created characters (IGBB)
-js/dev-fighters.js      Dev Corner-only fighters (older versions of roster fighters)
+js/dev-fighters.js      Dev Corner-only fighters (older versions and test versions of roster fighters)
 js/roster-store.js      Saving fighters: browser, cloud roster, repo; export/import
 js/roster-data.js       Fighters saved into the repo (generated from characters/)
 characters/             One character file per roster fighter

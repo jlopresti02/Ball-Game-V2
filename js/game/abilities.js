@@ -156,11 +156,12 @@ function updateAbilities(dt) {
   for (var oi = 0; oi < 2; oi++) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
-    if (!self.alive || self.grappled || self.sprawled) continue;
+    if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
     if (self.shocked || self.koOut || self.shelled) continue; // frozen by a KO Rush, knocked out, or shelled up under IGBB
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
+    if (self.guillo) { updateGuillotine(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
       self.slam.t += dt;
@@ -226,7 +227,7 @@ function updateAbilities(dt) {
             checkEnd();
           }
         }
-        if (self.punch.t >= pu.speed) self.punch = null;
+        if (self.punch && self.punch.t >= pu.speed) self.punch = null; // (a counter-grab can end it early)
       }
     }
 
@@ -258,14 +259,14 @@ function updateAbilities(dt) {
             checkEnd();
           }
         }
-        if (self.kick.t >= ki.speed) self.kick = null;
+        if (self.kick && self.kick.t >= ki.speed) self.kick = null;
       }
     }
 
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
-      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
+      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
         // (attemptGrab handles the grab being weaved or blocked: an escape.)
         if (attemptGrab(self, other)) {
           if (self.initiativeReason) {
