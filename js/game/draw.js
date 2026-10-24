@@ -233,7 +233,6 @@ function draw() {
     }
 
     ctx.restore();
-    drawGuardLegs(b);
 
     // Small health bar over the ball (hidden while pinned by a finisher,
     // where it would sit on top of the Grappler).

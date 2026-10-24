@@ -41,7 +41,7 @@ function beginGuard(b, atk) {
   b.vx = 0; b.vy = 0;
   b.guard = {
     t: 0, dur: gd.time, radius: gd.radius,
-    side: atk.x >= b.x ? 1 : -1,  // legs up toward the opponent
+    side: atk.x >= b.x ? 1 : -1,  // hips toward the opponent
     armed: false                   // the opponent has to be outside the circle before it can step in
   };
   b.guardCd = gd.cooldown;
@@ -144,29 +144,4 @@ function drawGuardZones() {
     ctx.beginPath(); ctx.arc(b.x, b.y, g.radius + 7, -Math.PI / 2, -Math.PI / 2 + left * Math.PI * 2); ctx.stroke();
     ctx.restore();
   });
-}
-
-// Both legs up in guard toward the opponent, feet pedalling a little.
-function drawGuardLegs(b) {
-  var g = b.guard;
-  if (!g || !b.alive) return;
-  var s = g.side, r = b.r, look = b.char.look;
-  var skin = look ? look.skin : b.char.color, shorts = look ? look.shorts : b.char.color;
-  ctx.save();
-  [-1, 1].forEach(function (k, i) {
-    var pedal = reduceMotion ? 0 : Math.sin(g.t * 6 + i * Math.PI) * r * 0.12;
-    var hipX = b.x + s * r * 0.55, hipY = b.y + k * r * 0.35;
-    var kneeX = b.x + s * r * 1.15, kneeY = b.y + k * r * 0.62 - r * 0.55 + pedal;
-    var footX = b.x + s * r * 1.5 + pedal * 0.5, footY = b.y + k * r * 0.3 - r * 0.95;
-    strokeLimb(r * 0.3, skin, function () {
-      ctx.moveTo(hipX, hipY); ctx.lineTo(kneeX, kneeY); ctx.lineTo(footX, footY);
-    });
-    // Shorts over the thigh
-    strokeLimb(r * 0.36, shorts, function () {
-      ctx.moveTo(hipX, hipY); ctx.lineTo(hipX + (kneeX - hipX) * 0.45, hipY + (kneeY - hipY) * 0.45);
-    });
-    ctx.fillStyle = skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.ellipse(footX, footY, r * 0.2, r * 0.13, -s * 0.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  });
-  ctx.restore();
 }
