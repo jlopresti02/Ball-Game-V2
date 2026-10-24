@@ -9,7 +9,7 @@ function defaultLook() {
   return {
     skin: "#d9a27e", build: "muscular", bodyHair: "none",
     hair: "short", hairColor: "#2b2019", beard: "none", ears: "normal",
-    tattoos: { chest: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
+    tattoos: { chest: false, portraits: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
     shorts: "#1e3a8a", trim: "#f2f2f2", shortsStyle: "stripe", gloves: "#141414"
   };
 }
@@ -395,6 +395,23 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
+  if (tat.portraits) {
+    // Three portraits across the chest, the middle one biggest and lowest.
+    // Drawn tall so they still read as faces once the torso is squashed.
+    var tall = contained ? 1.6 : 1;
+    [[-0.4, -0.5, 0.15], [0, -0.4, 0.17], [0.4, -0.5, 0.15]].forEach(function (pt) {
+      var px = r * pt[0], py = r * pt[1], pw = r * pt[2], ph = pw * tall;
+      c.globalAlpha = 0.22;
+      c.beginPath(); c.ellipse(px, py + ph * 0.7, pw * 1.3, ph * 0.5, 0, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = 0.4;
+      c.beginPath(); c.ellipse(px, py, pw * 0.78, ph, 0, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = 0.9;
+      c.beginPath(); c.ellipse(px, py - ph * 0.45, pw * 0.82, ph * 0.6, 0, Math.PI, Math.PI * 2); c.fill();
+      c.lineWidth = lw(0.022);
+      c.beginPath(); c.ellipse(px, py, pw * 0.78, ph, 0, 0, Math.PI * 2); c.stroke();
+    });
+    c.globalAlpha = 1;
+  }
   [["leftArm", -1], ["rightArm", 1]].forEach(function (p) {
     if (!tat[p[0]]) return;
     var s = p[1];
@@ -489,6 +506,18 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.beginPath(); c.arc(spx, spy, pz * 0.4, 0, Math.PI * 2); c.fill();
     }
     c.globalAlpha = 1;
+  }
+  if (look.shortsStyle === "chevron") {
+    // A wide diagonal panel sweeping up the right leg, pinstripes on the left
+    c.fillStyle = look.trim;
+    c.beginPath();
+    c.moveTo(r * 0.06, r); c.lineTo(r * 0.4, r);
+    c.lineTo(r * 0.94, sTop + band); c.lineTo(r * 0.6, sTop + band); c.closePath(); c.fill();
+    c.strokeStyle = look.trim; c.lineWidth = lw(0.035);
+    c.beginPath(); c.moveTo(-r * 0.12, r); c.lineTo(r * 0.46, sTop + band); c.stroke();
+    [0, 1].forEach(function (k) {
+      c.beginPath(); c.moveTo(-r * (0.86 - k * 0.12), sTop + band); c.lineTo(-r * (0.5 - k * 0.12), r); c.stroke();
+    });
   }
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;

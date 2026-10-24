@@ -60,8 +60,8 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `beard` | `none`, `stubble`, `full` |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
-| `shortsStyle` | `plain`, `stripe`, `split`, `print` |
-| `tattoos` | any of `chest`, `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true |
+| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg) |
+| `tattoos` | any of `chest`, `portraits`, `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true |
 
 ## Special moves (created characters)
 
