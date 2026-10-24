@@ -5,7 +5,11 @@
 // an arm around the shooter's head and the two lock up. A tug-of-war bar
 // shows the choke sinking in against the escape. If the choke wins, the
 // shooter taps (three pats) and loses the fight on the spot: a win by
-// submission. If the escape wins, they scramble apart and the fight goes on.
+// submission. If it doesn't finish, `outcomes` (relative odds) picks what
+// happens: they scramble apart on an angle (escape), the shooter pops its
+// head out and finishes the shot with ground and pound worth the shot's own
+// damage (gnp), the defender sinks it back in for another go (resink), or
+// the defender keeps the hold and slams the shooter for `slamDamage` (slam).
 //
 // The odds of the tap: `tapBase`% at full health, plus up to `tapLowHp`% more
 // the more damage the shooter has taken, so subs land late in fights the way
@@ -49,7 +53,7 @@ function beginGuillotine(def, atk) {
   if (def.x + side * reach > W || def.x + side * reach < 0) side = -side;
   def.guillo = {
     atkId: atk.id, t: 0, dur: GUILLO_MIN_TIME + Math.random() * GUILLO_MAX_EXTRA,
-    taps: Math.random() < tapChance / 100, bar: 0, phase: "squeeze", tapT: 0,
+    taps: Math.random() < tapChance / 100, tapChance: tapChance, bar: 0, phase: "squeeze", tapT: 0,
     nx: side, ny: 0, wob: Math.random() * 10
   };
   atk.choked = true;
@@ -69,14 +73,16 @@ function updateGuillotine(self, dt) {
   var g = self.guillo, atk = balls[g.atkId];
   if (!self.alive || !atk.alive) { endGuillotine(self); return; }
   g.t += dt;
-
-  // The shooter's head stays tucked under the defender's arm, and both
-  // shudder a little as they fight over it.
-  var jit = reduceMotion || g.phase !== "squeeze" ? 0 : 1.6;
-  var gap = (self.r + atk.r) * GUILLO_GAP;
   self.vx = 0; self.vy = 0; atk.vx = 0; atk.vy = 0;
-  atk.x = self.x + g.nx * gap + (Math.random() - 0.5) * jit;
-  atk.y = self.y + (Math.random() - 0.5) * jit;
+
+  if (g.phase === "squeeze" || g.phase === "tap") {
+    // The shooter's head stays tucked under the defender's arm, and both
+    // shudder a little as they fight over it.
+    var jit = reduceMotion || g.phase !== "squeeze" ? 0 : 1.6;
+    var gap = (self.r + atk.r) * GUILLO_GAP;
+    atk.x = self.x + g.nx * gap + (Math.random() - 0.5) * jit;
+    atk.y = self.y + (Math.random() - 0.5) * jit;
+  }
 
   if (g.phase === "squeeze") {
     // The bar swings back and forth, then commits to how it ends: +1 is the
@@ -92,22 +98,182 @@ function updateGuillotine(self, dt) {
       floater(atk.x, Math.min(atk.y, self.y) - atk.r - 30, "TAP", "crit");
       playPunch(10);
     } else {
-      floater((self.x + atk.x) / 2, Math.min(atk.y, self.y) - atk.r - 30, "ESCAPE", "note");
-      self.guilloCd = self.char.guillotine.cooldown;
-      endGuillotine(self);
-      // They pop apart and the fight goes on.
-      self.vx = -g.nx * GUILLO_ESCAPE_SPEED; self.vy = -g.ny * GUILLO_ESCAPE_SPEED;
-      atk.vx = g.nx * GUILLO_ESCAPE_SPEED; atk.vy = g.ny * GUILLO_ESCAPE_SPEED;
+      guilloNotFinished(self, atk, g);
     }
     return;
   }
-
-  // Tapping: three pats on the defender, then the fight is over.
-  g.tapT += dt;
-  if (g.tapT >= GUILLO_TAP_TIME) {
-    endGuillotine(self);
-    submit(atk);
+  if (g.phase === "tap") {
+    // Three pats on the defender, then the fight is over.
+    g.tapT += dt;
+    if (g.tapT >= GUILLO_TAP_TIME) {
+      endGuillotine(self);
+      submit(atk);
+    }
+    return;
   }
+  if (g.phase === "drive" || g.phase === "mount" || g.phase === "pound") { updateGuilloGnp(self, atk, g, dt); return; }
+  if (g.phase === "lift") updateGuilloSlam(self, atk, g, dt);
+}
+
+// The choke didn't finish. What happens next is rolled from `outcomes`:
+// they scramble apart (escape), the shooter drives through and finishes its
+// shot with ground and pound (gnp), the defender sinks it back in for
+// another go (resink), or the defender picks the shooter up by the neck and
+// slams it (slam).
+function guilloNotFinished(self, atk, g) {
+  var oc = self.char.guillotine.outcomes, roll = Math.random() * (oc.escape + oc.gnp + oc.resink + oc.slam);
+  var cx = (self.x + atk.x) / 2, cy = Math.min(atk.y, self.y) - atk.r - 30;
+  if ((roll -= oc.escape) < 0) {
+    floater(cx, cy, "ESCAPE", "note");
+    releaseGuillotine(self, atk, g);
+    // They pop apart on an angle, spinning off each other.
+    var a = (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 0.35);
+    var ex = Math.cos(a) * g.nx, ey = Math.sin(a);
+    atk.vx = ex * GUILLO_ESCAPE_SPEED; atk.vy = ey * GUILLO_ESCAPE_SPEED;
+    self.vx = -ex * GUILLO_ESCAPE_SPEED; self.vy = -ey * GUILLO_ESCAPE_SPEED;
+  } else if ((roll -= oc.gnp) < 0) {
+    floater(cx, cy, "HEAD'S OUT", "note");
+    beginGuilloGnp(self, atk, g);
+  } else if ((roll -= oc.resink) < 0) {
+    floater(cx, cy, "RE-SINK", "crit");
+    g.phase = "squeeze"; g.t = 0; g.bar = 0; g.wob = Math.random() * 10;
+    g.dur = GUILLO_MIN_TIME + Math.random() * GUILLO_MAX_EXTRA;
+    g.taps = Math.random() < g.tapChance / 100;
+    atk.flash = 0.16;
+    if (!reduceMotion) shake = Math.max(shake, 8);
+    playPunch(20);
+  } else {
+    floater(cx, cy, "GUILLOTINE SLAM", "crit");
+    g.phase = "lift"; g.t = 0; g.sx = atk.x; g.sy = atk.y;
+    playWhoosh();
+  }
+}
+
+// Lets go: the fight carries on, and the defender can't go for another
+// guillotine for a while.
+function releaseGuillotine(self, atk, g) {
+  self.guilloCd = self.char.guillotine.cooldown;
+  atk.grappleCd = atk.char.grapple ? atk.char.grapple.cooldown : 0;
+  endGuillotine(self);
+}
+
+// ---------------------------------------------------------------
+// The shooter pulls its head out and finishes the shot: drives the defender
+// down to the floor, climbs on top and hammers it with ground and pound
+// worth what the shot itself would have done.
+// ---------------------------------------------------------------
+var GNP_DRIVE_TIME = 0.4, GNP_MOUNT_TIME = 0.25, GNP_PUNCHES = 4;
+
+function beginGuilloGnp(self, atk, g) {
+  var total = atk.char.grapple ? atk.char.grapple.damage : 50;
+  // Splits the shot's damage over the punches in whole numbers.
+  g.hits = [];
+  for (var i = 0; i < GNP_PUNCHES; i++) {
+    g.hits.push(Math.round(total * (i + 1) / GNP_PUNCHES) - Math.round(total * i / GNP_PUNCHES));
+  }
+  g.phase = "drive"; g.t = 0;
+  g.sx = self.x; g.sy = self.y;
+  g.ex = Math.max(self.r + 40, Math.min(W - self.r - 40, self.x)); g.ey = H - self.r - 2;
+  g.ax = atk.x; g.ay = atk.y;
+  playWhoosh();
+}
+
+function updateGuilloGnp(self, atk, g, dt) {
+  var k;
+  if (g.phase === "drive") {
+    // Runs them down into the floor, the shooter's shoulder in their gut.
+    k = Math.min(1, g.t / GNP_DRIVE_TIME); k = k * k;
+    self.x = g.sx + (g.ex - g.sx) * k; self.y = g.sy + (g.ey - g.sy) * k;
+    var gap = (self.r + atk.r) * 0.8;
+    atk.x = self.x + g.nx * gap * (1 - k * 0.3); atk.y = self.y - gap * 0.6 * k;
+    if (k < 1) return;
+    guilloImpact(atk, self, 0, false);
+    floater(self.x, self.y - self.r - 30, "TAKEDOWN", "note");
+    g.phase = "mount"; g.t = 0; g.mx = atk.x; g.my = atk.y;
+    return;
+  }
+  // On top of them from the side nearer the middle, like Father's Plan.
+  if (!g.dir) g.dir = self.x > W / 2 ? -1 : 1;
+  var tx = self.x + g.dir * (self.r + atk.r) * 0.62, ty = self.y - (self.r + atk.r) * 0.62;
+  if (g.phase === "mount") {
+    k = Math.min(1, g.t / GNP_MOUNT_TIME);
+    atk.x = g.mx + (tx - g.mx) * k; atk.y = g.my + (ty - g.my) * k;
+    if (k >= 1) { g.phase = "pound"; g.t = 0; g.thrown = 0; }
+    return;
+  }
+  var gp = g.gp, lean = 0;
+  if (gp) {
+    gp.t += dt;
+    if (gp.t < gp.wind) lean = -6 * (gp.t / gp.wind);
+    else if (gp.t < gp.wind + FP_STRIKE) lean = 12;
+    else lean = 12 * Math.max(0, 1 - (gp.t - gp.wind - FP_STRIKE) / FP_RECOIL);
+    if (!gp.hit && gp.t >= gp.wind + FP_STRIKE) { gp.hit = true; landGnpPunch(atk, self, gp); }
+    if (gp.t >= gp.wind + FP_STRIKE + FP_RECOIL) g.gp = null;
+  }
+  atk.x = tx + Math.sin(g.t * 31) * 1.5; atk.y = ty + lean;
+  if (!self.alive) { endGuillotine(self); checkEnd(); return; }
+  if (!g.gp && g.thrown < g.hits.length) {
+    var last = g.thrown === g.hits.length - 1;
+    g.gp = { t: 0, wind: last ? FP_WIND_LAST * 0.8 : FP_WIND, hit: false, last: last, side: g.thrown % 2 ? -1 : 1, dmg: g.hits[g.thrown] };
+    g.thrown++;
+    playWhoosh();
+  }
+  if (g.thrown >= g.hits.length && !g.gp) {
+    // Done: lets them up and gets back to its feet.
+    releaseGuillotine(self, atk, g);
+    self.vx = 0; self.vy = -SPEED * 0.6;
+    atk.vx = g.dir * SPEED * 0.6; atk.vy = -SPEED * 0.3;
+  }
+}
+
+function landGnpPunch(top, under, gp) {
+  var big = gp.last;
+  var dealt = hurt(under, gp.dmg, "finisher", top.id);
+  if (dealt > 0) playPunch(dealt * (big ? 4 : 3));
+  var cx = under.x, cy = under.y - under.r * 0.45;
+  under.squash = { t: big ? 0.28 : 0.18, max: big ? 0.28 : 0.18, nx: 0, ny: -1 };
+  impacts.push({ x: cx, y: cy, nx: 0, ny: -1, life: big ? 0.55 : 0.4, max: big ? 0.55 : 0.4, color: theme.hit });
+  igbbSparks(cx, cy, 0, -1, top.char.color, big ? 26 : 16, big ? 560 : 420);
+  if (!reduceMotion) shake = Math.max(shake, big ? 26 : 16);
+  hitStop = Math.max(hitStop, big ? 0.18 : 0.08);
+  checkEnd();
+}
+
+// ---------------------------------------------------------------
+// Guillotine slam: the defender keeps the hold, hauls the shooter up by the
+// neck, over the top, and slams it down on the other side.
+// ---------------------------------------------------------------
+var GSLAM_LIFT_TIME = 0.55;
+
+function updateGuilloSlam(self, atk, g, dt) {
+  var k = Math.min(1, g.t / GSLAM_LIFT_TIME), e = k < 0.6 ? k / 0.6 * 0.5 : 0.5 + Math.pow((k - 0.6) / 0.4, 2) * 0.5;
+  // Up and over in an arc from one side of the defender to the other.
+  var ang = Math.PI * e, reach = (self.r + atk.r) * 0.9;
+  var ex = self.x - g.nx * reach;
+  var ey = Math.min(H - atk.r - 2, self.y + atk.r * 0.3);
+  var midX = self.x + g.nx * Math.cos(ang) * reach, midY = self.y - Math.sin(ang) * reach * 1.25;
+  atk.x = midX; atk.y = Math.min(midY, ey);
+  if (k < 1) return;
+  atk.x = ex; atk.y = ey;
+  // Big slam: a heavy impact, then the hold comes off.
+  guilloImpact(self, atk, self.char.guillotine.slamDamage, true);
+  releaseGuillotine(self, atk, g);
+  checkEnd();
+  if (atk.alive) { atk.vx = -g.nx * 200; atk.vy = 120; self.vx = g.nx * 260; self.vy = -80; }
+}
+
+// Driven into the floor: flattened, a shockwave, sparks, a freeze-frame.
+function guilloImpact(by, b, dmg, big) {
+  var cx = b.x, cy = b.y + b.r;
+  b.squash = { t: big ? 0.3 : 0.18, max: big ? 0.3 : 0.18, nx: 0, ny: -1 };
+  b.flash = 0.16;
+  impacts.push({ x: cx, y: cy, nx: 0, ny: -1, life: 0.5, max: 0.5, color: by.char.color });
+  impacts.push({ x: cx, y: cy, nx: 0, ny: -1, life: big ? 0.8 : 0.55, max: big ? 0.8 : 0.55, color: theme.hit });
+  igbbSparks(cx, cy, 0, -1, by.char.color, big ? 30 : 14, big ? 620 : 420);
+  if (!reduceMotion) shake = Math.max(shake, big ? 34 : 18);
+  hitStop = Math.max(hitStop, big ? 0.24 : 0.08);
+  playSlam(); playPunch(big ? 50 : 30);
+  if (dmg > 0) hurt(b, dmg, "finisher", by.id);
 }
 
 function endGuillotine(self) {
@@ -128,7 +294,22 @@ function submit(b) {
 
 // How hard the choke is sunk in right now (0 to 1).
 function guilloSqueeze(g) {
-  return g.phase === "tap" ? 1 : Math.max(0, g.bar);
+  if (g.phase === "tap" || g.phase === "lift") return 1;
+  return g.phase === "squeeze" ? Math.max(0, g.bar) : 0;
+}
+
+// Still in the hold (as opposed to the ground and pound after it).
+function guilloHolding(g) {
+  return g.phase === "squeeze" || g.phase === "tap" || g.phase === "lift";
+}
+
+// Which of the pair is drawn underneath: the shooter while its head is
+// buried in the hold, the defender once it's been taken down.
+function guilloUnder(b) {
+  var def = b.guillo ? b : (b.choked ? balls[1 - b.id] : null);
+  if (!def || !def.guillo) return false;
+  var holding = guilloHolding(def.guillo);
+  return b === def ? !holding : holding;
 }
 
 // Poses both fighters while they're locked in a guillotine: the shooter is
@@ -145,6 +326,7 @@ function applyGuilloPose(b) {
     if (!g) return;
   }
   // g.nx is +1 when the shooter is on the defender's right, -1 on its left.
+  if (g.phase === "mount" || g.phase === "pound") return; // back upright on top
   var angle = b === def ? guilloDefLean(g) : -g.nx * Math.PI / 2;
   ctx.translate(b.x, b.y);
   ctx.rotate(angle);
@@ -176,6 +358,8 @@ function drawGuillotines() {
     var g = self.guillo;
     if (!g) return;
     var atk = balls[g.atkId];
+    if (g.gp) { drawFpPound(atk, g.gp); return; }
+    if (!guilloHolding(g)) return;
     var squeeze = guilloSqueeze(g);
     var s = g.nx, r = self.r, ar = atk.r;
     // Points on the defender turn with its lean.
