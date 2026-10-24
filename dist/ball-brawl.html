@@ -4668,7 +4668,8 @@ function drawSprawls() {
 // happens: they scramble apart on an angle (escape), the shooter pops its
 // head out and finishes the shot with ground and pound worth the shot's own
 // damage (gnp), the defender sinks it back in for another go (resink), or
-// the defender keeps the hold and slams the shooter for `slamDamage` (slam).
+// the shooter, still caught in the hold, picks the defender up and slams it
+// for `slamDamage` (slam).
 //
 // The odds of the tap: `tapBase`% at full health, plus up to `tapLowHp`% more
 // the more damage the shooter has taken, so subs land late in fights the way
@@ -4777,8 +4778,8 @@ function updateGuillotine(self, dt) {
 // The choke didn't finish. What happens next is rolled from `outcomes`:
 // they scramble apart (escape), the shooter drives through and finishes its
 // shot with ground and pound (gnp), the defender sinks it back in for
-// another go (resink), or the defender picks the shooter up by the neck and
-// slams it (slam).
+// another go (resink), or the shooter picks the defender up, hold and all,
+// and slams it (slam).
 function guilloNotFinished(self, atk, g) {
   var oc = self.char.guillotine.outcomes, roll = Math.random() * (oc.escape + oc.gnp + oc.resink + oc.slam);
   var cx = (self.x + atk.x) / 2, cy = Math.min(atk.y, self.y) - atk.r - 30;
@@ -4899,26 +4900,29 @@ function landGnpPunch(top, under, gp) {
 }
 
 // ---------------------------------------------------------------
-// Guillotine slam: the defender keeps the hold, hauls the shooter up by the
-// neck, over the top, and slams it down on the other side.
+// Guillotine slam: still caught in the hold, the shooter stands up with the
+// defender hanging off its neck, carries it up and over the top, and slams
+// it down on the other side.
 // ---------------------------------------------------------------
-var GSLAM_LIFT_TIME = 0.55;
+var GSLAM_LIFT_TIME = 0.6;
 
 function updateGuilloSlam(self, atk, g, dt) {
-  var k = Math.min(1, g.t / GSLAM_LIFT_TIME), e = k < 0.6 ? k / 0.6 * 0.5 : 0.5 + Math.pow((k - 0.6) / 0.4, 2) * 0.5;
-  // Up and over in an arc from one side of the defender to the other.
-  var ang = Math.PI * e, reach = (self.r + atk.r) * 0.9;
-  var ex = self.x - g.nx * reach;
-  var ey = Math.min(H - atk.r - 2, self.y + atk.r * 0.3);
-  var midX = self.x + g.nx * Math.cos(ang) * reach, midY = self.y - Math.sin(ang) * reach * 1.25;
-  atk.x = midX; atk.y = Math.min(midY, ey);
+  var k = Math.min(1, g.t / GSLAM_LIFT_TIME);
+  g.e = k < 0.6 ? k / 0.6 * 0.5 : 0.5 + Math.pow((k - 0.6) / 0.4, 2) * 0.5; // slow lift, fast drop
+  // The defender goes up and over in an arc from its side of the shooter to
+  // the other.
+  var ang = Math.PI * g.e, reach = (self.r + atk.r) * 0.9;
+  var ex = atk.x + g.nx * reach;
+  var ey = Math.min(H - self.r - 2, atk.y + self.r * 0.3);
+  var midX = atk.x - g.nx * Math.cos(ang) * reach, midY = atk.y - Math.sin(ang) * reach * 1.25;
+  self.x = midX; self.y = Math.min(midY, ey);
   if (k < 1) return;
-  atk.x = ex; atk.y = ey;
-  // Big slam: a heavy impact, then the hold comes off.
-  guilloImpact(self, atk, self.char.guillotine.slamDamage, true);
+  self.x = ex; self.y = ey;
+  // Big slam: a heavy impact that breaks the hold.
+  guilloImpact(atk, self, self.char.guillotine.slamDamage, true);
   releaseGuillotine(self, atk, g);
   checkEnd();
-  if (atk.alive) { atk.vx = -g.nx * 200; atk.vy = 120; self.vx = g.nx * 260; self.vy = -80; }
+  if (self.alive) { self.vx = g.nx * 200; self.vy = 120; atk.vx = -g.nx * 260; atk.vy = -80; }
 }
 
 // Driven into the floor: flattened, a shockwave, sparks, a freeze-frame.
@@ -4987,6 +4991,11 @@ function applyGuilloPose(b) {
   // g.nx is +1 when the shooter is on the defender's right, -1 on its left.
   if (g.phase === "mount" || g.phase === "pound") return; // back upright on top
   var angle = b === def ? guilloDefLean(g) : -g.nx * Math.PI / 2;
+  if (g.phase === "lift") {
+    // The shooter straightens up as it lifts; the defender flips over the top.
+    var e = g.e || 0;
+    angle = b === def ? guilloDefLean(g) + g.nx * Math.PI * e : -g.nx * Math.PI / 2 * (1 - e);
+  }
   ctx.translate(b.x, b.y);
   ctx.rotate(angle);
   ctx.translate(-b.x, -b.y);
