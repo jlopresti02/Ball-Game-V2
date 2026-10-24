@@ -396,21 +396,68 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
   if (tat.portraits) {
-    // Three portraits across the chest, the middle one biggest and lowest.
-    // Drawn tall so they still read as faces once the torso is squashed.
-    var tall = contained ? 1.6 : 1;
-    [[-0.4, -0.5, 0.15], [0, -0.4, 0.17], [0.4, -0.5, 0.15]].forEach(function (pt) {
-      var px = r * pt[0], py = r * pt[1], pw = r * pt[2], ph = pw * tall;
-      c.globalAlpha = 0.22;
-      c.beginPath(); c.ellipse(px, py + ph * 0.7, pw * 1.3, ph * 0.5, 0, 0, Math.PI * 2); c.fill();
-      c.globalAlpha = 0.4;
-      c.beginPath(); c.ellipse(px, py, pw * 0.78, ph, 0, 0, Math.PI * 2); c.fill();
-      c.globalAlpha = 0.9;
-      c.beginPath(); c.ellipse(px, py - ph * 0.45, pw * 0.82, ph * 0.6, 0, Math.PI, Math.PI * 2); c.fill();
-      c.lineWidth = lw(0.022);
-      c.beginPath(); c.ellipse(px, py, pw * 0.78, ph, 0, 0, Math.PI * 2); c.stroke();
+    // Black-and-grey family portraits filling the upper chest: a woman with
+    // long hair, an older man with grey hair (lowest) and a girl with dark
+    // hair (highest), over smoky shading down to the pecs.
+    var tall = contained ? 0.86 / 0.59 : 1;  // undo the torso squeeze so faces stay round
+    var faceSkin = shadeHex(skin, 0.06), shade = "rgba(28,34,52,";
+    c.fillStyle = shade + "0.2)";
+    for (var sm = 0; sm < 7; sm++) {
+      c.beginPath(); c.ellipse(r * (-0.6 + sm * 0.2), r * (0.04 - (sm % 2) * 0.06), r * 0.2, r * 0.14, 0, 0, Math.PI * 2); c.fill();
+    }
+    [{ x: -0.48, y: -0.3, w: 0.24, hair: "long" }, { x: 0, y: -0.24, w: 0.25, hair: "grey" }, { x: 0.48, y: -0.36, w: 0.23, hair: "girl" }].forEach(function (pt) {
+      var w = r * pt.w;
+      c.save(); c.translate(r * pt.x, r * pt.y); c.scale(1, tall / 1.15);
+      // Hair behind the face
+      if (pt.hair === "long") {
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 1.05, w * 1.15); c.quadraticCurveTo(-w * 1.25, -w * 1.25, 0, -w * 1.3);
+        c.quadraticCurveTo(w * 1.25, -w * 1.25, w * 1.05, w * 1.15); c.quadraticCurveTo(0, w * 0.9, -w * 1.05, w * 1.15); c.fill();
+      } else if (pt.hair === "girl") {
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.moveTo(-w * 1.02, w * 0.75); c.quadraticCurveTo(-w * 1.25, -w * 1.3, 0, -w * 1.32);
+        c.quadraticCurveTo(w * 1.25, -w * 1.3, w * 1.02, w * 0.75); c.quadraticCurveTo(0, w * 0.5, -w * 1.02, w * 0.75); c.fill();
+      } else {
+        c.fillStyle = shade + "0.35)";
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.98, w * 1.05, 0, Math.PI, Math.PI * 2); c.fill();
+      }
+      // Face, shaded round the edges
+      var fg = c.createRadialGradient(-w * 0.15, -w * 0.15, w * 0.1, 0, 0, w * 1.05);
+      fg.addColorStop(0, faceSkin); fg.addColorStop(0.65, shadeHex(skin, -0.08)); fg.addColorStop(1, shadeHex(skin, -0.3));
+      c.fillStyle = fg;
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = shade + "0.16)"; c.fill();  // grey ink wash
+      if (pt.hair === "girl") {
+        // Fringe across the forehead
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.ellipse(0, -w * 0.72, w * 0.76, w * 0.32, 0, 0, Math.PI * 2); c.fill();
+      } else if (pt.hair === "long") {
+        // Hair parted over the forehead
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 0.78, -w * 0.1); c.quadraticCurveTo(-w * 0.6, -w * 0.95, w * 0.1, -w * 0.92);
+        c.quadraticCurveTo(-w * 0.35, -w * 0.6, -w * 0.78, -w * 0.1); c.fill();
+      } else {
+        // Receding grey hairline
+        c.strokeStyle = shade + "0.45)"; c.lineWidth = lw(0.02);
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.8, w * 0.75, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+      }
+      // Soft shading only: brow line and the shadow of a smile
+      c.fillStyle = shade + "0.3)";
+      c.beginPath(); c.ellipse(0, -w * 0.2, w * 0.5, w * 0.1, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(0, w * 0.45, w * 0.32, w * 0.12, 0, 0, Math.PI); c.fill();
+      c.strokeStyle = shade + "0.55)"; c.lineWidth = lw(0.018);
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.stroke();
+      c.restore();
     });
-    c.globalAlpha = 1;
+    // A short line of script under the girl's portrait
+    c.strokeStyle = shade + "0.6)"; c.lineWidth = lw(0.016);
+    c.beginPath();
+    for (var sc = 0; sc <= 12; sc++) {
+      var sx = r * (0.4 + sc * 0.016), sy = r * 0.03 + Math.sin(sc * 1.8) * r * 0.014;
+      if (sc === 0) c.moveTo(sx, sy); else c.lineTo(sx, sy);
+    }
+    c.stroke();
+    c.strokeStyle = inkCol; c.fillStyle = inkCol; c.globalAlpha = 1;
   }
   [["leftArm", -1], ["rightArm", 1]].forEach(function (p) {
     if (!tat[p[0]]) return;
