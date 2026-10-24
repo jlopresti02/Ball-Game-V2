@@ -252,10 +252,11 @@ function updateGuilloSlam(self, atk, g, dt) {
   g.e = k < 0.6 ? k / 0.6 * 0.5 : 0.5 + Math.pow((k - 0.6) / 0.4, 2) * 0.5; // slow lift, fast drop
   // The defender goes up and over in an arc from its side of the shooter to
   // the other.
-  var ang = Math.PI * g.e, reach = (self.r + atk.r) * 0.9;
+  // Held in tight by the neck so the arm never stretches.
+  var ang = Math.PI * g.e, reach = (self.r + atk.r) * 0.7;
   var ex = atk.x + g.nx * reach;
   var ey = Math.min(H - self.r - 2, atk.y + self.r * 0.3);
-  var midX = atk.x - g.nx * Math.cos(ang) * reach, midY = atk.y - Math.sin(ang) * reach * 1.25;
+  var midX = atk.x - g.nx * Math.cos(ang) * reach, midY = atk.y - Math.sin(ang) * reach;
   self.x = midX; self.y = Math.min(midY, ey);
   if (k < 1) return;
   self.x = ex; self.y = ey;
@@ -329,14 +330,8 @@ function applyGuilloPose(b) {
     g = def.guillo;
     if (!g) return;
   }
-  // g.nx is +1 when the shooter is on the defender's right, -1 on its left.
   if (g.phase === "mount" || g.phase === "pound") return; // back upright on top
-  var angle = b === def ? guilloDefLean(g) : -g.nx * Math.PI / 2;
-  if (g.phase === "lift") {
-    // The shooter straightens up as it lifts; the defender flips over the top.
-    var e = g.e || 0;
-    angle = b === def ? guilloDefLean(g) + g.nx * Math.PI * e : -g.nx * Math.PI / 2 * (1 - e);
-  }
+  var angle = b === def ? guilloDefAngle(g) : guilloShooterAngle(g);
   ctx.translate(b.x, b.y);
   ctx.rotate(angle);
   ctx.translate(-b.x, -b.y);
@@ -346,6 +341,19 @@ function applyGuilloPose(b) {
 // and a little further as it sinks in.
 function guilloDefLean(g) {
   return -g.nx * (0.35 + 0.15 * guilloSqueeze(g));
+}
+
+// How far each of the pair is turned. g.nx is +1 when the shooter is on the
+// defender's right, -1 on its left. The shooter is bent over sideways, head
+// first; on a guillotine slam it straightens up as it lifts, and the
+// defender flips over the top.
+function guilloShooterAngle(g) {
+  var e = g.phase === "lift" ? (g.e || 0) : 0;
+  return -g.nx * Math.PI / 2 * (1 - e);
+}
+function guilloDefAngle(g) {
+  var e = g.phase === "lift" ? (g.e || 0) : 0;
+  return guilloDefLean(g) + g.nx * Math.PI * e;
 }
 
 // An arm: a dark outline with the skin colour inside it.
@@ -372,7 +380,12 @@ function drawGuillotines() {
     var squeeze = guilloSqueeze(g);
     var s = g.nx, r = self.r, ar = atk.r;
     // Points on the defender turn with its lean.
-    var la = guilloDefLean(g), lc = Math.cos(la), ls = Math.sin(la);
+    var la = guilloDefAngle(g), lc = Math.cos(la), ls = Math.sin(la);
+    // The shooter's head direction (h) and across its neck (q, toward the
+    // side the defender's arm comes over), turning with the shooter.
+    var ka = guilloShooterAngle(g);
+    var hx = Math.sin(ka), hy = -Math.cos(ka), qx = Math.cos(ka) * s, qy = Math.sin(ka) * s;
+    function onAtk(alongHead, acrossNeck) { return { x: atk.x + hx * alongHead + qx * acrossNeck, y: atk.y + hy * alongHead + qy * acrossNeck }; }
     function onDef(ox, oy) { return { x: self.x + ox * lc - oy * ls, y: self.y + ox * ls + oy * lc }; }
     ctx.save();
 
@@ -387,23 +400,26 @@ function drawGuillotines() {
       ctx.clip("evenodd"); // the shooter minus the part under the defender
       ctx.globalAlpha = 0.55 * squeeze;
       ctx.fillStyle = "#d62020";
-      ctx.beginPath(); ctx.arc(atk.x - s * ar * 0.68, atk.y, ar * 0.5, 0, Math.PI * 2); ctx.fill();
+      var face = onAtk(ar * 0.68, 0);
+      ctx.beginPath(); ctx.arc(face.x, face.y, ar * 0.5, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
 
     // The defender's near arm: off its shoulder, over the top of the
     // shooter's neck (where its head meets its torso) and straight down
     // across it, both hands locked together underneath.
-    var neckX = atk.x - s * ar * 0.33;
+    // Everything on the neck turns with the shooter (e.g. as it's lifted
+    // for a guillotine slam).
     var sh = onDef(s * r * 0.45, -r * 0.72);
-    var top = atk.y - ar * 0.9, bottom = atk.y + ar * 0.62;
+    var over = onAtk(ar * 0.33, ar * 0.9), bend = onAtk(ar * 0.38, ar * 1.2), under = onAtk(ar * 0.33, -ar * 0.62);
     strokeLimb(r * 0.24, armColor(self.char), function () {
       ctx.moveTo(sh.x, sh.y);
-      ctx.quadraticCurveTo(neckX - s * ar * 0.05, atk.y - ar * 1.2, neckX, top);
-      ctx.lineTo(neckX, bottom);
+      ctx.quadraticCurveTo(bend.x, bend.y, over.x, over.y);
+      ctx.lineTo(under.x, under.y);
     });
-    drawGloveAt(neckX - s * r * 0.1, bottom + r * 0.06, r * 0.27, self.char);
-    drawGloveAt(neckX + s * r * 0.1, bottom + r * 0.12, r * 0.27, self.char);
+    var g1 = onAtk(ar * 0.33 + r * 0.1, -ar * 0.62 - r * 0.06), g2 = onAtk(ar * 0.33 - r * 0.1, -ar * 0.62 - r * 0.12);
+    drawGloveAt(g1.x, g1.y, r * 0.27, self.char);
+    drawGloveAt(g2.x, g2.y, r * 0.27, self.char);
 
     // Tapping: the shooter reaches up with a free hand and pats the
     // defender's back three times.
