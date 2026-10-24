@@ -142,8 +142,10 @@ function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 1
 // When a grab would be the killing blow, the grapple becomes a finisher:
 // a slam into the bottom wall for finSlamDamage, then the opponent is pinned
 // and hit with finPunches heavy punches of finPunchDamage each.
+// vsGrapplerChance is how often it actually shoots for the grab on contact
+// when the opponent is a Grappler too.
 function defaultGrapple() {
-  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50 };
+  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50, vsGrapplerChance: 100 };
 }
 // knockback is the speed the victim flies at during the wall slams; wallSlams
 // is how many walls it smashes into (0 turns the slams off), each dealing
@@ -171,6 +173,23 @@ function defaultSwing() {
 }
 // Forget: every `every` seconds, forgets some damage and regains `heal` health.
 function defaultForget() { return { heal: 12, every: 7 }; }
+// Guillotine: chance% of grabs shot at this fighter get caught in a
+// guillotine. The shooter taps tapBase% of the time at full health, up to
+// tapLowHp% more the more damage it's taken (see bjj.js).
+// If it doesn't finish, outcomes (relative odds) picks what happens next,
+// and a guillotine slam does slamDamage.
+function defaultGuillotine() {
+  return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5, outcomes: { escape: 20, gnp: 70, resink: 5, slam: 5 }, slamDamage: 75 };
+}
+// Guard: chance% of the strikes that land on this fighter drop it onto its
+// back in guard for `time` seconds, with a circle of `radius` around it.
+// The first opponent to step into the circle passes the guard passChance%
+// of the time (passPunches free ground-and-pound punches of passDamage);
+// otherwise it's caught in a submission picked from `subs` (see guard.js).
+// After getting back up it can't pull guard again for `cooldown` seconds.
+function defaultGuard() {
+  return { chance: 25, time: 6, radius: 130, passChance: 50, passPunches: 4, passDamage: 10, subs: ["guillotine"], cooldown: 3 };
+}
 function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -184,7 +203,7 @@ function normalizeChar(ch) {
   if (ch.kick.checkChance == null) ch.kick.checkChance = defaultKick().checkChance;
   if (ch.hasGrapple === undefined) ch.hasGrapple = false;
   if (!ch.grapple) ch.grapple = defaultGrapple();
-  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance"].forEach(function (k) {
+  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance", "vsGrapplerChance"].forEach(function (k) {
     if (ch.grapple[k] == null) ch.grapple[k] = defaultGrapple()[k];
   });
   if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;
@@ -205,6 +224,16 @@ function normalizeChar(ch) {
   if (!ch.swing) ch.swing = defaultSwing();
   if (ch.hasForget === undefined) ch.hasForget = false;
   if (!ch.forget) ch.forget = defaultForget();
+  if (ch.hasGuillotine === undefined) ch.hasGuillotine = false;
+  if (!ch.guillotine) ch.guillotine = defaultGuillotine();
+  ["outcomes", "slamDamage"].forEach(function (k) {
+    if (ch.guillotine[k] == null) ch.guillotine[k] = defaultGuillotine()[k];
+  });
+  if (ch.hasGuard === undefined) ch.hasGuard = false;
+  if (!ch.guard) ch.guard = defaultGuard();
+  Object.keys(defaultGuard()).forEach(function (k) {
+    if (ch.guard[k] == null) ch.guard[k] = defaultGuard()[k];
+  });
   if (ch.blockChance == null) ch.blockChance = 0;
   // Special moves are for created characters. Dustin was set up with IGBB
   // before the editor had a special-move section, so he gets it switched on

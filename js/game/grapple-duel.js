@@ -47,6 +47,7 @@ function readyToGrab(self, other, dt) {
   if (self.grappleCd - dt > 0) return false;
   if (!other.alive || other.grappled || other.invincible) return false;
   if (self.sprawl || self.sprawled || other.sprawl || other.sprawled) return false;
+  if (subLocked(self) || subLocked(other)) return false;
   if (grabBlockedByImpunity(self, other)) return false;
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
   return d < self.r + other.r + self.char.grapple.reach;
@@ -156,6 +157,7 @@ function grabEscaped(attacker, target) {
 function attemptGrab(attacker, target) {
   if (target.slamSafe > 0) return false;
   if (grabEscaped(attacker, target)) return false;
+  if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100) {
     beginSprawl(attacker, target);

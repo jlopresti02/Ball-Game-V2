@@ -1626,8 +1626,10 @@ function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 1
 // When a grab would be the killing blow, the grapple becomes a finisher:
 // a slam into the bottom wall for finSlamDamage, then the opponent is pinned
 // and hit with finPunches heavy punches of finPunchDamage each.
+// vsGrapplerChance is how often it actually shoots for the grab on contact
+// when the opponent is a Grappler too.
 function defaultGrapple() {
-  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50 };
+  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50, vsGrapplerChance: 100 };
 }
 // knockback is the speed the victim flies at during the wall slams; wallSlams
 // is how many walls it smashes into (0 turns the slams off), each dealing
@@ -1655,6 +1657,23 @@ function defaultSwing() {
 }
 // Forget: every `every` seconds, forgets some damage and regains `heal` health.
 function defaultForget() { return { heal: 12, every: 7 }; }
+// Guillotine: chance% of grabs shot at this fighter get caught in a
+// guillotine. The shooter taps tapBase% of the time at full health, up to
+// tapLowHp% more the more damage it's taken (see bjj.js).
+// If it doesn't finish, outcomes (relative odds) picks what happens next,
+// and a guillotine slam does slamDamage.
+function defaultGuillotine() {
+  return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5, outcomes: { escape: 20, gnp: 70, resink: 5, slam: 5 }, slamDamage: 75 };
+}
+// Guard: chance% of the strikes that land on this fighter drop it onto its
+// back in guard for `time` seconds, with a circle of `radius` around it.
+// The first opponent to step into the circle passes the guard passChance%
+// of the time (passPunches free ground-and-pound punches of passDamage);
+// otherwise it's caught in a submission picked from `subs` (see guard.js).
+// After getting back up it can't pull guard again for `cooldown` seconds.
+function defaultGuard() {
+  return { chance: 25, time: 6, radius: 130, passChance: 50, passPunches: 4, passDamage: 10, subs: ["guillotine"], cooldown: 3 };
+}
 function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -1668,7 +1687,7 @@ function normalizeChar(ch) {
   if (ch.kick.checkChance == null) ch.kick.checkChance = defaultKick().checkChance;
   if (ch.hasGrapple === undefined) ch.hasGrapple = false;
   if (!ch.grapple) ch.grapple = defaultGrapple();
-  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance"].forEach(function (k) {
+  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance", "vsGrapplerChance"].forEach(function (k) {
     if (ch.grapple[k] == null) ch.grapple[k] = defaultGrapple()[k];
   });
   if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;
@@ -1689,6 +1708,16 @@ function normalizeChar(ch) {
   if (!ch.swing) ch.swing = defaultSwing();
   if (ch.hasForget === undefined) ch.hasForget = false;
   if (!ch.forget) ch.forget = defaultForget();
+  if (ch.hasGuillotine === undefined) ch.hasGuillotine = false;
+  if (!ch.guillotine) ch.guillotine = defaultGuillotine();
+  ["outcomes", "slamDamage"].forEach(function (k) {
+    if (ch.guillotine[k] == null) ch.guillotine[k] = defaultGuillotine()[k];
+  });
+  if (ch.hasGuard === undefined) ch.hasGuard = false;
+  if (!ch.guard) ch.guard = defaultGuard();
+  Object.keys(defaultGuard()).forEach(function (k) {
+    if (ch.guard[k] == null) ch.guard[k] = defaultGuard()[k];
+  });
   if (ch.blockChance == null) ch.blockChance = 0;
   // Special moves are for created characters. Dustin was set up with IGBB
   // before the editor had a special-move section, so he gets it switched on
@@ -1732,69 +1761,96 @@ function getImg(dataURL) {
   return null;
 }
 
-// Dev Corner fighters: older versions of roster fighters, kept for testing
-// and side-by-side comparisons. They only appear in The Dev Corner.
-"use strict";
-
-var devFighters = [
-{
-  "id": "dev-dustin-photo",
-  "builtin": true,
-  "name": "Dustin Poirier (photo)",
-  "color": "#1e3a8a",
-  "label": "",
-  "imgData": "data:image/jpeg;base64,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",
-  "hasProjectile": false,
-  "proj": {
-    "size": 7,
-    "speed": 460,
-    "damage": 10,
-    "cooldown": 1.6,
-    "imgData": null
-  },
-  "hasPunch": true,
-  "punch": {
-    "damage": 22,
-    "cooldown": 0.95,
-    "speed": 0.28,
-    "size": 15,
-    "knockback": 280,
-    "reach": 42,
-    "koChance": 5
-  },
-  "hasKick": false,
-  "hasGrapple": false,
-  "hasPowerPunch": false,
-  "hasRage": false,
-  "hasWatcher": false,
-  "hasWeave": false,
-  "hasSwing": false,
-  "hasForget": false,
-  "hasSpecial": true,
-  "special": {
-    "move": "igbb",
-    "chargeTime": 45,
-    "hitCut": 5,
-    "punches": 7,
-    "damage": 10,
-    "shellTime": 5
-  },
-  "blockChance": 15
-}
-].map(function (ch) {
-  // Keep their special moves (normalizeChar switches them off for built-ins)
-  var special = ch.hasSpecial;
-  ch = normalizeChar(ch);
-  ch.hasSpecial = !!special;
-  return ch;
-});
-
 // Roster fighters saved into the repo, so every version of the game has
 // them. Generated from characters/*.json by tools/build_roster.py: edit
 // the character files (or the fighter in the game), not this file.
 "use strict";
 
 var SAVED_ROSTER = [
+  {
+    "id": "c-charles-oliveira",
+    "rev": 1,
+    "builtin": false,
+    "name": "Charles Oliveira",
+    "base": "Grappler",
+    "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in a submission (the guillotine for now, more to come).",
+    "color": "#d9a514",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#c48f68",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "short",
+      "hairColor": "#f4edd2",
+      "beard": "none",
+      "ears": "normal",
+      "tattoos": {
+        "portraits": true,
+        "leftArm": "dense",
+        "rightArm": "lion",
+        "armInk": true
+      },
+      "shorts": "#e9b824",
+      "trim": "#141414",
+      "shortsStyle": "chevron",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 5,
+      "cooldown": 0.7,
+      "speed": 0.22,
+      "size": 13,
+      "knockback": 80,
+      "reach": 30,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": true,
+    "grapple": {
+      "damage": 50,
+      "cooldown": 1.5,
+      "speed": 0.45,
+      "reach": 6,
+      "counterChance": 25,
+      "finSlamDamage": 20,
+      "finPunches": 3,
+      "finPunchDamage": 10,
+      "sprawlChance": 30,
+      "reattackChance": 50,
+      "vsGrapplerChance": 50
+    },
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "hasGuard": true,
+    "guard": {
+      "chance": 25,
+      "time": 6,
+      "radius": 130,
+      "passChance": 50,
+      "passPunches": 4,
+      "passDamage": 10,
+      "subs": [
+        "guillotine"
+      ],
+      "cooldown": 3
+    },
+    "hasSpecial": false,
+    "blockChance": 10
+  },
   {
     "id": "c-dustin-poirier",
     "rev": 3,
@@ -1942,6 +1998,87 @@ var SAVED_ROSTER = [
     "blockChance": 10
   }
 ];
+
+// Dev Corner fighters: older versions of roster fighters, kept for testing
+// and side-by-side comparisons, and test versions of roster fighters trying
+// out new mechanics before they're given to the real one. They only appear
+// in The Dev Corner. Loads after roster-data.js, which the test versions are
+// copied from.
+"use strict";
+
+var devFighters = [
+{
+  "id": "dev-dustin-photo",
+  "builtin": true,
+  "name": "Dustin Poirier (photo)",
+  "color": "#1e3a8a",
+  "label": "",
+  "imgData": "data:image/jpeg;base64,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",
+  "hasProjectile": false,
+  "proj": {
+    "size": 7,
+    "speed": 460,
+    "damage": 10,
+    "cooldown": 1.6,
+    "imgData": null
+  },
+  "hasPunch": true,
+  "punch": {
+    "damage": 22,
+    "cooldown": 0.95,
+    "speed": 0.28,
+    "size": 15,
+    "knockback": 280,
+    "reach": 42,
+    "koChance": 5
+  },
+  "hasKick": false,
+  "hasGrapple": false,
+  "hasPowerPunch": false,
+  "hasRage": false,
+  "hasWatcher": false,
+  "hasWeave": false,
+  "hasSwing": false,
+  "hasForget": false,
+  "hasSpecial": true,
+  "special": {
+    "move": "igbb",
+    "chargeTime": 45,
+    "hitCut": 5,
+    "punches": 7,
+    "damage": 10,
+    "shellTime": 5
+  },
+  "blockChance": 15
+}
+].map(function (ch) {
+  // Keep their special moves (normalizeChar switches them off for built-ins)
+  var special = ch.hasSpecial;
+  ch = normalizeChar(ch);
+  ch.hasSpecial = !!special;
+  return ch;
+});
+
+// Test versions: a copy of a repo roster fighter with something switched on.
+function devVariant(rosterId, id, name, changes) {
+  var src = SAVED_ROSTER.find(function (r) { return r.id === rosterId; });
+  if (!src) return;
+  var ch = JSON.parse(JSON.stringify(src));
+  ch.id = id; ch.name = name; ch.builtin = true;
+  delete ch.rev; delete ch.bio; delete ch.base;
+  changes(ch);
+  var special = ch.hasSpecial;
+  ch = normalizeChar(ch);
+  ch.hasSpecial = !!special;
+  devFighters.push(ch);
+}
+
+// Dustin with the guillotine off a shot (see bjj.js). Try him against
+// Khabib or the Grappler.
+devVariant("c-dustin-poirier", "dev-dustin-guillotine", "Dustin Poirier (guillotine)", function (ch) {
+  ch.hasGuillotine = true;
+  ch.guillotine = defaultGuillotine();
+});
 
 // Where created characters are saved.
 //
@@ -2240,6 +2377,8 @@ function abilitySummary(ch) {
   if (ch.hasWatcher) parts.push("👁️ " + ch.watcher.lasers + "×" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
   if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
   if (ch.hasSwing) parts.push("\uD83E\uDD74 " + ch.swing.damage + " dmg swing");
+  if (ch.hasGuillotine) parts.push("\uD83D\uDD12 " + ch.guillotine.chance + "% guillotine");
+  if (ch.hasGuard) parts.push("\uD83E\uDD4B " + ch.guard.chance + "% guard");
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
   if (ch.hasForget) parts.push("\uD83E\uDDE0 +" + ch.forget.heal + " / " + ch.forget.every + "s");
   if (ch.blockChance > 0) parts.push("🛡️ " + ch.blockChance + "% block");
@@ -3145,6 +3284,7 @@ function readTheme() {
 
 var balls, projectiles, floaters, particles, shake, over, started;
 var impacts = [], hitStop = 0; // wall-slam shockwaves and the brief freeze on each slam
+var winBy = null; // how the fight was won, when it isn't a knockout (e.g. "submission")
 
 // Each fighter's first charge-up comes a little earlier or later than its
 // normal interval, so two identical fighters (a mirror match) don't charge,
@@ -3165,7 +3305,8 @@ function makeBall(id, ch) {
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
-    koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false
+    koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
+    guillo: null, choked: false, guilloCd: 0, guard: null, guardCd: 0
   };
 }
 
@@ -3173,7 +3314,7 @@ function startMatchWith(ch0, ch1) {
   stopAllChargeSounds();
   balls = [makeBall(0, ch0), makeBall(1, ch1)];
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
-  impacts = []; hitStop = 0; koDuel = null;
+  impacts = []; hitStop = 0; koDuel = null; winBy = null;
 
   document.getElementById("name0").textContent = ch0.name;
   document.getElementById("name1").textContent = ch1.name;
@@ -3347,13 +3488,15 @@ function hurt(b, amount, source, attackerId) {
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
   if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && source !== "igbb" && !b.koDuel &&
-      b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
+      b.char.hasGrapple && !b.grapple && !b.grappled && !subLocked(b) && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
       if (Math.random() < chance) attemptGrab(b, atk); // can be weaved or blocked (an escape)
     }
   }
+  // A strike can knock a fighter with the guard onto its back (guard.js).
+  if (b.alive && amount > 0) tryPullGuard(b, source, attackerId);
   return amount;
 }
 
@@ -3363,7 +3506,7 @@ function checkEnd() {
   if (alive.length > 1) return;
   over = true;
   if (alive.length === 1) {
-    bannerText.textContent = alive[0].char.name + " wins";
+    bannerText.textContent = alive[0].char.name + " wins" + (winBy ? " by " + winBy : "");
     bannerText.style.color = alive[0].char.color;
   } else {
     bannerText.textContent = "Draw";
@@ -3389,7 +3532,7 @@ var SPEED_UP = 320;       // units/second gained each second while below normal 
 var SLOW_DOWN = 1.1;      // how quickly extra speed bleeds off (higher = faster)
 
 function inOrdinaryMovement(b) {
-  if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.flow || b.sprawl || b.sprawled || b.knockFly > 0) return false;
+  if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.flow || b.sprawl || b.sprawled || subLocked(b) || b.knockFly > 0) return false;
   if (b.koRush || b.shocked || b.koOut || b.koDuel || b.igbb || b.shelled) return false;
   if (b.checkStun > 0 || b.checkAnim || (b.kick && b.kick.counter && !b.kick.hit)) return false;
   if (b.powerState || b.rageState) return false;
@@ -3420,7 +3563,7 @@ function step(dt) {
     b = balls[i];
     var spinning = b.powerState && b.powerState.phase === "attack";
     var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-    if (!b.alive || b.grappled || b.grapple || b.sprawl || b.sprawled || b.koDuel || igbbLocked(b) || spinning || sitting) continue;
+    if (!b.alive || b.grappled || b.grapple || b.sprawl || b.sprawled || subLocked(b) || b.koDuel || igbbLocked(b) || spinning || sitting) continue;
     b.x += b.vx * dt; b.y += b.vy * dt;
     var hitWall = false, wnx = 0, wny = 0;
     if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); hitWall = true; wnx = 1; }
@@ -3441,7 +3584,7 @@ function step(dt) {
   // Sees Red keeps a normal collision box even mid-charge-dash, so it
   // still bounces off the opponent on contact like any other pair of
   // balls; only its punch damage is handled separately, on a timer.
-  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || a.koDuel || c.koDuel || igbbLocked(a) || igbbLocked(c) || aSpin || cSpin) return;
+  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || subLocked(a) || subLocked(c) || a.koDuel || c.koDuel || igbbLocked(a) || igbbLocked(c) || aSpin || cSpin) return;
   // A seated Watcher is an immovable, solid object: whoever runs into it
   // just bounces off, the way they would off a wall.
   if (aSit || cSit) {
@@ -3631,11 +3774,13 @@ function updateAbilities(dt) {
   for (var oi = 0; oi < 2; oi++) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
-    if (!self.alive || self.grappled || self.sprawled) continue;
+    if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
     if (self.shocked || self.koOut || self.shelled) continue; // frozen by a KO Rush, knocked out, or shelled up under IGBB
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
+    if (self.guard) { updateGuard(self, other, dt); continue; }
+    if (self.guillo) { updateGuillotine(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
       self.slam.t += dt;
@@ -3701,7 +3846,7 @@ function updateAbilities(dt) {
             checkEnd();
           }
         }
-        if (self.punch.t >= pu.speed) self.punch = null;
+        if (self.punch && self.punch.t >= pu.speed) self.punch = null; // (a counter-grab can end it early)
       }
     }
 
@@ -3733,16 +3878,20 @@ function updateAbilities(dt) {
             checkEnd();
           }
         }
-        if (self.kick.t >= ki.speed) self.kick = null;
+        if (self.kick && self.kick.t >= ki.speed) self.kick = null;
       }
     }
 
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
       var gr = self.char.grapple;
-      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
-        // (attemptGrab handles the grab being weaved or blocked: an escape.)
-        if (attemptGrab(self, other)) {
+      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
+        // Against another Grappler it only shoots for the takedown
+        // vsGrapplerChance% of the time; otherwise it lets the moment pass.
+        if (other.char.hasGrapple && Math.random() >= gr.vsGrapplerChance / 100) {
+          self.grappleCd = gr.cooldown;
+          self.initiativeReason = null;
+        } else if (attemptGrab(self, other)) { // (handles the grab being weaved or blocked: an escape)
           if (self.initiativeReason) {
             // Shows why this Grappler won the race to the grab.
             floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
@@ -4433,6 +4582,7 @@ function readyToGrab(self, other, dt) {
   if (self.grappleCd - dt > 0) return false;
   if (!other.alive || other.grappled || other.invincible) return false;
   if (self.sprawl || self.sprawled || other.sprawl || other.sprawled) return false;
+  if (subLocked(self) || subLocked(other)) return false;
   if (grabBlockedByImpunity(self, other)) return false;
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
   return d < self.r + other.r + self.char.grapple.reach;
@@ -4542,6 +4692,7 @@ function grabEscaped(attacker, target) {
 function attemptGrab(attacker, target) {
   if (target.slamSafe > 0) return false;
   if (grabEscaped(attacker, target)) return false;
+  if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100) {
     beginSprawl(attacker, target);
@@ -4612,6 +4763,631 @@ function drawSprawls() {
     ctx.stroke();
     ctx.restore();
   });
+}
+
+// BJJ submissions. For now: the guillotine off a shot.
+//
+// When a Grappler shoots for a grab on a fighter with the guillotine, there's
+// a chance (`chance`%) the defender snaps on a guillotine instead: it wraps
+// an arm around the shooter's head and the two lock up. A tug-of-war bar
+// shows the choke sinking in against the escape. If the choke wins, the
+// shooter taps (three pats) and loses the fight on the spot: a win by
+// submission. If it doesn't finish, `outcomes` (relative odds) picks what
+// happens: they scramble apart on an angle (escape), the shooter pops its
+// head out and finishes the shot with ground and pound worth the shot's own
+// damage (gnp), the defender sinks it back in for another go (resink), or
+// the shooter, still caught in the hold, picks the defender up and slams it
+// for `slamDamage` (slam).
+//
+// The odds of the tap: `tapBase`% at full health, plus up to `tapLowHp`% more
+// the more damage the shooter has taken, so subs land late in fights the way
+// they do in real MMA. After a failed attempt the defender can't throw
+// another one for `cooldown` seconds.
+"use strict";
+
+var GUILLO_MIN_TIME = 2.6;   // the struggle lasts this long...
+var GUILLO_MAX_EXTRA = 1.2;  // ...plus up to this much more
+var GUILLO_TAP_TIME = 0.75;  // three pats, then the fight's called
+var GUILLO_ESCAPE_SPEED = 360;
+var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching): the shooter's head is driven in under the defender
+
+// Locked up in a submission (either applying it or caught in it), or down
+// on its back in guard.
+function subLocked(b) {
+  return !!(b.guillo || b.choked || b.guard);
+}
+
+function canGuillotine(def) {
+  if (!def.char.hasGuillotine || !def.alive || def.guilloCd > 0) return false;
+  return !(def.koOut || def.shocked || def.shelled || def.igbb || def.koRush || def.koDuel ||
+    def.slam || def.combo || def.taunt || def.flow || def.grapple || subLocked(def));
+}
+
+// Called from attemptGrab: true if the shot got caught in a guillotine.
+function tryGuillotine(attacker, target) {
+  if (!canGuillotine(target) || Math.random() >= target.char.guillotine.chance / 100) return false;
+  beginGuillotine(target, attacker);
+  return true;
+}
+
+function beginGuillotine(def, atk) {
+  var gu = def.char.guillotine;
+  var hurtFrac = 1 - Math.max(0, Math.min(1, atk.hp / MAX_HP));
+  var tapChance = Math.min(95, gu.tapBase + gu.tapLowHp * hurtFrac);
+  // The pair always locks up side by side (the shooter bent over sideways,
+  // the way it looks from cageside), on whichever side it shot in from,
+  // unless there's no room for it there before the wall.
+  var side = atk.x >= def.x ? 1 : -1;
+  var reach = (def.r + atk.r) * GUILLO_GAP + atk.r;
+  if (def.x + side * reach > W || def.x + side * reach < 0) side = -side;
+  def.guillo = {
+    atkId: atk.id, t: 0, dur: GUILLO_MIN_TIME + Math.random() * GUILLO_MAX_EXTRA,
+    taps: Math.random() < tapChance / 100, tapChance: tapChance, bar: 0, phase: "squeeze", tapT: 0,
+    nx: side, ny: 0, wob: Math.random() * 10
+  };
+  atk.choked = true;
+  atk.grappleCd = atk.char.grapple ? atk.char.grapple.cooldown : 0;
+  [atk, def].forEach(function (b) {
+    b.vx = 0; b.vy = 0;
+    b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null; b.checkAnim = null;
+  });
+  floater(def.x, Math.min(atk.y, def.y) - def.r - 30, "GUILLOTINE", "crit");
+  playPunch(20);
+  if (!reduceMotion) shake = Math.max(shake, 8);
+}
+
+// Runs on the fighter applying the choke each frame; the one caught in it is
+// held still.
+function updateGuillotine(self, dt) {
+  var g = self.guillo, atk = balls[g.atkId];
+  if (!self.alive || !atk.alive) { endGuillotine(self); return; }
+  g.t += dt;
+  self.vx = 0; self.vy = 0; atk.vx = 0; atk.vy = 0;
+
+  if (g.phase === "squeeze" || g.phase === "tap") {
+    // The shooter's head stays tucked under the defender's arm, and both
+    // shudder a little as they fight over it.
+    var jit = reduceMotion || g.phase !== "squeeze" ? 0 : 1.6;
+    var gap = (self.r + atk.r) * GUILLO_GAP;
+    atk.x = self.x + g.nx * gap + (Math.random() - 0.5) * jit;
+    atk.y = self.y + (Math.random() - 0.5) * jit;
+  }
+
+  if (g.phase === "squeeze") {
+    // The bar swings back and forth, then commits to how it ends: +1 is the
+    // choke sunk in, -1 is the escape.
+    var p = Math.min(1, g.t / g.dur), sgn = g.taps ? 1 : -1;
+    var drift = sgn * Math.pow(p, 2.2);
+    var swing = Math.sin(g.t * 4.7 + g.wob) * Math.sin(g.t * 1.9 + g.wob * 0.5) * 0.55 * (1 - p);
+    g.bar = Math.max(-1, Math.min(1, drift + swing));
+    if (p < 1) return;
+    g.bar = sgn;
+    if (g.taps) {
+      g.phase = "tap";
+      floater(atk.x, Math.min(atk.y, self.y) - atk.r - 30, "TAP", "crit");
+      playPunch(10);
+    } else {
+      guilloNotFinished(self, atk, g);
+    }
+    return;
+  }
+  if (g.phase === "tap") {
+    // Three pats on the defender, then the fight is over.
+    g.tapT += dt;
+    if (g.tapT >= GUILLO_TAP_TIME) {
+      endGuillotine(self);
+      submit(atk);
+    }
+    return;
+  }
+  if (g.phase === "drive" || g.phase === "mount" || g.phase === "pound") { updateGuilloGnp(self, atk, g, dt); return; }
+  if (g.phase === "lift") updateGuilloSlam(self, atk, g, dt);
+}
+
+// The choke didn't finish. What happens next is rolled from `outcomes`:
+// they scramble apart (escape), the shooter drives through and finishes its
+// shot with ground and pound (gnp), the defender sinks it back in for
+// another go (resink), or the shooter picks the defender up, hold and all,
+// and slams it (slam).
+function guilloNotFinished(self, atk, g) {
+  var oc = self.char.guillotine.outcomes, roll = Math.random() * (oc.escape + oc.gnp + oc.resink + oc.slam);
+  var cx = (self.x + atk.x) / 2, cy = Math.min(atk.y, self.y) - atk.r - 30;
+  if ((roll -= oc.escape) < 0) {
+    floater(cx, cy, "ESCAPE", "note");
+    releaseGuillotine(self, atk, g);
+    // They pop apart on an angle, spinning off each other.
+    var a = (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 0.35);
+    var ex = Math.cos(a) * g.nx, ey = Math.sin(a);
+    atk.vx = ex * GUILLO_ESCAPE_SPEED; atk.vy = ey * GUILLO_ESCAPE_SPEED;
+    self.vx = -ex * GUILLO_ESCAPE_SPEED; self.vy = -ey * GUILLO_ESCAPE_SPEED;
+  } else if ((roll -= oc.gnp) < 0) {
+    floater(cx, cy, "HEAD'S OUT", "note");
+    beginGuilloGnp(self, atk, g);
+  } else if ((roll -= oc.resink) < 0) {
+    floater(cx, cy, "RE-SINK", "crit");
+    g.phase = "squeeze"; g.t = 0; g.bar = 0; g.wob = Math.random() * 10;
+    g.dur = GUILLO_MIN_TIME + Math.random() * GUILLO_MAX_EXTRA;
+    g.taps = Math.random() < g.tapChance / 100;
+    atk.flash = 0.16;
+    if (!reduceMotion) shake = Math.max(shake, 8);
+    playPunch(20);
+  } else {
+    floater(cx, cy, "GUILLOTINE SLAM", "crit");
+    g.phase = "lift"; g.t = 0; g.sx = atk.x; g.sy = atk.y;
+    playWhoosh();
+  }
+}
+
+// Lets go: the fight carries on, and the defender can't go for another
+// guillotine for a while.
+function releaseGuillotine(self, atk, g) {
+  self.guilloCd = self.char.guillotine.cooldown;
+  atk.grappleCd = atk.char.grapple ? atk.char.grapple.cooldown : 0;
+  endGuillotine(self);
+}
+
+// ---------------------------------------------------------------
+// The shooter pulls its head out and finishes the shot: drives the defender
+// down to the floor, climbs on top and hammers it with ground and pound
+// worth what the shot itself would have done.
+// ---------------------------------------------------------------
+var GNP_DRIVE_TIME = 0.4, GNP_MOUNT_TIME = 0.25, GNP_PUNCHES = 4;
+
+function beginGuilloGnp(self, atk, g) {
+  var total = atk.char.grapple ? atk.char.grapple.damage : 50;
+  // Splits the shot's damage over the punches in whole numbers.
+  g.hits = [];
+  for (var i = 0; i < GNP_PUNCHES; i++) {
+    g.hits.push(Math.round(total * (i + 1) / GNP_PUNCHES) - Math.round(total * i / GNP_PUNCHES));
+  }
+  g.phase = "drive"; g.t = 0;
+  g.sx = self.x; g.sy = self.y;
+  g.ex = Math.max(self.r + 40, Math.min(W - self.r - 40, self.x)); g.ey = H - self.r - 2;
+  g.ax = atk.x; g.ay = atk.y;
+  playWhoosh();
+}
+
+function updateGuilloGnp(self, atk, g, dt) {
+  var k;
+  if (g.phase === "drive") {
+    // Runs them down into the floor, the shooter's shoulder in their gut.
+    k = Math.min(1, g.t / GNP_DRIVE_TIME); k = k * k;
+    self.x = g.sx + (g.ex - g.sx) * k; self.y = g.sy + (g.ey - g.sy) * k;
+    var gap = (self.r + atk.r) * 0.8;
+    atk.x = self.x + g.nx * gap * (1 - k * 0.3); atk.y = self.y - gap * 0.6 * k;
+    if (k < 1) return;
+    guilloImpact(atk, self, 0, false);
+    floater(self.x, self.y - self.r - 30, "TAKEDOWN", "note");
+    g.phase = "mount"; g.t = 0; g.mx = atk.x; g.my = atk.y;
+    return;
+  }
+  // On top of them from the side nearer the middle, like Father's Plan.
+  if (!g.dir) g.dir = self.x > W / 2 ? -1 : 1;
+  var tx = self.x + g.dir * (self.r + atk.r) * 0.62, ty = self.y - (self.r + atk.r) * 0.62;
+  if (g.phase === "mount") {
+    k = Math.min(1, g.t / GNP_MOUNT_TIME);
+    atk.x = g.mx + (tx - g.mx) * k; atk.y = g.my + (ty - g.my) * k;
+    if (k >= 1) { g.phase = "pound"; g.t = 0; g.thrown = 0; }
+    return;
+  }
+  var gp = g.gp, lean = 0;
+  if (gp) {
+    gp.t += dt;
+    if (gp.t < gp.wind) lean = -6 * (gp.t / gp.wind);
+    else if (gp.t < gp.wind + FP_STRIKE) lean = 12;
+    else lean = 12 * Math.max(0, 1 - (gp.t - gp.wind - FP_STRIKE) / FP_RECOIL);
+    if (!gp.hit && gp.t >= gp.wind + FP_STRIKE) { gp.hit = true; landGnpPunch(atk, self, gp); }
+    if (gp.t >= gp.wind + FP_STRIKE + FP_RECOIL) g.gp = null;
+  }
+  atk.x = tx + Math.sin(g.t * 31) * 1.5; atk.y = ty + lean;
+  if (!self.alive) { endGuillotine(self); checkEnd(); return; }
+  if (!g.gp && g.thrown < g.hits.length) {
+    var last = g.thrown === g.hits.length - 1;
+    g.gp = { t: 0, wind: last ? FP_WIND_LAST * 0.8 : FP_WIND, hit: false, last: last, side: g.thrown % 2 ? -1 : 1, dmg: g.hits[g.thrown] };
+    g.thrown++;
+    playWhoosh();
+  }
+  if (g.thrown >= g.hits.length && !g.gp) {
+    // Done: lets them up and gets back to its feet.
+    releaseGuillotine(self, atk, g);
+    self.vx = 0; self.vy = -SPEED * 0.6;
+    atk.vx = g.dir * SPEED * 0.6; atk.vy = -SPEED * 0.3;
+  }
+}
+
+function landGnpPunch(top, under, gp) {
+  var big = gp.last;
+  var dealt = hurt(under, gp.dmg, "finisher", top.id);
+  if (dealt > 0) playPunch(dealt * (big ? 4 : 3));
+  var cx = under.x, cy = under.y - under.r * 0.45;
+  under.squash = { t: big ? 0.28 : 0.18, max: big ? 0.28 : 0.18, nx: 0, ny: -1 };
+  impacts.push({ x: cx, y: cy, nx: 0, ny: -1, life: big ? 0.55 : 0.4, max: big ? 0.55 : 0.4, color: theme.hit });
+  igbbSparks(cx, cy, 0, -1, top.char.color, big ? 26 : 16, big ? 560 : 420);
+  if (!reduceMotion) shake = Math.max(shake, big ? 26 : 16);
+  hitStop = Math.max(hitStop, big ? 0.18 : 0.08);
+  checkEnd();
+}
+
+// ---------------------------------------------------------------
+// Guillotine slam: still caught in the hold, the shooter stands up with the
+// defender hanging off its neck, carries it up and over the top, and slams
+// it down on the other side.
+// ---------------------------------------------------------------
+var GSLAM_LIFT_TIME = 0.6;
+
+function updateGuilloSlam(self, atk, g, dt) {
+  var k = Math.min(1, g.t / GSLAM_LIFT_TIME);
+  g.e = k < 0.6 ? k / 0.6 * 0.5 : 0.5 + Math.pow((k - 0.6) / 0.4, 2) * 0.5; // slow lift, fast drop
+  // The defender goes up and over in an arc from its side of the shooter to
+  // the other.
+  // Held in tight by the neck so the arm never stretches.
+  var ang = Math.PI * g.e, reach = (self.r + atk.r) * 0.7;
+  var ex = atk.x + g.nx * reach;
+  var ey = Math.min(H - self.r - 2, atk.y + self.r * 0.3);
+  var midX = atk.x - g.nx * Math.cos(ang) * reach, midY = atk.y - Math.sin(ang) * reach;
+  self.x = midX; self.y = Math.min(midY, ey);
+  if (k < 1) return;
+  self.x = ex; self.y = ey;
+  // Big slam: a heavy impact that breaks the hold.
+  guilloImpact(atk, self, self.char.guillotine.slamDamage, true);
+  releaseGuillotine(self, atk, g);
+  checkEnd();
+  if (self.alive) { self.vx = g.nx * 200; self.vy = 120; atk.vx = -g.nx * 260; atk.vy = -80; }
+}
+
+// Driven into the floor: flattened, a shockwave, sparks, a freeze-frame.
+function guilloImpact(by, b, dmg, big) {
+  var cx = b.x, cy = b.y + b.r;
+  b.squash = { t: big ? 0.3 : 0.18, max: big ? 0.3 : 0.18, nx: 0, ny: -1 };
+  b.flash = 0.16;
+  impacts.push({ x: cx, y: cy, nx: 0, ny: -1, life: 0.5, max: 0.5, color: by.char.color });
+  impacts.push({ x: cx, y: cy, nx: 0, ny: -1, life: big ? 0.8 : 0.55, max: big ? 0.8 : 0.55, color: theme.hit });
+  igbbSparks(cx, cy, 0, -1, by.char.color, big ? 30 : 14, big ? 620 : 420);
+  if (!reduceMotion) shake = Math.max(shake, big ? 34 : 18);
+  hitStop = Math.max(hitStop, big ? 0.24 : 0.08);
+  playSlam(); playPunch(big ? 50 : 30);
+  if (dmg > 0) hurt(b, dmg, "finisher", by.id);
+}
+
+function endGuillotine(self) {
+  var g = self.guillo;
+  if (!g) return;
+  balls[g.atkId].choked = false;
+  self.guillo = null;
+}
+
+// Loses by submission: no damage number, just out.
+function submit(b) {
+  b.hp = 0; b.shown = 0; b.alive = false;
+  burst(b);
+  document.getElementById("hud" + b.id).classList.add("dead");
+  winBy = "submission";
+  checkEnd();
+}
+
+// How hard the choke is sunk in right now (0 to 1).
+function guilloSqueeze(g) {
+  if (g.phase === "tap" || g.phase === "lift") return 1;
+  return g.phase === "squeeze" ? Math.max(0, g.bar) : 0;
+}
+
+// Still in the hold (as opposed to the ground and pound after it).
+function guilloHolding(g) {
+  return g.phase === "squeeze" || g.phase === "tap" || g.phase === "lift";
+}
+
+// Which of the pair is drawn underneath: the shooter while its head is
+// buried in the hold, the defender once it's been taken down.
+function guilloUnder(b) {
+  var def = b.guillo ? b : (b.choked ? balls[1 - b.id] : null);
+  if (!def || !def.guillo) return false;
+  var holding = guilloHolding(def.guillo);
+  return b === def ? !holding : holding;
+}
+
+// Poses both fighters while they're locked in a guillotine: the shooter is
+// bent over sideways, head first into the defender's side (its head, the top
+// third of the ball, turned to face the defender), and the defender leans
+// back as it pulls the choke up. Called by the fighter drawing with the
+// canvas already set up for that fighter.
+function applyGuilloPose(b) {
+  var g = b.guillo, def = b;
+  if (!g) {
+    if (!b.choked) return;
+    def = balls[1 - b.id];
+    g = def.guillo;
+    if (!g) return;
+  }
+  if (g.phase === "mount" || g.phase === "pound") return; // back upright on top
+  var angle = b === def ? guilloDefAngle(g) : guilloShooterAngle(g);
+  ctx.translate(b.x, b.y);
+  ctx.rotate(angle);
+  ctx.translate(-b.x, -b.y);
+}
+
+// The defender leans back away from the shooter, pulling up on the choke,
+// and a little further as it sinks in.
+function guilloDefLean(g) {
+  return -g.nx * (0.35 + 0.15 * guilloSqueeze(g));
+}
+
+// How far each of the pair is turned. g.nx is +1 when the shooter is on the
+// defender's right, -1 on its left. The shooter is bent over sideways, head
+// first; on a guillotine slam it straightens up as it lifts, and the
+// defender flips over the top.
+function guilloShooterAngle(g) {
+  var e = g.phase === "lift" ? (g.e || 0) : 0;
+  return -g.nx * Math.PI / 2 * (1 - e);
+}
+function guilloDefAngle(g) {
+  var e = g.phase === "lift" ? (g.e || 0) : 0;
+  return guilloDefLean(g) + g.nx * Math.PI * e;
+}
+
+// An arm: a dark outline with the skin colour inside it.
+function strokeLimb(width, color, path) {
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  [[theme.wall, width + 6], [color, width]].forEach(function (pass) {
+    ctx.strokeStyle = pass[0]; ctx.lineWidth = pass[1];
+    ctx.beginPath(); path(); ctx.stroke();
+  });
+}
+
+function drawGloveAt(x, y, r, ch) {
+  ctx.fillStyle = gloveColor(ch); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+}
+
+function drawGuillotines() {
+  balls.forEach(function (self) {
+    var g = self.guillo;
+    if (!g) return;
+    var atk = balls[g.atkId];
+    if (g.gp) { drawFpPound(atk, g.gp); return; }
+    if (!guilloHolding(g)) return;
+    var squeeze = guilloSqueeze(g);
+    var s = g.nx, r = self.r, ar = atk.r;
+    // Points on the defender turn with its lean.
+    var la = guilloDefAngle(g), lc = Math.cos(la), ls = Math.sin(la);
+    // The shooter's head direction (h) and across its neck (q, toward the
+    // side the defender's arm comes over), turning with the shooter.
+    var ka = guilloShooterAngle(g);
+    var hx = Math.sin(ka), hy = -Math.cos(ka), qx = Math.cos(ka) * s, qy = Math.sin(ka) * s;
+    function onAtk(alongHead, acrossNeck) { return { x: atk.x + hx * alongHead + qx * acrossNeck, y: atk.y + hy * alongHead + qy * acrossNeck }; }
+    function onDef(ox, oy) { return { x: self.x + ox * lc - oy * ls, y: self.y + ox * ls + oy * lc }; }
+    ctx.save();
+
+    // The shooter's head is buried under the defender; what still shows of
+    // it, up to the neck, goes red as the choke sinks in.
+    if (squeeze > 0) {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(atk.x, atk.y, ar, 0, Math.PI * 2); ctx.clip();
+      ctx.beginPath();
+      ctx.arc(atk.x, atk.y, ar, 0, Math.PI * 2);
+      ctx.arc(self.x, self.y, r, 0, Math.PI * 2);
+      ctx.clip("evenodd"); // the shooter minus the part under the defender
+      ctx.globalAlpha = 0.55 * squeeze;
+      ctx.fillStyle = "#d62020";
+      var face = onAtk(ar * 0.68, 0);
+      ctx.beginPath(); ctx.arc(face.x, face.y, ar * 0.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    // The defender's near arm: off its shoulder, over the top of the
+    // shooter's neck (where its head meets its torso) and straight down
+    // across it, both hands locked together underneath.
+    // Everything on the neck turns with the shooter (e.g. as it's lifted
+    // for a guillotine slam).
+    var sh = onDef(s * r * 0.45, -r * 0.72);
+    var over = onAtk(ar * 0.33, ar * 0.9), bend = onAtk(ar * 0.38, ar * 1.2), under = onAtk(ar * 0.33, -ar * 0.62);
+    strokeLimb(r * 0.24, armColor(self.char), function () {
+      ctx.moveTo(sh.x, sh.y);
+      ctx.quadraticCurveTo(bend.x, bend.y, over.x, over.y);
+      ctx.lineTo(under.x, under.y);
+    });
+    var g1 = onAtk(ar * 0.33 + r * 0.1, -ar * 0.62 - r * 0.06), g2 = onAtk(ar * 0.33 - r * 0.1, -ar * 0.62 - r * 0.12);
+    drawGloveAt(g1.x, g1.y, r * 0.27, self.char);
+    drawGloveAt(g2.x, g2.y, r * 0.27, self.char);
+
+    // Tapping: the shooter reaches up with a free hand and pats the
+    // defender's back three times.
+    if (g.phase === "tap") {
+      var pat = Math.abs(Math.sin(g.tapT / GUILLO_TAP_TIME * Math.PI * 3));
+      var hand = onDef(-s * r * 0.15, -r * 0.95 - pat * r * 0.35), hx = hand.x, hy = hand.y;
+      strokeLimb(ar * 0.26, armColor(atk.char), function () {
+        ctx.moveTo(atk.x + s * ar * 0.1, atk.y - ar * 0.8);
+        ctx.quadraticCurveTo(atk.x - s * ar * 0.3, hy - r * 0.2, hx, hy);
+      });
+      drawGloveAt(hx, hy, ar * 0.26, atk.char);
+    }
+
+    // Tug-of-war bar over the pair: the defender's colour is the choke,
+    // the shooter's is the escape. The marker is where it stands.
+    var bw = 150, bh = 12, cx = (self.x + atk.x) / 2;
+    var bx = Math.min(W - bw - 6, Math.max(6, cx - bw / 2));
+    var by = Math.min(self.y, atk.y) - r - 64;
+    if (by < 8) by = Math.max(self.y, atk.y) + r + 30;
+    var split = bw * (g.bar + 1) / 2;
+    ctx.fillStyle = self.char.color; ctx.fillRect(bx, by, split, bh);
+    ctx.fillStyle = atk.char.color; ctx.fillRect(bx + split, by, bw - split, bh);
+    ctx.lineWidth = 2.5; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+    ctx.fillStyle = theme.ink;
+    ctx.fillRect(bx + split - 2, by - 4, 4, bh + 8);
+    ctx.restore();
+  });
+}
+
+// Guard: a BJJ fighter who gets hit can fall onto its back and play guard.
+//
+// When a strike lands on a fighter with the guard, there's a `chance`% it
+// drops onto its back in guard instead of staying on its feet. It's planted
+// there for `time` seconds with a circle of `radius` around it; whoever hit
+// it is shoved back out of the circle first. The first time the opponent
+// steps into the circle, it's a coin flip (passChance%):
+//   - Guard passed: the opponent gets on top for passPunches free
+//     ground-and-pound punches of passDamage each.
+//   - Caught: the guard player snatches a submission, picked at random from
+//     `subs`. For now that's only the guillotine (bjj.js), as a placeholder
+//     until the guard's own submissions are designed.
+// If nobody steps in before the time's up, it gets back to its feet. Either
+// way it can't pull guard again for `cooldown` seconds once it's up.
+"use strict";
+
+var GUARD_GETUP_SPEED = 220;
+
+// Strikes that can knock it down into guard (not grabs, slams, specials or
+// anything that's already moving it around).
+var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, proj: true, combo: true };
+
+// Starts a guard submission on `atk`. Each entry in `subs` names one.
+var GUARD_SUBS = {
+  guillotine: function (self, atk) { beginGuillotine(self, atk); }
+};
+
+// Called from hurt() after a hit lands.
+function tryPullGuard(b, source, attackerId) {
+  if (!b.char.hasGuard || !GUARD_SOURCES[source] || b.guardCd > 0 || attackerId == null) return;
+  var atk = balls[attackerId];
+  if (!atk || !atk.alive || specialBusy(b) || specialBusy(atk) || b.invincible) return;
+  if (Math.random() >= b.char.guard.chance / 100) return;
+  beginGuard(b, atk);
+}
+
+function beginGuard(b, atk) {
+  var gd = b.char.guard;
+  clearActions(b);
+  clearActions(atk);
+  b.vx = 0; b.vy = 0;
+  b.guard = {
+    t: 0, dur: gd.time, radius: gd.radius,
+    side: atk.x >= b.x ? 1 : -1,  // legs up toward the opponent
+    armed: false                   // the opponent has to be outside the circle before it can step in
+  };
+  b.guardCd = gd.cooldown;
+  // Whoever knocked it down backs off out of the circle.
+  var dx = atk.x - b.x, dy = atk.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var out = gd.radius + 6;
+  atk.x = b.x + dx / d * out; atk.y = b.y + dy / d * out;
+  atk.vx = dx / d * SPEED; atk.vy = dy / d * SPEED;
+  b.squash = { t: 0.18, max: 0.18, nx: 0, ny: -1 };
+  floater(b.x, b.y - b.r - 30, "GUARD", "crit");
+  playSlam();
+  if (!reduceMotion) shake = Math.max(shake, 8);
+}
+
+// Runs on the guard player each frame while it's on its back.
+function updateGuard(self, other, dt) {
+  var g = self.guard;
+  self.vx = 0; self.vy = 0;
+  g.t += dt;
+  if (g.t >= g.dur || !other.alive) { endGuard(self, "STANDS UP"); return; }
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
+  if (d >= g.radius) { g.armed = true; return; }
+  // Only an opponent that's free to engage steps in (not one flying off a
+  // slam, sitting in a seat, mid special and so on).
+  if (!g.armed || other.invincible || other.slam || specialBusy(other)) return;
+  clearActions(other);
+  if (Math.random() < self.char.guard.passChance / 100) passGuard(self, other, g);
+  else catchInGuard(self, other);
+}
+
+function endGuard(self, text) {
+  self.guard = null;
+  if (text) floater(self.x, self.y - self.r - 30, text, "note");
+  var a = Math.random() * Math.PI * 2;
+  self.vx = Math.cos(a) * GUARD_GETUP_SPEED; self.vy = Math.sin(a) * GUARD_GETUP_SPEED;
+}
+
+// Guard passed: the opponent climbs on top and gets free ground and pound.
+// This uses the guillotine's ground-and-pound (bjj.js), straight from the
+// mount, with the guard player still flat on its back underneath.
+function passGuard(self, atk, g) {
+  var gd = self.char.guard;
+  self.guard = null;
+  self.guillo = {
+    atkId: atk.id, t: 0, phase: "mount", fromGuard: true, side: g.side,
+    nx: g.side, ny: 0, mx: atk.x, my: atk.y, dir: g.side,
+    hits: Array.apply(null, Array(Math.max(1, gd.passPunches))).map(function () { return gd.passDamage; })
+  };
+  atk.choked = true;
+  atk.vx = 0; atk.vy = 0;
+  floater((self.x + atk.x) / 2, Math.min(self.y, atk.y) - self.r - 30, "GUARD PASSED", "crit");
+  playWhoosh();
+}
+
+// Caught: pulls the opponent in and goes for a submission.
+function catchInGuard(self, atk) {
+  var subs = self.char.guard.subs.filter(function (s) { return GUARD_SUBS[s]; });
+  self.guard = null;
+  floater(self.x, self.y - self.r - 60, "CAUGHT", "note");
+  GUARD_SUBS[subs.length ? subs[Math.floor(Math.random() * subs.length)] : "guillotine"](self, atk);
+}
+
+// Flat on its back: in guard, or underneath after the guard's been passed.
+function onBack(b) {
+  if (b.guard) return b.guard.side;
+  if (b.guillo && b.guillo.fromGuard && (b.guillo.phase === "mount" || b.guillo.phase === "pound")) return b.guillo.side;
+  return 0;
+}
+
+// Lays the ball on its back, head away from the opponent and hips toward
+// it. Called with the canvas already set up for that fighter.
+function applyGuardPose(b) {
+  var side = onBack(b);
+  if (!side) return;
+  ctx.translate(b.x, b.y);
+  ctx.rotate(-side * Math.PI / 2);
+  ctx.translate(-b.x, -b.y);
+}
+
+// The guard circle (with a ring that drains as the time runs out), drawn on
+// the floor under the fighters.
+function drawGuardZones() {
+  balls.forEach(function (b) {
+    var g = b.guard;
+    if (!g || !b.alive) return;
+    var left = Math.max(0, 1 - g.t / g.dur);
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = b.char.color;
+    ctx.beginPath(); ctx.arc(b.x, b.y, g.radius, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.85;
+    ctx.setLineDash([10, 8]);
+    ctx.lineDashOffset = -g.t * 30;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = b.char.color;
+    ctx.beginPath(); ctx.arc(b.x, b.y, g.radius, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineCap = "round";
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(b.x, b.y, g.radius + 7, -Math.PI / 2, -Math.PI / 2 + left * Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  });
+}
+
+// Both legs up in guard toward the opponent, feet pedalling a little.
+function drawGuardLegs(b) {
+  var g = b.guard;
+  if (!g || !b.alive) return;
+  var s = g.side, r = b.r, look = b.char.look;
+  var skin = look ? look.skin : b.char.color, shorts = look ? look.shorts : b.char.color;
+  ctx.save();
+  [-1, 1].forEach(function (k, i) {
+    var pedal = reduceMotion ? 0 : Math.sin(g.t * 6 + i * Math.PI) * r * 0.12;
+    var hipX = b.x + s * r * 0.55, hipY = b.y + k * r * 0.35;
+    var kneeX = b.x + s * r * 1.15, kneeY = b.y + k * r * 0.62 - r * 0.55 + pedal;
+    var footX = b.x + s * r * 1.5 + pedal * 0.5, footY = b.y + k * r * 0.3 - r * 0.95;
+    strokeLimb(r * 0.3, skin, function () {
+      ctx.moveTo(hipX, hipY); ctx.lineTo(kneeX, kneeY); ctx.lineTo(footX, footY);
+    });
+    // Shorts over the thigh
+    strokeLimb(r * 0.36, shorts, function () {
+      ctx.moveTo(hipX, hipY); ctx.lineTo(hipX + (kneeX - hipX) * 0.45, hipY + (kneeY - hipY) * 0.45);
+    });
+    ctx.fillStyle = skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.ellipse(footX, footY, r * 0.2, r * 0.13, -s * 0.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
+  ctx.restore();
 }
 
 // CTE's abilities.
@@ -5507,7 +6283,7 @@ function tickSpecialCharge(b, dt) {
 
 // Busy with something that shouldn't be interrupted.
 function specialBusy(b) {
-  return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || b.combo || b.taunt || b.flow ||
+  return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.combo || b.taunt || b.flow ||
     b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled;
 }
 function canStartIgbb(self, other) {
@@ -6064,6 +6840,8 @@ function update(dt) {
     if (b.checkStun > 0) { b.checkStun = Math.max(0, b.checkStun - dt); b.vx = 0; b.vy = 0; }
     if (b.checkAnim) stepInForKickBack(b, balls[b.checkAnim.towardId]);
     if (b.slamSafe > 0) b.slamSafe = Math.max(0, b.slamSafe - dt);
+    if (b.guilloCd > 0) b.guilloCd = Math.max(0, b.guilloCd - dt);
+    if (b.guardCd > 0 && !subLocked(b)) b.guardCd = Math.max(0, b.guardCd - dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);
@@ -6168,14 +6946,17 @@ function defaultLook() {
   return {
     skin: "#d9a27e", build: "muscular", bodyHair: "none",
     hair: "short", hairColor: "#2b2019", beard: "none", ears: "normal",
-    tattoos: { chest: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
+    tattoos: { chest: false, portraits: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
     shorts: "#1e3a8a", trim: "#f2f2f2", shortsStyle: "stripe", gloves: "#141414"
   };
 }
 
 // Arms, legs and fists of fighters with art use skin and glove colours;
 // everyone else keeps their fighter colour.
-function armColor(ch) { return ch.look ? ch.look.skin : ch.color; }
+function armColor(ch) {
+  if (!ch.look) return ch.color;
+  return ch.look.tattoos && ch.look.tattoos.armInk ? sleevePattern(ch.look) : ch.look.skin;
+}
 function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
 
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
@@ -6537,7 +7318,19 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.globalAlpha = 1;
   }
 
-  // Tattoos
+  // Tattoos. In the contained layout nothing is inked above the chin line,
+  // so clip to the area under it (the jaw curve, mapped into torso space).
+  c.save();
+  if (contained) {
+    var tx = function (x) { return x / 0.86; }, ty = function (y) { return (y - r * 0.11) / 0.59; };
+    c.beginPath();
+    c.moveTo(tx(-r), ty(-r * 0.44));
+    c.lineTo(tx(-r * 0.66), ty(-r * 0.44));
+    c.quadraticCurveTo(tx(-r * 0.5), ty(-r * 0.2), 0, ty(-r * 0.2));
+    c.quadraticCurveTo(tx(r * 0.5), ty(-r * 0.2), tx(r * 0.66), ty(-r * 0.44));
+    c.lineTo(tx(r), ty(-r * 0.44)); c.lineTo(tx(r), ty(r)); c.lineTo(tx(-r), ty(r)); c.closePath();
+    c.clip();
+  }
   var tat = look.tattoos || {};
   var inkCol = "rgba(28,34,52,0.62)";
   c.strokeStyle = inkCol; c.fillStyle = inkCol;
@@ -6554,11 +7347,80 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
+  if (tat.portraits) {
+    // Black-and-grey family portraits filling the upper chest: a woman with
+    // long hair, an older man with grey hair (lowest) and a girl with dark
+    // hair (highest), over smoky shading down to the pecs.
+    var tall = contained ? 0.86 / 0.59 : 1;  // undo the torso squeeze so faces stay round
+    var faceSkin = shadeHex(skin, 0.06), shade = "rgba(28,34,52,";
+    c.fillStyle = shade + "0.2)";
+    for (var sm = 0; sm < 7; sm++) {
+      c.beginPath(); c.ellipse(r * (-0.33 + sm * 0.11), -r * (0.24 + (sm % 2) * 0.04), r * 0.12, r * 0.07, 0, 0, Math.PI * 2); c.fill();
+    }
+    [{ x: -0.27, y: -0.4, w: 0.14, hair: "long" }, { x: 0, y: -0.36, w: 0.145, hair: "grey" }, { x: 0.27, y: -0.42, w: 0.135, hair: "girl" }].forEach(function (pt) {
+      var w = r * pt.w;
+      c.save(); c.translate(r * pt.x, r * pt.y); c.scale(1, tall / 1.15);
+      // Hair behind the face
+      if (pt.hair === "long") {
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 1.05, w * 1.15); c.quadraticCurveTo(-w * 1.25, -w * 1.25, 0, -w * 1.3);
+        c.quadraticCurveTo(w * 1.25, -w * 1.25, w * 1.05, w * 1.15); c.quadraticCurveTo(0, w * 0.9, -w * 1.05, w * 1.15); c.fill();
+      } else if (pt.hair === "girl") {
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.moveTo(-w * 1.02, w * 0.75); c.quadraticCurveTo(-w * 1.25, -w * 1.3, 0, -w * 1.32);
+        c.quadraticCurveTo(w * 1.25, -w * 1.3, w * 1.02, w * 0.75); c.quadraticCurveTo(0, w * 0.5, -w * 1.02, w * 0.75); c.fill();
+      } else {
+        c.fillStyle = shade + "0.35)";
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.98, w * 1.05, 0, Math.PI, Math.PI * 2); c.fill();
+      }
+      // Face, shaded round the edges
+      var fg = c.createRadialGradient(-w * 0.15, -w * 0.15, w * 0.1, 0, 0, w * 1.05);
+      fg.addColorStop(0, faceSkin); fg.addColorStop(0.65, shadeHex(skin, -0.08)); fg.addColorStop(1, shadeHex(skin, -0.3));
+      c.fillStyle = fg;
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = shade + "0.16)"; c.fill();  // grey ink wash
+      if (pt.hair === "girl") {
+        // Fringe across the forehead
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.ellipse(0, -w * 0.72, w * 0.76, w * 0.32, 0, 0, Math.PI * 2); c.fill();
+      } else if (pt.hair === "long") {
+        // Hair parted over the forehead
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 0.78, -w * 0.1); c.quadraticCurveTo(-w * 0.6, -w * 0.95, w * 0.1, -w * 0.92);
+        c.quadraticCurveTo(-w * 0.35, -w * 0.6, -w * 0.78, -w * 0.1); c.fill();
+      } else {
+        // Receding grey hairline
+        c.strokeStyle = shade + "0.45)"; c.lineWidth = lw(0.02);
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.8, w * 0.75, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+      }
+      // Soft shading only: brow line and the shadow of a smile
+      c.fillStyle = shade + "0.3)";
+      c.beginPath(); c.ellipse(0, -w * 0.2, w * 0.5, w * 0.1, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(0, w * 0.45, w * 0.32, w * 0.12, 0, 0, Math.PI); c.fill();
+      c.strokeStyle = shade + "0.55)"; c.lineWidth = lw(0.018);
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.stroke();
+      c.restore();
+    });
+    // A short line of script under the girl's portrait
+    c.strokeStyle = shade + "0.6)"; c.lineWidth = lw(0.016);
+    c.beginPath();
+    for (var sc = 0; sc <= 12; sc++) {
+      var sx = r * (0.18 + sc * 0.012), sy = -r * 0.2 + Math.sin(sc * 1.8) * r * 0.014;
+      if (sc === 0) c.moveTo(sx, sy); else c.lineTo(sx, sy);
+    }
+    c.stroke();
+    c.strokeStyle = inkCol; c.fillStyle = inkCol; c.globalAlpha = 1;
+  }
   [["leftArm", -1], ["rightArm", 1]].forEach(function (p) {
     if (!tat[p[0]]) return;
-    var s = p[1];
+    var s = p[1], style = tat[p[0]];
     // Sleeve running over the shoulder: bands and curls
     c.save();
+    if (style === "dense" || style === "lion") {
+      drawNamedSleeve(c, r, s, style, inkCol, lw, artSeed(name + p[0]), contained ? 0.86 / 0.59 : 1);
+      c.restore();
+      return;
+    }
     c.beginPath(); c.arc(s * r * 1.02, -r * 0.3, r * 0.4, 0, Math.PI * 2); c.clip();
     c.globalAlpha = 0.38; c.fillRect(s > 0 ? r * 0.6 : -r, -r, r * 0.4, r * 1.2);
     if (tat.color) {
@@ -6613,6 +7475,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.stroke();
   }
 
+  c.restore();
   if (contained) c.restore();
 
   // Fight shorts
@@ -6648,6 +7511,18 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.beginPath(); c.arc(spx, spy, pz * 0.4, 0, Math.PI * 2); c.fill();
     }
     c.globalAlpha = 1;
+  }
+  if (look.shortsStyle === "chevron") {
+    // A wide diagonal panel sweeping up the right leg, pinstripes on the left
+    c.fillStyle = look.trim;
+    c.beginPath();
+    c.moveTo(r * 0.06, r); c.lineTo(r * 0.4, r);
+    c.lineTo(r * 0.94, sTop + band); c.lineTo(r * 0.6, sTop + band); c.closePath(); c.fill();
+    c.strokeStyle = look.trim; c.lineWidth = lw(0.035);
+    c.beginPath(); c.moveTo(-r * 0.12, r); c.lineTo(r * 0.46, sTop + band); c.stroke();
+    [0, 1].forEach(function (k) {
+      c.beginPath(); c.moveTo(-r * (0.86 - k * 0.12), sTop + band); c.lineTo(-r * (0.5 - k * 0.12), r); c.stroke();
+    });
   }
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
@@ -6686,6 +7561,92 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.077);
   c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.stroke();
+}
+
+// Named sleeve styles, drawn inside the shoulder clip at side `s`.
+// "dense": near solid black-and-grey from shoulder down, dark emblem on the delt.
+// "lion": a lion's head with a shaggy mane on the delt, patchier ink below.
+function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
+  // The arm hangs down the side of the ball, from the shoulder to the shorts
+  var rnd = artRand(seed), inner = r * 0.64, x0 = s * r * 0.8;
+  c.beginPath();
+  c.moveTo(s * r, -r * 0.95);
+  c.quadraticCurveTo(s * (inner - r * 0.04), -r * 0.9, s * (inner - r * 0.04), -r * 0.35);
+  c.quadraticCurveTo(s * (inner - r * 0.04), r * 0.1, s * (inner + r * 0.02), r * 0.6);
+  c.lineTo(s * r, r * 0.6); c.closePath(); c.clip();
+  c.fillStyle = inkCol;
+  c.globalAlpha = style === "dense" ? 0.95 : 0.2;
+  c.fillRect(s > 0 ? inner - r * 0.1 : -r, -r, r * 0.5, r * 1.6);
+  if (style === "lion") {
+    // Heavier ink on the forearm, lighter patches higher up
+    c.globalAlpha = 0.35; c.fillRect(s > 0 ? inner - r * 0.1 : -r, r * 0.05, r * 0.5, r * 0.6);
+  }
+  // Smoky blotches so it reads as shaded ink, not a flat band
+  for (var i = 0; i < 22; i++) {
+    c.globalAlpha = (style === "dense" ? 0.3 : 0.2) + rnd() * 0.25;
+    c.beginPath(); c.ellipse(x0 + (rnd() - 0.5) * r * 0.3, -r * 0.75 + rnd() * r * 1.35, r * (0.03 + rnd() * 0.06), r * (0.03 + rnd() * 0.05), rnd() * 3, 0, Math.PI * 2); c.fill();
+  }
+  c.globalAlpha = 1;
+  c.save(); c.translate(s * r * 0.83, -r * 0.5); c.scale(1, tall);
+  if (style === "dense") {
+    // Dark emblem on the delt: a body with legs reaching out
+    c.fillStyle = "rgba(14,16,24,0.9)"; c.strokeStyle = "rgba(14,16,24,0.9)"; c.lineWidth = lw(0.022);
+    c.beginPath(); c.ellipse(0, 0, r * 0.05, r * 0.075, 0, 0, Math.PI * 2); c.fill();
+    for (var l = 0; l < 4; l++) {
+      [-1, 1].forEach(function (d) {
+        var a = -0.9 + l * 0.6;
+        c.beginPath(); c.moveTo(0, 0);
+        c.quadraticCurveTo(d * r * 0.08, a * r * 0.06, d * r * 0.13, a * r * 0.11); c.stroke();
+      });
+    }
+  } else {
+    // Lion's head: a ring of mane tufts round a shaded face
+    var lr = r * 0.11;
+    c.strokeStyle = "rgba(20,24,36,0.8)"; c.lineWidth = lw(0.022);
+    for (var m = 0; m < 14; m++) {
+      var ma = m / 14 * Math.PI * 2;
+      c.beginPath();
+      c.moveTo(Math.cos(ma) * lr * 0.7, Math.sin(ma) * lr * 0.7);
+      c.quadraticCurveTo(Math.cos(ma + 0.3) * lr * 1.3, Math.sin(ma + 0.3) * lr * 1.3, Math.cos(ma + 0.15) * lr * 1.6, Math.sin(ma + 0.15) * lr * 1.6);
+      c.stroke();
+    }
+    c.fillStyle = "rgba(20,24,36,0.35)";
+    c.beginPath(); c.ellipse(0, lr * 0.1, lr * 0.62, lr * 0.75, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(20,24,36,0.65)";
+    c.beginPath(); c.ellipse(0, lr * 0.45, lr * 0.25, lr * 0.16, 0, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
+
+// Inked arm texture for fighters whose look sets tattoos.armInk: a skin tile
+// with black-and-grey swirls and shading, used as the arm stroke in attacks.
+var sleevePatterns = {};
+function sleevePattern(look) {
+  var key = look.skin;
+  if (sleevePatterns[key]) return sleevePatterns[key];
+  if (typeof document === "undefined") return look.skin;
+  var n = 24, cv = document.createElement("canvas");
+  cv.width = cv.height = n;
+  var c = cv.getContext("2d"), rnd = artRand(artSeed(key + "sleeve"));
+  c.fillStyle = look.skin; c.fillRect(0, 0, n, n);
+  c.fillStyle = "rgba(28,34,52,0.38)"; c.fillRect(0, 0, n, n);
+  c.strokeStyle = "rgba(14,16,24,0.8)"; c.lineWidth = 1.3; c.lineCap = "round";
+  for (var i = 0; i < 9; i++) {
+    var x = rnd() * n, y = rnd() * n, rr = 2 + rnd() * 4, a = rnd() * 6;
+    // Draw each mark at its wrapped copies so the tile repeats seamlessly
+    [-n, 0, n].forEach(function (dx) {
+      [-n, 0, n].forEach(function (dy) {
+        if (i % 3 === 0) {
+          c.fillStyle = "rgba(14,16,24,0.45)";
+          c.beginPath(); c.ellipse(x + dx, y + dy, rr, rr * 0.7, a, 0, Math.PI * 2); c.fill();
+        } else {
+          c.beginPath(); c.arc(x + dx, y + dy, rr, a, a + 3.6); c.stroke();
+        }
+      });
+    });
+  }
+  sleevePatterns[key] = c.createPattern(cv, "repeat") || look.skin;
+  return sleevePatterns[key];
 }
 
 // An open-finger MMA glove. (x, y) is its centre, `ang` points the way the
@@ -6813,7 +7774,7 @@ function drawHands(b, other) {
   var spinning = b.powerState && b.powerState.phase === "attack";
   var raging = b.rageState && b.rageState.phase === "attack";
   var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-  if (!b.alive || b.koOut || b.kick || b.grappled || b.grapple || b.sprawl || spinning || raging || b.combo || b.swing) return;
+  if (!b.alive || b.koOut || b.kick || b.grappled || b.grapple || b.sprawl || subLocked(b) || spinning || raging || b.combo || b.swing) return;
   if (b.taunt && b.taunt.t < 0) return; // the punch is still finishing
   if (b.koRush && b.koRush.phase === "celebrate") return; // hands up (drawn by drawKoCelebrate)
   if (b.taunt) {
@@ -7232,9 +8193,13 @@ function draw() {
     ctx.restore();
   });
 
+  drawGuardZones(); // the circle round a fighter down in guard
+
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).
-  (balls[0].igbb ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // A shooter caught in a guillotine goes underneath, its head buried
+  // under the defender (and the defender, once it's taken down).
+  (balls[0].igbb || guilloUnder(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -7292,6 +8257,8 @@ function draw() {
       ctx.rotate(-Math.atan2(sq.ny, sq.nx));
       ctx.translate(-ax, -ay);
     }
+    applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
+    applyGuardPose(b);  // flat on its back in guard
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -7401,6 +8368,7 @@ function draw() {
     }
 
     ctx.restore();
+    drawGuardLegs(b);
 
     // Small health bar over the ball (hidden while pinned by a finisher,
     // where it would sit on top of the Grappler).
@@ -7432,6 +8400,7 @@ function draw() {
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSprawls();
+  drawGuillotines();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

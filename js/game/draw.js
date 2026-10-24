@@ -58,9 +58,13 @@ function draw() {
     ctx.restore();
   });
 
+  drawGuardZones(); // the circle round a fighter down in guard
+
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).
-  (balls[0].igbb ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // A shooter caught in a guillotine goes underneath, its head buried
+  // under the defender (and the defender, once it's taken down).
+  (balls[0].igbb || guilloUnder(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -118,6 +122,8 @@ function draw() {
       ctx.rotate(-Math.atan2(sq.ny, sq.nx));
       ctx.translate(-ax, -ay);
     }
+    applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
+    applyGuardPose(b);  // flat on its back in guard
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -227,6 +233,7 @@ function draw() {
     }
 
     ctx.restore();
+    drawGuardLegs(b);
 
     // Small health bar over the ball (hidden while pinned by a finisher,
     // where it would sit on top of the Grappler).
@@ -258,6 +265,7 @@ function draw() {
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSprawls();
+  drawGuillotines();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

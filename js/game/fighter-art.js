@@ -9,14 +9,17 @@ function defaultLook() {
   return {
     skin: "#d9a27e", build: "muscular", bodyHair: "none",
     hair: "short", hairColor: "#2b2019", beard: "none", ears: "normal",
-    tattoos: { chest: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
+    tattoos: { chest: false, portraits: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
     shorts: "#1e3a8a", trim: "#f2f2f2", shortsStyle: "stripe", gloves: "#141414"
   };
 }
 
 // Arms, legs and fists of fighters with art use skin and glove colours;
 // everyone else keeps their fighter colour.
-function armColor(ch) { return ch.look ? ch.look.skin : ch.color; }
+function armColor(ch) {
+  if (!ch.look) return ch.color;
+  return ch.look.tattoos && ch.look.tattoos.armInk ? sleevePattern(ch.look) : ch.look.skin;
+}
 function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
 
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
@@ -378,7 +381,19 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.globalAlpha = 1;
   }
 
-  // Tattoos
+  // Tattoos. In the contained layout nothing is inked above the chin line,
+  // so clip to the area under it (the jaw curve, mapped into torso space).
+  c.save();
+  if (contained) {
+    var tx = function (x) { return x / 0.86; }, ty = function (y) { return (y - r * 0.11) / 0.59; };
+    c.beginPath();
+    c.moveTo(tx(-r), ty(-r * 0.44));
+    c.lineTo(tx(-r * 0.66), ty(-r * 0.44));
+    c.quadraticCurveTo(tx(-r * 0.5), ty(-r * 0.2), 0, ty(-r * 0.2));
+    c.quadraticCurveTo(tx(r * 0.5), ty(-r * 0.2), tx(r * 0.66), ty(-r * 0.44));
+    c.lineTo(tx(r), ty(-r * 0.44)); c.lineTo(tx(r), ty(r)); c.lineTo(tx(-r), ty(r)); c.closePath();
+    c.clip();
+  }
   var tat = look.tattoos || {};
   var inkCol = "rgba(28,34,52,0.62)";
   c.strokeStyle = inkCol; c.fillStyle = inkCol;
@@ -395,11 +410,80 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
+  if (tat.portraits) {
+    // Black-and-grey family portraits filling the upper chest: a woman with
+    // long hair, an older man with grey hair (lowest) and a girl with dark
+    // hair (highest), over smoky shading down to the pecs.
+    var tall = contained ? 0.86 / 0.59 : 1;  // undo the torso squeeze so faces stay round
+    var faceSkin = shadeHex(skin, 0.06), shade = "rgba(28,34,52,";
+    c.fillStyle = shade + "0.2)";
+    for (var sm = 0; sm < 7; sm++) {
+      c.beginPath(); c.ellipse(r * (-0.33 + sm * 0.11), -r * (0.24 + (sm % 2) * 0.04), r * 0.12, r * 0.07, 0, 0, Math.PI * 2); c.fill();
+    }
+    [{ x: -0.27, y: -0.4, w: 0.14, hair: "long" }, { x: 0, y: -0.36, w: 0.145, hair: "grey" }, { x: 0.27, y: -0.42, w: 0.135, hair: "girl" }].forEach(function (pt) {
+      var w = r * pt.w;
+      c.save(); c.translate(r * pt.x, r * pt.y); c.scale(1, tall / 1.15);
+      // Hair behind the face
+      if (pt.hair === "long") {
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 1.05, w * 1.15); c.quadraticCurveTo(-w * 1.25, -w * 1.25, 0, -w * 1.3);
+        c.quadraticCurveTo(w * 1.25, -w * 1.25, w * 1.05, w * 1.15); c.quadraticCurveTo(0, w * 0.9, -w * 1.05, w * 1.15); c.fill();
+      } else if (pt.hair === "girl") {
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.moveTo(-w * 1.02, w * 0.75); c.quadraticCurveTo(-w * 1.25, -w * 1.3, 0, -w * 1.32);
+        c.quadraticCurveTo(w * 1.25, -w * 1.3, w * 1.02, w * 0.75); c.quadraticCurveTo(0, w * 0.5, -w * 1.02, w * 0.75); c.fill();
+      } else {
+        c.fillStyle = shade + "0.35)";
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.98, w * 1.05, 0, Math.PI, Math.PI * 2); c.fill();
+      }
+      // Face, shaded round the edges
+      var fg = c.createRadialGradient(-w * 0.15, -w * 0.15, w * 0.1, 0, 0, w * 1.05);
+      fg.addColorStop(0, faceSkin); fg.addColorStop(0.65, shadeHex(skin, -0.08)); fg.addColorStop(1, shadeHex(skin, -0.3));
+      c.fillStyle = fg;
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = shade + "0.16)"; c.fill();  // grey ink wash
+      if (pt.hair === "girl") {
+        // Fringe across the forehead
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.ellipse(0, -w * 0.72, w * 0.76, w * 0.32, 0, 0, Math.PI * 2); c.fill();
+      } else if (pt.hair === "long") {
+        // Hair parted over the forehead
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 0.78, -w * 0.1); c.quadraticCurveTo(-w * 0.6, -w * 0.95, w * 0.1, -w * 0.92);
+        c.quadraticCurveTo(-w * 0.35, -w * 0.6, -w * 0.78, -w * 0.1); c.fill();
+      } else {
+        // Receding grey hairline
+        c.strokeStyle = shade + "0.45)"; c.lineWidth = lw(0.02);
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.8, w * 0.75, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+      }
+      // Soft shading only: brow line and the shadow of a smile
+      c.fillStyle = shade + "0.3)";
+      c.beginPath(); c.ellipse(0, -w * 0.2, w * 0.5, w * 0.1, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(0, w * 0.45, w * 0.32, w * 0.12, 0, 0, Math.PI); c.fill();
+      c.strokeStyle = shade + "0.55)"; c.lineWidth = lw(0.018);
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.stroke();
+      c.restore();
+    });
+    // A short line of script under the girl's portrait
+    c.strokeStyle = shade + "0.6)"; c.lineWidth = lw(0.016);
+    c.beginPath();
+    for (var sc = 0; sc <= 12; sc++) {
+      var sx = r * (0.18 + sc * 0.012), sy = -r * 0.2 + Math.sin(sc * 1.8) * r * 0.014;
+      if (sc === 0) c.moveTo(sx, sy); else c.lineTo(sx, sy);
+    }
+    c.stroke();
+    c.strokeStyle = inkCol; c.fillStyle = inkCol; c.globalAlpha = 1;
+  }
   [["leftArm", -1], ["rightArm", 1]].forEach(function (p) {
     if (!tat[p[0]]) return;
-    var s = p[1];
+    var s = p[1], style = tat[p[0]];
     // Sleeve running over the shoulder: bands and curls
     c.save();
+    if (style === "dense" || style === "lion") {
+      drawNamedSleeve(c, r, s, style, inkCol, lw, artSeed(name + p[0]), contained ? 0.86 / 0.59 : 1);
+      c.restore();
+      return;
+    }
     c.beginPath(); c.arc(s * r * 1.02, -r * 0.3, r * 0.4, 0, Math.PI * 2); c.clip();
     c.globalAlpha = 0.38; c.fillRect(s > 0 ? r * 0.6 : -r, -r, r * 0.4, r * 1.2);
     if (tat.color) {
@@ -454,6 +538,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.stroke();
   }
 
+  c.restore();
   if (contained) c.restore();
 
   // Fight shorts
@@ -489,6 +574,18 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.beginPath(); c.arc(spx, spy, pz * 0.4, 0, Math.PI * 2); c.fill();
     }
     c.globalAlpha = 1;
+  }
+  if (look.shortsStyle === "chevron") {
+    // A wide diagonal panel sweeping up the right leg, pinstripes on the left
+    c.fillStyle = look.trim;
+    c.beginPath();
+    c.moveTo(r * 0.06, r); c.lineTo(r * 0.4, r);
+    c.lineTo(r * 0.94, sTop + band); c.lineTo(r * 0.6, sTop + band); c.closePath(); c.fill();
+    c.strokeStyle = look.trim; c.lineWidth = lw(0.035);
+    c.beginPath(); c.moveTo(-r * 0.12, r); c.lineTo(r * 0.46, sTop + band); c.stroke();
+    [0, 1].forEach(function (k) {
+      c.beginPath(); c.moveTo(-r * (0.86 - k * 0.12), sTop + band); c.lineTo(-r * (0.5 - k * 0.12), r); c.stroke();
+    });
   }
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
@@ -527,6 +624,92 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.077);
   c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.stroke();
+}
+
+// Named sleeve styles, drawn inside the shoulder clip at side `s`.
+// "dense": near solid black-and-grey from shoulder down, dark emblem on the delt.
+// "lion": a lion's head with a shaggy mane on the delt, patchier ink below.
+function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
+  // The arm hangs down the side of the ball, from the shoulder to the shorts
+  var rnd = artRand(seed), inner = r * 0.64, x0 = s * r * 0.8;
+  c.beginPath();
+  c.moveTo(s * r, -r * 0.95);
+  c.quadraticCurveTo(s * (inner - r * 0.04), -r * 0.9, s * (inner - r * 0.04), -r * 0.35);
+  c.quadraticCurveTo(s * (inner - r * 0.04), r * 0.1, s * (inner + r * 0.02), r * 0.6);
+  c.lineTo(s * r, r * 0.6); c.closePath(); c.clip();
+  c.fillStyle = inkCol;
+  c.globalAlpha = style === "dense" ? 0.95 : 0.2;
+  c.fillRect(s > 0 ? inner - r * 0.1 : -r, -r, r * 0.5, r * 1.6);
+  if (style === "lion") {
+    // Heavier ink on the forearm, lighter patches higher up
+    c.globalAlpha = 0.35; c.fillRect(s > 0 ? inner - r * 0.1 : -r, r * 0.05, r * 0.5, r * 0.6);
+  }
+  // Smoky blotches so it reads as shaded ink, not a flat band
+  for (var i = 0; i < 22; i++) {
+    c.globalAlpha = (style === "dense" ? 0.3 : 0.2) + rnd() * 0.25;
+    c.beginPath(); c.ellipse(x0 + (rnd() - 0.5) * r * 0.3, -r * 0.75 + rnd() * r * 1.35, r * (0.03 + rnd() * 0.06), r * (0.03 + rnd() * 0.05), rnd() * 3, 0, Math.PI * 2); c.fill();
+  }
+  c.globalAlpha = 1;
+  c.save(); c.translate(s * r * 0.83, -r * 0.5); c.scale(1, tall);
+  if (style === "dense") {
+    // Dark emblem on the delt: a body with legs reaching out
+    c.fillStyle = "rgba(14,16,24,0.9)"; c.strokeStyle = "rgba(14,16,24,0.9)"; c.lineWidth = lw(0.022);
+    c.beginPath(); c.ellipse(0, 0, r * 0.05, r * 0.075, 0, 0, Math.PI * 2); c.fill();
+    for (var l = 0; l < 4; l++) {
+      [-1, 1].forEach(function (d) {
+        var a = -0.9 + l * 0.6;
+        c.beginPath(); c.moveTo(0, 0);
+        c.quadraticCurveTo(d * r * 0.08, a * r * 0.06, d * r * 0.13, a * r * 0.11); c.stroke();
+      });
+    }
+  } else {
+    // Lion's head: a ring of mane tufts round a shaded face
+    var lr = r * 0.11;
+    c.strokeStyle = "rgba(20,24,36,0.8)"; c.lineWidth = lw(0.022);
+    for (var m = 0; m < 14; m++) {
+      var ma = m / 14 * Math.PI * 2;
+      c.beginPath();
+      c.moveTo(Math.cos(ma) * lr * 0.7, Math.sin(ma) * lr * 0.7);
+      c.quadraticCurveTo(Math.cos(ma + 0.3) * lr * 1.3, Math.sin(ma + 0.3) * lr * 1.3, Math.cos(ma + 0.15) * lr * 1.6, Math.sin(ma + 0.15) * lr * 1.6);
+      c.stroke();
+    }
+    c.fillStyle = "rgba(20,24,36,0.35)";
+    c.beginPath(); c.ellipse(0, lr * 0.1, lr * 0.62, lr * 0.75, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(20,24,36,0.65)";
+    c.beginPath(); c.ellipse(0, lr * 0.45, lr * 0.25, lr * 0.16, 0, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
+
+// Inked arm texture for fighters whose look sets tattoos.armInk: a skin tile
+// with black-and-grey swirls and shading, used as the arm stroke in attacks.
+var sleevePatterns = {};
+function sleevePattern(look) {
+  var key = look.skin;
+  if (sleevePatterns[key]) return sleevePatterns[key];
+  if (typeof document === "undefined") return look.skin;
+  var n = 24, cv = document.createElement("canvas");
+  cv.width = cv.height = n;
+  var c = cv.getContext("2d"), rnd = artRand(artSeed(key + "sleeve"));
+  c.fillStyle = look.skin; c.fillRect(0, 0, n, n);
+  c.fillStyle = "rgba(28,34,52,0.38)"; c.fillRect(0, 0, n, n);
+  c.strokeStyle = "rgba(14,16,24,0.8)"; c.lineWidth = 1.3; c.lineCap = "round";
+  for (var i = 0; i < 9; i++) {
+    var x = rnd() * n, y = rnd() * n, rr = 2 + rnd() * 4, a = rnd() * 6;
+    // Draw each mark at its wrapped copies so the tile repeats seamlessly
+    [-n, 0, n].forEach(function (dx) {
+      [-n, 0, n].forEach(function (dy) {
+        if (i % 3 === 0) {
+          c.fillStyle = "rgba(14,16,24,0.45)";
+          c.beginPath(); c.ellipse(x + dx, y + dy, rr, rr * 0.7, a, 0, Math.PI * 2); c.fill();
+        } else {
+          c.beginPath(); c.arc(x + dx, y + dy, rr, a, a + 3.6); c.stroke();
+        }
+      });
+    });
+  }
+  sleevePatterns[key] = c.createPattern(cv, "repeat") || look.skin;
+  return sleevePatterns[key];
 }
 
 // An open-finger MMA glove. (x, y) is its centre, `ang` points the way the
