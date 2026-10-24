@@ -406,9 +406,9 @@ function drawArtBody(c, r, look, ink, name, contained) {
     var faceSkin = shadeHex(skin, 0.06), shade = "rgba(28,34,52,";
     c.fillStyle = shade + "0.2)";
     for (var sm = 0; sm < 7; sm++) {
-      c.beginPath(); c.ellipse(r * (-0.6 + sm * 0.2), r * (0.04 - (sm % 2) * 0.06), r * 0.2, r * 0.14, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(r * (-0.42 + sm * 0.14), -r * (0.24 + (sm % 2) * 0.04), r * 0.12, r * 0.07, 0, 0, Math.PI * 2); c.fill();
     }
-    [{ x: -0.48, y: -0.3, w: 0.24, hair: "long" }, { x: 0, y: -0.24, w: 0.25, hair: "grey" }, { x: 0.48, y: -0.36, w: 0.23, hair: "girl" }].forEach(function (pt) {
+    [{ x: -0.34, y: -0.4, w: 0.14, hair: "long" }, { x: 0, y: -0.36, w: 0.145, hair: "grey" }, { x: 0.34, y: -0.42, w: 0.135, hair: "girl" }].forEach(function (pt) {
       var w = r * pt.w;
       c.save(); c.translate(r * pt.x, r * pt.y); c.scale(1, tall / 1.15);
       // Hair behind the face
@@ -456,7 +456,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.strokeStyle = shade + "0.6)"; c.lineWidth = lw(0.016);
     c.beginPath();
     for (var sc = 0; sc <= 12; sc++) {
-      var sx = r * (0.4 + sc * 0.016), sy = r * 0.03 + Math.sin(sc * 1.8) * r * 0.014;
+      var sx = r * (0.27 + sc * 0.012), sy = -r * 0.2 + Math.sin(sc * 1.8) * r * 0.014;
       if (sc === 0) c.moveTo(sx, sy); else c.lineTo(sx, sy);
     }
     c.stroke();
