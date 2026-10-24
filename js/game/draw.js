@@ -118,6 +118,7 @@ function draw() {
       ctx.rotate(-Math.atan2(sq.ny, sq.nx));
       ctx.translate(-ax, -ay);
     }
+    applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {

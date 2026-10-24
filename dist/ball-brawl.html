@@ -4669,6 +4669,7 @@ var GUILLO_MIN_TIME = 2.6;   // the struggle lasts this long...
 var GUILLO_MAX_EXTRA = 1.2;  // ...plus up to this much more
 var GUILLO_TAP_TIME = 0.75;  // three pats, then the fight's called
 var GUILLO_ESCAPE_SPEED = 360;
+var GUILLO_GAP = 0.97;        // how close the pair is held (1 = just touching)
 
 // Locked up in a submission: either applying it or caught in it.
 function subLocked(b) {
@@ -4692,11 +4693,16 @@ function beginGuillotine(def, atk) {
   var gu = def.char.guillotine;
   var hurtFrac = 1 - Math.max(0, Math.min(1, atk.hp / MAX_HP));
   var tapChance = Math.min(95, gu.tapBase + gu.tapLowHp * hurtFrac);
-  var dx = atk.x - def.x, dy = atk.y - def.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  // The pair always locks up side by side (the shooter bent over sideways,
+  // the way it looks from cageside), on whichever side it shot in from,
+  // unless there's no room for it there before the wall.
+  var side = atk.x >= def.x ? 1 : -1;
+  var reach = (def.r + atk.r) * GUILLO_GAP + atk.r;
+  if (def.x + side * reach > W || def.x + side * reach < 0) side = -side;
   def.guillo = {
     atkId: atk.id, t: 0, dur: GUILLO_MIN_TIME + Math.random() * GUILLO_MAX_EXTRA,
     taps: Math.random() < tapChance / 100, bar: 0, phase: "squeeze", tapT: 0,
-    nx: dx / d, ny: dy / d, wob: Math.random() * 10
+    nx: side, ny: 0, wob: Math.random() * 10
   };
   atk.choked = true;
   atk.grappleCd = atk.char.grapple ? atk.char.grapple.cooldown : 0;
@@ -4719,10 +4725,10 @@ function updateGuillotine(self, dt) {
   // The shooter's head stays tucked under the defender's arm, and both
   // shudder a little as they fight over it.
   var jit = reduceMotion || g.phase !== "squeeze" ? 0 : 1.6;
-  var gap = self.r + atk.r - 14;
+  var gap = (self.r + atk.r) * GUILLO_GAP;
   self.vx = 0; self.vy = 0; atk.vx = 0; atk.vy = 0;
   atk.x = self.x + g.nx * gap + (Math.random() - 0.5) * jit;
-  atk.y = self.y + g.ny * gap + (Math.random() - 0.5) * jit;
+  atk.y = self.y + (Math.random() - 0.5) * jit;
 
   if (g.phase === "squeeze") {
     // The bar swings back and forth, then commits to how it ends: +1 is the
@@ -4772,63 +4778,107 @@ function submit(b) {
   checkEnd();
 }
 
+// How hard the choke is sunk in right now (0 to 1).
+function guilloSqueeze(g) {
+  return g.phase === "tap" ? 1 : Math.max(0, g.bar);
+}
+
+// Poses both fighters while they're locked in a guillotine: the shooter is
+// bent over sideways, head first into the defender's side (its head, the top
+// third of the ball, turned to face the defender), and the defender leans
+// back as it pulls the choke up. Called by the fighter drawing with the
+// canvas already set up for that fighter.
+function applyGuilloPose(b) {
+  var g = b.guillo, def = b;
+  if (!g) {
+    if (!b.choked) return;
+    def = balls[1 - b.id];
+    g = def.guillo;
+    if (!g) return;
+  }
+  // g.nx is +1 when the shooter is on the defender's right, -1 on its left.
+  var angle = b === def ? -g.nx * 0.25 * guilloSqueeze(g) : -g.nx * Math.PI / 2;
+  ctx.translate(b.x, b.y);
+  ctx.rotate(angle);
+  ctx.translate(-b.x, -b.y);
+}
+
+// An arm: a dark outline with the skin colour inside it.
+function strokeLimb(width, color, path) {
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  [[theme.wall, width + 6], [color, width]].forEach(function (pass) {
+    ctx.strokeStyle = pass[0]; ctx.lineWidth = pass[1];
+    ctx.beginPath(); path(); ctx.stroke();
+  });
+}
+
+function drawGloveAt(x, y, r, ch) {
+  ctx.fillStyle = gloveColor(ch); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+}
+
 function drawGuillotines() {
   balls.forEach(function (self) {
     var g = self.guillo;
     if (!g) return;
     var atk = balls[g.atkId];
-    var squeeze = Math.max(0, g.bar);
+    var squeeze = guilloSqueeze(g);
+    var s = g.nx, r = self.r, ar = atk.r;
+    var lean = s * squeeze * r * 0.08; // the defender's lean back pulls the arm with it
+    ctx.save();
 
-    // The shooter goes red in the face as the choke sinks in.
+    // The shooter's face (the end of its ball nearest the defender) goes
+    // red as the choke sinks in.
     if (squeeze > 0) {
       ctx.save();
-      ctx.globalAlpha = 0.45 * squeeze;
+      ctx.beginPath(); ctx.arc(atk.x, atk.y, ar, 0, Math.PI * 2); ctx.clip();
+      ctx.globalAlpha = 0.55 * squeeze;
       ctx.fillStyle = "#d62020";
-      ctx.beginPath(); ctx.arc(atk.x, atk.y, atk.r, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(atk.x - s * ar * 0.68, atk.y, ar * 0.45, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
 
-    // The defender's arm comes off its shoulder and wraps around the far
-    // side of the shooter's head, hands clasped where it closes.
-    var back = Math.atan2(self.y - atk.y, self.x - atk.x);
-    var ring = atk.r * (0.95 - 0.08 * squeeze);
-    var a0 = back + 1.95, a1 = back - 1.95 + Math.PI * 2;
-    var px = -g.ny, py = g.nx;
-    var sx = self.x + g.nx * self.r * 0.45 + px * self.r * 0.7, sy = self.y + g.ny * self.r * 0.45 + py * self.r * 0.7;
-    var endX = atk.x + Math.cos(a1) * ring, endY = atk.y + Math.sin(a1) * ring;
-    ctx.save();
-    ctx.lineCap = "round"; ctx.lineJoin = "round";
-    [[theme.wall, self.r * 0.44], [armColor(self.char), self.r * 0.3]].forEach(function (pass) {
-      ctx.strokeStyle = pass[0]; ctx.lineWidth = pass[1];
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(atk.x + Math.cos(a0) * ring, atk.y + Math.sin(a0) * ring);
-      ctx.arc(atk.x, atk.y, ring, a0, a1);
-      ctx.stroke();
+    // The defender's near arm: off its shoulder, over the top of the
+    // shooter's neck (where its head meets its torso), straight down across
+    // it and back under its chin to the defender's chest, where both hands
+    // lock together. The shooter's head is trapped inside the loop.
+    var neckX = atk.x - s * ar * 0.33 - lean;
+    var shX = self.x + s * r * 0.7 - lean, shY = self.y - r * 0.55;
+    var gripX = self.x + s * r * 0.72 - lean, gripY = self.y + r * 0.45;
+    var arm = r * 0.24;
+    strokeLimb(arm, armColor(self.char), function () {
+      ctx.moveTo(shX, shY);
+      ctx.quadraticCurveTo(atk.x - s * ar * 0.75, atk.y - ar * 1.12, neckX, atk.y - ar * 0.92);
+      ctx.lineTo(neckX, atk.y + ar * 0.8);
+      ctx.quadraticCurveTo(atk.x - s * ar * 0.75, atk.y + ar * 1.1, gripX, gripY);
     });
-    // Gable grip: both gloves locked together at the end of the wrap.
-    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
-    [0, 1].forEach(function (k) {
-      var hx = endX + px * (k ? -1 : 1) * self.r * 0.14, hy = endY + py * (k ? -1 : 1) * self.r * 0.14;
-      ctx.beginPath(); ctx.arc(hx, hy, self.r * 0.27, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    });
+    // The shooter hand-fights the arm around its neck, trying to peel it off.
+    if (g.phase === "squeeze") {
+      var tug = Math.sin(g.t * 9 + g.wob) * ar * 0.06;
+      drawGloveAt(neckX + s * ar * 0.18, atk.y + ar * 0.45 + tug, ar * 0.24, atk.char);
+    }
+    // Both hands locked together at the defender's chest (gable grip).
+    drawGloveAt(gripX - s * r * 0.1, gripY + r * 0.05, r * 0.27, self.char);
+    drawGloveAt(gripX + s * r * 0.08, gripY - r * 0.12, r * 0.27, self.char);
 
-    // Tapping: the shooter's glove pats the defender three times.
+    // Tapping: the shooter reaches up with a free hand and pats the
+    // defender's back three times.
     if (g.phase === "tap") {
       var pat = Math.abs(Math.sin(g.tapT / GUILLO_TAP_TIME * Math.PI * 3));
-      var side = -1;
-      var tx = self.x + px * side * self.r * 0.95 - g.nx * self.r * 0.1;
-      var ty = self.y + py * side * self.r * 0.95 - g.ny * self.r * 0.1 - pat * 10;
-      ctx.fillStyle = gloveColor(atk.char);
-      ctx.beginPath(); ctx.arc(tx, ty, atk.r * 0.27, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      var hx = self.x + s * r * 0.1 - lean, hy = self.y - r * 0.95 - pat * r * 0.35;
+      strokeLimb(ar * 0.26, armColor(atk.char), function () {
+        ctx.moveTo(atk.x + s * ar * 0.1, atk.y - ar * 0.8);
+        ctx.quadraticCurveTo(atk.x - s * ar * 0.3, hy - r * 0.2, hx, hy);
+      });
+      drawGloveAt(hx, hy, ar * 0.26, atk.char);
     }
 
     // Tug-of-war bar over the pair: the defender's colour is the choke,
     // the shooter's is the escape. The marker is where it stands.
     var bw = 150, bh = 12, cx = (self.x + atk.x) / 2;
     var bx = Math.min(W - bw - 6, Math.max(6, cx - bw / 2));
-    var by = Math.min(self.y, atk.y) - self.r - 64;
-    if (by < 8) by = Math.max(self.y, atk.y) + self.r + 30;
+    var by = Math.min(self.y, atk.y) - r - 64;
+    if (by < 8) by = Math.max(self.y, atk.y) + r + 30;
     var split = bw * (g.bar + 1) / 2;
     ctx.fillStyle = self.char.color; ctx.fillRect(bx, by, split, bh);
     ctx.fillStyle = atk.char.color; ctx.fillRect(bx + split, by, bw - split, bh);
@@ -7518,6 +7568,7 @@ function draw() {
       ctx.rotate(-Math.atan2(sq.ny, sq.nx));
       ctx.translate(-ax, -ay);
     }
+    applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
