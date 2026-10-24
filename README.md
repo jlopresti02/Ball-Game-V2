@@ -61,7 +61,7 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
 | `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg) |
-| `tattoos` | any of `chest`, `portraits`, `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true |
+| `tattoos` | any of `chest`, `portraits`, `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt) or `"lion"` (lion head on the delt, patchy ink); `armInk` gives the punching arms an inked texture |
 
 ## Special moves (created characters)
 
