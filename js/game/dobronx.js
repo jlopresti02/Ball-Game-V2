@@ -12,6 +12,7 @@
 //     against a Grappler), his grab reaches further, and the opponent sprawls
 //     half as often
 //   - every takedown he lands goes straight into a submission attempt
+// Nothing can touch him while he poses: hits and grabs are dodged.
 // Then he hits another pose, the cameras flash again and everything goes
 // back to normal: his state, the fans and the arena. The bar starts over.
 "use strict";
@@ -74,6 +75,21 @@ function updateDoBronx(self, other, dt) {
   }
   setSpeed(self, SPEED);
   return true;
+}
+
+// Striking a Do Bronx pose (the opening or the closing one): nothing can
+// touch him. Hits and grabs that reach him are dodged, so a takedown can't
+// knock him out of the pose and leave him restarting it over and over.
+function doBronxPosing(b) {
+  return !!(b.igbb && b.igbb.move === "dobronx");
+}
+
+function doBronxDodge(b) {
+  if (b.immuneCd <= 0) {
+    floater(b.x, b.y - b.r - 8, "DODGE", "dodge");
+    b.immuneCd = 0.3;
+  }
+  b.justDodged = true;
 }
 
 // The pose knocks the opponent back: no damage, just a shockwave.

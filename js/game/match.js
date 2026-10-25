@@ -183,6 +183,12 @@ function hurt(b, amount, source, attackerId) {
     b.justDodged = true;
     return 0;
   }
+  // Mid Do Bronx pose: dodges everything.
+  if (doBronxPosing(b)) {
+    if (source !== "laser") doBronxDodge(b);
+    else b.justDodged = true;
+    return 0;
+  }
   // Mid special move (IGBB): hands full or guard up, blocks everything.
   if (specialGuarding(b)) {
     if (source !== "laser" && b.immuneCd <= 0) {
