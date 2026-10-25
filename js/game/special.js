@@ -46,7 +46,7 @@ function tickSpecialCharge(b, dt) {
 
 // Busy with something that shouldn't be interrupted.
 function specialBusy(b) {
-  return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || b.combo || b.taunt || b.flow ||
+  return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.combo || b.taunt || b.flow ||
     b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled;
 }
 function canStartIgbb(self, other) {

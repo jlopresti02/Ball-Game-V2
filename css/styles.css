@@ -39,6 +39,7 @@ body {
   font-family: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
   font-weight: 500;
   min-height: 100vh;
+  overflow-x: clip; /* the screen shake never adds a sideways scroll */
 }
 
 main { max-width: 640px; margin: 0 auto; padding: 18px 16px 32px; }

@@ -1,5 +1,8 @@
 // Dev Corner fighters: older versions of roster fighters, kept for testing
-// and side-by-side comparisons. They only appear in The Dev Corner.
+// and side-by-side comparisons, and test versions of roster fighters trying
+// out new mechanics before they're given to the real one. They only appear
+// in The Dev Corner. Loads after roster-data.js, which the test versions are
+// copied from.
 "use strict";
 
 var devFighters = [
@@ -54,3 +57,17 @@ var devFighters = [
   ch.hasSpecial = !!special;
   return ch;
 });
+
+// Test versions: a copy of a repo roster fighter with something switched on.
+function devVariant(rosterId, id, name, changes) {
+  var src = SAVED_ROSTER.find(function (r) { return r.id === rosterId; });
+  if (!src) return;
+  var ch = JSON.parse(JSON.stringify(src));
+  ch.id = id; ch.name = name; ch.builtin = true;
+  delete ch.rev; delete ch.bio; delete ch.base;
+  changes(ch);
+  var special = ch.hasSpecial;
+  ch = normalizeChar(ch);
+  ch.hasSpecial = !!special;
+  devFighters.push(ch);
+}

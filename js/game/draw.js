@@ -1,6 +1,19 @@
 // Drawing the arena, fighters, projectiles and damage numbers.
 "use strict";
 
+// Camera shake moves the whole game screen (the ring, health bars, names
+// and buttons), not just what's inside the ring.
+var gameScreen = document.getElementById("screenGame");
+// px: screen pixels per game unit.
+function shakeScreen(px) {
+  if (shake > 0) {
+    var sx = (Math.random() - 0.5) * shake * 2 * px, sy = (Math.random() - 0.5) * shake * 2 * px;
+    gameScreen.style.transform = "translate(" + sx.toFixed(1) + "px," + sy.toFixed(1) + "px)";
+  } else if (gameScreen.style.transform) {
+    gameScreen.style.transform = "";
+  }
+}
+
 function draw() {
   readTheme();
   // In the WWIT stadium the arena is drawn smaller, in the middle of a 9:16
@@ -15,9 +28,8 @@ function draw() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (stadium) drawStadium(px);
 
-  var sx = 0, sy = 0;
-  if (shake > 0) { sx = (Math.random() - 0.5) * shake * 2 * s; sy = (Math.random() - 0.5) * shake * 2 * s; }
-  ctx.setTransform(s, 0, 0, s, ox + sx, oy + sy);
+  ctx.setTransform(s, 0, 0, s, ox, oy);
+  shakeScreen(s * canvas.getBoundingClientRect().width / canvas.width);
 
   if (stadium) drawStadiumMat();
   else {
@@ -70,7 +82,9 @@ function draw() {
 
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).
-  (balls[0].igbb ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // A shooter caught in a guillotine goes underneath, its head buried
+  // under the defender (and the defender, once it's taken down).
+  (balls[0].igbb || guilloUnder(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -128,6 +142,7 @@ function draw() {
       ctx.rotate(-Math.atan2(sq.ny, sq.nx));
       ctx.translate(-ax, -ay);
     }
+    applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -268,6 +283,7 @@ function draw() {
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSprawls();
+  drawGuillotines();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
