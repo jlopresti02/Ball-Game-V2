@@ -17,6 +17,7 @@ var menuScreen = "select";
 
 function showScreen(name) {
   stopAllChargeSounds(); // leaving mid-charge shouldn't leave a hum playing
+  if (name !== "game") stopCrowd();
   if (name === "select" || name === "dev") menuScreen = name;
   Object.keys(screens).forEach(function (k) { screens[k].hidden = k !== name; });
   if (name === "select" || name === "dev") renderMenu(name);
