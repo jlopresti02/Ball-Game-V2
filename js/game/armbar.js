@@ -13,6 +13,7 @@ var ARMBAR_MIN_TIME = 2.4, ARMBAR_MAX_EXTRA = 1.2;
 var ARMBAR_TAP_TIME = 0.75;
 var ARMBAR_ESCAPE_SPEED = 340;
 var ARMBAR_GAP = 0.85; // how close the opponent is held (1 = just touching)
+var ARMBAR_LEGS = false; // draw the legs up over them
 
 function beginArmbar(self, vic) {
   var ab = self.char.armbar || defaultArmbar();
@@ -111,14 +112,16 @@ function drawArmbars() {
     // Both legs up from its hips: one across their neck, one across their
     // stomach, squeezing their shoulder between them.
     var hip = { x: sx + s * r * 0.7, y: sy };
-    strokeLimb(limb * 1.25, legSkin, function () {
-      ctx.moveTo(hip.x, hip.y - r * 0.15);
-      ctx.quadraticCurveTo(vx - s * ar * 0.3, vy - ar * 0.8, vx + s * ar * 0.85, vy - ar * 0.42);
-    });
-    strokeLimb(limb * 1.25, legSkin, function () {
-      ctx.moveTo(hip.x, hip.y + r * 0.15);
-      ctx.quadraticCurveTo(vx - s * ar * 0.1, vy + ar * 0.6, vx + s * ar * 0.9, vy + ar * 0.38);
-    });
+    if (ARMBAR_LEGS) {
+      strokeLimb(limb * 1.25, legSkin, function () {
+        ctx.moveTo(hip.x, hip.y - r * 0.15);
+        ctx.quadraticCurveTo(vx - s * ar * 0.3, vy - ar * 0.8, vx + s * ar * 0.85, vy - ar * 0.42);
+      });
+      strokeLimb(limb * 1.25, legSkin, function () {
+        ctx.moveTo(hip.x, hip.y + r * 0.15);
+        ctx.quadraticCurveTo(vx - s * ar * 0.1, vy + ar * 0.6, vx + s * ar * 0.9, vy + ar * 0.38);
+      });
+    }
 
     // Their arm, pulled straight across its hips to its chest, the elbow
     // bending the wrong way as it's cranked.
@@ -142,10 +145,11 @@ function drawArmbars() {
       drawGloveAt(g.x, g.y, r * 0.22, self.char);
     });
 
-    // Tapping: their free hand pats its leg three times.
+    // Tapping: their free hand pats its leg (or its body) three times.
     if (c.phase === "tap") {
       var pat = Math.abs(Math.sin(c.tapT / ARMBAR_TAP_TIME * Math.PI * 3));
-      drawGloveAt(vx + s * ar * 0.55, vy + ar * 0.45 - pat * ar * 0.2, ar * 0.22, vic.char);
+      var px = ARMBAR_LEGS ? vx + s * ar * 0.55 : sx + s * r * 0.6, py = ARMBAR_LEGS ? vy + ar * 0.45 : sy + r * 0.45;
+      drawGloveAt(px, py - pat * ar * 0.2, ar * 0.22, vic.char);
     }
 
     // Tug-of-war bar: its colour is the armbar, theirs the escape.
