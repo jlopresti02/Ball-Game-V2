@@ -3518,6 +3518,12 @@ function hurt(b, amount, source, attackerId) {
     b.justDodged = true;
     return 0;
   }
+  // Mid Do Bronx pose: dodges everything.
+  if (doBronxPosing(b)) {
+    if (source !== "laser") doBronxDodge(b);
+    else b.justDodged = true;
+    return 0;
+  }
   // Mid special move (IGBB): hands full or guard up, blocks everything.
   if (specialGuarding(b)) {
     if (source !== "laser" && b.immuneCd <= 0) {
@@ -4691,6 +4697,7 @@ function readyToGrab(self, other, dt) {
   if (!other.alive || other.grappled || other.invincible) return false;
   if (self.sprawl || self.sprawled || other.sprawl || other.sprawled) return false;
   if (subLocked(self) || subLocked(other)) return false;
+  if (doBronxPosing(self) || doBronxPosing(other)) return false;
   if (grabBlockedByImpunity(self, other)) return false;
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
   return d < self.r + other.r + self.char.grapple.reach;
@@ -4799,6 +4806,12 @@ function grabEscaped(attacker, target) {
 
 function attemptGrab(attacker, target) {
   if (target.slamSafe > 0) return false;
+  if (doBronxPosing(target)) {
+    // Slips the grab mid pose (dobronx.js).
+    doBronxDodge(target);
+    attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
+    return false;
+  }
   if (grabEscaped(attacker, target)) return false;
   if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
@@ -7439,6 +7452,7 @@ function updateSpecialHud(force) {
 //     against a Grappler), his grab reaches further, and the opponent sprawls
 //     half as often
 //   - every takedown he lands goes straight into a submission attempt
+// Nothing can touch him while he poses: hits and grabs are dodged.
 // Then he hits another pose, the cameras flash again and everything goes
 // back to normal: his state, the fans and the arena. The bar starts over.
 "use strict";
@@ -7501,6 +7515,21 @@ function updateDoBronx(self, other, dt) {
   }
   setSpeed(self, SPEED);
   return true;
+}
+
+// Striking a Do Bronx pose (the opening or the closing one): nothing can
+// touch him. Hits and grabs that reach him are dodged, so a takedown can't
+// knock him out of the pose and leave him restarting it over and over.
+function doBronxPosing(b) {
+  return !!(b.igbb && b.igbb.move === "dobronx");
+}
+
+function doBronxDodge(b) {
+  if (b.immuneCd <= 0) {
+    floater(b.x, b.y - b.r - 8, "DODGE", "dodge");
+    b.immuneCd = 0.3;
+  }
+  b.justDodged = true;
 }
 
 // The pose knocks the opponent back: no damage, just a shockwave.
