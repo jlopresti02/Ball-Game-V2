@@ -1695,6 +1695,11 @@ function defaultForget() { return { heal: 12, every: 7 }; }
 function defaultGuillotine() {
   return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5, outcomes: { escape: 20, gnp: 70, resink: 5, slam: 5 }, slamDamage: 75 };
 }
+// Rear naked choke: chance% of grabs this fighter makes on an opponent
+// that isn't facing it become a back take and a choke. The one choked taps
+// tapBase% of the time at full health, up to tapLowHp% more the more damage
+// it's taken (see rnc.js).
+function defaultRnc() { return { chance: 60, tapBase: 35, tapLowHp: 50, cooldown: 5 }; }
 // Guard: chance% of the strikes that land on this fighter drop it onto its
 // back in guard for `time` seconds, with a circle of `radius` around it.
 // The first opponent to step into the circle passes the guard passChance%
@@ -1743,6 +1748,8 @@ function normalizeChar(ch) {
   ["outcomes", "slamDamage"].forEach(function (k) {
     if (ch.guillotine[k] == null) ch.guillotine[k] = defaultGuillotine()[k];
   });
+  if (ch.hasRnc === undefined) ch.hasRnc = false;
+  if (!ch.rnc) ch.rnc = defaultRnc();
   if (ch.hasGuard === undefined) ch.hasGuard = false;
   if (!ch.guard) ch.guard = defaultGuard();
   Object.keys(defaultGuard()).forEach(function (k) {
@@ -2124,6 +2131,11 @@ function devVariant(rosterId, id, name, changes) {
   devFighters.push(ch);
 }
 
+// Trying out the rear naked choke: grabs from behind take the back.
+devVariant("c-khabib-nurmagomedov", "dev-khabib-rnc", "Khabib Nurmagomedov (RNC)", function (ch) {
+  ch.hasRnc = true;
+});
+
 // Where created characters are saved.
 //
 // Every roster fighter is kept in three places, so a fighter that's been
@@ -2422,6 +2434,7 @@ function abilitySummary(ch) {
   if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
   if (ch.hasSwing) parts.push("\uD83E\uDD74 " + ch.swing.damage + " dmg swing");
   if (ch.hasGuillotine) parts.push("\uD83D\uDD12 " + ch.guillotine.chance + "% guillotine");
+  if (ch.hasRnc) parts.push("\uD83D\uDD12 " + ch.rnc.chance + "% rear naked choke");
   if (ch.hasGuard) parts.push("\uD83E\uDD4B " + ch.guard.chance + "% guard");
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
   if (ch.hasForget) parts.push("\uD83E\uDDE0 +" + ch.forget.heal + " / " + ch.forget.every + "s");
@@ -3351,7 +3364,7 @@ function makeBall(id, ch) {
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
-    guillo: null, choked: false, guilloCd: 0, guard: null, guardCd: 0, doBronx: null
+    guillo: null, choked: false, guilloCd: 0, rnc: null, rncCd: 0, guard: null, guardCd: 0, doBronx: null
   };
 }
 
@@ -3855,6 +3868,7 @@ function updateAbilities(dt) {
     if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.guard) { updateGuard(self, other, dt); continue; }
     if (self.guillo) { updateGuillotine(self, dt); continue; }
+    if (self.rnc) { updateRnc(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
       self.slam.t += dt;
@@ -4773,6 +4787,7 @@ function grabEscaped(attacker, target) {
 function attemptGrab(attacker, target) {
   if (target.slamSafe > 0) return false;
   if (grabEscaped(attacker, target)) return false;
+  if (tryRnc(attacker, target)) return false; // took the back for a rear naked choke (rnc.js)
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.
@@ -4876,7 +4891,7 @@ var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching):
 // Locked up in a submission (either applying it or caught in it), or down
 // on its back in guard.
 function subLocked(b) {
-  return !!(b.guillo || b.choked || b.guard);
+  return !!(b.guillo || b.rnc || b.choked || b.guard);
 }
 
 function canGuillotine(def) {
@@ -5299,6 +5314,183 @@ function drawGuillotines() {
   });
 }
 
+// Rear naked choke. When a fighter with the RNC grabs an opponent from
+// behind (the opponent isn't facing it), `chance`% of the time it takes the
+// back instead of slamming: it climbs on behind them, hooks its legs round
+// their waist, snakes an arm under the chin and locks the choke (its other
+// hand behind their head). The same tug-of-war bar as the guillotine decides
+// it: the tap (a win by submission) or the escape (they turn in and pop
+// free). Tap odds: `tapBase`% at full health, plus up to `tapLowHp`% more
+// the more damage the one being choked has taken. After an escape it can't
+// take the back again for `cooldown` seconds.
+"use strict";
+
+var RNC_MIN_TIME = 2.4, RNC_MAX_EXTRA = 1.2;
+var RNC_TAP_TIME = 0.75;
+var RNC_ESCAPE_SPEED = 340;
+var RNC_OFF_X = 0.45, RNC_OFF_Y = 0.7; // where it sits on their back (in their radii)
+
+function canRnc(self) {
+  if (!self.char.hasRnc || !self.alive || self.rncCd > 0) return false;
+  return !(self.koOut || self.shocked || self.shelled || self.igbb || self.koRush || self.koDuel ||
+    self.slam || self.combo || self.taunt || self.flow || self.grapple || subLocked(self));
+}
+
+// Called from attemptGrab: true if the grab became a back take.
+function tryRnc(attacker, target) {
+  if (!canRnc(attacker) || isFacing(target, attacker)) return false;
+  if (Math.random() >= attacker.char.rnc.chance / 100) return false;
+  floater(attacker.x, attacker.y - attacker.r - 30, "BACK TAKE", "note");
+  beginRnc(attacker, target);
+  return true;
+}
+
+function beginRnc(self, vic) {
+  var rc = self.char.rnc || defaultRnc();
+  var hurtFrac = 1 - Math.max(0, Math.min(1, vic.hp / MAX_HP));
+  var tapChance = Math.min(95, rc.tapBase + rc.tapLowHp * hurtFrac);
+  // Climbs on from whichever side it came in on.
+  var side = self.x >= vic.x ? 1 : -1;
+  self.rnc = {
+    vicId: vic.id, t: 0, dur: RNC_MIN_TIME + Math.random() * RNC_MAX_EXTRA,
+    taps: Math.random() < tapChance / 100, bar: 0, phase: "squeeze", tapT: 0,
+    side: side, wob: Math.random() * 10
+  };
+  vic.choked = true;
+  self.guard = null; // (when it comes from the guard)
+  [self, vic].forEach(function (b) {
+    b.vx = 0; b.vy = 0;
+    b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null; b.checkAnim = null;
+  });
+  // Room above them to climb on behind.
+  vic.y = Math.max(vic.y, vic.r * RNC_OFF_Y + self.r + 4);
+  floater(vic.x, vic.y - vic.r - 60, "REAR NAKED CHOKE", "crit");
+  playPunch(20);
+  if (!reduceMotion) shake = Math.max(shake, 8);
+}
+
+// Runs on the fighter applying the choke; the one in it is held still.
+function updateRnc(self, dt) {
+  var c = self.rnc, vic = balls[c.vicId];
+  if (!self.alive || !vic.alive) { endRnc(self); return; }
+  c.t += dt;
+  // On their back: behind and above them, its head peeking over one
+  // shoulder.
+  var jit = reduceMotion || c.phase !== "squeeze" ? 0 : 1.6;
+  self.vx = 0; self.vy = 0; vic.vx = 0; vic.vy = 0;
+  self.x = vic.x + c.side * vic.r * RNC_OFF_X + (Math.random() - 0.5) * jit;
+  self.y = vic.y - vic.r * RNC_OFF_Y + (Math.random() - 0.5) * jit;
+
+  if (c.phase === "squeeze") {
+    var p = Math.min(1, c.t / c.dur), sgn = c.taps ? 1 : -1;
+    var swing = Math.sin(c.t * 4.3 + c.wob) * Math.sin(c.t * 1.7 + c.wob * 0.5) * 0.55 * (1 - p);
+    c.bar = Math.max(-1, Math.min(1, sgn * Math.pow(p, 2.2) + swing));
+    if (p < 1) return;
+    c.bar = sgn;
+    if (c.taps) {
+      c.phase = "tap";
+      floater(vic.x, vic.y - vic.r - 30, "TAP", "crit");
+      playPunch(10);
+      return;
+    }
+    // They turn in to face it and pop free.
+    floater(vic.x, vic.y - vic.r - 30, "ESCAPE", "note");
+    self.rncCd = (self.char.rnc || defaultRnc()).cooldown;
+    endRnc(self);
+    var a = -Math.PI / 2 + c.side * (0.5 + Math.random() * 0.4);
+    self.vx = Math.cos(a) * RNC_ESCAPE_SPEED; self.vy = Math.sin(a) * RNC_ESCAPE_SPEED;
+    vic.vx = -Math.cos(a) * RNC_ESCAPE_SPEED; vic.vy = -Math.sin(a) * RNC_ESCAPE_SPEED;
+    return;
+  }
+  c.tapT += dt;
+  if (c.tapT >= RNC_TAP_TIME) {
+    endRnc(self);
+    submit(vic);
+  }
+}
+
+function endRnc(self) {
+  if (!self.rnc) return;
+  balls[self.rnc.vicId].choked = false;
+  self.rnc = null;
+}
+
+// The one taking the back is drawn behind the one it's choking.
+function rncBehind(b) {
+  return !!b.rnc;
+}
+
+function drawRncs() {
+  balls.forEach(function (self) {
+    var c = self.rnc;
+    if (!c) return;
+    var vic = balls[c.vicId], r = vic.r, s = c.side, vx = vic.x, vy = vic.y;
+    var squeeze = c.phase === "tap" ? 1 : Math.max(0, c.bar);
+    var limb = self.r * 0.2, skin = armColor(self.char);
+    ctx.save();
+
+    // Their face (the top third of the ball) goes red as the choke sinks in.
+    if (squeeze > 0) {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(vx, vy, r, 0, Math.PI * 2); ctx.clip();
+      ctx.globalAlpha = 0.55 * squeeze;
+      ctx.fillStyle = "#d62020";
+      ctx.beginPath(); ctx.arc(vx, vy - r * 0.62, r * 0.45, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    // Hooks in: both legs come round from behind their hips and cross over
+    // their stomach.
+    strokeLimb(limb * 1.15, skin, function () {
+      ctx.moveTo(vx - s * r * 0.97, vy + r * 0.2);
+      ctx.quadraticCurveTo(vx - s * r * 0.6, vy + r * 0.66, vx + s * r * 0.2, vy + r * 0.6);
+    });
+    strokeLimb(limb * 1.15, skin, function () {
+      ctx.moveTo(vx + s * r * 0.97, vy + r * 0.2);
+      ctx.quadraticCurveTo(vx + s * r * 0.6, vy + r * 0.66, vx - s * r * 0.2, vy + r * 0.6);
+    });
+
+    // The arm behind their head: only the forearm shows, coming out from
+    // behind the far side of their head down to the elbow (the hand's out of
+    // sight on the back of the head).
+    var neckY = vy - r * 0.32;
+    var elbow = { x: vx - s * r * 0.86, y: neckY + r * 0.04 };
+    strokeLimb(limb, skin, function () {
+      ctx.moveTo(vx - s * r * 0.74, vy - r * 0.74);
+      ctx.quadraticCurveTo(vx - s * r * 0.98, vy - r * 0.6, elbow.x, elbow.y);
+    });
+    // The choking arm: over their near shoulder and right across the front
+    // of the neck, cinched tighter as it sinks in, hand gripping the other
+    // bicep.
+    var cinch = squeeze * r * 0.06;
+    strokeLimb(limb, skin, function () {
+      ctx.moveTo(vx + s * r * 1.0, vy - r * 0.62);
+      ctx.quadraticCurveTo(vx + s * r * 0.55, neckY + cinch, vx - s * r * 0.1, neckY + cinch);
+      ctx.lineTo(elbow.x + s * r * 0.12, elbow.y - r * 0.02);
+    });
+    drawGloveAt(elbow.x + s * r * 0.1, elbow.y - r * 0.06, self.r * 0.26, self.char);
+
+    // Tapping: their hand pats the choking arm three times.
+    if (c.phase === "tap") {
+      var pat = Math.abs(Math.sin(c.tapT / RNC_TAP_TIME * Math.PI * 3));
+      drawGloveAt(vx + s * r * 0.45, neckY + r * 0.12 - pat * r * 0.2, r * 0.24, vic.char);
+    }
+
+    // Tug-of-war bar: its colour is the choke, theirs the escape.
+    var bw = 150, bh = 12;
+    var bx = Math.min(W - bw - 6, Math.max(6, vx - bw / 2));
+    var by = self.y - self.r - 64;
+    if (by < 8) by = vy + r + 30;
+    var split = bw * (c.bar + 1) / 2;
+    ctx.fillStyle = self.char.color; ctx.fillRect(bx, by, split, bh);
+    ctx.fillStyle = vic.char.color; ctx.fillRect(bx + split, by, bw - split, bh);
+    ctx.lineWidth = 2.5; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+    ctx.fillStyle = theme.ink;
+    ctx.fillRect(bx + split - 2, by - 4, 4, bh + 8);
+    ctx.restore();
+  });
+}
+
 // Guard: a BJJ fighter who gets hit can fall onto its back and play guard.
 //
 // When a strike lands on a fighter with the guard, there's a `chance`% it
@@ -5325,7 +5517,8 @@ var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, proj
 
 // Starts a guard submission on `atk`. Each entry in `subs` names one.
 var GUARD_SUBS = {
-  guillotine: function (self, atk) { beginGuillotine(self, atk); }
+  guillotine: function (self, atk) { beginGuillotine(self, atk); },
+  rnc: function (self, atk) { beginRnc(self, atk); }
 };
 
 // Called from hurt() after a hit lands.
@@ -7134,6 +7327,7 @@ function update(dt) {
     if (b.checkAnim) stepInForKickBack(b, balls[b.checkAnim.towardId]);
     if (b.slamSafe > 0) b.slamSafe = Math.max(0, b.slamSafe - dt);
     if (b.guilloCd > 0) b.guilloCd = Math.max(0, b.guilloCd - dt);
+    if (b.rncCd > 0) b.rncCd = Math.max(0, b.rncCd - dt);
     if (b.guardCd > 0 && !subLocked(b)) b.guardCd = Math.max(0, b.guardCd - dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
@@ -9121,7 +9315,8 @@ function draw() {
   // Father's Plan's ground and pound).
   // A shooter caught in a guillotine goes underneath, its head buried
   // under the defender (and the defender, once it's taken down).
-  (balls[0].igbb || guilloUnder(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // Whoever took the back for a rear naked choke goes behind the one it chokes.
+  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -9291,9 +9486,9 @@ function draw() {
 
     ctx.restore();
 
-    // Small health bar over the ball (hidden while pinned by a finisher,
-    // where it would sit on top of the Grappler).
-    var pinned = balls[1 - b.id].grapple && balls[1 - b.id].grapple.finisher && balls[1 - b.id].grapple.phase !== "carry";
+    // Small health bar over the ball (hidden while pinned by a finisher or
+    // choked from behind, where it would sit on top of the other fighter).
+    var pinned = balls[1 - b.id].grapple && balls[1 - b.id].grapple.finisher && balls[1 - b.id].grapple.phase !== "carry" || other.rnc;
     if (!pinned) {
       var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
       if (by < 4) by = b.y + b.r + 10;
@@ -9323,6 +9518,7 @@ function draw() {
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSprawls();
   drawGuillotines();
+  drawRncs();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

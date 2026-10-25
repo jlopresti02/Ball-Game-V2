@@ -71,3 +71,8 @@ function devVariant(rosterId, id, name, changes) {
   ch.hasSpecial = !!special;
   devFighters.push(ch);
 }
+
+// Trying out the rear naked choke: grabs from behind take the back.
+devVariant("c-khabib-nurmagomedov", "dev-khabib-rnc", "Khabib Nurmagomedov (RNC)", function (ch) {
+  ch.hasRnc = true;
+});

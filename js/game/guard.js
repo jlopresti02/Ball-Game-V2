@@ -24,7 +24,8 @@ var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, proj
 
 // Starts a guard submission on `atk`. Each entry in `subs` names one.
 var GUARD_SUBS = {
-  guillotine: function (self, atk) { beginGuillotine(self, atk); }
+  guillotine: function (self, atk) { beginGuillotine(self, atk); },
+  rnc: function (self, atk) { beginRnc(self, atk); }
 };
 
 // Called from hurt() after a hit lands.

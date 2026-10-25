@@ -80,6 +80,7 @@ BJJ submissions are switched on per fighter in its character file. So far there'
 | Submission | What it does |
 |---|---|
 | Guillotine | When a Grappler shoots for a grab, `chance`% of the time (35 by default) the defender catches its head in a guillotine instead. The two lock up and a tug-of-war bar over them swings between the choke (defender's colour) and the escape (shooter's colour), for about 3 to 4 seconds, while the shooter (bent over sideways off its shot, head driven in under the defender, who leans back with an arm locked over its neck) goes red. The shooter taps `tapBase`% of the time at full health (20), plus up to `tapLowHp`% more (60) the more damage it's taken: three pats and the fight is over, a win by submission. If it doesn't finish, `outcomes` picks what happens (relative odds): **escape** (20) they spin apart on an angle; **gnp** (70) the shooter pops its head out, drives the defender down to the floor and finishes its shot with 4 ground-and-pound punches adding up to the shot's own damage; **resink** (5) the defender sinks it back in for another go at the tap; **slam** (5) the shooter, still caught in the hold, stands up with the defender hanging off its neck, carries it up over the top and slams it down on the other side for `slamDamage` (75). After it's let go, the defender can't throw another guillotine for `cooldown` seconds (5). Set with `"hasGuillotine": true` and a `"guillotine"` block. Dustin Poirier has it. |
+| Rear naked choke | When a fighter with it grabs an opponent that isn't facing it, `chance`% of the time (60) it takes the back instead of slamming: it climbs on behind them, its head peeking over one shoulder, hooks its legs round their waist and locks an arm across their neck (the other arm's forearm behind their head). The same tug-of-war bar as the guillotine swings for about 2.5 to 3.5 seconds while their face goes red. They tap `tapBase`% of the time at full health (35), plus up to `tapLowHp`% more (50) the more damage they've taken: three pats on the arm and it's a win by submission. Otherwise they turn in and the two pop apart on an angle, and it can't take the back again for `cooldown` seconds (5). Also usable as a guard submission (`"rnc"` in `subs`). Set with `"hasRnc": true` and an `"rnc"` block. The logic is in `js/game/rnc.js`. Only the Dev Corner test Khabib has it so far. |
 
 ### Guard
 
@@ -115,6 +116,7 @@ js/game/weave.js        Weave dodge, critical-weave combo and the celebration ta
 js/game/finisher.js     Grappler finisher: bottom-wall slam, pin and punches
 js/game/grapple-duel.js Grappler vs Grappler: grab initiative, Iowa Style, Sprawl and Reattack
 js/game/bjj.js          BJJ submissions: the guillotine off a shot
+js/game/rnc.js          BJJ submissions: the rear naked choke off a back take
 js/game/guard.js        Falling into guard: on its back, the circle, pass or get caught
 js/game/dobronx.js      Do Bronx: the pose, camera flashes, the Brazil arena and the 15-second boost
 js/game/cte.js          CTE's wild swing and forget (heal) abilities

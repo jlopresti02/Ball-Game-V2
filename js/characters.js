@@ -181,6 +181,11 @@ function defaultForget() { return { heal: 12, every: 7 }; }
 function defaultGuillotine() {
   return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5, outcomes: { escape: 20, gnp: 70, resink: 5, slam: 5 }, slamDamage: 75 };
 }
+// Rear naked choke: chance% of grabs this fighter makes on an opponent
+// that isn't facing it become a back take and a choke. The one choked taps
+// tapBase% of the time at full health, up to tapLowHp% more the more damage
+// it's taken (see rnc.js).
+function defaultRnc() { return { chance: 60, tapBase: 35, tapLowHp: 50, cooldown: 5 }; }
 // Guard: chance% of the strikes that land on this fighter drop it onto its
 // back in guard for `time` seconds, with a circle of `radius` around it.
 // The first opponent to step into the circle passes the guard passChance%
@@ -229,6 +234,8 @@ function normalizeChar(ch) {
   ["outcomes", "slamDamage"].forEach(function (k) {
     if (ch.guillotine[k] == null) ch.guillotine[k] = defaultGuillotine()[k];
   });
+  if (ch.hasRnc === undefined) ch.hasRnc = false;
+  if (!ch.rnc) ch.rnc = defaultRnc();
   if (ch.hasGuard === undefined) ch.hasGuard = false;
   if (!ch.guard) ch.guard = defaultGuard();
   Object.keys(defaultGuard()).forEach(function (k) {
