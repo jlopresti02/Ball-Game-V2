@@ -156,6 +156,7 @@ function playSlam() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
+    crowdReact(0.5); // slams get the crowd up on top of the hit itself
     var now = ctx.currentTime;
 
     var thud = ctx.createOscillator();
@@ -499,41 +500,121 @@ function playForget() {
 }
 
 // ---------------------------------------------------------------
-// "Here we go!": the announcer call that opens every fight. Unlike the
-// other sounds it's a real recording (HERE_WE_GO_SRC), decoded once into a
-// buffer. Decoding starts when the match screen opens so the call is ready
-// by the time Start is tapped.
+// Recorded clips: unlike the synthesized sounds above, these are real
+// recordings inlined as MP3 data URLs (sound-clips.js). Each is decoded once
+// into a buffer; decoding starts when the match screen opens so the clips
+// are ready by the time Start is tapped.
 // ---------------------------------------------------------------
-var hereWeGoBuffer = null, hereWeGoLoading = false, hereWeGoPending = false;
-function loadHereWeGo() {
+var clipBuffers = {}, clipLoading = {}, clipWaiting = {};
+// Calls cb(buffer) once the clip named `name` (from SOUND_CLIPS) is decoded.
+function withClip(name, cb) {
   try {
     var ctx = getAudioCtx();
-    if (!ctx || hereWeGoBuffer || hereWeGoLoading || typeof HERE_WE_GO_SRC === "undefined") return;
-    hereWeGoLoading = true;
-    var b64 = HERE_WE_GO_SRC.slice(HERE_WE_GO_SRC.indexOf(",") + 1);
-    var bin = atob(b64), bytes = new Uint8Array(bin.length);
+    if (!ctx || typeof SOUND_CLIPS === "undefined" || !SOUND_CLIPS[name]) return;
+    if (clipBuffers[name]) { if (cb) cb(clipBuffers[name]); return; }
+    if (cb) (clipWaiting[name] = clipWaiting[name] || []).push(cb);
+    if (clipLoading[name]) return;
+    clipLoading[name] = true;
+    var src = SOUND_CLIPS[name];
+    var bin = atob(src.slice(src.indexOf(",") + 1)), bytes = new Uint8Array(bin.length);
     for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     var done = function (buf) {
-      hereWeGoBuffer = buf; hereWeGoLoading = false;
-      // Start was tapped before decoding finished: play it now.
-      if (hereWeGoPending) { hereWeGoPending = false; playHereWeGo(); }
+      clipBuffers[name] = buf; clipLoading[name] = false;
+      var waiting = clipWaiting[name] || [];
+      clipWaiting[name] = [];
+      waiting.forEach(function (f) { f(buf); });
     };
+    var fail = function () { clipLoading[name] = false; clipWaiting[name] = []; };
     // Older Safari only supports the callback form of decodeAudioData.
-    var p = ctx.decodeAudioData(bytes.buffer, done, function () { hereWeGoLoading = false; });
-    if (p && p.catch) p.catch(function () { hereWeGoLoading = false; });
-  } catch (e) { hereWeGoLoading = false; }
+    var p = ctx.decodeAudioData(bytes.buffer, done, fail);
+    if (p && p.catch) p.catch(fail);
+  } catch (e) { clipLoading[name] = false; }
 }
+function loadSoundClips() { withClip("hereWeGo"); withClip("crowd"); }
+
+// "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    if (!hereWeGoBuffer) { hereWeGoPending = true; loadHereWeGo(); return; }
-    var src = ctx.createBufferSource();
-    src.buffer = hereWeGoBuffer;
-    var g = ctx.createGain();
-    g.gain.value = 0.8;
-    src.connect(g); g.connect(ctx.destination);
-    src.start(ctx.currentTime);
+    var startedAt = ctx.currentTime;
+    withClip("hereWeGo", function (buf) {
+      // Still decoding when the fight started: play it late only if it's
+      // still near the start, rather than out of nowhere mid-fight.
+      if (ctx.currentTime - startedAt > 1) return;
+      var src = ctx.createBufferSource();
+      src.buffer = buf;
+      var g = ctx.createGain();
+      g.gain.value = 0.8;
+      src.connect(g); g.connect(ctx.destination);
+      src.start(ctx.currentTime);
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// ---------------------------------------------------------------
+// Crowd: a looping arena crowd under the whole fight. It sits at a low
+// murmur during lulls; every hit lifts the "hype", which swells the crowd
+// louder and brighter, then it settles back down over a few seconds. The
+// win brings one last roar.
+// ---------------------------------------------------------------
+var CROWD_FLOOR = 0.1, CROWD_PEAK = 0.6, CROWD_SETTLE = 2.2; // settle = seconds to fall most of the way back
+var crowd = null; // { src, gain, filter, hype, hypeAt }
+function crowdLevel(h) { return CROWD_FLOOR + (CROWD_PEAK - CROWD_FLOOR) * h; }
+function crowdHypeNow(c, now) { return c.hype * Math.exp(-(now - c.hypeAt) / CROWD_SETTLE); }
+function startCrowd() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    stopCrowd();
+    var c = crowd = { src: null, gain: null, filter: null, hype: 0, hypeAt: 0 };
+    withClip("crowd", function (buf) {
+      if (crowd !== c) return; // stopped (or restarted) while decoding
+      var now = ctx.currentTime;
+      c.src = ctx.createBufferSource();
+      c.src.buffer = buf;
+      c.src.loop = true;
+      // Skip the MP3's encoder padding at either end so the loop has no gap.
+      c.src.loopStart = 0.06; c.src.loopEnd = buf.duration - 0.06;
+      // Lulls sound muffled and distant; hype opens the crowd up.
+      c.filter = ctx.createBiquadFilter();
+      c.filter.type = "lowpass";
+      c.filter.frequency.value = 1800;
+      c.gain = ctx.createGain();
+      c.gain.gain.setValueAtTime(0.0001, now);
+      c.gain.gain.exponentialRampToValueAtTime(CROWD_FLOOR, now + 1.5);
+      c.src.connect(c.filter); c.filter.connect(c.gain); c.gain.connect(ctx.destination);
+      c.src.start(now, Math.random() * (buf.duration - 1));
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+// amount: how big the moment was, 0 (nothing) to 1 (huge). Hype stacks, so
+// a flurry builds the crowd up further than a single shot.
+function crowdReact(amount) {
+  try {
+    var c = crowd;
+    if (!c || !c.gain || !(amount > 0)) return;
+    var now = audioCtx.currentTime;
+    c.hype = Math.min(1, crowdHypeNow(c, now) + amount);
+    c.hypeAt = now;
+    [[c.gain.gain, crowdLevel(c.hype), CROWD_FLOOR], [c.filter.frequency, 1800 + 9000 * c.hype, 1800]].forEach(function (p) {
+      p[0].cancelScheduledValues(now);
+      p[0].setTargetAtTime(p[1], now, 0.06);           // swell fast
+      p[0].setTargetAtTime(p[2], now + 0.4, CROWD_SETTLE); // then settle back to the murmur
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+function crowdRoar() { crowdReact(1); }
+function stopCrowd() {
+  var c = crowd;
+  crowd = null;
+  if (!c || !c.src) return;
+  try {
+    var now = audioCtx.currentTime;
+    c.gain.gain.cancelScheduledValues(now);
+    c.gain.gain.setTargetAtTime(0.0001, now, 0.15);
+    c.src.stop(now + 0.8);
   } catch (e) { /* never let audio break the game */ }
 }

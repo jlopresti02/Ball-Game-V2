@@ -46,7 +46,8 @@ function makeBall(id, ch) {
 
 function startMatchWith(ch0, ch1) {
   stopAllChargeSounds();
-  loadHereWeGo();
+  stopCrowd();
+  loadSoundClips();
   balls = [makeBall(0, ch0), makeBall(1, ch1)];
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
@@ -105,6 +106,7 @@ function start() {
   setGamePhase("fight");
   rollKoRush(); // Brawler's opening KO Rush (usually doesn't happen)
   playHereWeGo();
+  startCrowd();
 }
 
 function floater(x, y, text, kind) {
@@ -240,6 +242,7 @@ function hurt(b, amount, source, attackerId) {
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
   recordHit(b, hpBefore - b.hp, source, attackerId); // jumbotron stats
+  crowdReact((hpBefore - b.hp) / MAX_HP * 4); // a 50 HP shot lifts the crowd 40%
   // A clean hit charges the attacker's special move.
   if (amount > 0 && attackerId != null && attackerId !== b.id && source !== "laser" && source !== "igbb") addSpecialCharge(balls[attackerId], source);
   if (source === "laser") {
@@ -275,6 +278,7 @@ function checkEnd() {
   var alive = balls.filter(function (b) { return b.alive; });
   if (alive.length > 1) return;
   over = true;
+  crowdRoar();
   if (alive.length === 1) {
     bannerText.textContent = alive[0].char.name + " wins" + (winBy ? " by " + winBy : "");
     bannerText.style.color = alive[0].char.color;
