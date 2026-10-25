@@ -40,7 +40,7 @@ function makeBall(id, ch) {
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
-    guillo: null, choked: false, guilloCd: 0, guard: null, guardCd: 0
+    guillo: null, choked: false, guilloCd: 0, guard: null, guardCd: 0, doBronx: null
   };
 }
 
@@ -49,6 +49,7 @@ function startMatchWith(ch0, ch1) {
   balls = [makeBall(0, ch0), makeBall(1, ch1)];
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
+  resetDoBronx();
 
   document.getElementById("name0").textContent = ch0.name;
   document.getElementById("name1").textContent = ch1.name;
@@ -158,6 +159,7 @@ function incomingMultiplier(b) {
   var m = 1;
   if (b.rageState && b.rageState.phase === "charge") m *= (b.char.rage.vulnMult != null ? b.char.rage.vulnMult : 2);
   if (b.taunt && b.taunt.t >= 0 && b.char.hasWeave) m *= (b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2);
+  m *= doBronxMult(1 - b.id); // the opponent's in the Do Bronx state
   return m;
 }
 function wouldKill(b, amount) {
@@ -223,6 +225,8 @@ function hurt(b, amount, source, attackerId) {
     var tm = b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2;
     amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }
+  // Everything a fighter in the Do Bronx state lands does double (dobronx.js).
+  if (source !== "laser") amount *= doBronxMult(attackerId);
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

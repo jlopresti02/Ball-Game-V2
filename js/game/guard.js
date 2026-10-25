@@ -121,9 +121,15 @@ function passGuard(self, atk, g) {
 
 // Caught: pulls the opponent in and goes for a submission.
 function catchInGuard(self, atk) {
-  var subs = self.char.guard.subs.filter(function (s) { return GUARD_SUBS[s]; });
   self.guard = null;
   floater(self.x, self.y - self.r - 60, "CAUGHT", "note");
+  startSubmission(self, atk);
+}
+
+// Goes for one of its submissions on `atk`, picked at random from its
+// guard's `subs` (also used by Do Bronx's takedowns).
+function startSubmission(self, atk) {
+  var subs = (self.char.guard.subs || []).filter(function (s) { return GUARD_SUBS[s]; });
   GUARD_SUBS[subs.length ? subs[Math.floor(Math.random() * subs.length)] : "guillotine"](self, atk);
 }
 

@@ -39,6 +39,7 @@ function draw() {
     ctx.stroke();
     ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
     ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.15, 0, Math.PI * 2); ctx.stroke();
+    if (brazilMode) drawBrazilFloor();
   }
 
   drawSitSpots();
@@ -279,6 +280,7 @@ function draw() {
     drawPowerSpin(b);
     drawJab(b);
     drawHands(b, other);
+    drawDoBronx(b); // the pose and the glow while it's on
     b.x -= wox; b.y -= woy;
   });
 
@@ -313,4 +315,5 @@ function draw() {
   ctx.globalAlpha = 1;
 
   if (stadium) drawJumbotron(px);
+  drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
 }
