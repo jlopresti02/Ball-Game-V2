@@ -19,6 +19,7 @@ function chargeProgress(b) {
 }
 
 function update(dt) {
+  tickDoBronxFx(dt); // camera flashes keep going through freeze-frames
   if (hitStop > 0) {
     // Frozen for a split second after a wall slam; only the camera shake
     // and shockwaves keep moving so the impact still reads.
@@ -49,6 +50,7 @@ function update(dt) {
     if (b.checkAnim) stepInForKickBack(b, balls[b.checkAnim.towardId]);
     if (b.slamSafe > 0) b.slamSafe = Math.max(0, b.slamSafe - dt);
     if (b.guilloCd > 0) b.guilloCd = Math.max(0, b.guilloCd - dt);
+    if (b.guardCd > 0 && !subLocked(b)) b.guardCd = Math.max(0, b.guardCd - dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);

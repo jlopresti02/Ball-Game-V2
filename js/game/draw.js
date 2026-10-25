@@ -39,6 +39,7 @@ function draw() {
     ctx.stroke();
     ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
     ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.15, 0, Math.PI * 2); ctx.stroke();
+    if (brazilMode) drawBrazilFloor();
   }
 
   drawSitSpots();
@@ -79,6 +80,8 @@ function draw() {
     ctx.beginPath(); ctx.arc(im.x, im.y, 18 * k + 4, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   });
+
+  drawGuardZones(); // the circle round a fighter down in guard
 
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).
@@ -143,6 +146,7 @@ function draw() {
       ctx.translate(-ax, -ay);
     }
     applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
+    applyGuardPose(b);  // flat on its back in guard
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -276,6 +280,7 @@ function draw() {
     drawPowerSpin(b);
     drawJab(b);
     drawHands(b, other);
+    drawDoBronx(b); // the pose and the glow while it's on
     b.x -= wox; b.y -= woy;
   });
 
@@ -310,4 +315,5 @@ function draw() {
   ctx.globalAlpha = 1;
 
   if (stadium) drawJumbotron(px);
+  drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
 }

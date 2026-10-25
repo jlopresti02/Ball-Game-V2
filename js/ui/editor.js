@@ -445,6 +445,7 @@ var forgetSliders = [
 // The special-move block names the fighter's own move.
 var SPECIAL_BLURBS = {
   igbb: document.getElementById("specialSub").textContent,
+  dobronx: "A bar charges up over time, faster with every clean hit. When it fills: hits a pose that blasts them away, the crowd's cameras flash and the arena turns Brazil themed. For 15 seconds every hit does double damage, takedowns come easier and each one goes straight into a submission attempt",
   fathersplan: "A bar charges up over time, faster with every clean hit (punches count extra). When it fills: grabs them and hurls them off wall after wall, slams them down onto the floor, then ground and pound"
 };
 function showSpecialMove(ch) {

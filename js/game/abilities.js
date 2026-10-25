@@ -161,6 +161,7 @@ function updateAbilities(dt) {
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
+    if (self.guard) { updateGuard(self, other, dt); continue; }
     if (self.guillo) { updateGuillotine(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
@@ -265,10 +266,15 @@ function updateAbilities(dt) {
 
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
-      var gr = self.char.grapple;
-      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
-        // (attemptGrab handles the grab being weaved or blocked: an escape.)
-        if (attemptGrab(self, other)) {
+      var gr = self.char.grapple, grabReach = gr.reach + (self.doBronx ? DB_REACH : 0);
+      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + grabReach) {
+        // Against another Grappler it only shoots for the takedown
+        // vsGrapplerChance% of the time (always in the Do Bronx state);
+        // otherwise it lets the moment pass.
+        if (other.char.hasGrapple && !self.doBronx && Math.random() >= gr.vsGrapplerChance / 100) {
+          self.grappleCd = gr.cooldown;
+          self.initiativeReason = null;
+        } else if (attemptGrab(self, other)) { // (handles the grab being weaved or blocked: an escape)
           if (self.initiativeReason) {
             // Shows why this Grappler won the race to the grab.
             floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
@@ -314,7 +320,12 @@ function updateAbilities(dt) {
             if (!reduceMotion) shake = 14;
             burst(tgt);
             checkEnd();
-            if (tgt.alive && isGrapplerDuel(self, tgt)) {
+            if (tgt.alive && self.doBronx) {
+              // Do Bronx: every takedown goes straight into a submission.
+              tgt.grappled = false; self.grapple = null; iowa = true; // (already let go)
+              floater(self.x, self.y - self.r - 60, "SUBMISSION ATTEMPT", "note");
+              startSubmission(self, tgt);
+            } else if (tgt.alive && isGrapplerDuel(self, tgt)) {
               // Grappler vs Grappler: keeps pressing them into the wall,
               // then disengages (Iowa Style, see grapple-duel.js).
               beginIowaStyle(self, tgt, g);

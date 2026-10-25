@@ -17,7 +17,7 @@
 // same during Father's Plan.
 "use strict";
 
-var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan" };
+var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan", dobronx: "Do Bronx" };
 
 var IGBB_CLOSE_SPEED = 820;   // dash in to grab
 var IGBB_CLOSE_GIVEUP = 3;
@@ -33,14 +33,14 @@ function specialName(ch) { return SPECIAL_MOVES[ch.special && ch.special.move] |
 // Every clean hit the fighter lands knocks some time off the charge.
 // A special can set punchCut to make plain punches charge it faster.
 function addSpecialCharge(b, source) {
-  if (!b || !b.char.hasSpecial || b.igbb) return;
+  if (!b || !b.char.hasSpecial || b.igbb || b.doBronx) return;
   var sp = b.char.special;
   var cut = source === "punch" && sp.punchCut != null ? sp.punchCut : sp.hitCut;
   b.specialT = Math.min(sp.chargeTime, (b.specialT || 0) + cut);
 }
 
 function tickSpecialCharge(b, dt) {
-  if (!b.char.hasSpecial || !b.alive || b.igbb || !started || over) return;
+  if (!b.char.hasSpecial || !b.alive || b.igbb || b.doBronx || !started || over) return;
   b.specialT = Math.min(b.char.special.chargeTime, (b.specialT || 0) + dt);
 }
 
@@ -81,6 +81,7 @@ function throwCorner(thrower, b) {
 function updateSpecial(self, other, dt) {
   if (!self.char.hasSpecial || !SPECIAL_MOVES[self.char.special.move]) return false;
   var sp = self.char.special;
+  if (sp.move === "dobronx") return updateDoBronx(self, other, dt); // dobronx.js
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };
@@ -544,7 +545,8 @@ function updateSpecialHud(force) {
     var b = balls[i];
     if (!b.char.hasSpecial) continue;
     var p = Math.max(0, Math.min(1, (b.specialT || 0) / b.char.special.chargeTime));
-    var live = !!b.igbb;
+    if (b.doBronx) p = Math.max(0, 1 - b.doBronx.t / b.doBronx.dur); // Do Bronx running down
+    var live = !!b.igbb && !b.doBronx;
     var key = Math.round(p * 400) + (live ? "l" : "") + (p >= 1 ? "f" : "");
     if (!force && specialCache[i] === key) continue;
     specialCache[i] = key;

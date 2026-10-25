@@ -1656,8 +1656,10 @@ function defaultKick() { return { damage: 40, cooldown: 2.8, speed: 0.5, size: 1
 // When a grab would be the killing blow, the grapple becomes a finisher:
 // a slam into the bottom wall for finSlamDamage, then the opponent is pinned
 // and hit with finPunches heavy punches of finPunchDamage each.
+// vsGrapplerChance is how often it actually shoots for the grab on contact
+// when the opponent is a Grappler too.
 function defaultGrapple() {
-  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50 };
+  return { damage: 50, cooldown: 1.5, speed: 0.45, reach: 6, counterChance: 25, finSlamDamage: 20, finPunches: 3, finPunchDamage: 10, sprawlChance: 30, reattackChance: 50, vsGrapplerChance: 100 };
 }
 // knockback is the speed the victim flies at during the wall slams; wallSlams
 // is how many walls it smashes into (0 turns the slams off), each dealing
@@ -1693,6 +1695,15 @@ function defaultForget() { return { heal: 12, every: 7 }; }
 function defaultGuillotine() {
   return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5, outcomes: { escape: 20, gnp: 70, resink: 5, slam: 5 }, slamDamage: 75 };
 }
+// Guard: chance% of the strikes that land on this fighter drop it onto its
+// back in guard for `time` seconds, with a circle of `radius` around it.
+// The first opponent to step into the circle passes the guard passChance%
+// of the time (passPunches free ground-and-pound punches of passDamage);
+// otherwise it's caught in a submission picked from `subs` (see guard.js).
+// After getting back up it can't pull guard again for `cooldown` seconds.
+function defaultGuard() {
+  return { chance: 25, time: 6, radius: 130, passChance: 50, passPunches: 4, passDamage: 10, subs: ["guillotine"], cooldown: 3 };
+}
 function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -1706,7 +1717,7 @@ function normalizeChar(ch) {
   if (ch.kick.checkChance == null) ch.kick.checkChance = defaultKick().checkChance;
   if (ch.hasGrapple === undefined) ch.hasGrapple = false;
   if (!ch.grapple) ch.grapple = defaultGrapple();
-  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance"].forEach(function (k) {
+  ["finSlamDamage", "finPunches", "finPunchDamage", "sprawlChance", "reattackChance", "vsGrapplerChance"].forEach(function (k) {
     if (ch.grapple[k] == null) ch.grapple[k] = defaultGrapple()[k];
   });
   if (ch.hasPowerPunch === undefined) ch.hasPowerPunch = false;
@@ -1731,6 +1742,11 @@ function normalizeChar(ch) {
   if (!ch.guillotine) ch.guillotine = defaultGuillotine();
   ["outcomes", "slamDamage"].forEach(function (k) {
     if (ch.guillotine[k] == null) ch.guillotine[k] = defaultGuillotine()[k];
+  });
+  if (ch.hasGuard === undefined) ch.hasGuard = false;
+  if (!ch.guard) ch.guard = defaultGuard();
+  Object.keys(defaultGuard()).forEach(function (k) {
+    if (ch.guard[k] == null) ch.guard[k] = defaultGuard()[k];
   });
   if (ch.blockChance == null) ch.blockChance = 0;
   // Special moves are for created characters. Dustin was set up with IGBB
@@ -1781,6 +1797,97 @@ function getImg(dataURL) {
 "use strict";
 
 var SAVED_ROSTER = [
+  {
+    "id": "c-charles-oliveira",
+    "rev": 2,
+    "builtin": false,
+    "name": "Charles Oliveira",
+    "base": "Grappler",
+    "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in a submission (the guillotine for now, more to come). Special move: Do Bronx.",
+    "color": "#d9a514",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#c48f68",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "short",
+      "hairColor": "#f4edd2",
+      "beard": "none",
+      "ears": "normal",
+      "tattoos": {
+        "portraits": true,
+        "leftArm": "dense",
+        "rightArm": "lion",
+        "armInk": true
+      },
+      "shorts": "#e9b824",
+      "trim": "#141414",
+      "shortsStyle": "chevron",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 5,
+      "cooldown": 0.7,
+      "speed": 0.22,
+      "size": 13,
+      "knockback": 80,
+      "reach": 30,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": true,
+    "grapple": {
+      "damage": 50,
+      "cooldown": 1.5,
+      "speed": 0.45,
+      "reach": 6,
+      "counterChance": 25,
+      "finSlamDamage": 20,
+      "finPunches": 3,
+      "finPunchDamage": 10,
+      "sprawlChance": 30,
+      "reattackChance": 50,
+      "vsGrapplerChance": 50
+    },
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "hasGuard": true,
+    "guard": {
+      "chance": 25,
+      "time": 6,
+      "radius": 130,
+      "passChance": 50,
+      "passPunches": 4,
+      "passDamage": 10,
+      "subs": [
+        "guillotine"
+      ],
+      "cooldown": 3
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "dobronx",
+      "chargeTime": 40,
+      "hitCut": 4,
+      "punchCut": 5,
+      "duration": 15
+    },
+    "blockChance": 10
+  },
   {
     "id": "c-dustin-poirier",
     "rev": 4,
@@ -2315,6 +2422,7 @@ function abilitySummary(ch) {
   if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
   if (ch.hasSwing) parts.push("\uD83E\uDD74 " + ch.swing.damage + " dmg swing");
   if (ch.hasGuillotine) parts.push("\uD83D\uDD12 " + ch.guillotine.chance + "% guillotine");
+  if (ch.hasGuard) parts.push("\uD83E\uDD4B " + ch.guard.chance + "% guard");
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
   if (ch.hasForget) parts.push("\uD83E\uDDE0 +" + ch.forget.heal + " / " + ch.forget.every + "s");
   if (ch.blockChance > 0) parts.push("🛡️ " + ch.blockChance + "% block");
@@ -3139,6 +3247,7 @@ var forgetSliders = [
 // The special-move block names the fighter's own move.
 var SPECIAL_BLURBS = {
   igbb: document.getElementById("specialSub").textContent,
+  dobronx: "A bar charges up over time, faster with every clean hit. When it fills: hits a pose that blasts them away, the crowd's cameras flash and the arena turns Brazil themed. For 15 seconds every hit does double damage, takedowns come easier and each one goes straight into a submission attempt",
   fathersplan: "A bar charges up over time, faster with every clean hit (punches count extra). When it fills: grabs them and hurls them off wall after wall, slams them down onto the floor, then ground and pound"
 };
 function showSpecialMove(ch) {
@@ -3242,7 +3351,7 @@ function makeBall(id, ch) {
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
-    guillo: null, choked: false, guilloCd: 0
+    guillo: null, choked: false, guilloCd: 0, guard: null, guardCd: 0, doBronx: null
   };
 }
 
@@ -3251,6 +3360,7 @@ function startMatchWith(ch0, ch1) {
   balls = [makeBall(0, ch0), makeBall(1, ch1)];
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
+  resetDoBronx();
 
   document.getElementById("name0").textContent = ch0.name;
   document.getElementById("name1").textContent = ch1.name;
@@ -3360,6 +3470,7 @@ function incomingMultiplier(b) {
   var m = 1;
   if (b.rageState && b.rageState.phase === "charge") m *= (b.char.rage.vulnMult != null ? b.char.rage.vulnMult : 2);
   if (b.taunt && b.taunt.t >= 0 && b.char.hasWeave) m *= (b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2);
+  m *= doBronxMult(1 - b.id); // the opponent's in the Do Bronx state
   return m;
 }
 function wouldKill(b, amount) {
@@ -3425,6 +3536,8 @@ function hurt(b, amount, source, attackerId) {
     var tm = b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2;
     amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }
+  // Everything a fighter in the Do Bronx state lands does double (dobronx.js).
+  if (source !== "laser") amount *= doBronxMult(attackerId);
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
@@ -3448,13 +3561,15 @@ function hurt(b, amount, source, attackerId) {
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
   if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && source !== "igbb" && !b.koDuel &&
-      b.char.hasGrapple && !b.grapple && !b.grappled && b.grappleCd === 0 && attackerId != null) {
+      b.char.hasGrapple && !b.grapple && !b.grappled && !subLocked(b) && b.grappleCd === 0 && attackerId != null) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
       if (Math.random() < chance) attemptGrab(b, atk); // can be weaved or blocked (an escape)
     }
   }
+  // A strike can knock a fighter with the guard onto its back (guard.js).
+  if (b.alive && amount > 0) tryPullGuard(b, source, attackerId);
   return amount;
 }
 
@@ -3738,6 +3853,7 @@ function updateAbilities(dt) {
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
+    if (self.guard) { updateGuard(self, other, dt); continue; }
     if (self.guillo) { updateGuillotine(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
@@ -3842,10 +3958,15 @@ function updateAbilities(dt) {
 
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt);
-      var gr = self.char.grapple;
-      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + gr.reach) {
-        // (attemptGrab handles the grab being weaved or blocked: an escape.)
-        if (attemptGrab(self, other)) {
+      var gr = self.char.grapple, grabReach = gr.reach + (self.doBronx ? DB_REACH : 0);
+      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + grabReach) {
+        // Against another Grappler it only shoots for the takedown
+        // vsGrapplerChance% of the time (always in the Do Bronx state);
+        // otherwise it lets the moment pass.
+        if (other.char.hasGrapple && !self.doBronx && Math.random() >= gr.vsGrapplerChance / 100) {
+          self.grappleCd = gr.cooldown;
+          self.initiativeReason = null;
+        } else if (attemptGrab(self, other)) { // (handles the grab being weaved or blocked: an escape)
           if (self.initiativeReason) {
             // Shows why this Grappler won the race to the grab.
             floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
@@ -3891,7 +4012,12 @@ function updateAbilities(dt) {
             if (!reduceMotion) shake = 14;
             burst(tgt);
             checkEnd();
-            if (tgt.alive && isGrapplerDuel(self, tgt)) {
+            if (tgt.alive && self.doBronx) {
+              // Do Bronx: every takedown goes straight into a submission.
+              tgt.grappled = false; self.grapple = null; iowa = true; // (already let go)
+              floater(self.x, self.y - self.r - 60, "SUBMISSION ATTEMPT", "note");
+              startSubmission(self, tgt);
+            } else if (tgt.alive && isGrapplerDuel(self, tgt)) {
               // Grappler vs Grappler: keeps pressing them into the wall,
               // then disengages (Iowa Style, see grapple-duel.js).
               beginIowaStyle(self, tgt, g);
@@ -4649,7 +4775,8 @@ function attemptGrab(attacker, target) {
   if (grabEscaped(attacker, target)) return false;
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
-  if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100) {
+  // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.
+  if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100 * (attacker.doBronx ? 0.5 : 1)) {
     beginSprawl(attacker, target);
     return false;
   }
@@ -4746,9 +4873,10 @@ var GUILLO_TAP_TIME = 0.75;  // three pats, then the fight's called
 var GUILLO_ESCAPE_SPEED = 360;
 var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching): the shooter's head is driven in under the defender
 
-// Locked up in a submission: either applying it or caught in it.
+// Locked up in a submission (either applying it or caught in it), or down
+// on its back in guard.
 function subLocked(b) {
-  return !!(b.guillo || b.choked);
+  return !!(b.guillo || b.choked || b.guard);
 }
 
 function canGuillotine(def) {
@@ -5167,6 +5295,191 @@ function drawGuillotines() {
     ctx.lineWidth = 2.5; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
     ctx.fillStyle = theme.ink;
     ctx.fillRect(bx + split - 2, by - 4, 4, bh + 8);
+    ctx.restore();
+  });
+}
+
+// Guard: a BJJ fighter who gets hit can fall onto its back and play guard.
+//
+// When a strike lands on a fighter with the guard, there's a `chance`% it
+// drops onto its back in guard instead of staying on its feet. It's planted
+// there for `time` seconds with a circle of `radius` around it; whoever hit
+// it is shoved back out of the circle first. The first time the opponent
+// steps into the circle, it's a coin flip (passChance%):
+//   - Guard passed: the opponent gets on top for passPunches free
+//     ground-and-pound punches of passDamage each.
+//   - Caught: the guard player snatches a submission, picked at random from
+//     `subs`. For now that's only the guillotine (bjj.js), as a placeholder
+//     until the guard's own submissions are designed.
+// If nobody steps in before the time's up, it gets back to its feet. Either
+// way it can't pull guard again for `cooldown` seconds once it's up.
+"use strict";
+
+var GUARD_ARM_TIME = 0.5;     // the opponent has to stay out of the circle this long before stepping in counts
+var GUARD_GETUP_TIME = 0.45;  // rolling back up onto its feet
+var GUARD_GETUP_SPEED = 300;  // backs away from the opponent once it's up
+
+// Strikes that can knock it down into guard (not grabs, slams, specials or
+// anything that's already moving it around).
+var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, proj: true, combo: true };
+
+// Starts a guard submission on `atk`. Each entry in `subs` names one.
+var GUARD_SUBS = {
+  guillotine: function (self, atk) { beginGuillotine(self, atk); }
+};
+
+// Called from hurt() after a hit lands.
+function tryPullGuard(b, source, attackerId) {
+  if (!b.char.hasGuard || !GUARD_SOURCES[source] || b.guardCd > 0 || attackerId == null) return;
+  var atk = balls[attackerId];
+  if (!atk || !atk.alive || specialBusy(b) || specialBusy(atk) || b.invincible) return;
+  if (Math.random() >= b.char.guard.chance / 100) return;
+  beginGuard(b, atk);
+}
+
+function beginGuard(b, atk) {
+  var gd = b.char.guard;
+  clearActions(b);
+  clearActions(atk);
+  b.vx = 0; b.vy = 0;
+  b.guard = {
+    t: 0, dur: gd.time, radius: gd.radius,
+    side: atk.x >= b.x ? 1 : -1,  // hips toward the opponent
+    outT: 0,                       // how long the opponent has been outside the circle
+    getup: -1                      // time into the get-up, once the guard runs out
+  };
+  b.guardCd = gd.cooldown;
+  // Whoever knocked it down backs off out of the circle, turning toward
+  // open floor if a wall is in the way.
+  var base = Math.atan2(atk.y - b.y, atk.x - b.x), out = gd.radius + 6, a = base;
+  for (var i = 0; i <= 12; i++) {
+    a = base + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * Math.PI / 6;
+    var px = b.x + Math.cos(a) * out, py = b.y + Math.sin(a) * out;
+    if (px > atk.r && px < W - atk.r && py > atk.r && py < H - atk.r) break;
+  }
+  atk.x = b.x + Math.cos(a) * out; atk.y = b.y + Math.sin(a) * out;
+  atk.vx = Math.cos(a) * SPEED; atk.vy = Math.sin(a) * SPEED;
+  b.squash = { t: 0.18, max: 0.18, nx: 0, ny: -1 };
+  floater(b.x, b.y - b.r - 30, "GUARD", "crit");
+  playSlam();
+  if (!reduceMotion) shake = Math.max(shake, 8);
+}
+
+// Runs on the guard player each frame while it's on its back.
+function updateGuard(self, other, dt) {
+  var g = self.guard;
+  self.vx = 0; self.vy = 0;
+  if (g.getup >= 0) {
+    // Nobody came in: rolls back up onto its feet, then backs away.
+    g.getup += dt;
+    if (g.getup >= GUARD_GETUP_TIME) endGuard(self, other);
+    return;
+  }
+  g.t += dt;
+  if (g.t >= g.dur || !other.alive) {
+    g.getup = 0;
+    floater(self.x, self.y - self.r - 30, "STANDS UP", "note");
+    playWhoosh();
+    return;
+  }
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
+  if (d >= g.radius) { g.outT += dt; return; }
+  // Only an opponent that's free to engage steps in (not one flying off a
+  // slam, sitting in a seat, mid special and so on), and only once it's
+  // been out of the circle for a moment, so the one that knocked it down
+  // can't just bounce straight back in.
+  if (g.outT < GUARD_ARM_TIME || other.invincible || other.slam || specialBusy(other)) return;
+  clearActions(other);
+  if (Math.random() < self.char.guard.passChance / 100) passGuard(self, other, g);
+  else catchInGuard(self, other);
+}
+
+// Back on its feet: pushes off away from the opponent, and the speed
+// regulator eases it back to its normal pace.
+function endGuard(self, other) {
+  self.guard = null;
+  var dx = self.x - other.x, dy = self.y - other.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var a = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.8;
+  self.vx = Math.cos(a) * GUARD_GETUP_SPEED; self.vy = Math.sin(a) * GUARD_GETUP_SPEED;
+}
+
+// Guard passed: the opponent climbs on top and gets free ground and pound.
+// This uses the guillotine's ground-and-pound (bjj.js), straight from the
+// mount, with the guard player still flat on its back underneath.
+function passGuard(self, atk, g) {
+  var gd = self.char.guard;
+  self.guard = null;
+  self.guillo = {
+    atkId: atk.id, t: 0, phase: "mount", fromGuard: true, side: g.side,
+    nx: g.side, ny: 0, mx: atk.x, my: atk.y, dir: g.side,
+    hits: Array.apply(null, Array(Math.max(1, gd.passPunches))).map(function () { return gd.passDamage; })
+  };
+  atk.choked = true;
+  atk.vx = 0; atk.vy = 0;
+  floater((self.x + atk.x) / 2, Math.min(self.y, atk.y) - self.r - 30, "GUARD PASSED", "crit");
+  playWhoosh();
+}
+
+// Caught: pulls the opponent in and goes for a submission.
+function catchInGuard(self, atk) {
+  self.guard = null;
+  floater(self.x, self.y - self.r - 60, "CAUGHT", "note");
+  startSubmission(self, atk);
+}
+
+// Goes for one of its submissions on `atk`, picked at random from its
+// guard's `subs` (also used by Do Bronx's takedowns).
+function startSubmission(self, atk) {
+  var subs = (self.char.guard.subs || []).filter(function (s) { return GUARD_SUBS[s]; });
+  GUARD_SUBS[subs.length ? subs[Math.floor(Math.random() * subs.length)] : "guillotine"](self, atk);
+}
+
+// Flat on its back: in guard, or underneath after the guard's been passed.
+// Returns which way it's lying (0 when upright) scaled by how far down it
+// is, so it rolls back upright through a get-up.
+function onBack(b) {
+  if (b.guard) {
+    var g = b.guard, k = g.getup >= 0 ? Math.min(1, g.getup / GUARD_GETUP_TIME) : 0;
+    return g.side * (1 - k * k * (3 - 2 * k));
+  }
+  if (b.guillo && b.guillo.fromGuard && (b.guillo.phase === "mount" || b.guillo.phase === "pound")) return b.guillo.side;
+  return 0;
+}
+
+// Lays the ball on its back, head away from the opponent and hips toward
+// it. Called with the canvas already set up for that fighter.
+function applyGuardPose(b) {
+  var side = onBack(b);
+  if (!side) return;
+  ctx.translate(b.x, b.y);
+  ctx.rotate(-side * Math.PI / 2);
+  ctx.translate(-b.x, -b.y);
+}
+
+// The guard circle (with a ring that drains as the time runs out), drawn on
+// the floor under the fighters.
+function drawGuardZones() {
+  balls.forEach(function (b) {
+    var g = b.guard;
+    if (!g || !b.alive) return;
+    var left = Math.max(0, 1 - g.t / g.dur);
+    ctx.save();
+    // The circle fades out as it gets up.
+    if (g.getup >= 0) ctx.globalAlpha = Math.max(0, 1 - g.getup / GUARD_GETUP_TIME);
+    var fade = ctx.globalAlpha;
+    ctx.globalAlpha = 0.12 * fade;
+    ctx.fillStyle = b.char.color;
+    ctx.beginPath(); ctx.arc(b.x, b.y, g.radius, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.85 * fade;
+    ctx.setLineDash([10, 8]);
+    ctx.lineDashOffset = -g.t * 30;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = b.char.color;
+    ctx.beginPath(); ctx.arc(b.x, b.y, g.radius, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineCap = "round";
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(b.x, b.y, g.radius + 7, -Math.PI / 2, -Math.PI / 2 + left * Math.PI * 2); ctx.stroke();
     ctx.restore();
   });
 }
@@ -6035,7 +6348,7 @@ function drawShock(b) {
 // same during Father's Plan.
 "use strict";
 
-var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan" };
+var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan", dobronx: "Do Bronx" };
 
 var IGBB_CLOSE_SPEED = 820;   // dash in to grab
 var IGBB_CLOSE_GIVEUP = 3;
@@ -6051,14 +6364,14 @@ function specialName(ch) { return SPECIAL_MOVES[ch.special && ch.special.move] |
 // Every clean hit the fighter lands knocks some time off the charge.
 // A special can set punchCut to make plain punches charge it faster.
 function addSpecialCharge(b, source) {
-  if (!b || !b.char.hasSpecial || b.igbb) return;
+  if (!b || !b.char.hasSpecial || b.igbb || b.doBronx) return;
   var sp = b.char.special;
   var cut = source === "punch" && sp.punchCut != null ? sp.punchCut : sp.hitCut;
   b.specialT = Math.min(sp.chargeTime, (b.specialT || 0) + cut);
 }
 
 function tickSpecialCharge(b, dt) {
-  if (!b.char.hasSpecial || !b.alive || b.igbb || !started || over) return;
+  if (!b.char.hasSpecial || !b.alive || b.igbb || b.doBronx || !started || over) return;
   b.specialT = Math.min(b.char.special.chargeTime, (b.specialT || 0) + dt);
 }
 
@@ -6099,6 +6412,7 @@ function throwCorner(thrower, b) {
 function updateSpecial(self, other, dt) {
   if (!self.char.hasSpecial || !SPECIAL_MOVES[self.char.special.move]) return false;
   var sp = self.char.special;
+  if (sp.move === "dobronx") return updateDoBronx(self, other, dt); // dobronx.js
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };
@@ -6562,7 +6876,8 @@ function updateSpecialHud(force) {
     var b = balls[i];
     if (!b.char.hasSpecial) continue;
     var p = Math.max(0, Math.min(1, (b.specialT || 0) / b.char.special.chargeTime));
-    var live = !!b.igbb;
+    if (b.doBronx) p = Math.max(0, 1 - b.doBronx.t / b.doBronx.dur); // Do Bronx running down
+    var live = !!b.igbb && !b.doBronx;
     var key = Math.round(p * 400) + (live ? "l" : "") + (p >= 1 ? "f" : "");
     if (!force && specialCache[i] === key) continue;
     specialCache[i] = key;
@@ -6570,6 +6885,201 @@ function updateSpecialHud(force) {
     document.getElementById("specialBar" + i).setAttribute("aria-valuenow", Math.round(p * 100));
     document.getElementById("special" + i).classList.toggle("healing", live || p >= 1);
   }
+}
+
+// Do Bronx: Charles Oliveira's special move.
+//
+// When the special bar fills, he stops and hits a pose that blasts the
+// opponent away from him. The crowd goes wild taking pictures, the camera
+// flashes white out the screen for a moment, and when it clears the arena
+// has turned Brazil themed (stadium.js): Brazil shirts, flags and signs, a
+// green walkway, a Brazil mat, every fan on their feet.
+//
+// For `duration` seconds (15) after that he's in the Do Bronx state:
+//   - all his hits do double damage
+//   - he's more likely to score takedowns: he always shoots on contact (even
+//     against a Grappler), his grab reaches further, and the opponent sprawls
+//     half as often
+//   - every takedown he lands goes straight into a submission attempt
+// Then he hits another pose, the cameras flash again and everything goes
+// back to normal: his state, the fans and the arena. The bar starts over.
+"use strict";
+
+var DB_POSE_TIME = 1.2;      // the opening pose
+var DB_OUTRO_TIME = 1.0;     // the closing pose
+var DB_FLASH_AT = 0.35;      // into a pose when the cameras go off
+var DB_PUSH_SPEED = 900;     // how hard the pose blasts the opponent away
+var DB_REACH = 16;           // extra grab reach while it's on
+var DB_FLASH_TIME = 0.7;     // how long the white-out takes to clear
+
+var brazilMode = false;      // the arena is Brazil themed right now
+var screenFlash = 0;         // white-out over the whole screen (1 = full)
+var cameraFlashes = [];      // pops of camera flash in the crowd
+
+function resetDoBronx() {
+  brazilMode = false;
+  screenFlash = 0;
+  cameraFlashes = [];
+  if (typeof stadiumCache !== "undefined") stadiumCache.key = null;
+}
+
+// Runs for a fighter whose special is Do Bronx, from updateSpecial. Returns
+// true while it's posing (it does nothing else).
+function updateDoBronx(self, other, dt) {
+  var sp = self.char.special, m = self.igbb;
+  if (!m) {
+    var db = self.doBronx;
+    if (db) {
+      // Running: fights as normal, with the boosts, until the time's up
+      // (the clock runs in tickDoBronxFx), then poses once it's free to.
+      if (!other.alive || db.t < db.dur || specialBusy(self) || self.punch || self.kick) return false;
+      self.igbb = { move: "dobronx", phase: "outro", t: 0 };
+      clearActions(self);
+      floater(self.x, self.y - self.r - 26, "OBRIGADO!", "note");
+      return true;
+    }
+    if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
+    self.igbb = { move: "dobronx", phase: "pose", t: 0 };
+    clearActions(self);
+    floater(self.x, self.y - self.r - 26, "DO BRONX!", "crit");
+    playWhoosh();
+  }
+  m = self.igbb;
+  m.t += dt;
+  self.vx = 0; self.vy = 0;
+  if (!m.flashed && m.t >= DB_FLASH_AT) {
+    m.flashed = true;
+    if (m.phase === "pose") blastAway(self, other);
+    cameraFlash();
+    brazilMode = m.phase === "pose"; // swaps behind the white-out
+  }
+  if (m.t < (m.phase === "pose" ? DB_POSE_TIME : DB_OUTRO_TIME)) return true;
+  self.igbb = null;
+  if (m.phase === "pose") {
+    self.doBronx = { t: 0, dur: sp.duration || 15 };
+  } else {
+    self.doBronx = null;
+    self.specialT = 0;
+  }
+  setSpeed(self, SPEED);
+  return true;
+}
+
+// The pose knocks the opponent back: no damage, just a shockwave.
+function blastAway(self, other) {
+  if (!other.alive) return;
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  clearActions(other);
+  other.vx = dx / d * DB_PUSH_SPEED; other.vy = dy / d * DB_PUSH_SPEED;
+  other.knockFly = 0.35;
+  other.squash = { t: 0.18, max: 0.18, nx: -dx / d, ny: -dy / d };
+  other.flash = 0.16;
+  impacts.push({ x: self.x, y: self.y, nx: dx / d, ny: dy / d, life: 0.6, max: 0.6, color: self.char.color });
+  impacts.push({ x: self.x, y: self.y, nx: -dx / d, ny: -dy / d, life: 0.6, max: 0.6, color: "#009c3b" });
+  igbbSparks(self.x, self.y, dx / d, dy / d, "#ffdf00", 26, 520);
+  if (!reduceMotion) shake = Math.max(shake, 16);
+  playSlam();
+}
+
+// The crowd's cameras all go off at once: the screen whites out and flashes
+// pop all over the stands.
+function cameraFlash() {
+  screenFlash = 1;
+  cameraFlashes = [];
+  if (typeof stadiumFans === "undefined") return;
+  for (var i = 0; i < 70; i++) {
+    var f = stadiumFans[Math.floor(Math.random() * stadiumFans.length)];
+    cameraFlashes.push({ x: f.x + (Math.random() - 0.5) * f.r, y: f.y - f.r * 1.2, at: Math.random() * 1.4, life: 0.18 + Math.random() * 0.12, r: f.r * (0.5 + Math.random() * 0.4) });
+  }
+  playPunch(30);
+}
+
+// Double damage for everything a fighter in the Do Bronx state lands.
+function doBronxMult(attackerId) {
+  return attackerId != null && balls[attackerId] && balls[attackerId].doBronx ? 2 : 1;
+}
+
+function tickDoBronxFx(dt) {
+  // The state's clock keeps running whatever he's doing (even while he's
+  // being slammed or choked), so it's always 15 real seconds.
+  if (balls && started && !over) balls.forEach(function (b) { if (b.doBronx && b.alive) b.doBronx.t += dt; });
+  if (screenFlash > 0) screenFlash = Math.max(0, screenFlash - dt / DB_FLASH_TIME);
+  cameraFlashes.forEach(function (c) { c.at -= dt; });
+  cameraFlashes = cameraFlashes.filter(function (c) { return c.at + c.life > 0; });
+}
+
+// Camera pops in the stands (stage units, drawn by drawStadium).
+function drawCameraFlashes() {
+  cameraFlashes.forEach(function (c) {
+    if (c.at > 0) return;
+    var k = 1 + c.at / c.life; // 1 when it pops, 0 when it's gone
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, k);
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.beginPath(); ctx.arc(c.x, c.y, c.r * 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(c.x, c.y, c.r * 0.6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(c.x - c.r * 1.6, c.y); ctx.lineTo(c.x + c.r * 1.6, c.y);
+    ctx.moveTo(c.x, c.y - c.r * 1.6); ctx.lineTo(c.x, c.y + c.r * 1.6);
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+// The white-out over everything (screen pixels).
+function drawScreenFlash() {
+  if (screenFlash <= 0) return;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "rgba(255,255,255," + Math.min(1, screenFlash * 1.25) + ")";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+// The test arena's floor gets a faded Brazil flag too (arena units).
+function drawBrazilFloor() {
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = "#009c3b"; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#ffdf00";
+  ctx.beginPath(); ctx.moveTo(W / 2, H * 0.12); ctx.lineTo(W * 0.9, H / 2); ctx.lineTo(W / 2, H * 0.88); ctx.lineTo(W * 0.1, H / 2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#002776";
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.17, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+// The poses: a double-biceps flex, gloves up by the head. While the state
+// is on he glows green and gold.
+function drawDoBronx(b) {
+  if (!b.alive) return;
+  var r = b.r;
+  if (b.doBronx) {
+    var pulse = 0.5 + 0.5 * Math.sin(b.doBronx.t * 8);
+    ctx.save();
+    ctx.lineWidth = 4;
+    ctx.globalAlpha = 0.55 + 0.3 * pulse;
+    ctx.strokeStyle = "#ffdf00";
+    ctx.beginPath(); ctx.arc(b.x, b.y, r + 7 + pulse * 3, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "#009c3b"; ctx.lineWidth = 3;
+    ctx.setLineDash([8, 7]); ctx.lineDashOffset = -b.doBronx.t * 40;
+    ctx.beginPath(); ctx.arc(b.x, b.y, r + 13 + pulse * 3, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  }
+  var m = b.igbb;
+  if (!m || m.move !== "dobronx") return;
+  var k = Math.min(1, m.t / 0.25); k = k * k * (3 - 2 * k); // arms snap up
+  var flex = m.t > 0.25 ? Math.sin((m.t - 0.25) * 18) * r * 0.04 : 0;
+  var size = b.char.punch.size || 15;
+  [-1, 1].forEach(function (s) {
+    var shx = b.x + s * r * 0.75, shy = b.y - r * 0.15;
+    var elx = b.x + s * r * (0.9 + 0.55 * k), ely = b.y - r * (0.15 + 0.15 * k);
+    var hx = b.x + s * r * (0.85 + 0.35 * k), hy = b.y - r * (0.3 + 0.85 * k) - flex;
+    strokeLimb(size * 0.75, armColor(b.char), function () {
+      ctx.moveTo(shx, shy); ctx.lineTo(elx, ely); ctx.lineTo(hx, hy);
+    });
+    ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(hx, hy, size * 0.95, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
 }
 
 // Per-frame update, HUD health bars and canvas sizing.
@@ -6593,6 +7103,7 @@ function chargeProgress(b) {
 }
 
 function update(dt) {
+  tickDoBronxFx(dt); // camera flashes keep going through freeze-frames
   if (hitStop > 0) {
     // Frozen for a split second after a wall slam; only the camera shake
     // and shockwaves keep moving so the impact still reads.
@@ -6623,6 +7134,7 @@ function update(dt) {
     if (b.checkAnim) stepInForKickBack(b, balls[b.checkAnim.towardId]);
     if (b.slamSafe > 0) b.slamSafe = Math.max(0, b.slamSafe - dt);
     if (b.guilloCd > 0) b.guilloCd = Math.max(0, b.guilloCd - dt);
+    if (b.guardCd > 0 && !subLocked(b)) b.guardCd = Math.max(0, b.guardCd - dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
     b.immuneCd = Math.max(0, b.immuneCd - dt);
@@ -6727,14 +7239,17 @@ function defaultLook() {
   return {
     skin: "#d9a27e", build: "muscular", bodyHair: "none",
     hair: "short", hairColor: "#2b2019", beard: "none", ears: "normal",
-    tattoos: { chest: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
+    tattoos: { chest: false, portraits: false, script: false, claws: false, leftArm: false, rightArm: false, ribs: false, color: false },
     shorts: "#1e3a8a", trim: "#f2f2f2", shortsStyle: "stripe", gloves: "#141414"
   };
 }
 
 // Arms, legs and fists of fighters with art use skin and glove colours;
 // everyone else keeps their fighter colour.
-function armColor(ch) { return ch.look ? ch.look.skin : ch.color; }
+function armColor(ch) {
+  if (!ch.look) return ch.color;
+  return ch.look.tattoos && ch.look.tattoos.armInk ? sleevePattern(ch.look) : ch.look.skin;
+}
 function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
 
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
@@ -7096,7 +7611,19 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.globalAlpha = 1;
   }
 
-  // Tattoos
+  // Tattoos. In the contained layout nothing is inked above the chin line,
+  // so clip to the area under it (the jaw curve, mapped into torso space).
+  c.save();
+  if (contained) {
+    var tx = function (x) { return x / 0.86; }, ty = function (y) { return (y - r * 0.11) / 0.59; };
+    c.beginPath();
+    c.moveTo(tx(-r), ty(-r * 0.44));
+    c.lineTo(tx(-r * 0.66), ty(-r * 0.44));
+    c.quadraticCurveTo(tx(-r * 0.5), ty(-r * 0.2), 0, ty(-r * 0.2));
+    c.quadraticCurveTo(tx(r * 0.5), ty(-r * 0.2), tx(r * 0.66), ty(-r * 0.44));
+    c.lineTo(tx(r), ty(-r * 0.44)); c.lineTo(tx(r), ty(r)); c.lineTo(tx(-r), ty(r)); c.closePath();
+    c.clip();
+  }
   var tat = look.tattoos || {};
   var inkCol = "rgba(28,34,52,0.62)";
   c.strokeStyle = inkCol; c.fillStyle = inkCol;
@@ -7113,11 +7640,80 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
+  if (tat.portraits) {
+    // Black-and-grey family portraits filling the upper chest: a woman with
+    // long hair, an older man with grey hair (lowest) and a girl with dark
+    // hair (highest), over smoky shading down to the pecs.
+    var tall = contained ? 0.86 / 0.59 : 1;  // undo the torso squeeze so faces stay round
+    var faceSkin = shadeHex(skin, 0.06), shade = "rgba(28,34,52,";
+    c.fillStyle = shade + "0.2)";
+    for (var sm = 0; sm < 7; sm++) {
+      c.beginPath(); c.ellipse(r * (-0.33 + sm * 0.11), -r * (0.24 + (sm % 2) * 0.04), r * 0.12, r * 0.07, 0, 0, Math.PI * 2); c.fill();
+    }
+    [{ x: -0.27, y: -0.4, w: 0.14, hair: "long" }, { x: 0, y: -0.36, w: 0.145, hair: "grey" }, { x: 0.27, y: -0.42, w: 0.135, hair: "girl" }].forEach(function (pt) {
+      var w = r * pt.w;
+      c.save(); c.translate(r * pt.x, r * pt.y); c.scale(1, tall / 1.15);
+      // Hair behind the face
+      if (pt.hair === "long") {
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 1.05, w * 1.15); c.quadraticCurveTo(-w * 1.25, -w * 1.25, 0, -w * 1.3);
+        c.quadraticCurveTo(w * 1.25, -w * 1.25, w * 1.05, w * 1.15); c.quadraticCurveTo(0, w * 0.9, -w * 1.05, w * 1.15); c.fill();
+      } else if (pt.hair === "girl") {
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.moveTo(-w * 1.02, w * 0.75); c.quadraticCurveTo(-w * 1.25, -w * 1.3, 0, -w * 1.32);
+        c.quadraticCurveTo(w * 1.25, -w * 1.3, w * 1.02, w * 0.75); c.quadraticCurveTo(0, w * 0.5, -w * 1.02, w * 0.75); c.fill();
+      } else {
+        c.fillStyle = shade + "0.35)";
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.98, w * 1.05, 0, Math.PI, Math.PI * 2); c.fill();
+      }
+      // Face, shaded round the edges
+      var fg = c.createRadialGradient(-w * 0.15, -w * 0.15, w * 0.1, 0, 0, w * 1.05);
+      fg.addColorStop(0, faceSkin); fg.addColorStop(0.65, shadeHex(skin, -0.08)); fg.addColorStop(1, shadeHex(skin, -0.3));
+      c.fillStyle = fg;
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = shade + "0.16)"; c.fill();  // grey ink wash
+      if (pt.hair === "girl") {
+        // Fringe across the forehead
+        c.fillStyle = shade + "0.8)";
+        c.beginPath(); c.ellipse(0, -w * 0.72, w * 0.76, w * 0.32, 0, 0, Math.PI * 2); c.fill();
+      } else if (pt.hair === "long") {
+        // Hair parted over the forehead
+        c.fillStyle = shade + "0.78)";
+        c.beginPath(); c.moveTo(-w * 0.78, -w * 0.1); c.quadraticCurveTo(-w * 0.6, -w * 0.95, w * 0.1, -w * 0.92);
+        c.quadraticCurveTo(-w * 0.35, -w * 0.6, -w * 0.78, -w * 0.1); c.fill();
+      } else {
+        // Receding grey hairline
+        c.strokeStyle = shade + "0.45)"; c.lineWidth = lw(0.02);
+        c.beginPath(); c.ellipse(0, -w * 0.25, w * 0.8, w * 0.75, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+      }
+      // Soft shading only: brow line and the shadow of a smile
+      c.fillStyle = shade + "0.3)";
+      c.beginPath(); c.ellipse(0, -w * 0.2, w * 0.5, w * 0.1, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(0, w * 0.45, w * 0.32, w * 0.12, 0, 0, Math.PI); c.fill();
+      c.strokeStyle = shade + "0.55)"; c.lineWidth = lw(0.018);
+      c.beginPath(); c.ellipse(0, 0, w * 0.74, w * 0.95, 0, 0, Math.PI * 2); c.stroke();
+      c.restore();
+    });
+    // A short line of script under the girl's portrait
+    c.strokeStyle = shade + "0.6)"; c.lineWidth = lw(0.016);
+    c.beginPath();
+    for (var sc = 0; sc <= 12; sc++) {
+      var sx = r * (0.18 + sc * 0.012), sy = -r * 0.2 + Math.sin(sc * 1.8) * r * 0.014;
+      if (sc === 0) c.moveTo(sx, sy); else c.lineTo(sx, sy);
+    }
+    c.stroke();
+    c.strokeStyle = inkCol; c.fillStyle = inkCol; c.globalAlpha = 1;
+  }
   [["leftArm", -1], ["rightArm", 1]].forEach(function (p) {
     if (!tat[p[0]]) return;
-    var s = p[1];
+    var s = p[1], style = tat[p[0]];
     // Sleeve running over the shoulder: bands and curls
     c.save();
+    if (style === "dense" || style === "lion") {
+      drawNamedSleeve(c, r, s, style, inkCol, lw, artSeed(name + p[0]), contained ? 0.86 / 0.59 : 1);
+      c.restore();
+      return;
+    }
     c.beginPath(); c.arc(s * r * 1.02, -r * 0.3, r * 0.4, 0, Math.PI * 2); c.clip();
     c.globalAlpha = 0.38; c.fillRect(s > 0 ? r * 0.6 : -r, -r, r * 0.4, r * 1.2);
     if (tat.color) {
@@ -7172,6 +7768,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.stroke();
   }
 
+  c.restore();
   if (contained) c.restore();
 
   // Fight shorts
@@ -7207,6 +7804,18 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.beginPath(); c.arc(spx, spy, pz * 0.4, 0, Math.PI * 2); c.fill();
     }
     c.globalAlpha = 1;
+  }
+  if (look.shortsStyle === "chevron") {
+    // A wide diagonal panel sweeping up the right leg, pinstripes on the left
+    c.fillStyle = look.trim;
+    c.beginPath();
+    c.moveTo(r * 0.06, r); c.lineTo(r * 0.4, r);
+    c.lineTo(r * 0.94, sTop + band); c.lineTo(r * 0.6, sTop + band); c.closePath(); c.fill();
+    c.strokeStyle = look.trim; c.lineWidth = lw(0.035);
+    c.beginPath(); c.moveTo(-r * 0.12, r); c.lineTo(r * 0.46, sTop + band); c.stroke();
+    [0, 1].forEach(function (k) {
+      c.beginPath(); c.moveTo(-r * (0.86 - k * 0.12), sTop + band); c.lineTo(-r * (0.5 - k * 0.12), r); c.stroke();
+    });
   }
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
@@ -7245,6 +7854,92 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.077);
   c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.stroke();
+}
+
+// Named sleeve styles, drawn inside the shoulder clip at side `s`.
+// "dense": near solid black-and-grey from shoulder down, dark emblem on the delt.
+// "lion": a lion's head with a shaggy mane on the delt, patchier ink below.
+function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
+  // The arm hangs down the side of the ball, from the shoulder to the shorts
+  var rnd = artRand(seed), inner = r * 0.64, x0 = s * r * 0.8;
+  c.beginPath();
+  c.moveTo(s * r, -r * 0.95);
+  c.quadraticCurveTo(s * (inner - r * 0.04), -r * 0.9, s * (inner - r * 0.04), -r * 0.35);
+  c.quadraticCurveTo(s * (inner - r * 0.04), r * 0.1, s * (inner + r * 0.02), r * 0.6);
+  c.lineTo(s * r, r * 0.6); c.closePath(); c.clip();
+  c.fillStyle = inkCol;
+  c.globalAlpha = style === "dense" ? 0.95 : 0.2;
+  c.fillRect(s > 0 ? inner - r * 0.1 : -r, -r, r * 0.5, r * 1.6);
+  if (style === "lion") {
+    // Heavier ink on the forearm, lighter patches higher up
+    c.globalAlpha = 0.35; c.fillRect(s > 0 ? inner - r * 0.1 : -r, r * 0.05, r * 0.5, r * 0.6);
+  }
+  // Smoky blotches so it reads as shaded ink, not a flat band
+  for (var i = 0; i < 22; i++) {
+    c.globalAlpha = (style === "dense" ? 0.3 : 0.2) + rnd() * 0.25;
+    c.beginPath(); c.ellipse(x0 + (rnd() - 0.5) * r * 0.3, -r * 0.75 + rnd() * r * 1.35, r * (0.03 + rnd() * 0.06), r * (0.03 + rnd() * 0.05), rnd() * 3, 0, Math.PI * 2); c.fill();
+  }
+  c.globalAlpha = 1;
+  c.save(); c.translate(s * r * 0.83, -r * 0.5); c.scale(1, tall);
+  if (style === "dense") {
+    // Dark emblem on the delt: a body with legs reaching out
+    c.fillStyle = "rgba(14,16,24,0.9)"; c.strokeStyle = "rgba(14,16,24,0.9)"; c.lineWidth = lw(0.022);
+    c.beginPath(); c.ellipse(0, 0, r * 0.05, r * 0.075, 0, 0, Math.PI * 2); c.fill();
+    for (var l = 0; l < 4; l++) {
+      [-1, 1].forEach(function (d) {
+        var a = -0.9 + l * 0.6;
+        c.beginPath(); c.moveTo(0, 0);
+        c.quadraticCurveTo(d * r * 0.08, a * r * 0.06, d * r * 0.13, a * r * 0.11); c.stroke();
+      });
+    }
+  } else {
+    // Lion's head: a ring of mane tufts round a shaded face
+    var lr = r * 0.11;
+    c.strokeStyle = "rgba(20,24,36,0.8)"; c.lineWidth = lw(0.022);
+    for (var m = 0; m < 14; m++) {
+      var ma = m / 14 * Math.PI * 2;
+      c.beginPath();
+      c.moveTo(Math.cos(ma) * lr * 0.7, Math.sin(ma) * lr * 0.7);
+      c.quadraticCurveTo(Math.cos(ma + 0.3) * lr * 1.3, Math.sin(ma + 0.3) * lr * 1.3, Math.cos(ma + 0.15) * lr * 1.6, Math.sin(ma + 0.15) * lr * 1.6);
+      c.stroke();
+    }
+    c.fillStyle = "rgba(20,24,36,0.35)";
+    c.beginPath(); c.ellipse(0, lr * 0.1, lr * 0.62, lr * 0.75, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(20,24,36,0.65)";
+    c.beginPath(); c.ellipse(0, lr * 0.45, lr * 0.25, lr * 0.16, 0, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+}
+
+// Inked arm texture for fighters whose look sets tattoos.armInk: a skin tile
+// with black-and-grey swirls and shading, used as the arm stroke in attacks.
+var sleevePatterns = {};
+function sleevePattern(look) {
+  var key = look.skin;
+  if (sleevePatterns[key]) return sleevePatterns[key];
+  if (typeof document === "undefined") return look.skin;
+  var n = 24, cv = document.createElement("canvas");
+  cv.width = cv.height = n;
+  var c = cv.getContext("2d"), rnd = artRand(artSeed(key + "sleeve"));
+  c.fillStyle = look.skin; c.fillRect(0, 0, n, n);
+  c.fillStyle = "rgba(28,34,52,0.38)"; c.fillRect(0, 0, n, n);
+  c.strokeStyle = "rgba(14,16,24,0.8)"; c.lineWidth = 1.3; c.lineCap = "round";
+  for (var i = 0; i < 9; i++) {
+    var x = rnd() * n, y = rnd() * n, rr = 2 + rnd() * 4, a = rnd() * 6;
+    // Draw each mark at its wrapped copies so the tile repeats seamlessly
+    [-n, 0, n].forEach(function (dx) {
+      [-n, 0, n].forEach(function (dy) {
+        if (i % 3 === 0) {
+          c.fillStyle = "rgba(14,16,24,0.45)";
+          c.beginPath(); c.ellipse(x + dx, y + dy, rr, rr * 0.7, a, 0, Math.PI * 2); c.fill();
+        } else {
+          c.beginPath(); c.arc(x + dx, y + dy, rr, a, a + 3.6); c.stroke();
+        }
+      });
+    });
+  }
+  sleevePatterns[key] = c.createPattern(cv, "repeat") || look.skin;
+  return sleevePatterns[key];
 }
 
 // An open-finger MMA glove. (x, y) is its centre, `ang` points the way the
@@ -7374,6 +8069,7 @@ function drawHands(b, other) {
   var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
   if (!b.alive || b.koOut || b.kick || b.grappled || b.grapple || b.sprawl || subLocked(b) || spinning || raging || b.combo || b.swing) return;
   if (b.taunt && b.taunt.t < 0) return; // the punch is still finishing
+  if (b.igbb && b.igbb.move === "dobronx") return; // posing (drawDoBronx)
   if (b.koRush && b.koRush.phase === "celebrate") return; // hands up (drawn by drawKoCelebrate)
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.
@@ -7851,6 +8547,55 @@ var ROWS_TB = 0;
   stadiumFans.sort(function (a, b) { return a.y - b.y; });
 })();
 
+// ---------------------------------------------------------------- Brazil theme
+
+// Charles Oliveira's special (Do Bronx, dobronx.js) turns the stadium into a
+// Brazil-themed arena for a while: the same fans in Brazil shirts, waving
+// flags and signs and going crazy, a green walkway and a Brazil mat.
+var BR = { green: "#009c3b", yellow: "#ffdf00", blue: "#002776", white: "#ffffff" };
+var BR_SIGNS = [["DO BRONX!", BR.yellow, BR.blue], ["CHARLES!", BR.green, BR.yellow], ["BRASIL!", BR.blue, BR.yellow],
+  ["OLIVEIRA", BR.yellow, BR.green], ["VAI CHARLES", BR.white, BR.green], ["DO BRONX!", BR.green, BR.white]];
+
+function brazilOn() { return typeof brazilMode !== "undefined" && brazilMode; }
+
+// Each fan's Brazil version: same face and seat, new shirt, maybe a flag or
+// a sign. A separate random stream keeps the regular crowd as it was.
+function buildBrazilCrowd() {
+  var seed = 31;
+  function rand() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var signs = 0;
+  stadiumFans.forEach(function (f) {
+    var r = rand(), br = Object.create(f);
+    br.shirt = r < 0.55 ? BR.yellow : r < 0.85 ? BR.green : BR.blue;
+    br.style = rand() < 0.4 ? "jersey" : "tee";
+    br.team = null; br.cap = rand() < 0.1 ? BR.green : null;
+    br.sign = f.sign ? BR_SIGNS[signs++ % BR_SIGNS.length] : null;
+    br.flag = !br.sign && rand() < 0.16;
+    br.phone = !br.sign && !br.flag && rand() < 0.3;
+    f.br = br;
+  });
+}
+buildBrazilCrowd();
+
+// A Brazil flag on a stick, centred at (x, y), waving.
+function drawBrazilFlag(x, y, w, t, phase) {
+  var h = w * 0.7, wave = Math.sin(t * 9 + phase) * w * 0.06;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = "#5b4630"; ctx.lineWidth = Math.max(2, w * 0.06);
+  ctx.beginPath(); ctx.moveTo(-w * 0.5, -h * 0.5); ctx.lineTo(-w * 0.5, h * 1.3); ctx.stroke();
+  ctx.transform(1, wave / w, 0, 1, 0, 0);
+  ctx.fillStyle = BR.green; ctx.fillRect(-w * 0.5, -h * 0.5, w, h);
+  ctx.fillStyle = BR.yellow;
+  ctx.beginPath(); ctx.moveTo(0, -h * 0.4); ctx.lineTo(w * 0.42, 0); ctx.lineTo(0, h * 0.4); ctx.lineTo(-w * 0.42, 0); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = BR.blue;
+  ctx.beginPath(); ctx.arc(0, 0, h * 0.22, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = BR.white; ctx.lineWidth = Math.max(1, h * 0.04);
+  ctx.beginPath(); ctx.arc(0, h * 0.12, h * 0.26, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+  ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 1.5; ctx.strokeRect(-w * 0.5, -h * 0.5, w, h);
+  ctx.restore();
+}
+
 // A fan's shirt over the bottom two thirds of the ball (inside the ball's clip).
 function drawFanShirt(c, r, f) {
   var col = f.shirt, dark = shadeHex(col, -0.3);
@@ -7932,9 +8677,11 @@ function makeLayer(w, h) {
   return cv;
 }
 
+function stadiumKey() { return canvas.width + ":" + (wwitBadge.complete ? 1 : 0) + (brazilOn() ? ":br" : ""); }
+
 function buildStadiumCache(px) {
   var c = stadiumCache;
-  c.key = canvas.width + ":" + (wwitBadge.complete ? 1 : 0);
+  c.key = stadiumKey();
   c.px = px;
   // Stands, walkway and cage
   c.bg = makeLayer(STAGE_W * px, STAGE_H * px);
@@ -7947,7 +8694,7 @@ function buildStadiumCache(px) {
     f.sprite = makeLayer(size, size);
     var fg = f.sprite.getContext("2d");
     fg.translate(size / 2, size / 2); fg.scale(px, px);
-    drawFanBall(fg, f.r, f);
+    drawFanBall(fg, f.r, brazilOn() ? f.br : f);
   });
   // The branded mat, in arena units (W x H)
   var ap = px * ST.A / W;
@@ -7983,20 +8730,21 @@ function drawStandsLayer(g) {
 
   // Walkway: maroon, wordmark in the middle and the motto either side
   var AX = ST.AX, AY = ST.AY, A = ST.A, CAGE = ST.CAGE;
-  g.fillStyle = WWIT.maroon;
+  var br = brazilOn();
+  g.fillStyle = br ? BR.green : WWIT.maroon;
   g.fillRect(IN.x0, IN.y0, IN.x1 - IN.x0, IN.y1 - IN.y0);
-  g.fillStyle = WWIT.gold; g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillStyle = br ? BR.yellow : WWIT.gold; g.textAlign = "center"; g.textBaseline = "middle";
   [IN.y0 + ST.APRON / 2 + 1, IN.y1 - ST.APRON / 2 + 1].forEach(function (ay) {
     for (var k = -1; k <= 1; k++) {
       g.globalAlpha = k === 0 ? 1 : 0.55;
       g.font = "900 " + (k === 0 ? 30 : 21) + "px Impact, 'Arial Black', sans-serif";
-      g.fillText(k === 0 ? WWIT.name + " " + WWIT.sub : WWIT.motto, STAGE_W / 2 + k * 290, ay);
+      g.fillText(br ? (k === 0 ? "DO BRONX" : "BRASIL") : (k === 0 ? WWIT.name + " " + WWIT.sub : WWIT.motto), STAGE_W / 2 + k * 290, ay);
     }
     g.globalAlpha = 1;
   });
   // Corner pads: red top left, blue bottom right
-  g.fillStyle = "#c62828"; g.fillRect(AX - CAGE - 12, AY - CAGE - 12, 40, 40);
-  g.fillStyle = "#1e46a8"; g.fillRect(AX + A + CAGE - 28, AY + A + CAGE - 28, 40, 40);
+  g.fillStyle = br ? BR.yellow : "#c62828"; g.fillRect(AX - CAGE - 12, AY - CAGE - 12, 40, 40);
+  g.fillStyle = br ? BR.blue : "#1e46a8"; g.fillRect(AX + A + CAGE - 28, AY + A + CAGE - 28, 40, 40);
   // Cage rail with chain-link
   g.strokeStyle = WWIT.dark; g.lineWidth = CAGE;
   g.strokeRect(AX - CAGE / 2, AY - CAGE / 2, A + CAGE, A + CAGE);
@@ -8008,8 +8756,8 @@ function drawStandsLayer(g) {
   }
   g.restore();
   // Gold trim and posts
-  g.strokeStyle = WWIT.gold; g.lineWidth = 4; g.strokeRect(AX - 2, AY - 2, A + 4, A + 4);
-  g.fillStyle = WWIT.gold;
+  g.strokeStyle = br ? BR.yellow : WWIT.gold; g.lineWidth = 4; g.strokeRect(AX - 2, AY - 2, A + 4, A + 4);
+  g.fillStyle = br ? BR.yellow : WWIT.gold;
   for (var i = 0; i <= 4; i++) {
     var p = AX - CAGE / 2 + (A + CAGE) * i / 4, q = AY - CAGE / 2 + (A + CAGE) * i / 4;
     [[p, AY - CAGE / 2], [p, AY + A + CAGE / 2], [AX - CAGE / 2, q], [AX + A + CAGE / 2, q]].forEach(function (pt) {
@@ -8021,6 +8769,7 @@ function drawStandsLayer(g) {
 // The canvas mat in arena units: cream so the fighters stay readable, a
 // faded badge in the middle, a maroon octagon line and corner wordmarks.
 function drawMatLayer(g) {
+  if (brazilOn()) { drawBrazilMat(g); return; }
   g.fillStyle = WWIT.mat; g.fillRect(0, 0, W, H);
   g.strokeStyle = "rgba(0,0,0,0.035)"; g.lineWidth = 0.6;
   g.beginPath();
@@ -8041,6 +8790,29 @@ function drawMatLayer(g) {
   [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(function (d) {
     g.save(); g.translate(cx + d[0] * W * 0.385, cy + d[1] * H * 0.385); g.rotate(-d[0] * d[1] * Math.PI / 4);
     g.fillText(WWIT.name + " " + WWIT.sub, 0, 0); g.restore();
+  });
+  g.globalAlpha = 1;
+}
+
+// The Brazil mat: still light so the fighters read, with a faded flag in
+// the middle, a green octagon line and BRASIL in the corners.
+function drawBrazilMat(g) {
+  g.fillStyle = "#f4f1d8"; g.fillRect(0, 0, W, H);
+  var cx = W / 2, cy = H / 2, R = W * 0.47;
+  g.globalAlpha = 0.22;
+  g.fillStyle = BR.green; g.fillRect(cx - W * 0.33, cy - H * 0.23, W * 0.66, H * 0.46);
+  g.fillStyle = BR.yellow;
+  g.beginPath(); g.moveTo(cx, cy - H * 0.2); g.lineTo(cx + W * 0.29, cy); g.lineTo(cx, cy + H * 0.2); g.lineTo(cx - W * 0.29, cy); g.closePath(); g.fill();
+  g.fillStyle = BR.blue; g.beginPath(); g.arc(cx, cy, H * 0.11, 0, Math.PI * 2); g.fill();
+  g.globalAlpha = 0.6; g.strokeStyle = BR.green; g.lineWidth = 4;
+  g.beginPath();
+  for (var k = 0; k <= 8; k++) { var an = Math.PI / 8 + k * Math.PI / 4; g[k ? "lineTo" : "moveTo"](cx + Math.cos(an) * R, cy + Math.sin(an) * R); }
+  g.stroke();
+  g.globalAlpha = 0.35; g.fillStyle = BR.green;
+  g.font = "900 17px Impact, 'Arial Black', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+  [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(function (d) {
+    g.save(); g.translate(cx + d[0] * W * 0.385, cy + d[1] * H * 0.385); g.rotate(-d[0] * d[1] * Math.PI / 4);
+    g.fillText("BRASIL", 0, 0); g.restore();
   });
   g.globalAlpha = 1;
 }
@@ -8095,7 +8867,7 @@ function recordTakedown(attackerId) { statsFor(attackerId).td++; }
 // ---------------------------------------------------------------- per frame
 
 function drawStadium(px) {
-  if (stadiumCache.key !== canvas.width + ":" + (wwitBadge.complete ? 1 : 0)) buildStadiumCache(px);
+  if (stadiumCache.key !== stadiumKey()) buildStadiumCache(px);
   statsFor(0);
   var now = performance.now() / 1000;
   if (fightClockLast !== null && started && !over) fightClock += Math.min(0.1, now - fightClockLast);
@@ -8105,14 +8877,21 @@ function drawStadium(px) {
   ctx.drawImage(stadiumCache.bg, 0, 0);
   ctx.setTransform(px, 0, 0, px, 0, 0);
   // The crowd gets louder when the cage shakes.
-  var roar = Math.min(1, (shake || 0) / 10);
-  for (var i = 0; i < stadiumFans.length; i++) drawFan(stadiumFans[i], now, roar, px);
-  for (var j = 0; j < stadiumFans.length; j++) if (stadiumFans[j].sign) drawFanSign(stadiumFans[j], now);
+  // In Brazil mode everyone's on their feet the whole time.
+  var br = brazilOn();
+  var roar = br ? 1 : Math.min(1, (shake || 0) / 10);
+  for (var i = 0; i < stadiumFans.length; i++) drawFan(br ? stadiumFans[i].br : stadiumFans[i], now, roar, px);
+  for (var j = 0; j < stadiumFans.length; j++) {
+    var f = br ? stadiumFans[j].br : stadiumFans[j];
+    if (f.sign) drawFanSign(f, now);
+    else if (f.flag) drawBrazilFlag(f.x + f.r * 0.3, f.y - f.r * 1.55, f.r * 1.3, now, f.phase);
+  }
+  drawCameraFlashes(now);
 }
 
 function drawFan(f, t, roar, px) {
   var hype = 0.5 + 0.5 * Math.sin(t * f.rate * (1 + roar) + f.phase);
-  var cheer = f.hype > 0.5 - roar * 0.4;
+  var cheer = f.hype > 0.5 - roar * 0.6;
   var r = f.r, bob = (cheer ? hype : hype * 0.3) * r * 0.22;
   var x = f.x, y = f.y - bob;
   // Bare fists pumping behind the ball
@@ -8219,13 +8998,14 @@ function drawJumbotron(px) {
     if (ch.hasSpecial) {
       var my = by + bh + 10, mh = 10, mw = bw * 0.7, mx = right ? bx + bw - mw : bx;
       var sp = Math.max(0, Math.min(1, (b.specialT || 0) / ch.special.chargeTime));
+      if (b.doBronx) sp = Math.max(0, 1 - b.doBronx.t / b.doBronx.dur); // Do Bronx running down
       ctx.fillStyle = "#1b2238"; ctx.fillRect(mx, my, mw, mh);
       ctx.fillStyle = "#ffd23f"; ctx.shadowColor = "#ffb000"; ctx.shadowBlur = sp >= 1 ? 16 : 8;
       ctx.fillRect(right ? mx + mw * (1 - sp) : mx, my, mw * sp, mh);
       ctx.shadowBlur = 0;
       ctx.font = "700 14px Impact, 'Arial Black', sans-serif"; ctx.fillStyle = sp >= 1 ? "#ffd23f" : "#c9d3ea";
       ctx.textAlign = right ? "right" : "left"; ctx.textBaseline = "middle";
-      ctx.fillText((sp >= 1 ? "READY: " : "") + specialName(ch).toUpperCase(), right ? mx - 8 : mx + mw + 8, my + 6);
+      ctx.fillText((b.doBronx ? "" : sp >= 1 ? "READY: " : "") + specialName(ch).toUpperCase() + (b.doBronx ? "!" : ""), right ? mx - 8 : mx + mw + 8, my + 6);
     }
   });
 
@@ -8293,6 +9073,7 @@ function draw() {
     ctx.stroke();
     ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
     ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.15, 0, Math.PI * 2); ctx.stroke();
+    if (brazilMode) drawBrazilFloor();
   }
 
   drawSitSpots();
@@ -8333,6 +9114,8 @@ function draw() {
     ctx.beginPath(); ctx.arc(im.x, im.y, 18 * k + 4, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   });
+
+  drawGuardZones(); // the circle round a fighter down in guard
 
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).
@@ -8397,6 +9180,7 @@ function draw() {
       ctx.translate(-ax, -ay);
     }
     applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
+    applyGuardPose(b);  // flat on its back in guard
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -8530,6 +9314,7 @@ function draw() {
     drawPowerSpin(b);
     drawJab(b);
     drawHands(b, other);
+    drawDoBronx(b); // the pose and the glow while it's on
     b.x -= wox; b.y -= woy;
   });
 
@@ -8564,6 +9349,7 @@ function draw() {
   ctx.globalAlpha = 1;
 
   if (stadium) drawJumbotron(px);
+  drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
 }
 
 // Game loop, buttons, tap-to-set sliders, and startup. Load this last.

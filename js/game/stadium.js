@@ -112,6 +112,55 @@ var ROWS_TB = 0;
   stadiumFans.sort(function (a, b) { return a.y - b.y; });
 })();
 
+// ---------------------------------------------------------------- Brazil theme
+
+// Charles Oliveira's special (Do Bronx, dobronx.js) turns the stadium into a
+// Brazil-themed arena for a while: the same fans in Brazil shirts, waving
+// flags and signs and going crazy, a green walkway and a Brazil mat.
+var BR = { green: "#009c3b", yellow: "#ffdf00", blue: "#002776", white: "#ffffff" };
+var BR_SIGNS = [["DO BRONX!", BR.yellow, BR.blue], ["CHARLES!", BR.green, BR.yellow], ["BRASIL!", BR.blue, BR.yellow],
+  ["OLIVEIRA", BR.yellow, BR.green], ["VAI CHARLES", BR.white, BR.green], ["DO BRONX!", BR.green, BR.white]];
+
+function brazilOn() { return typeof brazilMode !== "undefined" && brazilMode; }
+
+// Each fan's Brazil version: same face and seat, new shirt, maybe a flag or
+// a sign. A separate random stream keeps the regular crowd as it was.
+function buildBrazilCrowd() {
+  var seed = 31;
+  function rand() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var signs = 0;
+  stadiumFans.forEach(function (f) {
+    var r = rand(), br = Object.create(f);
+    br.shirt = r < 0.55 ? BR.yellow : r < 0.85 ? BR.green : BR.blue;
+    br.style = rand() < 0.4 ? "jersey" : "tee";
+    br.team = null; br.cap = rand() < 0.1 ? BR.green : null;
+    br.sign = f.sign ? BR_SIGNS[signs++ % BR_SIGNS.length] : null;
+    br.flag = !br.sign && rand() < 0.16;
+    br.phone = !br.sign && !br.flag && rand() < 0.3;
+    f.br = br;
+  });
+}
+buildBrazilCrowd();
+
+// A Brazil flag on a stick, centred at (x, y), waving.
+function drawBrazilFlag(x, y, w, t, phase) {
+  var h = w * 0.7, wave = Math.sin(t * 9 + phase) * w * 0.06;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = "#5b4630"; ctx.lineWidth = Math.max(2, w * 0.06);
+  ctx.beginPath(); ctx.moveTo(-w * 0.5, -h * 0.5); ctx.lineTo(-w * 0.5, h * 1.3); ctx.stroke();
+  ctx.transform(1, wave / w, 0, 1, 0, 0);
+  ctx.fillStyle = BR.green; ctx.fillRect(-w * 0.5, -h * 0.5, w, h);
+  ctx.fillStyle = BR.yellow;
+  ctx.beginPath(); ctx.moveTo(0, -h * 0.4); ctx.lineTo(w * 0.42, 0); ctx.lineTo(0, h * 0.4); ctx.lineTo(-w * 0.42, 0); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = BR.blue;
+  ctx.beginPath(); ctx.arc(0, 0, h * 0.22, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = BR.white; ctx.lineWidth = Math.max(1, h * 0.04);
+  ctx.beginPath(); ctx.arc(0, h * 0.12, h * 0.26, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+  ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 1.5; ctx.strokeRect(-w * 0.5, -h * 0.5, w, h);
+  ctx.restore();
+}
+
 // A fan's shirt over the bottom two thirds of the ball (inside the ball's clip).
 function drawFanShirt(c, r, f) {
   var col = f.shirt, dark = shadeHex(col, -0.3);
@@ -193,9 +242,11 @@ function makeLayer(w, h) {
   return cv;
 }
 
+function stadiumKey() { return canvas.width + ":" + (wwitBadge.complete ? 1 : 0) + (brazilOn() ? ":br" : ""); }
+
 function buildStadiumCache(px) {
   var c = stadiumCache;
-  c.key = canvas.width + ":" + (wwitBadge.complete ? 1 : 0);
+  c.key = stadiumKey();
   c.px = px;
   // Stands, walkway and cage
   c.bg = makeLayer(STAGE_W * px, STAGE_H * px);
@@ -208,7 +259,7 @@ function buildStadiumCache(px) {
     f.sprite = makeLayer(size, size);
     var fg = f.sprite.getContext("2d");
     fg.translate(size / 2, size / 2); fg.scale(px, px);
-    drawFanBall(fg, f.r, f);
+    drawFanBall(fg, f.r, brazilOn() ? f.br : f);
   });
   // The branded mat, in arena units (W x H)
   var ap = px * ST.A / W;
@@ -244,20 +295,21 @@ function drawStandsLayer(g) {
 
   // Walkway: maroon, wordmark in the middle and the motto either side
   var AX = ST.AX, AY = ST.AY, A = ST.A, CAGE = ST.CAGE;
-  g.fillStyle = WWIT.maroon;
+  var br = brazilOn();
+  g.fillStyle = br ? BR.green : WWIT.maroon;
   g.fillRect(IN.x0, IN.y0, IN.x1 - IN.x0, IN.y1 - IN.y0);
-  g.fillStyle = WWIT.gold; g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillStyle = br ? BR.yellow : WWIT.gold; g.textAlign = "center"; g.textBaseline = "middle";
   [IN.y0 + ST.APRON / 2 + 1, IN.y1 - ST.APRON / 2 + 1].forEach(function (ay) {
     for (var k = -1; k <= 1; k++) {
       g.globalAlpha = k === 0 ? 1 : 0.55;
       g.font = "900 " + (k === 0 ? 30 : 21) + "px Impact, 'Arial Black', sans-serif";
-      g.fillText(k === 0 ? WWIT.name + " " + WWIT.sub : WWIT.motto, STAGE_W / 2 + k * 290, ay);
+      g.fillText(br ? (k === 0 ? "DO BRONX" : "BRASIL") : (k === 0 ? WWIT.name + " " + WWIT.sub : WWIT.motto), STAGE_W / 2 + k * 290, ay);
     }
     g.globalAlpha = 1;
   });
   // Corner pads: red top left, blue bottom right
-  g.fillStyle = "#c62828"; g.fillRect(AX - CAGE - 12, AY - CAGE - 12, 40, 40);
-  g.fillStyle = "#1e46a8"; g.fillRect(AX + A + CAGE - 28, AY + A + CAGE - 28, 40, 40);
+  g.fillStyle = br ? BR.yellow : "#c62828"; g.fillRect(AX - CAGE - 12, AY - CAGE - 12, 40, 40);
+  g.fillStyle = br ? BR.blue : "#1e46a8"; g.fillRect(AX + A + CAGE - 28, AY + A + CAGE - 28, 40, 40);
   // Cage rail with chain-link
   g.strokeStyle = WWIT.dark; g.lineWidth = CAGE;
   g.strokeRect(AX - CAGE / 2, AY - CAGE / 2, A + CAGE, A + CAGE);
@@ -269,8 +321,8 @@ function drawStandsLayer(g) {
   }
   g.restore();
   // Gold trim and posts
-  g.strokeStyle = WWIT.gold; g.lineWidth = 4; g.strokeRect(AX - 2, AY - 2, A + 4, A + 4);
-  g.fillStyle = WWIT.gold;
+  g.strokeStyle = br ? BR.yellow : WWIT.gold; g.lineWidth = 4; g.strokeRect(AX - 2, AY - 2, A + 4, A + 4);
+  g.fillStyle = br ? BR.yellow : WWIT.gold;
   for (var i = 0; i <= 4; i++) {
     var p = AX - CAGE / 2 + (A + CAGE) * i / 4, q = AY - CAGE / 2 + (A + CAGE) * i / 4;
     [[p, AY - CAGE / 2], [p, AY + A + CAGE / 2], [AX - CAGE / 2, q], [AX + A + CAGE / 2, q]].forEach(function (pt) {
@@ -282,6 +334,7 @@ function drawStandsLayer(g) {
 // The canvas mat in arena units: cream so the fighters stay readable, a
 // faded badge in the middle, a maroon octagon line and corner wordmarks.
 function drawMatLayer(g) {
+  if (brazilOn()) { drawBrazilMat(g); return; }
   g.fillStyle = WWIT.mat; g.fillRect(0, 0, W, H);
   g.strokeStyle = "rgba(0,0,0,0.035)"; g.lineWidth = 0.6;
   g.beginPath();
@@ -302,6 +355,29 @@ function drawMatLayer(g) {
   [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(function (d) {
     g.save(); g.translate(cx + d[0] * W * 0.385, cy + d[1] * H * 0.385); g.rotate(-d[0] * d[1] * Math.PI / 4);
     g.fillText(WWIT.name + " " + WWIT.sub, 0, 0); g.restore();
+  });
+  g.globalAlpha = 1;
+}
+
+// The Brazil mat: still light so the fighters read, with a faded flag in
+// the middle, a green octagon line and BRASIL in the corners.
+function drawBrazilMat(g) {
+  g.fillStyle = "#f4f1d8"; g.fillRect(0, 0, W, H);
+  var cx = W / 2, cy = H / 2, R = W * 0.47;
+  g.globalAlpha = 0.22;
+  g.fillStyle = BR.green; g.fillRect(cx - W * 0.33, cy - H * 0.23, W * 0.66, H * 0.46);
+  g.fillStyle = BR.yellow;
+  g.beginPath(); g.moveTo(cx, cy - H * 0.2); g.lineTo(cx + W * 0.29, cy); g.lineTo(cx, cy + H * 0.2); g.lineTo(cx - W * 0.29, cy); g.closePath(); g.fill();
+  g.fillStyle = BR.blue; g.beginPath(); g.arc(cx, cy, H * 0.11, 0, Math.PI * 2); g.fill();
+  g.globalAlpha = 0.6; g.strokeStyle = BR.green; g.lineWidth = 4;
+  g.beginPath();
+  for (var k = 0; k <= 8; k++) { var an = Math.PI / 8 + k * Math.PI / 4; g[k ? "lineTo" : "moveTo"](cx + Math.cos(an) * R, cy + Math.sin(an) * R); }
+  g.stroke();
+  g.globalAlpha = 0.35; g.fillStyle = BR.green;
+  g.font = "900 17px Impact, 'Arial Black', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+  [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(function (d) {
+    g.save(); g.translate(cx + d[0] * W * 0.385, cy + d[1] * H * 0.385); g.rotate(-d[0] * d[1] * Math.PI / 4);
+    g.fillText("BRASIL", 0, 0); g.restore();
   });
   g.globalAlpha = 1;
 }
@@ -356,7 +432,7 @@ function recordTakedown(attackerId) { statsFor(attackerId).td++; }
 // ---------------------------------------------------------------- per frame
 
 function drawStadium(px) {
-  if (stadiumCache.key !== canvas.width + ":" + (wwitBadge.complete ? 1 : 0)) buildStadiumCache(px);
+  if (stadiumCache.key !== stadiumKey()) buildStadiumCache(px);
   statsFor(0);
   var now = performance.now() / 1000;
   if (fightClockLast !== null && started && !over) fightClock += Math.min(0.1, now - fightClockLast);
@@ -366,14 +442,21 @@ function drawStadium(px) {
   ctx.drawImage(stadiumCache.bg, 0, 0);
   ctx.setTransform(px, 0, 0, px, 0, 0);
   // The crowd gets louder when the cage shakes.
-  var roar = Math.min(1, (shake || 0) / 10);
-  for (var i = 0; i < stadiumFans.length; i++) drawFan(stadiumFans[i], now, roar, px);
-  for (var j = 0; j < stadiumFans.length; j++) if (stadiumFans[j].sign) drawFanSign(stadiumFans[j], now);
+  // In Brazil mode everyone's on their feet the whole time.
+  var br = brazilOn();
+  var roar = br ? 1 : Math.min(1, (shake || 0) / 10);
+  for (var i = 0; i < stadiumFans.length; i++) drawFan(br ? stadiumFans[i].br : stadiumFans[i], now, roar, px);
+  for (var j = 0; j < stadiumFans.length; j++) {
+    var f = br ? stadiumFans[j].br : stadiumFans[j];
+    if (f.sign) drawFanSign(f, now);
+    else if (f.flag) drawBrazilFlag(f.x + f.r * 0.3, f.y - f.r * 1.55, f.r * 1.3, now, f.phase);
+  }
+  drawCameraFlashes(now);
 }
 
 function drawFan(f, t, roar, px) {
   var hype = 0.5 + 0.5 * Math.sin(t * f.rate * (1 + roar) + f.phase);
-  var cheer = f.hype > 0.5 - roar * 0.4;
+  var cheer = f.hype > 0.5 - roar * 0.6;
   var r = f.r, bob = (cheer ? hype : hype * 0.3) * r * 0.22;
   var x = f.x, y = f.y - bob;
   // Bare fists pumping behind the ball
@@ -480,13 +563,14 @@ function drawJumbotron(px) {
     if (ch.hasSpecial) {
       var my = by + bh + 10, mh = 10, mw = bw * 0.7, mx = right ? bx + bw - mw : bx;
       var sp = Math.max(0, Math.min(1, (b.specialT || 0) / ch.special.chargeTime));
+      if (b.doBronx) sp = Math.max(0, 1 - b.doBronx.t / b.doBronx.dur); // Do Bronx running down
       ctx.fillStyle = "#1b2238"; ctx.fillRect(mx, my, mw, mh);
       ctx.fillStyle = "#ffd23f"; ctx.shadowColor = "#ffb000"; ctx.shadowBlur = sp >= 1 ? 16 : 8;
       ctx.fillRect(right ? mx + mw * (1 - sp) : mx, my, mw * sp, mh);
       ctx.shadowBlur = 0;
       ctx.font = "700 14px Impact, 'Arial Black', sans-serif"; ctx.fillStyle = sp >= 1 ? "#ffd23f" : "#c9d3ea";
       ctx.textAlign = right ? "right" : "left"; ctx.textBaseline = "middle";
-      ctx.fillText((sp >= 1 ? "READY: " : "") + specialName(ch).toUpperCase(), right ? mx - 8 : mx + mw + 8, my + 6);
+      ctx.fillText((b.doBronx ? "" : sp >= 1 ? "READY: " : "") + specialName(ch).toUpperCase() + (b.doBronx ? "!" : ""), right ? mx - 8 : mx + mw + 8, my + 6);
     }
   });
 

@@ -1,0 +1,91 @@
+{
+  "id": "c-charles-oliveira",
+  "rev": 2,
+  "builtin": false,
+  "name": "Charles Oliveira",
+  "base": "Grappler",
+  "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in a submission (the guillotine for now, more to come). Special move: Do Bronx.",
+  "color": "#d9a514",
+  "label": "",
+  "imgData": null,
+  "look": {
+    "skin": "#c48f68",
+    "build": "lean",
+    "bodyHair": "none",
+    "hair": "short",
+    "hairColor": "#f4edd2",
+    "beard": "none",
+    "ears": "normal",
+    "tattoos": {
+      "portraits": true,
+      "leftArm": "dense",
+      "rightArm": "lion",
+      "armInk": true
+    },
+    "shorts": "#e9b824",
+    "trim": "#141414",
+    "shortsStyle": "chevron",
+    "gloves": "#151515"
+  },
+  "hasProjectile": false,
+  "proj": {
+    "size": 7,
+    "speed": 460,
+    "damage": 10,
+    "cooldown": 1.6,
+    "imgData": null
+  },
+  "hasPunch": true,
+  "punch": {
+    "damage": 5,
+    "cooldown": 0.7,
+    "speed": 0.22,
+    "size": 13,
+    "knockback": 80,
+    "reach": 30,
+    "koChance": 0
+  },
+  "hasKick": false,
+  "hasGrapple": true,
+  "grapple": {
+    "damage": 50,
+    "cooldown": 1.5,
+    "speed": 0.45,
+    "reach": 6,
+    "counterChance": 25,
+    "finSlamDamage": 20,
+    "finPunches": 3,
+    "finPunchDamage": 10,
+    "sprawlChance": 30,
+    "reattackChance": 50,
+    "vsGrapplerChance": 50
+  },
+  "hasPowerPunch": false,
+  "hasRage": false,
+  "hasWatcher": false,
+  "hasWeave": false,
+  "hasSwing": false,
+  "hasForget": false,
+  "hasGuard": true,
+  "guard": {
+    "chance": 25,
+    "time": 6,
+    "radius": 130,
+    "passChance": 50,
+    "passPunches": 4,
+    "passDamage": 10,
+    "subs": [
+      "guillotine"
+    ],
+    "cooldown": 3
+  },
+  "hasSpecial": true,
+  "special": {
+    "move": "dobronx",
+    "chargeTime": 40,
+    "hitCut": 4,
+    "punchCut": 5,
+    "duration": 15
+  },
+  "blockChance": 10
+}
