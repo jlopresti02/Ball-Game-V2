@@ -165,6 +165,7 @@ function updateAbilities(dt) {
     if (self.guillo) { updateGuillotine(self, dt); continue; }
     if (self.rnc) { updateRnc(self, dt); continue; }
     if (self.armbar) { updateArmbar(self, dt); continue; }
+    if (self.suplex) { updateSuplex(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
       self.slam.t += dt;

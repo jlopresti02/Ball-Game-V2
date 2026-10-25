@@ -65,6 +65,7 @@ function abilitySummary(ch) {
   if (ch.hasWatcher) parts.push("👁️ " + ch.watcher.lasers + "×" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
   if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
   if (ch.hasSwing) parts.push("\uD83E\uDD74 " + ch.swing.damage + " dmg swing");
+  if (ch.hasSuplex) parts.push("\uD83E\uDD3C " + ch.suplex.chance + "% suplex from behind");
   if (ch.hasGuillotine) parts.push("\uD83D\uDD12 " + ch.guillotine.chance + "% guillotine");
   if (ch.hasGuard) parts.push("\uD83E\uDD4B " + ch.guard.chance + "% guard");
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));

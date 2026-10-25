@@ -1,10 +1,10 @@
 {
   "id": "c-khabib-nurmagomedov",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "name": "Khabib Nurmagomedov",
   "base": "Grappler",
-  "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
+  "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
   "color": "#8b1a1a",
   "label": "",
   "imgData": null,
@@ -53,6 +53,12 @@
     "finPunchDamage": 10,
     "sprawlChance": 30,
     "reattackChance": 50
+  },
+  "hasSuplex": true,
+  "suplex": {
+    "chance": 60,
+    "damage": 60,
+    "cooldown": 3
   },
   "hasPowerPunch": false,
   "hasRage": false,

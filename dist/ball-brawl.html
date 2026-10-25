@@ -1699,6 +1699,10 @@ function defaultGuillotine() {
 // the time at full health, up to tapLowHp% more the more damage it's taken
 // (see rnc.js).
 function defaultRnc() { return { tapBase: 35, tapLowHp: 50 }; }
+// Suplex: chance% of this fighter's grabs on an opponent that isn't facing
+// it become a back suplex for `damage`, then `cooldown` seconds before the
+// next (see suplex.js).
+function defaultSuplex() { return { chance: 60, damage: 60, cooldown: 3 }; }
 // Armbar (a guard submission): the one caught taps tapBase% of the time at
 // full health, up to tapLowHp% more the more damage it's taken (see
 // armbar.js).
@@ -1753,6 +1757,8 @@ function normalizeChar(ch) {
   });
   if (!ch.rnc) ch.rnc = defaultRnc();
   if (!ch.armbar) ch.armbar = defaultArmbar();
+  if (ch.hasSuplex === undefined) ch.hasSuplex = false;
+  if (!ch.suplex) ch.suplex = defaultSuplex();
   if (ch.hasGuard === undefined) ch.hasGuard = false;
   if (!ch.guard) ch.guard = defaultGuard();
   Object.keys(defaultGuard()).forEach(function (k) {
@@ -1983,11 +1989,11 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "name": "Khabib Nurmagomedov",
     "base": "Grappler",
-    "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
+    "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
     "color": "#8b1a1a",
     "label": "",
     "imgData": null,
@@ -2036,6 +2042,12 @@ var SAVED_ROSTER = [
       "finPunchDamage": 10,
       "sprawlChance": 30,
       "reattackChance": 50
+    },
+    "hasSuplex": true,
+    "suplex": {
+      "chance": 60,
+      "damage": 60,
+      "cooldown": 3
     },
     "hasPowerPunch": false,
     "hasRage": false,
@@ -2432,6 +2444,7 @@ function abilitySummary(ch) {
   if (ch.hasWatcher) parts.push("👁️ " + ch.watcher.lasers + "×" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
   if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
   if (ch.hasSwing) parts.push("\uD83E\uDD74 " + ch.swing.damage + " dmg swing");
+  if (ch.hasSuplex) parts.push("\uD83E\uDD3C " + ch.suplex.chance + "% suplex from behind");
   if (ch.hasGuillotine) parts.push("\uD83D\uDD12 " + ch.guillotine.chance + "% guillotine");
   if (ch.hasGuard) parts.push("\uD83E\uDD4B " + ch.guard.chance + "% guard");
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
@@ -3362,7 +3375,7 @@ function makeBall(id, ch) {
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
-    guillo: null, choked: false, guilloCd: 0, rnc: null, guard: null, guardCd: 0, doBronx: null
+    guillo: null, choked: false, guilloCd: 0, rnc: null, suplex: null, suplexCd: 0, guard: null, guardCd: 0, doBronx: null
   };
 }
 
@@ -3868,6 +3881,7 @@ function updateAbilities(dt) {
     if (self.guillo) { updateGuillotine(self, dt); continue; }
     if (self.rnc) { updateRnc(self, dt); continue; }
     if (self.armbar) { updateArmbar(self, dt); continue; }
+    if (self.suplex) { updateSuplex(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
       self.slam.t += dt;
@@ -4786,6 +4800,7 @@ function grabEscaped(attacker, target) {
 function attemptGrab(attacker, target) {
   if (target.slamSafe > 0) return false;
   if (grabEscaped(attacker, target)) return false;
+  if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.
@@ -4889,7 +4904,7 @@ var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching):
 // Locked up in a submission (either applying it or caught in it), or down
 // on its back in guard.
 function subLocked(b) {
-  return !!(b.guillo || b.rnc || b.armbar || b.choked || b.guard);
+  return !!(b.guillo || b.rnc || b.armbar || b.suplex || b.choked || b.guard);
 }
 
 function canGuillotine(def) {
@@ -5668,6 +5683,140 @@ function drawArmbars() {
     ctx.lineWidth = 2.5; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
     ctx.fillStyle = theme.ink;
     ctx.fillRect(bx + split - 2, by - 4, 4, bh + 8);
+    ctx.restore();
+  });
+}
+
+// Suplex. When a fighter with the suplex grabs an opponent from behind (the
+// opponent isn't facing it), `chance`% of the time it throws a back suplex
+// instead of its normal grab: it locks its arms round their waist, arches
+// back and lifts them up over its own head, then slams them down head first
+// on the other side for `damage`. Afterwards it can't suplex again for
+// `cooldown` seconds. Khabib and wrestlers get this one.
+"use strict";
+
+var SUPLEX_LOCK_TIME = 0.3;   // locking the arms round their waist
+var SUPLEX_LIFT_TIME = 0.55;  // up and over its head
+var SUPLEX_DOWN_TIME = 0.35;  // left lying head first after the slam
+
+function canSuplex(self) {
+  if (!self.char.hasSuplex || !self.alive || self.suplexCd > 0) return false;
+  return !(self.koOut || self.shocked || self.shelled || self.igbb || self.koRush || self.koDuel ||
+    self.slam || self.combo || self.taunt || self.flow || self.grapple || subLocked(self));
+}
+
+// Called from attemptGrab: true if the grab became a suplex.
+function trySuplex(attacker, target) {
+  if (!canSuplex(attacker) || isFacing(target, attacker)) return false;
+  if (Math.random() >= attacker.char.suplex.chance / 100) return false;
+  beginSuplex(attacker, target);
+  return true;
+}
+
+function beginSuplex(self, vic) {
+  var side = vic.x >= self.x ? 1 : -1;
+  // Room to throw them over to the other side, or it turns round.
+  var reach = (self.r + vic.r) * 0.8;
+  if (self.x - side * reach < vic.r || self.x - side * reach > W - vic.r) side = -side;
+  self.suplex = { vicId: vic.id, t: 0, phase: "lock", side: side, reach: reach };
+  vic.choked = true;
+  [self, vic].forEach(function (b) {
+    b.vx = 0; b.vy = 0;
+    b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null; b.checkAnim = null;
+  });
+  // Room above it to lift them.
+  self.y = Math.max(self.y, reach * 1.25 + vic.r + 4);
+  floater(self.x, self.y - self.r - 60, "SUPLEX", "crit");
+  playWhoosh();
+}
+
+// Runs on the fighter throwing it; the one thrown is carried along.
+function updateSuplex(self, dt) {
+  var c = self.suplex, vic = balls[c.vicId];
+  if (!self.alive || !vic.alive) { endSuplex(self); return; }
+  c.t += dt;
+  self.vx = 0; self.vy = 0; vic.vx = 0; vic.vy = 0;
+  var s = c.side, k;
+  if (c.phase === "lock") {
+    // Pulls them in tight, its chest to their back.
+    k = Math.min(1, c.t / SUPLEX_LOCK_TIME);
+    vic.x = self.x + s * c.reach; vic.y = self.y;
+    if (k >= 1) { c.phase = "lift"; c.t = 0; playWhoosh(); }
+    return;
+  }
+  if (c.phase === "lift") {
+    // Up and over in an arc, speeding up into the floor.
+    k = Math.min(1, c.t / SUPLEX_LIFT_TIME);
+    var e = k * k * (3 - 2 * k), ang = Math.PI * e;
+    vic.x = self.x + s * Math.cos(ang) * c.reach;
+    vic.y = self.y - Math.sin(ang) * c.reach * 1.25;
+    if (k < 1) return;
+    fpImpact(self, vic, { nx: 0, ny: -1 }, self.char.suplex.damage, true);
+    if (typeof recordTakedown === "function") recordTakedown(self.id);
+    floater(vic.x, vic.y - vic.r - 30, "TAKEDOWN", "note");
+    c.phase = "down"; c.t = 0;
+    checkEnd();
+    return;
+  }
+  if (c.t >= SUPLEX_DOWN_TIME) {
+    // Lets go and both scramble back up.
+    endSuplex(self);
+    self.suplexCd = self.char.suplex.cooldown;
+    self.grappleCd = self.char.grapple ? self.char.grapple.cooldown : 0;
+    vic.vx = -s * SPEED * 0.6; vic.vy = SPEED * 0.2;
+    self.vx = s * SPEED * 0.4; self.vy = -SPEED * 0.2;
+  }
+}
+
+function endSuplex(self) {
+  if (!self.suplex) return;
+  balls[self.suplex.vicId].choked = false;
+  self.suplex = null;
+}
+
+// How far through the throw it is: 0 locked on, 1 slammed down.
+function suplexArc(c) {
+  if (c.phase === "lock") return 0;
+  if (c.phase === "down") return 1;
+  var k = Math.min(1, c.t / SUPLEX_LIFT_TIME);
+  return k * k * (3 - 2 * k);
+}
+
+// The thrower arches back, and the one thrown flips over head first.
+function applySuplexPose(b) {
+  var c = b.suplex, angle;
+  if (c) {
+    var a = suplexArc(c);
+    angle = -c.side * 0.75 * Math.sin(Math.PI * Math.min(1, a * 1.15));
+  } else {
+    if (!b.choked) return;
+    c = balls[1 - b.id].suplex;
+    if (!c) return;
+    angle = -c.side * Math.PI * suplexArc(c);
+  }
+  ctx.translate(b.x, b.y);
+  ctx.rotate(angle);
+  ctx.translate(-b.x, -b.y);
+}
+
+// Its arms locked round their waist until the slam.
+function drawSuplexes() {
+  balls.forEach(function (self) {
+    var c = self.suplex;
+    if (!c || c.phase === "down") return;
+    var vic = balls[c.vicId], r = self.r, skin = armColor(self.char);
+    var dx = vic.x - self.x, dy = vic.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var ux = dx / d, uy = dy / d, px = -uy, py = ux;
+    ctx.save();
+    [-1, 1].forEach(function (k) {
+      var sh = { x: self.x + ux * r * 0.3 + px * k * r * 0.75, y: self.y + uy * r * 0.3 + py * k * r * 0.75 };
+      var hand = { x: vic.x - ux * vic.r * 0.15 + px * k * vic.r * 0.22, y: vic.y - uy * vic.r * 0.15 + py * k * vic.r * 0.22 };
+      strokeLimb(r * 0.2, skin, function () {
+        ctx.moveTo(sh.x, sh.y);
+        ctx.quadraticCurveTo(vic.x - ux * vic.r * 0.6 + px * k * vic.r * 0.95, vic.y - uy * vic.r * 0.6 + py * k * vic.r * 0.95, hand.x, hand.y);
+      });
+      drawGloveAt(hand.x, hand.y, r * 0.22, self.char);
+    });
     ctx.restore();
   });
 }
@@ -7523,6 +7672,7 @@ function update(dt) {
     if (b.checkAnim) stepInForKickBack(b, balls[b.checkAnim.towardId]);
     if (b.slamSafe > 0) b.slamSafe = Math.max(0, b.slamSafe - dt);
     if (b.guilloCd > 0) b.guilloCd = Math.max(0, b.guilloCd - dt);
+    if (b.suplexCd > 0) b.suplexCd = Math.max(0, b.suplexCd - dt);
     if (b.guardCd > 0 && !subLocked(b)) b.guardCd = Math.max(0, b.guardCd - dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
@@ -9572,6 +9722,7 @@ function draw() {
     applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
     applyGuardPose(b);  // flat on its back in guard
     applyArmbarPose(b); // pulled over in an armbar
+    applySuplexPose(b); // arching back into (or flipped over by) a suplex
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -9716,6 +9867,7 @@ function draw() {
   drawGuillotines();
   drawRncs();
   drawArmbars();
+  drawSuplexes();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

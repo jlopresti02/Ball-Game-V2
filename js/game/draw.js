@@ -149,6 +149,7 @@ function draw() {
     applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
     applyGuardPose(b);  // flat on its back in guard
     applyArmbarPose(b); // pulled over in an armbar
+    applySuplexPose(b); // arching back into (or flipped over by) a suplex
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -293,6 +294,7 @@ function draw() {
   drawGuillotines();
   drawRncs();
   drawArmbars();
+  drawSuplexes();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

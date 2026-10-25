@@ -185,6 +185,10 @@ function defaultGuillotine() {
 // the time at full health, up to tapLowHp% more the more damage it's taken
 // (see rnc.js).
 function defaultRnc() { return { tapBase: 35, tapLowHp: 50 }; }
+// Suplex: chance% of this fighter's grabs on an opponent that isn't facing
+// it become a back suplex for `damage`, then `cooldown` seconds before the
+// next (see suplex.js).
+function defaultSuplex() { return { chance: 60, damage: 60, cooldown: 3 }; }
 // Armbar (a guard submission): the one caught taps tapBase% of the time at
 // full health, up to tapLowHp% more the more damage it's taken (see
 // armbar.js).
@@ -239,6 +243,8 @@ function normalizeChar(ch) {
   });
   if (!ch.rnc) ch.rnc = defaultRnc();
   if (!ch.armbar) ch.armbar = defaultArmbar();
+  if (ch.hasSuplex === undefined) ch.hasSuplex = false;
+  if (!ch.suplex) ch.suplex = defaultSuplex();
   if (ch.hasGuard === undefined) ch.hasGuard = false;
   if (!ch.guard) ch.guard = defaultGuard();
   Object.keys(defaultGuard()).forEach(function (k) {
