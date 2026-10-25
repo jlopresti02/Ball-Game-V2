@@ -109,9 +109,9 @@ function drawArmbars() {
     var limb = r * 0.2, skin = armColor(self.char), legSkin = self.char.look ? self.char.look.skin : self.char.color;
     ctx.save();
 
-    // Both legs up from its hips, bent at the knee: one shin across their
+    // Both legs up from its hips, curving round at the knee: one shin across their
     // neck, the other across their stomach, their shoulder trapped between.
-    // The thighs come out of its shorts, and each ends in a bare foot.
+    // The thighs come out of its shorts, and each ends in a small bare foot.
     var hip = { x: sx + s * r * 0.7, y: sy };
     var shorts = self.char.look ? self.char.look.shorts : self.char.color;
     if (ARMBAR_LEGS) {
@@ -119,18 +119,20 @@ function drawArmbars() {
         { h: { x: hip.x, y: hip.y - r * 0.22 }, k: { x: vx - s * ar * 0.55, y: vy - ar * 0.78 }, f: { x: vx + s * ar * 0.78, y: vy - ar * 0.42 } },
         { h: { x: hip.x, y: hip.y + r * 0.22 }, k: { x: vx - s * ar * 0.5, y: vy + ar * 0.72 }, f: { x: vx + s * ar * 0.8, y: vy + ar * 0.42 } }
       ].forEach(function (L) {
-        // Thigh (thick, the top of it in its shorts), then the shin.
-        strokeLimb(limb * 1.7, legSkin, function () { ctx.moveTo(L.h.x, L.h.y); ctx.lineTo(L.k.x, L.k.y); });
-        var sk = 0.22;
-        strokeLimb(limb * 1.9, shorts, function () {
-          ctx.moveTo(L.h.x, L.h.y); ctx.lineTo(L.h.x + (L.k.x - L.h.x) * sk, L.h.y + (L.k.y - L.h.y) * sk);
+        // One smooth curve from the hip round a soft knee to the foot, the
+        // top of the thigh in its shorts.
+        var kx = (L.k.x + (L.h.x + L.f.x) / 2) / 2, ky = (L.k.y + (L.h.y + L.f.y) / 2) / 2;
+        strokeLimb(limb * 1.45, legSkin, function () {
+          ctx.moveTo(L.h.x, L.h.y); ctx.quadraticCurveTo(kx, ky, L.f.x, L.f.y);
         });
-        strokeLimb(limb * 1.3, legSkin, function () { ctx.moveTo(L.k.x, L.k.y); ctx.lineTo(L.f.x, L.f.y); });
-        // Foot: bent up at the ankle, toes pointed away from them.
-        var ang = Math.atan2(L.f.y - L.k.y, L.f.x - L.k.x) + (L.f.y < vy ? -1 : 1) * s * 1.1;
-        strokeLimb(limb * 1.15, legSkin, function () {
+        strokeLimb(limb * 1.6, shorts, function () {
+          ctx.moveTo(L.h.x, L.h.y); ctx.lineTo(L.h.x + (kx - L.h.x) * 0.25, L.h.y + (ky - L.h.y) * 0.25);
+        });
+        // A small foot, bent up at the ankle.
+        var ang = Math.atan2(L.f.y - ky, L.f.x - kx) + (L.f.y < vy ? -1 : 1) * s * 1.1;
+        strokeLimb(limb * 1.1, legSkin, function () {
           ctx.moveTo(L.f.x, L.f.y);
-          ctx.lineTo(L.f.x + Math.cos(ang) * r * 0.3, L.f.y + Math.sin(ang) * r * 0.3);
+          ctx.lineTo(L.f.x + Math.cos(ang) * r * 0.2, L.f.y + Math.sin(ang) * r * 0.2);
         });
       });
     }
