@@ -5470,11 +5470,22 @@ function drawRncs() {
     });
     drawGloveAt(elbow.x + s * r * 0.1, elbow.y - r * 0.06, self.r * 0.26, self.char);
 
-    // Tapping: their hand pats the choking arm three times.
-    if (c.phase === "tap") {
-      var pat = Math.abs(Math.sin(c.tapT / RNC_TAP_TIME * Math.PI * 3));
-      drawGloveAt(vx + s * r * 0.45, neckY + r * 0.12 - pat * r * 0.2, r * 0.24, vic.char);
-    }
+    // Their arms: up from the shoulders, elbows tucked, both hands gripping
+    // the choking arm and tugging at it. When they tap, the near hand lets go
+    // and pats the arm three times instead.
+    var vlimb = r * 0.17, vskin = armColor(vic.char), tug = c.phase === "squeeze" ? Math.sin(c.t * 9 + c.wob) * r * 0.03 : 0;
+    var pat = c.phase === "tap" ? Math.abs(Math.sin(c.tapT / RNC_TAP_TIME * Math.PI * 3)) * r * 0.22 : 0;
+    var grips = [
+      { sh: { x: vx + s * r * 0.78, y: vy + r * 0.02 }, el: { x: vx + s * r * 0.62, y: vy + r * 0.3 }, h: { x: vx + s * r * 0.42, y: neckY - r * 0.05 + cinch + tug - pat } },
+      { sh: { x: vx - s * r * 0.78, y: vy + r * 0.02 }, el: { x: vx - s * r * 0.3, y: vy + r * 0.32 }, h: { x: vx - s * r * 0.08, y: neckY - r * 0.02 + cinch - tug } }
+    ];
+    grips.forEach(function (g) {
+      strokeLimb(vlimb, vskin, function () {
+        ctx.moveTo(g.sh.x, g.sh.y);
+        ctx.quadraticCurveTo(g.el.x, g.el.y, g.h.x, g.h.y + r * 0.08);
+      });
+      drawGloveAt(g.h.x, g.h.y, r * 0.19, vic.char);
+    });
 
     // Tug-of-war bar: its colour is the choke, theirs the escape.
     var bw = 150, bh = 12;
