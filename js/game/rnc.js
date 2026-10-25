@@ -124,11 +124,11 @@ function drawRncs() {
     }
 
     // Hooks in: both legs come round from behind their hips and cross over
-    // their stomach, feet tucked in.
+    // their stomach, feet tucked in (its shorts are hidden behind them).
     drawBjjLeg(self.char, { x: vx - s * r * 0.97, y: vy + r * 0.32 }, { x: vx - s * r * 0.6, y: vy + r * 0.8 },
-      { x: vx + s * r * 0.22, y: vy + r * 0.7 }, limb, s * 1.1, r * 0.2);
+      { x: vx + s * r * 0.22, y: vy + r * 0.7 }, limb, s * 1.1, r * 0.2, true);
     drawBjjLeg(self.char, { x: vx + s * r * 0.97, y: vy + r * 0.32 }, { x: vx + s * r * 0.6, y: vy + r * 0.8 },
-      { x: vx - s * r * 0.22, y: vy + r * 0.7 }, limb, -s * 1.1, r * 0.2);
+      { x: vx - s * r * 0.22, y: vy + r * 0.7 }, limb, -s * 1.1, r * 0.2, true);
 
     // The arm behind their head: only the forearm shows, coming out from
     // behind the far side of their head down to the elbow (the hand's out of
