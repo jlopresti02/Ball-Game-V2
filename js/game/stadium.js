@@ -38,8 +38,9 @@ function setArenaMode(mode) {
 function applyArenaLayout() {
   var on = stadiumOn();
   document.getElementById("screenGame").classList.toggle("stadium", on);
-  var btn = document.getElementById("arenaBtn");
-  if (btn) btn.textContent = on ? "Arena: WWIT stadium" : "Arena: test";
+  Array.prototype.forEach.call(document.querySelectorAll(".arenaBtn"), function (btn) {
+    btn.textContent = on ? "Arena: WWIT stadium" : "Arena: test";
+  });
   stadiumCache.key = null;
   resize();
 }

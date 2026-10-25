@@ -309,6 +309,22 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
   padding: 0.1em 0.3em 0.14em; background: var(--floor); border: 5px solid var(--wall); border-radius: 8px;
 }
 
+/* After a win: "Tap to continue", then the pop-up menu over the arena.
+   The buttons under the arena are hidden while the fight is on screen. */
+.banner.tappable { pointer-events: auto; cursor: pointer; }
+.banner span.tapHint { font-size: clamp(16px, 4.5vw, 22px); font-weight: 700; line-height: 1.2; color: #fff; background: rgba(0,0,0,0.6); border: 0; padding: 4px 14px 6px; border-radius: 6px; }
+.postMenu {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 16px; background: rgba(0,0,0,0.55);
+}
+.postMenu button { width: min(280px, 80%); font-size: clamp(20px, 5.5vw, 26px); }
+.postMenu button.secondary { background: var(--floor); }
+.postTitle {
+  font-size: clamp(30px, 8vw, 52px); font-weight: 800; line-height: 1; text-align: center; margin-bottom: 6px;
+  padding: 0.1em 0.3em 0.14em; background: var(--floor); border: 4px solid var(--wall); border-radius: 8px;
+}
+#screenGame.phase-fight .gameFooter, #screenGame.phase-win .gameFooter, #screenGame.phase-menu .gameFooter { visibility: hidden; }
+
 .gameFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
 </style>
 </head>
@@ -955,13 +971,20 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       <div class="banner" id="banner">
         <span id="bannerText" hidden></span>
         <button id="startBtn" type="button">Start match</button>
+        <span class="tapHint" id="tapHint" hidden>Tap to continue</span>
+      </div>
+      <div class="postMenu" id="postMenu" hidden>
+        <div class="postTitle" id="postTitle"></div>
+        <button id="menuRematch" type="button">Rematch</button>
+        <button id="menuChange" type="button" class="secondary">Change fighters</button>
+        <button id="menuArena" type="button" class="secondary arenaBtn">Arena: test</button>
       </div>
     </div>
 
     <div class="gameFooter">
       <button id="backBtn" class="secondary">Change fighters</button>
       <button id="rematch" class="secondary">Reset</button>
-      <button id="arenaBtn" class="secondary">Arena: test</button>
+      <button id="arenaBtn" class="secondary arenaBtn">Arena: test</button>
     </div>
   </section>
 
@@ -3200,8 +3223,30 @@ function startMatchWith(ch0, ch1) {
   bannerText.hidden = true;
   startBtn.textContent = "Start match";
   banner.hidden = false;
+  setGamePhase("ready");
   updateHud(true);
   showScreen("game");
+}
+
+// Where the game screen is: "ready" (before the start), "fight", "win" (the
+// result banner) and "menu" (the pop-up menu after tapping past the win).
+// The buttons under the arena stay hidden from the start of the fight until
+// that menu is closed, so a screen recording only shows the fight.
+var gamePhase = "ready";
+function setGamePhase(phase) {
+  gamePhase = phase;
+  var scr = document.getElementById("screenGame");
+  ["ready", "fight", "win", "menu"].forEach(function (p) { scr.classList.toggle("phase-" + p, p === phase); });
+  document.getElementById("tapHint").hidden = phase !== "win";
+  startBtn.hidden = phase === "win";
+  banner.classList.toggle("tappable", phase === "win");
+  var menu = document.getElementById("postMenu");
+  menu.hidden = phase !== "menu";
+  if (phase === "menu") {
+    document.getElementById("postTitle").textContent = bannerText.textContent;
+    document.getElementById("postTitle").style.color = bannerText.style.color;
+    banner.hidden = true;
+  }
 }
 
 function start() {
@@ -3212,6 +3257,7 @@ function start() {
   });
   started = true;
   banner.hidden = true;
+  setGamePhase("fight");
   rollKoRush(); // Brawler's opening KO Rush (usually doesn't happen)
 }
 
@@ -3382,6 +3428,7 @@ function checkEnd() {
   bannerText.hidden = false;
   startBtn.textContent = "New match";
   banner.hidden = false;
+  setGamePhase("win");
 }
 
 // Movement, wall bounces, ball-vs-ball collisions and the speed regulator.
@@ -7230,8 +7277,9 @@ function setArenaMode(mode) {
 function applyArenaLayout() {
   var on = stadiumOn();
   document.getElementById("screenGame").classList.toggle("stadium", on);
-  var btn = document.getElementById("arenaBtn");
-  if (btn) btn.textContent = on ? "Arena: WWIT stadium" : "Arena: test";
+  Array.prototype.forEach.call(document.querySelectorAll(".arenaBtn"), function (btn) {
+    btn.textContent = on ? "Arena: WWIT stadium" : "Arena: test";
+  });
   stadiumCache.key = null;
   resize();
 }
@@ -8020,7 +8068,15 @@ function frame(t) {
 
 document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
 document.getElementById("backBtn").addEventListener("click", function () { showMenu(); });
-document.getElementById("arenaBtn").addEventListener("click", function () { setArenaMode(stadiumOn() ? "test" : "stadium"); });
+Array.prototype.forEach.call(document.querySelectorAll(".arenaBtn"), function (btn) {
+  btn.addEventListener("click", function () { setArenaMode(stadiumOn() ? "test" : "stadium"); });
+});
+// Tapping past the win banner opens the menu.
+banner.addEventListener("click", function (e) {
+  if (gamePhase === "win" && e.target !== startBtn) setGamePhase("menu");
+});
+document.getElementById("menuRematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
+document.getElementById("menuChange").addEventListener("click", function () { showMenu(); });
 startBtn.addEventListener("click", function () {
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();

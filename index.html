@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20261025020758">
+<link rel="stylesheet" href="css/styles.css?v=20261025021633">
 </head>
 <body>
 <main>
@@ -652,43 +652,50 @@
       <div class="banner" id="banner">
         <span id="bannerText" hidden></span>
         <button id="startBtn" type="button">Start match</button>
+        <span class="tapHint" id="tapHint" hidden>Tap to continue</span>
+      </div>
+      <div class="postMenu" id="postMenu" hidden>
+        <div class="postTitle" id="postTitle"></div>
+        <button id="menuRematch" type="button">Rematch</button>
+        <button id="menuChange" type="button" class="secondary">Change fighters</button>
+        <button id="menuArena" type="button" class="secondary arenaBtn">Arena: test</button>
       </div>
     </div>
 
     <div class="gameFooter">
       <button id="backBtn" class="secondary">Change fighters</button>
       <button id="rematch" class="secondary">Reset</button>
-      <button id="arenaBtn" class="secondary">Arena: test</button>
+      <button id="arenaBtn" class="secondary arenaBtn">Arena: test</button>
     </div>
   </section>
 
 </main>
 
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20261025020758"></script>
-<script src="js/audio.js?v=20261025020758"></script>
-<script src="js/characters.js?v=20261025020758"></script>
-<script src="js/dev-fighters.js?v=20261025020758"></script>
-<script src="js/roster-data.js?v=20261025020758"></script>
-<script src="js/roster-store.js?v=20261025020758"></script>
-<script src="js/ui/select.js?v=20261025020758"></script>
-<script src="js/ui/cropper.js?v=20261025020758"></script>
-<script src="js/ui/editor.js?v=20261025020758"></script>
-<script src="js/game/match.js?v=20261025020758"></script>
-<script src="js/game/physics.js?v=20261025020758"></script>
-<script src="js/game/abilities.js?v=20261025020758"></script>
-<script src="js/game/weave.js?v=20261025020758"></script>
-<script src="js/game/finisher.js?v=20261025020758"></script>
-<script src="js/game/grapple-duel.js?v=20261025020758"></script>
-<script src="js/game/cte.js?v=20261025020758"></script>
-<script src="js/game/korush.js?v=20261025020758"></script>
-<script src="js/game/special.js?v=20261025020758"></script>
-<script src="js/game/update.js?v=20261025020758"></script>
-<script src="js/game/fighter-art.js?v=20261025020758"></script>
-<script src="js/game/draw-attacks.js?v=20261025020758"></script>
-<script src="js/game/wwit-badge.js?v=20261025020758"></script>
-<script src="js/game/stadium.js?v=20261025020758"></script>
-<script src="js/game/draw.js?v=20261025020758"></script>
-<script src="js/main.js?v=20261025020758"></script>
+<script src="js/config.js?v=20261025021633"></script>
+<script src="js/audio.js?v=20261025021633"></script>
+<script src="js/characters.js?v=20261025021633"></script>
+<script src="js/dev-fighters.js?v=20261025021633"></script>
+<script src="js/roster-data.js?v=20261025021633"></script>
+<script src="js/roster-store.js?v=20261025021633"></script>
+<script src="js/ui/select.js?v=20261025021633"></script>
+<script src="js/ui/cropper.js?v=20261025021633"></script>
+<script src="js/ui/editor.js?v=20261025021633"></script>
+<script src="js/game/match.js?v=20261025021633"></script>
+<script src="js/game/physics.js?v=20261025021633"></script>
+<script src="js/game/abilities.js?v=20261025021633"></script>
+<script src="js/game/weave.js?v=20261025021633"></script>
+<script src="js/game/finisher.js?v=20261025021633"></script>
+<script src="js/game/grapple-duel.js?v=20261025021633"></script>
+<script src="js/game/cte.js?v=20261025021633"></script>
+<script src="js/game/korush.js?v=20261025021633"></script>
+<script src="js/game/special.js?v=20261025021633"></script>
+<script src="js/game/update.js?v=20261025021633"></script>
+<script src="js/game/fighter-art.js?v=20261025021633"></script>
+<script src="js/game/draw-attacks.js?v=20261025021633"></script>
+<script src="js/game/wwit-badge.js?v=20261025021633"></script>
+<script src="js/game/stadium.js?v=20261025021633"></script>
+<script src="js/game/draw.js?v=20261025021633"></script>
+<script src="js/main.js?v=20261025021633"></script>
 </body>
 </html>

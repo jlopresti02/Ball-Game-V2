@@ -15,6 +15,8 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 
 ## Arenas
 
+The buttons under the arena hide once a fight starts, so a screen recording only shows the fight. After a win, tap the result to open a menu with **Rematch**, **Change fighters** and **Arena**.
+
 The **Arena** button under the fight switches between two arenas, and the game remembers the choice on each device:
 
 - **Test**: the plain square arena with the health bars above it.

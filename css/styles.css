@@ -299,4 +299,20 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
   padding: 0.1em 0.3em 0.14em; background: var(--floor); border: 5px solid var(--wall); border-radius: 8px;
 }
 
+/* After a win: "Tap to continue", then the pop-up menu over the arena.
+   The buttons under the arena are hidden while the fight is on screen. */
+.banner.tappable { pointer-events: auto; cursor: pointer; }
+.banner span.tapHint { font-size: clamp(16px, 4.5vw, 22px); font-weight: 700; line-height: 1.2; color: #fff; background: rgba(0,0,0,0.6); border: 0; padding: 4px 14px 6px; border-radius: 6px; }
+.postMenu {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 16px; background: rgba(0,0,0,0.55);
+}
+.postMenu button { width: min(280px, 80%); font-size: clamp(20px, 5.5vw, 26px); }
+.postMenu button.secondary { background: var(--floor); }
+.postTitle {
+  font-size: clamp(30px, 8vw, 52px); font-weight: 800; line-height: 1; text-align: center; margin-bottom: 6px;
+  padding: 0.1em 0.3em 0.14em; background: var(--floor); border: 4px solid var(--wall); border-radius: 8px;
+}
+#screenGame.phase-fight .gameFooter, #screenGame.phase-win .gameFooter, #screenGame.phase-menu .gameFooter { visibility: hidden; }
+
 .gameFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; flex-wrap: wrap; }

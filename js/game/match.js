@@ -65,8 +65,30 @@ function startMatchWith(ch0, ch1) {
   bannerText.hidden = true;
   startBtn.textContent = "Start match";
   banner.hidden = false;
+  setGamePhase("ready");
   updateHud(true);
   showScreen("game");
+}
+
+// Where the game screen is: "ready" (before the start), "fight", "win" (the
+// result banner) and "menu" (the pop-up menu after tapping past the win).
+// The buttons under the arena stay hidden from the start of the fight until
+// that menu is closed, so a screen recording only shows the fight.
+var gamePhase = "ready";
+function setGamePhase(phase) {
+  gamePhase = phase;
+  var scr = document.getElementById("screenGame");
+  ["ready", "fight", "win", "menu"].forEach(function (p) { scr.classList.toggle("phase-" + p, p === phase); });
+  document.getElementById("tapHint").hidden = phase !== "win";
+  startBtn.hidden = phase === "win";
+  banner.classList.toggle("tappable", phase === "win");
+  var menu = document.getElementById("postMenu");
+  menu.hidden = phase !== "menu";
+  if (phase === "menu") {
+    document.getElementById("postTitle").textContent = bannerText.textContent;
+    document.getElementById("postTitle").style.color = bannerText.style.color;
+    banner.hidden = true;
+  }
 }
 
 function start() {
@@ -77,6 +99,7 @@ function start() {
   });
   started = true;
   banner.hidden = true;
+  setGamePhase("fight");
   rollKoRush(); // Brawler's opening KO Rush (usually doesn't happen)
 }
 
@@ -247,4 +270,5 @@ function checkEnd() {
   bannerText.hidden = false;
   startBtn.textContent = "New match";
   banner.hidden = false;
+  setGamePhase("win");
 }

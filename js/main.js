@@ -16,7 +16,15 @@ function frame(t) {
 
 document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
 document.getElementById("backBtn").addEventListener("click", function () { showMenu(); });
-document.getElementById("arenaBtn").addEventListener("click", function () { setArenaMode(stadiumOn() ? "test" : "stadium"); });
+Array.prototype.forEach.call(document.querySelectorAll(".arenaBtn"), function (btn) {
+  btn.addEventListener("click", function () { setArenaMode(stadiumOn() ? "test" : "stadium"); });
+});
+// Tapping past the win banner opens the menu.
+banner.addEventListener("click", function (e) {
+  if (gamePhase === "win" && e.target !== startBtn) setGamePhase("menu");
+});
+document.getElementById("menuRematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
+document.getElementById("menuChange").addEventListener("click", function () { showMenu(); });
 startBtn.addEventListener("click", function () {
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();
