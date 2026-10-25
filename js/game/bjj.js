@@ -366,6 +366,24 @@ function strokeLimb(width, color, path) {
   });
 }
 
+// A grappler's leg: one smooth curve from the hip round a soft knee (the
+// curve's control point) to the foot, the top of the thigh in its shorts,
+// and a small foot turned `footTurn` radians off the end of the shin.
+function drawBjjLeg(ch, hip, knee, foot, limb, footTurn, footLen) {
+  var skin = ch.look ? ch.look.skin : ch.color, shorts = ch.look ? ch.look.shorts : ch.color;
+  strokeLimb(limb * 1.45, skin, function () {
+    ctx.moveTo(hip.x, hip.y); ctx.quadraticCurveTo(knee.x, knee.y, foot.x, foot.y);
+  });
+  strokeLimb(limb * 1.6, shorts, function () {
+    ctx.moveTo(hip.x, hip.y); ctx.lineTo(hip.x + (knee.x - hip.x) * 0.25, hip.y + (knee.y - hip.y) * 0.25);
+  });
+  var ang = Math.atan2(foot.y - knee.y, foot.x - knee.x) + footTurn;
+  strokeLimb(limb * 1.1, skin, function () {
+    ctx.moveTo(foot.x, foot.y);
+    ctx.lineTo(foot.x + Math.cos(ang) * footLen, foot.y + Math.sin(ang) * footLen);
+  });
+}
+
 function drawGloveAt(x, y, r, ch) {
   ctx.fillStyle = gloveColor(ch); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();

@@ -106,34 +106,20 @@ function drawArmbars() {
     var vic = balls[c.vicId], s = c.side, r = self.r, ar = vic.r;
     var sx = self.x, sy = self.y, vx = vic.x, vy = vic.y;
     var squeeze = armbarSqueeze(c);
-    var limb = r * 0.2, skin = armColor(self.char), legSkin = self.char.look ? self.char.look.skin : self.char.color;
+    var limb = r * 0.2, skin = armColor(self.char);
     ctx.save();
 
     // Both legs up from its hips, curving round at the knee: one shin across their
     // neck, the other across their stomach, their shoulder trapped between.
     // The thighs come out of its shorts, and each ends in a small bare foot.
     var hip = { x: sx + s * r * 0.7, y: sy };
-    var shorts = self.char.look ? self.char.look.shorts : self.char.color;
     if (ARMBAR_LEGS) {
       [
         { h: { x: hip.x, y: hip.y - r * 0.22 }, k: { x: vx - s * ar * 0.55, y: vy - ar * 0.78 }, f: { x: vx + s * ar * 0.78, y: vy - ar * 0.42 } },
         { h: { x: hip.x, y: hip.y + r * 0.22 }, k: { x: vx - s * ar * 0.5, y: vy + ar * 0.72 }, f: { x: vx + s * ar * 0.8, y: vy + ar * 0.42 } }
       ].forEach(function (L) {
-        // One smooth curve from the hip round a soft knee to the foot, the
-        // top of the thigh in its shorts.
-        var kx = (L.k.x + (L.h.x + L.f.x) / 2) / 2, ky = (L.k.y + (L.h.y + L.f.y) / 2) / 2;
-        strokeLimb(limb * 1.45, legSkin, function () {
-          ctx.moveTo(L.h.x, L.h.y); ctx.quadraticCurveTo(kx, ky, L.f.x, L.f.y);
-        });
-        strokeLimb(limb * 1.6, shorts, function () {
-          ctx.moveTo(L.h.x, L.h.y); ctx.lineTo(L.h.x + (kx - L.h.x) * 0.25, L.h.y + (ky - L.h.y) * 0.25);
-        });
-        // A small foot, bent up at the ankle.
-        var ang = Math.atan2(L.f.y - ky, L.f.x - kx) + (L.f.y < vy ? -1 : 1) * s * 1.1;
-        strokeLimb(limb * 1.1, legSkin, function () {
-          ctx.moveTo(L.f.x, L.f.y);
-          ctx.lineTo(L.f.x + Math.cos(ang) * r * 0.2, L.f.y + Math.sin(ang) * r * 0.2);
-        });
+        var knee = { x: (L.k.x + (L.h.x + L.f.x) / 2) / 2, y: (L.k.y + (L.h.y + L.f.y) / 2) / 2 };
+        drawBjjLeg(self.char, L.h, knee, L.f, limb, (L.f.y < vy ? -1 : 1) * s * 1.1, r * 0.2);
       });
     }
 
