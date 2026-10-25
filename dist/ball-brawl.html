@@ -309,10 +309,9 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
   padding: 0.1em 0.3em 0.14em; background: var(--floor); border: 5px solid var(--wall); border-radius: 8px;
 }
 
-/* After a win: "Tap to continue", then the pop-up menu over the arena.
+/* After a win, tapping the result opens the pop-up menu over the arena.
    The buttons under the arena are hidden while the fight is on screen. */
 .banner.tappable { pointer-events: auto; cursor: pointer; }
-.banner span.tapHint { font-size: clamp(16px, 4.5vw, 22px); font-weight: 700; line-height: 1.2; color: #fff; background: rgba(0,0,0,0.6); border: 0; padding: 4px 14px 6px; border-radius: 6px; }
 .postMenu {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 14px; padding: 16px; background: rgba(0,0,0,0.55);
@@ -971,7 +970,6 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       <div class="banner" id="banner">
         <span id="bannerText" hidden></span>
         <button id="startBtn" type="button">Start match</button>
-        <span class="tapHint" id="tapHint" hidden>Tap to continue</span>
       </div>
       <div class="postMenu" id="postMenu" hidden>
         <div class="postTitle" id="postTitle"></div>
@@ -3237,7 +3235,6 @@ function setGamePhase(phase) {
   gamePhase = phase;
   var scr = document.getElementById("screenGame");
   ["ready", "fight", "win", "menu"].forEach(function (p) { scr.classList.toggle("phase-" + p, p === phase); });
-  document.getElementById("tapHint").hidden = phase !== "win";
   startBtn.hidden = phase === "win";
   banner.classList.toggle("tappable", phase === "win");
   var menu = document.getElementById("postMenu");

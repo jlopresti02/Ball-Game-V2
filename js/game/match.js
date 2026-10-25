@@ -79,7 +79,6 @@ function setGamePhase(phase) {
   gamePhase = phase;
   var scr = document.getElementById("screenGame");
   ["ready", "fight", "win", "menu"].forEach(function (p) { scr.classList.toggle("phase-" + p, p === phase); });
-  document.getElementById("tapHint").hidden = phase !== "win";
   startBtn.hidden = phase === "win";
   banner.classList.toggle("tappable", phase === "win");
   var menu = document.getElementById("postMenu");
