@@ -30,6 +30,7 @@ function updateFinisher(self, g, dt) {
       // The slam into the floor.
       tgt.x = g.endX; tgt.y = g.endY;
       hurt(tgt, gr.finSlamDamage, "finisher", self.id);
+      recordTakedown(self.id);
       playSlam();
       if (!reduceMotion) { shake = Math.max(shake, 18); hitStop = Math.max(hitStop, 0.08); }
       impacts.push({ x: tgt.x, y: H, nx: 0, ny: -1, life: 0.4, max: 0.4, color: self.char.color });

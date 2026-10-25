@@ -71,10 +71,3 @@ function devVariant(rosterId, id, name, changes) {
   ch.hasSpecial = !!special;
   devFighters.push(ch);
 }
-
-// Dustin with the guillotine off a shot (see bjj.js). Try him against
-// Khabib or the Grappler.
-devVariant("c-dustin-poirier", "dev-dustin-guillotine", "Dustin Poirier (guillotine)", function (ch) {
-  ch.hasGuillotine = true;
-  ch.guillotine = defaultGuillotine();
-});

@@ -1,23 +1,45 @@
 // Drawing the arena, fighters, projectiles and damage numbers.
 "use strict";
 
+// Camera shake moves the whole game screen (the ring, health bars, names
+// and buttons), not just what's inside the ring.
+var gameScreen = document.getElementById("screenGame");
+// px: screen pixels per game unit.
+function shakeScreen(px) {
+  if (shake > 0) {
+    var sx = (Math.random() - 0.5) * shake * 2 * px, sy = (Math.random() - 0.5) * shake * 2 * px;
+    gameScreen.style.transform = "translate(" + sx.toFixed(1) + "px," + sy.toFixed(1) + "px)";
+  } else if (gameScreen.style.transform) {
+    gameScreen.style.transform = "";
+  }
+}
+
 function draw() {
   readTheme();
-  var s = canvas.width / W;
+  // In the WWIT stadium the arena is drawn smaller, in the middle of a 9:16
+  // stage (stadium.js); ox/oy is where its top-left corner lands.
+  var stadium = stadiumOn(), px = canvas.width / STAGE_W;
+  // The stadium mat is always light, so dark mode's light outlines would vanish.
+  if (stadium) { theme.floor = WWIT.mat; theme.wall = STAGE_INK; theme.ink = STAGE_INK; }
+  var s = stadium ? px * ST.A / W : canvas.width / W;
+  var ox = stadium ? ST.AX * px : 0, oy = stadium ? ST.AY * px : 0;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = theme.floor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (stadium) drawStadium(px);
 
-  var sx = 0, sy = 0;
-  if (shake > 0) { sx = (Math.random() - 0.5) * shake * 2 * s; sy = (Math.random() - 0.5) * shake * 2 * s; }
-  ctx.setTransform(s, 0, 0, s, sx, sy);
+  ctx.setTransform(s, 0, 0, s, ox, oy);
+  shakeScreen(s * canvas.getBoundingClientRect().width / canvas.width);
 
-  ctx.strokeStyle = theme.grid; ctx.lineWidth = 1.5; ctx.beginPath();
-  for (var gx = 50; gx < W; gx += 50) { ctx.moveTo(gx, 0); ctx.lineTo(gx, H); }
-  for (var gy = 50; gy < H; gy += 50) { ctx.moveTo(0, gy); ctx.lineTo(W, gy); }
-  ctx.stroke();
-  ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
-  ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.15, 0, Math.PI * 2); ctx.stroke();
+  if (stadium) drawStadiumMat();
+  else {
+    ctx.strokeStyle = theme.grid; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (var gx = 50; gx < W; gx += 50) { ctx.moveTo(gx, 0); ctx.lineTo(gx, H); }
+    for (var gy = 50; gy < H; gy += 50) { ctx.moveTo(0, gy); ctx.lineTo(W, gy); }
+    ctx.stroke();
+    ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.15, 0, Math.PI * 2); ctx.stroke();
+  }
 
   drawSitSpots();
 
@@ -289,4 +311,6 @@ function draw() {
     ctx.fillStyle = f.kind === "note" ? theme.ink : ((f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit); ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
+
+  if (stadium) drawJumbotron(px);
 }

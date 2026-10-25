@@ -16,6 +16,15 @@ function frame(t) {
 
 document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
 document.getElementById("backBtn").addEventListener("click", function () { showMenu(); });
+Array.prototype.forEach.call(document.querySelectorAll(".arenaBtn"), function (btn) {
+  btn.addEventListener("click", function () { setArenaMode(stadiumOn() ? "test" : "stadium"); });
+});
+// Tapping past the win banner opens the menu.
+banner.addEventListener("click", function (e) {
+  if (gamePhase === "win" && e.target !== startBtn) setGamePhase("menu");
+});
+document.getElementById("menuRematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
+document.getElementById("menuChange").addEventListener("click", function () { showMenu(); });
 startBtn.addEventListener("click", function () {
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();
@@ -53,5 +62,6 @@ Array.prototype.forEach.call(document.querySelectorAll('input[type="range"]'), f
 });
 
 initRosterStore(); // pull in saved fighters (repo + cloud roster)
+applyArenaLayout(); // test arena or WWIT stadium, whichever was picked last
 showScreen("select");
 requestAnimationFrame(frame);
