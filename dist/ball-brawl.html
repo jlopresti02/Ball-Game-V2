@@ -5528,7 +5528,7 @@ var ARMBAR_MIN_TIME = 2.4, ARMBAR_MAX_EXTRA = 1.2;
 var ARMBAR_TAP_TIME = 0.75;
 var ARMBAR_ESCAPE_SPEED = 340;
 var ARMBAR_GAP = 0.85; // how close the opponent is held (1 = just touching)
-var ARMBAR_LEGS = false; // draw the legs up over them
+var ARMBAR_LEGS = true; // draw the legs up over them
 
 function beginArmbar(self, vic) {
   var ab = self.char.armbar || defaultArmbar();
@@ -5624,17 +5624,29 @@ function drawArmbars() {
     var limb = r * 0.2, skin = armColor(self.char), legSkin = self.char.look ? self.char.look.skin : self.char.color;
     ctx.save();
 
-    // Both legs up from its hips: one across their neck, one across their
-    // stomach, squeezing their shoulder between them.
+    // Both legs up from its hips, bent at the knee: one shin across their
+    // neck, the other across their stomach, their shoulder trapped between.
+    // The thighs come out of its shorts, and each ends in a bare foot.
     var hip = { x: sx + s * r * 0.7, y: sy };
+    var shorts = self.char.look ? self.char.look.shorts : self.char.color;
     if (ARMBAR_LEGS) {
-      strokeLimb(limb * 1.25, legSkin, function () {
-        ctx.moveTo(hip.x, hip.y - r * 0.15);
-        ctx.quadraticCurveTo(vx - s * ar * 0.3, vy - ar * 0.8, vx + s * ar * 0.85, vy - ar * 0.42);
-      });
-      strokeLimb(limb * 1.25, legSkin, function () {
-        ctx.moveTo(hip.x, hip.y + r * 0.15);
-        ctx.quadraticCurveTo(vx - s * ar * 0.1, vy + ar * 0.6, vx + s * ar * 0.9, vy + ar * 0.38);
+      [
+        { h: { x: hip.x, y: hip.y - r * 0.22 }, k: { x: vx - s * ar * 0.55, y: vy - ar * 0.78 }, f: { x: vx + s * ar * 0.78, y: vy - ar * 0.42 } },
+        { h: { x: hip.x, y: hip.y + r * 0.22 }, k: { x: vx - s * ar * 0.5, y: vy + ar * 0.72 }, f: { x: vx + s * ar * 0.8, y: vy + ar * 0.42 } }
+      ].forEach(function (L) {
+        // Thigh (thick, the top of it in its shorts), then the shin.
+        strokeLimb(limb * 1.7, legSkin, function () { ctx.moveTo(L.h.x, L.h.y); ctx.lineTo(L.k.x, L.k.y); });
+        var sk = 0.22;
+        strokeLimb(limb * 1.9, shorts, function () {
+          ctx.moveTo(L.h.x, L.h.y); ctx.lineTo(L.h.x + (L.k.x - L.h.x) * sk, L.h.y + (L.k.y - L.h.y) * sk);
+        });
+        strokeLimb(limb * 1.3, legSkin, function () { ctx.moveTo(L.k.x, L.k.y); ctx.lineTo(L.f.x, L.f.y); });
+        // Foot: bent up at the ankle, toes pointed away from them.
+        var ang = Math.atan2(L.f.y - L.k.y, L.f.x - L.k.x) + (L.f.y < vy ? -1 : 1) * s * 1.1;
+        strokeLimb(limb * 1.15, legSkin, function () {
+          ctx.moveTo(L.f.x, L.f.y);
+          ctx.lineTo(L.f.x + Math.cos(ang) * r * 0.3, L.f.y + Math.sin(ang) * r * 0.3);
+        });
       });
     }
 
