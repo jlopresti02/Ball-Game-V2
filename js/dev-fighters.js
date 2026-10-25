@@ -76,3 +76,8 @@ function devVariant(rosterId, id, name, changes) {
 devVariant("c-khabib-nurmagomedov", "dev-khabib-rnc", "Khabib Nurmagomedov (RNC)", function (ch) {
   ch.hasRnc = true;
 });
+
+// Trying out the armbar: every submission off his guard is an armbar.
+devVariant("c-charles-oliveira", "dev-charles-armbar", "Charles Oliveira (armbar)", function (ch) {
+  ch.guard.subs = ["armbar"];
+});

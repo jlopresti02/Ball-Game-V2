@@ -25,7 +25,8 @@ var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, proj
 // Starts a guard submission on `atk`. Each entry in `subs` names one.
 var GUARD_SUBS = {
   guillotine: function (self, atk) { beginGuillotine(self, atk); },
-  rnc: function (self, atk) { beginRnc(self, atk); }
+  rnc: function (self, atk) { beginRnc(self, atk); },
+  armbar: function (self, atk) { beginArmbar(self, atk); }
 };
 
 // Called from hurt() after a hit lands.
@@ -134,7 +135,8 @@ function startSubmission(self, atk) {
   GUARD_SUBS[subs.length ? subs[Math.floor(Math.random() * subs.length)] : "guillotine"](self, atk);
 }
 
-// Flat on its back: in guard, or underneath after the guard's been passed.
+// Flat on its back: in guard, underneath after the guard's been passed, or
+// throwing up an armbar.
 // Returns which way it's lying (0 when upright) scaled by how far down it
 // is, so it rolls back upright through a get-up.
 function onBack(b) {
@@ -142,6 +144,7 @@ function onBack(b) {
     var g = b.guard, k = g.getup >= 0 ? Math.min(1, g.getup / GUARD_GETUP_TIME) : 0;
     return g.side * (1 - k * k * (3 - 2 * k));
   }
+  if (b.armbar) return b.armbar.side;
   if (b.guillo && b.guillo.fromGuard && (b.guillo.phase === "mount" || b.guillo.phase === "pound")) return b.guillo.side;
   return 0;
 }

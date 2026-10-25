@@ -186,6 +186,10 @@ function defaultGuillotine() {
 // tapBase% of the time at full health, up to tapLowHp% more the more damage
 // it's taken (see rnc.js).
 function defaultRnc() { return { chance: 60, tapBase: 35, tapLowHp: 50, cooldown: 5 }; }
+// Armbar (a guard submission): the one caught taps tapBase% of the time at
+// full health, up to tapLowHp% more the more damage it's taken (see
+// armbar.js).
+function defaultArmbar() { return { tapBase: 30, tapLowHp: 50 }; }
 // Guard: chance% of the strikes that land on this fighter drop it onto its
 // back in guard for `time` seconds, with a circle of `radius` around it.
 // The first opponent to step into the circle passes the guard passChance%
@@ -236,6 +240,7 @@ function normalizeChar(ch) {
   });
   if (ch.hasRnc === undefined) ch.hasRnc = false;
   if (!ch.rnc) ch.rnc = defaultRnc();
+  if (!ch.armbar) ch.armbar = defaultArmbar();
   if (ch.hasGuard === undefined) ch.hasGuard = false;
   if (!ch.guard) ch.guard = defaultGuard();
   Object.keys(defaultGuard()).forEach(function (k) {
