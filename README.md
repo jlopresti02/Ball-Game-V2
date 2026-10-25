@@ -13,6 +13,13 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 - **Roster** (the main screen) holds the custom fighters you've built and saved. Roster fighters will later get their own textures, audio and special moves on top of the character bases.
 - **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters. Every card there has a **Mirror** button that puts that fighter on both sides; the second copy is named "<name> 2" and drawn in a lighter or darker shade. Its **Dev Fighters** section holds older versions of roster fighters for testing (e.g. Dustin Poirier with his face photo, from before his fighter art). An old copy of a repo fighter saved under another id without fighter art is removed from the roster automatically. The **Always KO Rush** switch makes every Brawler open each Dev Corner fight with the KO Rush (100% instead of 5%).
 
+## Arenas
+
+The **Arena** button under the fight switches between two arenas, and the game remembers the choice on each device:
+
+- **Test**: the plain square arena with the health bars above it.
+- **WWIT stadium**: a 9:16 frame for reels. The cage sits in the middle on a WWIT MMA branded mat, with stands of cheering fans (drawn in the fighter art style) around it. A jumbotron above the cage replaces the health bars and shows the clock, each fighter's health and special meter, and live strikes landed, damage dealt and takedowns. The cage and jumbotron stay out of the areas Reels and TikTok cover with their own buttons and captions.
+
 ## Character Bases
 
 | Base | Attack |
@@ -100,6 +107,8 @@ tools/build_roster.py   Builds js/roster-data.js from characters/
 js/game/update.js       Per-frame update, HUD, canvas sizing
 js/game/draw-attacks.js Drawing each attack's animation
 js/game/fighter-art.js  Fighter art: muscled ball, head, tattoos, shorts, gloves
+js/game/wwit-badge.js   The WWIT MMA badge image, inlined
+js/game/stadium.js      WWIT stadium arena: stands, fans, cage, mat, jumbotron, fight stats
 js/game/draw.js         Drawing the arena, fighters, projectiles, damage numbers
 js/main.js              Game loop, button wiring, startup (loads last)
 tools/build.py          Bundles everything into dist/ball-brawl.html

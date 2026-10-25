@@ -369,6 +369,7 @@ function updateFathersPlan(self, other, m, sp, dt) {
     }
     fpImpact(self, other, m, sp.slamDamage, true);
     floater(other.x, other.y - other.r - 30, "TAKEDOWN", "note");
+    recordTakedown(self.id);
     if (!other.alive) { endIgbb(self, other); checkEnd(); return false; }
     m.phase = "mount"; m.t = 0;
     m.mx = self.x; m.my = self.y;

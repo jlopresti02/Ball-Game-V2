@@ -199,9 +199,11 @@ function hurt(b, amount, source, attackerId) {
     var tm = b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2;
     amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }
+  var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
+  recordHit(b, hpBefore - b.hp, source, attackerId); // jumbotron stats
   // A clean hit charges the attacker's special move.
   if (amount > 0 && attackerId != null && attackerId !== b.id && source !== "laser" && source !== "igbb") addSpecialCharge(balls[attackerId], source);
   if (source === "laser") {

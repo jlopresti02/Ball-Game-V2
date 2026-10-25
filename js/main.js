@@ -16,6 +16,7 @@ function frame(t) {
 
 document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
 document.getElementById("backBtn").addEventListener("click", function () { showMenu(); });
+document.getElementById("arenaBtn").addEventListener("click", function () { setArenaMode(stadiumOn() ? "test" : "stadium"); });
 startBtn.addEventListener("click", function () {
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();
@@ -53,5 +54,6 @@ Array.prototype.forEach.call(document.querySelectorAll('input[type="range"]'), f
 });
 
 initRosterStore(); // pull in saved fighters (repo + cloud roster)
+applyArenaLayout(); // test arena or WWIT stadium, whichever was picked last
 showScreen("select");
 requestAnimationFrame(frame);
