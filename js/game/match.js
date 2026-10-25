@@ -46,6 +46,7 @@ function makeBall(id, ch) {
 
 function startMatchWith(ch0, ch1) {
   stopAllChargeSounds();
+  loadHereWeGo();
   balls = [makeBall(0, ch0), makeBall(1, ch1)];
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
@@ -103,6 +104,7 @@ function start() {
   banner.hidden = true;
   setGamePhase("fight");
   rollKoRush(); // Brawler's opening KO Rush (usually doesn't happen)
+  playHereWeGo();
 }
 
 function floater(x, y, text, kind) {

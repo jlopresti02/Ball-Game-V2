@@ -497,3 +497,43 @@ function playForget() {
     synthForget(ctx, ctx.destination, ctx.currentTime);
   } catch (e) { /* never let audio break the game */ }
 }
+
+// ---------------------------------------------------------------
+// "Here we go!": the announcer call that opens every fight. Unlike the
+// other sounds it's a real recording (HERE_WE_GO_SRC), decoded once into a
+// buffer. Decoding starts when the match screen opens so the call is ready
+// by the time Start is tapped.
+// ---------------------------------------------------------------
+var hereWeGoBuffer = null, hereWeGoLoading = false, hereWeGoPending = false;
+function loadHereWeGo() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx || hereWeGoBuffer || hereWeGoLoading || typeof HERE_WE_GO_SRC === "undefined") return;
+    hereWeGoLoading = true;
+    var b64 = HERE_WE_GO_SRC.slice(HERE_WE_GO_SRC.indexOf(",") + 1);
+    var bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var done = function (buf) {
+      hereWeGoBuffer = buf; hereWeGoLoading = false;
+      // Start was tapped before decoding finished: play it now.
+      if (hereWeGoPending) { hereWeGoPending = false; playHereWeGo(); }
+    };
+    // Older Safari only supports the callback form of decodeAudioData.
+    var p = ctx.decodeAudioData(bytes.buffer, done, function () { hereWeGoLoading = false; });
+    if (p && p.catch) p.catch(function () { hereWeGoLoading = false; });
+  } catch (e) { hereWeGoLoading = false; }
+}
+function playHereWeGo() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (!hereWeGoBuffer) { hereWeGoPending = true; loadHereWeGo(); return; }
+    var src = ctx.createBufferSource();
+    src.buffer = hereWeGoBuffer;
+    var g = ctx.createGain();
+    g.gain.value = 0.8;
+    src.connect(g); g.connect(ctx.destination);
+    src.start(ctx.currentTime);
+  } catch (e) { /* never let audio break the game */ }
+}
