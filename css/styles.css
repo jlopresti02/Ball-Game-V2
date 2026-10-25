@@ -283,6 +283,13 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .arena { position: relative; border: 6px solid var(--wall); border-radius: 8px; overflow: hidden; background: var(--floor); }
 canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipulation; }
 
+/* WWIT stadium: a 9:16 frame sized to fit the screen, with the jumbotron in
+   place of the health bars. */
+#screenGame.stadium .hud { display: none; }
+#screenGame.stadium .arena { border: 0; border-radius: 0; background: #0b0d12; max-width: calc((100svh - 90px) * 9 / 16); margin: 0 auto; }
+#screenGame.stadium canvas { aspect-ratio: 9 / 16; }
+#screenGame.stadium .banner span { background: #f3ede0; color: #16211f; border-color: #5a0f18; }
+
 .banner {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   flex-direction: column; gap: 20px; pointer-events: none; padding: 12px;
@@ -292,5 +299,20 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
   font-size: clamp(40px, 11vw, 84px); font-weight: 800; line-height: 1;
   padding: 0.1em 0.3em 0.14em; background: var(--floor); border: 5px solid var(--wall); border-radius: 8px;
 }
+
+/* After a win, tapping the result opens the pop-up menu over the arena.
+   The buttons under the arena are hidden while the fight is on screen. */
+.banner.tappable { pointer-events: auto; cursor: pointer; }
+.postMenu {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 16px; background: rgba(0,0,0,0.55);
+}
+.postMenu button { width: min(280px, 80%); font-size: clamp(20px, 5.5vw, 26px); }
+.postMenu button.secondary { background: var(--floor); }
+.postTitle {
+  font-size: clamp(30px, 8vw, 52px); font-weight: 800; line-height: 1; text-align: center; margin-bottom: 6px;
+  padding: 0.1em 0.3em 0.14em; background: var(--floor); border: 4px solid var(--wall); border-radius: 8px;
+}
+#screenGame.phase-fight .gameFooter, #screenGame.phase-win .gameFooter, #screenGame.phase-menu .gameFooter { visibility: hidden; }
 
 .gameFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
