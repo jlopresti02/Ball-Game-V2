@@ -1,4 +1,5 @@
-// Armbar from the guard. When the guard player catches the opponent stepping
+// Armbar from the guard (part of the BJJ artist submission set, see
+// guard.js). When the guard player catches the opponent stepping
 // in (or a Do Bronx takedown goes into a submission) and "armbar" is the
 // submission picked from its guard's `subs`, it stays flat on its back,
 // grabs the opponent's wrist to its chest, swings both legs up over them (one

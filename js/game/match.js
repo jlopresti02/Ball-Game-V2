@@ -40,7 +40,7 @@ function makeBall(id, ch) {
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
-    guillo: null, choked: false, guilloCd: 0, rnc: null, rncCd: 0, guard: null, guardCd: 0, doBronx: null
+    guillo: null, choked: false, guilloCd: 0, rnc: null, guard: null, guardCd: 0, doBronx: null
   };
 }
 

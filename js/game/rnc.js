@@ -1,33 +1,18 @@
-// Rear naked choke. When a fighter with the RNC grabs an opponent from
-// behind (the opponent isn't facing it), `chance`% of the time it takes the
-// back instead of slamming: it climbs on behind them, hooks its legs round
-// their waist, snakes an arm under the chin and locks the choke (its other
-// hand behind their head). The same tug-of-war bar as the guillotine decides
-// it: the tap (a win by submission) or the escape (they turn in and pop
-// free). Tap odds: `tapBase`% at full health, plus up to `tapLowHp`% more
-// the more damage the one being choked has taken. After an escape it can't
-// take the back again for `cooldown` seconds.
+// Rear naked choke (part of the BJJ artist submission set, see guard.js).
+// When the guard player catches the opponent stepping in (or a Do Bronx
+// takedown goes into a submission) and the RNC is picked, it scrambles round
+// to their back: it climbs on behind them, hooks its legs round their waist,
+// snakes an arm under the chin and locks the choke (its other hand behind
+// their head). The same tug-of-war bar as the guillotine decides it: the tap
+// (a win by submission) or the escape (they turn in and pop free). Tap odds:
+// `tapBase`% at full health, plus up to `tapLowHp`% more the more damage the
+// one being choked has taken.
 "use strict";
 
 var RNC_MIN_TIME = 2.4, RNC_MAX_EXTRA = 1.2;
 var RNC_TAP_TIME = 0.75;
 var RNC_ESCAPE_SPEED = 340;
 var RNC_OFF_X = 0.45, RNC_OFF_Y = 0.7; // where it sits on their back (in their radii)
-
-function canRnc(self) {
-  if (!self.char.hasRnc || !self.alive || self.rncCd > 0) return false;
-  return !(self.koOut || self.shocked || self.shelled || self.igbb || self.koRush || self.koDuel ||
-    self.slam || self.combo || self.taunt || self.flow || self.grapple || subLocked(self));
-}
-
-// Called from attemptGrab: true if the grab became a back take.
-function tryRnc(attacker, target) {
-  if (!canRnc(attacker) || isFacing(target, attacker)) return false;
-  if (Math.random() >= attacker.char.rnc.chance / 100) return false;
-  floater(attacker.x, attacker.y - attacker.r - 30, "BACK TAKE", "note");
-  beginRnc(attacker, target);
-  return true;
-}
 
 function beginRnc(self, vic) {
   var rc = self.char.rnc || defaultRnc();
@@ -48,6 +33,9 @@ function beginRnc(self, vic) {
   });
   // Room above them to climb on behind.
   vic.y = Math.max(vic.y, vic.r * RNC_OFF_Y + self.r + 4);
+  // And room to the side, so neither of them ends up in the wall.
+  var edge = vic.r * RNC_OFF_X + self.r + 4;
+  vic.x = Math.max(edge, Math.min(W - edge, vic.x));
   floater(vic.x, vic.y - vic.r - 60, "REAR NAKED CHOKE", "crit");
   playPunch(20);
   if (!reduceMotion) shake = Math.max(shake, 8);
@@ -79,7 +67,6 @@ function updateRnc(self, dt) {
     }
     // They turn in to face it and pop free.
     floater(vic.x, vic.y - vic.r - 30, "ESCAPE", "note");
-    self.rncCd = (self.char.rnc || defaultRnc()).cooldown;
     endRnc(self);
     var a = -Math.PI / 2 + c.side * (0.5 + Math.random() * 0.4);
     self.vx = Math.cos(a) * RNC_ESCAPE_SPEED; self.vy = Math.sin(a) * RNC_ESCAPE_SPEED;
