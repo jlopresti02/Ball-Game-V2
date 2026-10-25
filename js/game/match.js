@@ -65,8 +65,29 @@ function startMatchWith(ch0, ch1) {
   bannerText.hidden = true;
   startBtn.textContent = "Start match";
   banner.hidden = false;
+  setGamePhase("ready");
   updateHud(true);
   showScreen("game");
+}
+
+// Where the game screen is: "ready" (before the start), "fight", "win" (the
+// result banner) and "menu" (the pop-up menu after tapping past the win).
+// The buttons under the arena stay hidden from the start of the fight until
+// that menu is closed, so a screen recording only shows the fight.
+var gamePhase = "ready";
+function setGamePhase(phase) {
+  gamePhase = phase;
+  var scr = document.getElementById("screenGame");
+  ["ready", "fight", "win", "menu"].forEach(function (p) { scr.classList.toggle("phase-" + p, p === phase); });
+  startBtn.hidden = phase === "win";
+  banner.classList.toggle("tappable", phase === "win");
+  var menu = document.getElementById("postMenu");
+  menu.hidden = phase !== "menu";
+  if (phase === "menu") {
+    document.getElementById("postTitle").textContent = bannerText.textContent;
+    document.getElementById("postTitle").style.color = bannerText.style.color;
+    banner.hidden = true;
+  }
 }
 
 function start() {
@@ -77,6 +98,7 @@ function start() {
   });
   started = true;
   banner.hidden = true;
+  setGamePhase("fight");
   rollKoRush(); // Brawler's opening KO Rush (usually doesn't happen)
 }
 
@@ -199,9 +221,11 @@ function hurt(b, amount, source, attackerId) {
     var tm = b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2;
     amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }
+  var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
+  recordHit(b, hpBefore - b.hp, source, attackerId); // jumbotron stats
   // A clean hit charges the attacker's special move.
   if (amount > 0 && attackerId != null && attackerId !== b.id && source !== "laser" && source !== "igbb") addSpecialCharge(balls[attackerId], source);
   if (source === "laser") {
@@ -245,4 +269,5 @@ function checkEnd() {
   bannerText.hidden = false;
   startBtn.textContent = "New match";
   banner.hidden = false;
+  setGamePhase("win");
 }

@@ -138,5 +138,5 @@ function resize() {
   if (!rect.width) return;
   var dpr = window.devicePixelRatio || 1;
   canvas.width = Math.round(rect.width * dpr);
-  canvas.height = Math.round(rect.width * (H / W) * dpr);
+  canvas.height = Math.round(rect.width * (stadiumOn() ? STAGE_H / STAGE_W : H / W) * dpr);
 }
