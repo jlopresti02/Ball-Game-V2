@@ -6,11 +6,11 @@
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "name": "Charles Oliveira",
     "base": "Grappler",
-    "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in a submission (the guillotine for now, more to come). Special move: Do Bronx.",
+    "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Special move: Do Bronx.",
     "color": "#d9a514",
     "label": "",
     "imgData": null,
@@ -81,7 +81,7 @@ var SAVED_ROSTER = [
       "passPunches": 4,
       "passDamage": 10,
       "subs": [
-        "guillotine"
+        "bjj"
       ],
       "cooldown": 3
     },
@@ -180,11 +180,11 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "name": "Khabib Nurmagomedov",
     "base": "Grappler",
-    "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
+    "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
     "color": "#8b1a1a",
     "label": "",
     "imgData": null,
@@ -233,6 +233,12 @@ var SAVED_ROSTER = [
       "finPunchDamage": 10,
       "sprawlChance": 30,
       "reattackChance": 50
+    },
+    "hasSuplex": true,
+    "suplex": {
+      "chance": 60,
+      "damage": 60,
+      "cooldown": 3
     },
     "hasPowerPunch": false,
     "hasRage": false,

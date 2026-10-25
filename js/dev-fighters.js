@@ -71,3 +71,4 @@ function devVariant(rosterId, id, name, changes) {
   ch.hasSpecial = !!special;
   devFighters.push(ch);
 }
+

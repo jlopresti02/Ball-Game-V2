@@ -157,6 +157,7 @@ function grabEscaped(attacker, target) {
 function attemptGrab(attacker, target) {
   if (target.slamSafe > 0) return false;
   if (grabEscaped(attacker, target)) return false;
+  if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.

@@ -27,7 +27,7 @@ var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching):
 // Locked up in a submission (either applying it or caught in it), or down
 // on its back in guard.
 function subLocked(b) {
-  return !!(b.guillo || b.choked || b.guard);
+  return !!(b.guillo || b.rnc || b.armbar || b.suplex || b.choked || b.guard);
 }
 
 function canGuillotine(def) {
@@ -363,6 +363,25 @@ function strokeLimb(width, color, path) {
   [[theme.wall, width + 6], [color, width]].forEach(function (pass) {
     ctx.strokeStyle = pass[0]; ctx.lineWidth = pass[1];
     ctx.beginPath(); path(); ctx.stroke();
+  });
+}
+
+// A grappler's leg: one smooth curve from the hip round a soft knee (the
+// curve's control point) to the foot, the top of the thigh in its shorts,
+// and a small foot turned `footTurn` radians off the end of the shin.
+// `noShorts` leaves the shorts out (when they'd be hidden behind someone).
+function drawBjjLeg(ch, hip, knee, foot, limb, footTurn, footLen, noShorts) {
+  var skin = ch.look ? ch.look.skin : ch.color, shorts = ch.look ? ch.look.shorts : ch.color;
+  strokeLimb(limb * 1.45, skin, function () {
+    ctx.moveTo(hip.x, hip.y); ctx.quadraticCurveTo(knee.x, knee.y, foot.x, foot.y);
+  });
+  if (!noShorts) strokeLimb(limb * 1.6, shorts, function () {
+    ctx.moveTo(hip.x, hip.y); ctx.lineTo(hip.x + (knee.x - hip.x) * 0.25, hip.y + (knee.y - hip.y) * 0.25);
+  });
+  var ang = Math.atan2(foot.y - knee.y, foot.x - knee.x) + footTurn;
+  strokeLimb(limb * 1.1, skin, function () {
+    ctx.moveTo(foot.x, foot.y);
+    ctx.lineTo(foot.x + Math.cos(ang) * footLen, foot.y + Math.sin(ang) * footLen);
   });
 }
 

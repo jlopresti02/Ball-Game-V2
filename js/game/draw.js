@@ -87,7 +87,8 @@ function draw() {
   // Father's Plan's ground and pound).
   // A shooter caught in a guillotine goes underneath, its head buried
   // under the defender (and the defender, once it's taken down).
-  (balls[0].igbb || guilloUnder(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // Whoever took the back for a rear naked choke goes behind the one it chokes.
+  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -147,6 +148,8 @@ function draw() {
     }
     applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
     applyGuardPose(b);  // flat on its back in guard
+    applyArmbarPose(b); // pulled over in an armbar
+    applySuplexPose(b); // arching back into (or flipped over by) a suplex
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -257,9 +260,9 @@ function draw() {
 
     ctx.restore();
 
-    // Small health bar over the ball (hidden while pinned by a finisher,
-    // where it would sit on top of the Grappler).
-    var pinned = balls[1 - b.id].grapple && balls[1 - b.id].grapple.finisher && balls[1 - b.id].grapple.phase !== "carry";
+    // Small health bar over the ball (hidden while pinned by a finisher or
+    // choked from behind, where it would sit on top of the other fighter).
+    var pinned = balls[1 - b.id].grapple && balls[1 - b.id].grapple.finisher && balls[1 - b.id].grapple.phase !== "carry" || other.rnc;
     if (!pinned) {
       var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
       if (by < 4) by = b.y + b.r + 10;
@@ -289,6 +292,9 @@ function draw() {
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSprawls();
   drawGuillotines();
+  drawRncs();
+  drawArmbars();
+  drawSuplexes();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

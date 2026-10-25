@@ -1695,6 +1695,18 @@ function defaultForget() { return { heal: 12, every: 7 }; }
 function defaultGuillotine() {
   return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5, outcomes: { escape: 20, gnp: 70, resink: 5, slam: 5 }, slamDamage: 75 };
 }
+// Rear naked choke (a guard submission): the one choked taps tapBase% of
+// the time at full health, up to tapLowHp% more the more damage it's taken
+// (see rnc.js).
+function defaultRnc() { return { tapBase: 35, tapLowHp: 50 }; }
+// Suplex: chance% of this fighter's grabs on an opponent that isn't facing
+// it become a back suplex for `damage`, then `cooldown` seconds before the
+// next (see suplex.js).
+function defaultSuplex() { return { chance: 60, damage: 60, cooldown: 3 }; }
+// Armbar (a guard submission): the one caught taps tapBase% of the time at
+// full health, up to tapLowHp% more the more damage it's taken (see
+// armbar.js).
+function defaultArmbar() { return { tapBase: 30, tapLowHp: 50 }; }
 // Guard: chance% of the strikes that land on this fighter drop it onto its
 // back in guard for `time` seconds, with a circle of `radius` around it.
 // The first opponent to step into the circle passes the guard passChance%
@@ -1702,7 +1714,7 @@ function defaultGuillotine() {
 // otherwise it's caught in a submission picked from `subs` (see guard.js).
 // After getting back up it can't pull guard again for `cooldown` seconds.
 function defaultGuard() {
-  return { chance: 25, time: 6, radius: 130, passChance: 50, passPunches: 4, passDamage: 10, subs: ["guillotine"], cooldown: 3 };
+  return { chance: 25, time: 6, radius: 130, passChance: 50, passPunches: 4, passDamage: 10, subs: ["bjj"], cooldown: 3 };
 }
 function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
@@ -1743,6 +1755,10 @@ function normalizeChar(ch) {
   ["outcomes", "slamDamage"].forEach(function (k) {
     if (ch.guillotine[k] == null) ch.guillotine[k] = defaultGuillotine()[k];
   });
+  if (!ch.rnc) ch.rnc = defaultRnc();
+  if (!ch.armbar) ch.armbar = defaultArmbar();
+  if (ch.hasSuplex === undefined) ch.hasSuplex = false;
+  if (!ch.suplex) ch.suplex = defaultSuplex();
   if (ch.hasGuard === undefined) ch.hasGuard = false;
   if (!ch.guard) ch.guard = defaultGuard();
   Object.keys(defaultGuard()).forEach(function (k) {
@@ -1799,11 +1815,11 @@ function getImg(dataURL) {
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "name": "Charles Oliveira",
     "base": "Grappler",
-    "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in a submission (the guillotine for now, more to come). Special move: Do Bronx.",
+    "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Special move: Do Bronx.",
     "color": "#d9a514",
     "label": "",
     "imgData": null,
@@ -1874,7 +1890,7 @@ var SAVED_ROSTER = [
       "passPunches": 4,
       "passDamage": 10,
       "subs": [
-        "guillotine"
+        "bjj"
       ],
       "cooldown": 3
     },
@@ -1973,11 +1989,11 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "name": "Khabib Nurmagomedov",
     "base": "Grappler",
-    "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
+    "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
     "color": "#8b1a1a",
     "label": "",
     "imgData": null,
@@ -2026,6 +2042,12 @@ var SAVED_ROSTER = [
       "finPunchDamage": 10,
       "sprawlChance": 30,
       "reattackChance": 50
+    },
+    "hasSuplex": true,
+    "suplex": {
+      "chance": 60,
+      "damage": 60,
+      "cooldown": 3
     },
     "hasPowerPunch": false,
     "hasRage": false,
@@ -2123,6 +2145,7 @@ function devVariant(rosterId, id, name, changes) {
   ch.hasSpecial = !!special;
   devFighters.push(ch);
 }
+
 
 // Where created characters are saved.
 //
@@ -2421,6 +2444,7 @@ function abilitySummary(ch) {
   if (ch.hasWatcher) parts.push("👁️ " + ch.watcher.lasers + "×" + ch.watcher.tickDamage + "/" + ch.watcher.tickInterval + "s");
   if (ch.hasWeave) parts.push("\uD83C\uDF00 " + ch.weave.dodgeChance + "% weave \u00B7 " + ch.weave.critChance + "% crit");
   if (ch.hasSwing) parts.push("\uD83E\uDD74 " + ch.swing.damage + " dmg swing");
+  if (ch.hasSuplex) parts.push("\uD83E\uDD3C " + ch.suplex.chance + "% suplex from behind");
   if (ch.hasGuillotine) parts.push("\uD83D\uDD12 " + ch.guillotine.chance + "% guillotine");
   if (ch.hasGuard) parts.push("\uD83E\uDD4B " + ch.guard.chance + "% guard");
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
@@ -3351,7 +3375,7 @@ function makeBall(id, ch) {
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
-    guillo: null, choked: false, guilloCd: 0, guard: null, guardCd: 0, doBronx: null
+    guillo: null, choked: false, guilloCd: 0, rnc: null, suplex: null, suplexCd: 0, guard: null, guardCd: 0, doBronx: null
   };
 }
 
@@ -3855,6 +3879,9 @@ function updateAbilities(dt) {
     if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.guard) { updateGuard(self, other, dt); continue; }
     if (self.guillo) { updateGuillotine(self, dt); continue; }
+    if (self.rnc) { updateRnc(self, dt); continue; }
+    if (self.armbar) { updateArmbar(self, dt); continue; }
+    if (self.suplex) { updateSuplex(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
     if (self.slam) {
       self.slam.t += dt;
@@ -4773,6 +4800,7 @@ function grabEscaped(attacker, target) {
 function attemptGrab(attacker, target) {
   if (target.slamSafe > 0) return false;
   if (grabEscaped(attacker, target)) return false;
+  if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.
@@ -4876,7 +4904,7 @@ var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching):
 // Locked up in a submission (either applying it or caught in it), or down
 // on its back in guard.
 function subLocked(b) {
-  return !!(b.guillo || b.choked || b.guard);
+  return !!(b.guillo || b.rnc || b.armbar || b.suplex || b.choked || b.guard);
 }
 
 function canGuillotine(def) {
@@ -5215,6 +5243,25 @@ function strokeLimb(width, color, path) {
   });
 }
 
+// A grappler's leg: one smooth curve from the hip round a soft knee (the
+// curve's control point) to the foot, the top of the thigh in its shorts,
+// and a small foot turned `footTurn` radians off the end of the shin.
+// `noShorts` leaves the shorts out (when they'd be hidden behind someone).
+function drawBjjLeg(ch, hip, knee, foot, limb, footTurn, footLen, noShorts) {
+  var skin = ch.look ? ch.look.skin : ch.color, shorts = ch.look ? ch.look.shorts : ch.color;
+  strokeLimb(limb * 1.45, skin, function () {
+    ctx.moveTo(hip.x, hip.y); ctx.quadraticCurveTo(knee.x, knee.y, foot.x, foot.y);
+  });
+  if (!noShorts) strokeLimb(limb * 1.6, shorts, function () {
+    ctx.moveTo(hip.x, hip.y); ctx.lineTo(hip.x + (knee.x - hip.x) * 0.25, hip.y + (knee.y - hip.y) * 0.25);
+  });
+  var ang = Math.atan2(foot.y - knee.y, foot.x - knee.x) + footTurn;
+  strokeLimb(limb * 1.1, skin, function () {
+    ctx.moveTo(foot.x, foot.y);
+    ctx.lineTo(foot.x + Math.cos(ang) * footLen, foot.y + Math.sin(ang) * footLen);
+  });
+}
+
 function drawGloveAt(x, y, r, ch) {
   ctx.fillStyle = gloveColor(ch); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -5299,6 +5346,481 @@ function drawGuillotines() {
   });
 }
 
+// Rear naked choke (part of the BJJ artist submission set, see guard.js).
+// When the guard player catches the opponent stepping in (or a Do Bronx
+// takedown goes into a submission) and the RNC is picked, it scrambles round
+// to their back: it climbs on behind them, hooks its legs round their waist,
+// snakes an arm under the chin and locks the choke (its other hand behind
+// their head). The same tug-of-war bar as the guillotine decides it: the tap
+// (a win by submission) or the escape (they turn in and pop free). Tap odds:
+// `tapBase`% at full health, plus up to `tapLowHp`% more the more damage the
+// one being choked has taken.
+"use strict";
+
+var RNC_MIN_TIME = 2.4, RNC_MAX_EXTRA = 1.2;
+var RNC_TAP_TIME = 0.75;
+var RNC_ESCAPE_SPEED = 340;
+var RNC_OFF_X = 0.45, RNC_OFF_Y = 0.7; // where it sits on their back (in their radii)
+
+function beginRnc(self, vic) {
+  var rc = self.char.rnc || defaultRnc();
+  var hurtFrac = 1 - Math.max(0, Math.min(1, vic.hp / MAX_HP));
+  var tapChance = Math.min(95, rc.tapBase + rc.tapLowHp * hurtFrac);
+  // Climbs on from whichever side it came in on.
+  var side = self.x >= vic.x ? 1 : -1;
+  self.rnc = {
+    vicId: vic.id, t: 0, dur: RNC_MIN_TIME + Math.random() * RNC_MAX_EXTRA,
+    taps: Math.random() < tapChance / 100, bar: 0, phase: "squeeze", tapT: 0,
+    side: side, wob: Math.random() * 10
+  };
+  vic.choked = true;
+  self.guard = null; // (when it comes from the guard)
+  [self, vic].forEach(function (b) {
+    b.vx = 0; b.vy = 0;
+    b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null; b.checkAnim = null;
+  });
+  // Room above them to climb on behind.
+  vic.y = Math.max(vic.y, vic.r * RNC_OFF_Y + self.r + 4);
+  // And room to the side, so neither of them ends up in the wall.
+  var edge = vic.r * RNC_OFF_X + self.r + 4;
+  vic.x = Math.max(edge, Math.min(W - edge, vic.x));
+  floater(vic.x, vic.y - vic.r - 60, "REAR NAKED CHOKE", "crit");
+  playPunch(20);
+  if (!reduceMotion) shake = Math.max(shake, 8);
+}
+
+// Runs on the fighter applying the choke; the one in it is held still.
+function updateRnc(self, dt) {
+  var c = self.rnc, vic = balls[c.vicId];
+  if (!self.alive || !vic.alive) { endRnc(self); return; }
+  c.t += dt;
+  // On their back: behind and above them, its head peeking over one
+  // shoulder.
+  var jit = reduceMotion || c.phase !== "squeeze" ? 0 : 1.6;
+  self.vx = 0; self.vy = 0; vic.vx = 0; vic.vy = 0;
+  self.x = vic.x + c.side * vic.r * RNC_OFF_X + (Math.random() - 0.5) * jit;
+  self.y = vic.y - vic.r * RNC_OFF_Y + (Math.random() - 0.5) * jit;
+
+  if (c.phase === "squeeze") {
+    var p = Math.min(1, c.t / c.dur), sgn = c.taps ? 1 : -1;
+    var swing = Math.sin(c.t * 4.3 + c.wob) * Math.sin(c.t * 1.7 + c.wob * 0.5) * 0.55 * (1 - p);
+    c.bar = Math.max(-1, Math.min(1, sgn * Math.pow(p, 2.2) + swing));
+    if (p < 1) return;
+    c.bar = sgn;
+    if (c.taps) {
+      c.phase = "tap";
+      floater(vic.x, vic.y - vic.r - 30, "TAP", "crit");
+      playPunch(10);
+      return;
+    }
+    // They turn in to face it and pop free.
+    floater(vic.x, vic.y - vic.r - 30, "ESCAPE", "note");
+    endRnc(self);
+    var a = -Math.PI / 2 + c.side * (0.5 + Math.random() * 0.4);
+    self.vx = Math.cos(a) * RNC_ESCAPE_SPEED; self.vy = Math.sin(a) * RNC_ESCAPE_SPEED;
+    vic.vx = -Math.cos(a) * RNC_ESCAPE_SPEED; vic.vy = -Math.sin(a) * RNC_ESCAPE_SPEED;
+    return;
+  }
+  c.tapT += dt;
+  if (c.tapT >= RNC_TAP_TIME) {
+    endRnc(self);
+    submit(vic);
+  }
+}
+
+function endRnc(self) {
+  if (!self.rnc) return;
+  balls[self.rnc.vicId].choked = false;
+  self.rnc = null;
+}
+
+// The one taking the back is drawn behind the one it's choking.
+function rncBehind(b) {
+  return !!b.rnc;
+}
+
+function drawRncs() {
+  balls.forEach(function (self) {
+    var c = self.rnc;
+    if (!c) return;
+    var vic = balls[c.vicId], r = vic.r, s = c.side, vx = vic.x, vy = vic.y;
+    var squeeze = c.phase === "tap" ? 1 : Math.max(0, c.bar);
+    var limb = self.r * 0.2, skin = armColor(self.char);
+    ctx.save();
+
+    // Their face (the top third of the ball) goes red as the choke sinks in.
+    if (squeeze > 0) {
+      ctx.save();
+      ctx.beginPath(); ctx.arc(vx, vy, r, 0, Math.PI * 2); ctx.clip();
+      ctx.globalAlpha = 0.55 * squeeze;
+      ctx.fillStyle = "#d62020";
+      ctx.beginPath(); ctx.arc(vx, vy - r * 0.66, r * 0.38, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    // Hooks in: both legs come round from behind their hips and cross over
+    // their stomach, feet tucked in (its shorts are hidden behind them).
+    drawBjjLeg(self.char, { x: vx - s * r * 0.97, y: vy + r * 0.32 }, { x: vx - s * r * 0.6, y: vy + r * 0.8 },
+      { x: vx + s * r * 0.22, y: vy + r * 0.7 }, limb, s * 1.1, r * 0.2, true);
+    drawBjjLeg(self.char, { x: vx + s * r * 0.97, y: vy + r * 0.32 }, { x: vx + s * r * 0.6, y: vy + r * 0.8 },
+      { x: vx - s * r * 0.22, y: vy + r * 0.7 }, limb, -s * 1.1, r * 0.2, true);
+
+    // The arm behind their head: only the forearm shows, coming out from
+    // behind the far side of their head down to the elbow (the hand's out of
+    // sight on the back of the head).
+    var neckY = vy - r * 0.16;
+    var elbow = { x: vx - s * r * 0.86, y: neckY + r * 0.04 };
+    strokeLimb(limb, skin, function () {
+      ctx.moveTo(vx - s * r * 0.74, vy - r * 0.74);
+      ctx.quadraticCurveTo(vx - s * r * 0.98, vy - r * 0.6, elbow.x, elbow.y);
+    });
+    // The choking arm: over their near shoulder and right across the front
+    // of the neck, cinched tighter as it sinks in, hand gripping the other
+    // bicep.
+    var cinch = squeeze * r * 0.06;
+    strokeLimb(limb, skin, function () {
+      ctx.moveTo(vx + s * r * 1.0, vy - r * 0.5);
+      ctx.quadraticCurveTo(vx + s * r * 0.55, neckY + cinch, vx - s * r * 0.1, neckY + cinch);
+      ctx.lineTo(elbow.x + s * r * 0.12, elbow.y - r * 0.02);
+    });
+    drawGloveAt(elbow.x + s * r * 0.1, elbow.y - r * 0.06, self.r * 0.26, self.char);
+
+    // Their arms: up from the shoulders, elbows tucked, both hands gripping
+    // the choking arm and tugging at it. When they tap, the near hand lets go
+    // and pats the arm three times instead.
+    var vlimb = r * 0.17, vskin = armColor(vic.char), tug = c.phase === "squeeze" ? Math.sin(c.t * 9 + c.wob) * r * 0.03 : 0;
+    var pat = c.phase === "tap" ? Math.abs(Math.sin(c.tapT / RNC_TAP_TIME * Math.PI * 3)) * r * 0.22 : 0;
+    var grips = [
+      { sh: { x: vx + s * r * 0.78, y: vy + r * 0.02 }, el: { x: vx + s * r * 0.62, y: vy + r * 0.4 }, h: { x: vx + s * r * 0.42, y: neckY - r * 0.05 + cinch + tug - pat } },
+      { sh: { x: vx - s * r * 0.78, y: vy + r * 0.02 }, el: { x: vx - s * r * 0.3, y: vy + r * 0.42 }, h: { x: vx - s * r * 0.08, y: neckY - r * 0.02 + cinch - tug } }
+    ];
+    grips.forEach(function (g) {
+      strokeLimb(vlimb, vskin, function () {
+        ctx.moveTo(g.sh.x, g.sh.y);
+        ctx.quadraticCurveTo(g.el.x, g.el.y, g.h.x, g.h.y + r * 0.08);
+      });
+      drawGloveAt(g.h.x, g.h.y, r * 0.19, vic.char);
+    });
+
+    // Tug-of-war bar: its colour is the choke, theirs the escape.
+    var bw = 150, bh = 12;
+    var bx = Math.min(W - bw - 6, Math.max(6, vx - bw / 2));
+    var by = self.y - self.r - 64;
+    if (by < 8) by = vy + r + 30;
+    var split = bw * (c.bar + 1) / 2;
+    ctx.fillStyle = self.char.color; ctx.fillRect(bx, by, split, bh);
+    ctx.fillStyle = vic.char.color; ctx.fillRect(bx + split, by, bw - split, bh);
+    ctx.lineWidth = 2.5; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+    ctx.fillStyle = theme.ink;
+    ctx.fillRect(bx + split - 2, by - 4, 4, bh + 8);
+    ctx.restore();
+  });
+}
+
+// Armbar from the guard (part of the BJJ artist submission set, see
+// guard.js). When the guard player catches the opponent stepping
+// in (or a Do Bronx takedown goes into a submission) and "armbar" is the
+// submission picked from its guard's `subs`, it stays flat on its back,
+// grabs the opponent's wrist to its chest, swings both legs up over them (one
+// across the face, one across the chest) and straightens the arm across its
+// hips. The same tug-of-war bar as the other submissions decides it: the tap
+// (a win by submission) or the escape (they rip the arm out and pop free).
+// Tap odds: `tapBase`% at full health, plus up to `tapLowHp`% more the more
+// damage the one caught has taken.
+"use strict";
+
+var ARMBAR_MIN_TIME = 2.4, ARMBAR_MAX_EXTRA = 1.2;
+var ARMBAR_TAP_TIME = 0.75;
+var ARMBAR_ESCAPE_SPEED = 340;
+var ARMBAR_GAP = 0.85; // how close the opponent is held (1 = just touching)
+var ARMBAR_LEGS = true; // draw the legs up over them
+
+function beginArmbar(self, vic) {
+  var ab = self.char.armbar || defaultArmbar();
+  var hurtFrac = 1 - Math.max(0, Math.min(1, vic.hp / MAX_HP));
+  var tapChance = Math.min(95, ab.tapBase + ab.tapLowHp * hurtFrac);
+  var side = vic.x >= self.x ? 1 : -1;
+  // Room on that side to pull them in, or it turns to the other side.
+  var gap = (self.r + vic.r) * ARMBAR_GAP;
+  if (self.x + side * (gap + vic.r) > W || self.x + side * (gap + vic.r) < 0) side = -side;
+  self.armbar = {
+    vicId: vic.id, t: 0, dur: ARMBAR_MIN_TIME + Math.random() * ARMBAR_MAX_EXTRA,
+    taps: Math.random() < tapChance / 100, bar: 0, phase: "squeeze", tapT: 0,
+    side: side, wob: Math.random() * 10
+  };
+  vic.choked = true;
+  self.guard = null;
+  [self, vic].forEach(function (b) {
+    b.vx = 0; b.vy = 0;
+    b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null; b.checkAnim = null;
+  });
+  self.y = Math.max(self.y, vic.r * 1.4 + 4);
+  floater((self.x + vic.x) / 2, Math.min(self.y, vic.y) - vic.r - 60, "ARMBAR", "crit");
+  playPunch(20);
+  if (!reduceMotion) shake = Math.max(shake, 8);
+}
+
+// Runs on the guard player; the one caught in it is held still.
+function updateArmbar(self, dt) {
+  var c = self.armbar, vic = balls[c.vicId];
+  if (!self.alive || !vic.alive) { endArmbar(self); return; }
+  c.t += dt;
+  // Pulled in over its hips, bent over toward it.
+  var jit = reduceMotion || c.phase !== "squeeze" ? 0 : 1.6;
+  self.vx = 0; self.vy = 0; vic.vx = 0; vic.vy = 0;
+  vic.x = self.x + c.side * (self.r + vic.r) * ARMBAR_GAP + (Math.random() - 0.5) * jit;
+  vic.y = self.y - self.r * 0.3 + (Math.random() - 0.5) * jit;
+
+  if (c.phase === "squeeze") {
+    var p = Math.min(1, c.t / c.dur), sgn = c.taps ? 1 : -1;
+    var swing = Math.sin(c.t * 4.1 + c.wob) * Math.sin(c.t * 1.8 + c.wob * 0.5) * 0.55 * (1 - p);
+    c.bar = Math.max(-1, Math.min(1, sgn * Math.pow(p, 2.2) + swing));
+    if (p < 1) return;
+    c.bar = sgn;
+    if (c.taps) {
+      c.phase = "tap";
+      floater(vic.x, vic.y - vic.r - 30, "TAP", "crit");
+      playPunch(10);
+      return;
+    }
+    // They rip the arm out and spin away.
+    floater(vic.x, vic.y - vic.r - 30, "ESCAPE", "note");
+    endArmbar(self);
+    var a = -Math.PI / 2 + c.side * (0.6 + Math.random() * 0.4);
+    vic.vx = Math.cos(a) * ARMBAR_ESCAPE_SPEED; vic.vy = Math.sin(a) * ARMBAR_ESCAPE_SPEED;
+    self.vx = -Math.cos(a) * ARMBAR_ESCAPE_SPEED * 0.6; self.vy = -Math.sin(a) * ARMBAR_ESCAPE_SPEED * 0.6;
+    return;
+  }
+  c.tapT += dt;
+  if (c.tapT >= ARMBAR_TAP_TIME) {
+    endArmbar(self);
+    submit(vic);
+  }
+}
+
+function endArmbar(self) {
+  if (!self.armbar) return;
+  balls[self.armbar.vicId].choked = false;
+  self.armbar = null;
+}
+
+// How far it's cranked right now (0 to 1).
+function armbarSqueeze(c) {
+  return c.phase === "tap" ? 1 : Math.max(0, c.bar);
+}
+
+// The one caught in it is pulled over, bent toward the guard player.
+function applyArmbarPose(b) {
+  if (!b.choked) return;
+  var c = balls[1 - b.id].armbar;
+  if (!c) return;
+  ctx.translate(b.x, b.y);
+  ctx.rotate(-c.side * (0.3 + 0.15 * armbarSqueeze(c)));
+  ctx.translate(-b.x, -b.y);
+}
+
+function drawArmbars() {
+  balls.forEach(function (self) {
+    var c = self.armbar;
+    if (!c) return;
+    var vic = balls[c.vicId], s = c.side, r = self.r, ar = vic.r;
+    var sx = self.x, sy = self.y, vx = vic.x, vy = vic.y;
+    var squeeze = armbarSqueeze(c);
+    var limb = r * 0.2, skin = armColor(self.char);
+    ctx.save();
+
+    // Both legs up from its hips, curving round at the knee: one shin across their
+    // neck, the other across their stomach, their shoulder trapped between.
+    // The thighs come out of its shorts, and each ends in a small bare foot.
+    var hip = { x: sx + s * r * 0.7, y: sy };
+    if (ARMBAR_LEGS) {
+      [
+        { h: { x: hip.x, y: hip.y - r * 0.22 }, k: { x: vx - s * ar * 0.55, y: vy - ar * 0.78 }, f: { x: vx + s * ar * 0.78, y: vy - ar * 0.42 } },
+        { h: { x: hip.x, y: hip.y + r * 0.22 }, k: { x: vx - s * ar * 0.5, y: vy + ar * 0.72 }, f: { x: vx + s * ar * 0.8, y: vy + ar * 0.42 } }
+      ].forEach(function (L) {
+        var knee = { x: (L.k.x + (L.h.x + L.f.x) / 2) / 2, y: (L.k.y + (L.h.y + L.f.y) / 2) / 2 };
+        drawBjjLeg(self.char, L.h, knee, L.f, limb, (L.f.y < vy ? -1 : 1) * s * 1.1, r * 0.2);
+      });
+    }
+
+    // Their arm, pulled straight across its hips to its chest, the elbow
+    // bending the wrong way as it's cranked.
+    var sh = { x: vx - s * ar * 0.72, y: vy + ar * 0.05 };
+    var wrist = { x: sx - s * r * 0.1, y: sy - r * 0.12 };
+    var elbow = { x: (sh.x + wrist.x) / 2, y: (sh.y + wrist.y) / 2 - squeeze * r * 0.22 };
+    strokeLimb(ar * 0.2, armColor(vic.char), function () {
+      ctx.moveTo(sh.x, sh.y);
+      ctx.lineTo(elbow.x, elbow.y);
+      ctx.lineTo(wrist.x, wrist.y);
+    });
+    drawGloveAt(wrist.x - s * r * 0.08, wrist.y, ar * 0.22, vic.char);
+
+    // Its arms hugging the wrist to its chest.
+    [-1, 1].forEach(function (k) {
+      var g = { x: wrist.x + s * r * 0.12, y: wrist.y + k * r * 0.2 };
+      strokeLimb(limb, skin, function () {
+        ctx.moveTo(sx - s * r * 0.35, sy + k * r * 0.6);
+        ctx.quadraticCurveTo(sx - s * r * 0.05, sy + k * r * 0.55, g.x, g.y);
+      });
+      drawGloveAt(g.x, g.y, r * 0.22, self.char);
+    });
+
+    // Tapping: their free hand pats its leg (or its body) three times.
+    if (c.phase === "tap") {
+      var pat = Math.abs(Math.sin(c.tapT / ARMBAR_TAP_TIME * Math.PI * 3));
+      var px = ARMBAR_LEGS ? vx + s * ar * 0.55 : sx + s * r * 0.6, py = ARMBAR_LEGS ? vy + ar * 0.45 : sy + r * 0.45;
+      drawGloveAt(px, py - pat * ar * 0.2, ar * 0.22, vic.char);
+    }
+
+    // Tug-of-war bar: its colour is the armbar, theirs the escape.
+    var bw = 150, bh = 12;
+    var bx = Math.min(W - bw - 6, Math.max(6, (sx + vx) / 2 - bw / 2));
+    var by = Math.min(sy, vy) - Math.max(r, ar) - 64;
+    if (by < 8) by = Math.max(sy, vy) + Math.max(r, ar) + 30;
+    var split = bw * (c.bar + 1) / 2;
+    ctx.fillStyle = self.char.color; ctx.fillRect(bx, by, split, bh);
+    ctx.fillStyle = vic.char.color; ctx.fillRect(bx + split, by, bw - split, bh);
+    ctx.lineWidth = 2.5; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
+    ctx.fillStyle = theme.ink;
+    ctx.fillRect(bx + split - 2, by - 4, 4, bh + 8);
+    ctx.restore();
+  });
+}
+
+// Suplex. When a fighter with the suplex grabs an opponent from behind (the
+// opponent isn't facing it), `chance`% of the time it throws a back suplex
+// instead of its normal grab: it locks its arms round their waist, arches
+// back and lifts them up over its own head, then slams them down head first
+// on the other side for `damage`. Afterwards it can't suplex again for
+// `cooldown` seconds. Khabib and wrestlers get this one.
+"use strict";
+
+var SUPLEX_LOCK_TIME = 0.3;   // locking the arms round their waist
+var SUPLEX_LIFT_TIME = 0.55;  // up and over its head
+var SUPLEX_DOWN_TIME = 0.35;  // left lying head first after the slam
+
+function canSuplex(self) {
+  if (!self.char.hasSuplex || !self.alive || self.suplexCd > 0) return false;
+  return !(self.koOut || self.shocked || self.shelled || self.igbb || self.koRush || self.koDuel ||
+    self.slam || self.combo || self.taunt || self.flow || self.grapple || subLocked(self));
+}
+
+// Called from attemptGrab: true if the grab became a suplex.
+function trySuplex(attacker, target) {
+  if (!canSuplex(attacker) || isFacing(target, attacker)) return false;
+  if (Math.random() >= attacker.char.suplex.chance / 100) return false;
+  beginSuplex(attacker, target);
+  return true;
+}
+
+function beginSuplex(self, vic) {
+  var side = vic.x >= self.x ? 1 : -1;
+  // Room to throw them over to the other side, or it turns round.
+  var reach = (self.r + vic.r) * 0.8;
+  if (self.x - side * reach < vic.r || self.x - side * reach > W - vic.r) side = -side;
+  self.suplex = { vicId: vic.id, t: 0, phase: "lock", side: side, reach: reach };
+  vic.choked = true;
+  [self, vic].forEach(function (b) {
+    b.vx = 0; b.vy = 0;
+    b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null; b.checkAnim = null;
+  });
+  // Room above it to lift them.
+  self.y = Math.max(self.y, reach * 1.25 + vic.r + 4);
+  floater(self.x, self.y - self.r - 60, "SUPLEX", "crit");
+  playWhoosh();
+}
+
+// Runs on the fighter throwing it; the one thrown is carried along.
+function updateSuplex(self, dt) {
+  var c = self.suplex, vic = balls[c.vicId];
+  if (!self.alive || !vic.alive) { endSuplex(self); return; }
+  c.t += dt;
+  self.vx = 0; self.vy = 0; vic.vx = 0; vic.vy = 0;
+  var s = c.side, k;
+  if (c.phase === "lock") {
+    // Pulls them in tight, its chest to their back.
+    k = Math.min(1, c.t / SUPLEX_LOCK_TIME);
+    vic.x = self.x + s * c.reach; vic.y = self.y;
+    if (k >= 1) { c.phase = "lift"; c.t = 0; playWhoosh(); }
+    return;
+  }
+  if (c.phase === "lift") {
+    // Up and over in an arc, speeding up into the floor.
+    k = Math.min(1, c.t / SUPLEX_LIFT_TIME);
+    var e = k * k * (3 - 2 * k), ang = Math.PI * e;
+    vic.x = self.x + s * Math.cos(ang) * c.reach;
+    vic.y = self.y - Math.sin(ang) * c.reach * 1.25;
+    if (k < 1) return;
+    fpImpact(self, vic, { nx: 0, ny: -1 }, self.char.suplex.damage, true);
+    if (typeof recordTakedown === "function") recordTakedown(self.id);
+    floater(vic.x, vic.y - vic.r - 30, "TAKEDOWN", "note");
+    c.phase = "down"; c.t = 0;
+    checkEnd();
+    return;
+  }
+  if (c.t >= SUPLEX_DOWN_TIME) {
+    // Lets go and both scramble back up.
+    endSuplex(self);
+    self.suplexCd = self.char.suplex.cooldown;
+    self.grappleCd = self.char.grapple ? self.char.grapple.cooldown : 0;
+    vic.vx = -s * SPEED * 0.6; vic.vy = SPEED * 0.2;
+    self.vx = s * SPEED * 0.4; self.vy = -SPEED * 0.2;
+  }
+}
+
+function endSuplex(self) {
+  if (!self.suplex) return;
+  balls[self.suplex.vicId].choked = false;
+  self.suplex = null;
+}
+
+// How far through the throw it is: 0 locked on, 1 slammed down.
+function suplexArc(c) {
+  if (c.phase === "lock") return 0;
+  if (c.phase === "down") return 1;
+  var k = Math.min(1, c.t / SUPLEX_LIFT_TIME);
+  return k * k * (3 - 2 * k);
+}
+
+// The thrower arches back, and the one thrown flips over head first.
+function applySuplexPose(b) {
+  var c = b.suplex, angle;
+  if (c) {
+    var a = suplexArc(c);
+    angle = -c.side * 0.75 * Math.sin(Math.PI * Math.min(1, a * 1.15));
+  } else {
+    if (!b.choked) return;
+    c = balls[1 - b.id].suplex;
+    if (!c) return;
+    angle = -c.side * Math.PI * suplexArc(c);
+  }
+  ctx.translate(b.x, b.y);
+  ctx.rotate(angle);
+  ctx.translate(-b.x, -b.y);
+}
+
+// Its arms locked round their waist until the slam.
+function drawSuplexes() {
+  balls.forEach(function (self) {
+    var c = self.suplex;
+    if (!c || c.phase === "down") return;
+    var vic = balls[c.vicId], r = self.r, skin = armColor(self.char);
+    var dx = vic.x - self.x, dy = vic.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var ux = dx / d, uy = dy / d, px = -uy, py = ux;
+    ctx.save();
+    [-1, 1].forEach(function (k) {
+      var sh = { x: self.x + ux * r * 0.3 + px * k * r * 0.75, y: self.y + uy * r * 0.3 + py * k * r * 0.75 };
+      var hand = { x: vic.x - ux * vic.r * 0.15 + px * k * vic.r * 0.22, y: vic.y - uy * vic.r * 0.15 + py * k * vic.r * 0.22 };
+      strokeLimb(r * 0.2, skin, function () {
+        ctx.moveTo(sh.x, sh.y);
+        ctx.quadraticCurveTo(vic.x - ux * vic.r * 0.6 + px * k * vic.r * 0.95, vic.y - uy * vic.r * 0.6 + py * k * vic.r * 0.95, hand.x, hand.y);
+      });
+      drawGloveAt(hand.x, hand.y, r * 0.22, self.char);
+    });
+    ctx.restore();
+  });
+}
+
 // Guard: a BJJ fighter who gets hit can fall onto its back and play guard.
 //
 // When a strike lands on a fighter with the guard, there's a `chance`% it
@@ -5309,8 +5831,7 @@ function drawGuillotines() {
 //   - Guard passed: the opponent gets on top for passPunches free
 //     ground-and-pound punches of passDamage each.
 //   - Caught: the guard player snatches a submission, picked at random from
-//     `subs`. For now that's only the guillotine (bjj.js), as a placeholder
-//     until the guard's own submissions are designed.
+//     `subs` (a list of submissions and submission sets, see SUB_SETS).
 // If nobody steps in before the time's up, it gets back to its feet. Either
 // way it can't pull guard again for `cooldown` seconds once it's up.
 "use strict";
@@ -5323,9 +5844,20 @@ var GUARD_GETUP_SPEED = 300;  // backs away from the opponent once it's up
 // anything that's already moving it around).
 var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, proj: true, combo: true };
 
+// Submission sets a fighter's guard `subs` can name instead of single
+// submissions. The BJJ artist set is the rear naked choke (rnc.js) and the
+// armbar (armbar.js). The striker set is the guillotine off a shot (bjj.js),
+// which strikers get with "hasGuillotine" rather than through the guard.
+var SUB_SETS = {
+  bjj: ["rnc", "armbar"],
+  striker: ["guillotine"]
+};
+
 // Starts a guard submission on `atk`. Each entry in `subs` names one.
 var GUARD_SUBS = {
-  guillotine: function (self, atk) { beginGuillotine(self, atk); }
+  guillotine: function (self, atk) { beginGuillotine(self, atk); },
+  rnc: function (self, atk) { beginRnc(self, atk); },
+  armbar: function (self, atk) { beginArmbar(self, atk); }
 };
 
 // Called from hurt() after a hit lands.
@@ -5428,13 +5960,18 @@ function catchInGuard(self, atk) {
 }
 
 // Goes for one of its submissions on `atk`, picked at random from its
-// guard's `subs` (also used by Do Bronx's takedowns).
+// guard's `subs`, with any sets opened up (also used by Do Bronx's
+// takedowns). With nothing usable listed it uses the BJJ artist set.
 function startSubmission(self, atk) {
-  var subs = (self.char.guard.subs || []).filter(function (s) { return GUARD_SUBS[s]; });
-  GUARD_SUBS[subs.length ? subs[Math.floor(Math.random() * subs.length)] : "guillotine"](self, atk);
+  var subs = [];
+  (self.char.guard.subs || []).forEach(function (s) { subs = subs.concat(SUB_SETS[s] || [s]); });
+  subs = subs.filter(function (s) { return GUARD_SUBS[s]; });
+  if (!subs.length) subs = SUB_SETS.bjj;
+  GUARD_SUBS[subs[Math.floor(Math.random() * subs.length)]](self, atk);
 }
 
-// Flat on its back: in guard, or underneath after the guard's been passed.
+// Flat on its back: in guard, underneath after the guard's been passed, or
+// throwing up an armbar.
 // Returns which way it's lying (0 when upright) scaled by how far down it
 // is, so it rolls back upright through a get-up.
 function onBack(b) {
@@ -5442,6 +5979,7 @@ function onBack(b) {
     var g = b.guard, k = g.getup >= 0 ? Math.min(1, g.getup / GUARD_GETUP_TIME) : 0;
     return g.side * (1 - k * k * (3 - 2 * k));
   }
+  if (b.armbar) return b.armbar.side;
   if (b.guillo && b.guillo.fromGuard && (b.guillo.phase === "mount" || b.guillo.phase === "pound")) return b.guillo.side;
   return 0;
 }
@@ -7134,6 +7672,7 @@ function update(dt) {
     if (b.checkAnim) stepInForKickBack(b, balls[b.checkAnim.towardId]);
     if (b.slamSafe > 0) b.slamSafe = Math.max(0, b.slamSafe - dt);
     if (b.guilloCd > 0) b.guilloCd = Math.max(0, b.guilloCd - dt);
+    if (b.suplexCd > 0) b.suplexCd = Math.max(0, b.suplexCd - dt);
     if (b.guardCd > 0 && !subLocked(b)) b.guardCd = Math.max(0, b.guardCd - dt);
     if (b.iowaSafe) { b.iowaSafe.t -= dt; if (b.iowaSafe.t <= 0) b.iowaSafe = null; }
     b.flash = Math.max(0, b.flash - dt);
@@ -9121,7 +9660,8 @@ function draw() {
   // Father's Plan's ground and pound).
   // A shooter caught in a guillotine goes underneath, its head buried
   // under the defender (and the defender, once it's taken down).
-  (balls[0].igbb || guilloUnder(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // Whoever took the back for a rear naked choke goes behind the one it chokes.
+  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -9181,6 +9721,8 @@ function draw() {
     }
     applyGuilloPose(b); // bent over in (or leaning back with) a guillotine
     applyGuardPose(b);  // flat on its back in guard
+    applyArmbarPose(b); // pulled over in an armbar
+    applySuplexPose(b); // arching back into (or flipped over by) a suplex
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -9291,9 +9833,9 @@ function draw() {
 
     ctx.restore();
 
-    // Small health bar over the ball (hidden while pinned by a finisher,
-    // where it would sit on top of the Grappler).
-    var pinned = balls[1 - b.id].grapple && balls[1 - b.id].grapple.finisher && balls[1 - b.id].grapple.phase !== "carry";
+    // Small health bar over the ball (hidden while pinned by a finisher or
+    // choked from behind, where it would sit on top of the other fighter).
+    var pinned = balls[1 - b.id].grapple && balls[1 - b.id].grapple.finisher && balls[1 - b.id].grapple.phase !== "carry" || other.rnc;
     if (!pinned) {
       var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
       if (by < 4) by = b.y + b.r + 10;
@@ -9323,6 +9865,9 @@ function draw() {
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSprawls();
   drawGuillotines();
+  drawRncs();
+  drawArmbars();
+  drawSuplexes();
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

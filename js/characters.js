@@ -181,6 +181,18 @@ function defaultForget() { return { heal: 12, every: 7 }; }
 function defaultGuillotine() {
   return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5, outcomes: { escape: 20, gnp: 70, resink: 5, slam: 5 }, slamDamage: 75 };
 }
+// Rear naked choke (a guard submission): the one choked taps tapBase% of
+// the time at full health, up to tapLowHp% more the more damage it's taken
+// (see rnc.js).
+function defaultRnc() { return { tapBase: 35, tapLowHp: 50 }; }
+// Suplex: chance% of this fighter's grabs on an opponent that isn't facing
+// it become a back suplex for `damage`, then `cooldown` seconds before the
+// next (see suplex.js).
+function defaultSuplex() { return { chance: 60, damage: 60, cooldown: 3 }; }
+// Armbar (a guard submission): the one caught taps tapBase% of the time at
+// full health, up to tapLowHp% more the more damage it's taken (see
+// armbar.js).
+function defaultArmbar() { return { tapBase: 30, tapLowHp: 50 }; }
 // Guard: chance% of the strikes that land on this fighter drop it onto its
 // back in guard for `time` seconds, with a circle of `radius` around it.
 // The first opponent to step into the circle passes the guard passChance%
@@ -188,7 +200,7 @@ function defaultGuillotine() {
 // otherwise it's caught in a submission picked from `subs` (see guard.js).
 // After getting back up it can't pull guard again for `cooldown` seconds.
 function defaultGuard() {
-  return { chance: 25, time: 6, radius: 130, passChance: 50, passPunches: 4, passDamage: 10, subs: ["guillotine"], cooldown: 3 };
+  return { chance: 25, time: 6, radius: 130, passChance: 50, passPunches: 4, passDamage: 10, subs: ["bjj"], cooldown: 3 };
 }
 function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
@@ -229,6 +241,10 @@ function normalizeChar(ch) {
   ["outcomes", "slamDamage"].forEach(function (k) {
     if (ch.guillotine[k] == null) ch.guillotine[k] = defaultGuillotine()[k];
   });
+  if (!ch.rnc) ch.rnc = defaultRnc();
+  if (!ch.armbar) ch.armbar = defaultArmbar();
+  if (ch.hasSuplex === undefined) ch.hasSuplex = false;
+  if (!ch.suplex) ch.suplex = defaultSuplex();
   if (ch.hasGuard === undefined) ch.hasGuard = false;
   if (!ch.guard) ch.guard = defaultGuard();
   Object.keys(defaultGuard()).forEach(function (k) {

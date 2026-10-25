@@ -8,8 +8,7 @@
 //   - Guard passed: the opponent gets on top for passPunches free
 //     ground-and-pound punches of passDamage each.
 //   - Caught: the guard player snatches a submission, picked at random from
-//     `subs`. For now that's only the guillotine (bjj.js), as a placeholder
-//     until the guard's own submissions are designed.
+//     `subs` (a list of submissions and submission sets, see SUB_SETS).
 // If nobody steps in before the time's up, it gets back to its feet. Either
 // way it can't pull guard again for `cooldown` seconds once it's up.
 "use strict";
@@ -22,9 +21,20 @@ var GUARD_GETUP_SPEED = 300;  // backs away from the opponent once it's up
 // anything that's already moving it around).
 var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, proj: true, combo: true };
 
+// Submission sets a fighter's guard `subs` can name instead of single
+// submissions. The BJJ artist set is the rear naked choke (rnc.js) and the
+// armbar (armbar.js). The striker set is the guillotine off a shot (bjj.js),
+// which strikers get with "hasGuillotine" rather than through the guard.
+var SUB_SETS = {
+  bjj: ["rnc", "armbar"],
+  striker: ["guillotine"]
+};
+
 // Starts a guard submission on `atk`. Each entry in `subs` names one.
 var GUARD_SUBS = {
-  guillotine: function (self, atk) { beginGuillotine(self, atk); }
+  guillotine: function (self, atk) { beginGuillotine(self, atk); },
+  rnc: function (self, atk) { beginRnc(self, atk); },
+  armbar: function (self, atk) { beginArmbar(self, atk); }
 };
 
 // Called from hurt() after a hit lands.
@@ -127,13 +137,18 @@ function catchInGuard(self, atk) {
 }
 
 // Goes for one of its submissions on `atk`, picked at random from its
-// guard's `subs` (also used by Do Bronx's takedowns).
+// guard's `subs`, with any sets opened up (also used by Do Bronx's
+// takedowns). With nothing usable listed it uses the BJJ artist set.
 function startSubmission(self, atk) {
-  var subs = (self.char.guard.subs || []).filter(function (s) { return GUARD_SUBS[s]; });
-  GUARD_SUBS[subs.length ? subs[Math.floor(Math.random() * subs.length)] : "guillotine"](self, atk);
+  var subs = [];
+  (self.char.guard.subs || []).forEach(function (s) { subs = subs.concat(SUB_SETS[s] || [s]); });
+  subs = subs.filter(function (s) { return GUARD_SUBS[s]; });
+  if (!subs.length) subs = SUB_SETS.bjj;
+  GUARD_SUBS[subs[Math.floor(Math.random() * subs.length)]](self, atk);
 }
 
-// Flat on its back: in guard, or underneath after the guard's been passed.
+// Flat on its back: in guard, underneath after the guard's been passed, or
+// throwing up an armbar.
 // Returns which way it's lying (0 when upright) scaled by how far down it
 // is, so it rolls back upright through a get-up.
 function onBack(b) {
@@ -141,6 +156,7 @@ function onBack(b) {
     var g = b.guard, k = g.getup >= 0 ? Math.min(1, g.getup / GUARD_GETUP_TIME) : 0;
     return g.side * (1 - k * k * (3 - 2 * k));
   }
+  if (b.armbar) return b.armbar.side;
   if (b.guillo && b.guillo.fromGuard && (b.guillo.phase === "mount" || b.guillo.phase === "pound")) return b.guillo.side;
   return 0;
 }
