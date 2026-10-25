@@ -119,7 +119,7 @@ function drawRncs() {
       ctx.beginPath(); ctx.arc(vx, vy, r, 0, Math.PI * 2); ctx.clip();
       ctx.globalAlpha = 0.55 * squeeze;
       ctx.fillStyle = "#d62020";
-      ctx.beginPath(); ctx.arc(vx, vy - r * 0.62, r * 0.45, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(vx, vy - r * 0.66, r * 0.38, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
 
@@ -137,7 +137,7 @@ function drawRncs() {
     // The arm behind their head: only the forearm shows, coming out from
     // behind the far side of their head down to the elbow (the hand's out of
     // sight on the back of the head).
-    var neckY = vy - r * 0.32;
+    var neckY = vy - r * 0.16;
     var elbow = { x: vx - s * r * 0.86, y: neckY + r * 0.04 };
     strokeLimb(limb, skin, function () {
       ctx.moveTo(vx - s * r * 0.74, vy - r * 0.74);
@@ -148,7 +148,7 @@ function drawRncs() {
     // bicep.
     var cinch = squeeze * r * 0.06;
     strokeLimb(limb, skin, function () {
-      ctx.moveTo(vx + s * r * 1.0, vy - r * 0.62);
+      ctx.moveTo(vx + s * r * 1.0, vy - r * 0.5);
       ctx.quadraticCurveTo(vx + s * r * 0.55, neckY + cinch, vx - s * r * 0.1, neckY + cinch);
       ctx.lineTo(elbow.x + s * r * 0.12, elbow.y - r * 0.02);
     });
@@ -160,8 +160,8 @@ function drawRncs() {
     var vlimb = r * 0.17, vskin = armColor(vic.char), tug = c.phase === "squeeze" ? Math.sin(c.t * 9 + c.wob) * r * 0.03 : 0;
     var pat = c.phase === "tap" ? Math.abs(Math.sin(c.tapT / RNC_TAP_TIME * Math.PI * 3)) * r * 0.22 : 0;
     var grips = [
-      { sh: { x: vx + s * r * 0.78, y: vy + r * 0.02 }, el: { x: vx + s * r * 0.62, y: vy + r * 0.3 }, h: { x: vx + s * r * 0.42, y: neckY - r * 0.05 + cinch + tug - pat } },
-      { sh: { x: vx - s * r * 0.78, y: vy + r * 0.02 }, el: { x: vx - s * r * 0.3, y: vy + r * 0.32 }, h: { x: vx - s * r * 0.08, y: neckY - r * 0.02 + cinch - tug } }
+      { sh: { x: vx + s * r * 0.78, y: vy + r * 0.02 }, el: { x: vx + s * r * 0.62, y: vy + r * 0.4 }, h: { x: vx + s * r * 0.42, y: neckY - r * 0.05 + cinch + tug - pat } },
+      { sh: { x: vx - s * r * 0.78, y: vy + r * 0.02 }, el: { x: vx - s * r * 0.3, y: vy + r * 0.42 }, h: { x: vx - s * r * 0.08, y: neckY - r * 0.02 + cinch - tug } }
     ];
     grips.forEach(function (g) {
       strokeLimb(vlimb, vskin, function () {
