@@ -530,7 +530,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { withClip("hereWeGo"); withClip("crowd"); }
+function loadSoundClips() { withClip("hereWeGo"); withClip("crowd"); withClip("knockout"); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -549,6 +549,31 @@ function playHereWeGo() {
       g.gain.value = 0.8;
       src.connect(g); g.connect(ctx.destination);
       src.start(ctx.currentTime);
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Knockout: the arena erupting, for every win that isn't a submission. The
+// clip has its own crowd in it, so the looping crowd ducks under it.
+function playKnockout() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    withClip("knockout", function (buf) {
+      var now = ctx.currentTime;
+      var src = ctx.createBufferSource();
+      src.buffer = buf;
+      var g = ctx.createGain();
+      g.gain.value = 0.85;
+      src.connect(g); g.connect(ctx.destination);
+      src.start(now);
+      var c = crowd;
+      if (c && c.gain) {
+        c.hype = 0; c.hypeAt = now;
+        c.gain.gain.cancelScheduledValues(now);
+        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.4, now, 0.1);
+        c.gain.gain.setTargetAtTime(CROWD_FLOOR, now + buf.duration - 1, 1);
+      }
     });
   } catch (e) { /* never let audio break the game */ }
 }
