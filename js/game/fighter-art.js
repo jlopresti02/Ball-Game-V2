@@ -468,9 +468,9 @@ function drawArtBody(c, r, look, ink, name, contained) {
     // A crowned lion's head in the middle of the chest, under the beard, with
     // a shaggy mane hanging down over the pecs. Drawn round, then the torso
     // squeeze is undone so it keeps its shape.
-    var lt = contained ? 0.86 / 0.59 : 1, lr = r * 0.19, sh = "rgba(24,28,40,";
+    var lt = contained ? 0.86 / 0.59 : 1, lr = r * 0.145, sh = "rgba(24,28,40,";
     var lrnd = artRand(artSeed(name + "lion"));
-    c.save(); c.translate(-r * 0.03, contained ? r * 0.05 : -r * 0.3); c.scale(1, lt);
+    c.save(); c.translate(-r * 0.03, contained ? -r * 0.06 : -r * 0.4); c.scale(1, lt);
     c.globalAlpha = 1;
     // Mane: a jagged, shaggy silhouette, longer locks at the bottom
     c.fillStyle = sh + "0.55)";
