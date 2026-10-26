@@ -87,6 +87,7 @@ function updateSpecial(self, other, dt) {
     self.igbb = { phase: "close", t: 0, move: sp.move };
     floater(self.x, self.y - self.r - 26, sp.move === "fathersplan" ? "FATHER'S PLAN!" : "IGBB!", "crit");
     playWhoosh();
+    if (sp.move === "igbb") playIgbbLine();
   }
   var m = self.igbb;
   m.t += dt;

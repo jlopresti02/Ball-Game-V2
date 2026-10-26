@@ -530,7 +530,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash"].forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb"].forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -615,6 +615,20 @@ function stopDoBronx() {
   if (!doBronxSrc) return;
   try { doBronxSrc.stop(); } catch (e) { /* already stopped */ }
   doBronxSrc = null;
+}
+
+// "It's gonna be bad": the IGBB special going off. If the move gets called
+// off and restarted, the line doesn't repeat right away.
+var lastIgbbLine = -10;
+function playIgbbLine() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (ctx.currentTime - lastIgbbLine < 5) return;
+    lastIgbbLine = ctx.currentTime;
+    playClip("igbb", 0.9);
+  } catch (e) { /* never let audio break the game */ }
 }
 
 // The crowd's cameras going off: one loud shutter for the big white-out, then
