@@ -278,6 +278,7 @@ function checkEnd() {
   var alive = balls.filter(function (b) { return b.alive; });
   if (alive.length > 1) return;
   over = true;
+  crowdRelease();
   if (alive.length === 1 && winBy !== "submission") playKnockout(); else crowdRoar();
   if (alive.length === 1) {
     bannerText.textContent = alive[0].char.name + " wins" + (winBy ? " by " + winBy : "");

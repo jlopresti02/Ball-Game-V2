@@ -530,7 +530,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { withClip("hereWeGo"); withClip("crowd"); withClip("knockout"); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash"].forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -578,6 +578,57 @@ function playKnockout() {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// Plays a decoded clip once at `when` (default now). Returns the source, or
+// null if it isn't decoded yet.
+function playClip(name, gain, when, rate) {
+  var ctx = audioCtx, buf = clipBuffers[name];
+  if (!ctx || !buf) return null;
+  var src = ctx.createBufferSource();
+  src.buffer = buf;
+  if (rate) src.playbackRate.value = rate;
+  var g = ctx.createGain();
+  g.gain.value = gain;
+  src.connect(g); g.connect(ctx.destination);
+  src.start(when || ctx.currentTime);
+  return src;
+}
+
+// Do Bronx (dobronx.js): "Charrrles... Do... BRONX!" from the start of the
+// opening pose, timed so "Bronx" lands on the camera flash DO_BRONX_HIT
+// seconds in. The clip's own crowd fades out after a few seconds, and the
+// looping crowd takes over going wild for as long as the Do Bronx state lasts.
+var DO_BRONX_HIT = 3.0;
+var doBronxSrc = null;
+function playDoBronx() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    stopDoBronx();
+    doBronxSrc = playClip("doBronx", 0.85);
+    var buf = clipBuffers.doBronx;
+    // Take over just as the clip starts fading.
+    crowdHold(buf ? buf.duration - 1.4 : DO_BRONX_HIT);
+  } catch (e) { /* never let audio break the game */ }
+}
+function stopDoBronx() {
+  if (!doBronxSrc) return;
+  try { doBronxSrc.stop(); } catch (e) { /* already stopped */ }
+  doBronxSrc = null;
+}
+
+// The crowd's cameras going off: one loud shutter for the big white-out, then
+// quieter ones scattered over the next 1.4 seconds as flashes pop in the stands.
+function playCameraFlashes() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var now = ctx.currentTime;
+    playClip("cameraFlash", 0.7, now);
+    for (var i = 0; i < 10; i++) playClip("cameraFlash", 0.15 + Math.random() * 0.1, now + 0.1 + Math.random() * 1.4, 0.9 + Math.random() * 0.25);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // ---------------------------------------------------------------
 // Crowd: a looping arena crowd under the whole fight. It sits at a low
 // murmur during lulls; every hit lifts the "hype", which swells the crowd
@@ -585,7 +636,8 @@ function playKnockout() {
 // win brings one last roar.
 // ---------------------------------------------------------------
 var CROWD_FLOOR = 0.1, CROWD_PEAK = 0.6, CROWD_SETTLE = 2.2; // settle = seconds to fall most of the way back
-var crowd = null; // { src, gain, filter, hype, hypeAt }
+var crowd = null; // { src, gain, filter, hype, hypeAt, held, holdTimer }
+var CROWD_HOLD = 0.54, CROWD_HOLD_FREQ = 9000; // the crowd going wild through Do Bronx
 function crowdLevel(h) { return CROWD_FLOOR + (CROWD_PEAK - CROWD_FLOOR) * h; }
 function crowdHypeNow(c, now) { return c.hype * Math.exp(-(now - c.hypeAt) / CROWD_SETTLE); }
 function startCrowd() {
@@ -624,7 +676,8 @@ function crowdReact(amount) {
     var now = audioCtx.currentTime;
     c.hype = Math.min(1, crowdHypeNow(c, now) + amount);
     c.hypeAt = now;
-    [[c.gain.gain, crowdLevel(c.hype), CROWD_FLOOR], [c.filter.frequency, 1800 + 9000 * c.hype, 1800]].forEach(function (p) {
+    var restGain = c.held ? CROWD_HOLD : CROWD_FLOOR, restFreq = c.held ? CROWD_HOLD_FREQ : 1800;
+    [[c.gain.gain, Math.max(restGain, crowdLevel(c.hype)), restGain], [c.filter.frequency, Math.max(restFreq, 1800 + 9000 * c.hype), restFreq]].forEach(function (p) {
       p[0].cancelScheduledValues(now);
       p[0].setTargetAtTime(p[1], now, 0.06);           // swell fast
       p[0].setTargetAtTime(p[2], now + 0.4, CROWD_SETTLE); // then settle back to the murmur
@@ -632,9 +685,37 @@ function crowdReact(amount) {
   } catch (e) { /* never let audio break the game */ }
 }
 function crowdRoar() { crowdReact(1); }
+// Keeps the crowd going wild (instead of settling to the murmur) from `delay`
+// seconds from now until crowdRelease().
+function crowdHold(delay) {
+  var c = crowd;
+  if (!c) return;
+  clearTimeout(c.holdTimer);
+  c.holdTimer = setTimeout(function () {
+    if (crowd !== c || !c.gain) return;
+    c.held = true;
+    var now = audioCtx.currentTime;
+    [[c.gain.gain, CROWD_HOLD], [c.filter.frequency, CROWD_HOLD_FREQ]].forEach(function (p) {
+      p[0].cancelScheduledValues(now);
+      p[0].setTargetAtTime(p[1], now, 0.5);
+    });
+  }, Math.max(0, delay) * 1000);
+}
+// Back to normal: the crowd settles down to its murmur.
+function crowdRelease() {
+  var c = crowd;
+  if (!c) return;
+  clearTimeout(c.holdTimer);
+  if (!c.held) return;
+  c.held = false;
+  c.hype = 0.6; c.hypeAt = audioCtx.currentTime;
+  crowdReact(0.0001); // reschedules the settle toward the murmur
+}
 function stopCrowd() {
   var c = crowd;
   crowd = null;
+  stopDoBronx();
+  if (c) clearTimeout(c.holdTimer);
   if (!c || !c.src) return;
   try {
     var now = audioCtx.currentTime;
