@@ -385,7 +385,7 @@ function updateFathersPlan(self, other, m, sp, dt) {
     if (m.phase === "mount") {
       k = Math.min(1, m.t / FP_MOUNT_TIME);
       self.x = m.mx + (tx - m.mx) * k; self.y = m.my + (ty - m.my) * k;
-      if (k >= 1) { m.phase = "pound"; m.t = 0; m.thrown = 0; }
+      if (k >= 1) { m.phase = "pound"; m.t = 0; m.thrown = 0; playSmashLine(); }
       return true;
     }
     // Leans back while winding up, then drops their whole weight in.

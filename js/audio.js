@@ -530,7 +530,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb"].forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy"].forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -628,6 +628,17 @@ function playIgbbLine() {
     if (ctx.currentTime - lastIgbbLine < 5) return;
     lastIgbbLine = ctx.currentTime;
     playClip("igbb", 0.9);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// "I'm gonna smash your boy": Father's Plan (Khabib) as the ground and
+// pound starts.
+function playSmashLine() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    playClip("smashYourBoy", 0.9);
   } catch (e) { /* never let audio break the game */ }
 }
 
