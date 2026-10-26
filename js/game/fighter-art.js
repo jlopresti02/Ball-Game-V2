@@ -263,8 +263,30 @@ function drawArtHeadLayer(c, r, look, line, lw) {
     c.globalAlpha = 1;
   }
 
+  if (look.tattoos && look.tattoos.lionCrown) {
+    // The lion tattoo's crown wraps the neck, just under the chin, following
+    // the curve of the jaw. Outlined in skin tone so it reads over a beard.
+    drawLionCrown(c, -r * 0.03, jaw + r * 0.16, r * 0.17, r * 0.07, "rgba(40,44,56,0.95)", shadeHex(look.skin, 0.1), r * 0.03, lw(0.012));
+  }
   if (look.headwear === "bandana") drawBandana(c, r, line, lw);
   if (look.glasses === "shades") drawShades(c, r, lw);
+}
+
+// A crown: a band with five points, centred on (x, y) where y is the bottom
+// of the band. `sag` bends it into a U so it can wrap a neck.
+function drawLionCrown(c, x, y, w, h, fill, edge, sag, ew) {
+  sag = sag || 0;
+  var by = function (u) { return y - sag * (1 - u * u); };  // u from -1 to 1
+  c.beginPath();
+  c.moveTo(x - w, by(-1));
+  for (var k = 0; k <= 8; k++) {
+    var u = -1 + k * 0.25, peak = k % 2 === 0;
+    c.lineTo(x + u * w, by(u) - h * (peak ? (k % 4 === 0 ? 1 : 0.75) : 0.35));
+  }
+  for (var j = 8; j >= 0; j--) { var v = -1 + j * 0.25; c.lineTo(x + v * w, by(v)); }
+  c.closePath();
+  c.fillStyle = fill; c.fill();
+  if (edge) { c.strokeStyle = edge; c.lineWidth = ew || 1; c.stroke(); }
 }
 
 // A stars-and-stripes bandana tied over the scalp, knot and tails on one side.
@@ -468,9 +490,9 @@ function drawArtBody(c, r, look, ink, name, contained) {
     // A crowned lion's head in the middle of the chest, under the beard, with
     // a shaggy mane hanging down over the pecs. Drawn round, then the torso
     // squeeze is undone so it keeps its shape.
-    var lt = contained ? 0.86 / 0.59 : 1, lr = r * 0.145, sh = "rgba(24,28,40,";
+    var lt = contained ? 0.86 / 0.59 : 1, lr = r * 0.15, sh = "rgba(24,28,40,";
     var lrnd = artRand(artSeed(name + "lion"));
-    c.save(); c.translate(-r * 0.03, contained ? -r * 0.06 : -r * 0.4); c.scale(1, lt);
+    c.save(); c.translate(-r * 0.03, contained ? -r * 0.14 : -r * 0.4); c.scale(1, lt);
     c.globalAlpha = 1;
     // Mane: a jagged, shaggy silhouette, longer locks at the bottom
     c.fillStyle = sh + "0.55)";
@@ -510,14 +532,9 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.beginPath(); c.moveTo(-lr * 0.18, lr * 0.25); c.lineTo(lr * 0.18, lr * 0.25); c.lineTo(0, lr * 0.42); c.closePath(); c.fill();
     c.fillStyle = sh + "0.3)";
     c.beginPath(); c.ellipse(0, lr * 0.58, lr * 0.3, lr * 0.16, 0, 0, Math.PI * 2); c.fill();
-    // Crown sitting on the top of the mane
-    c.fillStyle = sh + "0.85)";
-    var cyc = -lr * 1.3, cw = lr * 0.75;
-    c.fillRect(-cw, cyc, cw * 2, lr * 0.2);
-    for (var pk = 0; pk < 5; pk++) {
-      var pxk = -cw + pk * cw * 0.5;
-      c.beginPath(); c.moveTo(pxk - lr * 0.12, cyc); c.lineTo(pxk, cyc - lr * (pk % 2 === 0 ? 0.35 : 0.22)); c.lineTo(pxk + lr * 0.12, cyc); c.fill();
-    }
+    // Crown sitting on the top of the mane (in the contained layout the head
+    // layer draws it round the neck instead, over the bottom of the beard)
+    if (!contained) drawLionCrown(c, 0, -lr * 1.15, lr * 0.75, lr * 0.3, sh + "0.85)", null);
     c.restore();
     c.strokeStyle = inkCol; c.fillStyle = inkCol; c.lineWidth = lw(0.03);
   }
