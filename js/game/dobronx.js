@@ -17,9 +17,10 @@
 // back to normal: his state, the fans and the arena. The bar starts over.
 "use strict";
 
-var DB_POSE_TIME = 1.2;      // the opening pose
+var DB_POSE_TIME = 3.6;      // the opening pose: "Charrrles... Do... BRONX!" (audio.js)
 var DB_OUTRO_TIME = 1.0;     // the closing pose
-var DB_FLASH_AT = 0.35;      // into a pose when the cameras go off
+var DB_FLASH_AT = DO_BRONX_HIT; // into the opening pose when the cameras go off, on "Bronx"
+var DB_OUTRO_FLASH_AT = 0.35; // into the closing pose
 var DB_PUSH_SPEED = 900;     // how hard the pose blasts the opponent away
 var DB_REACH = 16;           // extra grab reach while it's on
 var DB_FLASH_TIME = 0.7;     // how long the white-out takes to clear
@@ -55,15 +56,17 @@ function updateDoBronx(self, other, dt) {
     clearActions(self);
     floater(self.x, self.y - self.r - 26, "DO BRONX!", "crit");
     playWhoosh();
+    playDoBronx();
   }
   m = self.igbb;
   m.t += dt;
   self.vx = 0; self.vy = 0;
-  if (!m.flashed && m.t >= DB_FLASH_AT) {
+  if (!m.flashed && m.t >= (m.phase === "pose" ? DB_FLASH_AT : DB_OUTRO_FLASH_AT)) {
     m.flashed = true;
     if (m.phase === "pose") blastAway(self, other);
     cameraFlash();
     brazilMode = m.phase === "pose"; // swaps behind the white-out
+    if (m.phase === "outro") crowdRelease();
   }
   if (m.t < (m.phase === "pose" ? DB_POSE_TIME : DB_OUTRO_TIME)) return true;
   self.igbb = null;
@@ -119,6 +122,7 @@ function cameraFlash() {
     cameraFlashes.push({ x: f.x + (Math.random() - 0.5) * f.r, y: f.y - f.r * 1.2, at: Math.random() * 1.4, life: 0.18 + Math.random() * 0.12, r: f.r * (0.5 + Math.random() * 0.4) });
   }
   playPunch(30);
+  playCameraFlashes();
 }
 
 // Double damage for everything a fighter in the Do Bronx state lands.
