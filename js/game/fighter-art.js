@@ -160,7 +160,7 @@ function drawArtHead(c, r, look, ink, hy, hr) {
 // Contained layout: the ball's top third is the head itself. No outline of
 // its own, just layers painted onto the ball: hair on top, ears at the
 // edges, beard along the jaw, a chin shadow where it meets the chest.
-function drawArtHeadLayer(c, r, look, line, lw) {
+function drawArtHeadLayer(c, r, look, line, lw, name) {
   var hc = look.hairColor, jaw = -r * 0.3;
   // Chin shadow and neck line into the chest
   c.fillStyle = "rgba(0,0,0,0.2)";
@@ -263,30 +263,71 @@ function drawArtHeadLayer(c, r, look, line, lw) {
     c.globalAlpha = 1;
   }
 
-  if (look.tattoos && look.tattoos.lionCrown) {
-    // The lion tattoo's crown wraps the neck, just under the chin, following
-    // the curve of the jaw. Outlined in skin tone so it reads over a beard.
-    drawLionCrown(c, -r * 0.03, jaw + r * 0.16, r * 0.17, r * 0.07, "rgba(40,44,56,0.95)", shadeHex(look.skin, 0.1), r * 0.03, lw(0.012));
-  }
+  if (look.tattoos && look.tattoos.lionCrown) drawLionChest(c, r, look, name, lw, true);
   if (look.headwear === "bandana") drawBandana(c, r, line, lw);
   if (look.glasses === "shades") drawShades(c, r, lw);
 }
 
-// A crown: a band with five points, centred on (x, y) where y is the bottom
-// of the band. `sag` bends it into a U so it can wrap a neck.
-function drawLionCrown(c, x, y, w, h, fill, edge, sag, ew) {
-  sag = sag || 0;
-  var by = function (u) { return y - sag * (1 - u * u); };  // u from -1 to 1
+// A crowned lion's head in the middle of the chest with a shaggy mane hanging
+// down over the pecs. In the contained layout it is drawn from the head layer,
+// after the beard, so the crown can sit right up at the neck.
+function drawLionChest(c, r, look, name, lw, contained) {
+  c.save();
+  if (contained) { c.translate(0, r * 0.11); c.scale(0.86, 0.59); }
+  // Drawn round, then the torso squeeze is undone so it keeps its shape
+  var lt = contained ? 0.86 / 0.59 : 1, lr = r * 0.15, sh = "rgba(24,28,40,";
+  var lrnd = artRand(artSeed(name + "lion"));
+  c.save(); c.translate(-r * 0.03, contained ? -r * 0.19 : -r * 0.4); c.scale(1, lt);
+  c.globalAlpha = 1;
+  // Mane: a jagged, shaggy silhouette, longer locks at the bottom
+  c.fillStyle = sh + "0.55)";
   c.beginPath();
-  c.moveTo(x - w, by(-1));
-  for (var k = 0; k <= 8; k++) {
-    var u = -1 + k * 0.25, peak = k % 2 === 0;
-    c.lineTo(x + u * w, by(u) - h * (peak ? (k % 4 === 0 ? 1 : 0.75) : 0.35));
+  for (var mn = 0; mn <= 32; mn++) {
+    var ma = mn / 32 * Math.PI * 2, out = mn % 2 === 0;
+    var mr = lr * ((out ? 1.5 : 1.2) + 0.3 * Math.max(0, Math.sin(ma)) + (out ? lrnd() * 0.15 : 0));
+    var mx = Math.cos(ma) * mr, my = Math.sin(ma) * mr + lr * 0.1;
+    if (mn === 0) c.moveTo(mx, my); else c.lineTo(mx, my);
   }
-  for (var j = 8; j >= 0; j--) { var v = -1 + j * 0.25; c.lineTo(x + v * w, by(v)); }
-  c.closePath();
-  c.fillStyle = fill; c.fill();
-  if (edge) { c.strokeStyle = edge; c.lineWidth = ew || 1; c.stroke(); }
+  c.closePath(); c.fill();
+  // Strands flowing out and down through the mane
+  c.strokeStyle = sh + "0.8)"; c.lineWidth = lw(0.014);
+  for (var st = 0; st < 18; st++) {
+    var sa = st / 18 * Math.PI * 2;
+    c.beginPath();
+    c.moveTo(Math.cos(sa) * lr * 0.85, Math.sin(sa) * lr * 0.85);
+    c.quadraticCurveTo(Math.cos(sa + 0.2) * lr * 1.2, Math.sin(sa + 0.2) * lr * 1.2 + lr * 0.2, Math.cos(sa + 0.1) * lr * 1.45, Math.sin(sa + 0.1) * lr * 1.45 + lr * 0.35);
+    c.stroke();
+  }
+  // Ears and face
+  var face = shadeHex(look.skin, 0.03);
+  [-1, 1].forEach(function (e) {
+    c.fillStyle = face; c.beginPath(); c.arc(e * lr * 0.55, -lr * 0.62, lr * 0.2, 0, Math.PI * 2); c.fill();
+    c.fillStyle = sh + "0.45)"; c.beginPath(); c.arc(e * lr * 0.55, -lr * 0.62, lr * 0.1, 0, Math.PI * 2); c.fill();
+  });
+  c.fillStyle = face;
+  c.beginPath(); c.moveTo(-lr * 0.7, -lr * 0.45); c.quadraticCurveTo(0, -lr * 0.9, lr * 0.7, -lr * 0.45);
+  c.quadraticCurveTo(lr * 0.75, lr * 0.4, 0, lr * 0.85); c.quadraticCurveTo(-lr * 0.75, lr * 0.4, -lr * 0.7, -lr * 0.45); c.fill();
+  c.fillStyle = sh + "0.2)"; c.fill();
+  // Shading: brow, the long nose bridge, nose pad and muzzle
+  c.fillStyle = sh + "0.5)";
+  c.beginPath(); c.ellipse(0, -lr * 0.2, lr * 0.5, lr * 0.09, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = sh + "0.25)";
+  c.fillRect(-lr * 0.1, -lr * 0.15, lr * 0.2, lr * 0.4);
+  c.fillStyle = sh + "0.75)";
+  c.beginPath(); c.moveTo(-lr * 0.18, lr * 0.25); c.lineTo(lr * 0.18, lr * 0.25); c.lineTo(0, lr * 0.42); c.closePath(); c.fill();
+  c.fillStyle = sh + "0.3)";
+  c.beginPath(); c.ellipse(0, lr * 0.58, lr * 0.3, lr * 0.16, 0, 0, Math.PI * 2); c.fill();
+  // Crown sitting on the top of the mane
+  c.fillStyle = sh + "0.85)";
+  var cyc = -lr * 1.3, cw = lr * 0.75;
+  c.fillRect(-cw, cyc, cw * 2, lr * 0.2);
+  for (var pk = 0; pk < 5; pk++) {
+    var pxk = -cw + pk * cw * 0.5;
+    c.beginPath(); c.moveTo(pxk - lr * 0.12, cyc); c.lineTo(pxk, cyc - lr * (pk % 2 === 0 ? 0.35 : 0.22)); c.lineTo(pxk + lr * 0.12, cyc); c.fill();
+  }
+  c.restore();
+
+  c.restore();
 }
 
 // A stars-and-stripes bandana tied over the scalp, knot and tails on one side.
@@ -486,58 +527,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
-  if (tat.lionCrown) {
-    // A crowned lion's head in the middle of the chest, under the beard, with
-    // a shaggy mane hanging down over the pecs. Drawn round, then the torso
-    // squeeze is undone so it keeps its shape.
-    var lt = contained ? 0.86 / 0.59 : 1, lr = r * 0.15, sh = "rgba(24,28,40,";
-    var lrnd = artRand(artSeed(name + "lion"));
-    c.save(); c.translate(-r * 0.03, contained ? -r * 0.14 : -r * 0.4); c.scale(1, lt);
-    c.globalAlpha = 1;
-    // Mane: a jagged, shaggy silhouette, longer locks at the bottom
-    c.fillStyle = sh + "0.55)";
-    c.beginPath();
-    for (var mn = 0; mn <= 32; mn++) {
-      var ma = mn / 32 * Math.PI * 2, out = mn % 2 === 0;
-      var mr = lr * ((out ? 1.5 : 1.2) + 0.3 * Math.max(0, Math.sin(ma)) + (out ? lrnd() * 0.15 : 0));
-      var mx = Math.cos(ma) * mr, my = Math.sin(ma) * mr + lr * 0.1;
-      if (mn === 0) c.moveTo(mx, my); else c.lineTo(mx, my);
-    }
-    c.closePath(); c.fill();
-    // Strands flowing out and down through the mane
-    c.strokeStyle = sh + "0.8)"; c.lineWidth = lw(0.014);
-    for (var st = 0; st < 18; st++) {
-      var sa = st / 18 * Math.PI * 2;
-      c.beginPath();
-      c.moveTo(Math.cos(sa) * lr * 0.85, Math.sin(sa) * lr * 0.85);
-      c.quadraticCurveTo(Math.cos(sa + 0.2) * lr * 1.2, Math.sin(sa + 0.2) * lr * 1.2 + lr * 0.2, Math.cos(sa + 0.1) * lr * 1.45, Math.sin(sa + 0.1) * lr * 1.45 + lr * 0.35);
-      c.stroke();
-    }
-    // Ears and face
-    var face = shadeHex(look.skin, 0.03);
-    [-1, 1].forEach(function (e) {
-      c.fillStyle = face; c.beginPath(); c.arc(e * lr * 0.55, -lr * 0.62, lr * 0.2, 0, Math.PI * 2); c.fill();
-      c.fillStyle = sh + "0.45)"; c.beginPath(); c.arc(e * lr * 0.55, -lr * 0.62, lr * 0.1, 0, Math.PI * 2); c.fill();
-    });
-    c.fillStyle = face;
-    c.beginPath(); c.moveTo(-lr * 0.7, -lr * 0.45); c.quadraticCurveTo(0, -lr * 0.9, lr * 0.7, -lr * 0.45);
-    c.quadraticCurveTo(lr * 0.75, lr * 0.4, 0, lr * 0.85); c.quadraticCurveTo(-lr * 0.75, lr * 0.4, -lr * 0.7, -lr * 0.45); c.fill();
-    c.fillStyle = sh + "0.2)"; c.fill();
-    // Shading: brow, the long nose bridge, nose pad and muzzle
-    c.fillStyle = sh + "0.5)";
-    c.beginPath(); c.ellipse(0, -lr * 0.2, lr * 0.5, lr * 0.09, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = sh + "0.25)";
-    c.fillRect(-lr * 0.1, -lr * 0.15, lr * 0.2, lr * 0.4);
-    c.fillStyle = sh + "0.75)";
-    c.beginPath(); c.moveTo(-lr * 0.18, lr * 0.25); c.lineTo(lr * 0.18, lr * 0.25); c.lineTo(0, lr * 0.42); c.closePath(); c.fill();
-    c.fillStyle = sh + "0.3)";
-    c.beginPath(); c.ellipse(0, lr * 0.58, lr * 0.3, lr * 0.16, 0, 0, Math.PI * 2); c.fill();
-    // Crown sitting on the top of the mane (in the contained layout the head
-    // layer draws it round the neck instead, over the bottom of the beard)
-    if (!contained) drawLionCrown(c, 0, -lr * 1.15, lr * 0.75, lr * 0.3, sh + "0.85)", null);
-    c.restore();
-    c.strokeStyle = inkCol; c.fillStyle = inkCol; c.lineWidth = lw(0.03);
-  }
+  if (tat.lionCrown && !contained) drawLionChest(c, r, look, name, lw, false);
   if (tat.portraits) {
     // Black-and-grey family portraits filling the upper chest: a woman with
     // long hair, an older man with grey hair (lowest) and a girl with dark
@@ -752,7 +742,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
   c.beginPath(); c.moveTo(-r, sTop); c.lineTo(r, sTop); c.stroke();
 
-  if (contained) drawArtHeadLayer(c, r, look, line, lw);
+  if (contained) drawArtHeadLayer(c, r, look, line, lw, name);
 
   // Overall roundness: rim shadow
   var rg = c.createRadialGradient(-r * 0.2, -r * 0.25, r * 0.6, 0, 0, r);
