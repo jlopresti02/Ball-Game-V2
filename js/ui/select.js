@@ -72,7 +72,8 @@ function abilitySummary(ch) {
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
   if (ch.hasForget) parts.push("\uD83E\uDDE0 +" + ch.forget.heal + " / " + ch.forget.every + "s");
   if (ch.blockChance > 0) parts.push("🛡️ " + ch.blockChance + "% block");
-  return parts.length ? parts.join(" · ") : "No attacks yet";
+  parts.push("\u2696\uFE0F " + weightClassName(ch));
+  return parts.join(" · ");
 }
 
 function avatarStyle(ch) {
@@ -206,6 +207,14 @@ function fightFrom(name) {
   // A real click, so this is a safe place to unlock audio playback.
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();
+  if (name === "dev" && devWeightClass) {
+    // Dev Corner: both fighters in the weight class picked below.
+    picks = picks.map(function (ch) {
+      var copy = JSON.parse(JSON.stringify(ch));
+      copy.weightClass = devWeightClass;
+      return copy;
+    });
+  }
   startMatchWith(picks[0], picks[1]);
 }
 
@@ -230,6 +239,24 @@ try { devForceKo = localStorage.getItem("ballBrawl.devForceKo") === "1"; } catch
     devForceKo = !devForceKo;
     sw.setAttribute("aria-checked", String(devForceKo));
     try { localStorage.setItem("ballBrawl.devForceKo", devForceKo ? "1" : "0"); } catch (e) {}
+  });
+})();
+// Dev Corner: put both fighters in one weight class ("" keeps their own).
+var devWeightClass = "";
+try { devWeightClass = localStorage.getItem("ballBrawl.devWeightClass") || ""; } catch (e) {}
+(function () {
+  var sel = document.getElementById("devWeightClass");
+  WEIGHT_CLASSES.forEach(function (wc) {
+    var opt = document.createElement("option");
+    opt.value = wc.id;
+    opt.textContent = wc.name + " (" + wc.lb + ")";
+    sel.appendChild(opt);
+  });
+  sel.value = devWeightClass;
+  if (sel.value !== devWeightClass) devWeightClass = sel.value = "";
+  sel.addEventListener("change", function () {
+    devWeightClass = sel.value;
+    try { localStorage.setItem("ballBrawl.devWeightClass", devWeightClass); } catch (e) {}
   });
 })();
 document.getElementById("devCornerBtn").addEventListener("click", function () { showScreen("dev"); });

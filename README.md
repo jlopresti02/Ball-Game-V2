@@ -11,7 +11,7 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 ## Menus
 
 - **Roster** (the main screen) holds the custom fighters you've built and saved. Roster fighters will later get their own textures, audio and special moves on top of the character bases.
-- **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters. Every card there has a **Mirror** button that puts that fighter on both sides; the second copy is named "<name> 2" and drawn in a lighter or darker shade. Its **Dev Fighters** section holds older versions of roster fighters for testing (e.g. Dustin Poirier with his face photo, from before his fighter art), and can hold test versions of roster fighters trying out a new mechanic before the real one gets it (`devVariant` in `js/dev-fighters.js`). An old copy of a repo fighter saved under another id without fighter art is removed from the roster automatically. The **Always KO Rush** switch makes every Brawler open each Dev Corner fight with the KO Rush (100% instead of 5%).
+- **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters. Every card there has a **Mirror** button that puts that fighter on both sides; the second copy is named "<name> 2" and drawn in a lighter or darker shade. Its **Dev Fighters** section holds older versions of roster fighters for testing (e.g. Dustin Poirier with his face photo, from before his fighter art), and can hold test versions of roster fighters trying out a new mechanic before the real one gets it (`devVariant` in `js/dev-fighters.js`). An old copy of a repo fighter saved under another id without fighter art is removed from the roster automatically. The **Always KO Rush** switch makes every Brawler open each Dev Corner fight with the KO Rush (100% instead of 5%). The **Weight class** picker puts both fighters in one weight class for Dev Corner fights ("Their own" leaves them as they are).
 
 ## Arenas
 
@@ -37,6 +37,24 @@ The **Arena** button under the fight switches between two arenas, and the game r
 | BMF | Rapid 5-damage jabs up close; weaves (dodges) 75% of attacks, and 20% of weaves are critical: a 5-punch chase combo ending in a launching blow, then a 2-second hands-in-the-air celebration during which it takes double damage. Against another weaver (e.g. BMF vs BMF), a critical weave in the middle of the other's combo is a reversal (75%) or a flow counter (25%): it slips the rest of the combo, then lands one 15-damage strike that knocks them away and celebrates. Combos don't end in a celebration in those fights |
 
 Roster fighters can mix any of these abilities, with sliders for every stat. They're saved in the browser's local storage.
+
+## Weight classes
+
+Every fighter has a `weightClass` (Middleweight if it hasn't got one). Middleweight is the baseline. The logic is in `js/game/weight.js`.
+
+| Class | lb | Size | Move speed | Attack speed | Block |
+| --- | --- | --- | --- | --- | --- |
+| Strawweight | 115 | 31 px | 1.27x | 13% faster | +0% |
+| Flyweight | 125 | 32 px | 1.22x | 10% faster | +1% |
+| Bantamweight | 135 | 33 px | 1.17x | 8% faster | +2% |
+| Featherweight | 145 | 35 px | 1.13x | 6% faster | +3% |
+| Lightweight | 155 | 36 px | 1.09x | 5% faster | +4% |
+| Welterweight | 170 | 37 px | 1.04x | 2% faster | +5% |
+| Middleweight | 185 | 39 px | 1x | baseline | +6% |
+| Light Heavyweight | 205 | 41 px | 0.95x | 3% slower | +7% |
+| Heavyweight | 265 | 47 px | 0.84x | 9% slower | +8% |
+
+Size is sqrt(lb / 185); move speed is the inverse; attack cooldowns (projectile, punch, kick, grab) tick at 1 / size^0.25. For each class between the two fighters: the lighter one takes +6% damage from the heavier one, the heavier one takes -5% from the lighter one, the lighter one slips 4% of the heavier one's strikes ("WHIFF"), and the heavier one wins grappling exchanges (who grabs first, sprawls, sprawl scrambles, grab escapes) 50% + 5% of the time, up to 85%. Dustin Poirier, Charles Oliveira and Khabib Nurmagomedov are Lightweights.
 
 ## Saving your fighters
 

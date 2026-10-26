@@ -197,7 +197,7 @@ function updateAbilities(dt) {
     }
 
     if (self.char.hasProjectile) {
-      self.shotTimer -= dt;
+      self.shotTimer -= dt * self.atkRate; // lighter classes reload faster (weight.js)
       if (self.shotTimer <= 0 && other.alive && !self.throwAnim) {
         self.shotTimer += self.char.proj.cooldown;
         // Windup, then a fast whip-forward release (projectile fires at
@@ -207,7 +207,7 @@ function updateAbilities(dt) {
     }
 
     if (self.char.hasPunch) {
-      self.punchCd = Math.max(0, self.punchCd - dt);
+      self.punchCd = Math.max(0, self.punchCd - dt * self.atkRate);
       var pu = self.char.punch;
       if (!self.punch && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) {
         self.punch = { t: 0, hit: false };
@@ -238,7 +238,7 @@ function updateAbilities(dt) {
     if (self.char.hasSwing) updateSwing(self, other, dt);
 
     if (self.char.hasKick) {
-      self.kickCd = Math.max(0, self.kickCd - dt);
+      self.kickCd = Math.max(0, self.kickCd - dt * self.atkRate);
       var ki = self.char.kick;
       if (!self.kick && self.kickCd === 0 && other.alive && d < self.r + other.r + ki.reach) {
         self.kick = { t: 0, hit: false };
@@ -268,7 +268,7 @@ function updateAbilities(dt) {
     }
 
     if (self.char.hasGrapple) {
-      self.grappleCd = Math.max(0, self.grappleCd - dt);
+      self.grappleCd = Math.max(0, self.grappleCd - dt * self.atkRate);
       var gr = self.char.grapple, grabReach = gr.reach + (self.doBronx ? DB_REACH : 0);
       if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + grabReach) {
         // Against another Grappler it only shoots for the takedown

@@ -251,6 +251,7 @@ function normalizeChar(ch) {
     if (ch.guard[k] == null) ch.guard[k] = defaultGuard()[k];
   });
   if (ch.blockChance == null) ch.blockChance = 0;
+  if (!ch.weightClass) ch.weightClass = "middleweight"; // weight.js
   // Special moves are for created characters. Dustin was set up with IGBB
   // before the editor had a special-move section, so he gets it switched on
   // until he's saved with a choice of his own.

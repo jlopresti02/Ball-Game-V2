@@ -258,6 +258,10 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .devOption > div { display: flex; flex-direction: column; }
 .devOption .htitle { font-weight: 800; font-size: 19px; }
 .devOption .hsub { font-size: 13px; color: var(--muted); }
+.devSelect {
+  flex: none; max-width: 48%; font: inherit; font-weight: 700; font-size: 15px; color: var(--ink);
+  border: 3px solid var(--wall); border-radius: 8px; padding: 6px 8px; background: var(--track);
+}
 .abilityBlock[data-on="false"] .abilityBody { display: none; }
 
 .editorGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
@@ -399,6 +403,16 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <span class="hsub">Brawlers open every Dev Corner fight with the KO Rush (100% instead of 5%)</span>
       </div>
       <button type="button" class="switch" id="devForceKo" role="switch" aria-checked="false" aria-label="Brawlers always open with the KO Rush"><span class="knob"></span></button>
+    </div>
+
+    <div class="devOption">
+      <div>
+        <span class="htitle">Weight class</span>
+        <span class="hsub">Put both fighters in one weight class for Dev Corner fights</span>
+      </div>
+      <select id="devWeightClass" class="devSelect" aria-label="Weight class for both fighters">
+        <option value="">Their own</option>
+      </select>
     </div>
 
     <div class="fightRow">
@@ -2040,6 +2054,7 @@ function normalizeChar(ch) {
     if (ch.guard[k] == null) ch.guard[k] = defaultGuard()[k];
   });
   if (ch.blockChance == null) ch.blockChance = 0;
+  if (!ch.weightClass) ch.weightClass = "middleweight"; // weight.js
   // Special moves are for created characters. Dustin was set up with IGBB
   // before the editor had a special-move section, so he gets it switched on
   // until he's saved with a choice of his own.
@@ -2090,8 +2105,9 @@ function getImg(dataURL) {
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
+    "weightClass": "lightweight",
     "name": "Charles Oliveira",
     "base": "Grappler",
     "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Special move: Do Bronx.",
@@ -2181,8 +2197,9 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
+    "weightClass": "lightweight",
     "name": "Dustin Poirier",
     "base": "Brawler",
     "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine.",
@@ -2264,8 +2281,9 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
+    "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
     "base": "Grappler",
     "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
@@ -2652,6 +2670,88 @@ function importRoster(file) {
   reader.readAsText(file);
 }
 
+// Weight classes. Every fighter is in one of the nine UFC classes
+// (`weightClass` on the character, Middleweight if it hasn't got one).
+// Middleweight is the baseline: heavier fighters are bigger, slower, swing a
+// little slower and block a little more; lighter ones are smaller, quicker and
+// throw faster. When the two fighters are in different classes, each class
+// between them counts:
+//   the lighter one takes +6% damage from the heavier one,
+//   the heavier one takes -5% damage from the lighter one,
+//   the lighter one slips 4% of the heavier one's strikes ("WHIFF"),
+//   the heavier one wins grappling exchanges (who grabs first, sprawls,
+//   scrambles, grab escapes) 50% + 5% of the time, up to 85%.
+"use strict";
+
+var WEIGHT_CLASSES = [
+  { id: "strawweight", name: "Strawweight", lb: 115 },
+  { id: "flyweight", name: "Flyweight", lb: 125 },
+  { id: "bantamweight", name: "Bantamweight", lb: 135 },
+  { id: "featherweight", name: "Featherweight", lb: 145 },
+  { id: "lightweight", name: "Lightweight", lb: 155 },
+  { id: "welterweight", name: "Welterweight", lb: 170 },
+  { id: "middleweight", name: "Middleweight", lb: 185 },
+  { id: "lightheavyweight", name: "Light Heavyweight", lb: 205 },
+  { id: "heavyweight", name: "Heavyweight", lb: 265 }
+];
+var WEIGHT_BASE_LB = 185;
+var WEIGHT_HURT_UP = 0.06;    // extra damage per class the attacker is heavier
+var WEIGHT_HURT_DOWN = 0.05;  // less damage per class the attacker is lighter
+var WEIGHT_WHIFF = 4;         // % per class a lighter fighter slips a heavier one's strikes
+var WEIGHT_GRAPPLE = 0.05;    // heavier fighter's edge in grappling, per class
+var WEIGHT_GRAPPLE_MAX = 0.85;
+
+// The class's index in WEIGHT_CLASSES (0 Strawweight .. 8 Heavyweight).
+function weightIndex(ch) {
+  var id = ch && ch.weightClass;
+  for (var i = 0; i < WEIGHT_CLASSES.length; i++) if (WEIGHT_CLASSES[i].id === id) return i;
+  return 6; // Middleweight
+}
+function weightClassName(ch) { return WEIGHT_CLASSES[weightIndex(ch)].name; }
+
+// Set on a ball when it's made: its size, top speed and how quickly its
+// attack cooldowns tick down.
+function applyWeight(b) {
+  var wc = weightIndex(b.char), size = Math.sqrt(WEIGHT_CLASSES[wc].lb / WEIGHT_BASE_LB);
+  b.wc = wc;
+  b.r = Math.round(RADIUS * size);
+  b.baseSpeed = SPEED / size;
+  b.atkRate = 1 / Math.pow(size, 0.25);
+  b.blockBonus = wc; // +0% Strawweight up to +8% Heavyweight
+}
+
+// Classes the attacker is above the defender (negative if it's lighter).
+function weightGap(b, attackerId) {
+  if (attackerId == null || attackerId === b.id || !balls[attackerId]) return 0;
+  return (balls[attackerId].wc || 0) - (b.wc || 0);
+}
+
+function weightDamageMult(b, attackerId) {
+  var g = weightGap(b, attackerId);
+  if (g > 0) return 1 + WEIGHT_HURT_UP * g;
+  if (g < 0) return Math.max(0, 1 + WEIGHT_HURT_DOWN * g);
+  return 1;
+}
+
+// A lighter fighter slipping a heavier one's strike.
+function tryWeightWhiff(b, attackerId) {
+  var g = weightGap(b, attackerId);
+  if (g <= 0 || Math.random() >= WEIGHT_WHIFF * g / 100) return false;
+  floater(b.x, b.y - b.r - 8, "WHIFF", "dodge");
+  return true;
+}
+
+// Chance `a` wins a grappling exchange against `b` on weight alone.
+function grappleOdds(a, b) {
+  var g = (a.wc || 0) - (b.wc || 0);
+  var edge = Math.min(WEIGHT_GRAPPLE_MAX, 0.5 + WEIGHT_GRAPPLE * Math.abs(g));
+  return g >= 0 ? (g === 0 ? 0.5 : edge) : 1 - edge;
+}
+// Scales a grappling roll for `a` against `b`: 1 when they're the same
+// class, up to 1.7x for a much heavier fighter, down to 0.3x for a much
+// lighter one.
+function grappleScale(a, b) { return grappleOdds(a, b) / 0.5; }
+
 // Screen switching, the main select screen (your roster) and The Dev Corner
 // (the character bases).
 "use strict";
@@ -2726,7 +2826,8 @@ function abilitySummary(ch) {
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
   if (ch.hasForget) parts.push("\uD83E\uDDE0 +" + ch.forget.heal + " / " + ch.forget.every + "s");
   if (ch.blockChance > 0) parts.push("🛡️ " + ch.blockChance + "% block");
-  return parts.length ? parts.join(" · ") : "No attacks yet";
+  parts.push("\u2696\uFE0F " + weightClassName(ch));
+  return parts.join(" · ");
 }
 
 function avatarStyle(ch) {
@@ -2860,6 +2961,14 @@ function fightFrom(name) {
   // A real click, so this is a safe place to unlock audio playback.
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();
+  if (name === "dev" && devWeightClass) {
+    // Dev Corner: both fighters in the weight class picked below.
+    picks = picks.map(function (ch) {
+      var copy = JSON.parse(JSON.stringify(ch));
+      copy.weightClass = devWeightClass;
+      return copy;
+    });
+  }
   startMatchWith(picks[0], picks[1]);
 }
 
@@ -2884,6 +2993,24 @@ try { devForceKo = localStorage.getItem("ballBrawl.devForceKo") === "1"; } catch
     devForceKo = !devForceKo;
     sw.setAttribute("aria-checked", String(devForceKo));
     try { localStorage.setItem("ballBrawl.devForceKo", devForceKo ? "1" : "0"); } catch (e) {}
+  });
+})();
+// Dev Corner: put both fighters in one weight class ("" keeps their own).
+var devWeightClass = "";
+try { devWeightClass = localStorage.getItem("ballBrawl.devWeightClass") || ""; } catch (e) {}
+(function () {
+  var sel = document.getElementById("devWeightClass");
+  WEIGHT_CLASSES.forEach(function (wc) {
+    var opt = document.createElement("option");
+    opt.value = wc.id;
+    opt.textContent = wc.name + " (" + wc.lb + ")";
+    sel.appendChild(opt);
+  });
+  sel.value = devWeightClass;
+  if (sel.value !== devWeightClass) devWeightClass = sel.value = "";
+  sel.addEventListener("change", function () {
+    devWeightClass = sel.value;
+    try { localStorage.setItem("ballBrawl.devWeightClass", devWeightClass); } catch (e) {}
   });
 })();
 document.getElementById("devCornerBtn").addEventListener("click", function () { showScreen("dev"); });
@@ -3637,7 +3764,7 @@ var winBy = null; // how the fight was won, when it isn't a knockout (e.g. "subm
 function stagger() { return 0.6 + Math.random() * 0.8; }
 
 function makeBall(id, ch) {
-  return {
+  var b = {
     id: id, char: ch,
     x: id === 0 ? W * 0.27 : W * 0.73,
     y: H / 2 + (Math.random() - 0.5) * 160,
@@ -3653,6 +3780,8 @@ function makeBall(id, ch) {
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
     guillo: null, choked: false, guilloCd: 0, rnc: null, suplex: null, suplexCd: 0, guard: null, guardCd: 0, doBronx: null
   };
+  applyWeight(b); // size, speed and attack speed for its weight class (weight.js)
+  return b;
 }
 
 function startMatchWith(ch0, ch1) {
@@ -3775,6 +3904,7 @@ function incomingMultiplier(b) {
   if (b.rageState && b.rageState.phase === "charge") m *= (b.char.rage.vulnMult != null ? b.char.rage.vulnMult : 2);
   if (b.taunt && b.taunt.t >= 0 && b.char.hasWeave) m *= (b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2);
   m *= doBronxMult(1 - b.id); // the opponent's in the Do Bronx state
+  m *= weightDamageMult(b, 1 - b.id); // a heavier or lighter opponent (weight.js)
   return m;
 }
 function wouldKill(b, amount) {
@@ -3823,10 +3953,16 @@ function hurt(b, amount, source, attackerId) {
     b.justDodged = true;
     return 0;
   }
+  // A lighter fighter slips some of a heavier one's strikes (weight.js).
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" &&
+      tryWeightWhiff(b, attackerId)) {
+    b.justDodged = true;
+    return 0;
+  }
   // A passive chance to block an incoming attack outright and take no
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
-  var blockChance = Math.min(100, b.char.blockChance * (swinger ? swinger.blockMult : 1));
+  var blockChance = Math.min(100, (b.char.blockChance + (b.blockBonus || 0)) * (swinger ? swinger.blockMult : 1));
   if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" && Math.random() < blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
@@ -3848,6 +3984,8 @@ function hurt(b, amount, source, attackerId) {
   }
   // Everything a fighter in the Do Bronx state lands does double (dobronx.js).
   if (source !== "laser") amount *= doBronxMult(attackerId);
+  // Heavier hits harder, lighter hits softer (weight.js).
+  amount *= weightDamageMult(b, attackerId);
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
@@ -3931,13 +4069,14 @@ function inOrdinaryMovement(b) {
 function regulateSpeed(b, dt) {
   if (!inOrdinaryMovement(b)) return;
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  var normal = b.baseSpeed || SPEED; // lighter fighters roll faster (weight.js)
   var target;
-  if (s < SPEED - 0.5) {
+  if (s < normal - 0.5) {
     // Too slow: pick up momentum, starting from at least a steady crawl.
-    target = Math.min(SPEED, Math.max(s, MIN_SPEED) + SPEED_UP * dt);
-  } else if (s > SPEED + 0.5) {
+    target = Math.min(normal, Math.max(s, MIN_SPEED) + SPEED_UP * dt);
+  } else if (s > normal + 0.5) {
     // Too fast: lose the extra speed gradually.
-    target = SPEED + (s - SPEED) * Math.exp(-SLOW_DOWN * dt);
+    target = normal + (s - normal) * Math.exp(-SLOW_DOWN * dt);
   } else {
     return;
   }
@@ -4202,7 +4341,7 @@ function updateAbilities(dt) {
     }
 
     if (self.char.hasProjectile) {
-      self.shotTimer -= dt;
+      self.shotTimer -= dt * self.atkRate; // lighter classes reload faster (weight.js)
       if (self.shotTimer <= 0 && other.alive && !self.throwAnim) {
         self.shotTimer += self.char.proj.cooldown;
         // Windup, then a fast whip-forward release (projectile fires at
@@ -4212,7 +4351,7 @@ function updateAbilities(dt) {
     }
 
     if (self.char.hasPunch) {
-      self.punchCd = Math.max(0, self.punchCd - dt);
+      self.punchCd = Math.max(0, self.punchCd - dt * self.atkRate);
       var pu = self.char.punch;
       if (!self.punch && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) {
         self.punch = { t: 0, hit: false };
@@ -4243,7 +4382,7 @@ function updateAbilities(dt) {
     if (self.char.hasSwing) updateSwing(self, other, dt);
 
     if (self.char.hasKick) {
-      self.kickCd = Math.max(0, self.kickCd - dt);
+      self.kickCd = Math.max(0, self.kickCd - dt * self.atkRate);
       var ki = self.char.kick;
       if (!self.kick && self.kickCd === 0 && other.alive && d < self.r + other.r + ki.reach) {
         self.kick = { t: 0, hit: false };
@@ -4273,7 +4412,7 @@ function updateAbilities(dt) {
     }
 
     if (self.char.hasGrapple) {
-      self.grappleCd = Math.max(0, self.grappleCd - dt);
+      self.grappleCd = Math.max(0, self.grappleCd - dt * self.atkRate);
       var gr = self.char.grapple, grabReach = gr.reach + (self.doBronx ? DB_REACH : 0);
       if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + grabReach) {
         // Against another Grappler it only shoots for the takedown
@@ -4976,7 +5115,7 @@ function isFacing(a, b) {
 function readyToGrab(self, other, dt) {
   if (!self.char.hasGrapple || !self.alive || self.grappled || self.grapple) return false;
   if (self.slam || self.combo || self.taunt || self.flow) return false;
-  if (self.grappleCd - dt > 0) return false;
+  if (self.grappleCd - dt * self.atkRate > 0) return false;
   if (!other.alive || other.grappled || other.invincible) return false;
   if (self.sprawl || self.sprawled || other.sprawl || other.sprawled) return false;
   if (subLocked(self) || subLocked(other)) return false;
@@ -4998,7 +5137,12 @@ function resolveGrabInitiative(dt) {
   var aSees = isFacing(a, b), bSees = isFacing(b, a);
   if (aSees && !bSees) { winner = a; reason = "BLINDSIDE"; }
   else if (bSees && !aSees) { winner = b; reason = "BLINDSIDE"; }
-  else {
+  else if (a.wc !== b.wc) {
+    // Different weight classes: the heavier one usually gets there first.
+    var heavy = a.wc > b.wc ? a : b, light = heavy === a ? b : a;
+    if (Math.random() < grappleOdds(heavy, light)) { winner = heavy; reason = "HEAVIER"; }
+    else { winner = light; reason = "QUICKER"; }
+  } else {
     var sa = Math.sqrt(a.vx * a.vx + a.vy * a.vy), sb = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
     if (Math.abs(sa - sb) > SPEED_TIE) { winner = sa > sb ? a : b; reason = "FASTER"; }
     else if (Math.abs(a.hp - b.hp) > HEALTH_TIE) { winner = a.hp > b.hp ? a : b; reason = "MORE HEALTH"; }
@@ -5073,7 +5217,7 @@ var SLAM_SAFE_TIME = 0.8; // after landing a slam the Grappler can't be hit for 
 function grabEscaped(attacker, target) {
   var how = null;
   if (tryWeave(target, attacker.id)) how = "weave";
-  else if (target.char.blockChance > 0 && Math.random() < target.char.blockChance / 100) {
+  else if (Math.random() < (target.char.blockChance + (target.blockBonus || 0)) / 100 * grappleScale(target, attacker)) {
     how = "block";
     floater(target.x, target.y - target.r - 8, "BLOCK", "dodge");
     target.flash = 0.1;
@@ -5100,7 +5244,7 @@ function attemptGrab(attacker, target) {
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.
-  if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100 * (attacker.doBronx ? 0.5 : 1)) {
+  if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100 * (attacker.doBronx ? 0.5 : 1) * grappleScale(target, attacker)) {
     beginSprawl(attacker, target);
     return false;
   }
@@ -5139,7 +5283,7 @@ function updateSprawl(self, dt) {
   // The scramble: who comes out on top and slams the other.
   self.sprawl = null;
   atk.sprawled = false;
-  var sprawlerWins = Math.random() < self.char.grapple.reattackChance / 100;
+  var sprawlerWins = Math.random() < self.char.grapple.reattackChance / 100 * grappleScale(self, atk);
   var winner = sprawlerWins ? self : atk, loser = sprawlerWins ? atk : self;
   if (grabBlockedByImpunity(winner, loser)) { var tmp = winner; winner = loser; loser = tmp; }
   if (!winner.alive || !loser.alive) return;
