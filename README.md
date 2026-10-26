@@ -64,14 +64,16 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 
 | Look field | Values |
 |---|---|
-| `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours |
+| `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours (`accent`: optional stripe colour for `pinstripe` shorts) |
 | `build` | `muscular`, `lean`, `stocky` |
 | `hair` | `bald`, `buzz`, `short`, `long`, `mohawk`, `dreads` |
 | `beard` | `none`, `stubble`, `full` |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
-| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg) |
-| `tattoos` | any of `chest`, `portraits`, `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt) or `"lion"` (lion head on the delt, patchy ink); `armInk` gives the punching arms an inked texture |
+| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs) |
+| `headwear` | optional: `bandana` (stars-and-stripes bandana over the head) |
+| `glasses` | optional: `shades` (dark sunglasses) |
+| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `armInk` gives the punching arms an inked texture |
 
 ## Submissions
 

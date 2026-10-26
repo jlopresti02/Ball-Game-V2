@@ -262,6 +262,60 @@ function drawArtHeadLayer(c, r, look, line, lw) {
     }
     c.globalAlpha = 1;
   }
+
+  if (look.headwear === "bandana") drawBandana(c, r, line, lw);
+  if (look.glasses === "shades") drawShades(c, r, lw);
+}
+
+// A stars-and-stripes bandana tied over the scalp, knot and tails on one side.
+function drawBandana(c, r, line, lw) {
+  var cap = function () {
+    c.beginPath();
+    c.moveTo(-r, -r * 0.62);
+    c.lineTo(-r * 0.78, -r * 0.66);
+    c.quadraticCurveTo(0, -r * 0.8, r * 0.78, -r * 0.66);
+    c.lineTo(r, -r * 0.62); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
+  };
+  c.save();
+  cap(); c.clip();
+  c.fillStyle = "#f4f1ea"; c.fillRect(-r, -r, r * 2, r);
+  // Red stripes running front to back over the top of the head
+  c.fillStyle = "#c8202c";
+  for (var i = -4; i <= 4; i += 2) {
+    c.beginPath();
+    c.moveTo(i * r * 0.11, -r); c.lineTo((i + 1) * r * 0.11, -r);
+    c.lineTo((i + 1) * r * 0.16, -r * 0.6); c.lineTo(i * r * 0.16, -r * 0.6); c.closePath(); c.fill();
+  }
+  // Folded hem across the forehead
+  c.fillStyle = "rgba(0,0,0,0.18)";
+  c.beginPath(); c.moveTo(-r, -r * 0.7); c.quadraticCurveTo(0, -r * 0.86, r, -r * 0.7); c.lineTo(r, -r * 0.62); c.quadraticCurveTo(0, -r * 0.78, -r, -r * 0.62); c.fill();
+  c.restore();
+  c.strokeStyle = line; c.lineWidth = lw(0.03);
+  cap(); c.stroke();
+  // Knot and tails behind the right ear
+  c.fillStyle = "#c8202c";
+  c.beginPath(); c.ellipse(r * 0.86, -r * 0.66, r * 0.07, r * 0.05, 0.4, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.fillStyle = "#f4f1ea";
+  c.beginPath(); c.moveTo(r * 0.88, -r * 0.63); c.lineTo(r * 0.99, -r * 0.48); c.lineTo(r * 0.9, -r * 0.46); c.closePath(); c.fill(); c.stroke();
+}
+
+// Dark wraparound sunglasses across the head, arms running back to the ears.
+function drawShades(c, r, lw) {
+  var y = -r * 0.6;
+  c.strokeStyle = "#0d0d0f"; c.lineWidth = lw(0.035);
+  c.beginPath(); c.moveTo(-r * 0.68, y - r * 0.02); c.lineTo(-r * 0.46, y - r * 0.03); c.stroke();
+  c.beginPath(); c.moveTo(r * 0.68, y - r * 0.02); c.lineTo(r * 0.46, y - r * 0.03); c.stroke();
+  [-1, 1].forEach(function (s) {
+    var g = c.createLinearGradient(0, y - r * 0.08, 0, y + r * 0.08);
+    g.addColorStop(0, "#3a3f47"); g.addColorStop(1, "#0b0c0e");
+    c.fillStyle = g;
+    c.beginPath(); c.ellipse(s * r * 0.24, y, r * 0.2, r * 0.095, s * -0.06, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "#050506"; c.lineWidth = lw(0.025); c.stroke();
+    c.fillStyle = "rgba(255,255,255,0.35)";
+    c.beginPath(); c.ellipse(s * r * 0.24 - r * 0.07, y - r * 0.035, r * 0.06, r * 0.02, -0.3, 0, Math.PI * 2); c.fill();
+  });
+  c.strokeStyle = "#0d0d0f"; c.lineWidth = lw(0.03);
+  c.beginPath(); c.moveTo(-r * 0.05, y - r * 0.03); c.quadraticCurveTo(0, y - r * 0.06, r * 0.05, y - r * 0.03); c.stroke();
 }
 
 function drawArtBody(c, r, look, ink, name, contained) {
@@ -410,6 +464,63 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
+  if (tat.lionCrown) {
+    // A crowned lion's head in the middle of the chest, under the beard, with
+    // a shaggy mane hanging down over the pecs. Drawn round, then the torso
+    // squeeze is undone so it keeps its shape.
+    var lt = contained ? 0.86 / 0.59 : 1, lr = r * 0.19, sh = "rgba(24,28,40,";
+    var lrnd = artRand(artSeed(name + "lion"));
+    c.save(); c.translate(-r * 0.03, contained ? r * 0.05 : -r * 0.3); c.scale(1, lt);
+    c.globalAlpha = 1;
+    // Mane: a jagged, shaggy silhouette, longer locks at the bottom
+    c.fillStyle = sh + "0.55)";
+    c.beginPath();
+    for (var mn = 0; mn <= 32; mn++) {
+      var ma = mn / 32 * Math.PI * 2, out = mn % 2 === 0;
+      var mr = lr * ((out ? 1.5 : 1.2) + 0.3 * Math.max(0, Math.sin(ma)) + (out ? lrnd() * 0.15 : 0));
+      var mx = Math.cos(ma) * mr, my = Math.sin(ma) * mr + lr * 0.1;
+      if (mn === 0) c.moveTo(mx, my); else c.lineTo(mx, my);
+    }
+    c.closePath(); c.fill();
+    // Strands flowing out and down through the mane
+    c.strokeStyle = sh + "0.8)"; c.lineWidth = lw(0.014);
+    for (var st = 0; st < 18; st++) {
+      var sa = st / 18 * Math.PI * 2;
+      c.beginPath();
+      c.moveTo(Math.cos(sa) * lr * 0.85, Math.sin(sa) * lr * 0.85);
+      c.quadraticCurveTo(Math.cos(sa + 0.2) * lr * 1.2, Math.sin(sa + 0.2) * lr * 1.2 + lr * 0.2, Math.cos(sa + 0.1) * lr * 1.45, Math.sin(sa + 0.1) * lr * 1.45 + lr * 0.35);
+      c.stroke();
+    }
+    // Ears and face
+    var face = shadeHex(look.skin, 0.03);
+    [-1, 1].forEach(function (e) {
+      c.fillStyle = face; c.beginPath(); c.arc(e * lr * 0.55, -lr * 0.62, lr * 0.2, 0, Math.PI * 2); c.fill();
+      c.fillStyle = sh + "0.45)"; c.beginPath(); c.arc(e * lr * 0.55, -lr * 0.62, lr * 0.1, 0, Math.PI * 2); c.fill();
+    });
+    c.fillStyle = face;
+    c.beginPath(); c.moveTo(-lr * 0.7, -lr * 0.45); c.quadraticCurveTo(0, -lr * 0.9, lr * 0.7, -lr * 0.45);
+    c.quadraticCurveTo(lr * 0.75, lr * 0.4, 0, lr * 0.85); c.quadraticCurveTo(-lr * 0.75, lr * 0.4, -lr * 0.7, -lr * 0.45); c.fill();
+    c.fillStyle = sh + "0.2)"; c.fill();
+    // Shading: brow, the long nose bridge, nose pad and muzzle
+    c.fillStyle = sh + "0.5)";
+    c.beginPath(); c.ellipse(0, -lr * 0.2, lr * 0.5, lr * 0.09, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = sh + "0.25)";
+    c.fillRect(-lr * 0.1, -lr * 0.15, lr * 0.2, lr * 0.4);
+    c.fillStyle = sh + "0.75)";
+    c.beginPath(); c.moveTo(-lr * 0.18, lr * 0.25); c.lineTo(lr * 0.18, lr * 0.25); c.lineTo(0, lr * 0.42); c.closePath(); c.fill();
+    c.fillStyle = sh + "0.3)";
+    c.beginPath(); c.ellipse(0, lr * 0.58, lr * 0.3, lr * 0.16, 0, 0, Math.PI * 2); c.fill();
+    // Crown sitting on the top of the mane
+    c.fillStyle = sh + "0.85)";
+    var cyc = -lr * 1.3, cw = lr * 0.75;
+    c.fillRect(-cw, cyc, cw * 2, lr * 0.2);
+    for (var pk = 0; pk < 5; pk++) {
+      var pxk = -cw + pk * cw * 0.5;
+      c.beginPath(); c.moveTo(pxk - lr * 0.12, cyc); c.lineTo(pxk, cyc - lr * (pk % 2 === 0 ? 0.35 : 0.22)); c.lineTo(pxk + lr * 0.12, cyc); c.fill();
+    }
+    c.restore();
+    c.strokeStyle = inkCol; c.fillStyle = inkCol; c.lineWidth = lw(0.03);
+  }
   if (tat.portraits) {
     // Black-and-grey family portraits filling the upper chest: a woman with
     // long hair, an older man with grey hair (lowest) and a girl with dark
@@ -479,7 +590,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     var s = p[1], style = tat[p[0]];
     // Sleeve running over the shoulder: bands and curls
     c.save();
-    if (style === "dense" || style === "lion") {
+    if (style === "dense" || style === "lion" || style === "sun") {
       drawNamedSleeve(c, r, s, style, inkCol, lw, artSeed(name + p[0]), contained ? 0.86 / 0.59 : 1);
       c.restore();
       return;
@@ -575,6 +686,16 @@ function drawArtBody(c, r, look, ink, name, contained) {
     }
     c.globalAlpha = 1;
   }
+  if (look.shortsStyle === "pinstripe") {
+    // Thin vertical stripes down both legs in the accent colour
+    c.strokeStyle = look.accent || shadeHex(look.trim, 0.45); c.lineWidth = lw(0.03);
+    [-1, 1].forEach(function (sd) {
+      for (var ps = 0; ps < 4; ps++) {
+        var pxs = sd * r * (0.5 + ps * 0.12);
+        c.beginPath(); c.moveTo(pxs, sTop + band); c.quadraticCurveTo(pxs - sd * r * 0.04, (sTop + r) / 2, pxs - sd * r * 0.02, r); c.stroke();
+      }
+    });
+  }
   if (look.shortsStyle === "chevron") {
     // A wide diagonal panel sweeping up the right leg, pinstripes on the left
     c.fillStyle = look.trim;
@@ -638,7 +759,7 @@ function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
   c.quadraticCurveTo(s * (inner - r * 0.04), r * 0.1, s * (inner + r * 0.02), r * 0.6);
   c.lineTo(s * r, r * 0.6); c.closePath(); c.clip();
   c.fillStyle = inkCol;
-  c.globalAlpha = style === "dense" ? 0.95 : 0.2;
+  c.globalAlpha = style === "dense" ? 0.95 : style === "sun" ? 0.6 : 0.2;
   c.fillRect(s > 0 ? inner - r * 0.1 : -r, -r, r * 0.5, r * 1.6);
   if (style === "lion") {
     // Heavier ink on the forearm, lighter patches higher up
@@ -650,8 +771,32 @@ function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
     c.beginPath(); c.ellipse(x0 + (rnd() - 0.5) * r * 0.3, -r * 0.75 + rnd() * r * 1.35, r * (0.03 + rnd() * 0.06), r * (0.03 + rnd() * 0.05), rnd() * 3, 0, Math.PI * 2); c.fill();
   }
   c.globalAlpha = 1;
+  if (style === "sun") {
+    // Script across the middle of the arm
+    c.strokeStyle = "rgba(14,16,24,0.85)"; c.lineWidth = lw(0.016);
+    [0, 1].forEach(function (ln) {
+      c.beginPath();
+      for (var u = 0; u <= 10; u++) {
+        var ux = s * r * (0.7 + u * 0.022), uy = r * (0.02 + ln * 0.07) + Math.sin(u * 1.9) * r * 0.012;
+        if (u === 0) c.moveTo(ux, uy); else c.lineTo(ux, uy);
+      }
+      c.stroke();
+    });
+  }
   c.save(); c.translate(s * r * 0.83, -r * 0.5); c.scale(1, tall);
-  if (style === "dense") {
+  if (style === "sun") {
+    // Sunburst on the shoulder: rays fanning from the top of the delt
+    c.fillStyle = "rgba(14,16,24,0.7)";
+    for (var ry = 0; ry < 9; ry++) {
+      var ra = Math.PI * (0.15 + ry * 0.09) * (s > 0 ? 1 : -1) + (s > 0 ? 0 : Math.PI);
+      c.beginPath();
+      c.moveTo(Math.cos(ra - 0.05) * r * 0.05, -r * 0.1 + Math.sin(ra - 0.05) * r * 0.05);
+      c.lineTo(Math.cos(ra) * r * 0.28, -r * 0.1 + Math.sin(ra) * r * 0.28);
+      c.lineTo(Math.cos(ra + 0.05) * r * 0.05, -r * 0.1 + Math.sin(ra + 0.05) * r * 0.05);
+      c.fill();
+    }
+    c.beginPath(); c.arc(0, -r * 0.1, r * 0.05, 0, Math.PI * 2); c.fill();
+  } else if (style === "dense") {
     // Dark emblem on the delt: a body with legs reaching out
     c.fillStyle = "rgba(14,16,24,0.9)"; c.strokeStyle = "rgba(14,16,24,0.9)"; c.lineWidth = lw(0.022);
     c.beginPath(); c.ellipse(0, 0, r * 0.05, r * 0.075, 0, 0, Math.PI * 2); c.fill();
