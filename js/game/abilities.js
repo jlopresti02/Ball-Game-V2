@@ -157,7 +157,7 @@ function updateAbilities(dt) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
-    if (self.shocked || self.koOut || self.shelled) continue; // frozen by a KO Rush, knocked out, or shelled up under IGBB
+    if (self.shocked || self.koOut || self.shelled || self.dazed) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }

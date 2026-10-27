@@ -20,6 +20,7 @@ function chargeProgress(b) {
 
 function update(dt) {
   tickDoBronxFx(dt); // camera flashes keep going through freeze-frames
+  tickChairDebris(dt);
   if (hitStop > 0) {
     // Frozen for a split second after a wall slam; only the camera shake
     // and shockwaves keep moving so the impact still reads.

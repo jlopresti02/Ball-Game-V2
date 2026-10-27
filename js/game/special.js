@@ -17,7 +17,7 @@
 // same during Father's Plan.
 "use strict";
 
-var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan", dobronx: "Do Bronx" };
+var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan", dobronx: "Do Bronx", chairshot: "Chair Shot" };
 
 var IGBB_CLOSE_SPEED = 820;   // dash in to grab
 var IGBB_CLOSE_GIVEUP = 3;
@@ -47,7 +47,7 @@ function tickSpecialCharge(b, dt) {
 // Busy with something that shouldn't be interrupted.
 function specialBusy(b) {
   return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.combo || b.taunt || b.flow ||
-    b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled;
+    b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled || b.dazed;
 }
 function canStartIgbb(self, other) {
   if (!other.alive || other.invincible || specialBusy(self) || specialBusy(other)) return false;
@@ -83,6 +83,7 @@ function updateSpecial(self, other, dt) {
   if (!self.char.hasSpecial || !SPECIAL_MOVES[self.char.special.move]) return false;
   var sp = self.char.special;
   if (sp.move === "dobronx") return updateDoBronx(self, other, dt); // dobronx.js
+  if (sp.move === "chairshot") return updateChairShot(self, other, dt); // chairshot.js
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };
@@ -266,7 +267,7 @@ function endIgbb(self, other) {
 // its hands full or its guard up), except while still dashing in to grab.
 // Positions are set by the move itself (no physics) while it has hold of them.
 function igbbLocked(b) {
-  return b.shelled || (b.igbb && b.igbb.phase !== "close" && b.igbb.phase !== "retreat");
+  return b.shelled || b.dazed || (b.igbb && b.igbb.phase !== "close" && b.igbb.phase !== "retreat");
 }
 
 function specialGuarding(b) {

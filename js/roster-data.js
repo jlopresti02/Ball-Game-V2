@@ -182,12 +182,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-josh-hokit",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Josh Hokit",
     "base": "BMF",
-    "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him.",
+    "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. Special move: Chair Shot.",
     "color": "#c8202c",
     "label": "",
     "imgData": null,
@@ -263,6 +263,15 @@ var SAVED_ROSTER = [
     "thumbsDown": {
       "cooldown": 8,
       "anger": 3
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "chairshot",
+      "chargeTime": 40,
+      "hitCut": 3,
+      "punchCut": 1,
+      "damage": 40,
+      "dazeTime": 1.5
     },
     "blockChance": 0
   },
