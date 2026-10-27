@@ -16,9 +16,17 @@ var TAUNT_LEADIN = 0.26;      // how long a launched fighter flies before slowin
 // if the attack was dodged (and kicks off a critical combo if that rolls too).
 function tryWeave(b, attackerId, mult) {
   if (!b || !b.alive || !b.char.hasWeave) return false;
-  // Can't slip anything while held, being slammed around, or mid-celebration.
-  if (b.grappled || b.slam || b.taunt) return false;
+  // Can't slip anything while held or being slammed around.
+  if (b.grappled || b.slam) return false;
   var wv = b.char.weave;
+  // Mid-celebration it's wide open, unless it has a tauntDodge chance
+  // (Josh Hokit): then it can still slip some, but never a critical one.
+  if (b.taunt) {
+    if (!wv.tauntDodge || Math.random() >= wv.tauntDodge / 100) return false;
+    b.weaveAnim = { t: 0, dur: 0.26, sign: Math.random() < 0.5 ? -1 : 1 };
+    floater(b.x, b.y - b.r - 8, "WEAVE", "dodge");
+    return true;
+  }
   // In a flow counter: every attack is slipped until the combo is over.
   if (b.flow && b.flow.phase === "slip") {
     b.weaveAnim = { t: 0, dur: 0.2, sign: Math.random() < 0.5 ? -1 : 1 };
