@@ -63,7 +63,7 @@ function drawKick(self, other) {
   // The foot, bent at the ankle off the end of the shin.
   ctx.translate(tipX, tipY);
   ctx.rotate(angle);
-  drawKickFoot(ki.size, armColor(self.char), -dir); // toes trailing, so the instep leads, like a roundhouse
+  drawKickFoot(ki.size, armColor(self.char), dir); // toes pointing the way the leg swings
   // Skin over the join, so the shin runs straight into the ankle.
   ctx.strokeStyle = armColor(self.char); ctx.lineWidth = ki.size * 0.62; ctx.lineCap = "butt";
   ctx.beginPath(); ctx.moveTo(-ki.size * 1.1, 0); ctx.lineTo(-ki.size * 0.55, 0); ctx.stroke();
