@@ -179,12 +179,12 @@ function defaultForget() { return { heal: 12, every: 7 }; }
 // If it doesn't finish, outcomes (relative odds) picks what happens next,
 // and a guillotine slam does slamDamage.
 function defaultGuillotine() {
-  return { chance: 35, tapBase: 20, tapLowHp: 60, cooldown: 5, outcomes: { escape: 20, gnp: 70, resink: 5, slam: 5 }, slamDamage: 75 };
+  return { chance: 35, tapBase: 10, tapLowHp: 60, cooldown: 5, outcomes: { escape: 26, gnp: 56, resink: 4, slam: 4 }, slamDamage: 75 };
 }
 // Rear naked choke (a guard submission): the one choked taps tapBase% of
 // the time at full health, up to tapLowHp% more the more damage it's taken
 // (see rnc.js).
-function defaultRnc() { return { tapBase: 35, tapLowHp: 50 }; }
+function defaultRnc() { return { tapBase: 10, tapLowHp: 50 }; }
 // Suplex: chance% of this fighter's grabs on an opponent that isn't facing
 // it become a back suplex for `damage`, then `cooldown` seconds before the
 // next (see suplex.js).
@@ -192,7 +192,7 @@ function defaultSuplex() { return { chance: 60, damage: 60, cooldown: 3 }; }
 // Armbar (a guard submission): the one caught taps tapBase% of the time at
 // full health, up to tapLowHp% more the more damage it's taken (see
 // armbar.js).
-function defaultArmbar() { return { tapBase: 30, tapLowHp: 50 }; }
+function defaultArmbar() { return { tapBase: 10, tapLowHp: 50 }; }
 // Guard: chance% of the strikes that land on this fighter drop it onto its
 // back in guard for `time` seconds, with a circle of `radius` around it.
 // The first opponent to step into the circle passes the guard passChance%
