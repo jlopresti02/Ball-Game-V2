@@ -306,11 +306,11 @@ function drawCheater(b) {
     var g = other.fenceGrab;
     [-1, 1].forEach(function (s2) {
       var qx2 = -g.ny * s2, qy2 = g.nx * s2;
-      var sh2 = { x: b.x + g.nx * b.r * 0.4 + qx2 * b.r * 0.7, y: b.y + g.ny * b.r * 0.4 + qy2 * b.r * 0.7 };
-      var hd2 = { x: other.x + g.nx * other.r * 0.1 + qx2 * other.r * 0.7, y: other.y + g.ny * other.r * 0.1 + qy2 * other.r * 0.7 };
+      var sh2 = { x: b.x + g.nx * b.r * 0.6 + qx2 * b.r * 0.55, y: b.y + g.ny * b.r * 0.6 + qy2 * b.r * 0.55 };
+      var hd2 = { x: other.x - g.nx * other.r * 0.3 + qx2 * other.r * 0.82, y: other.y - g.ny * other.r * 0.3 + qy2 * other.r * 0.82 };
       strokeLimb(arm, armColor(ch), function () {
         ctx.moveTo(sh2.x, sh2.y);
-        ctx.quadraticCurveTo(other.x - g.nx * other.r * 0.3 + qx2 * other.r * 1.05, other.y - g.ny * other.r * 0.3 + qy2 * other.r * 1.05, hd2.x, hd2.y);
+        ctx.lineTo(hd2.x, hd2.y);
       });
       drawGloveAt(hd2.x, hd2.y, b.r * 0.22, ch);
     });
