@@ -9,8 +9,9 @@
 //
 // Thumbs down (hasThumbsDown): every `cooldown` seconds, when there's some
 // space between them, he stops for a moment and gives the opponent a thumbs
-// down. It gets to them: for `anger` seconds they steer straight at him, a
-// little faster than normal, right into his jabs and weaves.
+// down (and talks trash: one of his recorded lines, audio.js). It gets to
+// them: for `anger` seconds they steer straight at him, a little faster than
+// normal, right into his jabs and weaves.
 "use strict";
 
 var SHOT_TIME = 0.42;       // level change and drive, before they hit the mat
@@ -96,6 +97,7 @@ function updateMock(self, other, dt) {
   if (!m.landed && m.t >= MOCK_AT) {
     m.landed = true;
     floater(self.x, self.y - self.r - 26, "👎", "crit");
+    playHokitTaunt();
     if (other.alive) {
       other.angry = { t: 0, dur: self.char.thumbsDown.anger, atId: self.id };
       floater(other.x, other.y - other.r - 26, "ANGRY", "note");

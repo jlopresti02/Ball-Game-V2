@@ -530,7 +530,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy"].forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -642,6 +642,34 @@ function playSmashLine() {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// Josh Hokit's trash talk: each thumbs down plays one of these at random,
+// never the same one twice in a row. A thumbs down can come early (right
+// after he lets an armbar go), so while a line is still going the next one
+// stays quiet.
+var HOKIT_TAUNTS = ["hokitKnee", "hokitDog", "hokitDivision", "hokitWeights", "hokitPlan"];
+var hokitLineSrc = null, hokitLineEnd = 0, lastHokitLine = -1;
+function playHokitTaunt() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (ctx.currentTime < hokitLineEnd) return;
+    var pick = Math.floor(Math.random() * (HOKIT_TAUNTS.length - (lastHokitLine < 0 ? 0 : 1)));
+    if (lastHokitLine >= 0 && pick >= lastHokitLine) pick++;
+    var name = HOKIT_TAUNTS[pick], buf = clipBuffers[name];
+    if (!buf) { withClip(name); return; }
+    lastHokitLine = pick;
+    hokitLineSrc = playClip(name, 0.9);
+    hokitLineEnd = ctx.currentTime + buf.duration;
+  } catch (e) { /* never let audio break the game */ }
+}
+function stopHokitTaunt() {
+  hokitLineEnd = 0;
+  if (!hokitLineSrc) return;
+  try { hokitLineSrc.stop(); } catch (e) { /* already stopped */ }
+  hokitLineSrc = null;
+}
+
 // The crowd's cameras going off: one loud shutter for the big white-out, then
 // quieter ones scattered over the next 1.4 seconds as flashes pop in the stands.
 function playCameraFlashes() {
@@ -740,6 +768,7 @@ function stopCrowd() {
   var c = crowd;
   crowd = null;
   stopDoBronx();
+  stopHokitTaunt();
   if (c) clearTimeout(c.holdTimer);
   if (!c || !c.src) return;
   try {
