@@ -542,8 +542,7 @@ function updateAbilities(dt) {
                 if (dealtAmt > 0) {
                   var jx = (Math.random() - 0.5) * other.r * 1.3;
                   var jy = -other.r - 6 - Math.random() * 10;
-                  var amtStr = (Math.round(dealtAmt * 100) / 100).toString();
-                  floater(other.x + jx, other.y + jy, "-" + amtStr, "tick");
+                  floater(other.x + jx, other.y + jy, "-" + dmgText(dealtAmt), "tick");
                 }
               }
             }

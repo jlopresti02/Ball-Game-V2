@@ -112,6 +112,11 @@ function start() {
   startCrowd();
 }
 
+// Damage shown on screen is always a whole number, rounded up (5.9 shows as
+// 6, 0.75 as 1). The tiny allowance stops float noise (6.0000001) rounding
+// up to 7.
+function dmgText(amount) { return String(Math.ceil(amount - 1e-6)); }
+
 function floater(x, y, text, kind) {
   var life = kind === "tick" ? 0.4 : (kind === "crit" ? 1.3 : (kind === "note" ? 1.1 : 0.9));
   floaters.push({ x: x, y: y, text: text, kind: kind, life: life, max: life });
@@ -263,7 +268,7 @@ function hurt(b, amount, source, attackerId) {
     b.flash = Math.max(b.flash, 0.07);
   } else {
     b.flash = 0.16;
-    floater(b.x, b.y - b.r - 8, "-" + amount, "hit");
+    floater(b.x, b.y - b.r - 8, "-" + dmgText(amount), "hit");
   }
   if (b.hp === 0) {
     b.alive = false;
