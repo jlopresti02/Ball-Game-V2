@@ -85,7 +85,7 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 |---|---|
 | `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours (`accent`: optional stripe colour for `pinstripe` shorts) |
 | `build` | `muscular`, `lean`, `stocky` |
-| `hair` | `bald`, `buzz`, `short`, `long`, `mohawk`, `dreads` |
+| `hair` | `bald`, `stubble`, `buzz`, `short`, `long`, `mohawk`, `dreads` |
 | `beard` | `none`, `stubble`, `short`, `full` |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |

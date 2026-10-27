@@ -193,8 +193,9 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.lineTo(r, -r * 0.5); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
   };
   c.fillStyle = hc;
-  if (look.hair === "buzz") {
-    c.globalAlpha = 0.88; hairline(); c.fill();
+  if (look.hair === "buzz" || look.hair === "stubble") {
+    // A stubble scalp is a see-through shadow, as light as the short beard
+    c.globalAlpha = look.hair === "stubble" ? 0.55 : 0.88; hairline(); c.fill();
     var br = artRand(7);
     c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.5;
     for (var bz = 0; bz < 70; bz++) {
@@ -237,7 +238,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
   if (look.hair !== "bald") {
-    c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "mohawk" ? 0.3 : 0.8;
+    c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
 
