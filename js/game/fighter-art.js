@@ -23,6 +23,12 @@ function armColor(ch) {
 function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
 
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
+// Blend hex colour a toward b by t (0..1)
+function mixHex(a, b, t) {
+  var x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16);
+  var ch = function (sh) { var u = (x >> sh) & 255, v = (y >> sh) & 255; return Math.round(u + (v - u) * t); };
+  return "rgb(" + ch(16) + "," + ch(8) + "," + ch(0) + ")";
+}
 function shadeHex(hex, amt) {
   var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
   var t = amt < 0 ? 0 : 255, p = Math.abs(amt);
@@ -245,7 +251,10 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
 
   // Chinstrap: a narrow band from the sideburns along the jaw to the chin
   if (look.beard === "chinstrap") {
-    c.globalAlpha = 0.6; c.fillStyle = hc;
+    // One solid colour (beard mixed into the skin) for strap and moustache,
+    // so the two join cleanly instead of darkening where they overlap
+    var cs = mixHex(look.skin, hc, 0.6);
+    c.fillStyle = cs;
     c.beginPath();
     c.moveTo(-r * 0.76, -r * 0.66);
     c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.3, jaw + r * 0.02);
@@ -257,7 +266,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.quadraticCurveTo(-r * 0.66, -r * 0.4, -r * 0.66, -r * 0.66);
     c.closePath(); c.fill();
     // Thin moustache arching over the mouth, joining the strap at both corners
-    c.strokeStyle = hc; c.lineWidth = lw(0.04); c.lineCap = "round";
+    c.strokeStyle = cs; c.lineWidth = lw(0.04); c.lineCap = "round";
     c.beginPath();
     c.moveTo(-r * 0.27, jaw - r * 0.05);
     c.quadraticCurveTo(-r * 0.27, -r * 0.46, 0, -r * 0.46);
