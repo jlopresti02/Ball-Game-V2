@@ -257,22 +257,28 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     // see-through fill covers both with no darker seam where they meet
     var strap = function () {
       c.beginPath();
-      // Sideburns run up inside the rim into the hair, tapering to a thin
-      // point (higher for a stubble scalp's raised hairline)
-      var ty = look.hair === "stubble" ? -r * 0.84 : -r * 0.76, tx = Math.sqrt(Math.max(0, r * r - ty * ty)) * 0.85;
-      // Outer edge: inside the rim, then a U that curves in under the chin
-      c.moveTo(-tx, ty);
-      c.quadraticCurveTo(-r * 0.82, -r * 0.74, -r * 0.86, -r * 0.52);
+      // Sideburns follow the round of the head just inside the rim, thinning
+      // to a fine point in the hair (higher for a stubble scalp's hairline)
+      var ro = r * 0.92, a1 = -2.62, a2 = look.hair === "stubble" ? -1.98 : -2.1, sw = r * 0.13, n = 10;
+      var arcPt = function (side, u, rad) {  // u: 0 at the jaw end, 1 at the tip
+        var ang = a1 + (a2 - a1) * u;
+        return [-side * Math.cos(ang) * rad, Math.sin(ang) * rad];
+      };
+      var inner = function (u) { return ro - sw * Math.pow(1 - u, 1.4) - r * 0.012 * (1 - u * u); };
+      var k, p0;
+      // Left outer edge: tip down to the jaw end, then the U under the chin
+      p0 = arcPt(-1, 1, ro); c.moveTo(p0[0], p0[1]);
+      for (k = n - 1; k >= 0; k--) { p0 = arcPt(-1, k / n, ro); c.lineTo(p0[0], p0[1]); }
       c.quadraticCurveTo(-r * 0.66, -r * 0.22, -r * 0.26, jaw + r * 0.04);
       c.quadraticCurveTo(0, jaw + r * 0.13, r * 0.26, jaw + r * 0.04);
-      c.quadraticCurveTo(r * 0.66, -r * 0.22, r * 0.86, -r * 0.52);
-      c.quadraticCurveTo(r * 0.82, -r * 0.74, tx, ty);
-      // Inner edge back along the jaw
-      c.quadraticCurveTo(r * 0.6, -r * 0.7, r * 0.7, -r * 0.6);
-      c.quadraticCurveTo(r * 0.56, -r * 0.32, r * 0.24, jaw - r * 0.06);
+      p0 = arcPt(1, 0, ro); c.quadraticCurveTo(r * 0.66, -r * 0.22, p0[0], p0[1]);
+      for (k = 1; k <= n; k++) { p0 = arcPt(1, k / n, ro); c.lineTo(p0[0], p0[1]); }
+      // Right inner edge back down, along the jaw, and up the left side
+      for (k = n - 1; k >= 0; k--) { p0 = arcPt(1, k / n, inner(k / n)); c.lineTo(p0[0], p0[1]); }
+      c.quadraticCurveTo(r * 0.56, -r * 0.3, r * 0.24, jaw - r * 0.06);
       c.quadraticCurveTo(0, jaw + r * 0.02, -r * 0.24, jaw - r * 0.06);
-      c.quadraticCurveTo(-r * 0.56, -r * 0.32, -r * 0.7, -r * 0.6);
-      c.quadraticCurveTo(-r * 0.6, -r * 0.7, -tx, ty);
+      p0 = arcPt(-1, 0, inner(0)); c.quadraticCurveTo(-r * 0.56, -r * 0.3, p0[0], p0[1]);
+      for (k = 1; k < n; k++) { p0 = arcPt(-1, k / n, inner(k / n)); c.lineTo(p0[0], p0[1]); }
       c.closePath();
       // Thin moustache arching over the mouth, its ends running into the strap
       c.moveTo(r * 0.29, jaw - r * 0.02);
