@@ -208,6 +208,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = look.hair === "stubble" ? 0.3 : 0.5;
     for (var bz = 0; bz < 70; bz++) {
       var bx = (br() * 2 - 1) * r * 0.7, by = -r * (0.78 + br() * 0.2) - up;
+      if (look.hair === "stubble" && bz % 2 === 0) by += r * 0.1;  // grain right down to the hairline
       c.fillRect(bx, by, r * 0.018, r * 0.018);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
@@ -256,14 +257,17 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     // see-through fill covers both with no darker seam where they meet
     var strap = function () {
       c.beginPath();
-      c.moveTo(-r * 0.76, -r * 0.66);
+      // Sideburns run up to meet the hairline (raised for a stubble scalp)
+      var sb = look.hair === "stubble" ? r * 0.08 : 0;
+      c.moveTo(-r * 0.62, -r * 0.7 - sb);
+      c.lineTo(-r * 0.82, -r * 0.55 - sb);
       c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.3, jaw + r * 0.02);
       c.quadraticCurveTo(0, jaw + r * 0.12, r * 0.3, jaw + r * 0.02);
-      c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.76, -r * 0.66);
-      c.lineTo(r * 0.66, -r * 0.66);
+      c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.82, -r * 0.55 - sb);
+      c.lineTo(r * 0.62, -r * 0.7 - sb);
       c.quadraticCurveTo(r * 0.66, -r * 0.4, r * 0.26, jaw - r * 0.07);
       c.quadraticCurveTo(0, jaw + r * 0.01, -r * 0.26, jaw - r * 0.07);
-      c.quadraticCurveTo(-r * 0.66, -r * 0.4, -r * 0.66, -r * 0.66);
+      c.quadraticCurveTo(-r * 0.66, -r * 0.4, -r * 0.62, -r * 0.7 - sb);
       c.closePath();
       // Thin moustache arching over the mouth, its ends running into the strap
       c.moveTo(r * 0.29, jaw - r * 0.02);
