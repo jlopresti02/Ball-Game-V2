@@ -284,6 +284,9 @@ function draw() {
     drawJab(b);
     drawHands(b, other);
     drawDoBronx(b); // the pose and the glow while it's on
+    drawShot(b);    // Hokit's double leg
+    drawMock(b);    // and his thumbs down
+    drawAngry(b);   // fuming at it
     b.x -= wox; b.y -= woy;
   });
 

@@ -66,7 +66,9 @@ function updateArmbar(self, dt) {
     }
     // They rip the arm out and spin away.
     floater(vic.x, vic.y - vic.r - 30, "ESCAPE", "note");
+    var letGo = c.letGo; // Josh Hokit lets them go on purpose (hokit.js)
     endArmbar(self);
+    if (letGo) { floater(self.x, self.y - self.r - 60, "LETS IT GO", "note"); onArmbarLetGo(self); }
     var a = -Math.PI / 2 + c.side * (0.6 + Math.random() * 0.4);
     vic.vx = Math.cos(a) * ARMBAR_ESCAPE_SPEED; vic.vy = Math.sin(a) * ARMBAR_ESCAPE_SPEED;
     self.vx = -Math.cos(a) * ARMBAR_ESCAPE_SPEED * 0.6; self.vy = -Math.sin(a) * ARMBAR_ESCAPE_SPEED * 0.6;

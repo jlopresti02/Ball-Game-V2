@@ -61,6 +61,7 @@ function clearActions(b) {
   b.punch = null; b.kick = null; b.swing = null; b.throwAnim = null; b.jabAnim = null;
   b.powerState = null; b.rageState = null; b.watcherState = null; b.invincible = false;
   b.flow = null; b.taunt = null; b.combo = null; b.checkAnim = null; b.checkStun = 0; b.knockFly = 0;
+  b.mock = null;
 }
 
 // The corner the opponent gets thrown into: the one lying most in the

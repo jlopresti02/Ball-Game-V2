@@ -74,6 +74,7 @@ Each saved roster fighter has a character file in `characters/` (one JSON file p
 |---|---|---|
 | Dustin Poirier (fighter art) | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB, and the guillotine off a shot |
 | Charles Oliveira (fighter art) | Grappler | The Grappler's grab and wall slam (but against another Grappler he only shoots for it half the time on contact), Khabib's quick 5-damage punches every 0.7s, 10% block, and the guard (25%) with the BJJ artist submissions (rear naked choke or armbar), special move Do Bronx |
+| Josh Hokit (fighter art) | BMF | The BMF's rapid 5-damage jabs and 75% weave, the armbar shot (5%, and he always lets them go) and the thumbs down taunt. Light Heavyweight |
 | Khabib Nurmagomedov (fighter art) | Grappler | The Grappler's grab and wall slam, plus quick 5-damage punches every 0.7s that charge his special extra fast, a back suplex on 60% of his grabs from behind, 10% block, special move Father's Plan |
 
 ## Fighter art
@@ -110,6 +111,12 @@ A fighter with `"hasGuard": true` can fall into guard when it's hit. Any punch, 
 
 A Grappler's `grapple.vsGrapplerChance` (100 by default) is how often it shoots for the grab on contact when the opponent is also a Grappler. Charles's is 50.
 
+### Armbar shot and thumbs down
+
+A fighter with `"hasArmbarShot": true` rolls once a second while it's touching the opponent: `armbarShot.chance`% (5) of the time it shoots a double leg. The shot always lands (no sprawl, weave or block): it drops its level, wraps both arms round their legs and drives them back, then goes straight into the armbar. Whether they tap is the fighter's own `"armbar"` odds; Josh Hokit has `tapBase` and `tapLowHp` at 0, so the one caught always escapes ("LETS IT GO"), and he goes straight into a thumbs down.
+
+A fighter with `"hasThumbsDown": true` mocks the opponent every `thumbsDown.cooldown` seconds (8) when there's some space between them: it stops, sticks an arm out and pumps a thumbs down at them. It gets to them: for `anger` seconds (3) they glow red with an anger mark over their head and steer straight at it, 25% faster than normal. The logic for both is in `js/game/hokit.js`. Josh Hokit has them.
+
 ## Special moves (created characters)
 
 Roster fighters can have a special move, set in the editor's **Special move** section. It has a charge bar under the fighter's health (like CTE Rejuvenation) that fills over time and fills faster with every clean hit the fighter lands. When it's full the move goes off.
@@ -142,6 +149,7 @@ js/game/rnc.js          BJJ submissions: the rear naked choke off a back take
 js/game/armbar.js       BJJ submissions: the armbar from the guard
 js/game/suplex.js       the back suplex on grabs from behind
 js/game/guard.js        Falling into guard: on its back, the circle, pass or get caught
+js/game/hokit.js        Josh Hokit's armbar shot and thumbs down taunt
 js/game/dobronx.js      Do Bronx: the pose, camera flashes, the Brazil arena and the 15-second boost
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest
