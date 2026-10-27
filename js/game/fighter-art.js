@@ -243,7 +243,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
 
   // Beard: sideburns down around the jaw to a full chin
   if (look.beard !== "none") {
-    c.globalAlpha = look.beard === "stubble" ? 0.28 : 1;
+    c.globalAlpha = look.beard === "stubble" ? 0.28 : look.beard === "short" ? 0.55 : 1;
     c.fillStyle = hc;
     c.beginPath();
     c.moveTo(-r * 0.74, -r * 0.66);
@@ -528,6 +528,29 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
   if (tat.lionCrown && !contained) drawLionChest(c, r, look, name, lw, false);
+  if (tat.medallion) {
+    // A round sun medallion on the sternum: rays round a ringed disc
+    var mt = contained ? 0.86 / 0.59 : 1, mr = r * 0.085;
+    c.save(); c.translate(0, -r * 0.3); c.scale(1, mt);
+    c.fillStyle = "rgba(20,24,36,0.7)";
+    for (var mrz = 0; mrz < 16; mrz++) {
+      var mra = mrz / 16 * Math.PI * 2, ml = mr * (mrz % 2 === 0 ? 1.9 : 1.5);
+      c.beginPath();
+      c.moveTo(Math.cos(mra - 0.17) * mr, Math.sin(mra - 0.17) * mr);
+      c.lineTo(Math.cos(mra) * ml, Math.sin(mra) * ml);
+      c.lineTo(Math.cos(mra + 0.17) * mr, Math.sin(mra + 0.17) * mr);
+      c.fill();
+    }
+    c.strokeStyle = "rgba(20,24,36,0.8)"; c.lineWidth = lw(0.014);
+    c.beginPath(); c.arc(0, 0, mr, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = "rgba(20,24,36,0.35)";
+    c.beginPath(); c.arc(0, 0, mr * 0.95, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(0, 0, mr * 0.55, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = "rgba(20,24,36,0.65)";
+    c.beginPath(); c.arc(0, 0, mr * 0.25, 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.strokeStyle = inkCol; c.fillStyle = inkCol;
+  }
   if (tat.portraits) {
     // Black-and-grey family portraits filling the upper chest: a woman with
     // long hair, an older man with grey hair (lowest) and a girl with dark
@@ -690,6 +713,22 @@ function drawArtBody(c, r, look, ink, name, contained) {
       }
       c.fillStyle = "#f4e04d";
       c.beginPath(); c.arc(spx, spy, pz * 0.4, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+  }
+  if (look.shortsStyle === "slash") {
+    // Jagged streaks raking across the legs, in the trim colour
+    var slr = artRand(artSeed(name + "slash"));
+    c.fillStyle = look.trim;
+    for (var sl = 0; sl < 20; sl++) {
+      var sy0 = sTop + band + r * 0.05 + slr() * (r * 0.88 - sTop - band), sx0 = (slr() * 2 - 1) * r * 0.75, sw = r * (0.18 + slr() * 0.25), sh0 = r * (0.01 + slr() * 0.015);
+      c.globalAlpha = 0.6 + slr() * 0.35;
+      c.beginPath();
+      c.moveTo(sx0 - sw / 2, sy0);
+      c.lineTo(sx0 - sw * 0.1, sy0 - sh0 * 1.2);
+      c.lineTo(sx0 + sw / 2, sy0 - sh0 * 2.2);
+      c.lineTo(sx0 + sw * 0.15, sy0 + sh0);
+      c.closePath(); c.fill();
     }
     c.globalAlpha = 1;
   }
