@@ -4,8 +4,10 @@
 // folding chair, raises it overhead and charges the opponent down. When he
 // gets to them he swings it down over their head for `damage` (it can't be
 // weaved or blocked): CLANG, the chair bends, and they're left dazed on the
-// spot with stars circling their head for `dazeTime` seconds. He throws the
-// dented chair over the cage into the crowd and runs a lap of the ring with
+// spot with stars circling their head for `dazeTime` seconds. He recoils
+// back off the impact still holding the chair, winds up with it cocked
+// behind his head and hurls it as hard as he can over the cage into the
+// nearest stand, then runs a lap of the ring with
 // his arms up, celebrating, for `celebrateTime` seconds, then gives them a
 // thumbs down.
 //
@@ -20,8 +22,12 @@ var CHAIR_CLOSE_SPEED = 900;   // charging them down
 var CHAIR_CLOSE_GIVEUP = 3.5;  // gives up (stays charged) if it can't get there
 var CHAIR_SWING_TIME = 0.15;   // the swing down onto their head (a quick whip)
 var CHAIR_HOLD_TIME = 0.05;    // the chair bounces straight off them after the hit
+var CHAIR_RECOIL_TIME = 0.28;  // he recoils back off the impact, still holding it
+var CHAIR_RECOIL_SPEED = 520;
+var CHAIR_WINDUP_TIME = 0.42;  // a big telegraphed wind-up, chair cocked behind his head
+var CHAIR_FOLLOW_TIME = 0.18;  // arms follow through after the throw
 var CHAIR_LAP_SPEED = 620;     // running laps of the ring celebrating
-var CHAIR_CROWD_TIME = 0.8;    // the chair's flight into the stands
+var CHAIR_CROWD_TIME = 0.45;   // the chair's flight into the stands (thrown as hard as he can)
 
 var chairDebris = []; // thrown-away chairs, tumbling off and fading
 
@@ -75,12 +81,34 @@ function updateChairShot(self, other, dt) {
   }
   if (m.phase === "hold") {
     if (m.t < CHAIR_HOLD_TIME) return true;
+    m.phase = "recoil"; m.t = 0;
+    if (other.alive) floater(other.x, other.y - other.r - 34, "DAZED", "note");
+    return true;
+  }
+  if (m.phase === "recoil") {
+    // Knocked back off the impact, the chair bouncing back up over his head.
+    var rk = Math.min(1, m.t / CHAIR_RECOIL_TIME);
+    self.x -= m.nx * CHAIR_RECOIL_SPEED * (1 - rk) * dt; self.y -= m.ny * CHAIR_RECOIL_SPEED * (1 - rk) * dt;
+    self.x = Math.min(W - self.r, Math.max(self.r, self.x)); self.y = Math.min(H - self.r, Math.max(self.r, self.y));
+    if (rk < 1) return true;
+    // Turns to the nearest stand and winds up.
+    var dl = self.x, dr = W - self.x, dtop = self.y, dbot = H - self.y, near = Math.min(dl, dr, dtop, dbot);
+    m.tx = near === dl ? -1 : near === dr ? 1 : 0; m.ty = m.tx ? 0 : (near === dtop ? -1 : 1);
+    m.phase = "windup"; m.t = 0;
+    return true;
+  }
+  if (m.phase === "windup") {
+    if (m.t < CHAIR_WINDUP_TIME) return true;
     throwChairIntoCrowd(self);
+    m.phase = "follow"; m.t = 0;
+    return true;
+  }
+  if (m.phase === "follow") {
+    if (m.t < CHAIR_FOLLOW_TIME) return true;
     if (!other.alive) { endChairShot(self, other); return false; }
     m.phase = "celebrate"; m.t = 0;
     m.lapA = Math.atan2(self.y - H / 2, self.x - W / 2); // where on the lap he joins it
     m.lapDir = Math.random() < 0.5 ? -1 : 1;
-    floater(other.x, other.y - other.r - 34, "DAZED", "note");
     return true;
   }
   if (m.phase === "celebrate") {
@@ -103,6 +131,7 @@ function updateChairShot(self, other, dt) {
 function landChairShot(self, other, m) {
   var dealt = hurt(other, self.char.special.damage, "igbb", self.id); // can't be weaved or blocked
   m.dent = true;
+  m.hitPos = chairHold(self, m); // where it smashed down, for the recoil
   if (other.alive) other.dazed = true; // now the stars come out
   playSlam(); playSlam(); playPunch(Math.max(60, dealt * 3));
   floater(other.x, other.y - other.r - 60, "CLANG!", "crit");
@@ -139,14 +168,14 @@ function endChairShot(self, other) {
 // Hurls the dented chair over the cage into the nearest stand: it tumbles
 // out of the ring, shrinking as it sails up into the crowd, who pop.
 function throwChairIntoCrowd(self) {
-  var h = chairHold(self, self.igbb);
-  var dl = h.x, dr = W - h.x, dt = h.y, db = H - h.y, near = Math.min(dl, dr, dt, db);
-  var nx = near === dl ? -1 : near === dr ? 1 : 0, ny = nx ? 0 : (near === dt ? -1 : 1);
-  var dist = near + self.r * 3.2; // well past the cage, into the seats
+  var m = self.igbb, h = chairHold(self, m), nx = m.tx, ny = m.ty;
+  var near = nx < 0 ? h.x : nx > 0 ? W - h.x : ny < 0 ? h.y : H - h.y;
+  var dist = Math.max(0, near) + self.r * 3.2; // well past the cage, into the seats
   chairDebris.push({ x: h.x, y: h.y, a: h.a, vx: nx * dist / CHAIR_CROWD_TIME + (Math.random() - 0.5) * 60, vy: ny * dist / CHAIR_CROWD_TIME + (Math.random() - 0.5) * 60,
     va: (Math.random() < 0.5 ? -1 : 1) * 11, t: 0, life: CHAIR_CROWD_TIME, size: self.r, dent: true, crowd: true });
   floater(self.x, self.y - self.r - 30, "INTO THE CROWD!", "note");
-  playWhoosh();
+  playWhoosh(); playWhoosh();
+  if (!reduceMotion) shake = Math.max(shake, 8);
 }
 
 // Throws the chair away (dented once it's been used), tumbling off.
@@ -176,7 +205,22 @@ function chairHold(b, m) {
   var dx = o.x - b.x, dy = o.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   var nx = m && m.nx != null ? m.nx : dx / d, ny = m && m.ny != null ? m.ny : dy / d;
   var over = { x: b.x - nx * r * 0.25, y: b.y - r * 1.25, a: -Math.atan2(nx, 1) * 0.35 };
-  if (!m || m.phase === "close" || m.phase === "daze") return over;
+  if (!m || m.phase === "close") return over;
+  if (m.phase === "recoil") {
+    // Bounces back up off their head to over his own.
+    var rk = Math.min(1, m.t / CHAIR_RECOIL_TIME), re = 1 - Math.pow(1 - rk, 3);
+    var from = m.hitPos || over;
+    return { x: from.x + (over.x - from.x) * re, y: from.y + (over.y - from.y) * re - Math.sin(Math.PI * rk) * r * 0.4, a: from.a + (over.a - from.a) * re };
+  }
+  if (m.phase === "windup") {
+    // Cocked back behind his head, away from the stand he's about to throw
+    // it into, shaking with the effort.
+    var wk = Math.min(1, m.t / CHAIR_WINDUP_TIME); wk = 1 - Math.pow(1 - wk, 2);
+    var tx = m.tx, ty = m.ty, side = tx || (b.x < W / 2 ? 1 : -1);
+    var cock = { x: b.x - tx * r * 1.0 - (ty ? side * r * 0.2 : 0), y: b.y - r * 1.2 - ty * r * 0.7, a: -side * (0.4 + 0.9 * wk) };
+    var shk = reduceMotion ? 0 : wk * r * 0.05;
+    return { x: over.x + (cock.x - over.x) * wk + (Math.random() - 0.5) * shk, y: over.y + (cock.y - over.y) * wk + (Math.random() - 0.5) * shk, a: over.a + (cock.a - over.a) * wk };
+  }
   if (m.phase === "fetch") {
     var k = Math.min(1, m.t / CHAIR_FETCH_TIME); k = k * k * (3 - 2 * k);
     return { x: over.x, y: b.y + r * 0.9 - (r * 2.15) * k, a: over.a * k, rise: k };
@@ -250,6 +294,7 @@ function drawChairShot(b) {
   var m = b.igbb;
   if (!m || m.move !== "chairshot" || !b.alive) return;
   if (m.phase === "celebrate") { drawArmsUp(b, m.t); return; }
+  if (m.phase === "follow") { drawFollowThrough(b, m); return; }
   var h = chairHold(b, m), s = b.r * 2;
   if (m.phase === "fetch" && h.rise < 0.35) return; // still under the ring
   var grip = [-1, 1].map(function (k) {
@@ -262,6 +307,19 @@ function drawChairShot(b) {
   });
   drawFoldingChair(h.x, h.y, s, h.a, m.phase === "hold" || m.dent, 1);
   grip.forEach(function (g) { drawGloveAt(g.x, g.y, size * 0.85, b.char); });
+}
+
+// Both arms out toward the stand he just threw it into.
+function drawFollowThrough(b, m) {
+  var size = b.char.punch.size || 13, k = Math.min(1, m.t / CHAIR_FOLLOW_TIME);
+  var tx = m.tx, ty = m.ty, px = -ty, py = tx;
+  [-1, 1].forEach(function (s) {
+    var sh = { x: b.x + px * s * b.r * 0.6, y: b.y + py * s * b.r * 0.6 - b.r * 0.2 };
+    var reach = b.r * (1.5 - 0.4 * k);
+    var hand = { x: b.x + tx * reach + px * s * b.r * 0.35, y: b.y + ty * reach + py * s * b.r * 0.35 - b.r * 0.3 };
+    strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
+    drawGloveAt(hand.x, hand.y, size * 0.85, b.char);
+  });
 }
 
 // Both fists pumping in the air.
