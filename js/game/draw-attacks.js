@@ -60,36 +60,38 @@ function drawKick(self, other) {
   ctx.lineWidth = ki.size * 0.62;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(tipX, tipY); ctx.stroke();
 
-  // The foot, pointed out past the end of the shin: a heel, the sole
-  // widening to the ball of the foot, then five toes, the big toe on the
-  // side leading the swing.
+  // The foot, bent at the ankle off the end of the shin.
   ctx.translate(tipX, tipY);
   ctx.rotate(angle);
-  ctx.save(); ctx.rotate(dir * 0.18); drawKickFoot(ki.size, armColor(self.char), dir); ctx.restore();
+  drawKickFoot(ki.size, armColor(self.char), -dir); // toes trailing, so the instep leads, like a roundhouse
   // Skin over the join, so the shin runs straight into the ankle.
   ctx.strokeStyle = armColor(self.char); ctx.lineWidth = ki.size * 0.62; ctx.lineCap = "butt";
-  ctx.beginPath(); ctx.moveTo(-ki.size * 0.8, 0); ctx.lineTo(ki.size * 0.15, 0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-ki.size * 1.1, 0); ctx.lineTo(-ki.size * 0.55, 0); ctx.stroke();
   ctx.restore();
 }
 
-// A bare foot pointing along +x from the ankle at the origin. `side` puts
-// the big toe on +y (1) or -y (-1).
+// A bare foot seen from the side, bent at the ankle: the shin comes in
+// along +x to the ankle at the origin, and the foot turns off it with the
+// toes pointing to +y (`side` 1) or -y (-1), the heel sticking out behind.
 function drawKickFoot(size, skin, side) {
-  var L = size * 2.2, wHeel = size * 0.42, wBall = size * 0.7, s = side;
-  ctx.fillStyle = skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3; ctx.lineJoin = "round";
-  // Toes first, so the foot's outline runs across their bases.
-  // [along the foot, across it, radius]: big toe first.
-  var toes = [[0.97, 0.42, 0.25], [0.96, -0.06, 0.16], [0.92, -0.4, 0.145], [0.87, -0.67, 0.13], [0.8, -0.9, 0.115]];
-  toes.forEach(function (t) {
-    ctx.beginPath(); ctx.arc(L * t[0], s * wBall * t[1], size * t[2], 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  });
+  var u = size, s = side, w = size * 0.31;
+  ctx.fillStyle = skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3; ctx.lineJoin = "round"; ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(0, -s * wHeel);
-  ctx.bezierCurveTo(-size * 0.6, -s * wHeel, -size * 0.6, s * wHeel, 0, s * wHeel);          // round heel
-  ctx.bezierCurveTo(L * 0.3, s * wHeel * 0.7, L * 0.5, s * wBall * 1.05, L * 0.8, s * wBall); // the arch, in to the ball of the big toe
-  ctx.quadraticCurveTo(L * 0.97, 0, L * 0.78, -s * wBall);                                   // across under the toes
-  ctx.bezierCurveTo(L * 0.55, -s * wBall * 1.0, L * 0.3, -s * wHeel * 1.1, 0, -s * wHeel);    // the straight outside edge
+  ctx.moveTo(-u * 0.7, s * w);
+  ctx.quadraticCurveTo(-u * 0.05, s * w * 1.1, -u * 0.02, s * u * 0.75);       // front of the ankle into the instep
+  ctx.quadraticCurveTo(-u * 0.02, s * u * 1.45, u * 0.08, s * u * 1.85);       // top of the foot down to the toes
+  ctx.quadraticCurveTo(u * 0.2, s * u * 2.12, u * 0.46, s * u * 1.92);         // round the end of the big toe
+  ctx.quadraticCurveTo(u * 0.56, s * u * 1.5, u * 0.5, s * u * 1.05);          // ball of the foot
+  ctx.quadraticCurveTo(u * 0.46, s * u * 0.55, u * 0.56, s * u * 0.05);        // the sole's arch
+  ctx.bezierCurveTo(u * 0.66, -s * u * 0.45, u * 0.2, -s * u * 0.62, -u * 0.08, -s * u * 0.42); // round the heel
+  ctx.quadraticCurveTo(-u * 0.35, -s * w * 1.05, -u * 0.7, -s * w);             // up the back into the Achilles
   ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Ankle bone and the creases of the toes.
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(-u * 0.12, -s * u * 0.02, u * 0.13, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(u * 0.16, s * u * 1.62); ctx.quadraticCurveTo(u * 0.3, s * u * 1.68, u * 0.4, s * u * 1.6);
+  ctx.stroke();
 }
 
 // Every fighter keeps a pair of hands up in front of it, facing whichever
