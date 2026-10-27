@@ -643,8 +643,9 @@ function playSmashLine() {
 }
 
 // Josh Hokit's trash talk: each thumbs down plays one of these at random,
-// never the same one twice in a row. Some lines run longer than the taunt's
-// cooldown, so while one is still going the next thumbs down stays quiet.
+// never the same one twice in a row. A thumbs down can come early (right
+// after he lets an armbar go), so while a line is still going the next one
+// stays quiet.
 var HOKIT_TAUNTS = ["hokitKnee", "hokitDog", "hokitDivision", "hokitWeights", "hokitPlan"];
 var hokitLineSrc = null, hokitLineEnd = 0, lastHokitLine = -1;
 function playHokitTaunt() {
