@@ -1,8 +1,8 @@
 {
   "id": "c-josh-hokit",
-  "rev": 2,
+  "rev": 3,
   "builtin": false,
-  "weightClass": "lightheavyweight",
+  "weightClass": "heavyweight",
   "name": "Josh Hokit",
   "base": "BMF",
   "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him.",
