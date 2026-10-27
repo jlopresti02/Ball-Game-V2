@@ -5,11 +5,14 @@
 // gets to them he swings it down over their head for `damage` (it can't be
 // weaved or blocked): CLANG, the chair bends, and they're left dazed on the
 // spot with stars circling their head for `dazeTime` seconds. He throws the
-// dented chair away and gives them a thumbs down.
+// dented chair over the cage into the crowd and runs a lap of the ring with
+// his arms up, celebrating, for `celebrateTime` seconds, then gives them a
+// thumbs down.
 //
 // It shares the fighter's `igbb` state (move "chairshot"), so it locks and
 // guards like the other specials: he blocks everything while he's getting
-// the chair out and swinging it, but not while he's charging them down.
+// the chair out, swinging it and running his lap, but not while he's
+// charging them down.
 "use strict";
 
 var CHAIR_FETCH_TIME = 0.75;   // reaching under the ring and raising it overhead
@@ -17,7 +20,8 @@ var CHAIR_CLOSE_SPEED = 760;   // charging them down
 var CHAIR_CLOSE_GIVEUP = 3.5;  // gives up (stays charged) if it can't get there
 var CHAIR_SWING_TIME = 0.3;    // the swing down onto their head
 var CHAIR_HOLD_TIME = 0.3;     // the chair stays on them a moment after the hit
-var CHAIR_BACKOFF_SPEED = 220; // steps back while they're dazed
+var CHAIR_LAP_SPEED = 620;     // running laps of the ring celebrating
+var CHAIR_CROWD_TIME = 0.8;    // the chair's flight into the stands
 
 var chairDebris = []; // thrown-away chairs, tumbling off and fading
 
@@ -70,16 +74,25 @@ function updateChairShot(self, other, dt) {
   }
   if (m.phase === "hold") {
     if (m.t < CHAIR_HOLD_TIME) return true;
-    tossChair(self, -m.nx, -m.ny, true);
+    throwChairIntoCrowd(self);
     if (!other.alive) { endChairShot(self, other); return false; }
-    m.phase = "daze"; m.t = 0;
+    m.phase = "celebrate"; m.t = 0;
+    m.lapA = Math.atan2(self.y - H / 2, self.x - W / 2); // where on the lap he joins it
+    m.lapDir = Math.random() < 0.5 ? -1 : 1;
     floater(other.x, other.y - other.r - 34, "DAZED", "note");
     return true;
   }
-  if (m.phase === "daze") {
-    // Backs off and lets them stagger.
-    self.vx = -m.nx * CHAIR_BACKOFF_SPEED; self.vy = -m.ny * CHAIR_BACKOFF_SPEED;
-    if (m.t < sp.dazeTime) return true;
+  if (m.phase === "celebrate") {
+    // Arms up, running a lap round the ring while they're still seeing stars.
+    if (other.dazed && m.t >= sp.dazeTime) { other.dazed = false; setSpeed(other, (other.baseSpeed || SPEED) * 0.6); }
+    var R = Math.min(W, H) / 2 - self.r - 10;
+    m.lapA += m.lapDir * CHAIR_LAP_SPEED / R * dt;
+    var tx = W / 2 + Math.cos(m.lapA) * R, ty = H / 2 + Math.sin(m.lapA) * R;
+    var lx = tx - self.x, ly = ty - self.y, ld = Math.sqrt(lx * lx + ly * ly);
+    var step = CHAIR_LAP_SPEED * 1.4 * dt; // catches up onto the lap first
+    if (ld <= step) { self.x = tx; self.y = ty; } else { self.x += lx / ld * step; self.y += ly / ld * step; }
+    if (!reduceMotion) particles.push({ x: self.x, y: self.y, vx: 0, vy: 0, life: 0.22, max: 0.22, size: self.r * 0.45, color: self.char.color });
+    if (m.t < sp.celebrateTime) return true;
     endChairShot(self, other);
     return false;
   }
@@ -101,13 +114,29 @@ function landChairShot(self, other, m) {
 }
 
 function endChairShot(self, other) {
+  var m = self.igbb;
   self.igbb = null;
   self.specialT = 0;
   other.dazed = false;
+  // Off the lap at full speed, the way he was running.
+  if (m && m.lapA != null) { self.vx = -Math.sin(m.lapA) * m.lapDir; self.vy = Math.cos(m.lapA) * m.lapDir; }
   setSpeed(self, self.baseSpeed || SPEED);
   if (other.alive) setSpeed(other, (other.baseSpeed || SPEED) * 0.6);
   // Straight into a thumbs down at them (hokit.js).
   if (self.char.hasThumbsDown) self.mockCd = Math.min(self.mockCd, 0.2);
+}
+
+// Hurls the dented chair over the cage into the nearest stand: it tumbles
+// out of the ring, shrinking as it sails up into the crowd, who pop.
+function throwChairIntoCrowd(self) {
+  var h = chairHold(self, self.igbb);
+  var dl = h.x, dr = W - h.x, dt = h.y, db = H - h.y, near = Math.min(dl, dr, dt, db);
+  var nx = near === dl ? -1 : near === dr ? 1 : 0, ny = nx ? 0 : (near === dt ? -1 : 1);
+  var dist = near + self.r * 3.2; // well past the cage, into the seats
+  chairDebris.push({ x: h.x, y: h.y, a: h.a, vx: nx * dist / CHAIR_CROWD_TIME + (Math.random() - 0.5) * 60, vy: ny * dist / CHAIR_CROWD_TIME + (Math.random() - 0.5) * 60,
+    va: (Math.random() < 0.5 ? -1 : 1) * 11, t: 0, life: CHAIR_CROWD_TIME, size: self.r, dent: true, crowd: true });
+  floater(self.x, self.y - self.r - 30, "INTO THE CROWD!", "note");
+  playWhoosh();
 }
 
 // Throws the chair away (dented once it's been used), tumbling off.
@@ -118,8 +147,15 @@ function tossChair(self, nx, ny, dented) {
 }
 
 function tickChairDebris(dt) {
-  chairDebris.forEach(function (c) { c.t += dt; c.x += c.vx * dt; c.y += c.vy * dt; c.vx *= 0.97; c.vy *= 0.97; c.a += c.va * dt; });
-  chairDebris = chairDebris.filter(function (c) { return c.t < c.life; });
+  chairDebris.forEach(function (c) {
+    c.t += dt; c.x += c.vx * dt; c.y += c.vy * dt; c.a += c.va * dt;
+    if (!c.crowd) { c.vx *= 0.97; c.vy *= 0.97; }
+  });
+  chairDebris = chairDebris.filter(function (c) {
+    if (c.t < c.life) return true;
+    if (c.crowd) crowdReact(1); // lands in the seats: the crowd goes up
+    return false;
+  });
 }
 
 // Where the chair is and how it's tilted: rising out from under him in the
@@ -203,6 +239,7 @@ function drawFoldingChair(x, y, s, a, dent, alpha) {
 function drawChairShot(b) {
   var m = b.igbb;
   if (!m || m.move !== "chairshot" || !b.alive) return;
+  if (m.phase === "celebrate") { drawArmsUp(b, m.t); return; }
   var h = chairHold(b, m), s = b.r * 2;
   if (m.phase === "fetch" && h.rise < 0.35) return; // still under the ring
   var grip = [-1, 1].map(function (k) {
@@ -217,10 +254,25 @@ function drawChairShot(b) {
   grip.forEach(function (g) { drawGloveAt(g.x, g.y, size * 0.85, b.char); });
 }
 
+// Both fists pumping in the air.
+function drawArmsUp(b, t) {
+  var size = b.char.punch.size || 13;
+  [-1, 1].forEach(function (k, i) {
+    var pump = Math.max(0, Math.sin(t * 12 + i * Math.PI)) * b.r * 0.35;
+    var sh = { x: b.x + k * b.r * 0.62, y: b.y - b.r * 0.5 };
+    var hand = { x: b.x + k * b.r * 0.9, y: b.y - b.r * 1.15 - pump };
+    strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
+    drawGloveAt(hand.x, hand.y, size * 0.9, b.char);
+  });
+}
+
 // Thrown-away chairs tumbling off.
 function drawChairDebris() {
   chairDebris.forEach(function (c) {
-    drawFoldingChair(c.x, c.y, c.size * 2, c.a, c.dent, Math.max(0, 1 - c.t / c.life));
+    var k = c.t / c.life;
+    // Into the crowd it sails up and away (shrinks), only fading at the end.
+    if (c.crowd) drawFoldingChair(c.x, c.y - Math.sin(Math.PI * k) * c.size * 1.2, c.size * 2 * (1 - 0.45 * k), c.a, c.dent, k > 0.8 ? (1 - k) / 0.2 : 1);
+    else drawFoldingChair(c.x, c.y, c.size * 2, c.a, c.dent, Math.max(0, 1 - k));
   });
 }
 

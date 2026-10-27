@@ -182,7 +182,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-josh-hokit",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Josh Hokit",
@@ -271,7 +271,8 @@ var SAVED_ROSTER = [
       "hitCut": 3,
       "punchCut": 1,
       "damage": 40,
-      "dazeTime": 1.5
+      "dazeTime": 1.5,
+      "celebrateTime": 3
     },
     "blockChance": 0
   },
