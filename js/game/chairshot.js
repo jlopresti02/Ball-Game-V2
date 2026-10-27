@@ -16,10 +16,10 @@
 "use strict";
 
 var CHAIR_FETCH_TIME = 0.75;   // reaching under the ring and raising it overhead
-var CHAIR_CLOSE_SPEED = 760;   // charging them down
+var CHAIR_CLOSE_SPEED = 900;   // charging them down
 var CHAIR_CLOSE_GIVEUP = 3.5;  // gives up (stays charged) if it can't get there
-var CHAIR_SWING_TIME = 0.3;    // the swing down onto their head
-var CHAIR_HOLD_TIME = 0.3;     // the chair stays on them a moment after the hit
+var CHAIR_SWING_TIME = 0.15;   // the swing down onto their head (a quick whip)
+var CHAIR_HOLD_TIME = 0.35;    // the chair stays on them a moment after the hit
 var CHAIR_LAP_SPEED = 620;     // running laps of the ring celebrating
 var CHAIR_CROWD_TIME = 0.8;    // the chair's flight into the stands
 
@@ -54,9 +54,10 @@ function updateChairShot(self, other, dt) {
     }
     if (d < self.r + other.r + 14) {
       clearActions(other);
-      other.dazed = true; other.vx = 0; other.vy = 0;
+      other.dazed = "held"; other.vx = 0; other.vy = 0; // pinned in place, no stars until it lands
       self.vx = 0; self.vy = 0;
       m.phase = "swing"; m.t = 0; m.nx = dx / d; m.ny = dy / d;
+      playWhoosh();
       return true;
     }
     self.vx = dx / d * CHAIR_CLOSE_SPEED; self.vy = dy / d * CHAIR_CLOSE_SPEED;
@@ -102,15 +103,24 @@ function updateChairShot(self, other, dt) {
 function landChairShot(self, other, m) {
   var dealt = hurt(other, self.char.special.damage, "igbb", self.id); // can't be weaved or blocked
   m.dent = true;
-  playSlam(); playPunch(Math.max(40, dealt * 2));
+  if (other.alive) other.dazed = true; // now the stars come out
+  playSlam(); playSlam(); playPunch(Math.max(60, dealt * 3));
   floater(other.x, other.y - other.r - 60, "CLANG!", "crit");
-  other.squash = { t: 0.26, max: 0.26, nx: 0, ny: -1 }; // flattened down from above
   other.flash = 0.2;
   impacts.push({ x: other.x, y: other.y - other.r * 0.5, nx: 0, ny: -1, life: 0.6, max: 0.6, color: theme.hit });
   impacts.push({ x: other.x, y: other.y - other.r * 0.5, nx: -m.nx, ny: -m.ny, life: 0.45, max: 0.45, color: self.char.color });
-  igbbSparks(other.x, other.y - other.r * 0.4, 0, -1, "#d7dbe2", 26, 520);
-  hitStop = Math.max(hitStop, 0.2);
-  if (!reduceMotion) shake = Math.max(shake, 22);
+  impacts.push({ x: other.x, y: other.y, nx: 0, ny: -1, life: 0.9, max: 0.9, color: "#ffffff" });
+  igbbSparks(other.x, other.y - other.r * 0.4, 0, -1, "#d7dbe2", 40, 700);
+  igbbSparks(other.x, other.y - other.r * 0.4, -m.nx, -m.ny, theme.hit, 18, 560);
+  // Bits of the chair (bolts, a rubber foot) and sweat spraying off them.
+  if (!reduceMotion) for (var i = 0; i < 14; i++) {
+    var a = -Math.PI / 2 + (Math.random() - 0.5) * 2.6, v = 300 + Math.random() * 420;
+    particles.push({ x: other.x, y: other.y - other.r * 0.8, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.3, max: 0.8,
+      size: 2.5 + Math.random() * 3, color: i % 3 ? "#1b1d21" : "#cfe8ff" });
+  }
+  other.squash = { t: 0.34, max: 0.34, nx: 0, ny: -1 }; // flattened down from above
+  hitStop = Math.max(hitStop, 0.28);
+  if (!reduceMotion) shake = Math.max(shake, 34);
 }
 
 function endChairShot(self, other) {
@@ -172,13 +182,13 @@ function chairHold(b, m) {
     return { x: over.x, y: b.y + r * 0.9 - (r * 2.15) * k, a: over.a * k, rise: k };
   }
   // Swung from back over his head down onto theirs.
-  var p = m.phase === "swing" ? Math.min(1, m.t / CHAIR_SWING_TIME) : 1, e = p * p;
+  var p = m.phase === "swing" ? Math.min(1, m.t / CHAIR_SWING_TIME) : 1, e = p * p * p; // whips in, fastest at the end
   // Lands flat across the top of their head, the seat facing out.
   var sgn = nx < -0.15 ? -1 : 1;
   var back = { x: b.x - nx * r * 0.7, y: b.y - r * 1.35, a: -sgn * 0.6 };
   var hit = { x: o.x, y: o.y - o.r - r * 0.3, a: sgn * Math.PI / 2 };
-  if (p < 0.25) {
-    var q = p / 0.25;
+  if (p < 0.15) {
+    var q = p / 0.15;
     return { x: over.x + (back.x - over.x) * q, y: over.y + (back.y - over.y) * q, a: over.a + (back.a - over.a) * q };
   }
   return { x: back.x + (hit.x - back.x) * e, y: back.y + (hit.y - back.y) * e - Math.sin(Math.PI * e) * r * 0.5, a: back.a + (hit.a - back.a) * e };
@@ -278,7 +288,7 @@ function drawChairDebris() {
 
 // Stars spinning round a dazed fighter's head.
 function drawDazed(b) {
-  if (!b.dazed || !b.alive) return;
+  if (b.dazed !== true || !b.alive) return;
   var t = performance.now() / 1000;
   for (var i = 0; i < 3; i++) {
     var a = t * 5 + i * Math.PI * 2 / 3;
