@@ -74,6 +74,7 @@ Each saved roster fighter has a character file in `characters/` (one JSON file p
 |---|---|---|
 | Dustin Poirier (fighter art) | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB, and the guillotine off a shot |
 | Charles Oliveira (fighter art) | Grappler | The Grappler's grab and wall slam (but against another Grappler he only shoots for it half the time on contact), Khabib's quick 5-damage punches every 0.7s, 10% block, and the guard (25%) with the BJJ artist submissions (rear naked choke or armbar), special move Do Bronx |
+| Josh Hokit (fighter art) | BMF | The BMF's rapid 5-damage jabs and 75% weave, the armbar shot (5%, and he always lets them go) and the thumbs down taunt. Unlike the BMF he can still weave 50% of attacks while celebrating (`weave.tauntDodge`), and his thumbs down is covered by his normal 75% weave. Heavyweight |
 | Khabib Nurmagomedov (fighter art) | Grappler | The Grappler's grab and wall slam, plus quick 5-damage punches every 0.7s that charge his special extra fast, a back suplex on 60% of his grabs from behind, 10% block, special move Father's Plan |
 
 ## Fighter art
@@ -82,14 +83,16 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 
 | Look field | Values |
 |---|---|
-| `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours |
+| `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours (`accent`: optional stripe colour for `pinstripe` shorts) |
 | `build` | `muscular`, `lean`, `stocky` |
 | `hair` | `bald`, `buzz`, `short`, `long`, `mohawk`, `dreads` |
 | `beard` | `none`, `stubble`, `full` |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
-| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg) |
-| `tattoos` | any of `chest`, `portraits`, `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt) or `"lion"` (lion head on the delt, patchy ink); `armInk` gives the punching arms an inked texture |
+| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs) |
+| `headwear` | optional: `bandana` (stars-and-stripes bandana over the head) |
+| `glasses` | optional: `shades` (dark sunglasses) |
+| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `armInk` gives the punching arms an inked texture |
 
 ## Submissions
 
@@ -107,6 +110,12 @@ BJJ submissions are switched on per fighter in its character file. So far there'
 A fighter with `"hasGuard": true` can fall into guard when it's hit. Any punch, kick, swing, combo punch or projectile that lands on it has a `chance`% (25) to drop it onto its back, planted on the spot for `time` seconds (6) with a circle of `radius` (130) drawn around it and a ring that drains as the time runs out. Whoever hit it is pushed back out of the circle first (toward open floor if a wall is in the way), and has to stay out for half a second before stepping back in counts. The first time the opponent steps back into the circle it's a coin flip (`passChance`, 50): **guard passed**, the opponent gets on top for `passPunches` (4) free ground-and-pound punches of `passDamage` (10), or **caught**, the guard player goes for a submission picked at random from `subs`. The options are `"rnc"`, `"armbar"` and `"guillotine"`, or a whole submission set: `"bjj"` (the BJJ artist set: rear naked choke and armbar) or `"striker"` (the striker set: for now just the guillotine, which strikers normally get off a shot with `"hasGuillotine"`). Sets are listed in `SUB_SETS` in `js/game/guard.js`. If nobody steps in before the time is up it rolls back upright, the circle fading out, then pushes off away from the opponent and eases back to its normal speed. Once it's back on its feet it can't fall into guard again for `cooldown` seconds (3). The logic is in `js/game/guard.js`. Charles Oliveira has it.
 
 A Grappler's `grapple.vsGrapplerChance` (100 by default) is how often it shoots for the grab on contact when the opponent is also a Grappler. Charles's is 50.
+
+### Armbar shot and thumbs down
+
+A fighter with `"hasArmbarShot": true` rolls once a second while it's touching the opponent: `armbarShot.chance`% (5) of the time it shoots a double leg. The shot always lands (no sprawl, weave or block): it drops its level, wraps both arms round their legs and drives them back, then goes straight into the armbar. Whether they tap is the fighter's own `"armbar"` odds; Josh Hokit has `tapBase` and `tapLowHp` at 0, so the one caught always escapes ("LETS IT GO"), and he goes straight into a thumbs down.
+
+A fighter with `"hasThumbsDown": true` mocks the opponent every `thumbsDown.cooldown` seconds (8) when there's some space between them: it stops, sticks an arm out and pumps a thumbs down at them. It gets to them: for `anger` seconds (3) they glow red with an anger mark over their head and steer straight at it, 25% faster than normal. The logic for both is in `js/game/hokit.js`. Josh Hokit has them.
 
 ## Special moves (created characters)
 
@@ -140,6 +149,7 @@ js/game/rnc.js          BJJ submissions: the rear naked choke off a back take
 js/game/armbar.js       BJJ submissions: the armbar from the guard
 js/game/suplex.js       the back suplex on grabs from behind
 js/game/guard.js        Falling into guard: on its back, the circle, pass or get caught
+js/game/hokit.js        Josh Hokit's armbar shot and thumbs down taunt
 js/game/dobronx.js      Do Bronx: the pose, camera flashes, the Brazil arena and the 15-second boost
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest

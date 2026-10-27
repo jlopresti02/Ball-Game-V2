@@ -69,6 +69,8 @@ function abilitySummary(ch) {
   if (ch.hasSuplex) parts.push("\uD83E\uDD3C " + ch.suplex.chance + "% suplex from behind");
   if (ch.hasGuillotine) parts.push("\uD83D\uDD12 " + ch.guillotine.chance + "% guillotine");
   if (ch.hasGuard) parts.push("\uD83E\uDD4B " + ch.guard.chance + "% guard");
+  if (ch.hasArmbarShot) parts.push("\uD83E\uDDB5 " + ch.armbarShot.chance + "% armbar shot");
+  if (ch.hasThumbsDown) parts.push("\uD83D\uDC4E taunt");
   if (ch.hasSpecial) parts.push("\u2B50 " + specialName(ch));
   if (ch.hasForget) parts.push("\uD83E\uDDE0 +" + ch.forget.heal + " / " + ch.forget.every + "s");
   if (ch.blockChance > 0) parts.push("🛡️ " + ch.blockChance + "% block");

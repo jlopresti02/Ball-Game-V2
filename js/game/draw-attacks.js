@@ -87,6 +87,7 @@ function drawHands(b, other) {
   if (!b.alive || b.koOut || b.kick || b.grappled || b.grapple || b.sprawl || subLocked(b) || spinning || raging || b.combo || b.swing) return;
   if (b.taunt && b.taunt.t < 0) return; // the punch is still finishing
   if (b.igbb && b.igbb.move === "dobronx") return; // posing (drawDoBronx)
+  if (b.mock) return; // giving a thumbs down (drawMock)
   if (b.koRush && b.koRush.phase === "celebrate") return; // hands up (drawn by drawKoCelebrate)
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.

@@ -202,6 +202,13 @@ function defaultArmbar() { return { tapBase: 10, tapLowHp: 50 }; }
 function defaultGuard() {
   return { chance: 25, time: 6, radius: 130, passChance: 50, passPunches: 4, passDamage: 10, subs: ["bjj"], cooldown: 3 };
 }
+// Armbar shot (Josh Hokit): chance% of the times it bumps into the opponent
+// it shoots a takedown that always lands, straight into an armbar (see
+// hokit.js). Whether they tap is its own `armbar` odds.
+function defaultArmbarShot() { return { chance: 5 }; }
+// Thumbs down: every `cooldown` seconds it mocks the opponent, who steers
+// straight at it for `anger` seconds (see hokit.js).
+function defaultThumbsDown() { return { cooldown: 8, anger: 3 }; }
 function defaultSpecial() { return { move: "igbb", chargeTime: 45, hitCut: 5, punches: 7, damage: 10, shellTime: 5 }; }
 function defaultWatcher() {
   return { lasers: 2, preDelay: 1, chargeDur: 2, fireDur: 10, tickDamage: 0.75, tickInterval: 0.25, restDur: 6, approachSpeed: 420 };
@@ -250,6 +257,10 @@ function normalizeChar(ch) {
   Object.keys(defaultGuard()).forEach(function (k) {
     if (ch.guard[k] == null) ch.guard[k] = defaultGuard()[k];
   });
+  if (ch.hasArmbarShot === undefined) ch.hasArmbarShot = false;
+  if (!ch.armbarShot) ch.armbarShot = defaultArmbarShot();
+  if (ch.hasThumbsDown === undefined) ch.hasThumbsDown = false;
+  if (!ch.thumbsDown) ch.thumbsDown = defaultThumbsDown();
   if (ch.blockChance == null) ch.blockChance = 0;
   if (!ch.weightClass) ch.weightClass = "middleweight"; // weight.js
   // Special moves are for created characters. Dustin was set up with IGBB

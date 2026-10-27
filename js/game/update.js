@@ -68,6 +68,8 @@ function update(dt) {
       // before the speed regulator starts easing it back down.
       b.knockFly = Math.max(0, b.knockFly - dt);
     }
+    if (b.mock && (b.grappled || b.slam || subLocked(b) || b.igbb || b.koOut)) b.mock = null;
+    steerAngry(b, dt); // wound up by a thumbs down: heads straight for him
     regulateSpeed(b, dt);
     if ((b.combo || b.flow || (b.jabAnim && b.jabAnim.big)) && !reduceMotion) {
       // Streak behind a fighter hunting down its combo.

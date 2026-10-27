@@ -578,7 +578,7 @@ function drawJumbotron(px) {
   var rows = [["STRIKES LANDED", "strikes"], ["DAMAGE DEALT", "dmg"], ["TAKEDOWNS", "td"]];
   rows.forEach(function (row, j) {
     var yy = sy + 176 + j * 28;
-    var a = Math.round(fightStats[0][row[1]]), b = Math.round(fightStats[1][row[1]]);
+    var a = Number(dmgText(fightStats[0][row[1]])), b = Number(dmgText(fightStats[1][row[1]]));
     ctx.fillStyle = j % 2 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)";
     ctx.fillRect(sx + 20, yy - 13, sw - 40, 26);
     jtText(row[0], sx + sw / 2, yy + 1, 23, "#c9d3ea", "center", "#000000");
