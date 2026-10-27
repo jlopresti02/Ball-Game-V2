@@ -133,7 +133,7 @@ function landChairShot(self, other, m) {
   m.dent = true;
   m.hitPos = chairHold(self, m); // where it smashed down, for the recoil
   if (other.alive) other.dazed = true; // now the stars come out
-  playSlam(); playSlam(); playPunch(Math.max(60, dealt * 3));
+  playChairShot(); playSlam(); // the recorded CLANG, with a thud under it
   floater(other.x, other.y - other.r - 60, "CLANG!", "crit");
   other.flash = 0.2;
   impacts.push({ x: other.x, y: other.y - other.r * 0.5, nx: 0, ny: -1, life: 0.6, max: 0.6, color: theme.hit });
