@@ -1,0 +1,93 @@
+{
+  "id": "c-ciryl-gane",
+  "rev": 3,
+  "builtin": false,
+  "weightClass": "heavyweight",
+  "name": "Ciryl Gane",
+  "base": "Kicker",
+  "bio": "\"Bon Gamin\". Fighter mode: built on the Kicker base, long 40-damage kicks from range (one every 4.5s) that can be checked, plus a steady 12-damage punch up close. Cheater mode: in his fights the referee falls asleep for 5 seconds out of every 15, and Gane cheats the whole time, with eye pokes into a combo, throwing objects, or a bat. While he's cheating, every takedown on him fails: he grabs the cage and stands back up.",
+  "color": "#1f4fa8",
+  "label": "",
+  "imgData": null,
+  "look": {
+    "skin": "#a8724c",
+    "build": "muscular",
+    "bodyHair": "none",
+    "hair": "stubble",
+    "hairColor": "#151110",
+    "beard": "chinstrap",
+    "ears": "normal",
+    "tattoos": {
+      "medallion": true
+    },
+    "shorts": "#eceeef",
+    "trim": "#141414",
+    "shortsStyle": "slash",
+    "gloves": "#151515"
+  },
+  "hasProjectile": false,
+  "proj": {
+    "size": 7,
+    "speed": 460,
+    "damage": 10,
+    "cooldown": 1.6,
+    "imgData": null
+  },
+  "hasPunch": true,
+  "punch": {
+    "damage": 12,
+    "cooldown": 1.1,
+    "speed": 0.3,
+    "size": 13,
+    "knockback": 80,
+    "reach": 35,
+    "koChance": 0
+  },
+  "hasKick": true,
+  "kick": {
+    "damage": 40,
+    "cooldown": 4.5,
+    "speed": 0.5,
+    "size": 17,
+    "knockback": 450,
+    "reach": 75,
+    "checkChance": 25
+  },
+  "hasGrapple": false,
+  "hasPowerPunch": false,
+  "hasRage": false,
+  "hasWatcher": false,
+  "hasWeave": false,
+  "hasSwing": false,
+  "hasForget": false,
+  "blockChance": 0,
+  "hasCheater": true,
+  "cheater": {
+    "awake": 10,
+    "asleep": 5,
+    "poke": {
+      "damage": 6,
+      "stun": 0.25,
+      "combo": [
+        10,
+        10,
+        10,
+        10,
+        30
+      ],
+      "comboGap": 0.16,
+      "cooldown": 0.8
+    },
+    "throw": {
+      "cooldown": 0.75,
+      "speed": 560
+    },
+    "bat": {
+      "damage": 22,
+      "cooldown": 0.25,
+      "swing": 0.2,
+      "reach": 55,
+      "knockback": 260
+    }
+  }
+}

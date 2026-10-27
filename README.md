@@ -11,7 +11,7 @@ For a single self-contained file (handy for sharing or pasting into a Claude art
 ## Menus
 
 - **Roster** (the main screen) holds the custom fighters you've built and saved. Roster fighters will later get their own textures, audio and special moves on top of the character bases.
-- **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters. Every card there has a **Mirror** button that puts that fighter on both sides; the second copy is named "<name> 2" and drawn in a lighter or darker shade. Its **Dev Fighters** section holds older versions of roster fighters for testing (e.g. Dustin Poirier with his face photo, from before his fighter art), and can hold test versions of roster fighters trying out a new mechanic before the real one gets it (`devVariant` in `js/dev-fighters.js`). An old copy of a repo fighter saved under another id without fighter art is removed from the roster automatically. The **Always KO Rush** switch makes every Brawler open each Dev Corner fight with the KO Rush (100% instead of 5%). The **Weight class** picker puts both fighters in one weight class for Dev Corner fights ("Their own" leaves them as they are).
+- **The Dev Corner** (button at the top of the main screen) is where the character bases can be put into battle, against each other or against roster fighters. Every card there has a **Mirror** button that puts that fighter on both sides; the second copy is named "<name> 2" and drawn in a lighter or darker shade. Its **Dev Fighters** section holds older versions of roster fighters for testing (e.g. Dustin Poirier with his face photo, from before his fighter art), and can hold test versions of roster fighters trying out a new mechanic before the real one gets it (`devVariant` in `js/dev-fighters.js`). An old copy of a repo fighter saved under another id without fighter art is removed from the roster automatically. The **Always KO Rush** switch makes every Brawler open each Dev Corner fight with the KO Rush (100% instead of 5%). The **Referee** switch puts the referee in every Dev Corner fight. The **Weight class** picker puts both fighters in one weight class for Dev Corner fights ("Their own" leaves them as they are).
 
 ## Arenas
 
@@ -21,6 +21,10 @@ The **Arena** button under the fight switches between two arenas, and the game r
 
 - **Test**: the plain square arena with the health bars above it.
 - **WWIT stadium**: a 9:16 frame for reels. The cage sits in the middle on a WWIT MMA branded mat, with stands of cheering fans (drawn in the fighter art style) around it. A jumbotron above the cage replaces the health bars and shows the clock, each fighter's health and special meter, and live strikes landed, damage dealt and takedowns. The cage and jumbotron stay out of the areas Reels and TikTok cover with their own buttons and captions.
+
+## Referee
+
+When Ciryl Gane (`c-ciryl-gane`) is in a fight, or the fighter has `"hasReferee": true`, a referee works inside the cage. He's a ball in a black REF shirt, drawn under the fighters and see-through to the fight (nothing hits him or bumps into him). He keeps to whichever corner or edge spot is furthest from both fighters, steps back from anyone who gets close, and when a fighter is knocked out or taps he runs in over them and waves it off ("STOP!"). The logic is in `js/game/referee.js`.
 
 ## Character Bases
 
@@ -75,6 +79,7 @@ Each saved roster fighter has a character file in `characters/` (one JSON file p
 | Dustin Poirier (fighter art) | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB, and the guillotine off a shot |
 | Charles Oliveira (fighter art) | Grappler | The Grappler's grab and wall slam (but against another Grappler he only shoots for it half the time on contact), Khabib's quick 5-damage punches every 0.7s, 10% block, and the guard (25%) with the BJJ artist submissions (rear naked choke or armbar), special move Do Bronx |
 | Josh Hokit (fighter art) | BMF | The BMF's rapid 5-damage jabs and 75% weave, the armbar shot (5%, and he always lets them go) and the thumbs down taunt. Unlike the BMF he can still weave 50% of attacks while celebrating (`weave.tauntDodge`), and his thumbs down is covered by his normal 75% weave. Special move Chair Shot. Heavyweight |
+| Ciryl Gane (fighter art) | Kicker | The Kicker's long 40-damage kicks (25% chance to be checked) on a longer 4.5s cooldown, plus a steady 12-damage punch up close (1.1s cooldown, 35 reach). He throws one or the other, never both at once. That's his Fighter mode; when the referee falls asleep he switches to Cheater mode (below). No special move yet. Heavyweight |
 | Khabib Nurmagomedov (fighter art) | Grappler | The Grappler's grab and wall slam, plus quick 5-damage punches every 0.7s that charge his special extra fast, a back suplex on 60% of his grabs from behind, 10% block, special move Father's Plan |
 
 ## Fighter art
@@ -85,14 +90,14 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 |---|---|
 | `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours (`accent`: optional stripe colour for `pinstripe` shorts) |
 | `build` | `muscular`, `lean`, `stocky` |
-| `hair` | `bald`, `buzz`, `short`, `long`, `mohawk`, `dreads` |
-| `beard` | `none`, `stubble`, `full` |
+| `hair` | `bald`, `stubble`, `buzz`, `short`, `long`, `mohawk`, `dreads` |
+| `beard` | `none`, `stubble`, `short`, `chinstrap`, `full` |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
-| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs) |
+| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs), `slash` (jagged streaks in the trim colour) |
 | `headwear` | optional: `bandana` (stars-and-stripes bandana over the head) |
 | `glasses` | optional: `shades` (dark sunglasses) |
-| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `armInk` gives the punching arms an inked texture |
+| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `medallion` (sun medallion on the sternum), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `armInk` gives the punching arms an inked texture |
 
 ## Submissions
 
@@ -116,6 +121,13 @@ A Grappler's `grapple.vsGrapplerChance` (100 by default) is how often it shoots 
 A fighter with `"hasArmbarShot": true` rolls once a second while it's touching the opponent: `armbarShot.chance`% (5) of the time it shoots a double leg. The shot always lands (no sprawl, weave or block): it drops its level, wraps both arms round their legs and drives them back, then goes straight into the armbar. Whether they tap is the fighter's own `"armbar"` odds; Josh Hokit has `tapBase` and `tapLowHp` at 0, so the one caught always escapes ("LETS IT GO"), and he goes straight into a thumbs down.
 
 A fighter with `"hasThumbsDown": true` mocks the opponent every `thumbsDown.cooldown` seconds (8) when there's some space between them: it stops, sticks an arm out and pumps a thumbs down at them. It gets to them: for `anger` seconds (3) they glow red with an anger mark over their head and steer straight at it, 25% faster than normal. The logic for both is in `js/game/hokit.js`. Josh Hokit has them.
+
+A fighter with `"hasCheater": true` cheats whenever the referee isn't looking (`js/game/cheater.js`). In its fights the ref falls asleep with cartoon Z's for `cheater.asleep` seconds (5) after every `cheater.awake` seconds (10) awake. While he sleeps, the fighter drops its normal attacks and picks one trick for the whole nap, each equally likely:
+- **Eye pokes**: does `poke.damage`, and if it lands the opponent is stunned on the spot for a combo (`poke.combo`) they can't slip or block.
+- **Throwing objects**: one every `throw.cooldown` seconds, picked at random from `CHEATER_OBJECTS` (placeholders for now: water bottle 8, shoe 10, stool 20).
+- **A bat**: `bat.damage` (22) on a very fast `bat.cooldown` (0.25s).
+
+While it's cheating, every takedown shot on it fails: it backs onto the cage, grabs it ("FENCE GRAB"), stands back up and gets away with no damage. When the ref wakes up it's back in Fighter mode. Ciryl Gane has it.
 
 ## Special moves (created characters)
 
@@ -152,6 +164,7 @@ js/game/suplex.js       the back suplex on grabs from behind
 js/game/guard.js        Falling into guard: on its back, the circle, pass or get caught
 js/game/hokit.js        Josh Hokit's armbar shot and thumbs down taunt
 js/game/chairshot.js    Josh Hokit's special move, the folding chair shot
+js/game/cheater.js      Ciryl Gane's Cheater mode while the referee sleeps
 js/game/dobronx.js      Do Bronx: the pose, camera flashes, the Brazil arena and the 15-second boost
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest

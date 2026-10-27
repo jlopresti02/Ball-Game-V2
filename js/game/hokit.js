@@ -35,7 +35,10 @@ function updateHokit(self, other, dt, d) {
     self.shotRollCd = Math.max(0, (self.shotRollCd || 0) - dt);
     if (free && self.shotRollCd === 0 && d < self.r + other.r + 6) {
       self.shotRollCd = SHOT_ROLL_GAP;
-      if (Math.random() < self.char.armbarShot.chance / 100) { beginShot(self, other); return true; }
+      if (Math.random() < self.char.armbarShot.chance / 100) {
+        if (!cheaterFenceGrab(self, other)) beginShot(self, other); // (Gane cheating grabs the cage)
+        return true;
+      }
     }
   }
 

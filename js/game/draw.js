@@ -82,6 +82,7 @@ function draw() {
   });
 
   drawGuardZones(); // the circle round a fighter down in guard
+  drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).
@@ -288,6 +289,8 @@ function draw() {
     drawChairShot(b); // and his folding chair
     drawDazed(b);   // stars after a chair shot
     drawMock(b);    // and his thumbs down
+    drawCheater(b); // Gane cheating
+    drawPokeStun(b);
     drawAngry(b);   // fuming at it
     b.x -= wox; b.y -= woy;
   });
@@ -300,6 +303,7 @@ function draw() {
   drawRncs();
   drawArmbars();
   drawChairDebris();
+  drawCheaterObjects();
   drawSuplexes();
 
   projectiles.forEach(function (p) {

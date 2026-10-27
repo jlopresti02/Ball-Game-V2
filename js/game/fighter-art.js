@@ -23,6 +23,12 @@ function armColor(ch) {
 function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
 
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
+// Blend hex colour a toward b by t (0..1)
+function mixHex(a, b, t) {
+  var x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16);
+  var ch = function (sh) { var u = (x >> sh) & 255, v = (y >> sh) & 255; return Math.round(u + (v - u) * t); };
+  return "rgb(" + ch(16) + "," + ch(8) + "," + ch(0) + ")";
+}
 function shadeHex(hex, amt) {
   var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
   var t = amt < 0 ? 0 : 255, p = Math.abs(amt);
@@ -165,40 +171,48 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   // Chin shadow and neck line into the chest
   c.fillStyle = "rgba(0,0,0,0.2)";
   c.beginPath(); c.ellipse(0, jaw + r * 0.08, r * 0.45, r * 0.08, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = line; c.lineWidth = lw(0.045);
+  // (a chinstrap beard traces the jaw itself, so it skips the line)
+  c.strokeStyle = look.beard === "chinstrap" ? "rgba(0,0,0,0)" : line; c.lineWidth = lw(0.045);
   c.beginPath(); c.moveTo(-r * 0.66, jaw - r * 0.14); c.quadraticCurveTo(-r * 0.5, jaw + r * 0.1, 0, jaw + r * 0.1); c.quadraticCurveTo(r * 0.5, jaw + r * 0.1, r * 0.66, jaw - r * 0.14); c.stroke();
 
-  // Ears at the edges of the ball
-  var cauli = look.ears === "cauliflower";
-  [-1, 1].forEach(function (s) {
-    var ex = s * r * 0.76, ey = -r * 0.56, er = r * (cauli ? 0.14 : 0.12);
-    c.fillStyle = shadeHex(look.skin, -0.06);
-    c.strokeStyle = line; c.lineWidth = lw(0.035);
-    c.beginPath(); c.ellipse(ex, ey, er * 0.7, er, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-    c.beginPath(); c.arc(ex - s * er * 0.1, ey, er * 0.55, s > 0 ? Math.PI * 0.5 : -Math.PI * 0.5, s > 0 ? Math.PI * 1.5 : Math.PI * 0.5); c.stroke();
-    if (cauli) {
-      c.beginPath(); c.arc(ex, ey - er * 0.35, er * 0.28, 0, Math.PI * 2); c.stroke();
-      c.beginPath(); c.arc(ex + s * er * 0.1, ey + er * 0.3, er * 0.22, 0, Math.PI * 2); c.stroke();
-    }
-  });
+  // Ears at the edges of the ball (drawn over a chinstrap beard instead, so
+  // the sideburns run behind them)
+  var drawEars = function () {
+    var cauli = look.ears === "cauliflower";
+    [-1, 1].forEach(function (s) {
+      var ex = s * r * 0.76, ey = -r * 0.56, er = r * (cauli ? 0.14 : 0.12);
+      c.fillStyle = shadeHex(look.skin, -0.06);
+      c.strokeStyle = line; c.lineWidth = lw(0.035);
+      c.beginPath(); c.ellipse(ex, ey, er * 0.7, er, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.beginPath(); c.arc(ex - s * er * 0.1, ey, er * 0.55, s > 0 ? Math.PI * 0.5 : -Math.PI * 0.5, s > 0 ? Math.PI * 1.5 : Math.PI * 0.5); c.stroke();
+      if (cauli) {
+        c.beginPath(); c.arc(ex, ey - er * 0.35, er * 0.28, 0, Math.PI * 2); c.stroke();
+        c.beginPath(); c.arc(ex + s * er * 0.1, ey + er * 0.3, er * 0.22, 0, Math.PI * 2); c.stroke();
+      }
+    });
+  };
+  if (look.beard !== "chinstrap") drawEars();
 
   // Hair across the top of the ball
+  var up = look.hair === "stubble" ? r * 0.08 : 0;  // a stubble scalp sits on a higher hairline
   var hairline = function () {
     c.beginPath();
-    c.moveTo(-r, -r * 0.5);
-    c.lineTo(-r * 0.74, -r * 0.6);
-    c.quadraticCurveTo(-r * 0.62, -r * 0.76, -r * 0.4, -r * 0.74);
-    c.quadraticCurveTo(0, -r * 0.82, r * 0.4, -r * 0.74);
-    c.quadraticCurveTo(r * 0.62, -r * 0.76, r * 0.74, -r * 0.6);
-    c.lineTo(r, -r * 0.5); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
+    c.moveTo(-r, -r * 0.5 - up);
+    c.lineTo(-r * 0.74, -r * 0.6 - up);
+    c.quadraticCurveTo(-r * 0.62, -r * 0.76 - up, -r * 0.4, -r * 0.74 - up);
+    c.quadraticCurveTo(0, -r * 0.82 - up, r * 0.4, -r * 0.74 - up);
+    c.quadraticCurveTo(r * 0.62, -r * 0.76 - up, r * 0.74, -r * 0.6 - up);
+    c.lineTo(r, -r * 0.5 - up); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
   };
   c.fillStyle = hc;
-  if (look.hair === "buzz") {
-    c.globalAlpha = 0.88; hairline(); c.fill();
+  if (look.hair === "buzz" || look.hair === "stubble") {
+    // A stubble scalp is a see-through shadow, as light as the short beard
+    c.globalAlpha = look.hair === "stubble" ? 0.32 : 0.88; hairline(); c.fill();
     var br = artRand(7);
-    c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.5;
+    c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = look.hair === "stubble" ? 0.3 : 0.5;
     for (var bz = 0; bz < 70; bz++) {
-      var bx = (br() * 2 - 1) * r * 0.7, by = -r * (0.78 + br() * 0.2);
+      var bx = (br() * 2 - 1) * r * 0.7, by = -r * (0.78 + br() * 0.2) - up;
+      if (look.hair === "stubble" && bz % 2 === 0) by += r * 0.1;  // grain right down to the hairline
       c.fillRect(bx, by, r * 0.018, r * 0.018);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
@@ -237,13 +251,68 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
   if (look.hair !== "bald") {
-    c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "mohawk" ? 0.3 : 0.8;
+    c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
 
+  // Chinstrap: a narrow band from the sideburns along the jaw to the chin
+  if (look.beard === "chinstrap") {
+    // Strap and moustache are one path, wound the same way, so a single
+    // see-through fill covers both with no darker seam where they meet
+    var strap = function () {
+      c.beginPath();
+      // Sideburns run along the side of the head against the rim, thinning
+      // to a fine point in the hair (higher for a stubble scalp's hairline)
+      var ro = r * 0.985, a1 = -2.62, a2 = look.hair === "stubble" ? -1.98 : -2.1, sw = r * 0.13, n = 10;
+      var arcPt = function (side, u, rad) {  // u: 0 at the jaw end, 1 at the tip
+        var ang = a1 + (a2 - a1) * u;
+        return [-side * Math.cos(ang) * rad, Math.sin(ang) * rad];
+      };
+      // Flush with the side of the head; a thin strip stays visible past the
+      // ball's outline almost all the way up before it closes to a point
+      var inner = function (u) { return ro - Math.max(sw * Math.pow(1 - u, 1.4), r * 0.085 * (1 - Math.pow(u, 6))); };
+      var k, p0;
+      // Left outer edge: tip down to the jaw end, then the U under the chin
+      p0 = arcPt(-1, 1, ro); c.moveTo(p0[0], p0[1]);
+      for (k = n - 1; k >= 0; k--) { p0 = arcPt(-1, k / n, ro); c.lineTo(p0[0], p0[1]); }
+      c.quadraticCurveTo(-r * 0.66, -r * 0.22, -r * 0.26, jaw + r * 0.04);
+      c.quadraticCurveTo(0, jaw + r * 0.13, r * 0.26, jaw + r * 0.04);
+      p0 = arcPt(1, 0, ro); c.quadraticCurveTo(r * 0.66, -r * 0.22, p0[0], p0[1]);
+      for (k = 1; k <= n; k++) { p0 = arcPt(1, k / n, ro); c.lineTo(p0[0], p0[1]); }
+      // Right inner edge back down, along the jaw, and up the left side
+      for (k = n - 1; k >= 0; k--) { p0 = arcPt(1, k / n, inner(k / n)); c.lineTo(p0[0], p0[1]); }
+      c.quadraticCurveTo(r * 0.56, -r * 0.3, r * 0.24, jaw - r * 0.06);
+      c.quadraticCurveTo(0, jaw + r * 0.02, -r * 0.24, jaw - r * 0.06);
+      p0 = arcPt(-1, 0, inner(0)); c.quadraticCurveTo(-r * 0.56, -r * 0.3, p0[0], p0[1]);
+      for (k = 1; k < n; k++) { p0 = arcPt(-1, k / n, inner(k / n)); c.lineTo(p0[0], p0[1]); }
+      c.closePath();
+      // Thin moustache arching over the mouth, its ends running into the strap
+      c.moveTo(r * 0.29, jaw - r * 0.02);
+      c.quadraticCurveTo(r * 0.29, -r * 0.48, 0, -r * 0.48);
+      c.quadraticCurveTo(-r * 0.29, -r * 0.48, -r * 0.29, jaw - r * 0.02);
+      c.lineTo(-r * 0.25, jaw - r * 0.02);
+      c.quadraticCurveTo(-r * 0.25, -r * 0.44, 0, -r * 0.44);
+      c.quadraticCurveTo(r * 0.25, -r * 0.44, r * 0.25, jaw - r * 0.02);
+      c.closePath();
+    };
+    // Skin first so body lines underneath don't show through, then the hair
+    c.fillStyle = look.skin; strap(); c.fill("nonzero");
+    c.fillStyle = hc; c.globalAlpha = 0.5;
+    strap(); c.fill("nonzero");
+    // Stubble grain inside the shape
+    c.save(); strap(); c.clip("nonzero");
+    var cr = artRand(11);
+    c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.45;
+    for (var cg = 0; cg < 140; cg++) {
+      c.fillRect((cr() * 2 - 1) * r * 0.8, -r * 0.7 + cr() * r * 0.55, r * 0.016, r * 0.016);
+    }
+    c.restore();
+    c.globalAlpha = 1;
+    drawEars();
+  }
   // Beard: sideburns down around the jaw to a full chin
-  if (look.beard !== "none") {
-    c.globalAlpha = look.beard === "stubble" ? 0.28 : 1;
+  if (look.beard !== "none" && look.beard !== "chinstrap") {
+    c.globalAlpha = look.beard === "stubble" ? 0.28 : look.beard === "short" ? 0.55 : 1;
     c.fillStyle = hc;
     c.beginPath();
     c.moveTo(-r * 0.74, -r * 0.66);
@@ -528,6 +597,29 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
   if (tat.lionCrown && !contained) drawLionChest(c, r, look, name, lw, false);
+  if (tat.medallion) {
+    // A round sun medallion on the sternum: rays round a ringed disc
+    var mt = contained ? 0.86 / 0.59 : 1, mr = r * 0.085;
+    c.save(); c.translate(0, -r * 0.3); c.scale(1, mt);
+    c.fillStyle = "rgba(20,24,36,0.7)";
+    for (var mrz = 0; mrz < 16; mrz++) {
+      var mra = mrz / 16 * Math.PI * 2, ml = mr * (mrz % 2 === 0 ? 1.9 : 1.5);
+      c.beginPath();
+      c.moveTo(Math.cos(mra - 0.17) * mr, Math.sin(mra - 0.17) * mr);
+      c.lineTo(Math.cos(mra) * ml, Math.sin(mra) * ml);
+      c.lineTo(Math.cos(mra + 0.17) * mr, Math.sin(mra + 0.17) * mr);
+      c.fill();
+    }
+    c.strokeStyle = "rgba(20,24,36,0.8)"; c.lineWidth = lw(0.014);
+    c.beginPath(); c.arc(0, 0, mr, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = "rgba(20,24,36,0.35)";
+    c.beginPath(); c.arc(0, 0, mr * 0.95, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(0, 0, mr * 0.55, 0, Math.PI * 2); c.stroke();
+    c.fillStyle = "rgba(20,24,36,0.65)";
+    c.beginPath(); c.arc(0, 0, mr * 0.25, 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.strokeStyle = inkCol; c.fillStyle = inkCol;
+  }
   if (tat.portraits) {
     // Black-and-grey family portraits filling the upper chest: a woman with
     // long hair, an older man with grey hair (lowest) and a girl with dark
@@ -690,6 +782,22 @@ function drawArtBody(c, r, look, ink, name, contained) {
       }
       c.fillStyle = "#f4e04d";
       c.beginPath(); c.arc(spx, spy, pz * 0.4, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+  }
+  if (look.shortsStyle === "slash") {
+    // Jagged streaks raking across the legs, in the trim colour
+    var slr = artRand(artSeed(name + "slash"));
+    c.fillStyle = look.trim;
+    for (var sl = 0; sl < 20; sl++) {
+      var sy0 = sTop + band + r * 0.05 + slr() * (r * 0.88 - sTop - band), sx0 = (slr() * 2 - 1) * r * 0.75, sw = r * (0.18 + slr() * 0.25), sh0 = r * (0.01 + slr() * 0.015);
+      c.globalAlpha = 0.6 + slr() * 0.35;
+      c.beginPath();
+      c.moveTo(sx0 - sw / 2, sy0);
+      c.lineTo(sx0 - sw * 0.1, sy0 - sh0 * 1.2);
+      c.lineTo(sx0 + sw / 2, sy0 - sh0 * 2.2);
+      c.lineTo(sx0 + sw * 0.15, sy0 + sh0);
+      c.closePath(); c.fill();
     }
     c.globalAlpha = 1;
   }

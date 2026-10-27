@@ -40,7 +40,7 @@ function makeBall(id, ch) {
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
-    guillo: null, choked: false, guilloCd: 0, rnc: null, suplex: null, suplexCd: 0, guard: null, guardCd: 0, doBronx: null, dazed: false,
+    guillo: null, choked: false, guilloCd: 0, rnc: null, suplex: null, suplexCd: 0, guard: null, guardCd: 0, doBronx: null, dazed: false, cheater: null, chAct: null, fenceGrab: null,
     hokitShot: null, shotRollCd: 0, mock: null, mockCd: (ch.thumbsDown ? ch.thumbsDown.cooldown : 8) * stagger(), angry: null
   };
   applyWeight(b); // size, speed and attack speed for its weight class (weight.js)
@@ -55,7 +55,9 @@ function startMatchWith(ch0, ch1) {
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
   resetDoBronx();
+  resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
+  resetCheater();
 
   document.getElementById("name0").textContent = ch0.name;
   document.getElementById("name1").textContent = ch1.name;
