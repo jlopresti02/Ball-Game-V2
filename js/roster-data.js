@@ -97,6 +97,70 @@ var SAVED_ROSTER = [
     "blockChance": 10
   },
   {
+    "id": "c-ciryl-gane",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "heavyweight",
+    "name": "Ciryl Gane",
+    "base": "Kicker",
+    "bio": "\"Bon Gamin\". Built on the Kicker base: long 40-damage kicks from range that can be checked, plus a quick 10-damage jab-cross up close.",
+    "color": "#1f4fa8",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#a8724c",
+      "build": "muscular",
+      "bodyHair": "none",
+      "hair": "stubble",
+      "hairColor": "#151110",
+      "beard": "chinstrap",
+      "ears": "normal",
+      "tattoos": {
+        "medallion": true
+      },
+      "shorts": "#eceeef",
+      "trim": "#141414",
+      "shortsStyle": "slash",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 10,
+      "cooldown": 0.8,
+      "speed": 0.2,
+      "size": 13,
+      "knockback": 80,
+      "reach": 35,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 40,
+      "cooldown": 2.8,
+      "speed": 0.5,
+      "size": 17,
+      "knockback": 450,
+      "reach": 75,
+      "checkChance": 25
+    },
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 0
+  },
+  {
     "id": "c-dustin-poirier",
     "rev": 6,
     "builtin": false,
