@@ -1,13 +1,13 @@
-// Ciryl Gane's Chester mode (hasChester). In his fights the referee nods
-// off: he's awake for `chester.awake` seconds, then asleep for
-// `chester.asleep` with cartoon Z's coming off him, over and over. The
+// Ciryl Gane's Cheater mode (hasCheater). In his fights the referee nods
+// off: he's awake for `cheater.awake` seconds, then asleep for
+// `cheater.asleep` with cartoon Z's coming off him, over and over. The
 // moment he's asleep Gane drops Fighter mode and cheats, picking one trick
 // (an equal chance of each) for the whole nap:
 //
 //   poke:  eye pokes. A poke that lands does a little damage and leaves them
 //          stunned on the spot, and he follows up with a combo they can't
 //          slip or block.
-//   throw: throws random objects at them (CHESTER_OBJECTS).
+//   throw: throws random objects at them (CHEATER_OBJECTS).
 //   bat:   pulls out a baseball bat that hits hard on a very fast cooldown.
 //
 // While he's cheating, any takedown shot on him fails every time: he backs
@@ -16,38 +16,38 @@
 "use strict";
 
 // What he throws. Placeholders until Joe sends the real list: name, damage,
-// and how it's drawn (drawChesterObject).
-var CHESTER_OBJECTS = [
+// and how it's drawn (drawCheaterObject).
+var CHEATER_OBJECTS = [
   { name: "WATER BOTTLE", damage: 8, shape: "bottle" },
   { name: "SHOE", damage: 10, shape: "shoe" },
   { name: "STOOL", damage: 20, shape: "stool" }
 ];
-var CHESTER_MODES = ["poke", "throw", "bat"];
-var CHESTER_LABELS = { poke: "EYE POKES", throw: "THROWING STUFF", bat: "BAT" };
+var CHEATER_MODES = ["poke", "throw", "bat"];
+var CHEATER_LABELS = { poke: "EYE POKES", throw: "THROWING STUFF", bat: "BAT" };
 
 var FENCE_SLIDE = 0.25;   // backing onto the cage
 var FENCE_HOLD = 0.55;    // hanging on to it
 var POKE_REACH = 26;      // how close he has to be to get a finger in
 var POKE_AT = 0.12;       // into the poke when it lands
 
-var chesterObjs = []; // things he's thrown, in flight
+var cheaterObjs = []; // things he's thrown, in flight
 
-function resetChester() { chesterObjs = []; }
+function resetCheater() { cheaterObjs = []; }
 
-function chesterFight() { return balls.some(function (b) { return b.char.hasChester; }); }
+function cheaterFight() { return balls.some(function (b) { return b.char.hasCheater; }); }
 function refAsleep() { return !!(referee && referee.asleep); }
 
 // The ref's nap cycle, from update() after updateReferee. A stoppage wakes
 // him up for good.
 function tickRefNap(dt) {
   var rf = referee;
-  if (!rf || !chesterFight()) return;
-  var ch = balls.filter(function (b) { return b.char.hasChester; })[0].char.chester;
+  if (!rf || !cheaterFight()) return;
+  var ch = balls.filter(function (b) { return b.char.hasCheater; })[0].char.cheater;
   if (rf.stop || over) { if (rf.asleep) wakeRef(rf); return; }
   rf.napT = (rf.napT || 0) + dt;
   if (!rf.asleep && rf.napT >= ch.awake) {
     rf.asleep = true; rf.napT = 0;
-    balls.forEach(function (b) { if (b.char.hasChester && b.alive) startChester(b); });
+    balls.forEach(function (b) { if (b.char.hasCheater && b.alive) startCheater(b); });
   } else if (rf.asleep && rf.napT >= ch.asleep) {
     wakeRef(rf);
   }
@@ -56,35 +56,35 @@ function wakeRef(rf) {
   rf.asleep = false; rf.napT = 0;
   floater(rf.x, rf.y - REF_R - 20, "!", "note");
   balls.forEach(function (b) {
-    if (!b.chester) return;
-    b.chester = null;
+    if (!b.cheater) return;
+    b.cheater = null;
     if (b.alive) floater(b.x, b.y - b.r - 30, "FIGHTER MODE", "note");
   });
 }
 
-function startChester(b) {
-  var mode = CHESTER_MODES[Math.floor(Math.random() * CHESTER_MODES.length)];
-  b.chester = { mode: mode, cd: 0.3 };
+function startCheater(b) {
+  var mode = CHEATER_MODES[Math.floor(Math.random() * CHEATER_MODES.length)];
+  b.cheater = { mode: mode, cd: 0.3 };
   b.punch = null; b.kick = null;
-  floater(b.x, b.y - b.r - 30, "CHESTER MODE", "crit");
-  floater(b.x, b.y - b.r - 8, CHESTER_LABELS[mode], "note");
+  floater(b.x, b.y - b.r - 30, "CHEATER MODE", "crit");
+  floater(b.x, b.y - b.r - 8, CHEATER_LABELS[mode], "note");
 }
 
-// From updateAbilities. Returns true while Chester mode has him (his
+// From updateAbilities. Returns true while Cheater mode has him (his
 // Fighter mode punches and kicks are off).
-function updateChester(self, other, dt, d) {
+function updateCheater(self, other, dt, d) {
   if (self.fenceGrab) { updateFenceGrab(self, dt); return true; }
-  if (self.chAct) { updateChesterAct(self, other, dt); return true; }
-  var c = self.chester;
+  if (self.chAct) { updateCheaterAct(self, other, dt); return true; }
+  var c = self.cheater;
   if (!c) return false;
   if (!other.alive || over) return true;
   c.cd = Math.max(0, c.cd - dt * self.atkRate);
   if (c.cd > 0 || specialBusy(self) || specialBusy(other) || other.invincible) return true;
-  var cfg = self.char.chester;
+  var cfg = self.char.cheater;
   if (c.mode === "poke" && d < self.r + other.r + POKE_REACH) {
     self.chAct = { kind: "poke", t: 0, hit: false, side: Math.random() < 0.5 ? 1 : -1 };
   } else if (c.mode === "throw") {
-    var obj = CHESTER_OBJECTS[Math.floor(Math.random() * CHESTER_OBJECTS.length)];
+    var obj = CHEATER_OBJECTS[Math.floor(Math.random() * CHEATER_OBJECTS.length)];
     self.chAct = { kind: "throw", t: 0, fired: false, obj: obj };
     c.cd = cfg.throw.cooldown;
   } else if (c.mode === "bat" && d < self.r + other.r + cfg.bat.reach) {
@@ -94,8 +94,8 @@ function updateChester(self, other, dt, d) {
   return true;
 }
 
-function updateChesterAct(self, other, dt) {
-  var a = self.chAct, cfg = self.char.chester;
+function updateCheaterAct(self, other, dt) {
+  var a = self.chAct, cfg = self.char.cheater;
   a.t += dt;
   var dx = other.x - self.x, dy = other.y - self.y, dd = Math.sqrt(dx * dx + dy * dy) || 1;
   a.nx = dx / dd; a.ny = dy / dd;
@@ -106,7 +106,7 @@ function updateChesterAct(self, other, dt) {
       if (!other.alive || specialBusy(other)) { self.chAct = null; return; }
       hurt(other, cfg.poke.damage, "poke", self.id);
       if (other.justDodged || !other.alive) {
-        self.chAct = null; if (self.chester) self.chester.cd = 0.5;
+        self.chAct = null; if (self.cheater) self.cheater.cd = 0.5;
         checkEnd();
         return;
       }
@@ -143,7 +143,7 @@ function updateChesterAct(self, other, dt) {
       endPokeStun(other);
       if (other.alive) { other.vx = a.nx * 380; other.vy = a.ny * 380; }
       self.chAct = null;
-      if (self.chester) self.chester.cd = cfg.poke.cooldown;
+      if (self.cheater) self.cheater.cd = cfg.poke.cooldown;
     }
     return;
   }
@@ -151,7 +151,7 @@ function updateChesterAct(self, other, dt) {
     if (!a.fired && a.t >= 0.22) {
       a.fired = true;
       var sp = cfg.throw.speed;
-      chesterObjs.push({
+      cheaterObjs.push({
         x: self.x + a.nx * (self.r + 10), y: self.y + a.ny * (self.r + 10),
         vx: a.nx * sp, vy: a.ny * sp, rot: 0, spin: (Math.random() < 0.5 ? -1 : 1) * 12,
         size: self.r * 0.55, obj: a.obj, ownerId: self.id
@@ -188,8 +188,8 @@ function endPokeStun(b) { if (b.dazed === "poke") b.dazed = false; }
 // Cheating, so a takedown can't get him: he backs onto the cage, grabs it,
 // stands back up and walks off. Called before any takedown on `target`
 // lands (attemptGrab, Hokit's double leg). True when it stopped it.
-function chesterFenceGrab(attacker, target) {
-  if (!target.chester || target.fenceGrab || !target.alive) return false;
+function cheaterFenceGrab(attacker, target) {
+  if (!target.cheater || target.fenceGrab || !target.alive) return false;
   clearActions(target); target.chAct = null;
   // The nearest bit of the cage.
   var walls = [
@@ -230,14 +230,14 @@ function updateFenceGrab(self, dt) {
 
 // Every frame from update(): thrown objects fly, and a stun can't outlive
 // the combo that caused it.
-function tickChester(dt) {
+function tickCheater(dt) {
   balls.forEach(function (b) {
     if (b.dazed === "poke") {
       var owner = balls[1 - b.id];
       if (!owner.chAct || owner.chAct.kind !== "combo" || !owner.alive) endPokeStun(b);
     }
   });
-  chesterObjs.forEach(function (o) {
+  cheaterObjs.forEach(function (o) {
     o.x += o.vx * dt; o.y += o.vy * dt; o.rot += o.spin * dt;
     var tgt = balls[1 - o.ownerId];
     if (!o.done && tgt.alive) {
@@ -255,23 +255,23 @@ function tickChester(dt) {
       }
     }
   });
-  chesterObjs = chesterObjs.filter(function (o) {
+  cheaterObjs = cheaterObjs.filter(function (o) {
     return !o.done && o.x > -40 && o.x < W + 40 && o.y > -40 && o.y < H + 40;
   });
 }
 
 // He's got his hands full (drawHands leaves them out).
-function chesterHandsBusy(b) {
-  return !!(b.fenceGrab || b.chAct || (b.chester && b.chester.mode === "bat"));
+function cheaterHandsBusy(b) {
+  return !!(b.fenceGrab || b.chAct || (b.cheater && b.cheater.mode === "bat"));
 }
 // Held still on the spot (physics leaves him alone).
-function chesterHolding(b) {
+function cheaterHolding(b) {
   return !!(b.fenceGrab || (b.chAct && (b.chAct.kind === "poke" || b.chAct.kind === "combo")));
 }
 
 // ---------------------------------------------------------------- drawing
 
-function drawChester(b) {
+function drawCheater(b) {
   if (!b.alive) return;
   var other = balls[1 - b.id], ch = b.char, gr = b.r * 0.22, arm = (ch.punch.size || 13) * 0.75;
   var nx = other.x - b.x, ny = other.y - b.y, nd = Math.sqrt(nx * nx + ny * ny) || 1;
@@ -305,7 +305,7 @@ function drawChester(b) {
   }
   if (a && a.kind === "combo") {
     // Both hands firing in turn; the last one comes from way back.
-    var cfg = ch.chester.poke, n = cfg.combo.length;
+    var cfg = ch.cheater.poke, n = cfg.combo.length;
     for (var s = -1; s <= 1; s += 2) {
       var idx = Math.floor((a.t - cfg.stun) / cfg.comboGap);
       var mine = idx >= 0 && ((idx % 2 === 0) === (s === 1));
@@ -325,15 +325,15 @@ function drawChester(b) {
     var shx = b.x + px * b.r * 0.6, shy = b.y + py * b.r * 0.6;
     var hx3 = shx + nx * b.r * back + px * b.r * 0.25, hy3 = shy + ny * b.r * back + py * b.r * 0.25;
     strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(hx3, hy3); });
-    if (!a.fired) drawChesterObject(a.obj.shape, hx3, hy3, b.r * 0.55, 0.4);
+    if (!a.fired) drawCheaterObject(a.obj.shape, hx3, hy3, b.r * 0.55, 0.4);
     drawGloveAt(hx3, hy3, gr, ch);
     return;
   }
-  if (b.chester && b.chester.mode === "bat") {
+  if (b.cheater && b.cheater.mode === "bat") {
     // The bat: up on his shoulder, or swung through in a flat arc.
     var base0 = Math.atan2(ny, nx), ang, dir = a && a.kind === "bat" ? a.dir : 1;
     if (a && a.kind === "bat") {
-      var sk = Math.min(1, a.t / ch.chester.bat.swing); sk = sk * sk * (3 - 2 * sk);
+      var sk = Math.min(1, a.t / ch.cheater.bat.swing); sk = sk * sk * (3 - 2 * sk);
       ang = base0 - dir * 1.5 + dir * 2.9 * sk;
     } else ang = base0 - 2.3;
     var hx4 = b.x + Math.cos(ang) * b.r * 0.85, hy4 = b.y + Math.sin(ang) * b.r * 0.85;
@@ -365,7 +365,7 @@ function drawBat(x, y, a, len) {
   ctx.restore();
 }
 
-function drawChesterObject(shape, x, y, s, rot) {
+function drawCheaterObject(shape, x, y, s, rot) {
   ctx.save();
   ctx.translate(x, y); ctx.rotate(rot);
   ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5; ctx.lineJoin = "round";
@@ -400,8 +400,8 @@ function drawChesterObject(shape, x, y, s, rot) {
   ctx.restore();
 }
 
-function drawChesterObjects() {
-  chesterObjs.forEach(function (o) { drawChesterObject(o.obj.shape, o.x, o.y, o.size, o.rot); });
+function drawCheaterObjects() {
+  cheaterObjs.forEach(function (o) { drawCheaterObject(o.obj.shape, o.x, o.y, o.size, o.rot); });
 }
 
 // Stars round someone poked in the eye.

@@ -60,7 +60,7 @@ function updateReferee(dt) {
   var rf = referee;
   if (!rf) return;
   var down = refereeStoppage(), speed = REF_WALK;
-  if (rf.asleep && !down) { rf.vx = 0; rf.vy = 0; return; } // dozing where he stands (chester.js)
+  if (rf.asleep && !down) { rf.vx = 0; rf.vy = 0; return; } // dozing where he stands (cheater.js)
   if (down && !rf.stop) {
     // Rushes in over the downed fighter, on the far side from the winner.
     var win = balls[1 - down.id];

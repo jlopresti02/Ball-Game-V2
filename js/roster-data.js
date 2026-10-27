@@ -103,7 +103,7 @@ var SAVED_ROSTER = [
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
     "base": "Kicker",
-    "bio": "\"Bon Gamin\". Fighter mode: built on the Kicker base, long 40-damage kicks from range (one every 4.5s) that can be checked, plus a steady 12-damage punch up close. Chester mode: in his fights the referee falls asleep for 5 seconds out of every 15, and Gane cheats the whole time, with eye pokes into a combo, throwing objects, or a bat. While he's cheating, every takedown on him fails: he grabs the cage and stands back up.",
+    "bio": "\"Bon Gamin\". Fighter mode: built on the Kicker base, long 40-damage kicks from range (one every 4.5s) that can be checked, plus a steady 12-damage punch up close. Cheater mode: in his fights the referee falls asleep for 5 seconds out of every 15, and Gane cheats the whole time, with eye pokes into a combo, throwing objects, or a bat. While he's cheating, every takedown on him fails: he grabs the cage and stands back up.",
     "color": "#1f4fa8",
     "label": "",
     "imgData": null,
@@ -159,8 +159,8 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "blockChance": 0,
-    "hasChester": true,
-    "chester": {
+    "hasCheater": true,
+    "cheater": {
       "awake": 10,
       "asleep": 5,
       "poke": {

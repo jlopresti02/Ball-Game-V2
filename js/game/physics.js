@@ -16,7 +16,7 @@ function inOrdinaryMovement(b) {
   if (!b.alive || b.grappled || b.grapple || b.slam || b.combo || b.taunt || b.flow || b.sprawl || b.sprawled || subLocked(b) || b.knockFly > 0) return false;
   if (b.koRush || b.shocked || b.koOut || b.koDuel || b.igbb || b.shelled || b.dazed) return false;
   if (b.checkStun > 0 || b.checkAnim || (b.kick && b.kick.counter && !b.kick.hit)) return false;
-  if (b.powerState || b.rageState || b.mock || chesterHolding(b)) return false;
+  if (b.powerState || b.rageState || b.mock || cheaterHolding(b)) return false;
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
   return true;
