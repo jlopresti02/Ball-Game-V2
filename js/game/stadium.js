@@ -445,10 +445,10 @@ function drawStadium(px) {
   // In Brazil mode everyone's on their feet the whole time.
   var br = brazilOn();
   var roar = br ? 1 : Math.min(1, (shake || 0) / 10);
+  var wild = chairFrenzyLevel(); // the whole crowd going nuts over a chair shot (chairshot.js)
   for (var i = 0; i < stadiumFans.length; i++) {
     var fan = br ? stadiumFans[i].br : stadiumFans[i];
-    var wild = chairFrenzyAt(fan.x, fan.y); // going nuts over a chair shot (chairshot.js)
-    drawFan(fan, now, Math.max(roar, wild), px, wild);
+    drawFan(fan, now, roar, px, wild);
   }
   for (var j = 0; j < stadiumFans.length; j++) {
     var f = br ? stadiumFans[j].br : stadiumFans[j];
@@ -460,14 +460,14 @@ function drawStadium(px) {
 
 function drawFan(f, t, roar, px, wild) {
   wild = wild || 0;
-  var hype = 0.5 + 0.5 * Math.sin(t * f.rate * (1 + roar + wild) + f.phase);
-  var cheer = f.hype > 0.5 - roar * 0.6;
-  // Freaking out: jumping out of their seats, shaking side to side.
-  var r = f.r, bob = (cheer ? hype : hype * 0.3) * r * (0.22 + 0.35 * wild);
-  var x = f.x + (wild ? Math.sin(t * 17 + f.phase * 3) * r * 0.1 * wild : 0), y = f.y - bob;
+  var hype = 0.5 + 0.5 * Math.sin((t * (1 + roar) + chairFrenzy.beat) * f.rate + f.phase);
+  var cheer = f.hype > 0.5 - Math.max(roar, wild) * 0.6;
+  // Excited: everyone up out of their seats, jumping higher.
+  var r = f.r, bob = (cheer ? hype : hype * 0.3) * r * (0.22 + 0.25 * wild);
+  var x = f.x, y = f.y - bob;
   // Bare fists pumping behind the ball
   if (cheer || f.sign || f.phone) {
-    var up = f.sign ? 0 : hype * r * (0.3 + 0.45 * wild);
+    var up = f.sign ? 0 : hype * r * (0.3 + 0.35 * wild);
     ctx.fillStyle = f.look.skin; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = Math.max(1.5, r * 0.07);
     for (var s = -1; s <= 1; s += 2) {
       if (f.phone && s > 0) continue;
