@@ -45,7 +45,7 @@ function drawKick(self, other) {
   var dir = self.id === 0 ? 1 : -1;
   var angle = baseAngle - dir * (Math.PI / 2) + dir * Math.PI * pt;
   var restDist = self.r + 4;
-  var fullDist = Math.max(restDist, Math.min(qd - other.r + 4, ki.reach * 1.15), ki.reach * 0.9);
+  var fullDist = self.r + ki.reach * 0.95; // the whole leg out at full stretch
   var extT = Math.min(1, self.kick.t / (dur * 0.22));
   var legDist = restDist + (fullDist - restDist) * extT;
   var tipX = self.x + Math.cos(angle) * legDist, tipY = self.y + Math.sin(angle) * legDist;
