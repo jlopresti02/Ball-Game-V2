@@ -8496,7 +8496,7 @@ var chairDebris = []; // thrown-away chairs, tumbling off and fading
 var chairFrenzy = { level: 0, on: false, beat: 0 };
 var CHAIR_FRENZY_RISE = 0.5;
 var CHAIR_FRENZY_FADE = 2;
-var CHAIR_FRENZY_PACE = 0.5; // how much quicker they bounce at full frenzy
+var CHAIR_FRENZY_PACE = 0.2; // how much quicker they bounce at full frenzy (1.2x at most)
 
 function resetChairShot() { chairDebris = []; chairFrenzy = { level: 0, on: false, beat: 0 }; }
 
