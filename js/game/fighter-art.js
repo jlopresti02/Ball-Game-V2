@@ -216,6 +216,18 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.fillRect(bx, by, r * 0.018, r * 0.018);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "twists") {
+    // Short twists pulled back: rows of small rounded knots over the scalp
+    hairline(); c.fill();
+    c.fillStyle = shadeHex(hc, 0.22); c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.012);
+    for (var tw = 0; tw < 4; tw++) {
+      var twy = -r * (0.95 - tw * 0.055), twn = 7 + tw;
+      for (var tk = 0; tk < twn; tk++) {
+        var twx = (tk - (twn - 1) / 2) * r * (0.16 - tw * 0.012) + (tw % 2) * r * 0.04;
+        c.beginPath(); c.ellipse(twx, twy, r * 0.045, r * 0.032, 0.3, 0, Math.PI * 2); c.fill(); c.stroke();
+      }
+    }
+    c.fillStyle = hc;
   } else if (look.hair === "short" || look.hair === "long" || look.hair === "dreads") {
     hairline(); c.fill();
     c.strokeStyle = shadeHex(hc, 0.25); c.lineWidth = lw(0.025); c.globalAlpha = 0.6;
@@ -750,6 +762,47 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   c.restore();
   if (contained) c.restore();
+
+  // A collared polo shirt (a referee's) covering the torso, sleeves at the sides
+  if (look.outfit === "polo") {
+    var shirt = look.shirt || "#1b1c1f", sTopP = contained ? r * 0.36 : r * 0.42;
+    var neckY = contained ? -r * 0.1 : -r * 0.5;
+    c.fillStyle = shirt;
+    c.beginPath();
+    c.moveTo(-r, neckY - r * 0.12);
+    c.quadraticCurveTo(-r * 0.5, neckY + r * 0.04, 0, neckY + r * 0.06);
+    c.quadraticCurveTo(r * 0.5, neckY + r * 0.04, r, neckY - r * 0.12);
+    c.lineTo(r, sTopP + r * 0.02); c.lineTo(-r, sTopP + r * 0.02); c.closePath(); c.fill();
+    // Soft fabric folds and the shoulder seams
+    var pg = c.createLinearGradient(0, neckY, 0, sTopP);
+    pg.addColorStop(0, "rgba(255,255,255,0.08)"); pg.addColorStop(1, "rgba(0,0,0,0.2)");
+    c.fillStyle = pg; c.fillRect(-r, neckY - r * 0.1, r * 2, sTopP - neckY + r * 0.12);
+    c.strokeStyle = "rgba(255,255,255,0.12)"; c.lineWidth = lw(0.02);
+    [-1, 1].forEach(function (sd) {
+      c.beginPath(); c.moveTo(sd * r * 0.66, neckY); c.quadraticCurveTo(sd * r * 0.6, (neckY + sTopP) / 2, sd * r * 0.7, sTopP); c.stroke();
+      c.beginPath(); c.moveTo(sd * r * 0.25, (neckY + sTopP) / 2); c.quadraticCurveTo(sd * r * 0.32, sTopP - r * 0.12, sd * r * 0.22, sTopP); c.stroke();
+    });
+    // Collar points and the button placket
+    c.fillStyle = shadeHex(shirt.charAt(0) === "#" ? shirt : "#1b1c1f", 0.08);
+    c.strokeStyle = "rgba(0,0,0,0.55)"; c.lineWidth = lw(0.018);
+    [-1, 1].forEach(function (sd) {
+      c.beginPath();
+      c.moveTo(sd * r * 0.02, neckY + r * 0.06);
+      c.lineTo(sd * r * 0.3, neckY - r * 0.02);
+      c.lineTo(sd * r * 0.2, neckY + r * 0.13);
+      c.closePath(); c.fill(); c.stroke();
+    });
+    c.strokeStyle = "rgba(255,255,255,0.15)";
+    c.beginPath(); c.moveTo(0, neckY + r * 0.07); c.lineTo(0, neckY + r * 0.25); c.stroke();
+    c.fillStyle = "rgba(255,255,255,0.35)";
+    [0.13, 0.21].forEach(function (by) { c.beginPath(); c.arc(r * 0.025, neckY + r * by, r * 0.012, 0, Math.PI * 2); c.fill(); });
+    // Commission badge on the left chest
+    if (look.badge) {
+      c.fillStyle = look.badge;
+      c.beginPath(); c.moveTo(-r * 0.42, neckY + r * 0.16); c.lineTo(-r * 0.3, neckY + r * 0.16); c.lineTo(-r * 0.3, neckY + r * 0.28);
+      c.lineTo(-r * 0.36, neckY + r * 0.33); c.lineTo(-r * 0.42, neckY + r * 0.28); c.closePath(); c.fill();
+    }
+  }
 
   // Fight shorts
   var sTop = contained ? r * 0.36 : r * 0.42, band = r * 0.13;
