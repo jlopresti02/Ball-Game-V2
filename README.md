@@ -87,6 +87,7 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `build` | `muscular`, `lean`, `stocky` |
 | `hair` | `bald`, `stubble`, `buzz`, `twists`, `short`, `long`, `mohawk`, `dreads` |
 | `hairPuff` | `true` puts big twisted hair as a second circle behind the top of the ball (contained layout) |
+| `cane` | `true` gives a white cane with a red tip at the right side (contained layout); pass `opts.caneSwing` (radians) to sweep it |
 | `beard` | `none`, `stubble`, `short`, `chinstrap`, `full` |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |

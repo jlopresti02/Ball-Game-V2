@@ -60,7 +60,33 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   var contained = opts.layout === "contained";
   if (contained && look.hairPuff) drawHairPuff(c, r, look, ink);
   drawArtBody(c, r, look, ink, opts.name || "", contained);
+  if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
+  c.restore();
+}
+
+// A white cane with a red tip, held at the right side and planted on the
+// floor out past the ball, with a crook handle curled over the hand. `swing`
+// (radians) sweeps the tip side to side, the way a blind walker taps ahead.
+function drawCane(c, r, ink, swing) {
+  var hx = r * 0.86, hy = r * 0.02, fx = r * (1.42 + swing * 0.6), fy = r * (1.12 - Math.abs(swing) * 0.25);
+  var ang = Math.atan2(fy - hy, fx - hx), len = Math.hypot(fx - hx, fy - hy);
+  c.save();
+  c.translate(hx, hy); c.rotate(ang);
+  c.lineCap = "round";
+  var shaft = function (col, w, from, to) {
+    c.strokeStyle = col; c.lineWidth = w;
+    c.beginPath(); c.moveTo(from, 0); c.lineTo(to, 0); c.stroke();
+  };
+  shaft(ink, r * 0.11, 0, len);
+  shaft("#f4f4f2", r * 0.065, 0, len * 0.82);
+  shaft("#c8102e", r * 0.065, len * 0.82, len);
+  c.strokeStyle = "rgba(0,0,0,0.18)"; c.lineWidth = r * 0.02;
+  c.beginPath(); c.moveTo(0, r * 0.018); c.lineTo(len * 0.82, r * 0.018); c.stroke();
+  // Crook: a hook curling back over the top
+  c.beginPath(); c.arc(-r * 0.09, 0, r * 0.09, 0, Math.PI, true);
+  c.strokeStyle = ink; c.lineWidth = r * 0.11; c.stroke();
+  c.strokeStyle = "#f4f4f2"; c.lineWidth = r * 0.065; c.stroke();
   c.restore();
 }
 
