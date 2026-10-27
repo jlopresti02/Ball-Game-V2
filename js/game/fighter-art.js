@@ -257,22 +257,22 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     // see-through fill covers both with no darker seam where they meet
     var strap = function () {
       c.beginPath();
-      // Sideburns hug the edge of the ball up into the hair, tapering to a
+      // Sideburns run up inside the rim into the hair, tapering to a thin
       // point (higher for a stubble scalp's raised hairline)
-      var ty = look.hair === "stubble" ? -r * 0.86 : -r * 0.78, tx = Math.sqrt(Math.max(0, r * r - ty * ty)) * 0.98;
-      // Outer edge: down the rim, then a U that curves in under the chin
+      var ty = look.hair === "stubble" ? -r * 0.84 : -r * 0.76, tx = Math.sqrt(Math.max(0, r * r - ty * ty)) * 0.85;
+      // Outer edge: inside the rim, then a U that curves in under the chin
       c.moveTo(-tx, ty);
-      c.lineTo(-r * 0.86, -r * 0.52);
+      c.quadraticCurveTo(-r * 0.82, -r * 0.74, -r * 0.86, -r * 0.52);
       c.quadraticCurveTo(-r * 0.66, -r * 0.22, -r * 0.26, jaw + r * 0.04);
       c.quadraticCurveTo(0, jaw + r * 0.13, r * 0.26, jaw + r * 0.04);
       c.quadraticCurveTo(r * 0.66, -r * 0.22, r * 0.86, -r * 0.52);
-      c.lineTo(tx, ty);
+      c.quadraticCurveTo(r * 0.82, -r * 0.74, tx, ty);
       // Inner edge back along the jaw
-      c.quadraticCurveTo(r * 0.66, -r * 0.72, r * 0.7, -r * 0.6);
+      c.quadraticCurveTo(r * 0.6, -r * 0.7, r * 0.7, -r * 0.6);
       c.quadraticCurveTo(r * 0.56, -r * 0.32, r * 0.24, jaw - r * 0.06);
       c.quadraticCurveTo(0, jaw + r * 0.02, -r * 0.24, jaw - r * 0.06);
       c.quadraticCurveTo(-r * 0.56, -r * 0.32, -r * 0.7, -r * 0.6);
-      c.quadraticCurveTo(-r * 0.66, -r * 0.72, -tx, ty);
+      c.quadraticCurveTo(-r * 0.6, -r * 0.7, -tx, ty);
       c.closePath();
       // Thin moustache arching over the mouth, its ends running into the strap
       c.moveTo(r * 0.29, jaw - r * 0.02);
