@@ -113,9 +113,13 @@ function start() {
 }
 
 // Damage shown on screen is always a whole number, rounded up (5.9 shows as
-// 6, 0.75 as 1). The tiny allowance stops float noise (6.0000001) rounding
-// up to 7.
-function dmgText(amount) { return String(Math.ceil(amount - 1e-6)); }
+// 6), or with `decimals` places, rounded up (the Watcher's laser ticks show
+// 2: 0.795 as 0.8). The tiny allowance stops float noise (6.0000001)
+// rounding up to 7.
+function dmgText(amount, decimals) {
+  var k = Math.pow(10, decimals || 0);
+  return String(Math.ceil(amount * k - 1e-6) / k);
+}
 
 function floater(x, y, text, kind) {
   var life = kind === "tick" ? 0.4 : (kind === "crit" ? 1.3 : (kind === "note" ? 1.1 : 0.9));
