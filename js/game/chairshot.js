@@ -19,7 +19,7 @@ var CHAIR_FETCH_TIME = 0.75;   // reaching under the ring and raising it overhea
 var CHAIR_CLOSE_SPEED = 900;   // charging them down
 var CHAIR_CLOSE_GIVEUP = 3.5;  // gives up (stays charged) if it can't get there
 var CHAIR_SWING_TIME = 0.15;   // the swing down onto their head (a quick whip)
-var CHAIR_HOLD_TIME = 0.35;    // the chair stays on them a moment after the hit
+var CHAIR_HOLD_TIME = 0.05;    // the chair bounces straight off them after the hit
 var CHAIR_LAP_SPEED = 620;     // running laps of the ring celebrating
 var CHAIR_CROWD_TIME = 0.8;    // the chair's flight into the stands
 
@@ -119,7 +119,7 @@ function landChairShot(self, other, m) {
       size: 2.5 + Math.random() * 3, color: i % 3 ? "#1b1d21" : "#cfe8ff" });
   }
   other.squash = { t: 0.34, max: 0.34, nx: 0, ny: -1 }; // flattened down from above
-  hitStop = Math.max(hitStop, 0.28);
+  hitStop = Math.max(hitStop, 0.12); // a sharp freeze on contact, then it bounces off
   if (!reduceMotion) shake = Math.max(shake, 34);
 }
 
