@@ -127,7 +127,7 @@ A fighter with `"hasCheater": true` cheats whenever the referee isn't looking (`
 - **Throwing objects**: one every `throw.cooldown` seconds, picked at random from `CHEATER_OBJECTS` (placeholders for now: water bottle 8, shoe 10, stool 20).
 - **A bat**: `bat.damage` (22) on a very fast `bat.cooldown` (0.25s).
 
-While it's cheating, every takedown shot on it fails: it backs onto the cage, grabs it ("FENCE GRAB"), stands back up and gets away with no damage. When the ref wakes up it's back in Fighter mode. Ciryl Gane has it.
+While it's cheating, every takedown shot on it fails: whoever shot drives it back into the cage, and once it's up against it it grabs hold ("FENCE GRAB"), stands back up and gets away with no damage. When the ref wakes up it's back in Fighter mode. Ciryl Gane has it.
 
 ## Special moves (created characters)
 
