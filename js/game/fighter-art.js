@@ -183,23 +183,24 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   });
 
   // Hair across the top of the ball
+  var up = look.hair === "stubble" ? r * 0.08 : 0;  // a stubble scalp sits on a higher hairline
   var hairline = function () {
     c.beginPath();
-    c.moveTo(-r, -r * 0.5);
-    c.lineTo(-r * 0.74, -r * 0.6);
-    c.quadraticCurveTo(-r * 0.62, -r * 0.76, -r * 0.4, -r * 0.74);
-    c.quadraticCurveTo(0, -r * 0.82, r * 0.4, -r * 0.74);
-    c.quadraticCurveTo(r * 0.62, -r * 0.76, r * 0.74, -r * 0.6);
-    c.lineTo(r, -r * 0.5); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
+    c.moveTo(-r, -r * 0.5 - up);
+    c.lineTo(-r * 0.74, -r * 0.6 - up);
+    c.quadraticCurveTo(-r * 0.62, -r * 0.76 - up, -r * 0.4, -r * 0.74 - up);
+    c.quadraticCurveTo(0, -r * 0.82 - up, r * 0.4, -r * 0.74 - up);
+    c.quadraticCurveTo(r * 0.62, -r * 0.76 - up, r * 0.74, -r * 0.6 - up);
+    c.lineTo(r, -r * 0.5 - up); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
   };
   c.fillStyle = hc;
   if (look.hair === "buzz" || look.hair === "stubble") {
     // A stubble scalp is a see-through shadow, as light as the short beard
-    c.globalAlpha = look.hair === "stubble" ? 0.55 : 0.88; hairline(); c.fill();
+    c.globalAlpha = look.hair === "stubble" ? 0.32 : 0.88; hairline(); c.fill();
     var br = artRand(7);
-    c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.5;
+    c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = look.hair === "stubble" ? 0.3 : 0.5;
     for (var bz = 0; bz < 70; bz++) {
-      var bx = (br() * 2 - 1) * r * 0.7, by = -r * (0.78 + br() * 0.2);
+      var bx = (br() * 2 - 1) * r * 0.7, by = -r * (0.78 + br() * 0.2) - up;
       c.fillRect(bx, by, r * 0.018, r * 0.018);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
