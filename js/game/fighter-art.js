@@ -243,8 +243,23 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
 
+  // Chinstrap: a narrow band from the sideburns along the jaw to the chin
+  if (look.beard === "chinstrap") {
+    c.globalAlpha = 0.6; c.fillStyle = hc;
+    c.beginPath();
+    c.moveTo(-r * 0.76, -r * 0.66);
+    c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.3, jaw + r * 0.02);
+    c.quadraticCurveTo(0, jaw + r * 0.12, r * 0.3, jaw + r * 0.02);
+    c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.76, -r * 0.66);
+    c.lineTo(r * 0.66, -r * 0.66);
+    c.quadraticCurveTo(r * 0.66, -r * 0.4, r * 0.26, jaw - r * 0.07);
+    c.quadraticCurveTo(0, jaw + r * 0.01, -r * 0.26, jaw - r * 0.07);
+    c.quadraticCurveTo(-r * 0.66, -r * 0.4, -r * 0.66, -r * 0.66);
+    c.closePath(); c.fill();
+    c.globalAlpha = 1;
+  }
   // Beard: sideburns down around the jaw to a full chin
-  if (look.beard !== "none") {
+  if (look.beard !== "none" && look.beard !== "chinstrap") {
     c.globalAlpha = look.beard === "stubble" ? 0.28 : look.beard === "short" ? 0.55 : 1;
     c.fillStyle = hc;
     c.beginPath();
