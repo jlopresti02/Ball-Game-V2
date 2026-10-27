@@ -257,14 +257,16 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     // see-through fill covers both with no darker seam where they meet
     var strap = function () {
       c.beginPath();
-      // Sideburns follow the round of the head just inside the rim, thinning
+      // Sideburns run along the side of the head against the rim, thinning
       // to a fine point in the hair (higher for a stubble scalp's hairline)
-      var ro = r * 0.92, a1 = -2.62, a2 = look.hair === "stubble" ? -1.98 : -2.1, sw = r * 0.13, n = 10;
+      var ro = r * 0.985, a1 = -2.62, a2 = look.hair === "stubble" ? -1.98 : -2.1, sw = r * 0.13, n = 10;
       var arcPt = function (side, u, rad) {  // u: 0 at the jaw end, 1 at the tip
         var ang = a1 + (a2 - a1) * u;
         return [-side * Math.cos(ang) * rad, Math.sin(ang) * rad];
       };
-      var inner = function (u) { return ro - sw * Math.pow(1 - u, 1.4) - r * 0.012 * (1 - u * u); };
+      // Flush with the side of the head; a thin strip stays visible past the
+      // ball's outline almost all the way up before it closes to a point
+      var inner = function (u) { return ro - Math.max(sw * Math.pow(1 - u, 1.4), r * 0.085 * (1 - Math.pow(u, 6))); };
       var k, p0;
       // Left outer edge: tip down to the jaw end, then the U under the chin
       p0 = arcPt(-1, 1, ro); c.moveTo(p0[0], p0[1]);
