@@ -30,8 +30,31 @@ var CHAIR_LAP_SPEED = 620;     // running laps of the ring celebrating
 var CHAIR_CROWD_TIME = 0.45;   // the chair's flight into the stands (thrown as hard as he can)
 
 var chairDebris = []; // thrown-away chairs, tumbling off and fading
+// The crowd losing it after a chair shot: `level` rises to 1 on the hit and
+// stays there while he celebrates, then settles over CHAIR_FRENZY_FADE
+// seconds. The fans nearest him go the wildest, so it follows him round his
+// lap (stadium.js draws it).
+var chairFrenzy = { level: 0, on: false, x: 0, y: 0 };
+var CHAIR_FRENZY_FADE = 1.5;
 
-function resetChairShot() { chairDebris = []; }
+function resetChairShot() { chairDebris = []; chairFrenzy = { level: 0, on: false, x: 0, y: 0 }; }
+
+function startChairFrenzy() {
+  chairFrenzy.on = true; chairFrenzy.level = 1;
+  crowdReact(1);
+  crowdHold(0.4); // stays roaring through the celebration
+}
+function endChairFrenzy() {
+  if (!chairFrenzy.on) return;
+  chairFrenzy.on = false;
+  crowdRelease();
+}
+// How wild the fan at stage point (x, y) is going (0 to 1).
+function chairFrenzyAt(x, y) {
+  if (chairFrenzy.level <= 0) return 0;
+  var dx = x - chairFrenzy.x, dy = y - chairFrenzy.y, d = Math.sqrt(dx * dx + dy * dy);
+  return chairFrenzy.level * Math.max(0.5, 1 - Math.max(0, d - 300) / 700); // everyone's up, nearest wildest
+}
 
 function updateChairShot(self, other, dt) {
   var sp = self.char.special;
@@ -132,6 +155,7 @@ function landChairShot(self, other, m) {
   var dealt = hurt(other, self.char.special.damage, "igbb", self.id); // can't be weaved or blocked
   m.dent = true;
   m.hitPos = chairHold(self, m); // where it smashed down, for the recoil
+  startChairFrenzy(); // the crowd loses it
   if (other.alive) other.dazed = true; // now the stars come out
   playChairShot(); playSlam(); // the recorded CLANG, with a thud under it
   floater(other.x, other.y - other.r - 60, "CLANG!", "crit");
@@ -154,6 +178,7 @@ function landChairShot(self, other, m) {
 
 function endChairShot(self, other) {
   var m = self.igbb;
+  endChairFrenzy();
   self.igbb = null;
   self.specialT = 0;
   other.dazed = false;
@@ -186,6 +211,9 @@ function tossChair(self, nx, ny, dented) {
 }
 
 function tickChairDebris(dt) {
+  if (!chairFrenzy.on) chairFrenzy.level = Math.max(0, chairFrenzy.level - dt / CHAIR_FRENZY_FADE);
+  var owner = balls && balls.filter(function (b) { return b.igbb && b.igbb.move === "chairshot"; })[0];
+  if (owner && typeof ST !== "undefined") { chairFrenzy.x = ST.AX + owner.x * ST.A / W; chairFrenzy.y = ST.AY + owner.y * ST.A / H; }
   chairDebris.forEach(function (c) {
     c.t += dt; c.x += c.vx * dt; c.y += c.vy * dt; c.a += c.va * dt;
     if (!c.crowd) { c.vx *= 0.97; c.vy *= 0.97; }
