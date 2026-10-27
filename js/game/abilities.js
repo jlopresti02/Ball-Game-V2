@@ -175,6 +175,8 @@ function updateAbilities(dt) {
     // A critical-weave combo or the celebration after it takes over completely.
     if (updateWeave(self, other, dt)) continue;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    // Ciryl Gane cheating while the ref's asleep (chester.js).
+    if (self.char.hasChester && updateChester(self, other, dt, d)) continue;
     // Josh Hokit's armbar shot and thumbs down (hokit.js).
     if ((self.char.hasArmbarShot || self.char.hasThumbsDown) && updateHokit(self, other, dt, d)) continue;
 

@@ -161,6 +161,7 @@ function grabEscaped(attacker, target) {
 }
 
 function attemptGrab(attacker, target) {
+  if (chesterFenceGrab(attacker, target)) return false; // cheating: grabs the cage (chester.js)
   if (target.slamSafe > 0) return false;
   if (doBronxPosing(target)) {
     // Slips the grab mid pose (dobronx.js).

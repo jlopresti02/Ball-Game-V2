@@ -27,7 +27,7 @@ function refereeOn() {
 function resetReferee() {
   if (!refereeOn()) { referee = null; return; }
   // Starts at the bottom middle of the cage, out of both corners.
-  referee = { x: W / 2, y: H - REF_R - 10, vx: 0, vy: 0, tx: W / 2, ty: H - REF_R - 10, think: 0, stop: null, wave: 0, look: null };
+  referee = { x: W / 2, y: H - REF_R - 10, vx: 0, vy: 0, tx: W / 2, ty: H - REF_R - 10, think: 0, stop: null, wave: 0, look: null, asleep: false, napT: 0 };
   var look = defaultLook();
   look.skin = "#c99172"; look.hair = "bald"; look.beard = "none"; look.build = "lean";
   referee.fan = { look: look, shirt: "#151515", style: "tee", team: null, shirtless: false, cap: null, phase: 0 };
@@ -60,6 +60,7 @@ function updateReferee(dt) {
   var rf = referee;
   if (!rf) return;
   var down = refereeStoppage(), speed = REF_WALK;
+  if (rf.asleep && !down) { rf.vx = 0; rf.vy = 0; return; } // dozing where he stands (chester.js)
   if (down && !rf.stop) {
     // Rushes in over the downed fighter, on the far side from the winner.
     var win = balls[1 - down.id];
@@ -117,6 +118,9 @@ function drawReferee() {
   var r = REF_R, skin = rf.fan.look.skin;
   ctx.save();
   ctx.translate(rf.x, rf.y);
+  // Asleep: slumped over to one side, breathing slow.
+  var slump = rf.asleep ? 0.35 + Math.sin(performance.now() / 700) * 0.06 : 0;
+  ctx.rotate(slump);
   // Shadow
   ctx.fillStyle = "rgba(0,0,0,0.12)";
   ctx.beginPath(); ctx.ellipse(r * 0.15, r * 0.9, r * 0.9, r * 0.28, 0, 0, Math.PI * 2); ctx.fill();
@@ -129,6 +133,8 @@ function drawReferee() {
   if (rf.stop && rf.stop.called) {
     var sw = Math.sin(rf.wave * 14);
     hands = [{ x: -r * 0.55 * sw, y: -r * 1.15 }, { x: r * 0.55 * sw, y: -r * 1.05 }];
+  } else if (rf.asleep) {
+    hands = [{ x: -r * 0.95, y: r * 0.55 }, { x: r * 0.95, y: r * 0.55 }]; // hanging limp
   } else {
     var bob = Math.sin(performance.now() / 160) * r * 0.06;
     hands = [{ x: -r * 1.02, y: r * 0.25 + bob }, { x: r * 1.02, y: r * 0.25 - bob }];
@@ -137,5 +143,7 @@ function drawReferee() {
     ctx.fillStyle = skin; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(h.x, h.y, r * 0.24, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   });
+  ctx.rotate(-slump);
+  drawRefZs(rf);
   ctx.restore();
 }

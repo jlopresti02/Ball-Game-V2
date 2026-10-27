@@ -79,7 +79,7 @@ Each saved roster fighter has a character file in `characters/` (one JSON file p
 | Dustin Poirier (fighter art) | Brawler | 22-damage punches every 0.95s (faster, higher-volume hands than the Brawler), 42 reach, 15% block, 5% opening KO Rush, special move IGBB, and the guillotine off a shot |
 | Charles Oliveira (fighter art) | Grappler | The Grappler's grab and wall slam (but against another Grappler he only shoots for it half the time on contact), Khabib's quick 5-damage punches every 0.7s, 10% block, and the guard (25%) with the BJJ artist submissions (rear naked choke or armbar), special move Do Bronx |
 | Josh Hokit (fighter art) | BMF | The BMF's rapid 5-damage jabs and 75% weave, the armbar shot (5%, and he always lets them go) and the thumbs down taunt. Unlike the BMF he can still weave 50% of attacks while celebrating (`weave.tauntDodge`), and his thumbs down is covered by his normal 75% weave. Special move Chair Shot. Heavyweight |
-| Ciryl Gane (fighter art) | Kicker | The Kicker's long 40-damage kicks (25% chance to be checked) on a longer 4.5s cooldown, plus a steady 12-damage punch up close (1.1s cooldown, 35 reach). He throws one or the other, never both at once. No special move yet. Heavyweight |
+| Ciryl Gane (fighter art) | Kicker | The Kicker's long 40-damage kicks (25% chance to be checked) on a longer 4.5s cooldown, plus a steady 12-damage punch up close (1.1s cooldown, 35 reach). He throws one or the other, never both at once. That's his Fighter mode; when the referee falls asleep he switches to Chester mode (below). No special move yet. Heavyweight |
 | Khabib Nurmagomedov (fighter art) | Grappler | The Grappler's grab and wall slam, plus quick 5-damage punches every 0.7s that charge his special extra fast, a back suplex on 60% of his grabs from behind, 10% block, special move Father's Plan |
 
 ## Fighter art
@@ -122,6 +122,13 @@ A fighter with `"hasArmbarShot": true` rolls once a second while it's touching t
 
 A fighter with `"hasThumbsDown": true` mocks the opponent every `thumbsDown.cooldown` seconds (8) when there's some space between them: it stops, sticks an arm out and pumps a thumbs down at them. It gets to them: for `anger` seconds (3) they glow red with an anger mark over their head and steer straight at it, 25% faster than normal. The logic for both is in `js/game/hokit.js`. Josh Hokit has them.
 
+A fighter with `"hasChester": true` cheats whenever the referee isn't looking (`js/game/chester.js`). In its fights the ref falls asleep with cartoon Z's for `chester.asleep` seconds (5) after every `chester.awake` seconds (10) awake. While he sleeps, the fighter drops its normal attacks and picks one trick for the whole nap, each equally likely:
+- **Eye pokes**: does `poke.damage`, and if it lands the opponent is stunned on the spot for a combo (`poke.combo`) they can't slip or block.
+- **Throwing objects**: one every `throw.cooldown` seconds, picked at random from `CHESTER_OBJECTS` (placeholders for now: water bottle 8, shoe 10, stool 20).
+- **A bat**: `bat.damage` (22) on a very fast `bat.cooldown` (0.25s).
+
+While it's cheating, every takedown shot on it fails: it backs onto the cage, grabs it ("FENCE GRAB"), stands back up and gets away with no damage. When the ref wakes up it's back in Fighter mode. Ciryl Gane has it.
+
 ## Special moves (created characters)
 
 Roster fighters can have a special move, set in the editor's **Special move** section. It has a charge bar under the fighter's health (like CTE Rejuvenation) that fills over time and fills faster with every clean hit the fighter lands. When it's full the move goes off.
@@ -157,6 +164,7 @@ js/game/suplex.js       the back suplex on grabs from behind
 js/game/guard.js        Falling into guard: on its back, the circle, pass or get caught
 js/game/hokit.js        Josh Hokit's armbar shot and thumbs down taunt
 js/game/chairshot.js    Josh Hokit's special move, the folding chair shot
+js/game/chester.js      Ciryl Gane's Chester mode while the referee sleeps
 js/game/dobronx.js      Do Bronx: the pose, camera flashes, the Brazil arena and the 15-second boost
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest

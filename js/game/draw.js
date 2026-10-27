@@ -289,6 +289,8 @@ function draw() {
     drawChairShot(b); // and his folding chair
     drawDazed(b);   // stars after a chair shot
     drawMock(b);    // and his thumbs down
+    drawChester(b); // Gane cheating
+    drawPokeStun(b);
     drawAngry(b);   // fuming at it
     b.x -= wox; b.y -= woy;
   });
@@ -301,6 +303,7 @@ function draw() {
   drawRncs();
   drawArmbars();
   drawChairDebris();
+  drawChesterObjects();
   drawSuplexes();
 
   projectiles.forEach(function (p) {
