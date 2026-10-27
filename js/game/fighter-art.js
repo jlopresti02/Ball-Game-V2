@@ -171,7 +171,8 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   // Chin shadow and neck line into the chest
   c.fillStyle = "rgba(0,0,0,0.2)";
   c.beginPath(); c.ellipse(0, jaw + r * 0.08, r * 0.45, r * 0.08, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = line; c.lineWidth = lw(0.045);
+  // (a chinstrap beard traces the jaw itself, so it skips the line)
+  c.strokeStyle = look.beard === "chinstrap" ? "rgba(0,0,0,0)" : line; c.lineWidth = lw(0.045);
   c.beginPath(); c.moveTo(-r * 0.66, jaw - r * 0.14); c.quadraticCurveTo(-r * 0.5, jaw + r * 0.1, 0, jaw + r * 0.1); c.quadraticCurveTo(r * 0.5, jaw + r * 0.1, r * 0.66, jaw - r * 0.14); c.stroke();
 
   // Ears at the edges of the ball
@@ -251,27 +252,40 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
 
   // Chinstrap: a narrow band from the sideburns along the jaw to the chin
   if (look.beard === "chinstrap") {
-    // One solid colour (beard mixed into the skin) for strap and moustache,
-    // so the two join cleanly instead of darkening where they overlap
-    var cs = mixHex(look.skin, hc, 0.6);
-    c.fillStyle = cs;
-    c.beginPath();
-    c.moveTo(-r * 0.76, -r * 0.66);
-    c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.3, jaw + r * 0.02);
-    c.quadraticCurveTo(0, jaw + r * 0.12, r * 0.3, jaw + r * 0.02);
-    c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.76, -r * 0.66);
-    c.lineTo(r * 0.66, -r * 0.66);
-    c.quadraticCurveTo(r * 0.66, -r * 0.4, r * 0.26, jaw - r * 0.07);
-    c.quadraticCurveTo(0, jaw + r * 0.01, -r * 0.26, jaw - r * 0.07);
-    c.quadraticCurveTo(-r * 0.66, -r * 0.4, -r * 0.66, -r * 0.66);
-    c.closePath(); c.fill();
-    // Thin moustache arching over the mouth, joining the strap at both corners
-    c.strokeStyle = cs; c.lineWidth = lw(0.04); c.lineCap = "round";
-    c.beginPath();
-    c.moveTo(-r * 0.27, jaw - r * 0.05);
-    c.quadraticCurveTo(-r * 0.27, -r * 0.46, 0, -r * 0.46);
-    c.quadraticCurveTo(r * 0.27, -r * 0.46, r * 0.27, jaw - r * 0.05);
-    c.stroke();
+    // Strap and moustache are one path, wound the same way, so a single
+    // see-through fill covers both with no darker seam where they meet
+    var strap = function () {
+      c.beginPath();
+      c.moveTo(-r * 0.76, -r * 0.66);
+      c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.3, jaw + r * 0.02);
+      c.quadraticCurveTo(0, jaw + r * 0.12, r * 0.3, jaw + r * 0.02);
+      c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.76, -r * 0.66);
+      c.lineTo(r * 0.66, -r * 0.66);
+      c.quadraticCurveTo(r * 0.66, -r * 0.4, r * 0.26, jaw - r * 0.07);
+      c.quadraticCurveTo(0, jaw + r * 0.01, -r * 0.26, jaw - r * 0.07);
+      c.quadraticCurveTo(-r * 0.66, -r * 0.4, -r * 0.66, -r * 0.66);
+      c.closePath();
+      // Thin moustache arching over the mouth, its ends running into the strap
+      c.moveTo(r * 0.29, jaw - r * 0.02);
+      c.quadraticCurveTo(r * 0.29, -r * 0.48, 0, -r * 0.48);
+      c.quadraticCurveTo(-r * 0.29, -r * 0.48, -r * 0.29, jaw - r * 0.02);
+      c.lineTo(-r * 0.25, jaw - r * 0.02);
+      c.quadraticCurveTo(-r * 0.25, -r * 0.44, 0, -r * 0.44);
+      c.quadraticCurveTo(r * 0.25, -r * 0.44, r * 0.25, jaw - r * 0.02);
+      c.closePath();
+    };
+    // Skin first so body lines underneath don't show through, then the hair
+    c.fillStyle = look.skin; strap(); c.fill("nonzero");
+    c.fillStyle = hc; c.globalAlpha = 0.5;
+    strap(); c.fill("nonzero");
+    // Stubble grain inside the shape
+    c.save(); strap(); c.clip("nonzero");
+    var cr = artRand(11);
+    c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.45;
+    for (var cg = 0; cg < 140; cg++) {
+      c.fillRect((cr() * 2 - 1) * r * 0.8, -r * 0.7 + cr() * r * 0.55, r * 0.016, r * 0.016);
+    }
+    c.restore();
     c.globalAlpha = 1;
   }
   // Beard: sideburns down around the jaw to a full chin
