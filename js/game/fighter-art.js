@@ -175,19 +175,23 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   c.strokeStyle = look.beard === "chinstrap" ? "rgba(0,0,0,0)" : line; c.lineWidth = lw(0.045);
   c.beginPath(); c.moveTo(-r * 0.66, jaw - r * 0.14); c.quadraticCurveTo(-r * 0.5, jaw + r * 0.1, 0, jaw + r * 0.1); c.quadraticCurveTo(r * 0.5, jaw + r * 0.1, r * 0.66, jaw - r * 0.14); c.stroke();
 
-  // Ears at the edges of the ball
-  var cauli = look.ears === "cauliflower";
-  [-1, 1].forEach(function (s) {
-    var ex = s * r * 0.76, ey = -r * 0.56, er = r * (cauli ? 0.14 : 0.12);
-    c.fillStyle = shadeHex(look.skin, -0.06);
-    c.strokeStyle = line; c.lineWidth = lw(0.035);
-    c.beginPath(); c.ellipse(ex, ey, er * 0.7, er, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-    c.beginPath(); c.arc(ex - s * er * 0.1, ey, er * 0.55, s > 0 ? Math.PI * 0.5 : -Math.PI * 0.5, s > 0 ? Math.PI * 1.5 : Math.PI * 0.5); c.stroke();
-    if (cauli) {
-      c.beginPath(); c.arc(ex, ey - er * 0.35, er * 0.28, 0, Math.PI * 2); c.stroke();
-      c.beginPath(); c.arc(ex + s * er * 0.1, ey + er * 0.3, er * 0.22, 0, Math.PI * 2); c.stroke();
-    }
-  });
+  // Ears at the edges of the ball (drawn over a chinstrap beard instead, so
+  // the sideburns run behind them)
+  var drawEars = function () {
+    var cauli = look.ears === "cauliflower";
+    [-1, 1].forEach(function (s) {
+      var ex = s * r * 0.76, ey = -r * 0.56, er = r * (cauli ? 0.14 : 0.12);
+      c.fillStyle = shadeHex(look.skin, -0.06);
+      c.strokeStyle = line; c.lineWidth = lw(0.035);
+      c.beginPath(); c.ellipse(ex, ey, er * 0.7, er, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.beginPath(); c.arc(ex - s * er * 0.1, ey, er * 0.55, s > 0 ? Math.PI * 0.5 : -Math.PI * 0.5, s > 0 ? Math.PI * 1.5 : Math.PI * 0.5); c.stroke();
+      if (cauli) {
+        c.beginPath(); c.arc(ex, ey - er * 0.35, er * 0.28, 0, Math.PI * 2); c.stroke();
+        c.beginPath(); c.arc(ex + s * er * 0.1, ey + er * 0.3, er * 0.22, 0, Math.PI * 2); c.stroke();
+      }
+    });
+  };
+  if (look.beard !== "chinstrap") drawEars();
 
   // Hair across the top of the ball
   var up = look.hair === "stubble" ? r * 0.08 : 0;  // a stubble scalp sits on a higher hairline
@@ -304,6 +308,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     }
     c.restore();
     c.globalAlpha = 1;
+    drawEars();
   }
   // Beard: sideburns down around the jaw to a full chin
   if (look.beard !== "none" && look.beard !== "chinstrap") {
