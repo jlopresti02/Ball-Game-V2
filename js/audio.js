@@ -530,7 +530,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -639,6 +639,16 @@ function playSmashLine() {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     playClip("smashYourBoy", 0.9);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The chair shot's CLANG (Josh Hokit's Chair Shot), the moment it lands.
+function playChairShot() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    playClip("chairShot", 1);
   } catch (e) { /* never let audio break the game */ }
 }
 

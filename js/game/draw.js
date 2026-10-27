@@ -285,6 +285,8 @@ function draw() {
     drawHands(b, other);
     drawDoBronx(b); // the pose and the glow while it's on
     drawShot(b);    // Hokit's double leg
+    drawChairShot(b); // and his folding chair
+    drawDazed(b);   // stars after a chair shot
     drawMock(b);    // and his thumbs down
     drawAngry(b);   // fuming at it
     b.x -= wox; b.y -= woy;
@@ -297,6 +299,7 @@ function draw() {
   drawGuillotines();
   drawRncs();
   drawArmbars();
+  drawChairDebris();
   drawSuplexes();
 
   projectiles.forEach(function (p) {
