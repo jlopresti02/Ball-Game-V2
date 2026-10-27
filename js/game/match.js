@@ -55,6 +55,7 @@ function startMatchWith(ch0, ch1) {
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
   resetDoBronx();
+  resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
 
   document.getElementById("name0").textContent = ch0.name;
