@@ -25,13 +25,14 @@ function inOrdinaryMovement(b) {
 function regulateSpeed(b, dt) {
   if (!inOrdinaryMovement(b)) return;
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  var normal = b.baseSpeed || SPEED; // lighter fighters roll faster (weight.js)
   var target;
-  if (s < SPEED - 0.5) {
+  if (s < normal - 0.5) {
     // Too slow: pick up momentum, starting from at least a steady crawl.
-    target = Math.min(SPEED, Math.max(s, MIN_SPEED) + SPEED_UP * dt);
-  } else if (s > SPEED + 0.5) {
+    target = Math.min(normal, Math.max(s, MIN_SPEED) + SPEED_UP * dt);
+  } else if (s > normal + 0.5) {
     // Too fast: lose the extra speed gradually.
-    target = SPEED + (s - SPEED) * Math.exp(-SLOW_DOWN * dt);
+    target = normal + (s - normal) * Math.exp(-SLOW_DOWN * dt);
   } else {
     return;
   }

@@ -44,7 +44,7 @@ function isFacing(a, b) {
 function readyToGrab(self, other, dt) {
   if (!self.char.hasGrapple || !self.alive || self.grappled || self.grapple) return false;
   if (self.slam || self.combo || self.taunt || self.flow) return false;
-  if (self.grappleCd - dt > 0) return false;
+  if (self.grappleCd - dt * self.atkRate > 0) return false;
   if (!other.alive || other.grappled || other.invincible) return false;
   if (self.sprawl || self.sprawled || other.sprawl || other.sprawled) return false;
   if (subLocked(self) || subLocked(other)) return false;
@@ -66,7 +66,12 @@ function resolveGrabInitiative(dt) {
   var aSees = isFacing(a, b), bSees = isFacing(b, a);
   if (aSees && !bSees) { winner = a; reason = "BLINDSIDE"; }
   else if (bSees && !aSees) { winner = b; reason = "BLINDSIDE"; }
-  else {
+  else if (a.wc !== b.wc) {
+    // Different weight classes: the heavier one usually gets there first.
+    var heavy = a.wc > b.wc ? a : b, light = heavy === a ? b : a;
+    if (Math.random() < grappleOdds(heavy, light)) { winner = heavy; reason = "HEAVIER"; }
+    else { winner = light; reason = "QUICKER"; }
+  } else {
     var sa = Math.sqrt(a.vx * a.vx + a.vy * a.vy), sb = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
     if (Math.abs(sa - sb) > SPEED_TIE) { winner = sa > sb ? a : b; reason = "FASTER"; }
     else if (Math.abs(a.hp - b.hp) > HEALTH_TIE) { winner = a.hp > b.hp ? a : b; reason = "MORE HEALTH"; }
@@ -141,7 +146,7 @@ var SLAM_SAFE_TIME = 0.8; // after landing a slam the Grappler can't be hit for 
 function grabEscaped(attacker, target) {
   var how = null;
   if (tryWeave(target, attacker.id)) how = "weave";
-  else if (target.char.blockChance > 0 && Math.random() < target.char.blockChance / 100) {
+  else if (Math.random() < (target.char.blockChance + (target.blockBonus || 0)) / 100 * grappleScale(target, attacker)) {
     how = "block";
     floater(target.x, target.y - target.r - 8, "BLOCK", "dodge");
     target.flash = 0.1;
@@ -168,7 +173,7 @@ function attemptGrab(attacker, target) {
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.
-  if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100 * (attacker.doBronx ? 0.5 : 1)) {
+  if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100 * (attacker.doBronx ? 0.5 : 1) * grappleScale(target, attacker)) {
     beginSprawl(attacker, target);
     return false;
   }
@@ -207,7 +212,7 @@ function updateSprawl(self, dt) {
   // The scramble: who comes out on top and slams the other.
   self.sprawl = null;
   atk.sprawled = false;
-  var sprawlerWins = Math.random() < self.char.grapple.reattackChance / 100;
+  var sprawlerWins = Math.random() < self.char.grapple.reattackChance / 100 * grappleScale(self, atk);
   var winner = sprawlerWins ? self : atk, loser = sprawlerWins ? atk : self;
   if (grabBlockedByImpunity(winner, loser)) { var tmp = winner; winner = loser; loser = tmp; }
   if (!winner.alive || !loser.alive) return;

@@ -248,6 +248,10 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 .devOption > div { display: flex; flex-direction: column; }
 .devOption .htitle { font-weight: 800; font-size: 19px; }
 .devOption .hsub { font-size: 13px; color: var(--muted); }
+.devSelect {
+  flex: none; max-width: 48%; font: inherit; font-weight: 700; font-size: 15px; color: var(--ink);
+  border: 3px solid var(--wall); border-radius: 8px; padding: 6px 8px; background: var(--track);
+}
 .abilityBlock[data-on="false"] .abilityBody { display: none; }
 
 .editorGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }

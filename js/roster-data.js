@@ -6,8 +6,9 @@
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
+    "weightClass": "lightweight",
     "name": "Charles Oliveira",
     "base": "Grappler",
     "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Special move: Do Bronx.",
@@ -97,8 +98,9 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
+    "weightClass": "lightweight",
     "name": "Dustin Poirier",
     "base": "Brawler",
     "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine.",
@@ -180,8 +182,9 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
+    "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
     "base": "Grappler",
     "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",

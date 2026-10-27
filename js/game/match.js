@@ -26,7 +26,7 @@ var winBy = null; // how the fight was won, when it isn't a knockout (e.g. "subm
 function stagger() { return 0.6 + Math.random() * 0.8; }
 
 function makeBall(id, ch) {
-  return {
+  var b = {
     id: id, char: ch,
     x: id === 0 ? W * 0.27 : W * 0.73,
     y: H / 2 + (Math.random() - 0.5) * 160,
@@ -42,6 +42,8 @@ function makeBall(id, ch) {
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
     guillo: null, choked: false, guilloCd: 0, rnc: null, suplex: null, suplexCd: 0, guard: null, guardCd: 0, doBronx: null
   };
+  applyWeight(b); // size, speed and attack speed for its weight class (weight.js)
+  return b;
 }
 
 function startMatchWith(ch0, ch1) {
@@ -164,6 +166,7 @@ function incomingMultiplier(b) {
   if (b.rageState && b.rageState.phase === "charge") m *= (b.char.rage.vulnMult != null ? b.char.rage.vulnMult : 2);
   if (b.taunt && b.taunt.t >= 0 && b.char.hasWeave) m *= (b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2);
   m *= doBronxMult(1 - b.id); // the opponent's in the Do Bronx state
+  m *= weightDamageMult(b, 1 - b.id); // a heavier or lighter opponent (weight.js)
   return m;
 }
 function wouldKill(b, amount) {
@@ -212,10 +215,16 @@ function hurt(b, amount, source, attackerId) {
     b.justDodged = true;
     return 0;
   }
+  // A lighter fighter slips some of a heavier one's strikes (weight.js).
+  if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" &&
+      tryWeightWhiff(b, attackerId)) {
+    b.justDodged = true;
+    return 0;
+  }
   // A passive chance to block an incoming attack outright and take no
   // damage at all (laser ticks are too frequent/small to bother blocking,
   // and you can't block a wall you're being slammed into).
-  var blockChance = Math.min(100, b.char.blockChance * (swinger ? swinger.blockMult : 1));
+  var blockChance = Math.min(100, (b.char.blockChance + (b.blockBonus || 0)) * (swinger ? swinger.blockMult : 1));
   if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" && Math.random() < blockChance / 100) {
     floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
     b.flash = 0.1;
@@ -237,6 +246,8 @@ function hurt(b, amount, source, attackerId) {
   }
   // Everything a fighter in the Do Bronx state lands does double (dobronx.js).
   if (source !== "laser") amount *= doBronxMult(attackerId);
+  // Heavier hits harder, lighter hits softer (weight.js).
+  amount *= weightDamageMult(b, attackerId);
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

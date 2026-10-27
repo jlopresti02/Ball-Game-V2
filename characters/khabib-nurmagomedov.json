@@ -1,7 +1,8 @@
 {
   "id": "c-khabib-nurmagomedov",
-  "rev": 2,
+  "rev": 3,
   "builtin": false,
+  "weightClass": "lightweight",
   "name": "Khabib Nurmagomedov",
   "base": "Grappler",
   "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
