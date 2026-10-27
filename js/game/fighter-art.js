@@ -58,9 +58,49 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   c.save();
   c.translate(x, y);
   var contained = opts.layout === "contained";
+  if (contained && look.hairPuff) drawHairPuff(c, r, look, ink);
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
   c.restore();
+}
+
+// Big hair as a second circle sitting behind the top of the ball: a lumpy
+// cloud of twists, outlined as one shape (all the lumps stroked, then filled)
+function drawHairPuff(c, r, look, ink) {
+  var hc = look.hairColor, py = -r * 0.8, pr = r * 0.62;
+  var lumps = [[0, 0, 1]];
+  for (var i = 0; i < 9; i++) {
+    var a = Math.PI * (1.05 + i * 0.1125);
+    lumps.push([Math.cos(a) * pr * 0.78, Math.sin(a) * pr * 0.7, 0.34]);
+  }
+  var blob = function () {
+    c.beginPath();
+    lumps.forEach(function (l) { c.moveTo(l[0] + pr * l[2], py + l[1]); c.arc(l[0], py + l[1], pr * l[2], 0, Math.PI * 2); });
+  };
+  c.save();
+  c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.06) * 2;
+  blob(); c.stroke();
+  var g = c.createRadialGradient(-pr * 0.3, py - pr * 0.4, pr * 0.1, 0, py, pr * 1.2);
+  g.addColorStop(0, shadeHex(hc, 0.3)); g.addColorStop(1, shadeHex(hc, -0.1));
+  c.fillStyle = g; blob(); c.fill();
+  blob(); c.clip();
+  drawTwistStrands(c, r, hc, -pr * 1.1, py - pr * 1.05, pr * 2.2, pr * 1.6, 11, 170);
+  c.restore();
+}
+
+// Long twists hanging down and slightly out from the middle, drawn over a
+// clipped hair fill: thick dark strands with a light ridge on each
+function drawTwistStrands(c, r, hc, x0, y0, w, h, seed, count) {
+  var rnd = artRand(seed);
+  c.lineCap = "round";
+  for (var n = 0; n < count; n++) {
+    var x = x0 + rnd() * w, y = y0 + rnd() * h, len = r * (0.14 + rnd() * 0.1);
+    var dx = x * 0.25 + (rnd() - 0.5) * r * 0.04, dy = len;
+    [[shadeHex(hc, -0.5), 0.045], [shadeHex(hc, 0.28), 0.014]].forEach(function (st) {
+      c.strokeStyle = st[0]; c.lineWidth = Math.max(1, r * st[1]);
+      c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + dx * 0.2 + r * 0.025, y + dy * 0.5, x + dx * 0.4, y + dy); c.stroke();
+    });
+  }
 }
 
 function drawArtHead(c, r, look, ink, hy, hr) {
@@ -219,6 +259,11 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   } else if (look.hair === "twists") {
     // Short twists pulled back: rows of small rounded knots over the scalp
     hairline(); c.fill();
+    if (look.hairPuff) {
+      c.save(); hairline(); c.clip();
+      drawTwistStrands(c, r, hc, -r, -r * 1.05, r * 2, r * 0.3, 12, 60);
+      c.restore();
+    } else {
     c.fillStyle = shadeHex(hc, 0.22); c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.012);
     for (var tw = 0; tw < 4; tw++) {
       var twy = -r * (0.95 - tw * 0.055), twn = 7 + tw;
@@ -226,6 +271,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
         var twx = (tk - (twn - 1) / 2) * r * (0.16 - tw * 0.012) + (tw % 2) * r * 0.04;
         c.beginPath(); c.ellipse(twx, twy, r * 0.045, r * 0.032, 0.3, 0, Math.PI * 2); c.fill(); c.stroke();
       }
+    }
     }
     c.fillStyle = hc;
   } else if (look.hair === "short" || look.hair === "long" || look.hair === "dreads") {
