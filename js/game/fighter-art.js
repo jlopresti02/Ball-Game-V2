@@ -256,6 +256,13 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.quadraticCurveTo(0, jaw + r * 0.01, -r * 0.26, jaw - r * 0.07);
     c.quadraticCurveTo(-r * 0.66, -r * 0.4, -r * 0.66, -r * 0.66);
     c.closePath(); c.fill();
+    // Thin moustache arching over the mouth, joining the strap at both corners
+    c.strokeStyle = hc; c.lineWidth = lw(0.04); c.lineCap = "round";
+    c.beginPath();
+    c.moveTo(-r * 0.27, jaw - r * 0.05);
+    c.quadraticCurveTo(-r * 0.27, -r * 0.46, 0, -r * 0.46);
+    c.quadraticCurveTo(r * 0.27, -r * 0.46, r * 0.27, jaw - r * 0.05);
+    c.stroke();
     c.globalAlpha = 1;
   }
   // Beard: sideburns down around the jaw to a full chin
