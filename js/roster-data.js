@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -98,7 +98,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
@@ -167,14 +167,14 @@ var SAVED_ROSTER = [
     "hasGuillotine": true,
     "guillotine": {
       "chance": 35,
-      "tapBase": 20,
+      "tapBase": 10,
       "tapLowHp": 60,
       "cooldown": 5,
       "outcomes": {
-        "escape": 20,
-        "gnp": 70,
-        "resink": 5,
-        "slam": 5
+        "escape": 26,
+        "gnp": 56,
+        "resink": 4,
+        "slam": 4
       },
       "slamDamage": 75
     },
