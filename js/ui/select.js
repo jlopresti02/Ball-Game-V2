@@ -243,6 +243,20 @@ try { devForceKo = localStorage.getItem("ballBrawl.devForceKo") === "1"; } catch
     try { localStorage.setItem("ballBrawl.devForceKo", devForceKo ? "1" : "0"); } catch (e) {}
   });
 })();
+// Dev Corner switch: the referee works every Dev Corner fight, not just
+// Ciryl Gane's (referee.js).
+var devForceRef = false;
+try { devForceRef = localStorage.getItem("ballBrawl.devForceRef") === "1"; } catch (e) {}
+(function () {
+  var sw = document.getElementById("devForceRef");
+  sw.setAttribute("aria-checked", String(devForceRef));
+  sw.addEventListener("click", function () {
+    devForceRef = !devForceRef;
+    sw.setAttribute("aria-checked", String(devForceRef));
+    try { localStorage.setItem("ballBrawl.devForceRef", devForceRef ? "1" : "0"); } catch (e) {}
+  });
+})();
+
 // Dev Corner: put both fighters in one weight class ("" keeps their own).
 var devWeightClass = "";
 try { devWeightClass = localStorage.getItem("ballBrawl.devWeightClass") || ""; } catch (e) {}

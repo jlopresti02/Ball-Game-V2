@@ -82,6 +82,7 @@ function draw() {
   });
 
   drawGuardZones(); // the circle round a fighter down in guard
+  drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).

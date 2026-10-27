@@ -39,6 +39,7 @@ function update(dt) {
     b.y = Math.min(H - b.r, Math.max(b.r, b.y));
   });
   impacts = impacts.filter(function (im) { im.life -= dt; return im.life > 0; });
+  updateReferee(dt);
 
   balls.forEach(function (b) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;
