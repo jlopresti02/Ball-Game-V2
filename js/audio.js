@@ -556,6 +556,7 @@ function playHereWeGo() {
 // Knockout: the arena erupting, for every win that isn't a submission. The
 // clip has its own crowd in it, so the looping crowd ducks under it.
 function playKnockout() {
+  crowdReact(1); // the stands go up (the looping crowd itself ducks under the clip)
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
@@ -569,10 +570,9 @@ function playKnockout() {
       src.start(now);
       var c = crowd;
       if (c && c.gain) {
-        c.hype = 0; c.hypeAt = now;
+        c.duckUntil = now + buf.duration - 1;
         c.gain.gain.cancelScheduledValues(now);
         c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.4, now, 0.1);
-        c.gain.gain.setTargetAtTime(CROWD_FLOOR, now + buf.duration - 1, 1);
       }
     });
   } catch (e) { /* never let audio break the game */ }
@@ -713,22 +713,32 @@ function playCameraFlashes() {
 
 // ---------------------------------------------------------------
 // Crowd: a looping arena crowd under the whole fight. It sits at a low
-// murmur during lulls; every hit lifts the "hype", which swells the crowd
-// louder and brighter, then it settles back down over a few seconds. The
-// win brings one last roar.
+// murmur during lulls. Big moments raise the crowd's "heat", and the crowd
+// doesn't jump straight to it: it takes about a second to build up to full
+// excitement, stays there a few seconds while the action keeps coming, then
+// takes a few seconds to die back down once things slow. The same mood drives
+// the fans in the stands (crowdExcitement, stadium.js). The win brings one
+// last roar.
 // ---------------------------------------------------------------
-var CROWD_FLOOR = 0.1, CROWD_PEAK = 0.6, CROWD_SETTLE = 2.2; // settle = seconds to fall most of the way back
-var crowd = null; // { src, gain, filter, hype, hypeAt, held, holdTimer }
+var CROWD_FLOOR = 0.1, CROWD_PEAK = 0.6;
+var CROWD_RISE = 1.0;   // seconds to build from calm to fully excited
+var CROWD_KEEP = 3.0;   // seconds it stays up after the last big moment
+var CROWD_FADE = 4.0;   // seconds to die all the way back down
+var crowd = null; // { src, gain, filter, held, holdTimer, duckUntil }
+var crowdMood = { heat: 0, level: 0, keep: 0 }; // heat: where it's headed; level: where it is
 var CROWD_HOLD = 0.54, CROWD_HOLD_FREQ = 9000; // the crowd going wild through Do Bronx
 function crowdLevel(h) { return CROWD_FLOOR + (CROWD_PEAK - CROWD_FLOOR) * h; }
-function crowdHypeNow(c, now) { return c.hype * Math.exp(-(now - c.hypeAt) / CROWD_SETTLE); }
+// How excited the crowd is right now, 0 (murmur) to 1 (on its feet).
+function crowdExcitement() { return crowd && crowd.held ? Math.max(0.9, crowdMood.level) : crowdMood.level; }
+function resetCrowdMood() { crowdMood.heat = 0; crowdMood.level = 0; crowdMood.keep = 0; }
 function startCrowd() {
+  resetCrowdMood();
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     stopCrowd();
-    var c = crowd = { src: null, gain: null, filter: null, hype: 0, hypeAt: 0 };
+    var c = crowd = { src: null, gain: null, filter: null, ready: 0 };
     withClip("crowd", function (buf) {
       if (crowd !== c) return; // stopped (or restarted) while decoding
       var now = ctx.currentTime;
@@ -737,36 +747,52 @@ function startCrowd() {
       c.src.loop = true;
       // Skip the MP3's encoder padding at either end so the loop has no gap.
       c.src.loopStart = 0.06; c.src.loopEnd = buf.duration - 0.06;
-      // Lulls sound muffled and distant; hype opens the crowd up.
+      // Lulls sound muffled and distant; excitement opens the crowd up.
       c.filter = ctx.createBiquadFilter();
       c.filter.type = "lowpass";
       c.filter.frequency.value = 1800;
       c.gain = ctx.createGain();
       c.gain.gain.setValueAtTime(0.0001, now);
       c.gain.gain.exponentialRampToValueAtTime(CROWD_FLOOR, now + 1.5);
+      c.ready = now + 1.5; // fading in; the mood takes over after
       c.src.connect(c.filter); c.filter.connect(c.gain); c.gain.connect(ctx.destination);
       c.src.start(now, Math.random() * (buf.duration - 1));
     });
   } catch (e) { /* never let audio break the game */ }
 }
-// amount: how big the moment was, 0 (nothing) to 1 (huge). Hype stacks, so
-// a flurry builds the crowd up further than a single shot.
+// amount: how big the moment was, 0 (nothing) to 1 (huge). Heat stacks, so
+// a flurry builds the crowd up further than a single shot. A real moment
+// (CROWD_BIG or more) keeps it up for another CROWD_KEEP seconds; little
+// jabs only nudge it.
+var CROWD_BIG = 0.1;
 function crowdReact(amount) {
-  try {
-    var c = crowd;
-    if (!c || !c.gain || !(amount > 0)) return;
-    var now = audioCtx.currentTime;
-    c.hype = Math.min(1, crowdHypeNow(c, now) + amount);
-    c.hypeAt = now;
-    var restGain = c.held ? CROWD_HOLD : CROWD_FLOOR, restFreq = c.held ? CROWD_HOLD_FREQ : 1800;
-    [[c.gain.gain, Math.max(restGain, crowdLevel(c.hype)), restGain], [c.filter.frequency, Math.max(restFreq, 1800 + 9000 * c.hype), restFreq]].forEach(function (p) {
-      p[0].cancelScheduledValues(now);
-      p[0].setTargetAtTime(p[1], now, 0.06);           // swell fast
-      p[0].setTargetAtTime(p[2], now + 0.4, CROWD_SETTLE); // then settle back to the murmur
-    });
-  } catch (e) { /* never let audio break the game */ }
+  if (!(amount > 0)) return;
+  crowdMood.heat = Math.min(1, Math.max(crowdMood.heat, crowdMood.level) + amount);
+  if (amount >= CROWD_BIG) crowdMood.keep = CROWD_KEEP;
 }
 function crowdRoar() { crowdReact(1); }
+// Runs every frame (update.js): eases the crowd toward its heat and plays it.
+function tickCrowd(dt) {
+  var m = crowdMood;
+  if (m.keep > 0) m.keep = Math.max(0, m.keep - dt);
+  else m.heat = Math.max(0, m.heat - dt / CROWD_FADE);
+  if (m.level < m.heat) m.level = Math.min(m.heat, m.level + dt / CROWD_RISE);
+  else m.level = m.heat;
+  try {
+    var c = crowd;
+    if (!c || !c.gain) return;
+    var now = audioCtx.currentTime;
+    if (now < c.ready || now < (c.duckUntil || 0)) return; // fading in, or ducked under the knockout
+    var gain = crowdLevel(m.level), freq = 1800 + 9000 * m.level;
+    if (c.held) { gain = Math.max(gain, CROWD_HOLD); freq = Math.max(freq, CROWD_HOLD_FREQ); }
+    c.gain.gain.cancelScheduledValues(now);
+    // Slow after a hold or coming back up from under the knockout clip.
+    var slow = c.held || now < (c.duckUntil || 0) + 1.5;
+    c.gain.gain.setTargetAtTime(gain, now, slow ? 0.5 : 0.08);
+    c.filter.frequency.cancelScheduledValues(now);
+    c.filter.frequency.setTargetAtTime(freq, now, 0.08);
+  } catch (e) { /* never let audio break the game */ }
+}
 // Keeps the crowd going wild (instead of settling to the murmur) from `delay`
 // seconds from now until crowdRelease().
 function crowdHold(delay) {
@@ -774,24 +800,19 @@ function crowdHold(delay) {
   if (!c) return;
   clearTimeout(c.holdTimer);
   c.holdTimer = setTimeout(function () {
-    if (crowd !== c || !c.gain) return;
+    if (crowd !== c) return;
     c.held = true;
-    var now = audioCtx.currentTime;
-    [[c.gain.gain, CROWD_HOLD], [c.filter.frequency, CROWD_HOLD_FREQ]].forEach(function (p) {
-      p[0].cancelScheduledValues(now);
-      p[0].setTargetAtTime(p[1], now, 0.5);
-    });
   }, Math.max(0, delay) * 1000);
 }
-// Back to normal: the crowd settles down to its murmur.
+// Back to normal: the crowd dies down to its murmur.
 function crowdRelease() {
   var c = crowd;
   if (!c) return;
   clearTimeout(c.holdTimer);
   if (!c.held) return;
   c.held = false;
-  c.hype = 0.6; c.hypeAt = audioCtx.currentTime;
-  crowdReact(0.0001); // reschedules the settle toward the murmur
+  crowdMood.heat = crowdMood.level = Math.max(crowdMood.level, 0.6);
+  crowdMood.keep = 0;
 }
 function stopCrowd() {
   var c = crowd;

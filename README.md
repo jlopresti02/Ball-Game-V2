@@ -19,6 +19,8 @@ The buttons under the arena hide once a fight starts, so a screen recording only
 
 The **Arena** button under the fight switches between two arenas, and the game remembers the choice on each device:
 
+The crowd (its sound, and the fans in the WWIT stadium) has a mood: big moments raise it, it takes about a second to build up to fully excited, stays up for 3 seconds after the last big moment (a hit of 12.5 damage or more, or a slam), then takes about 4 seconds to die back down. Little jabs only nudge it. The settings are `CROWD_RISE`, `CROWD_KEEP`, `CROWD_FADE` and `CROWD_BIG` in `js/audio.js`.
+
 - **Test**: the plain square arena with the health bars above it.
 - **WWIT stadium**: a 9:16 frame for reels. The cage sits in the middle on a WWIT MMA branded mat, with stands of cheering fans (drawn in the fighter art style) around it. A jumbotron above the cage replaces the health bars and shows the clock, each fighter's health and special meter, and live strikes landed, damage dealt and takedowns. The cage and jumbotron stay out of the areas Reels and TikTok cover with their own buttons and captions.
 

@@ -441,10 +441,10 @@ function drawStadium(px) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(stadiumCache.bg, 0, 0);
   ctx.setTransform(px, 0, 0, px, 0, 0);
-  // The crowd gets louder when the cage shakes.
+  // The crowd's on its feet when the fight's exciting.
   // In Brazil mode everyone's on their feet the whole time.
   var br = brazilOn();
-  var roar = br ? 1 : Math.min(1, (shake || 0) / 10);
+  var roar = br ? 1 : crowdExcitement(); // builds up and dies down (audio.js)
   var wild = chairFrenzyLevel(); // the whole crowd going nuts over a chair shot (chairshot.js)
   for (var i = 0; i < stadiumFans.length; i++) {
     var fan = br ? stadiumFans[i].br : stadiumFans[i];
