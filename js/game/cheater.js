@@ -54,7 +54,7 @@ function tickRefNap(dt) {
 }
 function wakeRef(rf) {
   rf.asleep = false; rf.napT = 0;
-  floater(rf.x, rf.y - REF_R - 20, "!", "note");
+  floater(rf.x, refTop(rf), "!", "note");
   balls.forEach(function (b) {
     if (!b.cheater) return;
     b.cheater = null;
