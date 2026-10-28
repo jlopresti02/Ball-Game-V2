@@ -9043,10 +9043,11 @@ function drawStar(x, y, r, color) {
 // blocks anyone. He keeps to whichever spot round the edge of the cage is
 // furthest from both fighters, shuffling out of their way, and when a
 // fighter is knocked out or taps he runs in over them and waves it off.
-// With REF_TOWER on, in the WWIT stadium he sits up in a lifeguard tower
-// outside the cage on the left (in place of a few fans) all fight instead,
-// and jumps down over the cage for the stoppage. The test arena has no room
-// outside the cage, so there he still roams.
+// In the WWIT stadium he works from ringside instead: the column of fans
+// left of the cage is cleared for him, and he jogs up and down it keeping
+// level with the fight, pointing, clapping and leaning in, then hops the
+// cage for the stoppage. (The test arena has no room outside the cage, so
+// there he still works inside it.)
 "use strict";
 
 var REF_R = 30;          // a bit smaller than a fighter (39 at Middleweight)
@@ -9055,10 +9056,10 @@ var REF_RUN = 420;       // units/second rushing in for the stoppage
 var REF_RETHINK = 0.4;   // seconds between picking a new spot
 var REF_SWITCH = 30;     // a new spot has to be this much further from the fight
 var REF_GAP = 14;        // how close he lets a fighter get before stepping away
-var REF_TOWER = true;    // experiment: watch from a lifeguard tower instead of roaming
-var TOWER_W = 80, TOWER_H = 200; // the tower's footprint width and seat height
-var REF_HOP = 0.6;       // seconds to jump down off the tower
-var REF_SEAT = TOWER_H + REF_R * 0.55; // how high he sits, down in the seat box
+var REF_RINGSIDE = true; // in the stadium, work from ringside (left of the cage)
+var RINGSIDE_X = 62;     // stage x of his lane, the middle of the left fan column
+var RINGSIDE_R = 34;     // he's drawn a little bigger out there, to stand out
+var REF_HOP = 0.5;       // seconds to vault the cage for the stoppage
 
 var referee = null;
 
@@ -9074,30 +9075,43 @@ function refereeOn() {
 function resetReferee() {
   if (!refereeOn()) { referee = null; return; }
   // Starts at the bottom middle of the cage, out of both corners.
-  referee = { x: W / 2, y: H - REF_R - 10, vx: 0, vy: 0, tx: W / 2, ty: H - REF_R - 10, think: 0, stop: null, wave: 0, look: null, asleep: false, napT: 0, z: 0, hop: 0 };
-  if (REF_TOWER && stadiumOn()) {
-    var t = towerSpot();
-    referee.tower = t;
-    referee.x = referee.tx = t.x; referee.y = referee.ty = t.y; referee.z = REF_SEAT;
+  referee = { x: W / 2, y: H - REF_R - 10, vx: 0, vy: 0, tx: W / 2, ty: H - REF_R - 10, think: 0, stop: null, wave: 0, look: null, asleep: false, napT: 0, z: 0, hop: 0, r: REF_R, gest: null, walk: 0 };
+  if (REF_RINGSIDE && stadiumOn()) {
+    var k = W / ST.A;
+    referee.ringside = { x: (RINGSIDE_X - ST.AX) * k, y0: (ST.IN.y0 - ST.AY) * k + RINGSIDE_R + 10, y1: (ST.IN.y1 - ST.AY) * k - RINGSIDE_R - 10 };
+    referee.r = RINGSIDE_R;
+    referee.x = referee.tx = referee.ringside.x;
+    referee.y = referee.ty = H / 2;
   }
   var look = defaultLook();
   look.skin = "#c99172"; look.hair = "bald"; look.beard = "none"; look.build = "lean";
   referee.fan = { look: look, shirt: "#151515", style: "tee", team: null, shirtless: false, cap: null, phase: 0 };
 }
 
-// Where the tower stands, in arena units: the middle of its base, in the
-// column of fans left of the cage, a little below halfway down.
-var TOWER_STAGE = { x: 62, y: 1300 }; // the same spot on the 1080x1920 stage
-function towerSpot() {
-  var k = W / ST.A;
-  return { x: (TOWER_STAGE.x - ST.AX) * k, y: (TOWER_STAGE.y - ST.AY) * k };
+// Where floating text over his head goes.
+function refTop(rf) { return rf.y - rf.z - rf.r - 20; }
+// The fans the ref's ringside lane takes the place of (stadium.js skips them).
+function refClearsFan(f) { return !!(referee && referee.ringside) && f.side === "left"; }
+
+// Ringside: jog up and down the lane keeping level with the fight, and keep
+// busy watching it: point at the action, clap, wave them on, lean in.
+var REF_GESTURES = ["point", "point", "clap", "work", "lean", "lean"];
+function updateRingside(rf, dt) {
+  var sum = 0, n = 0;
+  balls.forEach(function (b) { if (b.alive) { sum += b.y; n++; } });
+  var want = n ? sum / n : H / 2;
+  rf.ty = Math.min(rf.ringside.y1, Math.max(rf.ringside.y0, want));
+  rf.tx = rf.ringside.x;
+  var dy = rf.ty - rf.y, sp = Math.min(REF_WALK * 1.4, Math.abs(dy) * 3);
+  rf.vy += ((dy > 0 ? sp : -sp) - rf.vy) * Math.min(1, dt * 6);
+  rf.vx = 0;
+  rf.y += rf.vy * dt;
+  rf.walk += Math.abs(rf.vy) * dt;
+  // A new bit of business every second or so.
+  if (!rf.gest || (rf.gest.t += dt) > rf.gest.dur) {
+    rf.gest = { kind: REF_GESTURES[(Math.random() * REF_GESTURES.length) | 0], t: 0, dur: 0.8 + Math.random() * 1.2 };
+  }
 }
-// The fans the tower stands in place of (stadium.js skips drawing them).
-function towerHidesFan(f) {
-  return !!(referee && referee.tower) && f.side === "left" && f.y > TOWER_STAGE.y - 500 && f.y < TOWER_STAGE.y + 30;
-}
-// Where floating text over his head goes (he's up high on the tower).
-function refTop(rf) { return rf.y - rf.z - REF_R - 20; }
 
 // The spots round the cage he can stand in: corners and edge middles.
 function refereeSpots() {
@@ -9127,6 +9141,7 @@ function updateReferee(dt) {
   if (!rf) return;
   var down = refereeStoppage(), speed = REF_WALK;
   if (rf.asleep && !down) { rf.vx = 0; rf.vy = 0; return; } // dozing where he stands (cheater.js)
+  if (rf.ringside && !rf.stop && !down) { updateRingside(rf, dt); return; }
   if (down && !rf.stop) {
     // Rushes in over the downed fighter, on the far side from the winner.
     var win = balls[1 - down.id];
@@ -9134,17 +9149,11 @@ function updateReferee(dt) {
     var off = down.alive ? down.r + REF_R * 0.6 : 0;
     rf.stop = { x: down.x + dx / d * off, y: down.y + dy / d * off, called: false };
   }
-  if (rf.tower && !rf.stop) {
-    // Up in the tower: he sits and watches, and never has to move.
-    rf.vx = 0; rf.vy = 0;
-    return;
-  }
-  if (rf.stop && rf.z > 0) {
-    // Jumping down off the tower: drops in a short hop while heading in.
+  if (rf.stop && rf.ringside && rf.hop < REF_HOP) {
+    // Vaulting the cage on the way in.
     rf.hop += dt;
     var hk = Math.min(1, rf.hop / REF_HOP);
-    rf.z = REF_SEAT * (1 - hk) + Math.sin(Math.PI * hk) * 40; // up and over the cage
-    if (hk >= 1) rf.z = 0;
+    rf.z = hk >= 1 ? 0 : Math.sin(Math.PI * hk) * 60;
   }
   if (rf.stop) {
     rf.tx = rf.stop.x; rf.ty = rf.stop.y; speed = REF_RUN;
@@ -9178,7 +9187,7 @@ function updateReferee(dt) {
       if (ed < min) { var push = Math.min(min - ed, REF_RUN * dt); rf.x += ex / ed * push; rf.y += ey / ed * push; }
     });
   }
-  if (rf.z <= 0) { // (mid-jump he's still coming over the cage)
+  if (rf.z <= 0) { // (mid-vault he's still coming over the cage)
     rf.x = Math.min(W - REF_R, Math.max(REF_R, rf.x));
     rf.y = Math.min(H - REF_R, Math.max(REF_R, rf.y));
   }
@@ -9191,45 +9200,62 @@ function updateReferee(dt) {
   }
 }
 
-// Drawn under the fighters, so they pass over him.
+// Drawn under the fighters, so they pass over him. He's dressed the part:
+// the black-and-white striped shirt, a REF patch and a whistle.
 function drawReferee() {
   var rf = referee;
   if (!rf) return;
-  if (rf.tower) drawRefTower(rf.tower, false);
-  var r = REF_R, skin = rf.fan.look.skin;
-  // His shadow stays on the mat while he's up high or mid-jump.
-  if (rf.z > 0) {
-    ctx.fillStyle = "rgba(0,0,0,0.14)";
-    ctx.beginPath(); ctx.ellipse(rf.x, rf.y + r * 0.2, r * 0.8, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
-  }
+  var r = rf.r, skin = rf.fan.look.skin, now = performance.now();
+  // Jogging bounce while he moves along the lane.
+  var moving = Math.abs(rf.vy) > 15 || Math.abs(rf.vx) > 15;
+  var jog = moving && !rf.asleep && rf.z <= 0 ? Math.abs(Math.sin(rf.walk * 0.09)) * r * 0.14 : 0;
+  // His shadow stays on the floor while he's in the air.
+  ctx.fillStyle = "rgba(0,0,0,0.14)";
+  ctx.beginPath(); ctx.ellipse(rf.x + r * 0.15, rf.y + r * 0.9, r * 0.9 * (1 - Math.min(0.4, rf.z / 150)), r * 0.28, 0, 0, Math.PI * 2); ctx.fill();
   ctx.save();
-  ctx.translate(rf.x, rf.y - rf.z);
-  // Asleep: slumped over to one side, breathing slow.
-  var slump = rf.asleep ? 0.35 + Math.sin(performance.now() / 700) * 0.06 : 0;
+  ctx.translate(rf.x, rf.y - rf.z - jog);
+  // Asleep: slumped over to one side, breathing slow. Leaning in to watch:
+  // tipped toward the fight.
+  var g = rf.gest && !rf.stop && !rf.asleep ? rf.gest : null;
+  var slump = rf.asleep ? 0.35 + Math.sin(now / 700) * 0.06 : g && g.kind === "lean" ? 0.22 * Math.min(1, g.t * 5) : 0;
   ctx.rotate(slump);
-  // Shadow (on the ground only; up high it's drawn on the mat above)
-  if (rf.z <= 0) {
-    ctx.fillStyle = "rgba(0,0,0,0.12)";
-    ctx.beginPath(); ctx.ellipse(r * 0.15, r * 0.9, r * 0.9, r * 0.28, 0, 0, Math.PI * 2); ctx.fill();
-  }
   drawFanBall(ctx, r, rf.fan);
-  ctx.fillStyle = "#ffffff"; ctx.font = "900 " + Math.round(r * 0.42) + "px Impact, 'Arial Black', sans-serif";
+  drawRefStripes(r);
+  // REF patch on the chest
+  ctx.fillStyle = "#ffffff"; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(-r * 0.42, r * 0.2, r * 0.84, r * 0.4, r * 0.08); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#111111"; ctx.font = "900 " + Math.round(r * 0.34) + "px Impact, 'Arial Black', sans-serif";
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText("REF", 0, r * 0.4);
-  // A whistle on a lanyard.
-  ctx.strokeStyle = "#e3cd9a"; ctx.lineWidth = 1.6;
-  ctx.beginPath(); ctx.moveTo(-r * 0.45, -r * 0.05); ctx.quadraticCurveTo(0, r * 0.2, r * 0.45, -r * 0.05); ctx.stroke();
+  ctx.fillText("REF", 0, r * 0.41);
+  // Whistle on a lanyard
+  ctx.strokeStyle = "#e53935"; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(-r * 0.32, -r * 0.18); ctx.quadraticCurveTo(-r * 0.05, r * 0.08, r * 0.2, r * 0.02); ctx.stroke();
   ctx.fillStyle = "#c9ccd1"; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.roundRect(-r * 0.1, r * 0.08, r * 0.24, r * 0.13, r * 0.05); ctx.fill(); ctx.stroke();
-  // Hands: at his sides, or waving it off over his head.
-  var hands;
+  ctx.beginPath(); ctx.roundRect(r * 0.14, -r * 0.04, r * 0.26, r * 0.14, r * 0.05); ctx.fill(); ctx.stroke();
+  // Hands: waving it off, hanging limp asleep, or busy with whatever
+  // he's doing at ringside (the fight is off to his right).
+  var hands, sw;
   if (rf.stop && rf.stop.called) {
-    var sw = Math.sin(rf.wave * 14);
+    sw = Math.sin(rf.wave * 14);
     hands = [{ x: -r * 0.55 * sw, y: -r * 1.15 }, { x: r * 0.55 * sw, y: -r * 1.05 }];
+  } else if (rf.stop) {
+    hands = [{ x: -r * 0.9, y: -r * 0.6 }, { x: r * 1.2, y: -r * 0.5 }]; // charging in, arm out
   } else if (rf.asleep) {
-    hands = [{ x: -r * 0.95, y: r * 0.55 }, { x: r * 0.95, y: r * 0.55 }]; // hanging limp
+    hands = [{ x: -r * 0.95, y: r * 0.55 }, { x: r * 0.95, y: r * 0.55 }];
+  } else if (g && g.kind === "point") {
+    var jab = Math.sin(g.t * 9) * r * 0.08;
+    hands = [{ x: -r * 1.0, y: r * 0.25 }, { x: r * 1.45 + jab, y: -r * 0.2 }];
+  } else if (g && g.kind === "clap") {
+    sw = Math.abs(Math.sin(g.t * 11));
+    hands = [{ x: -r * (0.2 + 0.5 * sw), y: -r * 0.05 }, { x: r * (0.2 + 0.5 * sw), y: -r * 0.05 }];
+  } else if (g && g.kind === "work") {
+    // "Work!" both hands up, rolling over and over
+    sw = g.t * 10;
+    hands = [{ x: -r * 0.85 + Math.cos(sw) * r * 0.2, y: -r * 0.7 + Math.sin(sw) * r * 0.2 }, { x: r * 0.85 + Math.cos(sw + Math.PI) * r * 0.2, y: -r * 0.7 + Math.sin(sw + Math.PI) * r * 0.2 }];
+  } else if (g && g.kind === "lean") {
+    hands = [{ x: -r * 0.7, y: r * 0.75 }, { x: r * 0.75, y: r * 0.75 }]; // hands on his knees
   } else {
-    var bob = Math.sin(performance.now() / 160) * r * 0.06;
+    var bob = Math.sin(now / 160) * r * 0.06;
     hands = [{ x: -r * 1.02, y: r * 0.25 + bob }, { x: r * 1.02, y: r * 0.25 - bob }];
   }
   hands.forEach(function (h) {
@@ -9239,67 +9265,24 @@ function drawReferee() {
   ctx.rotate(-slump);
   drawRefZs(rf);
   ctx.restore();
-  if (rf.tower) drawRefTower(rf.tower, true); // the seat box's front, over his lap
 }
 
-// The lifeguard tower, seen from the front like the fans: four white legs
-// splayed out to the mat with cross braces, a ladder up the front, and a
-// maroon seat box with a backrest and a little WWIT pennant on top. (x, y)
-// is the middle of its base on the mat. It's drawn in two passes around the
-// ref: everything behind him, then (front) the seat box's front panel.
-function drawRefTower(t, front) {
-  var w = TOWER_W, h = TOWER_H, x = t.x, y = t.y;
-  var top = y - h, seatW = w * 0.62;
+// White vertical stripes over the black shirt, below the collar line.
+function drawRefStripes(r) {
   ctx.save();
-  ctx.lineJoin = "round"; ctx.lineCap = "round";
-  if (front) {
-    ctx.fillStyle = WWIT.maroon; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.roundRect(x - seatW / 2 - 5, top - 12, seatW + 10, 20, 4); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = WWIT.gold; ctx.font = "900 11px Impact, 'Arial Black', sans-serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText("REF", x, top - 1.5);
-    ctx.restore();
-    return;
-  }
-  // Shadow on the mat.
-  ctx.fillStyle = "rgba(0,0,0,0.12)";
-  ctx.beginPath(); ctx.ellipse(x + 6, y + 2, w * 0.62, 9, 0, 0, Math.PI * 2); ctx.fill();
-  function post(x0, y0, x1, y1, wd) {
-    ctx.strokeStyle = STAGE_INK; ctx.lineWidth = wd + 3;
-    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-    ctx.strokeStyle = "#f7f3ea"; ctx.lineWidth = wd;
-    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-  }
-  // Back legs (shorter, further away), then the braces, then the front legs.
-  var bl = x - w * 0.36, br = x + w * 0.36, by = y - 10;
-  var fl = x - w * 0.5, fr = x + w * 0.5;
-  var sl = x - seatW / 2, sr = x + seatW / 2;
-  post(bl, by, sl + 4, top, 4); post(br, by, sr - 4, top, 4);
-  // Two levels of cross braces between the legs, a crossbar on each.
-  [[0.08, 0.44], [0.5, 0.86]].forEach(function (lv) {
-    var y0 = y - h * lv[0], y1 = y - h * lv[1];
-    var i0 = (w - seatW) / 2 * lv[0], i1 = (w - seatW) / 2 * lv[1]; // legs lean in as they climb
-    post(fl + 6 + i0, y0, fr - 6 - i1, y1, 3);
-    post(fr - 6 - i0, y0, fl + 6 + i1, y1, 3);
-    post(fl + 4 + i1, y1, fr - 4 - i1, y1, 3);
-  });
-  post(fl, y, sl, top + 4, 7); post(fr, y, sr, top + 4, 7);
-  // Ladder up the front middle.
-  var lw = w * 0.2;
-  post(x - lw / 2, y, x - lw / 2, top + 6, 2.5); post(x + lw / 2, y, x + lw / 2, top + 6, 2.5);
-  for (var i = 1; i <= 9; i++) { var ry = y - (h - 6) * i / 10; post(x - lw / 2, ry, x + lw / 2, ry, 2); }
-  // Backrest behind where he sits.
-  ctx.fillStyle = WWIT.maroon; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.roundRect(x - seatW * 0.46, top - 66, seatW * 0.92, 62, 6); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = WWIT.gold; ctx.fillRect(x - seatW * 0.46 + 3, top - 56, seatW * 0.92 - 6, 4);
-  // Pennant pole off the back corner.
-  post(sr + 2, top, sr + 8, top - 84, 2.5);
-  ctx.fillStyle = WWIT.gold; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 1.5;
-  var wav = Math.sin(performance.now() / 260) * 3;
-  ctx.beginPath(); ctx.moveTo(sr + 8, top - 84); ctx.lineTo(sr + 32, top - 77 + wav); ctx.lineTo(sr + 7, top - 70); ctx.closePath(); ctx.fill(); ctx.stroke();
-  // Platform under the seat.
-  ctx.fillStyle = "#f7f3ea"; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.roundRect(sl - 6, top + 2, seatW + 12, 8, 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, r - 1, 0, Math.PI * 2); ctx.clip();
+  ctx.beginPath();
+  ctx.moveTo(-r, -r * 0.38);
+  ctx.quadraticCurveTo(-r * 0.55, -r * 0.3, -r * 0.3, -r * 0.24);
+  ctx.quadraticCurveTo(0, -r * 0.08, r * 0.3, -r * 0.24);
+  ctx.quadraticCurveTo(r * 0.55, -r * 0.3, r, -r * 0.38);
+  ctx.lineTo(r, r); ctx.lineTo(-r, r); ctx.closePath(); ctx.clip();
+  ctx.fillStyle = "#f4f4f4";
+  var sw = r * 0.2;
+  for (var x = -r + sw * 0.5; x < r; x += sw * 2) ctx.fillRect(x, -r, sw, r * 2);
+  var sh = ctx.createLinearGradient(0, -r * 0.3, 0, r);
+  sh.addColorStop(0, "rgba(255,255,255,0.05)"); sh.addColorStop(1, "rgba(0,0,0,0.3)");
+  ctx.fillStyle = sh; ctx.fillRect(-r, -r, r * 2, r * 2);
   ctx.restore();
 }
 
@@ -11845,13 +11828,13 @@ function drawStadium(px) {
   fanClock += fdt * (1 + (FAN_PACE_MAX - 1) * roar);
   var wild = chairFrenzyLevel(); // the whole crowd going nuts over a chair shot (chairshot.js)
   for (var i = 0; i < stadiumFans.length; i++) {
-    if (towerHidesFan(stadiumFans[i])) continue; // the ref's tower stands there (referee.js)
+    if (refClearsFan(stadiumFans[i])) continue; // the ref works ringside there (referee.js)
     var fan = br ? stadiumFans[i].br : stadiumFans[i];
     drawFan(fan, now, fanClock, roar, px, wild);
   }
   for (var j = 0; j < stadiumFans.length; j++) {
     var f = br ? stadiumFans[j].br : stadiumFans[j];
-    if (towerHidesFan(stadiumFans[j])) continue;
+    if (refClearsFan(stadiumFans[j])) continue;
     if (f.sign) drawFanSign(f, now);
     else if (f.flag) drawBrazilFlag(f.x + f.r * 0.3, f.y - f.r * 1.55, f.r * 1.3, now, f.phase);
   }

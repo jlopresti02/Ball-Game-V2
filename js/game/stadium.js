@@ -456,13 +456,13 @@ function drawStadium(px) {
   fanClock += fdt * (1 + (FAN_PACE_MAX - 1) * roar);
   var wild = chairFrenzyLevel(); // the whole crowd going nuts over a chair shot (chairshot.js)
   for (var i = 0; i < stadiumFans.length; i++) {
-    if (towerHidesFan(stadiumFans[i])) continue; // the ref's tower stands there (referee.js)
+    if (refClearsFan(stadiumFans[i])) continue; // the ref works ringside there (referee.js)
     var fan = br ? stadiumFans[i].br : stadiumFans[i];
     drawFan(fan, now, fanClock, roar, px, wild);
   }
   for (var j = 0; j < stadiumFans.length; j++) {
     var f = br ? stadiumFans[j].br : stadiumFans[j];
-    if (towerHidesFan(stadiumFans[j])) continue;
+    if (refClearsFan(stadiumFans[j])) continue;
     if (f.sign) drawFanSign(f, now);
     else if (f.flag) drawBrazilFlag(f.x + f.r * 0.3, f.y - f.r * 1.55, f.r * 1.3, now, f.phase);
   }
