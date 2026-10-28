@@ -4,8 +4,10 @@
 // blocks anyone. He keeps to whichever spot round the edge of the cage is
 // furthest from both fighters, shuffling out of their way, and when a
 // fighter is knocked out or taps he runs in over them and waves it off.
-// With REF_TOWER on he sits up in a lifeguard tower in the bottom-left
-// corner of the mat all fight instead, and jumps down for the stoppage.
+// With REF_TOWER on, in the WWIT stadium he sits up in a lifeguard tower
+// outside the cage on the left (in place of a few fans) all fight instead,
+// and jumps down over the cage for the stoppage. The test arena has no room
+// outside the cage, so there he still roams.
 "use strict";
 
 var REF_R = 30;          // a bit smaller than a fighter (39 at Middleweight)
@@ -15,7 +17,7 @@ var REF_RETHINK = 0.4;   // seconds between picking a new spot
 var REF_SWITCH = 30;     // a new spot has to be this much further from the fight
 var REF_GAP = 14;        // how close he lets a fighter get before stepping away
 var REF_TOWER = true;    // experiment: watch from a lifeguard tower instead of roaming
-var TOWER_W = 84, TOWER_H = 72; // the tower's footprint width and seat height
+var TOWER_W = 70, TOWER_H = 72; // the tower's footprint width and seat height
 var REF_HOP = 0.4;       // seconds to jump down off the tower
 var REF_SEAT = TOWER_H + REF_R * 0.55; // how high he sits, down in the seat box
 
@@ -34,7 +36,7 @@ function resetReferee() {
   if (!refereeOn()) { referee = null; return; }
   // Starts at the bottom middle of the cage, out of both corners.
   referee = { x: W / 2, y: H - REF_R - 10, vx: 0, vy: 0, tx: W / 2, ty: H - REF_R - 10, think: 0, stop: null, wave: 0, look: null, asleep: false, napT: 0, z: 0, hop: 0 };
-  if (REF_TOWER) {
+  if (REF_TOWER && stadiumOn()) {
     var t = towerSpot();
     referee.tower = t;
     referee.x = referee.tx = t.x; referee.y = referee.ty = t.y; referee.z = REF_SEAT;
@@ -44,9 +46,17 @@ function resetReferee() {
   referee.fan = { look: look, shirt: "#151515", style: "tee", team: null, shirtless: false, cap: null, phase: 0 };
 }
 
-// Where the tower stands: the middle of its base, tucked into the
-// bottom-left corner of the mat.
-function towerSpot() { return { x: TOWER_W / 2 + 8, y: H - 10 }; }
+// Where the tower stands, in arena units: the middle of its base, in the
+// column of fans left of the cage, a little below halfway down.
+var TOWER_STAGE = { x: 62, y: 1062 }; // the same spot on the 1080x1920 stage
+function towerSpot() {
+  var k = W / ST.A;
+  return { x: (TOWER_STAGE.x - ST.AX) * k, y: (TOWER_STAGE.y - ST.AY) * k };
+}
+// The fans the tower stands in place of (stadium.js skips drawing them).
+function towerHidesFan(f) {
+  return !!(referee && referee.tower) && f.side === "left" && f.y > TOWER_STAGE.y - 300 && f.y < TOWER_STAGE.y + 20;
+}
 // Where floating text over his head goes (he's up high on the tower).
 function refTop(rf) { return rf.y - rf.z - REF_R - 20; }
 
@@ -94,7 +104,7 @@ function updateReferee(dt) {
     // Jumping down off the tower: drops in a short hop while heading in.
     rf.hop += dt;
     var hk = Math.min(1, rf.hop / REF_HOP);
-    rf.z = REF_SEAT * (1 - hk) + Math.sin(Math.PI * hk) * 18;
+    rf.z = REF_SEAT * (1 - hk) + Math.sin(Math.PI * hk) * 40; // up and over the cage
     if (hk >= 1) rf.z = 0;
   }
   if (rf.stop) {
@@ -129,8 +139,10 @@ function updateReferee(dt) {
       if (ed < min) { var push = Math.min(min - ed, REF_RUN * dt); rf.x += ex / ed * push; rf.y += ey / ed * push; }
     });
   }
-  rf.x = Math.min(W - REF_R, Math.max(REF_R, rf.x));
-  rf.y = Math.min(H - REF_R, Math.max(REF_R, rf.y));
+  if (rf.z <= 0) { // (mid-jump he's still coming over the cage)
+    rf.x = Math.min(W - REF_R, Math.max(REF_R, rf.x));
+    rf.y = Math.min(H - REF_R, Math.max(REF_R, rf.y));
+  }
   if (rf.stop) {
     rf.wave += dt;
     if (!rf.stop.called && td < REF_R && rf.z <= 0) {
