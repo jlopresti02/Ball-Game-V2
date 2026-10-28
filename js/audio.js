@@ -543,12 +543,7 @@ function playHereWeGo() {
       // Still decoding when the fight started: play it late only if it's
       // still near the start, rather than out of nowhere mid-fight.
       if (ctx.currentTime - startedAt > 1) return;
-      var src = ctx.createBufferSource();
-      src.buffer = buf;
-      var g = ctx.createGain();
-      g.gain.value = 0.8;
-      src.connect(g); g.connect(ctx.destination);
-      src.start(ctx.currentTime);
+      playTalk("hereWeGo", 0.8);
     });
   } catch (e) { /* never let audio break the game */ }
 }
@@ -562,12 +557,7 @@ function playKnockout() {
     if (!ctx) return;
     withClip("knockout", function (buf) {
       var now = ctx.currentTime;
-      var src = ctx.createBufferSource();
-      src.buffer = buf;
-      var g = ctx.createGain();
-      g.gain.value = 0.85;
-      src.connect(g); g.connect(ctx.destination);
-      src.start(now);
+      cutInTalk("knockout", 0.85);
       var c = crowd;
       if (c && c.gain) {
         c.duckUntil = now + buf.duration - 1;
@@ -593,6 +583,47 @@ function playClip(name, gain, when, rate) {
   return src;
 }
 
+// Talking clips (fighters and announcers) never overlap. One plays at a
+// time: if another line comes up while one is going and it's due to end
+// within TALK_WAIT seconds, the new line waits and plays right after it.
+// Otherwise the new line is skipped. The big moments (the knockout call and
+// Do Bronx) cut in instead: they stop whatever line is going.
+var TALK_WAIT = 1.5;  // how long a line will wait for the current one to finish
+var TALK_GAP = 0.15;  // breath between two lines
+var talkSrcs = [], talkEnd = 0, talkQueued = false;
+// Plays `name` on the talk channel. Returns false if it was skipped.
+function playTalk(name, gain) {
+  var ctx = audioCtx, buf = clipBuffers[name];
+  if (!ctx || !buf) return false;
+  var now = ctx.currentTime, at = now;
+  if (now < talkEnd) {
+    if (talkQueued || talkEnd - now > TALK_WAIT) return false;
+    at = talkEnd + TALK_GAP;
+    talkQueued = true;
+  } else {
+    talkQueued = false;
+    talkSrcs = [];
+  }
+  var src = playClip(name, gain, at);
+  if (!src) return false;
+  talkSrcs.push(src);
+  talkEnd = at + buf.duration;
+  return true;
+}
+// Cuts in on the talk channel: whatever line is going (or waiting) stops.
+function cutInTalk(name, gain) {
+  stopTalk();
+  var src = playClip(name, gain);
+  if (!src) return null;
+  talkSrcs = [src];
+  talkEnd = audioCtx.currentTime + clipBuffers[name].duration;
+  return src;
+}
+function stopTalk() {
+  talkSrcs.forEach(function (src) { try { src.stop(); } catch (e) { /* already stopped */ } });
+  talkSrcs = []; talkEnd = 0; talkQueued = false;
+}
+
 // Do Bronx (dobronx.js): "Charrrles... Do... BRONX!" from the start of the
 // opening pose, timed so "Bronx" lands on the camera flash DO_BRONX_HIT
 // seconds in. The clip's own crowd fades out after a few seconds, and the
@@ -605,7 +636,7 @@ function playDoBronx() {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     stopDoBronx();
-    doBronxSrc = playClip("doBronx", 0.85);
+    doBronxSrc = cutInTalk("doBronx", 0.85);
     var buf = clipBuffers.doBronx;
     // Take over just as the clip starts fading.
     crowdHold(buf ? buf.duration - 1.4 : DO_BRONX_HIT);
@@ -627,7 +658,7 @@ function playIgbbLine() {
     if (ctx.state === "suspended") ctx.resume();
     if (ctx.currentTime - lastIgbbLine < 5) return;
     lastIgbbLine = ctx.currentTime;
-    playClip("igbb", 0.9);
+    playTalk("igbb", 0.9);
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -638,7 +669,7 @@ function playSmashLine() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    playClip("smashYourBoy", 0.9);
+    playTalk("smashYourBoy", 0.9);
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -655,48 +686,31 @@ function playChairShot() {
 // The commentators going off the first time Gane lands the bat
 // ("ganeBatCall") or an eye poke ("ganePokeCall") in Cheater mode
 // (cheater.js). The fades are in the clips themselves.
-var ganeCallSrc = null;
 function playGaneCall(name) {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    stopGaneCall();
-    ganeCallSrc = playClip(name, 0.9);
+    playTalk(name, 0.9);
   } catch (e) { /* never let audio break the game */ }
-}
-function stopGaneCall() {
-  if (!ganeCallSrc) return;
-  try { ganeCallSrc.stop(); } catch (e) { /* already stopped */ }
-  ganeCallSrc = null;
 }
 
 // Josh Hokit's trash talk: each thumbs down plays one of these at random,
-// never the same one twice in a row. A thumbs down can come early (right
-// after he lets an armbar go), so while a line is still going the next one
-// stays quiet.
+// never the same one twice in a row (on the talk channel, so it waits or
+// stays quiet while someone else is talking).
 var HOKIT_TAUNTS = ["hokitKnee", "hokitDog", "hokitDivision", "hokitWeights", "hokitPlan"];
-var hokitLineSrc = null, hokitLineEnd = 0, lastHokitLine = -1;
+var lastHokitLine = -1;
 function playHokitTaunt() {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    if (ctx.currentTime < hokitLineEnd) return;
     var pick = Math.floor(Math.random() * (HOKIT_TAUNTS.length - (lastHokitLine < 0 ? 0 : 1)));
     if (lastHokitLine >= 0 && pick >= lastHokitLine) pick++;
     var name = HOKIT_TAUNTS[pick], buf = clipBuffers[name];
     if (!buf) { withClip(name); return; }
-    lastHokitLine = pick;
-    hokitLineSrc = playClip(name, 0.9);
-    hokitLineEnd = ctx.currentTime + buf.duration;
+    if (playTalk(name, 0.9)) lastHokitLine = pick;
   } catch (e) { /* never let audio break the game */ }
-}
-function stopHokitTaunt() {
-  hokitLineEnd = 0;
-  if (!hokitLineSrc) return;
-  try { hokitLineSrc.stop(); } catch (e) { /* already stopped */ }
-  hokitLineSrc = null;
 }
 
 // The crowd's cameras going off: one loud shutter for the big white-out, then
@@ -818,8 +832,7 @@ function stopCrowd() {
   var c = crowd;
   crowd = null;
   stopDoBronx();
-  stopHokitTaunt();
-  stopGaneCall();
+  stopTalk();
   if (c) clearTimeout(c.holdTimer);
   if (!c || !c.src) return;
   try {
