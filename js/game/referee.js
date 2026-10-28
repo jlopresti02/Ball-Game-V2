@@ -175,9 +175,15 @@ function drawReferee() {
   var rf = referee;
   if (!rf) return;
   var r = rf.r, skin = rf.fan.look.skin, now = performance.now();
+  // Everything below eases toward its pose instead of snapping to it, so
+  // he blends from one bit of business into the next.
+  var ddt = rf.drawLast ? Math.min(0.1, (now - rf.drawLast) / 1000) : 0;
+  rf.drawLast = now;
+  function ease(cur, want, rate) { return cur === undefined ? want : cur + (want - cur) * Math.min(1, ddt * rate); }
   // Jogging bounce while he moves along the lane.
   var moving = Math.abs(rf.vy) > 40 || Math.abs(rf.vx) > 40;
-  var jog = moving && !rf.asleep && rf.z <= 0 ? Math.abs(Math.sin(rf.walk * 0.09)) * r * 0.14 : 0;
+  rf.jogK = ease(rf.jogK, moving && !rf.asleep && rf.z <= 0 ? 1 : 0, 8);
+  var jog = rf.jogK * Math.abs(Math.sin(rf.walk * 0.09)) * r * 0.14;
   // Startled awake: he jolts up off the floor, shaking.
   var wk = rf.wakeT > 0 ? rf.wakeT / REF_WAKE : 0, shakeX = 0;
   if (wk > 0) { jog += Math.sin(Math.PI * (1 - wk)) * r * 0.55; shakeX = Math.sin(now / 18) * r * 0.08 * wk; }
@@ -187,7 +193,9 @@ function drawReferee() {
   ctx.save();
   var g = rf.gest && !rf.stop && !rf.asleep && !wk && !(moving && rf.ringside) ? rf.gest : null;
   // Freaking out: jittering on the spot.
-  if (g && g.kind === "freak") { shakeX += Math.sin(now / 35) * r * 0.05; jog += Math.abs(Math.sin(g.t * 9)) * r * 0.1; }
+  rf.freakK = ease(rf.freakK, g && g.kind === "freak" ? 1 : 0, 6);
+  shakeX += rf.freakK * Math.sin(now / 35) * r * 0.05;
+  jog += rf.freakK * Math.abs(Math.sin(now / 1000 * 9)) * r * 0.1;
   ctx.translate(rf.x + shakeX, rf.y - rf.z - jog);
   // Asleep: slumped over to one side, breathing slow. Fighting sleep: he
   // slowly nods off sideways, then snaps back upright.
@@ -196,6 +204,7 @@ function drawReferee() {
     var dp = (g.t % 1.5) / 1.5;
     slump = dp < 0.85 ? 0.45 * dp / 0.85 : 0.45 * (1 - (dp - 0.85) / 0.15);
   }
+  slump = rf.slumpS = ease(rf.slumpS, slump, 10);
   ctx.rotate(slump);
   drawFanBall(ctx, r, rf.fan);
   drawRefStripes(r);
@@ -230,8 +239,9 @@ function drawReferee() {
     hands = [{ x: -r * 0.75, y: -r * 1.05 + pump }, { x: r * 0.75, y: -r * 1.05 - pump }];
   } else if (g && g.kind === "freak") {
     // Hands on his head, then thrown up in the air, over and over
-    if (Math.sin(g.t * 5) > 0) hands = [{ x: -r * 0.6, y: -r * 0.95 }, { x: r * 0.6, y: -r * 0.95 }];
-    else hands = [{ x: -r * 1.15, y: -r * 1.25 }, { x: r * 1.15, y: -r * 1.25 }];
+    var m = 0.5 + 0.5 * Math.sin(g.t * 5);
+    m = m * m * (3 - 2 * m);
+    hands = [{ x: -r * (0.6 + 0.55 * m), y: -r * (0.95 + 0.3 * m) }, { x: r * (0.6 + 0.55 * m), y: -r * (0.95 + 0.3 * m) }];
   } else if (g && g.kind === "drowsy") {
     hands = [{ x: -r * 0.9, y: r * 0.6 }, { x: r * 0.9, y: r * 0.6 }]; // arms going heavy
   } else if (g && g.kind === "clap") {
@@ -241,6 +251,14 @@ function drawReferee() {
     var bob = Math.sin(now / 160) * r * 0.06;
     hands = [{ x: -r * 1.02, y: r * 0.25 + bob }, { x: r * 1.02, y: r * 0.25 - bob }];
   }
+  // Quick moves (claps, waving it off) follow closely; changes of pose glide.
+  var quick = (rf.stop && rf.stop.called) || (g && (g.kind === "clap" || g.kind === "freak"));
+  if (!rf.hs) rf.hs = hands.map(function (h) { return { x: h.x, y: h.y }; });
+  hands = hands.map(function (h, i) {
+    var cur = rf.hs[i];
+    cur.x = ease(cur.x, h.x, quick ? 24 : 9); cur.y = ease(cur.y, h.y, quick ? 24 : 9);
+    return cur;
+  });
   hands.forEach(function (h) {
     ctx.fillStyle = skin; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(h.x, h.y, r * 0.24, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
