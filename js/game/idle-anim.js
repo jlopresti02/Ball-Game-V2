@@ -14,7 +14,7 @@
 var IDLE_MODE = "off";
 var idleClock = 0, idleClockLast = null;
 
-function idleOn(name) { return IDLE_MODE === name || (IDLE_MODE === "all" && name !== "slip") || IDLE_MODE.split(",").indexOf(name) >= 0; }
+function idleOn(name) { return IDLE_MODE === name || (IDLE_MODE === "all" && name !== "slip"); }
 
 // How much the idle animations show on a fighter right now (0 to 1): they
 // fade in while it's just moving around and fade out the moment it does
@@ -115,97 +115,27 @@ function applyIdlePose(b) {
   }
 }
 
-// Guard styles: where the gloves sit and how they move while a fighter is
-// just moving around. Each fighter can have its own (`guardStyle` on the
-// character); IDLE_GUARD picks one for everyone while testing.
-//   mma     hands up at the cheekbones, pumping and pawing, the odd feint
-//   boxer   tight high guard, gloves together at the chin, rolling side to
-//           side with quick double-jab pops
-//   muaythai tall long guard, hands high and out, lead hand pawing in
-//           little circles, both rocking on the Thai rhythm
-//   handsdown hands hanging at the hips, swaying loose, shrugging, and
-//           beckoning "come on" with the lead hand
-//   cocky   loose low hands swinging like pendulums, a showboat bolo wind
-//           up and a fast shimmy
-//   awkward hands at odd heights, jerking about out of rhythm, sudden
-//           pokes and a glove wandering off wide
-var GUARD_STYLES = ["mma", "boxer", "muaythai", "handsdown", "cocky", "awkward"];
-var IDLE_GUARD = null;
-function guardStyleOf(b) { return IDLE_GUARD || (b.char && b.char.guardStyle) || "mma"; }
-
-// A smooth wobbly value (-1..1) for the awkward guard: mixed odd frequencies.
-function wobble(t, seed) { return (Math.sin(t * 1.7 + seed) + Math.sin(t * 3.1 + seed * 2.3) * 0.6 + Math.sin(t * 5.3 + seed * 0.7) * 0.35) / 1.95; }
-// 0..1 bump while `t` is within `dur` of the start of each `period`.
-function beat(t, period, dur) { var x = t % period; return x < dur ? Math.sin(Math.PI * x / dur) : 0; }
-
-// Offsets from the normal guard spot: f forward, s out to the side, y down.
+// Guard: the gloves pump in and out in turn and circle a little, like a
+// fighter keeping its hands busy. Every so often one glove snaps out in a
+// feint, and now and then both gloves come together for a glove tap.
 function idleHand(b, sgn) {
   var k = idleBlend(b), o = { f: 0, s: 0, y: 0 };
   if (k <= 0) return o;
   if (idleOn("guard")) {
-    var r = b.r, t = idleClock + b.id * 0.9, lead = sgn === 1;
-    var n, bt;
-    switch (guardStyleOf(b)) {
-      case "boxer":
-        // Tight and high, gloves together at the chin, rolling side to side.
-        o.f = -r * 0.1; o.s = -r * 0.18; o.y = -r * 0.28;
-        o.s += Math.sin(t * 4.5) * r * 0.16 * sgn;        // shoulder roll: both shift together
-        o.y += Math.abs(Math.sin(t * 9)) * r * -0.06;      // quick bounce
-        n = Math.floor(t / 1.1);
-        if (lead && n % 2 === 0) o.f += (beat(t, 1.1, 0.14) + beat(t - 0.18, 1.1, 0.14)) * r * 0.75; // double jab
-        break;
-      case "muaythai":
-        // Tall, long guard: hands high and out, rocking on the rhythm.
-        o.f = r * 0.18; o.s = r * 0.12; o.y = -r * 0.42;
-        var rock = Math.sin(t * 4.4);
-        o.y += rock * r * 0.12;                               // both rise and fall together
-        if (lead) {                                           // lead hand pawing in little circles
-          o.f += r * 0.22 + Math.cos(t * 9) * r * 0.12;
-          o.y += Math.sin(t * 9) * r * 0.12;
-        } else o.f += Math.sin(t * 2.2) * r * 0.06;
-        break;
-      case "handsdown":
-        // Hands hanging at the hips, loose. Shrugs, and "come on" with the lead hand.
-        o.f = -r * 0.55; o.s = r * 0.55; o.y = r * 0.75;
-        o.s += Math.sin(t * 2.6 + sgn) * r * 0.08;
-        o.y += Math.sin(t * 2.6 + sgn * 0.8) * r * 0.06;
-        o.y -= beat(t + 0.5, 3.0, 0.5) * r * 0.3;            // shrug: both hands jump up
-        bt = (t % 3.0);
-        if (lead && bt > 1.2 && bt < 2.2) {                   // beckoning: hand up, curling it in twice
-          var bk = Math.sin(Math.PI * (bt - 1.2) / 1.0);
-          o.y -= bk * r * 0.85; o.f += bk * r * 0.65;
-          o.f -= Math.abs(Math.sin((bt - 1.2) * Math.PI * 4)) * r * 0.3 * bk;
-        }
-        break;
-      case "cocky":
-        // Low loose hands swinging like pendulums, then showing off.
-        o.f = -r * 0.25; o.s = r * 0.3; o.y = r * 0.45;
-        o.f += Math.sin(t * 5 + (lead ? 0 : Math.PI)) * r * 0.3;
-        o.y += Math.abs(Math.cos(t * 5 + (lead ? 0 : Math.PI))) * r * -0.12;
-        bt = t % 4.0;
-        if (!lead && bt < 1.1) {                              // bolo wind up: rear hand windmilling
-          var ang = bt * Math.PI * 2 * 2.2, bw = Math.sin(Math.PI * bt / 1.1);
-          o.f += Math.cos(ang) * r * 0.5 * bw; o.y += Math.sin(ang) * r * 0.5 * bw - r * 0.4 * bw;
-        }
-        if (bt > 2.2 && bt < 2.9) o.s += Math.sin(bt * 60) * r * 0.14; // shimmy
-        break;
-      case "awkward":
-        // Odd heights, out of rhythm, the odd sudden poke and a wandering glove.
-        o.f = wobble(t, sgn * 3) * r * 0.3; o.s = wobble(t * 0.8, sgn * 7) * r * 0.25;
-        o.y = (lead ? -r * 0.35 : r * 0.3) + wobble(t * 1.3, sgn * 5) * r * 0.3;
-        if (beat(t + sgn * 0.7, 1.9 + sgn * 0.35, 0.12) > 0) o.f += beat(t + sgn * 0.7, 1.9 + sgn * 0.35, 0.12) * r * 0.8;
-        if (!lead) o.s += beat(t, 3.3, 0.9) * r * 0.6;     // glove wanders out wide
-        break;
-      default:
-        // MMA: hands at the cheekbones, pumping in turn and pawing, the odd feint.
-        o.y = -r * 0.1;
-        o.f += Math.sin(t * 8 + sgn * 1.6) * r * 0.2;
-        o.y += Math.cos(t * 8 + sgn * 1.6) * r * 0.1;
-        o.s += Math.sin(t * 3.2) * r * 0.1;
-        n = Math.floor(t / 1.4);
-        if ((n % 2 ? 1 : -1) === sgn) o.f += beat(t, 1.4, 0.22) * r * 0.75;
+    var t0 = idleClock + b.id * 0.9;
+    // Pumping in and out, each hand in turn, and circling
+    o.f += Math.sin(t0 * 8 + sgn * 1.6) * b.r * 0.2 * k;
+    o.y += Math.cos(t0 * 8 + sgn * 1.6) * b.r * 0.12 * k;
+    o.s += Math.sin(t0 * 3.2) * b.r * 0.12 * k;
+    // Feint every 1.4 seconds: one glove snaps right out and back.
+    var period = 1.4, t = t0 % period, dur = 0.22;
+    var n = Math.floor(t0 / period), fside = n % 2 ? 1 : -1;
+    if (n % 4 === 3) {
+      // Every fourth beat a glove tap instead: both gloves meet in front.
+      if (t < 0.32) { var tk = Math.sin(Math.PI * t / 0.32); o.s -= b.r * 0.38 * tk * k; o.f += b.r * 0.3 * tk * k; }
+    } else if (t < dur && fside === sgn) {
+      o.f += Math.sin(Math.PI * t / dur) * b.r * 0.75 * k;
     }
-    o.f *= k; o.s *= k; o.y *= k;
   }
   if (idleOn("fatigue") && b.hp < MAX_HP * 0.4) o.y += b.r * 0.18 * k; // hands dropping
   return o;
