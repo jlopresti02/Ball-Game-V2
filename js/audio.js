@@ -685,14 +685,15 @@ function playChairShot() {
 
 // The commentators going off the first time Gane lands the bat
 // ("ganeBatCall") or an eye poke ("ganePokeCall") in Cheater mode
-// (cheater.js). The fades are in the clips themselves.
+// (cheater.js). The fades are in the clips themselves. Returns false if the
+// line got skipped, so it can be tried again on the next one.
 function playGaneCall(name) {
   try {
     var ctx = getAudioCtx();
-    if (!ctx) return;
+    if (!ctx) return false;
     if (ctx.state === "suspended") ctx.resume();
-    playTalk(name, 0.9);
-  } catch (e) { /* never let audio break the game */ }
+    return playTalk(name, 0.9);
+  } catch (e) { return false; /* never let audio break the game */ }
 }
 
 // Josh Hokit's trash talk: each thumbs down plays one of these at random,

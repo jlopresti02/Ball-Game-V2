@@ -1760,14 +1760,15 @@ function playChairShot() {
 
 // The commentators going off the first time Gane lands the bat
 // ("ganeBatCall") or an eye poke ("ganePokeCall") in Cheater mode
-// (cheater.js). The fades are in the clips themselves.
+// (cheater.js). The fades are in the clips themselves. Returns false if the
+// line got skipped, so it can be tried again on the next one.
 function playGaneCall(name) {
   try {
     var ctx = getAudioCtx();
-    if (!ctx) return;
+    if (!ctx) return false;
     if (ctx.state === "suspended") ctx.resume();
-    playTalk(name, 0.9);
-  } catch (e) { /* never let audio break the game */ }
+    return playTalk(name, 0.9);
+  } catch (e) { return false; /* never let audio break the game */ }
 }
 
 // Josh Hokit's trash talk: each thumbs down plays one of these at random,
@@ -9301,8 +9302,9 @@ function updateCheaterAct(self, other, dt) {
       floater(other.x, other.y - other.r - 30, "EYE POKE", "crit");
       playPunch(10);
       // The first eye poke of the match (and only that one): the
-      // commentators lose it.
-      if (!self.pokeCalled) { self.pokeCalled = true; playGaneCall("ganePokeCall"); }
+      // commentators lose it. If someone else is talking and the line gets
+      // skipped, it waits for the next poke that lands.
+      if (!self.pokeCalled) self.pokeCalled = playGaneCall("ganePokeCall");
       clearActions(other);
       other.dazed = "poke"; other.vx = 0; other.vy = 0;
       // Straight into the combo while they can't see.
@@ -9367,8 +9369,9 @@ function updateCheaterAct(self, other, dt) {
           if (!reduceMotion) shake = Math.max(shake, 12);
           if (dealt > 0) floater(other.x, other.y - other.r - 30, "BAT", "crit");
           // The first bat shot of the match (and only that one): the
-          // commentators lose it.
-          if (dealt > 0 && !self.batCalled) { self.batCalled = true; playGaneCall("ganeBatCall"); }
+          // commentators lose it. If someone else is talking and the line
+          // gets skipped, it waits for the next bat shot that lands.
+          if (dealt > 0 && !self.batCalled) self.batCalled = playGaneCall("ganeBatCall");
         }
         checkEnd();
       }

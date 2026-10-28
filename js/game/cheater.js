@@ -113,8 +113,9 @@ function updateCheaterAct(self, other, dt) {
       floater(other.x, other.y - other.r - 30, "EYE POKE", "crit");
       playPunch(10);
       // The first eye poke of the match (and only that one): the
-      // commentators lose it.
-      if (!self.pokeCalled) { self.pokeCalled = true; playGaneCall("ganePokeCall"); }
+      // commentators lose it. If someone else is talking and the line gets
+      // skipped, it waits for the next poke that lands.
+      if (!self.pokeCalled) self.pokeCalled = playGaneCall("ganePokeCall");
       clearActions(other);
       other.dazed = "poke"; other.vx = 0; other.vy = 0;
       // Straight into the combo while they can't see.
@@ -179,8 +180,9 @@ function updateCheaterAct(self, other, dt) {
           if (!reduceMotion) shake = Math.max(shake, 12);
           if (dealt > 0) floater(other.x, other.y - other.r - 30, "BAT", "crit");
           // The first bat shot of the match (and only that one): the
-          // commentators lose it.
-          if (dealt > 0 && !self.batCalled) { self.batCalled = true; playGaneCall("ganeBatCall"); }
+          // commentators lose it. If someone else is talking and the line
+          // gets skipped, it waits for the next bat shot that lands.
+          if (dealt > 0 && !self.batCalled) self.batCalled = playGaneCall("ganeBatCall");
         }
         checkEnd();
       }
