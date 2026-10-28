@@ -19,6 +19,8 @@ The buttons under the arena hide once a fight starts, so a screen recording only
 
 The **Arena** button under the fight switches between two arenas, and the game remembers the choice on each device:
 
+The crowd (its sound, and the fans in the WWIT stadium) has a mood: big moments raise it, it takes about a second to build up to fully excited, stays up for 3 seconds after the last big moment (a hit of 12.5 damage or more, or a slam), then takes about 4 seconds to die back down. Little jabs only nudge it. The settings are `CROWD_RISE`, `CROWD_KEEP`, `CROWD_FADE` and `CROWD_BIG` in `js/audio.js`.
+
 - **Test**: the plain square arena with the health bars above it.
 - **WWIT stadium**: a 9:16 frame for reels. The cage sits in the middle on a WWIT MMA branded mat, with stands of cheering fans (drawn in the fighter art style) around it. A jumbotron above the cage replaces the health bars and shows the clock, each fighter's health and special meter, and live strikes landed, damage dealt and takedowns. The cage and jumbotron stay out of the areas Reels and TikTok cover with their own buttons and captions.
 
@@ -127,7 +129,7 @@ A fighter with `"hasCheater": true` cheats whenever the referee isn't looking (`
 - **Throwing objects**: one every `throw.cooldown` seconds, picked at random from `CHEATER_OBJECTS` (placeholders for now: water bottle 8, shoe 10, stool 20).
 - **A bat**: `bat.damage` (22) on a very fast `bat.cooldown` (0.25s).
 
-While it's cheating, every takedown shot on it fails: whoever shot drives it back into the cage, and once it's up against it it grabs hold ("FENCE GRAB"), stands back up and gets away with no damage. When the ref wakes up it's back in Fighter mode. Ciryl Gane has it.
+While it's cheating, every normal takedown shot on it fails (not suplexes or special moves): whoever shot drives it back into the cage, and once it's up against it it grabs hold ("FENCE GRAB"), stands back up and gets away with no damage. When the ref wakes up it's back in Fighter mode. Ciryl Gane has it.
 
 ## Special moves (created characters)
 

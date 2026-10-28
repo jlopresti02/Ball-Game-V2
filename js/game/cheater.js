@@ -55,7 +55,8 @@ function tickRefNap(dt) {
 }
 function wakeRef(rf) {
   rf.asleep = false; rf.napT = 0;
-  floater(rf.x, rf.y - REF_R - 20, "!", "note");
+  rf.wakeT = REF_WAKE; rf.gest = null; // the startled jolt (referee.js)
+  floater(rf.x, refTop(rf), "!?", "note");
   balls.forEach(function (b) {
     if (!b.cheater) return;
     b.cheater = null;
@@ -113,6 +114,10 @@ function updateCheaterAct(self, other, dt) {
       }
       floater(other.x, other.y - other.r - 30, "EYE POKE", "crit");
       playPunch(10);
+      // The first eye poke of the match (and only that one): the
+      // commentators lose it. If someone else is talking and the line gets
+      // skipped, it waits for the next poke that lands.
+      if (!self.pokeCalled) self.pokeCalled = playGaneCall("ganePokeCall");
       clearActions(other);
       other.dazed = "poke"; other.vx = 0; other.vy = 0;
       // Straight into the combo while they can't see.
@@ -176,6 +181,10 @@ function updateCheaterAct(self, other, dt) {
           impacts.push({ x: other.x - a.nx * other.r, y: other.y - a.ny * other.r, nx: a.nx, ny: a.ny, life: 0.35, max: 0.35, color: "#c98a4b" });
           if (!reduceMotion) shake = Math.max(shake, 12);
           if (dealt > 0) floater(other.x, other.y - other.r - 30, "BAT", "crit");
+          // The first bat shot of the match (and only that one): the
+          // commentators lose it. If someone else is talking and the line
+          // gets skipped, it waits for the next bat shot that lands.
+          if (dealt > 0 && !self.batCalled) self.batCalled = playGaneCall("ganeBatCall");
         }
         checkEnd();
       }
