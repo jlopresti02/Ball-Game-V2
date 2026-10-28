@@ -171,7 +171,8 @@ function drawHands(b, other) {
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 2.5;
   sides.forEach(function (sgn) {
-    var hx = b.x + fx * fwd + perpx * gap * sgn, hy = b.y + fy * fwd + perpy * gap * sgn;
+    var ih = idleHand(b, sgn); // guard bob and feints (idle-anim.js)
+    var hx = b.x + fx * (fwd + ih.f) + perpx * (gap + ih.s) * sgn, hy = b.y + fy * (fwd + ih.f) + perpy * (gap + ih.s) * sgn + ih.y;
     if (b.char.look) { drawGlove(ctx, hx, hy, hr, b.char.look, theme.wall, Math.atan2(fy, fx)); return; }
     ctx.beginPath(); ctx.arc(hx, hy, hr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   });

@@ -82,6 +82,7 @@ function draw() {
   });
 
   drawGuardZones(); // the circle round a fighter down in guard
+  drawIdleUnder(); // shadows and feet under the fighters (idle-anim.js)
   drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -104,6 +105,7 @@ function draw() {
       woy = wfx * wa.sign * b.r * 0.75 * wk;
     }
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
+    var idl = idleOffset(b); wox += idl.x; woy += idl.y; // bouncing on the feet (idle-anim.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -151,6 +153,7 @@ function draw() {
     applyGuardPose(b);  // flat on its back in guard
     applyArmbarPose(b); // pulled over in an armbar
     applySuplexPose(b); // arching back into (or flipped over by) a suplex
+    applyIdlePose(b);   // leaning, squashing, breathing (idle-anim.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
