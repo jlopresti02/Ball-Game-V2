@@ -530,7 +530,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -652,22 +652,23 @@ function playChairShot() {
   } catch (e) { /* never let audio break the game */ }
 }
 
-// The commentators going off once Gane connects with the bat in Cheater
-// mode (cheater.js). The fades are in the clip itself.
-var ganeBatSrc = null;
-function playGaneBatCall() {
+// The commentators going off the first time Gane lands the bat
+// ("ganeBatCall") or an eye poke ("ganePokeCall") in Cheater mode
+// (cheater.js). The fades are in the clips themselves.
+var ganeCallSrc = null;
+function playGaneCall(name) {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    stopGaneBatCall();
-    ganeBatSrc = playClip("ganeBatCall", 0.9);
+    stopGaneCall();
+    ganeCallSrc = playClip(name, 0.9);
   } catch (e) { /* never let audio break the game */ }
 }
-function stopGaneBatCall() {
-  if (!ganeBatSrc) return;
-  try { ganeBatSrc.stop(); } catch (e) { /* already stopped */ }
-  ganeBatSrc = null;
+function stopGaneCall() {
+  if (!ganeCallSrc) return;
+  try { ganeCallSrc.stop(); } catch (e) { /* already stopped */ }
+  ganeCallSrc = null;
 }
 
 // Josh Hokit's trash talk: each thumbs down plays one of these at random,
@@ -797,7 +798,7 @@ function stopCrowd() {
   crowd = null;
   stopDoBronx();
   stopHokitTaunt();
-  stopGaneBatCall();
+  stopGaneCall();
   if (c) clearTimeout(c.holdTimer);
   if (!c || !c.src) return;
   try {
