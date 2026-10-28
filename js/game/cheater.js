@@ -54,7 +54,8 @@ function tickRefNap(dt) {
 }
 function wakeRef(rf) {
   rf.asleep = false; rf.napT = 0;
-  floater(rf.x, refTop(rf), "!", "note");
+  rf.wakeT = REF_WAKE; rf.gest = null; // the startled jolt (referee.js)
+  floater(rf.x, refTop(rf), "!?", "note");
   balls.forEach(function (b) {
     if (!b.cheater) return;
     b.cheater = null;
