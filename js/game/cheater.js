@@ -175,6 +175,9 @@ function updateCheaterAct(self, other, dt) {
           impacts.push({ x: other.x - a.nx * other.r, y: other.y - a.ny * other.r, nx: a.nx, ny: a.ny, life: 0.35, max: 0.35, color: "#c98a4b" });
           if (!reduceMotion) shake = Math.max(shake, 12);
           if (dealt > 0) floater(other.x, other.y - other.r - 30, "BAT", "crit");
+          // The first bat shot of the match (and only that one): the
+          // commentators lose it.
+          if (dealt > 0 && !self.batCalled) { self.batCalled = true; playGaneBatCall(); }
         }
         checkEnd();
       }
