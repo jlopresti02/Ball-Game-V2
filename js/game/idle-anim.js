@@ -3,7 +3,7 @@
 // IDLE_MODE picks which ones are on, so each can be looked at on its own:
 //   "bounce"  boxer's bounce on the toes: a hop with a squash on landing
 //   "lean"    leans into the direction it's moving, stretching when fast
-//   "guard"   gloves bob in rhythm, with the odd quick feint
+//   "guard"   gloves pump and circle, with feints and glove taps
 //   "feet"    two little feet shuffling under the ball, kicking up dust
 //   "fatigue" breathing; when hurt, heavy breathing, swaying and sweat
 //   "slip"    the odd head slip side to side and a shoulder roll
@@ -115,17 +115,27 @@ function applyIdlePose(b) {
   }
 }
 
-// Guard: the gloves bob in and out in turn, with the odd quick feint.
+// Guard: the gloves pump in and out in turn and circle a little, like a
+// fighter keeping its hands busy. Every so often one glove snaps out in a
+// feint, and now and then both gloves come together for a glove tap.
 function idleHand(b, sgn) {
   var k = idleBlend(b), o = { f: 0, s: 0, y: 0 };
   if (k <= 0) return o;
   if (idleOn("guard")) {
-    o.f += Math.sin(idleClock * 7 + sgn * 1.4 + b.id) * b.r * 0.09 * k;
-    o.s += Math.sin(idleClock * 3.5 + b.id) * b.r * 0.05 * k;
-    // A feint every couple of seconds: one glove pops out and back.
-    var period = 2.2, t = (idleClock + b.id * 0.9) % period, dur = 0.18;
-    var fside = Math.floor((idleClock + b.id * 0.9) / period) % 2 ? 1 : -1;
-    if (t < dur && fside === sgn) o.f += Math.sin(Math.PI * t / dur) * b.r * 0.4 * k;
+    var t0 = idleClock + b.id * 0.9;
+    // Pumping in and out, each hand in turn, and circling
+    o.f += Math.sin(t0 * 8 + sgn * 1.6) * b.r * 0.2 * k;
+    o.y += Math.cos(t0 * 8 + sgn * 1.6) * b.r * 0.12 * k;
+    o.s += Math.sin(t0 * 3.2) * b.r * 0.12 * k;
+    // Feint every 1.4 seconds: one glove snaps right out and back.
+    var period = 1.4, t = t0 % period, dur = 0.22;
+    var n = Math.floor(t0 / period), fside = n % 2 ? 1 : -1;
+    if (n % 4 === 3) {
+      // Every fourth beat a glove tap instead: both gloves meet in front.
+      if (t < 0.32) { var tk = Math.sin(Math.PI * t / 0.32); o.s -= b.r * 0.38 * tk * k; o.f += b.r * 0.3 * tk * k; }
+    } else if (t < dur && fside === sgn) {
+      o.f += Math.sin(Math.PI * t / dur) * b.r * 0.75 * k;
+    }
   }
   if (idleOn("fatigue") && b.hp < MAX_HP * 0.4) o.y += b.r * 0.18 * k; // hands dropping
   return o;
