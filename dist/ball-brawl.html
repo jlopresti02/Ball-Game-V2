@@ -9056,8 +9056,8 @@ var REF_RETHINK = 0.4;   // seconds between picking a new spot
 var REF_SWITCH = 30;     // a new spot has to be this much further from the fight
 var REF_GAP = 14;        // how close he lets a fighter get before stepping away
 var REF_TOWER = true;    // experiment: watch from a lifeguard tower instead of roaming
-var TOWER_W = 70, TOWER_H = 72; // the tower's footprint width and seat height
-var REF_HOP = 0.4;       // seconds to jump down off the tower
+var TOWER_W = 80, TOWER_H = 200; // the tower's footprint width and seat height
+var REF_HOP = 0.6;       // seconds to jump down off the tower
 var REF_SEAT = TOWER_H + REF_R * 0.55; // how high he sits, down in the seat box
 
 var referee = null;
@@ -9087,14 +9087,14 @@ function resetReferee() {
 
 // Where the tower stands, in arena units: the middle of its base, in the
 // column of fans left of the cage, a little below halfway down.
-var TOWER_STAGE = { x: 62, y: 1062 }; // the same spot on the 1080x1920 stage
+var TOWER_STAGE = { x: 62, y: 1300 }; // the same spot on the 1080x1920 stage
 function towerSpot() {
   var k = W / ST.A;
   return { x: (TOWER_STAGE.x - ST.AX) * k, y: (TOWER_STAGE.y - ST.AY) * k };
 }
 // The fans the tower stands in place of (stadium.js skips drawing them).
 function towerHidesFan(f) {
-  return !!(referee && referee.tower) && f.side === "left" && f.y > TOWER_STAGE.y - 300 && f.y < TOWER_STAGE.y + 20;
+  return !!(referee && referee.tower) && f.side === "left" && f.y > TOWER_STAGE.y - 500 && f.y < TOWER_STAGE.y + 30;
 }
 // Where floating text over his head goes (he's up high on the tower).
 function refTop(rf) { return rf.y - rf.z - REF_R - 20; }
@@ -9275,13 +9275,19 @@ function drawRefTower(t, front) {
   var fl = x - w * 0.5, fr = x + w * 0.5;
   var sl = x - seatW / 2, sr = x + seatW / 2;
   post(bl, by, sl + 4, top, 4); post(br, by, sr - 4, top, 4);
-  post(fl + 4, y - h * 0.35, fr - 4, y - h * 0.72, 3);
-  post(fr - 4, y - h * 0.35, fl + 4, y - h * 0.72, 3);
-  post(fl, y, sl, top + 4, 6); post(fr, y, sr, top + 4, 6);
+  // Two levels of cross braces between the legs, a crossbar on each.
+  [[0.08, 0.44], [0.5, 0.86]].forEach(function (lv) {
+    var y0 = y - h * lv[0], y1 = y - h * lv[1];
+    var i0 = (w - seatW) / 2 * lv[0], i1 = (w - seatW) / 2 * lv[1]; // legs lean in as they climb
+    post(fl + 6 + i0, y0, fr - 6 - i1, y1, 3);
+    post(fr - 6 - i0, y0, fl + 6 + i1, y1, 3);
+    post(fl + 4 + i1, y1, fr - 4 - i1, y1, 3);
+  });
+  post(fl, y, sl, top + 4, 7); post(fr, y, sr, top + 4, 7);
   // Ladder up the front middle.
   var lw = w * 0.2;
   post(x - lw / 2, y, x - lw / 2, top + 6, 2.5); post(x + lw / 2, y, x + lw / 2, top + 6, 2.5);
-  for (var i = 1; i <= 4; i++) { var ry = y - (h - 6) * i / 5; post(x - lw / 2, ry, x + lw / 2, ry, 2); }
+  for (var i = 1; i <= 9; i++) { var ry = y - (h - 6) * i / 10; post(x - lw / 2, ry, x + lw / 2, ry, 2); }
   // Backrest behind where he sits.
   ctx.fillStyle = WWIT.maroon; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.roundRect(x - seatW * 0.46, top - 66, seatW * 0.92, 62, 6); ctx.fill(); ctx.stroke();
