@@ -5591,7 +5591,6 @@ function grabEscaped(attacker, target) {
 }
 
 function attemptGrab(attacker, target) {
-  if (cheaterFenceGrab(attacker, target)) return false; // cheating: grabs the cage (cheater.js)
   if (target.slamSafe > 0) return false;
   if (doBronxPosing(target)) {
     // Slips the grab mid pose (dobronx.js).
@@ -5601,6 +5600,7 @@ function attemptGrab(attacker, target) {
   }
   if (grabEscaped(attacker, target)) return false;
   if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
+  if (cheaterFenceGrab(attacker, target)) return false; // cheating: grabs the cage (cheater.js); suplexes still land
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.
@@ -9353,8 +9353,9 @@ var CHEATER_OBJECTS = [
 var CHEATER_MODES = ["poke", "throw", "bat"];
 var CHEATER_LABELS = { poke: "EYE POKES", throw: "THROWING STUFF", bat: "BAT" };
 
-var FENCE_SLIDE = 0.25;   // backing onto the cage
-var FENCE_HOLD = 0.55;    // hanging on to it
+var FENCE_DRIVE = 420;    // how fast he's driven back into the cage
+var FENCE_DRIVE_MAX = 0.9; // the most time the drive can take
+var FENCE_HOLD = 0.55;    // hanging on to the cage before standing back up
 var POKE_REACH = 26;      // how close he has to be to get a finger in
 var POKE_AT = 0.12;       // into the poke when it lands
 
@@ -9522,47 +9523,58 @@ function updateCheaterAct(self, other, dt) {
 
 function endPokeStun(b) { if (b.dazed === "poke") b.dazed = false; }
 
-// Cheating, so a takedown can't get him: he backs onto the cage, grabs it,
-// stands back up and walks off. Called before any takedown on `target`
+// Cheating, so a takedown can't get him: whoever shoots drives him back
+// into the cage, and once he's up against it he grabs hold, stands back up
+// and gets away with no damage. Called before any takedown on `target`
 // lands (attemptGrab, Hokit's double leg). True when it stopped it.
 function cheaterFenceGrab(attacker, target) {
   if (!target.cheater || target.fenceGrab || !target.alive) return false;
   clearActions(target); target.chAct = null;
-  // The nearest bit of the cage.
-  var walls = [
-    { x: target.r, y: target.y, d: target.x },
-    { x: W - target.r, y: target.y, d: W - target.x },
-    { x: target.x, y: target.r, d: target.y },
-    { x: target.x, y: H - target.r, d: H - target.y }
-  ].sort(function (p, q) { return p.d - q.d; });
-  var w = walls[0];
-  var gx = w.x === target.r ? 0 : w.x === W - target.r ? W : target.x;
-  var gy = w.y === target.r ? 0 : w.y === H - target.r ? H : target.y;
-  target.fenceGrab = { t: 0, sx: target.x, sy: target.y, tx: w.x, ty: w.y, gx: gx, gy: gy, atkId: attacker.id };
-  target.vx = 0; target.vy = 0;
-  attacker.vx = 0; attacker.vy = 0;
+  clearActions(attacker);
+  // Driven straight back the way he's being pushed, to where that meets the cage.
+  var nx = target.x - attacker.x, ny = target.y - attacker.y, nd = Math.sqrt(nx * nx + ny * ny) || 1;
+  nx /= nd; ny /= nd;
+  var r = target.r, run = 1e9;
+  if (nx > 0.001) run = Math.min(run, (W - r - target.x) / nx); else if (nx < -0.001) run = Math.min(run, (r - target.x) / nx);
+  if (ny > 0.001) run = Math.min(run, (H - r - target.y) / ny); else if (ny < -0.001) run = Math.min(run, (r - target.y) / ny);
+  run = Math.max(0, run);
+  target.fenceGrab = { t: 0, phase: "drive", sx: target.x, sy: target.y, nx: nx, ny: ny, run: run, atkId: attacker.id, side: Math.random() < 0.5 ? 1 : -1 };
+  target.vx = 0; target.vy = 0; attacker.vx = 0; attacker.vy = 0;
   if (attacker.char.hasGrapple) attacker.grappleCd = attacker.char.grapple.cooldown;
-  attacker.checkStun = Math.max(attacker.checkStun || 0, FENCE_SLIDE + FENCE_HOLD * 0.6); // left grabbing at air
-  floater(target.x, target.y - target.r - 30, "FENCE GRAB", "crit");
+  attacker.checkStun = 5; // held to him until it's over (updateFenceGrab lets go)
   playWhoosh();
   return true;
 }
 
 function updateFenceGrab(self, dt) {
-  var f = self.fenceGrab;
+  var f = self.fenceGrab, atk = balls[f.atkId];
   f.t += dt;
-  self.vx = 0; self.vy = 0;
-  var k = Math.min(1, f.t / FENCE_SLIDE); k = k * (2 - k);
-  self.x = f.sx + (f.tx - f.sx) * k; self.y = f.sy + (f.ty - f.sy) * k;
-  if (f.t >= FENCE_SLIDE + FENCE_HOLD) {
+  self.vx = 0; self.vy = 0; atk.vx = 0; atk.vy = 0;
+  if (f.phase === "drive") {
+    var dist = Math.min(f.run, f.t * FENCE_DRIVE);
+    self.x = f.sx + f.nx * dist; self.y = f.sy + f.ny * dist;
+    if (dist >= f.run - 0.5 || f.t >= FENCE_DRIVE_MAX) {
+      f.phase = "grab"; f.t = 0;
+      floater(self.x, self.y - self.r - 30, "FENCE GRAB", "crit");
+      playPunch(15);
+      if (!reduceMotion) shake = Math.max(shake, 6);
+    }
+  } else if (f.t >= FENCE_HOLD) {
     self.fenceGrab = null;
+    atk.checkStun = 0.3;
     floater(self.x, self.y - self.r - 30, "STANDS UP", "note");
-    // Walks off along the fence, away from them.
-    var atk = balls[f.atkId], ax = self.x - atk.x, ay = self.y - atk.y, ad = Math.sqrt(ax * ax + ay * ay) || 1;
-    self.vx = ax / ad; self.vy = ay / ad;
+    // Pushes off the cage and away from them.
+    self.vx = -f.nx; self.vy = -f.ny;
+    var px = -f.ny * f.side, py = f.nx * f.side;
+    self.vx = px; self.vy = py; // slides out along the fence
     setSpeed(self, self.baseSpeed || SPEED);
+    atk.vx = -f.nx; atk.vy = -f.ny; setSpeed(atk, atk.baseSpeed || SPEED);
     self.slamSafe = Math.max(self.slamSafe || 0, 0.4);
+    return;
   }
+  // The one shooting stays wrapped round him, chest to chest.
+  var gap = self.r + atk.r - 6;
+  atk.x = self.x - f.nx * gap; atk.y = self.y - f.ny * gap;
 }
 
 // Every frame from update(): thrown objects fly, and a stun can't outlive
@@ -9599,7 +9611,8 @@ function tickCheater(dt) {
 
 // He's got his hands full (drawHands leaves them out).
 function cheaterHandsBusy(b) {
-  return !!(b.fenceGrab || b.chAct || (b.cheater && b.cheater.mode === "bat"));
+  var o = balls[1 - b.id];
+  return !!(b.fenceGrab || b.chAct || (b.cheater && b.cheater.mode === "bat") || (o && o.fenceGrab && o.fenceGrab.atkId === b.id));
 }
 // Held still on the spot (physics leaves him alone).
 function cheaterHolding(b) {
@@ -9615,12 +9628,29 @@ function drawCheater(b) {
   nx /= nd; ny /= nd;
   var px = -ny, py = nx;
   if (b.fenceGrab) {
-    // One hand stretched back to the cage, fingers through it.
-    var f = b.fenceGrab, hx = f.gx, hy = f.gy;
-    var sx = b.x + (hx - b.x) / (Math.sqrt((hx - b.x) * (hx - b.x) + (hy - b.y) * (hy - b.y)) || 1) * b.r * 0.6;
-    var sy = b.y + (hy - b.y) / (Math.sqrt((hx - b.x) * (hx - b.x) + (hy - b.y) * (hy - b.y)) || 1) * b.r * 0.6;
-    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
+    // Pressed against the cage: one hand back on it, fingers through.
+    var f = b.fenceGrab;
+    if (f.phase !== "grab") return;
+    var k = Math.min(1, f.t / 0.1), qx = -f.ny * f.side, qy = f.nx * f.side;
+    var shx = b.x + qx * b.r * 0.6 + f.nx * b.r * 0.2, shy = b.y + qy * b.r * 0.6 + f.ny * b.r * 0.2;
+    var hx = b.x + f.nx * b.r * (0.4 + 0.6 * k) + qx * b.r * (0.6 + 0.3 * k), hy = b.y + f.ny * b.r * (0.4 + 0.6 * k) + qy * b.r * (0.6 + 0.3 * k);
+    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); });
     drawGloveAt(hx, hy, gr, ch);
+    return;
+  }
+  // Driving him into the cage: both arms wrapped round him.
+  if (other.fenceGrab && other.fenceGrab.atkId === b.id) {
+    var g = other.fenceGrab;
+    [-1, 1].forEach(function (s2) {
+      var qx2 = -g.ny * s2, qy2 = g.nx * s2;
+      var sh2 = { x: b.x + g.nx * b.r * 0.6 + qx2 * b.r * 0.55, y: b.y + g.ny * b.r * 0.6 + qy2 * b.r * 0.55 };
+      var hd2 = { x: other.x - g.nx * other.r * 0.3 + qx2 * other.r * 0.82, y: other.y - g.ny * other.r * 0.3 + qy2 * other.r * 0.82 };
+      strokeLimb(arm, armColor(ch), function () {
+        ctx.moveTo(sh2.x, sh2.y);
+        ctx.lineTo(hd2.x, hd2.y);
+      });
+      drawGloveAt(hd2.x, hd2.y, b.r * 0.22, ch);
+    });
     return;
   }
   var a = b.chAct;
