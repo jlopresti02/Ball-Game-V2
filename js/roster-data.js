@@ -197,8 +197,7 @@ var SAVED_ROSTER = [
       "batDamage": 6,
       "batGap": 0.42,
       "finisher": 20,
-      "caneDamage": 3,
-      "caneGap": 0.35
+      "caneDamage": 4
     }
   },
   {

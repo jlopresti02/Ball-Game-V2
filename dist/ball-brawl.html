@@ -2431,8 +2431,7 @@ var SAVED_ROSTER = [
       "batDamage": 6,
       "batGap": 0.42,
       "finisher": 20,
-      "caneDamage": 3,
-      "caneGap": 0.35
+      "caneDamage": 4
     }
   },
   {
@@ -9840,6 +9839,11 @@ var HERB_WALK = 120;       // Herb tapping his way across the cage
 var HERB_BEAT_MAX = 7;     // the beating can't go on longer than this
 var HERB_JOINED = 2.4;     // how long Herb gets to hit them before the finish
 var HERB_SHOW = 3.2;       // seconds the jumbotron shows the announcement
+var HERB_RUN = 300;        // running in (and back out) through the crowd
+var HERB_CROWD = 170;      // how far down in the stands below the cage he starts (stadium)
+var CANE_WIND = 0.34;      // the cane raised high over his head
+var CANE_STRIKE = 0.07;    // bringing it down
+var CANE_RECOVER = 0.16;
 
 var HERB_LOOK = {
   skin: "#6b4733", build: "stocky", bodyHair: "none", hair: "twists", hairPuff: true, hairColor: "#17120f",
@@ -9922,10 +9926,12 @@ function updateHerbDean(self, other, dt) {
 
 // Herb comes in through the far side of the cage from the fight, heading
 // for Gane (he can't see a thing) but wandering on past him.
+// He runs in through the crowd in the stands below the cage, comes in over
+// the fence, and leaves back out the same way.
 function herbEnters(owner) {
-  var fromRight = owner.x < W / 2;
-  var x0 = fromRight ? W + HERB_R : -HERB_R, y0 = Math.min(H - HERB_R - 10, Math.max(HERB_R + 10, owner.y + (Math.random() - 0.5) * 120));
-  herb = { x: x0, y: y0, t: 0, phase: "walk", ownerId: owner.id, missed: false, hitT: 0, hitCd: 0, swing: 0, flip: fromRight ? -1 : 1, outX: x0 };
+  var x0 = Math.min(W - 60, Math.max(60, W - owner.x + (Math.random() - 0.5) * 80)); // across from Gane
+  var y0 = H + (stadiumOn() ? HERB_CROWD : HERB_R * 2);
+  herb = { x: x0, y: y0, t: 0, phase: "run", ownerId: owner.id, missed: false, hitT: 0, cyc: 0, struck: false, swing: 0, flip: 1, ex: x0, ey: y0, fade: 1 };
 }
 
 function updateHerb(dt) {
@@ -9935,7 +9941,13 @@ function updateHerb(dt) {
   h.t += dt;
   var owner = balls[h.ownerId], vic = balls[1 - h.ownerId];
   var sp = owner.char.special;
-  if (h.phase === "walk") {
+  if (h.phase === "run") {
+    // Sprinting up the aisle, cane flailing, and over the fence.
+    h.y -= HERB_RUN * dt;
+    h.x += Math.sin(h.t * 4) * 40 * dt;
+    h.swing = Math.sin(h.t * 14) * 0.7;
+    if (h.y <= H - HERB_R - 6) { h.phase = "walk"; h.t = 0; }
+  } else if (h.phase === "walk") {
     // Heads roughly at Gane, but drifts off to one side and sails past him.
     var tx, ty;
     if (!h.missed) {
@@ -9953,14 +9965,14 @@ function updateHerb(dt) {
     // Bumps right into the one getting beaten.
     var vx = vic.x - h.x, vy = vic.y - h.y;
     if (h.missed && vic.alive && Math.sqrt(vx * vx + vy * vy) < vic.r + HERB_R + 2) {
-      h.phase = "hit"; h.hitT = 0; h.hitCd = 0.3;
+      h.phase = "hit"; h.hitT = 0; h.cyc = 0; h.struck = false;
       h.flip = vx < 0 ? -1 : 1;
       h.ang = Math.atan2(h.y - vic.y, h.x - vic.x);
       floater(vic.x, vic.y - vic.r - 52, "HERB JOINS IN", "crit");
     }
   } else if (h.phase === "hit") {
     h.hitT += dt;
-    h.hitCd -= dt;
+    h.cyc += dt;
     // Feels his way round them to the side away from Gane, still swinging.
     var want = Math.atan2(vic.y - owner.y, vic.x - owner.x);
     var diff = Math.atan2(Math.sin(want - h.ang), Math.cos(want - h.ang));
@@ -9968,28 +9980,37 @@ function updateHerb(dt) {
     var rr = vic.r + HERB_R - 4;
     h.x = vic.x + Math.cos(h.ang) * rr; h.y = vic.y + Math.sin(h.ang) * rr;
     h.flip = vic.x < h.x ? -1 : 1;
-    h.swing = 0.25 + Math.abs(Math.sin(h.hitT * 12)) * 0.9; // whacking away with the cane
+    // Each whack: a big slow wind-up with the cane raised over his head,
+    // then he brings it crashing down on them.
     var stillOn = vic.alive && owner.igbb && owner.igbb.move === "herbdean";
-    if (stillOn && h.hitCd <= 0) {
-      h.hitCd = sp.caneGap;
+    if (h.cyc >= CANE_WIND + CANE_STRIKE + CANE_RECOVER) { h.cyc = 0; h.struck = false; }
+    if (stillOn && !h.struck && h.cyc >= CANE_WIND + CANE_STRIKE) {
+      h.struck = true;
       hurt(vic, sp.caneDamage, "igbb", owner.id);
-      playPunch(6);
+      playPunch(18);
+      var ax = vic.x - h.x, ay = vic.y - h.y, al = Math.sqrt(ax * ax + ay * ay) || 1;
+      impacts.push({ x: vic.x - ax / al * vic.r * 0.6, y: vic.y - vic.r * 0.5, nx: ax / al, ny: ay / al, life: 0.32, max: 0.32, color: "#ffffff" });
+      vic.squash = { t: 0.14, max: 0.14, nx: 0, ny: 1 };
+      vic.flash = 0.12;
+      if (!reduceMotion) { shake = Math.max(shake, 9); hitStop = Math.max(hitStop, 0.04); }
+      if (Math.random() < 0.5) floater(vic.x + (Math.random() - 0.5) * 30, vic.y - vic.r - 40, "WHACK", "crit");
       checkEnd();
     }
     if (!stillOn) herbLeaves();
   } else if (h.phase === "leave") {
-    var ox = h.outX - h.x;
+    // Back over the fence and off up through the crowd the way he came.
+    var ox = h.ex - h.x, oy = h.ey - h.y, od = Math.sqrt(ox * ox + oy * oy) || 1;
+    h.x += ox / od * HERB_RUN * dt; h.y += oy / od * HERB_RUN * dt;
     h.flip = ox < 0 ? -1 : 1;
-    h.x += (ox < 0 ? -1 : 1) * HERB_WALK * 1.2 * dt;
-    h.swing = Math.sin(h.t * 5) * 0.45;
-    if (Math.abs(ox) < 4 || h.x < -HERB_R * 2 || h.x > W + HERB_R * 2) herb = null;
+    h.swing = Math.sin(h.t * 14) * 0.7;
+    if (h.y > H) h.fade = Math.max(0, 1 - (h.y - H) / (h.ey - H));
+    if (od < HERB_RUN * dt + 2) herb = null; // lost in the crowd
   }
 }
 
 function herbLeaves() {
   if (!herb || herb.phase === "leave") return;
   herb.phase = "leave";
-  herb.outX = herb.x < W / 2 ? -HERB_R * 2 : W + HERB_R * 2;
 }
 
 function endHerbDean(self, other, landed) {
@@ -10041,11 +10062,63 @@ function drawHerb() {
   // Shadow
   ctx.fillStyle = "rgba(0,0,0,0.14)";
   ctx.beginPath(); ctx.ellipse(HERB_R * 0.15, HERB_R * 0.9, HERB_R * 0.9, HERB_R * 0.28, 0, 0, Math.PI * 2); ctx.fill();
-  var bob = h.phase === "hit" ? 0 : Math.abs(Math.sin(h.t * 6)) * 2;
+  ctx.globalAlpha = h.fade;
+  if (h.phase === "hit") { drawHerbWhacking(h); ctx.restore(); return; }
+  var running = h.phase === "run" || h.phase === "leave";
+  var bob = Math.abs(Math.sin(h.t * (running ? 14 : 6))) * (running ? 5 : 2);
   ctx.translate(0, -bob);
-  ctx.scale(h.flip, 1); // the cane on the side he's heading (or hitting)
+  ctx.scale(h.flip, 1); // the cane on the side he's heading
   drawFighterArt(ctx, 0, 0, HERB_R, HERB_LOOK, theme.wall, { layout: "contained", name: "herb dean", caneSwing: h.swing });
   ctx.restore();
+}
+
+// Whacking them: the cane comes up behind his head while he leans back,
+// trembles at the top, then he lunges in and cracks it down on their head.
+var HERB_LOOK_NOCANE = null;
+function drawHerbWhacking(h) {
+  if (!HERB_LOOK_NOCANE) { HERB_LOOK_NOCANE = JSON.parse(JSON.stringify(HERB_LOOK)); HERB_LOOK_NOCANE.cane = false; }
+  var vic = balls[1 - h.ownerId], r = HERB_R;
+  var ax = vic.x - h.x, ay = vic.y - h.y, aim = Math.atan2(ay, ax), al = Math.sqrt(ax * ax + ay * ay) || 1;
+  var c = h.cyc, k, lean;
+  var up = aim - h.flip * 2.6; // raised up behind him
+  var down = aim + h.flip * 0.05; // across the top of their head
+  var ang;
+  if (c < CANE_WIND) {
+    k = c / CANE_WIND; k = k * (2 - k);
+    ang = aim + (up - aim) * k + (k > 0.8 ? Math.sin(c * 70) * 0.06 : 0);
+    lean = -k * 5;
+  } else if (c < CANE_WIND + CANE_STRIKE) {
+    k = (c - CANE_WIND) / CANE_STRIKE; k = k * k;
+    ang = up + (down - up) * k; lean = -5 + 13 * k;
+  } else {
+    k = (c - CANE_WIND - CANE_STRIKE) / CANE_RECOVER;
+    ang = down + (aim - h.flip * 0.4 - down) * k * 0.5; lean = 8 * (1 - k);
+  }
+  ctx.translate(ax / al * lean, ay / al * lean);
+  ctx.save(); ctx.scale(h.flip, 1);
+  drawFighterArt(ctx, 0, 0, r, HERB_LOOK_NOCANE, theme.wall, { layout: "contained", name: "herb dean" });
+  ctx.restore();
+  // Motion streaks on the way down
+  var len = r * 2.1, hx = Math.cos(ang) * r * 0.75, hy = Math.sin(ang) * r * 0.75;
+  if (c >= CANE_WIND && c < CANE_WIND + CANE_STRIKE + 0.06) {
+    ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 3;
+    for (var i = 1; i <= 3; i++) {
+      var ga = ang - h.flip * i * 0.22;
+      ctx.beginPath(); ctx.moveTo(hx + Math.cos(ga) * len * 0.5, hy + Math.sin(ga) * len * 0.5); ctx.lineTo(hx + Math.cos(ga) * len, hy + Math.sin(ga) * len); ctx.stroke();
+    }
+  }
+  ctx.save();
+  ctx.translate(hx, hy); ctx.rotate(ang);
+  ctx.lineCap = "round";
+  [[theme.wall, r * 0.13, 0, len], ["#f4f4f2", r * 0.075, 0, len * 0.82], ["#c8102e", r * 0.075, len * 0.82, len]].forEach(function (s) {
+    ctx.strokeStyle = s[0]; ctx.lineWidth = s[1]; ctx.beginPath(); ctx.moveTo(s[2], 0); ctx.lineTo(s[3], 0); ctx.stroke();
+  });
+  ctx.restore();
+  // Both hands gripping it
+  ctx.fillStyle = HERB_LOOK.skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2;
+  [0, 0.22].forEach(function (f) {
+    ctx.beginPath(); ctx.arc(hx + Math.cos(ang) * len * f, hy + Math.sin(ang) * len * f, r * 0.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
 }
 
 // "Herb Dean is entering the ring" across the jumbotron (stadium.js), or
@@ -10060,7 +10133,12 @@ function drawHerbJumbo(x, y, w, h) {
   ctx.strokeStyle = flash ? "#ffd23f" : "#c8102e"; ctx.lineWidth = 6; ctx.strokeRect(x + 6, y + 6, w - 12, h - 12);
   var pr = h * 0.33, px = x + 40 + pr, py = y + h / 2;
   ctx.fillStyle = "#1b2238"; ctx.beginPath(); ctx.arc(px, py, pr + 8, 0, Math.PI * 2); ctx.fill();
-  drawFighterArt(ctx, px, py, pr, HERB_LOOK, "#0b0f12", { layout: "contained", name: "herb dean", caneSwing: Math.sin(performance.now() / 300) * 0.4 });
+  // Scaled down so his hair and cane stay inside the circle, and clipped to it.
+  ctx.save();
+  ctx.beginPath(); ctx.arc(px, py, pr + 8, 0, Math.PI * 2); ctx.clip();
+  var ar = (pr + 8) / 1.75;
+  drawFighterArt(ctx, px - ar * 0.2, py + ar * 0.28, ar, HERB_LOOK, "#0b0f12", { layout: "contained", name: "herb dean", caneSwing: Math.sin(performance.now() / 300) * 0.4 });
+  ctx.restore();
   var tx = px + pr + 30, tw = x + w - tx - 30;
   jtText("NOW ENTERING THE RING", tx + tw / 2, y + h * 0.27, 30, "#c9d3ea", "center", "#000000", tw);
   jtText("HERB DEAN", tx + tw / 2, y + h * 0.55, 86, "#ffd23f", "center", "#b8862f", tw);
