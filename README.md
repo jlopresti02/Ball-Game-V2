@@ -92,7 +92,7 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 |---|---|
 | `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours (`accent`: optional stripe colour for `pinstripe` shorts) |
 | `build` | `muscular`, `lean`, `stocky` |
-| `hair` | `bald`, `stubble`, `buzz`, `crop` (faded sides, fuller top, receding temples), `twists`, `short`, `long`, `mohawk`, `dreads` |
+| `hair` | `bald`, `stubble`, `buzz`, `crop` (faded sides, longer top swept from a left part into an uneven fringe), `twists`, `short`, `long`, `mohawk`, `dreads` |
 | `hairPuff` | `true` puts big twisted hair as a second circle behind the top of the ball (contained layout) |
 | `cane` | `true` gives a white cane with a red tip at the right side (contained layout); pass `opts.caneSwing` (radians) to sweep it |
 | `beard` | `none`, `stubble`, `short`, `chinstrap`, `full` |

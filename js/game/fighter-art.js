@@ -272,26 +272,37 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   };
   c.fillStyle = hc;
   if (look.hair === "crop") {
-    // Short crop: faded sides as a see-through shadow, a fuller top swept up
-    // and back, and the hairline pulled back at the temples
+    // Short sides faded to a see-through shadow, with a longer top swept
+    // across from a part on the left into an uneven, ragged fringe that
+    // dips low over the right of the forehead
     c.globalAlpha = 0.4; hairline(); c.fill(); c.globalAlpha = 1;
-    var crg = c.createLinearGradient(0, -r, 0, -r * 0.6);
-    crg.addColorStop(0, shadeHex(hc, -0.15)); crg.addColorStop(1, hc);
+    var crg = c.createLinearGradient(-r * 0.5, -r, r * 0.6, -r * 0.55);
+    crg.addColorStop(0, shadeHex(hc, -0.2)); crg.addColorStop(1, shadeHex(hc, 0.08));
     c.fillStyle = crg;
+    // Fringe tips: [x, y] along the front edge, left (high, at the part) to right (low)
+    var tips = [[-0.5, -0.74], [-0.38, -0.7], [-0.3, -0.72], [-0.18, -0.64], [-0.08, -0.67], [0.04, -0.58], [0.14, -0.62], [0.26, -0.54], [0.36, -0.59], [0.5, -0.52], [0.62, -0.58], [0.78, -0.56]];
     c.beginPath();
-    c.moveTo(-r * 0.86, -r);
-    c.lineTo(-r * 0.82, -r * 0.66);
-    c.quadraticCurveTo(-r * 0.66, -r * 0.6, -r * 0.46, -r * 0.68);
-    c.quadraticCurveTo(-r * 0.24, -r * 0.58, 0, -r * 0.6);
-    c.quadraticCurveTo(r * 0.24, -r * 0.58, r * 0.46, -r * 0.68);
-    c.quadraticCurveTo(r * 0.66, -r * 0.6, r * 0.82, -r * 0.66);
-    c.lineTo(r * 0.86, -r); c.closePath(); c.fill();
-    // Strands brushed up from the front edge
-    c.strokeStyle = shadeHex(hc, 0.3); c.lineWidth = lw(0.018); c.globalAlpha = 0.7;
-    for (var cs = -6; cs <= 6; cs++) {
-      var csx = cs * r * 0.1, csy = -r * (0.63 + Math.abs(cs) * 0.008);
-      c.beginPath(); c.moveTo(csx, csy); c.quadraticCurveTo(csx + r * 0.03, csy - r * 0.12, csx + cs * r * 0.012, csy - r * 0.26); c.stroke();
+    c.moveTo(-r * 0.56, -r);
+    c.quadraticCurveTo(-r * 0.6, -r * 0.84, -r * 0.5, -r * 0.74);
+    for (var ti = 1; ti < tips.length; ti++) {
+      var pt0 = tips[ti - 1], pt1 = tips[ti];
+      // Notch up between locks so each one ends in a point
+      c.quadraticCurveTo(r * (pt0[0] + pt1[0]) / 2, r * (Math.min(pt0[1], pt1[1]) - 0.06), r * pt1[0], r * pt1[1]);
     }
+    c.quadraticCurveTo(r * 0.86, -r * 0.64, r * 0.88, -r * 0.8);
+    c.lineTo(r * 0.88, -r); c.closePath(); c.fill();
+    // Part line on the left
+    c.strokeStyle = shadeHex(hc, -0.45); c.lineWidth = lw(0.016); c.globalAlpha = 0.8;
+    c.beginPath(); c.moveTo(-r * 0.5, -r * 0.74); c.quadraticCurveTo(-r * 0.55, -r * 0.88, -r * 0.52, -r); c.stroke();
+    // Locks sweeping from the part across and down into the fringe
+    c.lineCap = "round";
+    for (var ls = 0; ls < 11; ls++) {
+      var tip = tips[ls + 1], sx0 = -r * 0.48 + ls * r * 0.02, sy0 = -r * (0.97 - ls * 0.012);
+      c.strokeStyle = ls % 3 === 1 ? shadeHex(hc, -0.4) : shadeHex(hc, 0.32); c.lineWidth = lw(ls % 3 === 1 ? 0.014 : 0.02);
+      c.beginPath(); c.moveTo(sx0, sy0);
+      c.quadraticCurveTo(r * (tip[0] - 0.12), r * (tip[1] - 0.2), r * tip[0] - r * 0.01, r * tip[1] - r * 0.02); c.stroke();
+    }
+    c.globalAlpha = 1;
     // Fade grain on the sides
     var cr = artRand(9); c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.4;
     for (var cg = 0; cg < 50; cg++) {
