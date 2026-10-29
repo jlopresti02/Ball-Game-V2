@@ -752,7 +752,7 @@ function startCrowd() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    stopCrowd();
+    stopCrowdLoop();
     var c = crowd = { src: null, gain: null, filter: null, ready: 0 };
     withClip("crowd", function (buf) {
       if (crowd !== c) return; // stopped (or restarted) while decoding
@@ -829,11 +829,17 @@ function crowdRelease() {
   crowdMood.heat = crowdMood.level = Math.max(crowdMood.level, 0.6);
   crowdMood.keep = 0;
 }
+// Leaving or restarting a match: the crowd and anyone talking go quiet.
 function stopCrowd() {
-  var c = crowd;
-  crowd = null;
   stopDoBronx();
   stopTalk();
+  stopCrowdLoop();
+}
+// Just the looping crowd. startCrowd uses this, so it doesn't cut off the
+// "Here we go!" that starts the same moment.
+function stopCrowdLoop() {
+  var c = crowd;
+  crowd = null;
   if (c) clearTimeout(c.holdTimer);
   if (!c || !c.src) return;
   try {
