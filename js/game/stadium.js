@@ -608,6 +608,8 @@ function drawJumbotron(px) {
     jtText(String(b), sx + sw - 50, yy + 1, 30, "#ffffff", "right", shadeHex(balls[1].char.color || "#888888", 0.35));
   });
 
+  drawHerbJumbo(sx, sy, sw, jt.h - 28); // Gane's special (herbdean.js)
+
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.jtFront, jt.x * px, jt.y * px);
 }

@@ -111,6 +111,7 @@ function drawHands(b, other) {
   if (b.mock) return; // giving a thumbs down (drawMock)
   if (cheaterHandsBusy(b)) return; // cheating (drawCheater)
   if (b.igbb && b.igbb.move === "chairshot") return; // both hands on the chair (drawChairShot)
+  if (b.igbb && b.igbb.move === "herbdean") return; // swinging the bat (drawHerbDeanSpecial)
   if (b.koRush && b.koRush.phase === "celebrate") return; // hands up (drawn by drawKoCelebrate)
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.

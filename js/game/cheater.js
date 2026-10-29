@@ -45,6 +45,8 @@ function tickRefNap(dt) {
   if (!rf || !cheaterFight()) return;
   var ch = balls.filter(function (b) { return b.char.hasCheater; })[0].char.cheater;
   if (rf.stop || over) { if (rf.asleep) wakeRef(rf); return; }
+  // Out cold for the whole of Gane's special (herbdean.js wakes him after).
+  if (herbDeanActive()) { rf.asleep = true; rf.napT = 0; return; }
   rf.napT = (rf.napT || 0) + dt;
   if (!rf.asleep && rf.napT >= ch.awake) {
     rf.asleep = true; rf.napT = 0;

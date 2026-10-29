@@ -58,6 +58,7 @@ function startMatchWith(ch0, ch1) {
   resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
   resetCheater();
+  resetHerbDean();
 
   document.getElementById("name0").textContent = ch0.name;
   document.getElementById("name1").textContent = ch1.name;

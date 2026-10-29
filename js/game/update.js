@@ -43,6 +43,7 @@ function update(dt) {
   updateReferee(dt);
   tickRefNap(dt);   // the ref nodding off in Gane's fights (cheater.js)
   tickCheater(dt);
+  updateHerb(dt);   // Herb Dean wandering the cage (herbdean.js)
 
   balls.forEach(function (b) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;

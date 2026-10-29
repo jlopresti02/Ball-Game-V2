@@ -58,9 +58,75 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   c.save();
   c.translate(x, y);
   var contained = opts.layout === "contained";
+  if (contained && look.hairPuff) drawHairPuff(c, r, look, ink);
   drawArtBody(c, r, look, ink, opts.name || "", contained);
+  if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
   c.restore();
+}
+
+// A white cane with a red tip, held at the right side and planted on the
+// floor out past the ball, with a crook handle curled over the hand. `swing`
+// (radians) sweeps the tip side to side, the way a blind walker taps ahead.
+function drawCane(c, r, ink, swing) {
+  var hx = r * 0.86, hy = r * 0.02, fx = r * (1.42 + swing * 0.6), fy = r * (1.12 - Math.abs(swing) * 0.25);
+  var ang = Math.atan2(fy - hy, fx - hx), len = Math.hypot(fx - hx, fy - hy);
+  c.save();
+  c.translate(hx, hy); c.rotate(ang);
+  c.lineCap = "round";
+  var shaft = function (col, w, from, to) {
+    c.strokeStyle = col; c.lineWidth = w;
+    c.beginPath(); c.moveTo(from, 0); c.lineTo(to, 0); c.stroke();
+  };
+  shaft(ink, r * 0.11, 0, len);
+  shaft("#f4f4f2", r * 0.065, 0, len * 0.82);
+  shaft("#c8102e", r * 0.065, len * 0.82, len);
+  c.strokeStyle = "rgba(0,0,0,0.18)"; c.lineWidth = r * 0.02;
+  c.beginPath(); c.moveTo(0, r * 0.018); c.lineTo(len * 0.82, r * 0.018); c.stroke();
+  // Crook: a hook curling back over the top
+  c.beginPath(); c.arc(-r * 0.09, 0, r * 0.09, 0, Math.PI, true);
+  c.strokeStyle = ink; c.lineWidth = r * 0.11; c.stroke();
+  c.strokeStyle = "#f4f4f2"; c.lineWidth = r * 0.065; c.stroke();
+  c.restore();
+}
+
+// Big hair as a second circle sitting behind the top of the ball: a lumpy
+// cloud of twists, outlined as one shape (all the lumps stroked, then filled)
+function drawHairPuff(c, r, look, ink) {
+  var hc = look.hairColor, py = -r * 0.8, pr = r * 0.62;
+  var lumps = [[0, 0, 1]];
+  for (var i = 0; i < 9; i++) {
+    var a = Math.PI * (1.05 + i * 0.1125);
+    lumps.push([Math.cos(a) * pr * 0.78, Math.sin(a) * pr * 0.7, 0.34]);
+  }
+  var blob = function () {
+    c.beginPath();
+    lumps.forEach(function (l) { c.moveTo(l[0] + pr * l[2], py + l[1]); c.arc(l[0], py + l[1], pr * l[2], 0, Math.PI * 2); });
+  };
+  c.save();
+  c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.06) * 2;
+  blob(); c.stroke();
+  var g = c.createRadialGradient(-pr * 0.3, py - pr * 0.4, pr * 0.1, 0, py, pr * 1.2);
+  g.addColorStop(0, shadeHex(hc, 0.3)); g.addColorStop(1, shadeHex(hc, -0.1));
+  c.fillStyle = g; blob(); c.fill();
+  blob(); c.clip();
+  drawTwistStrands(c, r, hc, -pr * 1.1, py - pr * 1.05, pr * 2.2, pr * 1.6, 11, 170);
+  c.restore();
+}
+
+// Long twists hanging down and slightly out from the middle, drawn over a
+// clipped hair fill: thick dark strands with a light ridge on each
+function drawTwistStrands(c, r, hc, x0, y0, w, h, seed, count) {
+  var rnd = artRand(seed);
+  c.lineCap = "round";
+  for (var n = 0; n < count; n++) {
+    var x = x0 + rnd() * w, y = y0 + rnd() * h, len = r * (0.14 + rnd() * 0.1);
+    var dx = x * 0.25 + (rnd() - 0.5) * r * 0.04, dy = len;
+    [[shadeHex(hc, -0.5), 0.045], [shadeHex(hc, 0.28), 0.014]].forEach(function (st) {
+      c.strokeStyle = st[0]; c.lineWidth = Math.max(1, r * st[1]);
+      c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + dx * 0.2 + r * 0.025, y + dy * 0.5, x + dx * 0.4, y + dy); c.stroke();
+    });
+  }
 }
 
 function drawArtHead(c, r, look, ink, hy, hr) {
@@ -216,6 +282,24 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.fillRect(bx, by, r * 0.018, r * 0.018);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "twists") {
+    // Short twists pulled back: rows of small rounded knots over the scalp
+    hairline(); c.fill();
+    if (look.hairPuff) {
+      c.save(); hairline(); c.clip();
+      drawTwistStrands(c, r, hc, -r, -r * 1.05, r * 2, r * 0.3, 12, 60);
+      c.restore();
+    } else {
+    c.fillStyle = shadeHex(hc, 0.22); c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.012);
+    for (var tw = 0; tw < 4; tw++) {
+      var twy = -r * (0.95 - tw * 0.055), twn = 7 + tw;
+      for (var tk = 0; tk < twn; tk++) {
+        var twx = (tk - (twn - 1) / 2) * r * (0.16 - tw * 0.012) + (tw % 2) * r * 0.04;
+        c.beginPath(); c.ellipse(twx, twy, r * 0.045, r * 0.032, 0.3, 0, Math.PI * 2); c.fill(); c.stroke();
+      }
+    }
+    }
+    c.fillStyle = hc;
   } else if (look.hair === "short" || look.hair === "long" || look.hair === "dreads") {
     hairline(); c.fill();
     c.strokeStyle = shadeHex(hc, 0.25); c.lineWidth = lw(0.025); c.globalAlpha = 0.6;
@@ -750,6 +834,47 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   c.restore();
   if (contained) c.restore();
+
+  // A collared polo shirt (a referee's) covering the torso, sleeves at the sides
+  if (look.outfit === "polo") {
+    var shirt = look.shirt || "#1b1c1f", sTopP = contained ? r * 0.36 : r * 0.42;
+    var neckY = contained ? -r * 0.1 : -r * 0.5;
+    c.fillStyle = shirt;
+    c.beginPath();
+    c.moveTo(-r, neckY - r * 0.12);
+    c.quadraticCurveTo(-r * 0.5, neckY + r * 0.04, 0, neckY + r * 0.06);
+    c.quadraticCurveTo(r * 0.5, neckY + r * 0.04, r, neckY - r * 0.12);
+    c.lineTo(r, sTopP + r * 0.02); c.lineTo(-r, sTopP + r * 0.02); c.closePath(); c.fill();
+    // Soft fabric folds and the shoulder seams
+    var pg = c.createLinearGradient(0, neckY, 0, sTopP);
+    pg.addColorStop(0, "rgba(255,255,255,0.08)"); pg.addColorStop(1, "rgba(0,0,0,0.2)");
+    c.fillStyle = pg; c.fillRect(-r, neckY - r * 0.1, r * 2, sTopP - neckY + r * 0.12);
+    c.strokeStyle = "rgba(255,255,255,0.12)"; c.lineWidth = lw(0.02);
+    [-1, 1].forEach(function (sd) {
+      c.beginPath(); c.moveTo(sd * r * 0.66, neckY); c.quadraticCurveTo(sd * r * 0.6, (neckY + sTopP) / 2, sd * r * 0.7, sTopP); c.stroke();
+      c.beginPath(); c.moveTo(sd * r * 0.25, (neckY + sTopP) / 2); c.quadraticCurveTo(sd * r * 0.32, sTopP - r * 0.12, sd * r * 0.22, sTopP); c.stroke();
+    });
+    // Collar points and the button placket
+    c.fillStyle = shadeHex(shirt.charAt(0) === "#" ? shirt : "#1b1c1f", 0.08);
+    c.strokeStyle = "rgba(0,0,0,0.55)"; c.lineWidth = lw(0.018);
+    [-1, 1].forEach(function (sd) {
+      c.beginPath();
+      c.moveTo(sd * r * 0.02, neckY + r * 0.06);
+      c.lineTo(sd * r * 0.3, neckY - r * 0.02);
+      c.lineTo(sd * r * 0.2, neckY + r * 0.13);
+      c.closePath(); c.fill(); c.stroke();
+    });
+    c.strokeStyle = "rgba(255,255,255,0.15)";
+    c.beginPath(); c.moveTo(0, neckY + r * 0.07); c.lineTo(0, neckY + r * 0.25); c.stroke();
+    c.fillStyle = "rgba(255,255,255,0.35)";
+    [0.13, 0.21].forEach(function (by) { c.beginPath(); c.arc(r * 0.025, neckY + r * by, r * 0.012, 0, Math.PI * 2); c.fill(); });
+    // Commission badge on the left chest
+    if (look.badge) {
+      c.fillStyle = look.badge;
+      c.beginPath(); c.moveTo(-r * 0.42, neckY + r * 0.16); c.lineTo(-r * 0.3, neckY + r * 0.16); c.lineTo(-r * 0.3, neckY + r * 0.28);
+      c.lineTo(-r * 0.36, neckY + r * 0.33); c.lineTo(-r * 0.42, neckY + r * 0.28); c.closePath(); c.fill();
+    }
+  }
 
   // Fight shorts
   var sTop = contained ? r * 0.36 : r * 0.42, band = r * 0.13;

@@ -17,7 +17,7 @@
 // same during Father's Plan.
 "use strict";
 
-var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan", dobronx: "Do Bronx", chairshot: "Chair Shot" };
+var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan", dobronx: "Do Bronx", chairshot: "Chair Shot", herbdean: "Herb Dean" };
 
 var IGBB_CLOSE_SPEED = 820;   // dash in to grab
 var IGBB_CLOSE_GIVEUP = 3;
@@ -84,6 +84,7 @@ function updateSpecial(self, other, dt) {
   var sp = self.char.special;
   if (sp.move === "dobronx") return updateDoBronx(self, other, dt); // dobronx.js
   if (sp.move === "chairshot") return updateChairShot(self, other, dt); // chairshot.js
+  if (sp.move === "herbdean") return updateHerbDean(self, other, dt); // herbdean.js
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };
