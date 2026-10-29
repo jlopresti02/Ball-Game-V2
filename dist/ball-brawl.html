@@ -9896,9 +9896,11 @@ function updateHerbDean(self, other, dt) {
   self.vx = 0; self.vy = 0;
   if (m.phase === "beat") {
     // Stays right on them.
-    var gap = self.r + other.r + 10;
-    self.x += (other.x - m.nx * gap - self.x) * Math.min(1, dt * 10);
-    self.y += (other.y - m.ny * gap - self.y) * Math.min(1, dt * 10);
+    // Rocks back as he winds up, then lunges in with the swing.
+    var wk = Math.min(1, m.swingT / sp.batGap);
+    var gap = self.r + other.r + 10 + (wk < 0.7 ? 14 * (wk / 0.7) : 14 - 22 * ((wk - 0.7) / 0.3));
+    self.x += (other.x - m.nx * gap - self.x) * Math.min(1, dt * 18);
+    self.y += (other.y - m.ny * gap - self.y) * Math.min(1, dt * 18);
     m.swingT += dt;
     var joined = herb && herb.phase === "hit" ? herb.hitT : 0;
     var finish = joined >= HERB_JOINED || m.t >= HERB_BEAT_MAX;
@@ -9909,6 +9911,7 @@ function updateHerbDean(self, other, dt) {
       playPunch(last ? 40 : 14);
       impacts.push({ x: other.x - m.nx * other.r, y: other.y - m.ny * other.r, nx: m.nx, ny: m.ny, life: 0.3, max: 0.3, color: "#c98a4b" });
       if (!reduceMotion) shake = Math.max(shake, last ? 20 : 7);
+      herbVictimRecoil(other, m.nx, m.ny, last ? 0.6 : 0.42);
       if (last) {
         if (dealt > 0) floater(other.x, other.y - other.r - 30, "HOME RUN", "crit");
         playSlam();
@@ -9966,6 +9969,7 @@ function herbEnters(owner) {
 
 function updateHerb(dt) {
   if (herbShow > 0) herbShow = Math.max(0, herbShow - dt);
+  tickHerbJolt(dt);
   var h = herb;
   if (!h) return;
   h.t += dt;
@@ -10015,11 +10019,12 @@ function updateHerb(dt) {
     h.hitT += dt;
     h.cyc += dt;
     // Feels his way round them to the side away from Gane, still swinging.
-    var want = Math.atan2(vic.y - owner.y, vic.x - owner.x);
+    var want = herbSpotAngle(vic, owner, Math.atan2(vic.y - owner.y, vic.x - owner.x));
     var diff = Math.atan2(Math.sin(want - h.ang), Math.cos(want - h.ang));
     h.ang += Math.max(-4 * dt, Math.min(4 * dt, diff));
-    var rr = vic.r + HERB_R - 4;
-    h.x = vic.x + Math.cos(h.ang) * rr; h.y = vic.y + Math.sin(h.ang) * rr;
+    var rr = vic.r + HERB_R + 16; // an arm and a cane's length off them
+    var hk = Math.min(1, dt * 10);
+    h.x += (vic.x + Math.cos(h.ang) * rr - h.x) * hk; h.y += (vic.y + Math.sin(h.ang) * rr - h.y) * hk;
     herbClampIn(h); // never through the cage, even with them pinned on it
     h.flip = vic.x < h.x ? -1 : 1;
     // Each whack: a big slow wind-up with the cane raised over his head,
@@ -10032,8 +10037,7 @@ function updateHerb(dt) {
       playPunch(18);
       var ax = vic.x - h.x, ay = vic.y - h.y, al = Math.sqrt(ax * ax + ay * ay) || 1;
       impacts.push({ x: vic.x - ax / al * vic.r * 0.6, y: vic.y - vic.r * 0.5, nx: ax / al, ny: ay / al, life: 0.32, max: 0.32, color: "#ffffff" });
-      vic.squash = { t: 0.14, max: 0.14, nx: 0, ny: 1 };
-      vic.flash = 0.12;
+      herbVictimRecoil(vic, ax / al, ay / al, 0.36);
       if (!reduceMotion) { shake = Math.max(shake, 9); hitStop = Math.max(hitStop, 0.04); }
       if (Math.random() < 0.5) floater(vic.x + (Math.random() - 0.5) * 30, vic.y - vic.r - 40, "WHACK", "crit");
       checkEnd();
@@ -10057,6 +10061,64 @@ function updateHerb(dt) {
     if (!stadiumOn()) h.fade = Math.max(0, 1 - (h.y - herbOutY()) / (herbOffY() - herbOutY()));
     if (h.y >= herbOffY()) herb = null;
   }
+}
+
+// Getting hit: knocked back a step, squashed, flashing, sweat flying, and
+// sometimes yelling about it. Purely for show (they're pinned).
+var HERB_OUCH = ["OOF", "OW!", "AAGH", "NOT THE FACE", "REF?!", "HELP"];
+function herbVictimRecoil(b, nx, ny, amt) {
+  b.herbJolt = { t: 0.22, max: 0.22, nx: nx, ny: ny, amt: b.r * amt };
+  b.squash = { t: 0.16, max: 0.16, nx: nx, ny: ny };
+  b.flash = 0.14;
+  if (!reduceMotion) for (var i = 0; i < 5; i++) {
+    var a = Math.atan2(ny, nx) + (Math.random() - 0.5) * 1.6, sp = 160 + Math.random() * 160;
+    particles.push({ x: b.x, y: b.y - b.r * 0.4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60, life: 0.35, max: 0.35, size: 3, color: "#bfe3ff" });
+  }
+  if (Math.random() < 0.3) floater(b.x + (Math.random() - 0.5) * 50, b.y + b.r + 26, HERB_OUCH[(Math.random() * HERB_OUCH.length) | 0], "note");
+}
+function tickHerbJolt(dt) {
+  balls.forEach(function (b) { if (b.herbJolt && (b.herbJolt.t -= dt) <= 0) b.herbJolt = null; });
+}
+// Where to draw them this frame (draw.js adds it to the fighter's spot).
+function herbJoltOffset(b) {
+  var j = b.herbJolt, x = 0, y = 0;
+  if (j) { var k = j.t / j.max; x = j.nx * j.amt * k * k; y = j.ny * j.amt * k * k; }
+  if (herbCovering(b) && !reduceMotion) { x += (Math.random() - 0.5) * 2.4; y += (Math.random() - 0.5) * 2.4; } // trembling
+  return { x: x, y: y };
+}
+
+// Pinned for the beating: both gloves up in front of the face, elbows in,
+// shaking, and knocked back into their own head on every hit.
+function herbCovering(b) {
+  var o = balls[1 - b.id];
+  return b.alive && b.dazed === "held" && o.igbb && o.igbb.move === "herbdean" && o.igbb.phase === "beat";
+}
+function drawHerbCover(b) {
+  var o = balls[1 - b.id], a = Math.atan2(o.y - b.y, o.x - b.x);
+  // Turns the guard toward whichever of them hit last.
+  if (b.herbJolt) a = Math.atan2(-b.herbJolt.ny, -b.herbJolt.nx);
+  var cx = Math.cos(a), cy = Math.sin(a), px = -cy, py = cx;
+  var j = b.herbJolt ? b.herbJolt.t / b.herbJolt.max : 0;
+  var out = b.r * (0.62 - 0.3 * j), arm = (b.char.punch.size || 13) * 0.75;
+  [-1, 1].forEach(function (k) {
+    var sx = b.x + px * k * b.r * 0.62, sy = b.y + py * k * b.r * 0.62;
+    var gx = b.x + cx * out + px * k * b.r * (0.24 + 0.1 * j), gy = b.y + cy * out + py * k * b.r * (0.24 + 0.1 * j) - b.r * 0.2;
+    strokeLimb(arm, armColor(b.char), function () { ctx.moveTo(sx, sy); ctx.lineTo(gx, gy); });
+    drawGloveAt(gx, gy, b.r * 0.3, b.char);
+  });
+}
+
+// The angle round the victim closest to `want` (the side away from Gane)
+// where Herb fits inside the cage without standing on Gane.
+function herbSpotAngle(vic, owner, want) {
+  var rr = vic.r + HERB_R + 16, offs = [0, 0.4, -0.4, 0.8, -0.8, 1.2, -1.2, 1.6, -1.6, 2.0, -2.0];
+  for (var i = 0; i < offs.length; i++) {
+    var a = want + offs[i], x = vic.x + Math.cos(a) * rr, y = vic.y + Math.sin(a) * rr;
+    var gx = x - owner.x, gy = y - owner.y;
+    if (x > HERB_R + 2 && x < W - HERB_R - 2 && y > HERB_R + 2 && y < H - HERB_R - 2 &&
+        gx * gx + gy * gy > (owner.r + HERB_R + 6) * (owner.r + HERB_R + 6)) return a;
+  }
+  return want;
 }
 
 // Keeps Herb from walking through a fighter: pushes him back out to their
@@ -10112,24 +10174,38 @@ function drawHerbDeanSpecial(b) {
   var base = Math.atan2(ny, nx), ang;
   if (m.phase === "outro") { drawGaneCelebrating(b, m.t); return; }
   if (m.phase === "beat") {
-    var k = Math.min(1, m.swingT / sp.batGap);
-    // Cocks it back, then whips down at the end of each beat.
-    var e = k < 0.7 ? -0.6 * (k / 0.7) : -0.6 + 1.6 * ((k - 0.7) / 0.3);
-    ang = base + m.side * (1.1 - Math.max(-0.6, e) * 1.1);
-    if (k < 0.15) ang = base + m.side * 0.05; // just landed
+    // Cocks it way back over his shoulder (shaking at the top), then whips
+    // it through them and follows through across his body.
+    var k = Math.min(1, m.swingT / sp.batGap), whip = false;
+    if (k < 0.12) ang = base - m.side * (0.5 - 0.5 * (k / 0.12)) ;          // follow-through settling
+    else if (k < 0.72) { var e = (k - 0.12) / 0.6; e = e * (2 - e); ang = base + m.side * 2.4 * e + (e > 0.85 ? Math.sin(m.swingT * 80) * 0.06 : 0); }
+    else { var f = (k - 0.72) / 0.28; f = f * f; ang = base + m.side * (2.4 - 2.9 * f); whip = true; }
   } else if (m.phase === "announce") {
     var up = Math.min(1, m.t / 0.4);
     ang = base - 2.3 * up;
   } else ang = base - 2.3;
-  var arm = (ch.punch.size || 13) * 0.75;
+  var arm = (ch.punch.size || 13) * 0.75, bl = b.r * 1.7;
   var hx = b.x + Math.cos(ang) * b.r * 0.85, hy = b.y + Math.sin(ang) * b.r * 0.85;
   var shx = b.x + Math.cos(ang) * b.r * 0.4, shy = b.y + Math.sin(ang) * b.r * 0.4;
-  drawBat(hx, hy, ang, b.r * 1.6); // cheater.js
+  if (whip && !reduceMotion) {
+    ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineCap = "round";
+    for (var i = 1; i <= 3; i++) {
+      var ga = ang + m.side * i * 0.25;
+      ctx.lineWidth = 5 - i;
+      ctx.beginPath(); ctx.moveTo(hx + Math.cos(ga) * bl * 0.45, hy + Math.sin(ga) * bl * 0.45); ctx.lineTo(hx + Math.cos(ga) * bl, hy + Math.sin(ga) * bl); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  drawBat(hx, hy, ang, bl); // cheater.js
+  // Two hands on the handle, the back one from the other shoulder.
+  var h2x = hx + Math.cos(ang) * b.r * 0.3, h2y = hy + Math.sin(ang) * b.r * 0.3;
+  var s2a = ang + m.side * 1.4, s2x = b.x + Math.cos(s2a) * b.r * 0.5, s2y = b.y + Math.sin(s2a) * b.r * 0.5;
+  strokeLimb(arm, armColor(ch), function () { ctx.moveTo(s2x, s2y); ctx.lineTo(h2x, h2y); });
   strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); });
   drawGloveAt(hx, hy, b.r * 0.22, ch);
+  drawGloveAt(h2x, h2y, b.r * 0.22, ch);
 }
 
-// Arms up, pumping, with the bat held high in one glove.
 function drawGaneCelebrating(b, t) {
   var ch = b.char, arm = (ch.punch.size || 13) * 0.75, other = balls[1 - b.id];
   var batSide = other.x > b.x ? -1 : 1; // held up on the side away from them
@@ -11687,6 +11763,7 @@ function drawHands(b, other) {
   if (cheaterHandsBusy(b)) return; // cheating (drawCheater)
   if (b.igbb && b.igbb.move === "chairshot") return; // both hands on the chair (drawChairShot)
   if (b.igbb && b.igbb.move === "herbdean") return; // swinging the bat (drawHerbDeanSpecial)
+  if (herbCovering(b)) { drawHerbCover(b); return; } // covering up from the bat and the cane
   if (b.koRush && b.koRush.phase === "celebrate") return; // hands up (drawn by drawKoCelebrate)
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.
@@ -12781,6 +12858,7 @@ function draw() {
       woy = wfx * wa.sign * b.r * 0.75 * wk;
     }
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
+    var hjo = herbJoltOffset(b); wox += hjo.x; woy += hjo.y; // rocked by a bat or a cane (herbdean.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
