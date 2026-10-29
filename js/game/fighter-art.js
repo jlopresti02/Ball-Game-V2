@@ -271,7 +271,35 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.lineTo(r, -r * 0.5 - up); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
   };
   c.fillStyle = hc;
-  if (look.hair === "buzz" || look.hair === "stubble") {
+  if (look.hair === "crop") {
+    // Short crop: faded sides as a see-through shadow, a fuller top swept up
+    // and back, and the hairline pulled back at the temples
+    c.globalAlpha = 0.4; hairline(); c.fill(); c.globalAlpha = 1;
+    var crg = c.createLinearGradient(0, -r, 0, -r * 0.6);
+    crg.addColorStop(0, shadeHex(hc, -0.15)); crg.addColorStop(1, hc);
+    c.fillStyle = crg;
+    c.beginPath();
+    c.moveTo(-r * 0.86, -r);
+    c.lineTo(-r * 0.82, -r * 0.66);
+    c.quadraticCurveTo(-r * 0.66, -r * 0.6, -r * 0.46, -r * 0.68);
+    c.quadraticCurveTo(-r * 0.24, -r * 0.58, 0, -r * 0.6);
+    c.quadraticCurveTo(r * 0.24, -r * 0.58, r * 0.46, -r * 0.68);
+    c.quadraticCurveTo(r * 0.66, -r * 0.6, r * 0.82, -r * 0.66);
+    c.lineTo(r * 0.86, -r); c.closePath(); c.fill();
+    // Strands brushed up from the front edge
+    c.strokeStyle = shadeHex(hc, 0.3); c.lineWidth = lw(0.018); c.globalAlpha = 0.7;
+    for (var cs = -6; cs <= 6; cs++) {
+      var csx = cs * r * 0.1, csy = -r * (0.63 + Math.abs(cs) * 0.008);
+      c.beginPath(); c.moveTo(csx, csy); c.quadraticCurveTo(csx + r * 0.03, csy - r * 0.12, csx + cs * r * 0.012, csy - r * 0.26); c.stroke();
+    }
+    // Fade grain on the sides
+    var cr = artRand(9); c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.4;
+    for (var cg = 0; cg < 50; cg++) {
+      var cgx = (cr() < 0.5 ? -1 : 1) * r * (0.82 + cr() * 0.15), cgy = -r * (0.5 + cr() * 0.25);
+      c.fillRect(cgx, cgy, r * 0.016, r * 0.016);
+    }
+    c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "buzz" || look.hair === "stubble") {
     // A stubble scalp is a see-through shadow, as light as the short beard
     c.globalAlpha = look.hair === "stubble" ? 0.32 : 0.88; hairline(); c.fill();
     var br = artRand(7);
@@ -822,8 +850,8 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.strokeStyle = inkCol;
   }
   if (tat.eyes) {
-    // A pair of staring eyes under the left pec (screen right), linework only
-    var ey0 = contained ? -r * 0.22 : -r * 0.3, eyq = contained ? 0.86 / 0.59 : 1;
+    // A pair of staring eyes just below the left pec (screen right), linework only
+    var ey0 = contained ? -r * 0.04 : -r * 0.12, eyq = contained ? 0.86 / 0.59 : 1;
     c.save(); c.translate(r * 0.4, ey0); c.scale(1, eyq);
     c.lineWidth = lw(0.022); c.globalAlpha = 0.85;
     [-1, 1].forEach(function (es) {
