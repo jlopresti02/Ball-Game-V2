@@ -102,7 +102,7 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `headwear` | optional: `bandana` (stars-and-stripes bandana over the head) |
 | `glasses` | optional: `shades` (dark sunglasses) |
 | `outfit` | optional: `polo` (collared shirt over the torso, for a referee; `shirt` colour, optional `badge` colour for a chest badge) |
-| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `medallion` (sun medallion on the sternum), `eyes` (pair of staring eyes just below the left pec), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `ribs` can be `"left"` to put the script on the other side; `armInk` gives the punching arms an inked texture |
+| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `medallion` (sun medallion on the sternum), `eyes` (pair of staring eyes low on the left side, above the waistband), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `ribs` can be `"left"` to put the script on the other side; `armInk` gives the punching arms an inked texture |
 
 ## Submissions
 

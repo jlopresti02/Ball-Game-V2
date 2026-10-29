@@ -862,8 +862,8 @@ function drawArtBody(c, r, look, ink, name, contained) {
   }
   if (tat.eyes) {
     // A pair of staring eyes just below the left pec (screen right), linework only
-    var ey0 = contained ? -r * 0.04 : -r * 0.12, eyq = contained ? 0.86 / 0.59 : 1;
-    c.save(); c.translate(r * 0.4, ey0); c.scale(1, eyq);
+    var ey0 = contained ? r * 0.31 : r * 0.14, eyq = contained ? 0.86 / 0.59 : 1;
+    c.save(); c.translate(r * 0.6, ey0); c.scale(0.85, eyq * 0.85);
     c.lineWidth = lw(0.022); c.globalAlpha = 0.85;
     [-1, 1].forEach(function (es) {
       var ex = es * r * 0.1;
