@@ -19,7 +19,9 @@ function chargeProgress(b) {
 }
 
 function update(dt) {
+  tickCrowd(dt); // the crowd builds up and dies down (audio.js)
   tickDoBronxFx(dt); // camera flashes keep going through freeze-frames
+  tickChairDebris(dt);
   if (hitStop > 0) {
     // Frozen for a split second after a wall slam; only the camera shake
     // and shockwaves keep moving so the impact still reads.
@@ -38,6 +40,9 @@ function update(dt) {
     b.y = Math.min(H - b.r, Math.max(b.r, b.y));
   });
   impacts = impacts.filter(function (im) { im.life -= dt; return im.life > 0; });
+  updateReferee(dt);
+  tickRefNap(dt);   // the ref nodding off in Gane's fights (cheater.js)
+  tickCheater(dt);
 
   balls.forEach(function (b) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;

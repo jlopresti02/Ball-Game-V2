@@ -157,7 +157,7 @@ function updateAbilities(dt) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
-    if (self.shocked || self.koOut || self.shelled) continue; // frozen by a KO Rush, knocked out, or shelled up under IGBB
+    if (self.shocked || self.koOut || self.shelled || self.dazed) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
@@ -175,6 +175,8 @@ function updateAbilities(dt) {
     // A critical-weave combo or the celebration after it takes over completely.
     if (updateWeave(self, other, dt)) continue;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    // Ciryl Gane cheating while the ref's asleep (cheater.js).
+    if (self.char.hasCheater && updateCheater(self, other, dt, d)) continue;
     // Josh Hokit's armbar shot and thumbs down (hokit.js).
     if ((self.char.hasArmbarShot || self.char.hasThumbsDown) && updateHokit(self, other, dt, d)) continue;
 
@@ -211,7 +213,7 @@ function updateAbilities(dt) {
     if (self.char.hasPunch) {
       self.punchCd = Math.max(0, self.punchCd - dt * self.atkRate);
       var pu = self.char.punch;
-      if (!self.punch && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) {
+      if (!self.punch && !self.kick && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) { // (one limb at a time when it kicks too)
         self.punch = { t: 0, hit: false };
         self.punchCd = pu.cooldown;
       }
@@ -242,7 +244,7 @@ function updateAbilities(dt) {
     if (self.char.hasKick) {
       self.kickCd = Math.max(0, self.kickCd - dt * self.atkRate);
       var ki = self.char.kick;
-      if (!self.kick && self.kickCd === 0 && other.alive && d < self.r + other.r + ki.reach) {
+      if (!self.kick && !self.punch && self.kickCd === 0 && other.alive && d < self.r + other.r + ki.reach) {
         self.kick = { t: 0, hit: false };
         self.kickCd = ki.cooldown;
       }

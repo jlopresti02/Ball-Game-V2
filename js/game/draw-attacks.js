@@ -45,7 +45,7 @@ function drawKick(self, other) {
   var dir = self.id === 0 ? 1 : -1;
   var angle = baseAngle - dir * (Math.PI / 2) + dir * Math.PI * pt;
   var restDist = self.r + 4;
-  var fullDist = Math.max(restDist, Math.min(qd - other.r + 4, ki.reach * 1.15), ki.reach * 0.9);
+  var fullDist = self.r + ki.reach * 0.95; // the whole leg out at full stretch
   var extT = Math.min(1, self.kick.t / (dur * 0.22));
   var legDist = restDist + (fullDist - restDist) * extT;
   var tipX = self.x + Math.cos(angle) * legDist, tipY = self.y + Math.sin(angle) * legDist;
@@ -60,17 +60,38 @@ function drawKick(self, other) {
   ctx.lineWidth = ki.size * 0.62;
   ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(tipX, tipY); ctx.stroke();
 
-  // Foot: a rectangle oriented with the swing, planted at the tip of the leg.
-  var fw = ki.size * 1.9, fh = ki.size * 1.15;
+  // The foot, bent at the ankle off the end of the shin.
   ctx.translate(tipX, tipY);
   ctx.rotate(angle);
-  ctx.fillStyle = armColor(self.char);
-  ctx.strokeStyle = theme.wall;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.rect(-fw * 0.25, -fh / 2, fw, fh);
-  ctx.fill(); ctx.stroke();
+  drawKickFoot(ki.size, armColor(self.char), dir); // toes pointing the way the leg swings
+  // Skin over the join, so the shin runs straight into the ankle.
+  ctx.strokeStyle = armColor(self.char); ctx.lineWidth = ki.size * 0.62; ctx.lineCap = "butt";
+  ctx.beginPath(); ctx.moveTo(-ki.size * 1.1, 0); ctx.lineTo(-ki.size * 0.55, 0); ctx.stroke();
   ctx.restore();
+}
+
+// A bare foot seen from the side, bent at the ankle: the shin comes in
+// along +x to the ankle at the origin, and the foot turns off it with the
+// toes pointing to +y (`side` 1) or -y (-1), the heel sticking out behind.
+function drawKickFoot(size, skin, side) {
+  var u = size, s = side, w = size * 0.31;
+  ctx.fillStyle = skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 3; ctx.lineJoin = "round"; ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-u * 0.7, s * w);
+  ctx.quadraticCurveTo(-u * 0.05, s * w * 1.1, -u * 0.02, s * u * 0.75);       // front of the ankle into the instep
+  ctx.quadraticCurveTo(-u * 0.02, s * u * 1.45, u * 0.08, s * u * 1.85);       // top of the foot down to the toes
+  ctx.quadraticCurveTo(u * 0.2, s * u * 2.12, u * 0.46, s * u * 1.92);         // round the end of the big toe
+  ctx.quadraticCurveTo(u * 0.56, s * u * 1.5, u * 0.5, s * u * 1.05);          // ball of the foot
+  ctx.quadraticCurveTo(u * 0.46, s * u * 0.55, u * 0.56, s * u * 0.05);        // the sole's arch
+  ctx.bezierCurveTo(u * 0.66, -s * u * 0.45, u * 0.2, -s * u * 0.62, -u * 0.08, -s * u * 0.42); // round the heel
+  ctx.quadraticCurveTo(-u * 0.35, -s * w * 1.05, -u * 0.7, -s * w);             // up the back into the Achilles
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // Ankle bone and the creases of the toes.
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(-u * 0.12, -s * u * 0.02, u * 0.13, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(u * 0.16, s * u * 1.62); ctx.quadraticCurveTo(u * 0.3, s * u * 1.68, u * 0.4, s * u * 1.6);
+  ctx.stroke();
 }
 
 // Every fighter keeps a pair of hands up in front of it, facing whichever
@@ -88,6 +109,8 @@ function drawHands(b, other) {
   if (b.taunt && b.taunt.t < 0) return; // the punch is still finishing
   if (b.igbb && b.igbb.move === "dobronx") return; // posing (drawDoBronx)
   if (b.mock) return; // giving a thumbs down (drawMock)
+  if (cheaterHandsBusy(b)) return; // cheating (drawCheater)
+  if (b.igbb && b.igbb.move === "chairshot") return; // both hands on the chair (drawChairShot)
   if (b.koRush && b.koRush.phase === "celebrate") return; // hands up (drawn by drawKoCelebrate)
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.
