@@ -821,12 +821,32 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
     c.strokeStyle = inkCol;
   }
+  if (tat.eyes) {
+    // A pair of staring eyes under the left pec (screen right), linework only
+    var ey0 = contained ? -r * 0.22 : -r * 0.3, eyq = contained ? 0.86 / 0.59 : 1;
+    c.save(); c.translate(r * 0.4, ey0); c.scale(1, eyq);
+    c.lineWidth = lw(0.022); c.globalAlpha = 0.85;
+    [-1, 1].forEach(function (es) {
+      var ex = es * r * 0.1;
+      c.beginPath();
+      c.moveTo(ex - r * 0.075, 0);
+      c.quadraticCurveTo(ex, -r * 0.055, ex + r * 0.075, 0);
+      c.quadraticCurveTo(ex, r * 0.045, ex - r * 0.075, 0);
+      c.stroke();
+      c.beginPath(); c.arc(ex, -r * 0.002, r * 0.022, 0, Math.PI * 2); c.fill();
+      // Brow sweeping up and out
+      c.beginPath(); c.moveTo(ex - es * r * 0.06, -r * 0.065); c.quadraticCurveTo(ex + es * r * 0.02, -r * 0.09, ex + es * r * 0.085, -r * 0.06); c.stroke();
+    });
+    c.globalAlpha = 1;
+    c.restore();
+  }
   if (tat.ribs) {
-    // Script running down the right ribs
+    // Script running down the ribs: the right side, or the left with "left"
+    var rbs = tat.ribs === "left" ? -1 : 1;
     c.lineWidth = lw(0.025);
     c.beginPath();
     for (var w = 0; w < 14; w++) {
-      var wy = -r * 0.2 + w * r * 0.035, wx = r * 0.58 + Math.sin(w * 1.9) * r * 0.035;
+      var wy = -r * 0.2 + w * r * 0.035, wx = rbs * (r * 0.58 + Math.sin(w * 1.9) * r * 0.035);
       if (w === 0) c.moveTo(wx, wy); else c.lineTo(wx, wy);
     }
     c.stroke();
@@ -948,6 +968,18 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.beginPath(); c.moveTo(-r * (0.86 - k * 0.12), sTop + band); c.lineTo(-r * (0.5 - k * 0.12), r); c.stroke();
     });
   }
+  if (look.shortsStyle === "usa") {
+    // Stars-and-stripes panel down the outside of the right leg (screen left)
+    c.save();
+    c.beginPath(); c.moveTo(-r, sTop + band); c.lineTo(-r * 0.62, sTop + band); c.lineTo(-r * 0.12, r); c.lineTo(-r, r); c.closePath(); c.clip();
+    for (var us = 0; us < 14; us++) {
+      c.fillStyle = us % 2 ? "#f4f4f2" : "#c8202c";
+      c.beginPath();
+      var uy0 = sTop + band + r * 0.02 + us * r * 0.055;
+      c.moveTo(-r, uy0); c.lineTo(-r * 0.2, uy0 - r * 0.22); c.lineTo(-r * 0.2, uy0 - r * 0.165); c.lineTo(-r, uy0 + r * 0.055); c.closePath(); c.fill();
+    }
+    c.restore();
+  }
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {
@@ -960,6 +992,17 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.fillStyle = look.shortsStyle === "split" ? shadeHex(look.shorts, -0.35) : look.shortsStyle === "print" ? "#111111" : look.trim;
   c.fillRect(-r, sTop, r * 2, band);
   c.fillStyle = "rgba(0,0,0,0.18)"; c.fillRect(-r, sTop + band * 0.75, r * 2, band * 0.25);
+  if (look.shortsStyle === "usa") {
+    // White star on the waistband over the left hip
+    var stx = r * 0.5, sty = sTop + band * 0.5, sto = band * 0.42;
+    c.fillStyle = "#f4f4f2";
+    c.beginPath();
+    for (var sti = 0; sti < 10; sti++) {
+      var sta = -Math.PI / 2 + sti * Math.PI / 5, strr = sti % 2 ? sto * 0.42 : sto;
+      if (sti === 0) c.moveTo(stx + Math.cos(sta) * strr, sty + Math.sin(sta) * strr); else c.lineTo(stx + Math.cos(sta) * strr, sty + Math.sin(sta) * strr);
+    }
+    c.closePath(); c.fill();
+  }
   if (look.shortsStyle === "print") {
     // Logo patch on the front of the waistband
     c.fillStyle = "#111111"; c.fillRect(r * 0.08, sTop, r * 0.4, band + r * 0.12);
