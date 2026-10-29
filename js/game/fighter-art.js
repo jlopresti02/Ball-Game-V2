@@ -273,8 +273,8 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   c.fillStyle = hc;
   if (look.hair === "crop") {
     // Short sides faded to a see-through shadow, with a longer top swept
-    // cleanly back and across from a part on the right, over a high, nearly
-    // straight hairline (drawn mirrored)
+    // cleanly back and across from a part on the right, over an arched,
+    // receding hairline (drawn mirrored)
     c.save(); c.beginPath(); c.rect(-r, -r, r * 0.3, r); c.rect(r * 0.7, -r, r * 0.3, r); c.clip();
     c.globalAlpha = 0.4; hairline(); c.fill(); c.globalAlpha = 1;
     c.restore();
@@ -283,23 +283,24 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     crg.addColorStop(0, shadeHex(hc, -0.2)); crg.addColorStop(1, shadeHex(hc, 0.08));
     c.fillStyle = crg;
     // Fringe locks: [x, y] along the front edge, from the part (high) to the low side
-    // A high, nearly straight hairline, sloping gently down from the part
+    // An arched hairline: forward in the middle, receding up and back at
+    // both temples
     c.beginPath();
-    c.moveTo(-r * 0.56, -r);
-    c.quadraticCurveTo(-r * 0.6, -r * 0.84, -r * 0.52, -r * 0.76);
-    c.quadraticCurveTo(r * 0.1, -r * 0.73, r * 0.78, -r * 0.65);
-    c.quadraticCurveTo(r * 0.88, -r * 0.65, r * 0.9, -r * 0.78);
-    c.lineTo(r * 0.9, -r); c.closePath(); c.fill();
+    c.moveTo(-r * 0.8, -r);
+    c.quadraticCurveTo(-r * 0.8, -r * 0.8, -r * 0.66, -r * 0.8);
+    c.bezierCurveTo(-r * 0.46, -r * 0.6, r * 0.46, -r * 0.6, r * 0.66, -r * 0.8);
+    c.quadraticCurveTo(r * 0.8, -r * 0.8, r * 0.8, -r);
+    c.closePath(); c.fill();
     c.strokeStyle = shadeHex(hc, -0.45); c.lineWidth = lw(0.018); c.stroke();
     // Part line
     c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.014); c.globalAlpha = 0.7;
-    c.beginPath(); c.moveTo(-r * 0.52, -r * 0.76); c.quadraticCurveTo(-r * 0.56, -r * 0.9, -r * 0.53, -r); c.stroke();
+    c.beginPath(); c.moveTo(-r * 0.42, -r * 0.78); c.quadraticCurveTo(-r * 0.46, -r * 0.9, -r * 0.44, -r); c.stroke();
     // A few long, soft highlights following the sweep
     c.lineCap = "round"; c.strokeStyle = shadeHex(hc, 0.3); c.lineWidth = lw(0.016); c.globalAlpha = 0.55;
     for (var ls = 0; ls < 5; ls++) {
-      var sy0 = -r * (0.97 - ls * 0.04), ey1 = -r * (0.88 - ls * 0.04);
-      c.beginPath(); c.moveTo(-r * 0.44, sy0);
-      c.quadraticCurveTo(r * 0.05, sy0 + r * 0.01, r * (0.35 + ls * 0.08), ey1); c.stroke();
+      var sy0 = -r * (0.95 - ls * 0.05), ey1 = -r * (0.86 - ls * 0.04);
+      c.beginPath(); c.moveTo(-r * 0.38, sy0);
+      c.quadraticCurveTo(r * 0.05, sy0 + r * 0.01, r * (0.3 + ls * 0.05), ey1); c.stroke();
     }
     c.globalAlpha = 1;
     c.restore();
