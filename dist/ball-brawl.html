@@ -9841,6 +9841,7 @@ var HERB_JOINED = 2.4;     // how long Herb gets to hit them before the finish
 var HERB_SHOW = 3.2;       // seconds the jumbotron shows the announcement
 var HERB_RUN = 300;        // running in (and back out) through the crowd
 var HERB_CLIMB = 0.75;     // climbing over the fence, in or out
+var HERB_OUTRO_MAX = 6;    // Gane celebrating while Herb finds his way out (cap)
 var CANE_WIND = 0.34;      // the cane raised high over his head
 var CANE_STRIKE = 0.07;    // bringing it down
 var CANE_RECOVER = 0.16;
@@ -9912,13 +9913,31 @@ function updateHerbDean(self, other, dt) {
         if (dealt > 0) floater(other.x, other.y - other.r - 30, "HOME RUN", "crit");
         playSlam();
         if (!reduceMotion) hitStop = Math.max(hitStop, 0.08);
-        endHerbDean(self, other, true);
         checkEnd();
-        return false;
+        if (!other.alive || over) { endHerbDean(self, other, true); return false; }
+        // Knocked back in a daze, seeing stars, while Gane celebrates and
+        // Herb feels his way back out of the cage.
+        other.dazed = true; other.vx = 0; other.vy = 0;
+        m.phase = "outro"; m.t = 0; m.kx = m.nx * 420; m.ky = m.ny * 420;
+        herbLeaves();
+        return true;
       }
       checkEnd();
     }
     if (!other.alive) { endHerbDean(self, other, true); return false; }
+    return true;
+  }
+  if (m.phase === "outro") {
+    // The knockback slides them away and dies off; they just sit there.
+    other.vx = 0; other.vy = 0;
+    var dk = Math.exp(-6 * dt);
+    other.x += m.kx * dt; other.y += m.ky * dt; m.kx *= dk; m.ky *= dk;
+    other.x = Math.max(other.r, Math.min(W - other.r, other.x));
+    other.y = Math.max(other.r, Math.min(H - other.r, other.y));
+    herbShoveOut(other);
+    if (!other.alive || over) { endHerbDean(self, other, true); return false; }
+    var gone = !herb || herb.phase === "exit";
+    if ((gone && m.t > 0.6) || m.t >= HERB_OUTRO_MAX) { endHerbDean(self, other, true, true); return false; }
     return true;
   }
   return true;
@@ -9980,6 +9999,7 @@ function updateHerb(dt) {
     var mx = tx - h.x, my = ty - h.y, md = Math.sqrt(mx * mx + my * my) || 1;
     h.x += mx / md * HERB_WALK * dt + Math.sin(h.t * 3.1) * 18 * dt;
     h.y += my / md * HERB_WALK * dt + Math.cos(h.t * 2.3) * 18 * dt;
+    herbSteerClear(h, owner, mx, my); // walks round Gane, never through him
     herbClampIn(h);
     h.flip = mx < 0 ? -1 : 1;
     h.swing = Math.sin(h.t * 5) * 0.45;
@@ -10024,6 +10044,7 @@ function updateHerb(dt) {
     var ox = Math.max(70, Math.min(W - 70, h.x)) - h.x, oy = herbInY() - h.y, od = Math.sqrt(ox * ox + oy * oy) || 1;
     var step = Math.min(od, HERB_WALK * 1.8 * dt);
     h.x += ox / od * step; h.y += oy / od * step;
+    herbSteerClear(h, owner, ox, oy); herbSteerClear(h, vic, ox, oy);
     herbClampIn(h);
     h.flip = ox < 0 ? -1 : 1;
     h.swing = Math.sin(h.t * 10) * 0.6;
@@ -10038,6 +10059,27 @@ function updateHerb(dt) {
   }
 }
 
+// Keeps Herb from walking through a fighter: pushes him back out to their
+// edge and slides him round them the way he was heading.
+function herbSteerClear(h, b, dx, dy) {
+  if (!b || !b.alive) return;
+  var px = h.x - b.x, py = h.y - b.y, pd = Math.sqrt(px * px + py * py) || 1, min = b.r + HERB_R + 4;
+  if (pd >= min) return;
+  var nx = px / pd, ny = py / pd;
+  h.x = b.x + nx * min; h.y = b.y + ny * min;
+  var side = (-ny * dx + nx * dy) >= 0 ? 1 : -1; // around whichever way is closer to where he's going
+  if (Math.abs(-ny * dx + nx * dy) < 1e-3) side = 1;
+  h.x += -ny * side * 3; h.y += nx * side * 3;
+}
+
+// And a fighter sliding into him gets stopped at his edge.
+function herbShoveOut(b) {
+  var h = herb;
+  if (!h || h.y > H) return;
+  var px = b.x - h.x, py = b.y - h.y, pd = Math.sqrt(px * px + py * py) || 1, min = b.r + HERB_R + 2;
+  if (pd < min) { b.x = h.x + px / pd * min; b.y = h.y + py / pd * min; }
+}
+
 function herbLeaves() {
   if (!herb || herb.phase === "leave" || herb.phase === "climbOut" || herb.phase === "exit") return;
   if (herb.phase === "run") { herb.phase = "exit"; herb.t = 0; return; } // never got in
@@ -10045,9 +10087,9 @@ function herbLeaves() {
   herb.phase = "leave";
 }
 
-function endHerbDean(self, other, landed) {
-  if (other.dazed === "held") other.dazed = false;
-  if (landed && other.alive) {
+function endHerbDean(self, other, landed, afterOutro) {
+  if (other.dazed === "held" || (afterOutro && other.dazed === true)) other.dazed = false;
+  if (landed && other.alive && !afterOutro) {
     var m = self.igbb, nx = m.nx || 1, ny = m.ny || 0;
     other.vx = nx * 420; other.vy = ny * 420;
   }
@@ -10068,6 +10110,7 @@ function drawHerbDeanSpecial(b) {
   var other = balls[1 - b.id], ch = b.char, sp = ch.special;
   var nx = other.x - b.x, ny = other.y - b.y, nd = Math.sqrt(nx * nx + ny * ny) || 1;
   var base = Math.atan2(ny, nx), ang;
+  if (m.phase === "outro") { drawGaneCelebrating(b, m.t); return; }
   if (m.phase === "beat") {
     var k = Math.min(1, m.swingT / sp.batGap);
     // Cocks it back, then whips down at the end of each beat.
@@ -10084,6 +10127,20 @@ function drawHerbDeanSpecial(b) {
   drawBat(hx, hy, ang, b.r * 1.6); // cheater.js
   strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); });
   drawGloveAt(hx, hy, b.r * 0.22, ch);
+}
+
+// Arms up, pumping, with the bat held high in one glove.
+function drawGaneCelebrating(b, t) {
+  var ch = b.char, arm = (ch.punch.size || 13) * 0.75, other = balls[1 - b.id];
+  var batSide = other.x > b.x ? -1 : 1; // held up on the side away from them
+  [-1, 1].forEach(function (k, i) {
+    var pump = Math.max(0, Math.sin(t * 11 + i * Math.PI)) * b.r * 0.35;
+    var shx = b.x + k * b.r * 0.62, shy = b.y - b.r * 0.5;
+    var hx = b.x + k * b.r * 0.9, hy = b.y - b.r * 1.15 - pump;
+    if (k === batSide) drawBat(hx, hy, -Math.PI / 2 + k * (0.7 + Math.sin(t * 11) * 0.2), b.r * 1.5); // cheater.js
+    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); });
+    drawGloveAt(hx, hy, b.r * 0.22, ch);
+  });
 }
 
 function drawHerb() {
