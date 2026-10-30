@@ -679,6 +679,17 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.globalAlpha = 0.4; c.strokeStyle = line; c.lineWidth = lw(0.04);
     c.beginPath(); c.moveTo(0, -r * 0.05); c.lineTo(0, r * 0.32); c.stroke();
     c.beginPath(); c.arc(0, r * 0.1, r * 0.42, 0.35, Math.PI - 0.35); c.stroke();
+  } else if (look.core === "solid") {
+    // Solid, thick core with no six pack: one broad smooth panel, a faint
+    // centre line and the obliques framing it
+    c.globalAlpha = 0.28; c.fillStyle = hi;
+    c.beginPath(); c.ellipse(0, r * 0.16, r * 0.3, r * 0.22, 0, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 0.3; c.strokeStyle = line; c.lineWidth = lw(0.035);
+    c.beginPath(); c.moveTo(0, -r * 0.06); c.lineTo(0, r * 0.3); c.stroke();
+    c.globalAlpha = 0.55; c.lineWidth = lw(0.045);
+    [-1, 1].forEach(function (s) {
+      c.beginPath(); c.moveTo(s * r * 0.4, -r * 0.08); c.quadraticCurveTo(s * r * 0.5, r * 0.16, s * r * 0.36, r * 0.4); c.stroke();
+    });
   } else {
     // Six pack
     var top = -r * 0.06, bot = r * 0.4, half = r * 0.2;
