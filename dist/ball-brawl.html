@@ -9958,7 +9958,8 @@ function drawCheater(b) {
 // Holding the bat between swings. The fighters are drawn front on, so the
 // poses are too: shoulders at the top corners of the ball, the bat in the
 // hand away from the opponent, each arm bent at the elbow. On the move it
-// rides on his shoulder, bouncing with his stride, free glove up by his chin.
+// rides on his shoulder, bouncing with his stride, free glove at his chest.
+// Hands stay low by his body, below his face.
 // Stood still he loops through a batter's stance with the bat waggling, three
 // smacks of the bat into his free palm, and a twirl of it out to the side.
 var BAT_IDLE_LOOP = 4.6;
@@ -9970,21 +9971,21 @@ function drawBatIdle(b) {
   function A(a) { return s > 0 ? a : Math.PI - a; } // mirrors an angle drawn for s = 1
   var t = performance.now() / 1000 + b.id * 1.7;
   var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-  var bSh = Q(0.6, -0.45), fSh = Q(-0.6, -0.45);
+  var bSh = Q(0.66, -0.3), fSh = Q(-0.66, -0.3);
   var bH, fH, batA, knob = bH;
   if (sp > 60) {
     // Resting on his shoulder, barrel up behind his head, bouncing.
     var st = t * 10, bob = Math.abs(Math.sin(st)) * 0.08;
-    bH = Q(0.78, -0.78 - bob);
+    bH = Q(0.72, -0.42 - bob);
     batA = A(-Math.PI / 2 - 0.55 + Math.sin(st) * 0.1);
-    fH = Q(-0.42, -0.62 + Math.sin(st + Math.PI) * 0.06);
+    fH = Q(-0.38, 0.0 + Math.sin(st + Math.PI) * 0.06);
     knob = bH;
   } else {
     var c = t % BAT_IDLE_LOOP;
     if (c < 1.8) {
       // Batter's stance: hands stacked on the handle by his shoulder, the
       // barrel up and leaning back, waggling.
-      fH = Q(0.62, -0.62);
+      fH = Q(0.5, -0.05);
       batA = A(-Math.PI / 2 + 0.45 + Math.sin(t * 6) * 0.25);
       bH = { x: fH.x + Math.cos(batA) * len * 0.2, y: fH.y + Math.sin(batA) * len * 0.2 };
       knob = fH;
@@ -9992,18 +9993,18 @@ function drawBatIdle(b) {
       // Three smacks into his open palm in front of his belly.
       var k = (c - 1.8) / 2.1 * 3, f = k % 1;
       var tap = f < 0.55 ? Math.pow(f / 0.55, 2) : 1 - (f - 0.55) / 0.45;
-      bH = Q(0.72, -0.25);
-      var down = Math.atan2(0.3, -1.05) - Math.PI * 2; // to the palm (s = 1), up and over the top
+      bH = Q(0.62, 0.0);
+      var down = Math.atan2(0.2, -1.0) - Math.PI * 2; // to the palm (s = 1), up and over the top
       batA = A(-Math.PI / 2 + 0.25 + (down + Math.PI / 2 - 0.25) * tap);
       var hit = f > 0.5 && f < 0.72 ? 0.06 : 0;
-      fH = Q(-0.42 - hit, 0.08 + hit);
+      fH = Q(-0.38 - hit, 0.2 + hit);
       knob = bH;
     } else {
       // Spins it once round in his hand, out to the side.
       var tw = (c - 3.9) / (BAT_IDLE_LOOP - 3.9); tw = tw * tw * (3 - 2 * tw);
-      bH = Q(1.05, -0.3);
+      bH = Q(0.95, 0.05);
       batA = A(-Math.PI / 2 + 0.3) + s * tw * Math.PI * 2;
-      fH = Q(-0.42, -0.62);
+      fH = Q(-0.38, 0.0);
       knob = bH;
     }
   }
@@ -10017,20 +10018,20 @@ function drawBatIdle(b) {
 // An arm from shoulder to hand, the elbow dropping down and out to its own
 // side of the body (side 1 = screen right, -1 = screen left).
 function drawBentArm(b, sh, hand, side) {
-  var ch = b.char, arm = (ch.punch.size || 13) * 0.75, seg = b.r * 0.6;
+  var ch = b.char, arm = (ch.punch.size || 13) * 0.75, seg = b.r * 0.5;
   var dx = hand.x - sh.x, dy = hand.y - sh.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   var reach = Math.min(d, seg * 2 - 0.5), bend = Math.sqrt(Math.max(0, seg * seg - reach * reach / 4));
   var mx = sh.x + dx / d * reach / 2, my = sh.y + dy / d * reach / 2;
   var nx = -dy / d, ny = dx / d;
-  if (nx * side * 0.6 + ny < 0) { nx = -nx; ny = -ny; }
+  if (nx * side * 0.25 + ny < 0) { nx = -nx; ny = -ny; } // elbows tucked down at his sides
   var ex = mx + nx * bend, ey = my + ny * bend;
   strokeLimb(arm, armColor(ch), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(ex, ey); ctx.lineTo(hand.x, hand.y); });
 }
 
-// His free glove up by his chin while he swings.
+// His free glove in close at his chest while he swings.
 function drawBatGuardHand(b) {
   var s = batSide(b), r = b.r;
-  var sh = { x: b.x - s * 0.6 * r, y: b.y - 0.45 * r }, g = { x: b.x - s * 0.42 * r, y: b.y - 0.62 * r };
+  var sh = { x: b.x - s * 0.66 * r, y: b.y - 0.3 * r }, g = { x: b.x - s * 0.38 * r, y: b.y };
   drawBentArm(b, sh, g, -s);
   drawGloveAt(g.x, g.y, r * 0.22, b.char);
 }
