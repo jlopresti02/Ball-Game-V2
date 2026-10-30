@@ -98,6 +98,7 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `cane` | `true` gives a white cane with a red tip at the right side (contained layout); pass `opts.caneSwing` (radians) to sweep it |
 | `beard` | `none`, `stubble`, `short`, `boxed` (short beard: thin sideburns, low cheek line, thin moustache, bare gap at the mouth, fuller chin), `chinstrap`, `full` |
 | `beardColor` | optional hex colour for the beard (defaults to `hairColor`) |
+| `beardChin` | optional extra length at the chin for a `boxed` beard, as a fraction of the radius (e.g. `0.12`) |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
 | `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs), `slash` (jagged streaks in the trim colour), `usa` (stars-and-stripes panel on one leg, white star on the waistband) |

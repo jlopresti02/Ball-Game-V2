@@ -451,7 +451,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   // Boxed beard: short and dense, sideburns running up into the hair, a low
   // cheek line, a moustache across the top lip and stubble grain throughout
   if (look.beard === "boxed") {
-    var bc = look.beardColor || hc;
+    var bc = look.beardColor || hc, bch = r * (look.beardChin || 0);  // extra length at the chin
     var boxed = function () {
       // Thin sideburns from the ears down the side of the head, a low cheek
       // line running diagonally in to a thin moustache, and a fuller chin
@@ -464,8 +464,8 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.quadraticCurveTo(r * 0.36, -r * 0.39, r * 0.5, -r * 0.42);
       c.quadraticCurveTo(r * 0.74, -r * 0.46, r * 0.8, -r * 0.6);
       c.lineTo(r * 0.9, -r * 0.6);
-      c.quadraticCurveTo(r * 0.86, -r * 0.3, r * 0.36, jaw + r * 0.04);
-      c.quadraticCurveTo(0, jaw + r * 0.17, -r * 0.36, jaw + r * 0.04);
+      c.quadraticCurveTo(r * 0.86, -r * 0.3, r * 0.36, jaw + r * 0.04 + bch * 0.4);
+      c.quadraticCurveTo(0, jaw + r * 0.17 + bch, -r * 0.36, jaw + r * 0.04 + bch * 0.4);
       c.quadraticCurveTo(-r * 0.86, -r * 0.3, -r * 0.9, -r * 0.6);
       c.closePath();
       // Bare skin where the mouth would be, between moustache and chin
@@ -478,12 +478,12 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.save(); boxed(); c.clip("evenodd");
     // Fuller, darker chin under the lip
     c.globalAlpha = 0.35; c.fillStyle = shadeHex(bc, -0.25);
-    c.beginPath(); c.ellipse(0, jaw - r * 0.01, r * 0.26, r * 0.08, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(0, jaw - r * 0.01 + bch * 0.5, r * 0.26, r * 0.08 + bch * 0.5, 0, 0, Math.PI * 2); c.fill();
     var br2 = artRand(17);
     c.fillStyle = shadeHex(bc, -0.35); c.globalAlpha = 0.5;
-    for (var bg = 0; bg < 160; bg++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * r * 0.42, r * 0.016, r * 0.016);
+    for (var bg = 0; bg < 160; bg++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * (r * 0.42 + bch), r * 0.016, r * 0.016);
     c.fillStyle = shadeHex(bc, 0.35); c.globalAlpha = 0.45;
-    for (var bh = 0; bh < 70; bh++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * r * 0.38, r * 0.014, r * 0.014);
+    for (var bh = 0; bh < 70; bh++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * (r * 0.38 + bch), r * 0.014, r * 0.014);
     c.restore();
     c.globalAlpha = 1;
     drawEars();  // over the sideburns
