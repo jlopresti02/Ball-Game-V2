@@ -880,6 +880,41 @@ function playBatHit(big) {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// The critical weave combo (weave.js): an anime flurry. Each quick punch is
+// a sharp slap riding a short whoosh; the last, launching one comes in on a
+// bigger whoosh and lands with a deep boom and a short echo. Joe picked this
+// one (option B).
+var CRIT_GAIN = 0.68;
+function playCritPunch(last) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, lead = last ? 0.06 : 0.03, hit = now + lead;
+    var v = 0.95 + Math.random() * 0.1, k = CRIT_GAIN;
+    var w = ctx.createBufferSource();
+    w.buffer = caneNoise(ctx);
+    var f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = 2;
+    f.frequency.setValueAtTime(700, now);
+    f.frequency.exponentialRampToValueAtTime(last ? 2000 : 4500, hit);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime((last ? 0.4 : 0.28) * k, hit - 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.012);
+    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.start(now); w.stop(hit + 0.03);
+    if (!last) {
+      caneBurst(ctx, hit, 3800 * v, 1.0, 0.7 * k, 0.03);
+      caneBurst(ctx, hit, 1200 * v, 1.0, 0.35 * k, 0.04);
+    } else {
+      caneBurst(ctx, hit, 1600, 0.7, 1.0 * k, 0.12);
+      caneTone(ctx, hit, "sine", 90, 34, 1.0 * k, 0.6); // the boom
+      [0.11, 0.22, 0.33].forEach(function (d, i) { caneBurst(ctx, hit + d, 1400, 0.8, 0.28 / (i + 1) * k, 0.1); }); // echo
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // Gane's Herb Dean special: Joe's clip as the special starts, as a priority
 // line, so no other talking clip cuts it off or plays over it. The looping
 // crowd sits down under it, then swells back up as the clip fades out
