@@ -2640,6 +2640,7 @@ var SAVED_ROSTER = [
         "cooldown": 0.25,
         "windup": 0.32,
         "swing": 0.2,
+        "follow": 0.2,
         "reach": 55,
         "knockback": 260
       }
@@ -9741,9 +9742,9 @@ function updateCheaterAct(self, other, dt) {
     return;
   }
   if (a.kind === "bat") {
-    // Cocks it back first (the tell), then swings.
-    var swing = cfg.bat.swing, wind = cfg.bat.windup || 0;
-    if (!a.hit && a.t >= wind + swing * 0.45) {
+    // Cocks it back first (the tell), swings, and holds the follow-through.
+    var swing = cfg.bat.swing, wind = cfg.bat.windup || 0, follow = cfg.bat.follow || 0;
+    if (!a.hit && a.t >= wind + swing * 0.55) {
       a.hit = true;
       var dist = Math.sqrt((other.x - self.x) * (other.x - self.x) + (other.y - self.y) * (other.y - self.y));
       if (other.alive && dist < self.r + other.r + cfg.bat.reach + 6) {
@@ -9752,8 +9753,15 @@ function updateCheaterAct(self, other, dt) {
           other.vx += a.nx * cfg.bat.knockback; other.vy += a.ny * cfg.bat.knockback;
           playBatHit(false); crowdReact(0.5);
           impacts.push({ x: other.x - a.nx * other.r, y: other.y - a.ny * other.r, nx: a.nx, ny: a.ny, life: 0.35, max: 0.35, color: "#c98a4b" });
-          if (!reduceMotion) shake = Math.max(shake, 12);
-          if (dealt > 0) floater(other.x, other.y - other.r - 30, "BAT", "crit");
+          // Lands like a home run: freeze, big shake, splinters, and them
+          // crushed flat by it.
+          if (!reduceMotion) { shake = Math.max(shake, 20); hitStop = Math.max(hitStop, 0.08); }
+          other.squash = { t: 0.2, max: 0.2, nx: a.nx, ny: a.ny }; other.flash = 0.16;
+          for (var sp = 0; sp < 10 && !reduceMotion; sp++) {
+            var pa = Math.atan2(a.ny, a.nx) + (Math.random() - 0.5) * 1.8, pv = 200 + Math.random() * 260;
+            particles.push({ x: other.x - a.nx * other.r * 0.6, y: other.y - a.ny * other.r * 0.6, vx: Math.cos(pa) * pv, vy: Math.sin(pa) * pv, life: 0.4, max: 0.4, size: 3 + Math.random() * 3, color: sp % 3 ? "#c98a4b" : "#ffffff" });
+          }
+          if (dealt > 0) floater(other.x, other.y - other.r - 30, "CRACK!", "crit");
           // The first bat shot of the match (and only that one): the
           // commentators lose it. If someone else is talking and the line
           // gets skipped, it waits for the next bat shot that lands.
@@ -9762,7 +9770,7 @@ function updateCheaterAct(self, other, dt) {
         checkEnd();
       }
     }
-    if (a.t >= wind + swing) self.chAct = null;
+    if (a.t >= wind + swing + follow) self.chAct = null;
   }
 }
 
@@ -9945,7 +9953,7 @@ function drawCheater(b) {
     // The bat: held and played with between swings, or swung two-handed
     // across at them (one set of poses, so it flows between the two).
     var bc = ch.cheater.bat, bw = bc.windup || 0;
-    if (a && a.kind === "bat") drawBatIdle(b, a.t < bw ? -(a.t / bw) : Math.min(1, (a.t - bw) / bc.swing));
+    if (a && a.kind === "bat") drawBatIdle(b, a.t < bw ? -(a.t / bw) : (a.t - bw) / bc.swing); // past 1: the follow-through
     else drawBatIdle(b, null);
   }
 }
@@ -9984,20 +9992,33 @@ function drawBatIdle(b, swing) {
     fH = { x: bH.x + Math.cos(batA) * len * 0.18, y: bH.y + Math.sin(batA) * len * 0.18 };
     bEl = Q(0.85 + 0.1 * w, 0.2 - 0.48 * w); fEl = Q(-0.05 + 0.25 * w, 0.02 - 0.1 * w); // elbows out and back
   } else if (swing != null) {
-    // Lets it go: two hands, from cocked behind him, up and over and across
-    // his chest at them, and through.
+    // Lets it go: a flat, full-body sweep. The bat comes round low across
+    // the front of him, arms fully out at them at contact, and wraps up
+    // over his other shoulder in the follow-through.
     key = "swing";
-    var sk = swing * swing * (3 - 2 * swing);
-    var hs = Q(0.82, -0.5), he = Q(-0.55, 0.05);
-    bH = { x: hs.x + (he.x - hs.x) * sk, y: hs.y + (he.y - hs.y) * sk };
-    batA = A(COCK_A - (COCK_A + Math.PI / 2 + 1.17) * sk);
+    var sw = Math.min(1, swing), e = Math.sin(sw * Math.PI / 2); // fastest at the start, like a whip
+    var endA = Math.PI + 0.75;
+    batA = A(COCK_A + (endA - COCK_A) * e);
+    // Hands: shoulder, out to full reach at them (contact), up to the other shoulder.
+    var k1 = Math.min(1, e / 0.8), k2 = Math.max(0, (e - 0.8) / 0.2);
+    var hs = Q(0.82, -0.5), hm = Q(-0.85, 0.08), hf = Q(-0.62, -0.42);
+    bH = { x: hs.x + (hm.x - hs.x) * k1 + (hf.x - hm.x) * k2, y: hs.y + (hm.y - hs.y) * k1 + (hf.y - hm.y) * k2 };
+    len *= 1 + 0.12 * Math.sin(sw * Math.PI); // stretched out by the speed
     fH = { x: bH.x + Math.cos(batA) * len * 0.18, y: bH.y + Math.sin(batA) * len * 0.18 };
-    if (swing > 0.1 && swing < 0.85 && !reduceMotion) {
-      ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineCap = "round";
-      for (var i = 1; i <= 3; i++) {
-        var ga = batA + s * i * 0.22;
-        ctx.lineWidth = 5 - i;
-        ctx.beginPath(); ctx.moveTo(bH.x + Math.cos(ga) * len * 0.45, bH.y + Math.sin(ga) * len * 0.45); ctx.lineTo(bH.x + Math.cos(ga) * len, bH.y + Math.sin(ga) * len); ctx.stroke();
+    if (swing > 1) { bEl = Q(-0.2, 0.05); fEl = Q(-0.05, -0.05); } // wrapped round, holding it
+    if (sw > 0.05 && swing < 1.15 && !reduceMotion) {
+      // A filled blur behind the barrel, fading back along the arc.
+      var fade = swing > 1 ? Math.max(0, 1 - (swing - 1) / 0.15) : 1;
+      ctx.save();
+      for (var i = 0; i < 7; i++) {
+        var a0 = A(COCK_A + (endA - COCK_A) * Math.max(0, e - i * 0.07)), a1 = A(COCK_A + (endA - COCK_A) * Math.max(0, e - (i + 1) * 0.07));
+        ctx.fillStyle = "rgba(255,255,255," + (0.65 * fade * (1 - i / 7)) + ")";
+        ctx.beginPath();
+        ctx.moveTo(bH.x + Math.cos(a0) * len * 0.4, bH.y + Math.sin(a0) * len * 0.4);
+        ctx.lineTo(bH.x + Math.cos(a0) * len * 1.02, bH.y + Math.sin(a0) * len * 1.02);
+        ctx.lineTo(bH.x + Math.cos(a1) * len * 1.02, bH.y + Math.sin(a1) * len * 1.02);
+        ctx.lineTo(bH.x + Math.cos(a1) * len * 0.4, bH.y + Math.sin(a1) * len * 0.4);
+        ctx.fill();
       }
       ctx.restore();
     }
@@ -10050,6 +10071,18 @@ function drawBatIdle(b, swing) {
   drawBentArm(b, bSh, bH, s, bEl);
   drawGloveAt(fH.x, fH.y, r * 0.22, ch);
   drawGloveAt(bH.x, bH.y, r * 0.22, ch);
+}
+
+// His whole body in the swing: rocks back away from them as he winds up,
+// then lunges in with it and settles back (draw.js adds it to his spot).
+function ganeBatLean(b) {
+  var a = b.chAct;
+  if (!a || a.kind !== "bat" || !b.cheater || !b.char.cheater) return { x: 0, y: 0 };
+  var bc = b.char.cheater.bat, bw = bc.windup || 0, o = balls[1 - b.id];
+  var nx = o.x - b.x, ny = o.y - b.y, nd = Math.sqrt(nx * nx + ny * ny) || 1, k;
+  if (a.t < bw) { k = Math.min(1, a.t / bw / 0.7); k = -0.2 * k * (2 - k); }
+  else { var f = (a.t - bw) / (bc.swing + (bc.follow || 0)); k = -0.2 + 0.5 * Math.sin(Math.min(1, f * 1.6) * Math.PI / 2) - 0.3 * Math.max(0, f - 0.6) / 0.4; }
+  return { x: nx / nd * b.r * k, y: ny / nd * b.r * k };
 }
 
 // Smooths the jump between two poses: when the pose changes (`key`), the gap
@@ -13209,7 +13242,8 @@ function draw() {
   // A shooter caught in a guillotine goes underneath, its head buried
   // under the defender (and the defender, once it's taken down).
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
-  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // A bat swing goes over whoever it's hitting.
+  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -13225,6 +13259,7 @@ function draw() {
     }
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
     var hjo = herbJoltOffset(b); wox += hjo.x; woy += hjo.y; // rocked by a bat or a cane (herbdean.js)
+    var gbl = ganeBatLean(b); wox += gbl.x; woy += gbl.y; // throwing his weight into a bat swing (cheater.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
