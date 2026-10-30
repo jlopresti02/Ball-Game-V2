@@ -405,14 +405,16 @@ function drawBatIdle(b) {
   var bSh = Q(0.66, -0.3), fSh = Q(-0.66, -0.3);
   var bH, fH, batA, bEl = null, fEl = null, key;
   if (sp > 60) {
-    key = "walk";
+    key = "walk"; b.batIdleT0 = null;
     // Resting on his shoulder, barrel up behind his head, bouncing.
     var st = t * 10, bob = Math.abs(Math.sin(st)) * 0.08;
     bH = Q(0.72, -0.42 - bob);
     batA = A(-Math.PI / 2 - 0.55 + Math.sin(st) * 0.1);
     fH = Q(-0.38, 0.0 + Math.sin(st + Math.PI) * 0.06);
   } else {
-    var c = t % BAT_IDLE_LOOP;
+    // The loop starts over from the stance each time he stops walking.
+    if (b.batIdleT0 == null) b.batIdleT0 = t;
+    var c = (t - b.batIdleT0) % BAT_IDLE_LOOP;
     key = c < 1.8 ? "stance" : c < 3.9 ? "tap" : "twirl";
     if (c < 1.8) {
       // Batter's stance: hands stacked on the handle by his shoulder, the
@@ -455,13 +457,15 @@ function drawBatIdle(b) {
 
 // Smooths the jump between two poses: when the pose changes (`key`), the gap
 // from the last drawn pose is carried as an offset that fades out over about
-// a third of a second. The last value is the bat's angle.
-var BAT_BLEND_RATE = 8;
+// a third of a second (closer to a second when he starts or stops walking,
+// and out of the twirl). The last value is the bat's angle.
+var BAT_BLEND_RATE = 8, BAT_BLEND_SLOW = 3.5; // the slow one into and out of walking, and the twirl back to the stance
 function batBlend(b, key, pose) {
   var now = performance.now() / 1000, st = b.batBlend;
   if (!st || now - st.t > 0.25) st = b.batBlend = { key: key, t: now, off: null, last: null };
   var dt = Math.max(0, now - st.t); st.t = now;
   if (st.key !== key && st.last) {
+    st.rate = /walk/.test(st.key + key) || /twirl/.test(st.key) ? BAT_BLEND_SLOW : BAT_BLEND_RATE;
     st.off = pose.map(function (v, i) {
       var d = st.last[i] - v;
       if (i === pose.length - 1) d = Math.atan2(Math.sin(d), Math.cos(d)); // the short way round
@@ -471,7 +475,7 @@ function batBlend(b, key, pose) {
   st.key = key;
   var out = pose;
   if (st.off) {
-    var k = Math.exp(-BAT_BLEND_RATE * dt), big = 0;
+    var k = Math.exp(-(st.rate || BAT_BLEND_RATE) * dt), big = 0;
     st.off = st.off.map(function (d) { d *= k; big = Math.max(big, Math.abs(d)); return d; });
     out = pose.map(function (v, i) { return v + st.off[i]; });
     if (big < 0.01) st.off = null;
