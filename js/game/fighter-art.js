@@ -276,7 +276,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     // quiff over an arched hairline that comes to a point in the middle and
     // recedes at both temples
     c.save(); c.beginPath(); c.rect(-r, -r, r * 0.3, r); c.rect(r * 0.7, -r, r * 0.3, r); c.clip();
-    c.globalAlpha = 0.4; hairline(); c.fill(); c.globalAlpha = 1;
+    c.fillStyle = shadeHex(hc, -0.12); hairline(); c.fill();
     c.restore();
     var crg = c.createLinearGradient(0, -r, 0, -r * 0.6);
     crg.addColorStop(0, shadeHex(hc, -0.2)); crg.addColorStop(1, shadeHex(hc, 0.1));
@@ -453,7 +453,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.quadraticCurveTo(-r * 0.82, -r * 0.3, -r * 0.86, -r * 0.6);
       c.closePath();
     };
-    c.fillStyle = bc; c.globalAlpha = 0.62; boxed(); c.fill();
+    c.fillStyle = bc; boxed(); c.fill();
     c.save(); boxed(); c.clip();
     // Moustache: a denser band across the top lip
     c.globalAlpha = 0.35; c.fillStyle = shadeHex(bc, -0.25);
@@ -465,6 +465,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     for (var bh = 0; bh < 70; bh++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * r * 0.38, r * 0.014, r * 0.014);
     c.restore();
     c.globalAlpha = 1;
+    drawEars();  // over the sideburns
   }
   // Beard: sideburns down around the jaw to a full chin
   if (look.beard !== "none" && look.beard !== "chinstrap" && look.beard !== "boxed") {
