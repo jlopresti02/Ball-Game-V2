@@ -1223,6 +1223,70 @@ function playPunch(damage) {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// BMF jab: a quick swish of air into a tight, bright leather pop, so his
+// rapid 5-damage jabs cut through the crowd and sound as fast as they are.
+// Used for the BMF and every fighter built on its base (bmfJabs).
+var BMF_WHOOSH = 0.045; // the swish leads, the pop lands this much later
+function bmfJabs(ch) { return !!ch && (ch.id === "builtin-bmf" || ch.base === "BMF"); }
+function synthBmfJab(ctx, out, now, noise) {
+  var vary = 0.9 + Math.random() * 0.2;
+  var hit = now + BMF_WHOOSH;
+
+  // Whoosh: noise through a band-pass sweeping up as the fist comes in.
+  var w = ctx.createBufferSource();
+  w.buffer = noise;
+  var wf = ctx.createBiquadFilter();
+  wf.type = "bandpass";
+  wf.Q.value = 2;
+  wf.frequency.setValueAtTime(800, now);
+  wf.frequency.exponentialRampToValueAtTime(4000, hit);
+  var wg = ctx.createGain();
+  wg.gain.setValueAtTime(0.0001, now);
+  wg.gain.exponentialRampToValueAtTime(0.35, hit - 0.005);
+  wg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.01);
+  w.connect(wf); wf.connect(wg); wg.connect(out);
+  w.start(now); w.stop(hit + 0.02);
+
+  // Pop: a short, bright crack of filtered noise for the glove.
+  var s = ctx.createBufferSource();
+  s.buffer = noise;
+  var bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.value = 1.2;
+  bp.frequency.setValueAtTime(2600 * vary, hit);
+  bp.frequency.exponentialRampToValueAtTime(900, hit + 0.04);
+  var sg = ctx.createGain();
+  sg.gain.setValueAtTime(0.0001, hit);
+  sg.gain.exponentialRampToValueAtTime(1.1, hit + 0.001);
+  sg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.05);
+  s.connect(bp); bp.connect(sg); sg.connect(out);
+  s.start(hit); s.stop(hit + 0.07);
+
+  // A small low thud under it so it still lands on something.
+  var o = ctx.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(240 * vary, hit);
+  o.frequency.exponentialRampToValueAtTime(110, hit + 0.05);
+  var og = ctx.createGain();
+  og.gain.setValueAtTime(0.0001, hit);
+  og.gain.exponentialRampToValueAtTime(0.45, hit + 0.003);
+  og.gain.exponentialRampToValueAtTime(0.0001, hit + 0.07);
+  o.connect(og); og.connect(out);
+  o.start(hit); o.stop(hit + 0.09);
+}
+function playBmfJab() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (now - lastPunchSound < 0.05) return;
+    lastPunchSound = now;
+    if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+    synthBmfJab(ctx, ctx.destination, now, punchNoise);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // A heavy crunch for power-punch wall slams: a low body thud that drops in
 // pitch plus a short burst of filtered noise for the crack of the impact.
 var noiseBuffer = null;
@@ -4735,7 +4799,7 @@ function updateAbilities(dt) {
           self.punch.hit = true;
           if (other.alive) {
             var punchDealt = hurt(other, pu.damage, "punch", self.id);
-            if (punchDealt > 0) playPunch(punchDealt);
+            if (punchDealt > 0) { if (bmfJabs(self.char)) playBmfJab(); else playPunch(punchDealt); }
             if (pu.knockback > 0 && !other.justDodged) {
               var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
               other.vx += kx / kd * pu.knockback;
