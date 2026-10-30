@@ -52,6 +52,14 @@ function artSeed(str) {
 // outline color (theme.wall in game). opts.head: draw the head on top.
 // opts.layout "contained" keeps the whole fighter inside the ball instead:
 // head in the top third, torso in the middle, shorts in the bottom third.
+// Decal images are created once per source and reused every frame
+var artDecalCache = {};
+function artDecalImage(src) {
+  var im = artDecalCache[src];
+  if (!im) { im = artDecalCache[src] = new Image(); im.src = src; }
+  return im;
+}
+
 function drawFighterArt(c, x, y, r, look, ink, opts) {
   opts = opts || {};
   look = look || defaultLook();
@@ -960,6 +968,20 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   c.restore();
   if (contained) c.restore();
+
+  // Tattoo decals traced from reference photos: little images placed in ball
+  // units (x, y, w, h as fractions of r), kept between the jaw and the shorts
+  if (tat.decals && contained) {
+    c.save();
+    c.beginPath(); c.rect(-r, -r * 0.28, r * 2, r * 0.64); c.clip();
+    tat.decals.forEach(function (d) {
+      var im = artDecalImage(d.img);
+      if (!im.complete || !im.naturalWidth) return;
+      c.globalAlpha = d.alpha === undefined ? 1 : d.alpha;
+      c.drawImage(im, r * d.x, r * d.y, r * d.w, r * d.h);
+    });
+    c.restore();
+  }
 
   // A collared polo shirt (a referee's) covering the torso, sleeves at the sides
   if (look.outfit === "polo") {
