@@ -179,7 +179,7 @@ function updateCheaterAct(self, other, dt) {
         var dealt = hurt(other, cfg.bat.damage, "bat", self.id);
         if (!other.justDodged) {
           other.vx += a.nx * cfg.bat.knockback; other.vy += a.ny * cfg.bat.knockback;
-          playSlam();
+          playBatHit(false); crowdReact(0.5);
           impacts.push({ x: other.x - a.nx * other.r, y: other.y - a.ny * other.r, nx: a.nx, ny: a.ny, life: 0.35, max: 0.35, color: "#c98a4b" });
           if (!reduceMotion) shake = Math.max(shake, 12);
           if (dealt > 0) floater(other.x, other.y - other.r - 30, "BAT", "crit");
