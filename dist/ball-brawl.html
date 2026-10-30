@@ -2638,7 +2638,9 @@ var SAVED_ROSTER = [
       "bat": {
         "damage": 22,
         "cooldown": 0.25,
+        "windup": 0.32,
         "swing": 0.2,
+        "follow": 0.2,
         "reach": 55,
         "knockback": 260
       }
@@ -9740,8 +9742,15 @@ function updateCheaterAct(self, other, dt) {
     return;
   }
   if (a.kind === "bat") {
-    var swing = cfg.bat.swing;
-    if (!a.hit && a.t >= swing * 0.45) {
+    // Cocks it back first (the tell), swings, and holds the follow-through.
+    var swing = cfg.bat.swing, wind = cfg.bat.windup || 0, follow = cfg.bat.follow || 0;
+    // Stalks in on them through the wind-up and lunges with the swing, so
+    // the tell gives them a moment to get away but it isn't a free miss.
+    if (a.t < wind + swing && dd > self.r + other.r + 8) {
+      var chase = a.t < wind ? 230 : 460;
+      self.vx = a.nx * chase; self.vy = a.ny * chase;
+    } else if (a.t < wind + swing) { self.vx *= 0.5; self.vy *= 0.5; }
+    if (!a.hit && a.t >= wind + swing * 0.55) {
       a.hit = true;
       var dist = Math.sqrt((other.x - self.x) * (other.x - self.x) + (other.y - self.y) * (other.y - self.y));
       if (other.alive && dist < self.r + other.r + cfg.bat.reach + 6) {
@@ -9750,8 +9759,15 @@ function updateCheaterAct(self, other, dt) {
           other.vx += a.nx * cfg.bat.knockback; other.vy += a.ny * cfg.bat.knockback;
           playBatHit(false); crowdReact(0.5);
           impacts.push({ x: other.x - a.nx * other.r, y: other.y - a.ny * other.r, nx: a.nx, ny: a.ny, life: 0.35, max: 0.35, color: "#c98a4b" });
-          if (!reduceMotion) shake = Math.max(shake, 12);
-          if (dealt > 0) floater(other.x, other.y - other.r - 30, "BAT", "crit");
+          // Lands like a home run: freeze, big shake, splinters, and them
+          // crushed flat by it.
+          if (!reduceMotion) { shake = Math.max(shake, 20); hitStop = Math.max(hitStop, 0.08); }
+          other.squash = { t: 0.2, max: 0.2, nx: a.nx, ny: a.ny }; other.flash = 0.16;
+          for (var sp = 0; sp < 10 && !reduceMotion; sp++) {
+            var pa = Math.atan2(a.ny, a.nx) + (Math.random() - 0.5) * 1.8, pv = 200 + Math.random() * 260;
+            particles.push({ x: other.x - a.nx * other.r * 0.6, y: other.y - a.ny * other.r * 0.6, vx: Math.cos(pa) * pv, vy: Math.sin(pa) * pv, life: 0.4, max: 0.4, size: 3 + Math.random() * 3, color: sp % 3 ? "#c98a4b" : "#ffffff" });
+          }
+          if (dealt > 0) floater(other.x, other.y - other.r - 30, "CRACK!", "crit");
           // The first bat shot of the match (and only that one): the
           // commentators lose it. If someone else is talking and the line
           // gets skipped, it waits for the next bat shot that lands.
@@ -9760,7 +9776,7 @@ function updateCheaterAct(self, other, dt) {
         checkEnd();
       }
     }
-    if (a.t >= swing) self.chAct = null;
+    if (a.t >= wind + swing + follow) self.chAct = null;
   }
 }
 
@@ -9940,18 +9956,187 @@ function drawCheater(b) {
     return;
   }
   if (b.cheater && b.cheater.mode === "bat") {
-    // The bat: up on his shoulder, or swung through in a flat arc.
-    var base0 = Math.atan2(ny, nx), ang, dir = a && a.kind === "bat" ? a.dir : 1;
-    if (a && a.kind === "bat") {
-      var sk = Math.min(1, a.t / ch.cheater.bat.swing); sk = sk * sk * (3 - 2 * sk);
-      ang = base0 - dir * 1.5 + dir * 2.9 * sk;
-    } else ang = base0 - 2.3;
-    var hx4 = b.x + Math.cos(ang) * b.r * 0.85, hy4 = b.y + Math.sin(ang) * b.r * 0.85;
-    var shx4 = b.x + Math.cos(ang) * b.r * 0.4, shy4 = b.y + Math.sin(ang) * b.r * 0.4;
-    drawBat(hx4, hy4, ang, b.r * 1.6);
-    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx4, shy4); ctx.lineTo(hx4, hy4); });
-    drawGloveAt(hx4, hy4, gr, ch);
+    // The bat: held and played with between swings, or swung two-handed
+    // across at them (one set of poses, so it flows between the two).
+    var bc = ch.cheater.bat, bw = bc.windup || 0;
+    if (a && a.kind === "bat") drawBatIdle(b, a.t < bw ? -(a.t / bw) : (a.t - bw) / bc.swing); // past 1: the follow-through
+    else drawBatIdle(b, null);
   }
+}
+
+// Holding the bat between swings. The fighters are drawn front on, so the
+// poses are too: shoulders at the top corners of the ball, the bat in the
+// hand away from the opponent, each arm bent at the elbow. On the move it
+// rides on his shoulder, bouncing with his stride, free glove at his chest.
+// Hands stay low by his body, below his face.
+// Stood still he loops through a batter's stance with the bat waggling, three
+// smacks of the bat into his free palm, and a twirl of it out to the side.
+var BAT_IDLE_LOOP = 4.6;
+function batSide(b) { var o = balls[1 - b.id]; return o.x > b.x ? -1 : 1; } // 1 = his bat out on screen right
+// `swing`: null between swings, 0 to -1 while he winds up, 0 to 1 through
+// the swing itself.
+function drawBatIdle(b, swing) {
+  var ch = b.char, r = b.r, len = r * 1.6, s = batSide(b);
+  function P(x, y) { return { x: b.x + x * r, y: b.y + y * r }; } // x measured toward the bat side
+  function Q(x, y) { return P(x * s, y); }
+  function A(a) { return s > 0 ? a : Math.PI - a; } // mirrors an angle drawn for s = 1
+  var t = performance.now() / 1000 + b.id * 1.7;
+  var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  var bSh = Q(0.66, -0.3), fSh = Q(-0.66, -0.3);
+  var bH, fH, batA, bEl = null, fEl = null, key;
+  var COCK_A = -Math.PI / 2 + 1.35; // barrel back and down behind him (s = 1)
+  if (swing != null && swing < 0) {
+    // The tell: both hands drag the bat back behind his shoulder, the
+    // barrel dropping low, and it shakes there for a beat before he goes.
+    key = "windup";
+    var w = Math.min(1, -swing / 0.7); w = w * (2 - w);
+    var hold = -swing > 0.7 ? 1 : 0;
+    var shake = hold && !reduceMotion ? Math.sin(t * 90) * 0.06 : 0;
+    var h0 = Q(0.55, -0.15), h1 = Q(0.82, -0.5);
+    bH = { x: h0.x + (h1.x - h0.x) * w, y: h0.y + (h1.y - h0.y) * w };
+    batA = A(-Math.PI / 2 + 0.45 + (COCK_A + Math.PI / 2 - 0.45) * w + shake);
+    fH = { x: bH.x + Math.cos(batA) * len * 0.18, y: bH.y + Math.sin(batA) * len * 0.18 };
+    bEl = Q(0.85 + 0.1 * w, 0.2 - 0.48 * w); fEl = Q(-0.05 + 0.25 * w, 0.02 - 0.1 * w); // elbows out and back
+  } else if (swing != null) {
+    // Lets it go: a flat, full-body sweep. The bat comes round low across
+    // the front of him, arms fully out at them at contact, and wraps up
+    // over his other shoulder in the follow-through.
+    key = "swing";
+    var sw = Math.min(1, swing), e = Math.sin(sw * Math.PI / 2); // fastest at the start, like a whip
+    var endA = Math.PI + 0.75;
+    batA = A(COCK_A + (endA - COCK_A) * e);
+    // Hands: shoulder, out to full reach at them (contact), up to the other shoulder.
+    var k1 = Math.min(1, e / 0.8), k2 = Math.max(0, (e - 0.8) / 0.2);
+    var hs = Q(0.82, -0.5), hm = Q(-0.85, 0.08), hf = Q(-0.62, -0.42);
+    bH = { x: hs.x + (hm.x - hs.x) * k1 + (hf.x - hm.x) * k2, y: hs.y + (hm.y - hs.y) * k1 + (hf.y - hm.y) * k2 };
+    len *= 1 + 0.12 * Math.sin(sw * Math.PI); // stretched out by the speed
+    fH = { x: bH.x + Math.cos(batA) * len * 0.18, y: bH.y + Math.sin(batA) * len * 0.18 };
+    if (swing > 1) { bEl = Q(-0.2, 0.05); fEl = Q(-0.05, -0.05); } // wrapped round, holding it
+    if (sw > 0.05 && swing < 1.15 && !reduceMotion) {
+      // A filled blur behind the barrel, fading back along the arc.
+      var fade = swing > 1 ? Math.max(0, 1 - (swing - 1) / 0.15) : 1;
+      ctx.save();
+      for (var i = 0; i < 7; i++) {
+        var a0 = A(COCK_A + (endA - COCK_A) * Math.max(0, e - i * 0.07)), a1 = A(COCK_A + (endA - COCK_A) * Math.max(0, e - (i + 1) * 0.07));
+        ctx.fillStyle = "rgba(255,255,255," + (0.65 * fade * (1 - i / 7)) + ")";
+        ctx.beginPath();
+        ctx.moveTo(bH.x + Math.cos(a0) * len * 0.4, bH.y + Math.sin(a0) * len * 0.4);
+        ctx.lineTo(bH.x + Math.cos(a0) * len * 1.02, bH.y + Math.sin(a0) * len * 1.02);
+        ctx.lineTo(bH.x + Math.cos(a1) * len * 1.02, bH.y + Math.sin(a1) * len * 1.02);
+        ctx.lineTo(bH.x + Math.cos(a1) * len * 0.4, bH.y + Math.sin(a1) * len * 0.4);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  } else if (sp > 60) {
+    key = "walk"; b.batIdleT0 = null;
+    // Resting on his shoulder, barrel up behind his head, bouncing.
+    var st = t * 10, bob = Math.abs(Math.sin(st)) * 0.08;
+    bH = Q(0.72, -0.42 - bob);
+    batA = A(-Math.PI / 2 - 0.55 + Math.sin(st) * 0.1);
+    fH = Q(-0.38, 0.0 + Math.sin(st + Math.PI) * 0.06);
+  } else {
+    // The loop starts over from the stance each time he stops walking.
+    if (b.batIdleT0 == null) b.batIdleT0 = t;
+    var c = (t - b.batIdleT0) % BAT_IDLE_LOOP;
+    key = c < 1.8 ? "stance" : c < 3.9 ? "tap" : "twirl";
+    if (c < 1.8) {
+      // Batter's stance: hands stacked on the handle by his shoulder, the
+      // barrel up and leaning back, waggling.
+      // Bat hand at the knob, elbow tucked down at his side; the free hand
+      // reaches across his belly to grip just above it.
+      bH = Q(0.5, 0.0);
+      batA = A(-Math.PI / 2 + 0.45 + Math.sin(t * 6) * 0.25);
+      fH = { x: bH.x + Math.cos(batA) * len * 0.18, y: bH.y + Math.sin(batA) * len * 0.18 };
+      bEl = Q(0.85, 0.2); fEl = Q(-0.05, 0.02);
+    } else if (c < 3.9) {
+      // Three smacks into his open palm in front of his belly.
+      var k = (c - 1.8) / 2.1 * 3, f = k % 1;
+      var tap = f < 0.55 ? Math.pow(f / 0.55, 2) : 1 - (f - 0.55) / 0.45;
+      bH = Q(0.62, 0.0);
+      var down = Math.atan2(0.2, -1.0) - Math.PI * 2; // to the palm (s = 1), up and over the top
+      batA = A(-Math.PI / 2 + 0.25 + (down + Math.PI / 2 - 0.25) * tap);
+      var hit = f > 0.5 && f < 0.72 ? 0.06 : 0;
+      fH = Q(-0.38 - hit, 0.2 + hit);
+    } else {
+      // Spins it once round in his hand, out to the side.
+      var tw = (c - 3.9) / (BAT_IDLE_LOOP - 3.9); tw = tw * tw * (3 - 2 * tw);
+      bH = Q(0.95, 0.05);
+      batA = A(-Math.PI / 2 + 0.3) + s * tw * Math.PI * 2;
+      fH = Q(-0.38, 0.0);
+    }
+  }
+  bEl = bEl || armElbow(b, bSh, bH, s);
+  fEl = fEl || armElbow(b, fSh, fH, -s);
+  // Eases from wherever the last pose left off into this one.
+  var pose = batBlend(b, key + s, [bH.x - b.x, bH.y - b.y, fH.x - b.x, fH.y - b.y, bEl.x - b.x, bEl.y - b.y, fEl.x - b.x, fEl.y - b.y, batA]);
+  bH = { x: b.x + pose[0], y: b.y + pose[1] }; fH = { x: b.x + pose[2], y: b.y + pose[3] };
+  bEl = { x: b.x + pose[4], y: b.y + pose[5] }; fEl = { x: b.x + pose[6], y: b.y + pose[7] };
+  drawBentArm(b, fSh, fH, -s, fEl);
+  drawBat(bH.x, bH.y, pose[8], len);
+  drawBentArm(b, bSh, bH, s, bEl);
+  drawGloveAt(fH.x, fH.y, r * 0.22, ch);
+  drawGloveAt(bH.x, bH.y, r * 0.22, ch);
+}
+
+// His whole body in the swing: rocks back away from them as he winds up,
+// then lunges in with it and settles back (draw.js adds it to his spot).
+function ganeBatLean(b) {
+  var a = b.chAct;
+  if (!a || a.kind !== "bat" || !b.cheater || !b.char.cheater) return { x: 0, y: 0 };
+  var bc = b.char.cheater.bat, bw = bc.windup || 0, o = balls[1 - b.id];
+  var nx = o.x - b.x, ny = o.y - b.y, nd = Math.sqrt(nx * nx + ny * ny) || 1, k;
+  if (a.t < bw) { k = Math.min(1, a.t / bw / 0.7); k = -0.2 * k * (2 - k); }
+  else { var f = (a.t - bw) / (bc.swing + (bc.follow || 0)); k = -0.2 + 0.5 * Math.sin(Math.min(1, f * 1.6) * Math.PI / 2) - 0.3 * Math.max(0, f - 0.6) / 0.4; }
+  return { x: nx / nd * b.r * k, y: ny / nd * b.r * k };
+}
+
+// Smooths the jump between two poses: when the pose changes (`key`), the gap
+// from the last drawn pose is carried as an offset that fades out over about
+// a third of a second (closer to a second when he starts or stops walking,
+// and out of the twirl). The last value is the bat's angle.
+var BAT_BLEND_RATE = 8, BAT_BLEND_SLOW = 3.5, BAT_BLEND_SNAP = 25; // the slow one into and out of walking, and the twirl back to the stance
+function batBlend(b, key, pose) {
+  var now = performance.now() / 1000, st = b.batBlend;
+  if (!st || now - st.t > 0.25) st = b.batBlend = { key: key, t: now, off: null, last: null };
+  var dt = Math.max(0, now - st.t); st.t = now;
+  if (st.key !== key && st.last) {
+    st.rate = key === "swing" ? BAT_BLEND_SNAP : key === "windup" ? BAT_BLEND_RATE * 2 : /walk/.test(st.key + key) || /twirl/.test(st.key) ? BAT_BLEND_SLOW : BAT_BLEND_RATE;
+    st.off = pose.map(function (v, i) {
+      var d = st.last[i] - v;
+      if (i === pose.length - 1) d = Math.atan2(Math.sin(d), Math.cos(d)); // the short way round
+      return d;
+    });
+  }
+  st.key = key;
+  var out = pose;
+  if (st.off) {
+    var k = Math.exp(-(st.rate || BAT_BLEND_RATE) * dt), big = 0;
+    st.off = st.off.map(function (d) { d *= k; big = Math.max(big, Math.abs(d)); return d; });
+    out = pose.map(function (v, i) { return v + st.off[i]; });
+    if (big < 0.01) st.off = null;
+  }
+  st.last = out;
+  return out;
+}
+
+// Where an arm's elbow sits: dropped down and out to its own side.
+function armElbow(b, sh, hand, side) {
+  var seg = b.r * 0.5;
+  var dx = hand.x - sh.x, dy = hand.y - sh.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var reach = Math.min(d, seg * 2 - 0.5), bend = Math.sqrt(Math.max(0, seg * seg - reach * reach / 4));
+  var mx = sh.x + dx / d * reach / 2, my = sh.y + dy / d * reach / 2;
+  var nx = -dy / d, ny = dx / d;
+  if (nx * side * 0.25 + ny < 0) { nx = -nx; ny = -ny; } // elbows tucked down at his sides
+  return { x: mx + nx * bend, y: my + ny * bend };
+}
+
+// An arm from shoulder to hand, the elbow dropping down and out to its own
+// side of the body (side 1 = screen right, -1 = screen left).
+function drawBentArm(b, sh, hand, side, elbow) {
+  var ch = b.char, arm = (ch.punch.size || 13) * 0.75;
+  var e = elbow || armElbow(b, sh, hand, side), ex = e.x, ey = e.y; // a pose can set its own
+  strokeLimb(arm, armColor(ch), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(ex, ey); ctx.lineTo(hand.x, hand.y); });
 }
 
 function drawBat(x, y, a, len) {
@@ -10403,10 +10588,7 @@ function drawHerbDeanSpecial(b) {
     if (k < 0.12) ang = base - m.side * (0.5 - 0.5 * (k / 0.12)) ;          // follow-through settling
     else if (k < 0.72) { var e = (k - 0.12) / 0.6; e = e * (2 - e); ang = base + m.side * 2.4 * e + (e > 0.85 ? Math.sin(m.swingT * 80) * 0.06 : 0); }
     else { var f = (k - 0.72) / 0.28; f = f * f; ang = base + m.side * (2.4 - 2.9 * f); whip = true; }
-  } else if (m.phase === "announce") {
-    var up = Math.min(1, m.t / 0.4);
-    ang = base - 2.3 * up;
-  } else ang = base - 2.3;
+  } else { drawBatIdle(b); return; } // pulling it out / running them down (cheater.js)
   var arm = (ch.punch.size || 13) * 0.75, bl = b.r * 1.7;
   var hx = b.x + Math.cos(ang) * b.r * 0.85, hy = b.y + Math.sin(ang) * b.r * 0.85;
   var shx = b.x + Math.cos(ang) * b.r * 0.4, shy = b.y + Math.sin(ang) * b.r * 0.4;
@@ -13066,7 +13248,8 @@ function draw() {
   // A shooter caught in a guillotine goes underneath, its head buried
   // under the defender (and the defender, once it's taken down).
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
-  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // A bat swing goes over whoever it's hitting.
+  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -13082,6 +13265,7 @@ function draw() {
     }
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
     var hjo = herbJoltOffset(b); wox += hjo.x; woy += hjo.y; // rocked by a bat or a cane (herbdean.js)
+    var gbl = ganeBatLean(b); wox += gbl.x; woy += gbl.y; // throwing his weight into a bat swing (cheater.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with

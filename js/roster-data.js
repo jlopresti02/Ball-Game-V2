@@ -183,7 +183,9 @@ var SAVED_ROSTER = [
       "bat": {
         "damage": 22,
         "cooldown": 0.25,
+        "windup": 0.32,
         "swing": 0.2,
+        "follow": 0.2,
         "reach": 55,
         "knockback": 260
       }

@@ -89,7 +89,8 @@ function draw() {
   // A shooter caught in a guillotine goes underneath, its head buried
   // under the defender (and the defender, once it's taken down).
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
-  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // A bat swing goes over whoever it's hitting.
+  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -105,6 +106,7 @@ function draw() {
     }
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
     var hjo = herbJoltOffset(b); wox += hjo.x; woy += hjo.y; // rocked by a bat or a cane (herbdean.js)
+    var gbl = ganeBatLean(b); wox += gbl.x; woy += gbl.y; // throwing his weight into a bat swing (cheater.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with

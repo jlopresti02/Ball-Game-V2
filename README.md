@@ -130,7 +130,7 @@ A fighter with `"hasThumbsDown": true` mocks the opponent every `thumbsDown.cool
 A fighter with `"hasCheater": true` cheats whenever the referee isn't looking (`js/game/cheater.js`). In its fights the ref falls asleep with cartoon Z's for `cheater.asleep` seconds (5) after every `cheater.awake` seconds (10) awake. While he sleeps, the fighter drops its normal attacks and picks one trick for the whole nap, each equally likely:
 - **Eye pokes**: does `poke.damage`, and if it lands the opponent is stunned on the spot for a combo (`poke.combo`) they can't slip or block.
 - **Throwing objects**: one every `throw.cooldown` seconds, picked at random from `CHEATER_OBJECTS` (placeholders for now: water bottle 8, shoe 10, stool 20).
-- **A bat**: `bat.damage` (22) on a very fast `bat.cooldown` (0.25s).
+- **A bat**: `bat.damage` (22) on a very fast `bat.cooldown` (0.25s). Each swing is telegraphed: he drags it back two-handed and rocks his weight back for `bat.windup` (0.32s), then lunges in with a flat full-extension sweep (`bat.swing` 0.2s) and holds the follow-through over his other shoulder (`bat.follow` 0.2s). A hit freezes the frame, splinters, and squashes them ("CRACK!").
 
 While it's cheating, every normal takedown shot on it fails (not suplexes or special moves): whoever shot drives it back into the cage, and once it's up against it it grabs hold ("FENCE GRAB"), stands back up and gets away with no damage. When the ref wakes up it's back in Fighter mode. Ciryl Gane has it.
 
