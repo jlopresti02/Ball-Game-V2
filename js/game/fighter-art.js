@@ -468,9 +468,14 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.quadraticCurveTo(0, jaw + r * 0.17, -r * 0.36, jaw + r * 0.04);
       c.quadraticCurveTo(-r * 0.86, -r * 0.3, -r * 0.9, -r * 0.6);
       c.closePath();
+      // Bare skin where the mouth would be, between moustache and chin
+      c.moveTo(r * 0.17, -r * 0.37);
+      c.quadraticCurveTo(0, -r * 0.43, -r * 0.17, -r * 0.37);
+      c.quadraticCurveTo(0, -r * 0.31, r * 0.17, -r * 0.37);
+      c.closePath();
     };
-    c.fillStyle = bc; boxed(); c.fill();
-    c.save(); boxed(); c.clip();
+    c.fillStyle = bc; boxed(); c.fill("evenodd");
+    c.save(); boxed(); c.clip("evenodd");
     // Fuller, darker chin under the lip
     c.globalAlpha = 0.35; c.fillStyle = shadeHex(bc, -0.25);
     c.beginPath(); c.ellipse(0, jaw - r * 0.01, r * 0.26, r * 0.08, 0, 0, Math.PI * 2); c.fill();
