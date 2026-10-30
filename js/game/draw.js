@@ -104,6 +104,7 @@ function draw() {
       woy = wfx * wa.sign * b.r * 0.75 * wk;
     }
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
+    var hjo = herbJoltOffset(b); wox += hjo.x; woy += hjo.y; // rocked by a bat or a cane (herbdean.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -290,6 +291,7 @@ function draw() {
     drawDazed(b);   // stars after a chair shot
     drawMock(b);    // and his thumbs down
     drawCheater(b); // Gane cheating
+    drawHerbDeanSpecial(b); // and his bat during his special
     drawPokeStun(b);
     drawAngry(b);   // fuming at it
     b.x -= wox; b.y -= woy;
@@ -304,6 +306,7 @@ function draw() {
   drawArmbars();
   drawChairDebris();
   drawCheaterObjects();
+  drawHerb();
   drawSuplexes();
 
   projectiles.forEach(function (p) {
@@ -316,6 +319,7 @@ function draw() {
     }
   });
 
+  drawHerbBanner(); // "Herb Dean is entering the ring" when there's no jumbotron
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
     var t = f.life / f.max;

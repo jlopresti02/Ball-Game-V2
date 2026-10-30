@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -620,13 +620,13 @@ function playKnockout() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     withClip("knockout", function (buf) {
-      var now = ctx.currentTime;
-      cutInTalk("knockout", 0.85);
+      if (!cutInTalk("knockout", 0.85)) return;
+      var at = talkCutAt; // later than now if Gane's Herb Dean line is still going
       var c = crowd;
       if (c && c.gain) {
-        c.duckUntil = now + buf.duration - 1;
-        c.gain.gain.cancelScheduledValues(now);
-        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.4, now, 0.1);
+        c.duckUntil = at + buf.duration - 1;
+        c.gain.gain.cancelScheduledValues(ctx.currentTime);
+        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.4, at, 0.1);
       }
     });
   } catch (e) { /* never let audio break the game */ }
@@ -651,10 +651,14 @@ function playClip(name, gain, when, rate) {
 // time: if another line comes up while one is going and it's due to end
 // within TALK_WAIT seconds, the new line waits and plays right after it.
 // Otherwise the new line is skipped. The big moments (the knockout call and
-// Do Bronx) cut in instead: they stop whatever line is going.
+// Do Bronx) cut in instead: they stop whatever line is going. A priority line
+// (Gane's Herb Dean special) outranks all of them: it cuts in, and nothing
+// cuts it off; a cut-in waits for it to finish instead.
 var TALK_WAIT = 1.5;  // how long a line will wait for the current one to finish
 var TALK_GAP = 0.15;  // breath between two lines
 var talkSrcs = [], talkEnd = 0, talkQueued = false;
+var talkPriorityEnd = 0; // a priority line is playing until then
+var talkCutAt = 0;       // when the last cut-in actually starts
 // Plays `name` on the talk channel. Returns false if it was skipped.
 function playTalk(name, gain) {
   var ctx = audioCtx, buf = clipBuffers[name];
@@ -675,17 +679,37 @@ function playTalk(name, gain) {
   return true;
 }
 // Cuts in on the talk channel: whatever line is going (or waiting) stops.
+// While a priority line is going, it plays right after it instead.
 function cutInTalk(name, gain) {
+  var now = audioCtx.currentTime;
+  if (now < talkPriorityEnd) {
+    var at = talkEnd + TALK_GAP, later = playClip(name, gain, at);
+    if (!later) return null;
+    talkSrcs.push(later); talkQueued = true;
+    talkEnd = at + clipBuffers[name].duration;
+    talkCutAt = at;
+    return later;
+  }
   stopTalk();
   var src = playClip(name, gain);
   if (!src) return null;
   talkSrcs = [src];
-  talkEnd = audioCtx.currentTime + clipBuffers[name].duration;
+  talkEnd = now + clipBuffers[name].duration;
+  talkCutAt = now;
+  return src;
+}
+// A priority line: cuts in on everything, and nothing cuts it off.
+function playPriorityTalk(name, gain) {
+  stopTalk();
+  var src = playClip(name, gain);
+  if (!src) return null;
+  talkSrcs = [src];
+  talkEnd = talkPriorityEnd = audioCtx.currentTime + clipBuffers[name].duration;
   return src;
 }
 function stopTalk() {
   talkSrcs.forEach(function (src) { try { src.stop(); } catch (e) { /* already stopped */ } });
-  talkSrcs = []; talkEnd = 0; talkQueued = false;
+  talkSrcs = []; talkEnd = 0; talkQueued = false; talkPriorityEnd = 0;
 }
 
 // Do Bronx (dobronx.js): "Charrrles... Do... BRONX!" from the start of the
@@ -751,6 +775,136 @@ function playChairShot() {
 // ("ganeBatCall") or an eye poke ("ganePokeCall") in Cheater mode
 // (cheater.js). The fades are in the clips themselves. Returns false if the
 // line got skipped, so it can be tried again on the next one.
+// Herb Dean's white cane (herbdean.js): a cheap, rickety plastic one. A
+// quick swish as he brings it down (playCaneSwish, at the start of the
+// strike), then on contact a dull hollow plastic pok with the cane's loose
+// folding joints rattling a few times after it (playCaneWhack).
+function caneNoise(ctx) { if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2); return punchNoise; }
+function caneBurst(ctx, t, freq, q, peak, dur) {
+  var s = ctx.createBufferSource();
+  s.buffer = caneNoise(ctx);
+  var f = ctx.createBiquadFilter();
+  f.type = "bandpass"; f.Q.value = q; f.frequency.value = freq;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.001);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(ctx.destination);
+  s.start(t); s.stop(t + dur + 0.02);
+}
+function caneTone(ctx, t, type, f0, f1, peak, dur) {
+  var o = ctx.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+// One plastic pok: the dull hollow tube plus a papery top end.
+function canePok(ctx, t, v, peak) {
+  caneBurst(ctx, t, 2300 * v, 0.9, peak, 0.035);
+  caneBurst(ctx, t, 5200 * v, 1.2, peak * 0.35, 0.02);
+  caneTone(ctx, t, "triangle", 1350 * v, 1100 * v, peak * 0.28, 0.05);
+}
+function playCaneSwish() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + 0.08;
+    var w = ctx.createBufferSource();
+    w.buffer = caneNoise(ctx);
+    var f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = 3;
+    f.frequency.setValueAtTime(600, now);
+    f.frequency.exponentialRampToValueAtTime(3000, end);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.22, end - 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, end + 0.01);
+    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.start(now); w.stop(end + 0.03);
+  } catch (e) { /* never let audio break the game */ }
+}
+function playCaneWhack() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, v = 0.94 + Math.random() * 0.12;
+    canePok(ctx, now, v, 0.9);
+    caneTone(ctx, now, "sine", 210 * v, 120, 0.25, 0.06); // light, not much behind it
+    // The rattle: a few smaller poks, quieter and quicker each time.
+    var dt = 0.022, pk = 0.42;
+    for (var k = 0; k < 4; k++) {
+      dt *= 0.85 + Math.random() * 0.4; pk *= 0.62;
+      canePok(ctx, now + 0.03 + k * dt * 1.6, v * (1.15 + Math.random() * 0.2), pk);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Ciryl Gane's bat (the Herb Dean special and Cheater mode): a heavy swing
+// whoosh into a deep, meaty thud of the bat sinking in. A big one (the HOME
+// RUN) gets a sharp crack on top. Joe picked this one (option C).
+var BAT_GAIN = 0.5;
+function playBatHit(big) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, hit = now + 0.06; // the whoosh leads in
+    var v = 0.9 + Math.random() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
+    var w = ctx.createBufferSource();
+    w.buffer = caneNoise(ctx);
+    var f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = 2;
+    f.frequency.setValueAtTime(300, now);
+    f.frequency.exponentialRampToValueAtTime(1600, hit);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.35 * k, hit - 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.015);
+    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.start(now); w.stop(hit + 0.03);
+    caneBurst(ctx, hit, 900 * v, 0.8, 0.8 * k, 0.08);              // the slap of it landing
+    caneTone(ctx, hit, "sine", 95 * v, 42, 0.9 * k, big ? 0.35 : 0.2); // the weight
+    caneTone(ctx, hit, "triangle", 240 * v, 120, 0.3 * k, 0.1);
+    if (big) {
+      caneBurst(ctx, hit, 2600, 1.2, 0.9 * BAT_GAIN, 0.08);
+      caneTone(ctx, hit, "triangle", 600, 420, 0.35 * BAT_GAIN, 0.14);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Gane's Herb Dean special: Joe's clip as the special starts, as a priority
+// line, so no other talking clip cuts it off or plays over it. The looping
+// crowd sits down under it, then swells back up as the clip fades out
+// (HERB_LINE_BLEND seconds before its end), so one hands over to the other.
+var HERB_LINE_BLEND = 1.6;
+function playHerbDeanLine() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    withClip("ganeHerbDean", function (buf) {
+      var src = playPriorityTalk("ganeHerbDean", 0.9);
+      if (!src) return;
+      var now = ctx.currentTime, c = crowd;
+      if (c && c.gain) {
+        c.duckUntil = now + buf.duration - HERB_LINE_BLEND;
+        c.gain.gain.cancelScheduledValues(now);
+        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.6, now, 0.3);
+      }
+      setTimeout(function () {
+        if (talkSrcs[0] === src) crowdReact(0.6); // still ours: the stands come back up
+      }, (buf.duration - HERB_LINE_BLEND) * 1000);
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
 function playGaneCall(name) {
   try {
     var ctx = getAudioCtx();
