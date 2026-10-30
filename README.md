@@ -92,17 +92,18 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 |---|---|
 | `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours (`accent`: optional stripe colour for `pinstripe` shorts) |
 | `build` | `muscular`, `lean`, `stocky` |
-| `hair` | `bald`, `stubble`, `buzz`, `crop` (faded sides, top swept back and across over an arched hairline receding at the temples), `twists`, `short`, `long`, `mohawk`, `dreads` |
+| `hair` | `bald`, `stubble`, `buzz`, `crop` (faded sides, top brushed up into a spiky quiff over a hairline peaked in the middle and receding at the temples), `twists`, `short`, `long`, `mohawk`, `dreads` |
 | `hairPuff` | `true` puts big twisted hair as a second circle behind the top of the ball (contained layout) |
 | `cane` | `true` gives a white cane with a red tip at the right side (contained layout); pass `opts.caneSwing` (radians) to sweep it |
 | `beard` | `none`, `stubble`, `short`, `chinstrap`, `full` |
+| `beardColor` | optional hex colour for the beard (defaults to `hairColor`) |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
 | `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs), `slash` (jagged streaks in the trim colour), `usa` (stars-and-stripes panel on one leg, white star on the waistband) |
 | `headwear` | optional: `bandana` (stars-and-stripes bandana over the head) |
 | `glasses` | optional: `shades` (dark sunglasses) |
 | `outfit` | optional: `polo` (collared shirt over the torso, for a referee; `shirt` colour, optional `badge` colour for a chest badge) |
-| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `medallion` (sun medallion on the sternum), `eyes` (pair of staring eyes low on the left side, above the waistband), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `ribs` can be `"left"` to put the script on the other side; `armInk` gives the punching arms an inked texture |
+| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `medallion` (sun medallion on the sternum), `eyes` (pair of staring eyes low on the left side, above the waistband), `sidePiece` (big dark colour piece down the right side of the stomach), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `ribs` can be `"left"` to put the script on the other side; `armInk` gives the punching arms an inked texture |
 
 ## Submissions
 

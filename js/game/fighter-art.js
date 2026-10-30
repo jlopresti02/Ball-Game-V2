@@ -272,35 +272,36 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   };
   c.fillStyle = hc;
   if (look.hair === "crop") {
-    // Short sides faded to a see-through shadow, with a longer top swept
-    // cleanly back and across from a part on the right, over an arched,
-    // receding hairline (drawn mirrored)
+    // Short faded sides, and a short top brushed straight up into a spiky
+    // quiff over an arched hairline that comes to a point in the middle and
+    // recedes at both temples
     c.save(); c.beginPath(); c.rect(-r, -r, r * 0.3, r); c.rect(r * 0.7, -r, r * 0.3, r); c.clip();
     c.globalAlpha = 0.4; hairline(); c.fill(); c.globalAlpha = 1;
     c.restore();
-    c.save(); c.scale(-1, 1);
-    var crg = c.createLinearGradient(-r * 0.5, -r, r * 0.6, -r * 0.55);
-    crg.addColorStop(0, shadeHex(hc, -0.2)); crg.addColorStop(1, shadeHex(hc, 0.08));
+    var crg = c.createLinearGradient(0, -r, 0, -r * 0.6);
+    crg.addColorStop(0, shadeHex(hc, -0.2)); crg.addColorStop(1, shadeHex(hc, 0.1));
     c.fillStyle = crg;
-    // Fringe locks: [x, y] along the front edge, from the part (high) to the low side
-    // An arched hairline: forward in the middle, receding up and back at
-    // both temples
-    c.beginPath();
-    c.moveTo(-r * 0.8, -r);
-    c.quadraticCurveTo(-r * 0.8, -r * 0.8, -r * 0.66, -r * 0.8);
-    c.bezierCurveTo(-r * 0.46, -r * 0.6, r * 0.46, -r * 0.6, r * 0.66, -r * 0.8);
-    c.quadraticCurveTo(r * 0.8, -r * 0.8, r * 0.8, -r);
-    c.closePath(); c.fill();
+    var front = function () {
+      c.beginPath();
+      c.moveTo(-r * 0.8, -r);
+      c.quadraticCurveTo(-r * 0.8, -r * 0.8, -r * 0.66, -r * 0.8);
+      c.quadraticCurveTo(-r * 0.3, -r * 0.66, 0, -r * 0.6);
+      c.quadraticCurveTo(r * 0.3, -r * 0.66, r * 0.66, -r * 0.8);
+      c.quadraticCurveTo(r * 0.8, -r * 0.8, r * 0.8, -r);
+      c.closePath();
+    };
+    front(); c.fill();
     c.strokeStyle = shadeHex(hc, -0.45); c.lineWidth = lw(0.018); c.stroke();
-    // Part line
-    c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.014); c.globalAlpha = 0.7;
-    c.beginPath(); c.moveTo(-r * 0.42, -r * 0.78); c.quadraticCurveTo(-r * 0.46, -r * 0.9, -r * 0.44, -r); c.stroke();
-    // A few long, soft highlights following the sweep
-    c.lineCap = "round"; c.strokeStyle = shadeHex(hc, 0.3); c.lineWidth = lw(0.016); c.globalAlpha = 0.55;
-    for (var ls = 0; ls < 5; ls++) {
-      var sy0 = -r * (0.95 - ls * 0.05), ey1 = -r * (0.86 - ls * 0.04);
-      c.beginPath(); c.moveTo(-r * 0.38, sy0);
-      c.quadraticCurveTo(r * 0.05, sy0 + r * 0.01, r * (0.3 + ls * 0.05), ey1); c.stroke();
+    // Brushed-up texture: strands rising from the hairline, fanning out a
+    // little, light at the quiff in the middle
+    c.save(); front(); c.clip();
+    c.lineCap = "round";
+    for (var qs = -7; qs <= 7; qs++) {
+      var qx = qs * r * 0.085, qy = -r * (0.62 + Math.pow(Math.abs(qs) / 7, 1.6) * 0.18);
+      c.strokeStyle = Math.abs(qs) < 3 ? shadeHex(hc, 0.35) : (qs % 2 ? shadeHex(hc, -0.3) : shadeHex(hc, 0.2));
+      c.lineWidth = lw(Math.abs(qs) < 3 ? 0.02 : 0.014); c.globalAlpha = 0.55;
+      c.beginPath(); c.moveTo(qx, qy + r * 0.02);
+      c.quadraticCurveTo(qx + qs * r * 0.01, qy - r * 0.12, qx + qs * r * 0.03, qy - r * 0.26); c.stroke();
     }
     c.globalAlpha = 1;
     c.restore();
@@ -437,7 +438,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   // Beard: sideburns down around the jaw to a full chin
   if (look.beard !== "none" && look.beard !== "chinstrap") {
     c.globalAlpha = look.beard === "stubble" ? 0.28 : look.beard === "short" ? 0.55 : 1;
-    c.fillStyle = hc;
+    c.fillStyle = look.beardColor || hc;
     c.beginPath();
     c.moveTo(-r * 0.74, -r * 0.66);
     c.quadraticCurveTo(-r * 0.62, -r * 0.44, -r * 0.32, -r * 0.5);
@@ -860,6 +861,33 @@ function drawArtBody(c, r, look, ink, name, contained) {
       }
     });
     c.strokeStyle = inkCol;
+  }
+  if (tat.sidePiece) {
+    // A big colour piece down the right side of the stomach (screen left),
+    // from under the pec to the waistband: a dark scene with a figure in it
+    var spT = contained ? -r * 0.12 : -r * 0.22, spB = contained ? r * 0.42 : r * 0.42;
+    c.save();
+    c.beginPath(); c.moveTo(-r * 0.62, spT); c.lineTo(-r * 0.22, spT + r * 0.03); c.lineTo(-r * 0.2, spB); c.lineTo(-r * 0.6, spB); c.closePath();
+    c.fillStyle = "#34404c"; c.globalAlpha = 0.72; c.fill(); c.clip();
+    var spr = artRand(21);
+    [["#4f6a8a", 5], ["#8b3a2e", 4], ["#c9a46a", 3]].forEach(function (pc) {
+      c.fillStyle = pc[0]; c.globalAlpha = 0.3;
+      for (var k = 0; k < pc[1]; k++) {
+        c.beginPath(); c.ellipse(-r * (0.22 + spr() * 0.4), spT + spr() * (spB - spT), r * (0.05 + spr() * 0.05), r * (0.06 + spr() * 0.08), spr() * 3, 0, Math.PI * 2); c.fill();
+      }
+    });
+    // A figure's head and shoulders near the top of the piece
+    c.globalAlpha = 0.5; c.fillStyle = shadeHex(look.skin, -0.3);
+    c.beginPath(); c.ellipse(-r * 0.4, spT + r * 0.14, r * 0.06, r * 0.09, 0.2, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(-r * 0.4, spT + r * 0.3, r * 0.15, r * 0.08, 0, Math.PI, 0); c.fill();
+    c.globalAlpha = 0.7; c.lineWidth = lw(0.016); c.strokeStyle = "#1e252c";
+    // Linework through the scene
+    for (var sl2 = 0; sl2 < 6; sl2++) {
+      var ly = spT + r * 0.32 + sl2 * r * 0.07;
+      c.beginPath(); c.moveTo(-r * 0.6, ly); c.quadraticCurveTo(-r * 0.4, ly - r * 0.05, -r * 0.2, ly + r * 0.02); c.stroke();
+    }
+    c.restore();
+    c.globalAlpha = 1;
   }
   if (tat.eyes) {
     // A pair of staring eyes just below the left pec (screen right), linework only
