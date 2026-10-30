@@ -9972,7 +9972,7 @@ function drawBatIdle(b) {
   var t = performance.now() / 1000 + b.id * 1.7;
   var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   var bSh = Q(0.66, -0.3), fSh = Q(-0.66, -0.3);
-  var bH, fH, batA, knob = bH;
+  var bH, fH, batA, knob, bEl = null, fEl = null;
   if (sp > 60) {
     // Resting on his shoulder, barrel up behind his head, bouncing.
     var st = t * 10, bob = Math.abs(Math.sin(st)) * 0.08;
@@ -9985,10 +9985,12 @@ function drawBatIdle(b) {
     if (c < 1.8) {
       // Batter's stance: hands stacked on the handle by his shoulder, the
       // barrel up and leaning back, waggling.
-      fH = Q(0.5, -0.05);
+      // Bat hand at the knob, elbow tucked down at his side; the free hand
+      // reaches across his belly to grip just above it.
+      bH = Q(0.5, 0.0);
       batA = A(-Math.PI / 2 + 0.45 + Math.sin(t * 6) * 0.25);
-      bH = { x: fH.x + Math.cos(batA) * len * 0.2, y: fH.y + Math.sin(batA) * len * 0.2 };
-      knob = fH;
+      fH = { x: bH.x + Math.cos(batA) * len * 0.18, y: bH.y + Math.sin(batA) * len * 0.18 };
+      knob = bH; bEl = Q(0.85, 0.2); fEl = Q(-0.05, 0.02);
     } else if (c < 3.9) {
       // Three smacks into his open palm in front of his belly.
       var k = (c - 1.8) / 2.1 * 3, f = k % 1;
@@ -10008,16 +10010,16 @@ function drawBatIdle(b) {
       knob = bH;
     }
   }
-  drawBentArm(b, fSh, fH, -s);
+  drawBentArm(b, fSh, fH, -s, fEl);
   drawBat(knob.x, knob.y, batA, len);
-  drawBentArm(b, bSh, bH, s);
+  drawBentArm(b, bSh, bH, s, bEl);
   drawGloveAt(fH.x, fH.y, r * 0.22, ch);
   drawGloveAt(bH.x, bH.y, r * 0.22, ch);
 }
 
 // An arm from shoulder to hand, the elbow dropping down and out to its own
 // side of the body (side 1 = screen right, -1 = screen left).
-function drawBentArm(b, sh, hand, side) {
+function drawBentArm(b, sh, hand, side, elbow) {
   var ch = b.char, arm = (ch.punch.size || 13) * 0.75, seg = b.r * 0.5;
   var dx = hand.x - sh.x, dy = hand.y - sh.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   var reach = Math.min(d, seg * 2 - 0.5), bend = Math.sqrt(Math.max(0, seg * seg - reach * reach / 4));
@@ -10025,6 +10027,7 @@ function drawBentArm(b, sh, hand, side) {
   var nx = -dy / d, ny = dx / d;
   if (nx * side * 0.25 + ny < 0) { nx = -nx; ny = -ny; } // elbows tucked down at his sides
   var ex = mx + nx * bend, ey = my + ny * bend;
+  if (elbow) { ex = elbow.x; ey = elbow.y; } // a pose that sets its own
   strokeLimb(arm, armColor(ch), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(ex, ey); ctx.lineTo(hand.x, hand.y); });
 }
 
