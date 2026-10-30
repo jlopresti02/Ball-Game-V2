@@ -371,18 +371,9 @@ function drawCheater(b) {
     return;
   }
   if (b.cheater && b.cheater.mode === "bat") {
-    // The bat: up on his shoulder, or swung through in a flat arc.
-    var base0 = Math.atan2(ny, nx), ang, dir = a && a.kind === "bat" ? a.dir : 1;
-    if (a && a.kind === "bat") {
-      var sk = Math.min(1, a.t / ch.cheater.bat.swing); sk = sk * sk * (3 - 2 * sk);
-      ang = base0 - dir * 1.5 + dir * 2.9 * sk;
-    } else { drawBatIdle(b); return; }
-    var hx4 = b.x + Math.cos(ang) * b.r * 0.85, hy4 = b.y + Math.sin(ang) * b.r * 0.85;
-    var shx4 = b.x + Math.cos(ang) * b.r * 0.4, shy4 = b.y + Math.sin(ang) * b.r * 0.4;
-    drawBatGuardHand(b);
-    drawBat(hx4, hy4, ang, b.r * 1.6);
-    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx4, shy4); ctx.lineTo(hx4, hy4); });
-    drawGloveAt(hx4, hy4, gr, ch);
+    // The bat: held and played with between swings, or swung two-handed
+    // across at them (one set of poses, so it flows between the two).
+    drawBatIdle(b, a && a.kind === "bat" ? Math.min(1, a.t / ch.cheater.bat.swing) : null);
   }
 }
 
@@ -395,7 +386,7 @@ function drawCheater(b) {
 // smacks of the bat into his free palm, and a twirl of it out to the side.
 var BAT_IDLE_LOOP = 4.6;
 function batSide(b) { var o = balls[1 - b.id]; return o.x > b.x ? -1 : 1; } // 1 = his bat out on screen right
-function drawBatIdle(b) {
+function drawBatIdle(b, swing) {
   var ch = b.char, r = b.r, len = r * 1.6, s = batSide(b);
   function P(x, y) { return { x: b.x + x * r, y: b.y + y * r }; } // x measured toward the bat side
   function Q(x, y) { return P(x * s, y); }
@@ -404,7 +395,25 @@ function drawBatIdle(b) {
   var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   var bSh = Q(0.66, -0.3), fSh = Q(-0.66, -0.3);
   var bH, fH, batA, bEl = null, fEl = null, key;
-  if (sp > 60) {
+  if (swing != null) {
+    // Two hands on it, from cocked up over his shoulder, across his chest at
+    // them and through.
+    key = "swing";
+    var sk = swing * swing * (3 - 2 * swing);
+    var hs = Q(0.55, -0.25), he = Q(-0.55, 0.05);
+    bH = { x: hs.x + (he.x - hs.x) * sk, y: hs.y + (he.y - hs.y) * sk };
+    batA = A(-Math.PI / 2 + 0.6 - (Math.PI / 2 + 1.17) * sk);
+    fH = { x: bH.x + Math.cos(batA) * len * 0.18, y: bH.y + Math.sin(batA) * len * 0.18 };
+    if (swing > 0.15 && swing < 0.85 && !reduceMotion) {
+      ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineCap = "round";
+      for (var i = 1; i <= 3; i++) {
+        var ga = batA + s * i * 0.22;
+        ctx.lineWidth = 5 - i;
+        ctx.beginPath(); ctx.moveTo(bH.x + Math.cos(ga) * len * 0.45, bH.y + Math.sin(ga) * len * 0.45); ctx.lineTo(bH.x + Math.cos(ga) * len, bH.y + Math.sin(ga) * len); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  } else if (sp > 60) {
     key = "walk"; b.batIdleT0 = null;
     // Resting on his shoulder, barrel up behind his head, bouncing.
     var st = t * 10, bob = Math.abs(Math.sin(st)) * 0.08;
@@ -459,13 +468,13 @@ function drawBatIdle(b) {
 // from the last drawn pose is carried as an offset that fades out over about
 // a third of a second (closer to a second when he starts or stops walking,
 // and out of the twirl). The last value is the bat's angle.
-var BAT_BLEND_RATE = 8, BAT_BLEND_SLOW = 3.5; // the slow one into and out of walking, and the twirl back to the stance
+var BAT_BLEND_RATE = 8, BAT_BLEND_SLOW = 3.5, BAT_BLEND_SNAP = 25; // the slow one into and out of walking, and the twirl back to the stance
 function batBlend(b, key, pose) {
   var now = performance.now() / 1000, st = b.batBlend;
   if (!st || now - st.t > 0.25) st = b.batBlend = { key: key, t: now, off: null, last: null };
   var dt = Math.max(0, now - st.t); st.t = now;
   if (st.key !== key && st.last) {
-    st.rate = /walk/.test(st.key + key) || /twirl/.test(st.key) ? BAT_BLEND_SLOW : BAT_BLEND_RATE;
+    st.rate = key === "swing" ? BAT_BLEND_SNAP : /walk/.test(st.key + key) || /twirl/.test(st.key) ? BAT_BLEND_SLOW : BAT_BLEND_RATE;
     st.off = pose.map(function (v, i) {
       var d = st.last[i] - v;
       if (i === pose.length - 1) d = Math.atan2(Math.sin(d), Math.cos(d)); // the short way round
@@ -501,14 +510,6 @@ function drawBentArm(b, sh, hand, side, elbow) {
   var ch = b.char, arm = (ch.punch.size || 13) * 0.75;
   var e = elbow || armElbow(b, sh, hand, side), ex = e.x, ey = e.y; // a pose can set its own
   strokeLimb(arm, armColor(ch), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(ex, ey); ctx.lineTo(hand.x, hand.y); });
-}
-
-// His free glove in close at his chest while he swings.
-function drawBatGuardHand(b) {
-  var s = batSide(b), r = b.r;
-  var sh = { x: b.x - s * 0.66 * r, y: b.y - 0.3 * r }, g = { x: b.x - s * 0.38 * r, y: b.y };
-  drawBentArm(b, sh, g, -s);
-  drawGloveAt(g.x, g.y, r * 0.22, b.char);
 }
 
 function drawBat(x, y, a, len) {
