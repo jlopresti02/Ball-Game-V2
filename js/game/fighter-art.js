@@ -280,36 +280,41 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   };
   c.fillStyle = hc;
   if (look.hair === "crop") {
-    // Short faded sides, and a short top brushed straight up into a spiky
-    // quiff over an arched hairline that comes to a point in the middle and
-    // recedes at both temples
-    c.save(); c.beginPath(); c.rect(-r, -r, r * 0.3, r); c.rect(r * 0.7, -r, r * 0.3, r); c.clip();
-    c.fillStyle = shadeHex(hc, -0.12); hairline(); c.fill();
+    // Buzzed sides (a solid darker skin tone), and a short dark top sitting
+    // high on the head: deep recession at both temples, with a forelock
+    // in the middle flicking forward and over to one side
+    c.save(); c.beginPath(); c.rect(-r, -r, r * 0.26, r); c.rect(r * 0.74, -r, r * 0.26, r); c.clip();
+    c.fillStyle = mixHex(look.skin, hc, 0.35); hairline(); c.fill();
     c.restore();
-    var crg = c.createLinearGradient(0, -r, 0, -r * 0.6);
-    crg.addColorStop(0, shadeHex(hc, -0.2)); crg.addColorStop(1, shadeHex(hc, 0.1));
+    var crg = c.createLinearGradient(0, -r, 0, -r * 0.7);
+    crg.addColorStop(0, shadeHex(hc, -0.15)); crg.addColorStop(1, shadeHex(hc, 0.12));
     c.fillStyle = crg;
     var front = function () {
       c.beginPath();
-      c.moveTo(-r * 0.8, -r);
-      c.quadraticCurveTo(-r * 0.8, -r * 0.8, -r * 0.66, -r * 0.8);
-      c.bezierCurveTo(-r * 0.5, -r * 0.7, -r * 0.2, -r * 0.64, 0, -r * 0.64);
-      c.bezierCurveTo(r * 0.2, -r * 0.64, r * 0.5, -r * 0.7, r * 0.66, -r * 0.8);
-      c.quadraticCurveTo(r * 0.8, -r * 0.8, r * 0.8, -r);
+      c.moveTo(-r * 0.74, -r);
+      c.lineTo(-r * 0.74, -r * 0.8);
+      // Temple, pulled well back
+      c.quadraticCurveTo(-r * 0.58, -r * 0.86, -r * 0.42, -r * 0.8);
+      // Forelock: dips down in the middle and flicks out to the side
+      c.quadraticCurveTo(-r * 0.3, -r * 0.74, -r * 0.18, -r * 0.7);
+      c.quadraticCurveTo(-r * 0.04, -r * 0.66, r * 0.02, -r * 0.7);
+      c.quadraticCurveTo(r * 0.12, -r * 0.76, r * 0.3, -r * 0.78);
+      c.quadraticCurveTo(r * 0.5, -r * 0.84, r * 0.6, -r * 0.86);
+      c.quadraticCurveTo(r * 0.7, -r * 0.84, r * 0.74, -r * 0.8);
+      c.lineTo(r * 0.74, -r);
       c.closePath();
     };
     front(); c.fill();
-    c.strokeStyle = shadeHex(hc, -0.45); c.lineWidth = lw(0.018); c.stroke();
-    // Brushed-up texture: strands rising from the hairline, fanning out a
-    // little, light at the quiff in the middle
+    c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.016); c.stroke();
+    // Texture: short strands brushed up and over toward the forelock
     c.save(); front(); c.clip();
     c.lineCap = "round";
-    for (var qs = -7; qs <= 7; qs++) {
-      var qx = qs * r * 0.085, qy = -r * (0.62 + Math.pow(Math.abs(qs) / 7, 1.6) * 0.18);
-      c.strokeStyle = Math.abs(qs) < 3 ? shadeHex(hc, 0.35) : (qs % 2 ? shadeHex(hc, -0.3) : shadeHex(hc, 0.2));
-      c.lineWidth = lw(Math.abs(qs) < 3 ? 0.02 : 0.014); c.globalAlpha = 0.55;
-      c.beginPath(); c.moveTo(qx, qy + r * 0.02);
-      c.quadraticCurveTo(qx + qs * r * 0.01, qy - r * 0.12, qx + qs * r * 0.03, qy - r * 0.26); c.stroke();
+    for (var qs = -6; qs <= 6; qs++) {
+      var qx = qs * r * 0.1, qy = -r * (0.72 + Math.abs(qs + 1) * 0.012);
+      c.strokeStyle = qs % 2 ? shadeHex(hc, -0.3) : shadeHex(hc, 0.3);
+      c.lineWidth = lw(0.011); c.globalAlpha = 0.4;
+      c.beginPath(); c.moveTo(qx - r * 0.02, qy);
+      c.quadraticCurveTo(qx + r * 0.03, qy - r * 0.12, qx + r * 0.1, qy - r * 0.24); c.stroke();
     }
     c.globalAlpha = 1;
     c.restore();
@@ -448,27 +453,30 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.beard === "boxed") {
     var bc = look.beardColor || hc;
     var boxed = function () {
+      // Thin sideburns from the ears down the side of the head, a low cheek
+      // line running diagonally in to a thin moustache, and a fuller chin
       c.beginPath();
-      c.moveTo(-r * 0.86, -r * 0.6);
-      c.lineTo(-r * 0.74, -r * 0.62);
-      c.quadraticCurveTo(-r * 0.66, -r * 0.48, -r * 0.42, -r * 0.46);
-      c.quadraticCurveTo(-r * 0.2, -r * 0.5, 0, -r * 0.5);
-      c.quadraticCurveTo(r * 0.2, -r * 0.5, r * 0.42, -r * 0.46);
-      c.quadraticCurveTo(r * 0.66, -r * 0.48, r * 0.74, -r * 0.62);
-      c.lineTo(r * 0.86, -r * 0.6);
-      c.quadraticCurveTo(r * 0.82, -r * 0.3, r * 0.34, jaw + r * 0.03);
-      c.quadraticCurveTo(0, jaw + r * 0.15, -r * 0.34, jaw + r * 0.03);
-      c.quadraticCurveTo(-r * 0.82, -r * 0.3, -r * 0.86, -r * 0.6);
+      c.moveTo(-r * 0.9, -r * 0.6);
+      c.lineTo(-r * 0.8, -r * 0.6);
+      c.quadraticCurveTo(-r * 0.74, -r * 0.46, -r * 0.5, -r * 0.42);
+      c.quadraticCurveTo(-r * 0.36, -r * 0.4, -r * 0.24, -r * 0.45);
+      c.quadraticCurveTo(0, -r * 0.5, r * 0.24, -r * 0.45);
+      c.quadraticCurveTo(r * 0.36, -r * 0.4, r * 0.5, -r * 0.42);
+      c.quadraticCurveTo(r * 0.74, -r * 0.46, r * 0.8, -r * 0.6);
+      c.lineTo(r * 0.9, -r * 0.6);
+      c.quadraticCurveTo(r * 0.86, -r * 0.3, r * 0.36, jaw + r * 0.04);
+      c.quadraticCurveTo(0, jaw + r * 0.17, -r * 0.36, jaw + r * 0.04);
+      c.quadraticCurveTo(-r * 0.86, -r * 0.3, -r * 0.9, -r * 0.6);
       c.closePath();
     };
     c.fillStyle = bc; boxed(); c.fill();
     c.save(); boxed(); c.clip();
-    // Moustache: a denser band across the top lip
+    // Fuller, darker chin under the lip
     c.globalAlpha = 0.35; c.fillStyle = shadeHex(bc, -0.25);
-    c.beginPath(); c.ellipse(0, -r * 0.45, r * 0.3, r * 0.05, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(0, jaw - r * 0.01, r * 0.26, r * 0.08, 0, 0, Math.PI * 2); c.fill();
     var br2 = artRand(17);
     c.fillStyle = shadeHex(bc, -0.35); c.globalAlpha = 0.5;
-    for (var bg = 0; bg < 160; bg++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * r * 0.38, r * 0.016, r * 0.016);
+    for (var bg = 0; bg < 160; bg++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * r * 0.42, r * 0.016, r * 0.016);
     c.fillStyle = shadeHex(bc, 0.35); c.globalAlpha = 0.45;
     for (var bh = 0; bh < 70; bh++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * r * 0.38, r * 0.014, r * 0.014);
     c.restore();

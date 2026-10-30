@@ -93,10 +93,10 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours (`accent`: optional stripe colour for `pinstripe` shorts) |
 | `build` | `muscular`, `lean`, `stocky` |
 | `core` | optional `solid`: a thick, smooth core with no six pack (muscular/lean builds) |
-| `hair` | `bald`, `stubble`, `buzz`, `crop` (faded sides, top brushed up into a spiky quiff over a hairline peaked in the middle and receding at the temples), `twists`, `short`, `long`, `mohawk`, `dreads` |
+| `hair` | `bald`, `stubble`, `buzz`, `crop` (buzzed sides, short top sitting high with deep temple recession and a forelock flicking to one side), `twists`, `short`, `long`, `mohawk`, `dreads` |
 | `hairPuff` | `true` puts big twisted hair as a second circle behind the top of the ball (contained layout) |
 | `cane` | `true` gives a white cane with a red tip at the right side (contained layout); pass `opts.caneSwing` (radians) to sweep it |
-| `beard` | `none`, `stubble`, `short`, `boxed` (short dense beard with moustache and grain), `chinstrap`, `full` |
+| `beard` | `none`, `stubble`, `short`, `boxed` (short beard: thin sideburns, low cheek line, thin moustache, fuller chin), `chinstrap`, `full` |
 | `beardColor` | optional hex colour for the beard (defaults to `hairColor`) |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
