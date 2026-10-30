@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -620,13 +620,13 @@ function playKnockout() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     withClip("knockout", function (buf) {
-      var now = ctx.currentTime;
-      cutInTalk("knockout", 0.85);
+      if (!cutInTalk("knockout", 0.85)) return;
+      var at = talkCutAt; // later than now if Gane's Herb Dean line is still going
       var c = crowd;
       if (c && c.gain) {
-        c.duckUntil = now + buf.duration - 1;
-        c.gain.gain.cancelScheduledValues(now);
-        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.4, now, 0.1);
+        c.duckUntil = at + buf.duration - 1;
+        c.gain.gain.cancelScheduledValues(ctx.currentTime);
+        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.4, at, 0.1);
       }
     });
   } catch (e) { /* never let audio break the game */ }
@@ -651,10 +651,14 @@ function playClip(name, gain, when, rate) {
 // time: if another line comes up while one is going and it's due to end
 // within TALK_WAIT seconds, the new line waits and plays right after it.
 // Otherwise the new line is skipped. The big moments (the knockout call and
-// Do Bronx) cut in instead: they stop whatever line is going.
+// Do Bronx) cut in instead: they stop whatever line is going. A priority line
+// (Gane's Herb Dean special) outranks all of them: it cuts in, and nothing
+// cuts it off; a cut-in waits for it to finish instead.
 var TALK_WAIT = 1.5;  // how long a line will wait for the current one to finish
 var TALK_GAP = 0.15;  // breath between two lines
 var talkSrcs = [], talkEnd = 0, talkQueued = false;
+var talkPriorityEnd = 0; // a priority line is playing until then
+var talkCutAt = 0;       // when the last cut-in actually starts
 // Plays `name` on the talk channel. Returns false if it was skipped.
 function playTalk(name, gain) {
   var ctx = audioCtx, buf = clipBuffers[name];
@@ -675,17 +679,37 @@ function playTalk(name, gain) {
   return true;
 }
 // Cuts in on the talk channel: whatever line is going (or waiting) stops.
+// While a priority line is going, it plays right after it instead.
 function cutInTalk(name, gain) {
+  var now = audioCtx.currentTime;
+  if (now < talkPriorityEnd) {
+    var at = talkEnd + TALK_GAP, later = playClip(name, gain, at);
+    if (!later) return null;
+    talkSrcs.push(later); talkQueued = true;
+    talkEnd = at + clipBuffers[name].duration;
+    talkCutAt = at;
+    return later;
+  }
   stopTalk();
   var src = playClip(name, gain);
   if (!src) return null;
   talkSrcs = [src];
-  talkEnd = audioCtx.currentTime + clipBuffers[name].duration;
+  talkEnd = now + clipBuffers[name].duration;
+  talkCutAt = now;
+  return src;
+}
+// A priority line: cuts in on everything, and nothing cuts it off.
+function playPriorityTalk(name, gain) {
+  stopTalk();
+  var src = playClip(name, gain);
+  if (!src) return null;
+  talkSrcs = [src];
+  talkEnd = talkPriorityEnd = audioCtx.currentTime + clipBuffers[name].duration;
   return src;
 }
 function stopTalk() {
   talkSrcs.forEach(function (src) { try { src.stop(); } catch (e) { /* already stopped */ } });
-  talkSrcs = []; talkEnd = 0; talkQueued = false;
+  talkSrcs = []; talkEnd = 0; talkQueued = false; talkPriorityEnd = 0;
 }
 
 // Do Bronx (dobronx.js): "Charrrles... Do... BRONX!" from the start of the
@@ -751,6 +775,16 @@ function playChairShot() {
 // ("ganeBatCall") or an eye poke ("ganePokeCall") in Cheater mode
 // (cheater.js). The fades are in the clips themselves. Returns false if the
 // line got skipped, so it can be tried again on the next one.
+// Gane's Herb Dean special: Joe's clip as the special starts, as a priority
+// line, so no other talking clip cuts it off or plays over it.
+function playHerbDeanLine() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    withClip("ganeHerbDean", function () { playPriorityTalk("ganeHerbDean", 0.9); });
+  } catch (e) { /* never let audio break the game */ }
+}
 function playGaneCall(name) {
   try {
     var ctx = getAudioCtx();

@@ -45,6 +45,7 @@ function updateHerbDean(self, other, dt) {
     herbShow = HERB_SHOW;
     floater(self.x, self.y - self.r - 26, "HERB DEAN!", "crit");
     playWhoosh();
+    playHerbDeanLine(); // Joe's clip, over every other talking clip
     herbEnters(self); // already pushing through the crowd while he's announced
   }
   var m = self.igbb;
