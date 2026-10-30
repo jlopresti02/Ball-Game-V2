@@ -360,7 +360,7 @@ function drawHerbDeanSpecial(b) {
     if (k < 0.12) ang = base - m.side * (0.5 - 0.5 * (k / 0.12)) ;          // follow-through settling
     else if (k < 0.72) { var e = (k - 0.12) / 0.6; e = e * (2 - e); ang = base + m.side * 2.4 * e + (e > 0.85 ? Math.sin(m.swingT * 80) * 0.06 : 0); }
     else { var f = (k - 0.72) / 0.28; f = f * f; ang = base + m.side * (2.4 - 2.9 * f); whip = true; }
-  } else { drawBatIdle(b, base); return; } // pulling it out / running them down (cheater.js)
+  } else { drawBatIdle(b); return; } // pulling it out / running them down (cheater.js)
   var arm = (ch.punch.size || 13) * 0.75, bl = b.r * 1.7;
   var hx = b.x + Math.cos(ang) * b.r * 0.85, hy = b.y + Math.sin(ang) * b.r * 0.85;
   var shx = b.x + Math.cos(ang) * b.r * 0.4, shy = b.y + Math.sin(ang) * b.r * 0.4;

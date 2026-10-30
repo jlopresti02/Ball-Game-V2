@@ -9945,74 +9945,94 @@ function drawCheater(b) {
     if (a && a.kind === "bat") {
       var sk = Math.min(1, a.t / ch.cheater.bat.swing); sk = sk * sk * (3 - 2 * sk);
       ang = base0 - dir * 1.5 + dir * 2.9 * sk;
-    } else { drawBatIdle(b, base0); return; }
+    } else { drawBatIdle(b); return; }
     var hx4 = b.x + Math.cos(ang) * b.r * 0.85, hy4 = b.y + Math.sin(ang) * b.r * 0.85;
     var shx4 = b.x + Math.cos(ang) * b.r * 0.4, shy4 = b.y + Math.sin(ang) * b.r * 0.4;
-    drawBatGuardHand(b, base0, 0);
+    drawBatGuardHand(b);
     drawBat(hx4, hy4, ang, b.r * 1.6);
     strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx4, shy4); ctx.lineTo(hx4, hy4); });
     drawGloveAt(hx4, hy4, gr, ch);
   }
 }
 
-// Holding the bat between swings, facing `face` (radians). On the move it
-// rides on his shoulder, bouncing with his stride, free hand pumping. Stood
-// still he loops through a batter's waggle, smacking the bat into his free
-// palm three times, and a twirl of the bat in his hand.
-var BAT_IDLE_LOOP = 4.4;
-function drawBatIdle(b, face) {
-  var ch = b.char, gr = b.r * 0.22, arm = (ch.punch.size || 13) * 0.75, len = b.r * 1.6;
+// Holding the bat between swings. The fighters are drawn front on, so the
+// poses are too: shoulders at the top corners of the ball, the bat in the
+// hand away from the opponent, each arm bent at the elbow. On the move it
+// rides on his shoulder, bouncing with his stride, free glove up by his chin.
+// Stood still he loops through a batter's stance with the bat waggling, three
+// smacks of the bat into his free palm, and a twirl of it out to the side.
+var BAT_IDLE_LOOP = 4.6;
+function batSide(b) { var o = balls[1 - b.id]; return o.x > b.x ? -1 : 1; } // 1 = his bat out on screen right
+function drawBatIdle(b) {
+  var ch = b.char, r = b.r, len = r * 1.6, s = batSide(b);
+  function P(x, y) { return { x: b.x + x * r, y: b.y + y * r }; } // x measured toward the bat side
+  function Q(x, y) { return P(x * s, y); }
+  function A(a) { return s > 0 ? a : Math.PI - a; } // mirrors an angle drawn for s = 1
   var t = performance.now() / 1000 + b.id * 1.7;
   var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-  var handA = face - 2.3, batA, lift = 0, off = null, offBump = 0;
+  var bSh = Q(0.6, -0.45), fSh = Q(-0.6, -0.45);
+  var bH, fH, batA, knob = bH;
   if (sp > 60) {
-    // Strutting with it up on his shoulder.
-    var st = t * 10;
-    batA = handA + Math.sin(st) * 0.25;
-    lift = Math.abs(Math.sin(st)) * b.r * 0.1;
-    offBump = Math.sin(st + Math.PI) * 0.5 + 0.5;
+    // Resting on his shoulder, barrel up behind his head, bouncing.
+    var st = t * 10, bob = Math.abs(Math.sin(st)) * 0.08;
+    bH = Q(0.78, -0.78 - bob);
+    batA = A(-Math.PI / 2 - 0.55 + Math.sin(st) * 0.1);
+    fH = Q(-0.42, -0.62 + Math.sin(st + Math.PI) * 0.06);
+    knob = bH;
   } else {
     var c = t % BAT_IDLE_LOOP;
-    if (c < 1.6) {
-      // Batter's waggle: up and ready, the head circling.
-      handA = face - 1.9; batA = handA - 0.2 + Math.sin(t * 7) * 0.32;
-      lift = Math.cos(t * 7) * b.r * 0.06;
-    } else if (c < 3.6) {
-      // Smacks it into his free palm, three times.
-      var k = (c - 1.6) / 2 * 3, f = k % 1, tap;
-      tap = f < 0.55 ? (f / 0.55) * (f / 0.55) : 1 - (f - 0.55) / 0.45;
-      handA = face - 1.9 + 0.9 * tap; batA = handA + 0.3 + 0.35 * tap;
-      // Free palm held out where the barrel comes down, knocked back on contact.
-      var h1 = face - 1.0, b1 = h1 + 0.65;
-      off = { x: b.x + Math.cos(h1) * b.r * 0.85 + Math.cos(b1) * len * 0.55, y: b.y + Math.sin(h1) * b.r * 0.85 + Math.sin(b1) * len * 0.55 };
-      var knock = f > 0.5 && f < 0.75 ? b.r * 0.1 : 0;
-      off.x += Math.cos(face) * knock; off.y += Math.sin(face) * knock;
+    if (c < 1.8) {
+      // Batter's stance: hands stacked on the handle by his shoulder, the
+      // barrel up and leaning back, waggling.
+      fH = Q(0.62, -0.62);
+      batA = A(-Math.PI / 2 + 0.45 + Math.sin(t * 6) * 0.25);
+      bH = { x: fH.x + Math.cos(batA) * len * 0.2, y: fH.y + Math.sin(batA) * len * 0.2 };
+      knob = fH;
+    } else if (c < 3.9) {
+      // Three smacks into his open palm in front of his belly.
+      var k = (c - 1.8) / 2.1 * 3, f = k % 1;
+      var tap = f < 0.55 ? Math.pow(f / 0.55, 2) : 1 - (f - 0.55) / 0.45;
+      bH = Q(0.72, -0.25);
+      var down = Math.atan2(0.3, -1.05) - Math.PI * 2; // to the palm (s = 1), up and over the top
+      batA = A(-Math.PI / 2 + 0.25 + (down + Math.PI / 2 - 0.25) * tap);
+      var hit = f > 0.5 && f < 0.72 ? 0.06 : 0;
+      fH = Q(-0.42 - hit, 0.08 + hit);
+      knob = bH;
     } else {
-      // Twirls it once round in his hand.
-      var tw = (c - 3.6) / (BAT_IDLE_LOOP - 3.6); tw = tw * tw * (3 - 2 * tw);
-      batA = handA - tw * Math.PI * 2;
+      // Spins it once round in his hand, out to the side.
+      var tw = (c - 3.9) / (BAT_IDLE_LOOP - 3.9); tw = tw * tw * (3 - 2 * tw);
+      bH = Q(1.05, -0.3);
+      batA = A(-Math.PI / 2 + 0.3) + s * tw * Math.PI * 2;
+      fH = Q(-0.42, -0.62);
+      knob = bH;
     }
   }
-  var hx = b.x + Math.cos(handA) * b.r * 0.85, hy = b.y + Math.sin(handA) * b.r * 0.85 - lift;
-  var shx = b.x + Math.cos(handA) * b.r * 0.4, shy = b.y + Math.sin(handA) * b.r * 0.4;
-  if (off) {
-    var osa = face + 1.0, osx = b.x + Math.cos(osa) * b.r * 0.55, osy = b.y + Math.sin(osa) * b.r * 0.55;
-    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(osx, osy); ctx.lineTo(off.x, off.y); });
-  } else drawBatGuardHand(b, face, offBump);
-  drawBat(hx, hy, batA, len);
-  strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); });
-  drawGloveAt(hx, hy, gr, ch);
-  if (off) drawGloveAt(off.x, off.y, gr * 1.1, ch);
+  drawBentArm(b, fSh, fH, -s);
+  drawBat(knob.x, knob.y, batA, len);
+  drawBentArm(b, bSh, bH, s);
+  drawGloveAt(fH.x, fH.y, r * 0.22, ch);
+  drawGloveAt(bH.x, bH.y, r * 0.22, ch);
 }
 
-// The free hand up in a guard on the other side (pump 0..1 pushes it out).
-function drawBatGuardHand(b, face, pump) {
-  var ch = b.char, arm = (ch.punch.size || 13) * 0.75;
-  var sa = face + 1.0, shx = b.x + Math.cos(sa) * b.r * 0.55, shy = b.y + Math.sin(sa) * b.r * 0.55;
-  var ga = face + 0.55, gd = b.r * (0.95 + 0.25 * (pump || 0));
-  var gx = b.x + Math.cos(ga) * gd, gy = b.y + Math.sin(ga) * gd;
-  strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(gx, gy); });
-  drawGloveAt(gx, gy, b.r * 0.22, ch);
+// An arm from shoulder to hand, the elbow dropping down and out to its own
+// side of the body (side 1 = screen right, -1 = screen left).
+function drawBentArm(b, sh, hand, side) {
+  var ch = b.char, arm = (ch.punch.size || 13) * 0.75, seg = b.r * 0.6;
+  var dx = hand.x - sh.x, dy = hand.y - sh.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var reach = Math.min(d, seg * 2 - 0.5), bend = Math.sqrt(Math.max(0, seg * seg - reach * reach / 4));
+  var mx = sh.x + dx / d * reach / 2, my = sh.y + dy / d * reach / 2;
+  var nx = -dy / d, ny = dx / d;
+  if (nx * side * 0.6 + ny < 0) { nx = -nx; ny = -ny; }
+  var ex = mx + nx * bend, ey = my + ny * bend;
+  strokeLimb(arm, armColor(ch), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(ex, ey); ctx.lineTo(hand.x, hand.y); });
+}
+
+// His free glove up by his chin while he swings.
+function drawBatGuardHand(b) {
+  var s = batSide(b), r = b.r;
+  var sh = { x: b.x - s * 0.6 * r, y: b.y - 0.45 * r }, g = { x: b.x - s * 0.42 * r, y: b.y - 0.62 * r };
+  drawBentArm(b, sh, g, -s);
+  drawGloveAt(g.x, g.y, r * 0.22, b.char);
 }
 
 function drawBat(x, y, a, len) {
@@ -10464,7 +10484,7 @@ function drawHerbDeanSpecial(b) {
     if (k < 0.12) ang = base - m.side * (0.5 - 0.5 * (k / 0.12)) ;          // follow-through settling
     else if (k < 0.72) { var e = (k - 0.12) / 0.6; e = e * (2 - e); ang = base + m.side * 2.4 * e + (e > 0.85 ? Math.sin(m.swingT * 80) * 0.06 : 0); }
     else { var f = (k - 0.72) / 0.28; f = f * f; ang = base + m.side * (2.4 - 2.9 * f); whip = true; }
-  } else { drawBatIdle(b, base); return; } // pulling it out / running them down (cheater.js)
+  } else { drawBatIdle(b); return; } // pulling it out / running them down (cheater.js)
   var arm = (ch.punch.size || 13) * 0.75, bl = b.r * 1.7;
   var hx = b.x + Math.cos(ang) * b.r * 0.85, hy = b.y + Math.sin(ang) * b.r * 0.85;
   var shx = b.x + Math.cos(ang) * b.r * 0.4, shy = b.y + Math.sin(ang) * b.r * 0.4;
