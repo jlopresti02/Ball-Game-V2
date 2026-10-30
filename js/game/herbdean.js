@@ -87,7 +87,7 @@ function updateHerbDean(self, other, dt) {
       m.swingT = 0; m.swings++; m.side = -m.side;
       var last = finish;
       var dealt = hurt(other, last ? sp.finisher : sp.batDamage, "igbb", self.id);
-      playPunch(last ? 40 : 14);
+      playBatHit(last);
       impacts.push({ x: other.x - m.nx * other.r, y: other.y - m.ny * other.r, nx: m.nx, ny: m.ny, life: 0.3, max: 0.3, color: "#c98a4b" });
       if (!reduceMotion) shake = Math.max(shake, last ? 20 : 7);
       herbVictimRecoil(other, m.nx, m.ny, last ? 0.6 : 0.42);

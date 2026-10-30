@@ -847,6 +847,39 @@ function playCaneWhack() {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// Ciryl Gane's bat (the Herb Dean special and Cheater mode): a heavy swing
+// whoosh into a deep, meaty thud of the bat sinking in. A big one (the HOME
+// RUN) gets a sharp crack on top. Joe picked this one (option C).
+var BAT_GAIN = 0.5;
+function playBatHit(big) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, hit = now + 0.06; // the whoosh leads in
+    var v = 0.9 + Math.random() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
+    var w = ctx.createBufferSource();
+    w.buffer = caneNoise(ctx);
+    var f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = 2;
+    f.frequency.setValueAtTime(300, now);
+    f.frequency.exponentialRampToValueAtTime(1600, hit);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.35 * k, hit - 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.015);
+    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.start(now); w.stop(hit + 0.03);
+    caneBurst(ctx, hit, 900 * v, 0.8, 0.8 * k, 0.08);              // the slap of it landing
+    caneTone(ctx, hit, "sine", 95 * v, 42, 0.9 * k, big ? 0.35 : 0.2); // the weight
+    caneTone(ctx, hit, "triangle", 240 * v, 120, 0.3 * k, 0.1);
+    if (big) {
+      caneBurst(ctx, hit, 2600, 1.2, 0.9 * BAT_GAIN, 0.08);
+      caneTone(ctx, hit, "triangle", 600, 420, 0.35 * BAT_GAIN, 0.14);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // Gane's Herb Dean special: Joe's clip as the special starts, as a priority
 // line, so no other talking clip cuts it off or plays over it. The looping
 // crowd sits down under it, then swells back up as the clip fades out
