@@ -388,7 +388,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.fillStyle = "rgba(255,255,255,0.35)";
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
-  if (look.hair !== "bald") {
+  if (look.hair !== "bald" && look.hair !== "crop") {  // the crop outlines its own shape
     c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
