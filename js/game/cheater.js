@@ -376,13 +376,74 @@ function drawCheater(b) {
     if (a && a.kind === "bat") {
       var sk = Math.min(1, a.t / ch.cheater.bat.swing); sk = sk * sk * (3 - 2 * sk);
       ang = base0 - dir * 1.5 + dir * 2.9 * sk;
-    } else ang = base0 - 2.3;
+    } else { drawBatIdle(b, base0); return; }
     var hx4 = b.x + Math.cos(ang) * b.r * 0.85, hy4 = b.y + Math.sin(ang) * b.r * 0.85;
     var shx4 = b.x + Math.cos(ang) * b.r * 0.4, shy4 = b.y + Math.sin(ang) * b.r * 0.4;
+    drawBatGuardHand(b, base0, 0);
     drawBat(hx4, hy4, ang, b.r * 1.6);
     strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx4, shy4); ctx.lineTo(hx4, hy4); });
     drawGloveAt(hx4, hy4, gr, ch);
   }
+}
+
+// Holding the bat between swings, facing `face` (radians). On the move it
+// rides on his shoulder, bouncing with his stride, free hand pumping. Stood
+// still he loops through a batter's waggle, smacking the bat into his free
+// palm three times, and a twirl of the bat in his hand.
+var BAT_IDLE_LOOP = 4.4;
+function drawBatIdle(b, face) {
+  var ch = b.char, gr = b.r * 0.22, arm = (ch.punch.size || 13) * 0.75, len = b.r * 1.6;
+  var t = performance.now() / 1000 + b.id * 1.7;
+  var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  var handA = face - 2.3, batA, lift = 0, off = null, offBump = 0;
+  if (sp > 60) {
+    // Strutting with it up on his shoulder.
+    var st = t * 10;
+    batA = handA + Math.sin(st) * 0.25;
+    lift = Math.abs(Math.sin(st)) * b.r * 0.1;
+    offBump = Math.sin(st + Math.PI) * 0.5 + 0.5;
+  } else {
+    var c = t % BAT_IDLE_LOOP;
+    if (c < 1.6) {
+      // Batter's waggle: up and ready, the head circling.
+      handA = face - 1.9; batA = handA - 0.2 + Math.sin(t * 7) * 0.32;
+      lift = Math.cos(t * 7) * b.r * 0.06;
+    } else if (c < 3.6) {
+      // Smacks it into his free palm, three times.
+      var k = (c - 1.6) / 2 * 3, f = k % 1, tap;
+      tap = f < 0.55 ? (f / 0.55) * (f / 0.55) : 1 - (f - 0.55) / 0.45;
+      handA = face - 1.9 + 0.9 * tap; batA = handA + 0.3 + 0.35 * tap;
+      // Free palm held out where the barrel comes down, knocked back on contact.
+      var h1 = face - 1.0, b1 = h1 + 0.65;
+      off = { x: b.x + Math.cos(h1) * b.r * 0.85 + Math.cos(b1) * len * 0.55, y: b.y + Math.sin(h1) * b.r * 0.85 + Math.sin(b1) * len * 0.55 };
+      var knock = f > 0.5 && f < 0.75 ? b.r * 0.1 : 0;
+      off.x += Math.cos(face) * knock; off.y += Math.sin(face) * knock;
+    } else {
+      // Twirls it once round in his hand.
+      var tw = (c - 3.6) / (BAT_IDLE_LOOP - 3.6); tw = tw * tw * (3 - 2 * tw);
+      batA = handA - tw * Math.PI * 2;
+    }
+  }
+  var hx = b.x + Math.cos(handA) * b.r * 0.85, hy = b.y + Math.sin(handA) * b.r * 0.85 - lift;
+  var shx = b.x + Math.cos(handA) * b.r * 0.4, shy = b.y + Math.sin(handA) * b.r * 0.4;
+  if (off) {
+    var osa = face + 1.0, osx = b.x + Math.cos(osa) * b.r * 0.55, osy = b.y + Math.sin(osa) * b.r * 0.55;
+    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(osx, osy); ctx.lineTo(off.x, off.y); });
+  } else drawBatGuardHand(b, face, offBump);
+  drawBat(hx, hy, batA, len);
+  strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); });
+  drawGloveAt(hx, hy, gr, ch);
+  if (off) drawGloveAt(off.x, off.y, gr * 1.1, ch);
+}
+
+// The free hand up in a guard on the other side (pump 0..1 pushes it out).
+function drawBatGuardHand(b, face, pump) {
+  var ch = b.char, arm = (ch.punch.size || 13) * 0.75;
+  var sa = face + 1.0, shx = b.x + Math.cos(sa) * b.r * 0.55, shy = b.y + Math.sin(sa) * b.r * 0.55;
+  var ga = face + 0.55, gd = b.r * (0.95 + 0.25 * (pump || 0));
+  var gx = b.x + Math.cos(ga) * gd, gy = b.y + Math.sin(ga) * gd;
+  strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(gx, gy); });
+  drawGloveAt(gx, gy, b.r * 0.22, ch);
 }
 
 function drawBat(x, y, a, len) {
