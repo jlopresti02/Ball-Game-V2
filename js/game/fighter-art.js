@@ -459,9 +459,9 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.moveTo(-r * 0.9, -r * 0.6);
       c.lineTo(-r * 0.8, -r * 0.6);
       c.quadraticCurveTo(-r * 0.74, -r * 0.46, -r * 0.5, -r * 0.42);
-      c.quadraticCurveTo(-r * 0.36, -r * 0.4, -r * 0.24, -r * 0.45);
-      c.quadraticCurveTo(0, -r * 0.5, r * 0.24, -r * 0.45);
-      c.quadraticCurveTo(r * 0.36, -r * 0.4, r * 0.5, -r * 0.42);
+      c.quadraticCurveTo(-r * 0.36, -r * 0.39, -r * 0.24, -r * 0.43);
+      c.quadraticCurveTo(0, -r * 0.47, r * 0.24, -r * 0.43);
+      c.quadraticCurveTo(r * 0.36, -r * 0.39, r * 0.5, -r * 0.42);
       c.quadraticCurveTo(r * 0.74, -r * 0.46, r * 0.8, -r * 0.6);
       c.lineTo(r * 0.9, -r * 0.6);
       c.quadraticCurveTo(r * 0.86, -r * 0.3, r * 0.36, jaw + r * 0.04);
