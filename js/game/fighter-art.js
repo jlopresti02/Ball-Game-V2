@@ -285,8 +285,8 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.beginPath();
       c.moveTo(-r * 0.8, -r);
       c.quadraticCurveTo(-r * 0.8, -r * 0.8, -r * 0.66, -r * 0.8);
-      c.quadraticCurveTo(-r * 0.3, -r * 0.66, 0, -r * 0.6);
-      c.quadraticCurveTo(r * 0.3, -r * 0.66, r * 0.66, -r * 0.8);
+      c.bezierCurveTo(-r * 0.5, -r * 0.7, -r * 0.2, -r * 0.64, 0, -r * 0.64);
+      c.bezierCurveTo(r * 0.2, -r * 0.64, r * 0.5, -r * 0.7, r * 0.66, -r * 0.8);
       c.quadraticCurveTo(r * 0.8, -r * 0.8, r * 0.8, -r);
       c.closePath();
     };
@@ -435,8 +435,39 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.globalAlpha = 1;
     drawEars();
   }
+  // Boxed beard: short and dense, sideburns running up into the hair, a low
+  // cheek line, a moustache across the top lip and stubble grain throughout
+  if (look.beard === "boxed") {
+    var bc = look.beardColor || hc;
+    var boxed = function () {
+      c.beginPath();
+      c.moveTo(-r * 0.86, -r * 0.6);
+      c.lineTo(-r * 0.74, -r * 0.62);
+      c.quadraticCurveTo(-r * 0.66, -r * 0.48, -r * 0.42, -r * 0.46);
+      c.quadraticCurveTo(-r * 0.2, -r * 0.5, 0, -r * 0.5);
+      c.quadraticCurveTo(r * 0.2, -r * 0.5, r * 0.42, -r * 0.46);
+      c.quadraticCurveTo(r * 0.66, -r * 0.48, r * 0.74, -r * 0.62);
+      c.lineTo(r * 0.86, -r * 0.6);
+      c.quadraticCurveTo(r * 0.82, -r * 0.3, r * 0.34, jaw + r * 0.03);
+      c.quadraticCurveTo(0, jaw + r * 0.15, -r * 0.34, jaw + r * 0.03);
+      c.quadraticCurveTo(-r * 0.82, -r * 0.3, -r * 0.86, -r * 0.6);
+      c.closePath();
+    };
+    c.fillStyle = bc; c.globalAlpha = 0.62; boxed(); c.fill();
+    c.save(); boxed(); c.clip();
+    // Moustache: a denser band across the top lip
+    c.globalAlpha = 0.35; c.fillStyle = shadeHex(bc, -0.25);
+    c.beginPath(); c.ellipse(0, -r * 0.45, r * 0.3, r * 0.05, 0, 0, Math.PI * 2); c.fill();
+    var br2 = artRand(17);
+    c.fillStyle = shadeHex(bc, -0.35); c.globalAlpha = 0.5;
+    for (var bg = 0; bg < 160; bg++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * r * 0.38, r * 0.016, r * 0.016);
+    c.fillStyle = shadeHex(bc, 0.35); c.globalAlpha = 0.45;
+    for (var bh = 0; bh < 70; bh++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * r * 0.38, r * 0.014, r * 0.014);
+    c.restore();
+    c.globalAlpha = 1;
+  }
   // Beard: sideburns down around the jaw to a full chin
-  if (look.beard !== "none" && look.beard !== "chinstrap") {
+  if (look.beard !== "none" && look.beard !== "chinstrap" && look.beard !== "boxed") {
     c.globalAlpha = look.beard === "stubble" ? 0.28 : look.beard === "short" ? 0.55 : 1;
     c.fillStyle = look.beardColor || hc;
     c.beginPath();
@@ -867,7 +898,13 @@ function drawArtBody(c, r, look, ink, name, contained) {
     // from under the pec to the waistband: a dark scene with a figure in it
     var spT = contained ? -r * 0.12 : -r * 0.22, spB = contained ? r * 0.42 : r * 0.42;
     c.save();
-    c.beginPath(); c.moveTo(-r * 0.62, spT); c.lineTo(-r * 0.22, spT + r * 0.03); c.lineTo(-r * 0.2, spB); c.lineTo(-r * 0.6, spB); c.closePath();
+    c.beginPath();
+    c.moveTo(-r * 0.66, spT + r * 0.06);
+    c.quadraticCurveTo(-r * 0.45, spT - r * 0.03, -r * 0.22, spT + r * 0.04);
+    c.quadraticCurveTo(-r * 0.17, (spT + spB) / 2, -r * 0.21, spB);
+    c.lineTo(-r * 0.58, spB);
+    c.quadraticCurveTo(-r * 0.7, (spT + spB) / 2, -r * 0.66, spT + r * 0.06);
+    c.closePath();
     c.fillStyle = "#34404c"; c.globalAlpha = 0.72; c.fill(); c.clip();
     var spr = artRand(21);
     [["#4f6a8a", 5], ["#8b3a2e", 4], ["#c9a46a", 3]].forEach(function (pc) {
