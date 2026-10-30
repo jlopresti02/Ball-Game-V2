@@ -107,6 +107,7 @@ function draw() {
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
     var hjo = herbJoltOffset(b); wox += hjo.x; woy += hjo.y; // rocked by a bat or a cane (herbdean.js)
     var gbl = ganeBatLean(b); wox += gbl.x; woy += gbl.y; // throwing his weight into a bat swing (cheater.js)
+    var dzo = dizzyOffset(b); wox += dzo.x; woy += dzo.y; // staggering after a haymaker (gaethje.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -291,6 +292,7 @@ function draw() {
     drawShot(b);    // Hokit's double leg
     drawChairShot(b); // and his folding chair
     drawDazed(b);   // stars after a chair shot
+    drawDizzy(b);   // stars and a spiral after a Gaethje haymaker
     drawMock(b);    // and his thumbs down
     drawCheater(b); // Gane cheating
     drawHerbDeanSpecial(b); // and his bat during his special
