@@ -775,6 +775,78 @@ function playChairShot() {
 // ("ganeBatCall") or an eye poke ("ganePokeCall") in Cheater mode
 // (cheater.js). The fades are in the clips themselves. Returns false if the
 // line got skipped, so it can be tried again on the next one.
+// Herb Dean's white cane (herbdean.js): a cheap, rickety plastic one. A
+// quick swish as he brings it down (playCaneSwish, at the start of the
+// strike), then on contact a dull hollow plastic pok with the cane's loose
+// folding joints rattling a few times after it (playCaneWhack).
+function caneNoise(ctx) { if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2); return punchNoise; }
+function caneBurst(ctx, t, freq, q, peak, dur) {
+  var s = ctx.createBufferSource();
+  s.buffer = caneNoise(ctx);
+  var f = ctx.createBiquadFilter();
+  f.type = "bandpass"; f.Q.value = q; f.frequency.value = freq;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.001);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(ctx.destination);
+  s.start(t); s.stop(t + dur + 0.02);
+}
+function caneTone(ctx, t, type, f0, f1, peak, dur) {
+  var o = ctx.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+// One plastic pok: the dull hollow tube plus a papery top end.
+function canePok(ctx, t, v, peak) {
+  caneBurst(ctx, t, 2300 * v, 0.9, peak, 0.035);
+  caneBurst(ctx, t, 5200 * v, 1.2, peak * 0.35, 0.02);
+  caneTone(ctx, t, "triangle", 1350 * v, 1100 * v, peak * 0.28, 0.05);
+}
+function playCaneSwish() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + 0.08;
+    var w = ctx.createBufferSource();
+    w.buffer = caneNoise(ctx);
+    var f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = 3;
+    f.frequency.setValueAtTime(600, now);
+    f.frequency.exponentialRampToValueAtTime(3000, end);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.22, end - 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, end + 0.01);
+    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.start(now); w.stop(end + 0.03);
+  } catch (e) { /* never let audio break the game */ }
+}
+function playCaneWhack() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, v = 0.94 + Math.random() * 0.12;
+    canePok(ctx, now, v, 0.9);
+    caneTone(ctx, now, "sine", 210 * v, 120, 0.25, 0.06); // light, not much behind it
+    // The rattle: a few smaller poks, quieter and quicker each time.
+    var dt = 0.022, pk = 0.42;
+    for (var k = 0; k < 4; k++) {
+      dt *= 0.85 + Math.random() * 0.4; pk *= 0.62;
+      canePok(ctx, now + 0.03 + k * dt * 1.6, v * (1.15 + Math.random() * 0.2), pk);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // Gane's Herb Dean special: Joe's clip as the special starts, as a priority
 // line, so no other talking clip cuts it off or plays over it. The looping
 // crowd sits down under it, then swells back up as the clip fades out

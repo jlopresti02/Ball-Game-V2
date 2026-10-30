@@ -189,7 +189,7 @@ function updateHerb(dt) {
     // Bumps right into the one getting beaten.
     var vx = vic.x - h.x, vy = vic.y - h.y;
     if (h.missed && vic.alive && Math.sqrt(vx * vx + vy * vy) < vic.r + HERB_R + 2) {
-      h.phase = "hit"; h.hitT = 0; h.cyc = 0; h.struck = false;
+      h.phase = "hit"; h.hitT = 0; h.cyc = 0; h.struck = false; h.swished = false;
       h.flip = vx < 0 ? -1 : 1;
       h.ang = Math.atan2(h.y - vic.y, h.x - vic.x);
       floater(vic.x, vic.y - vic.r - 52, "HERB JOINS IN", "crit");
@@ -209,11 +209,12 @@ function updateHerb(dt) {
     // Each whack: a big slow wind-up with the cane raised over his head,
     // then he brings it crashing down on them.
     var stillOn = vic.alive && owner.igbb && owner.igbb.move === "herbdean";
-    if (h.cyc >= CANE_WIND + CANE_STRIKE + CANE_RECOVER) { h.cyc = 0; h.struck = false; }
+    if (h.cyc >= CANE_WIND + CANE_STRIKE + CANE_RECOVER) { h.cyc = 0; h.struck = false; h.swished = false; }
+    if (stillOn && !h.swished && h.cyc >= CANE_WIND) { h.swished = true; playCaneSwish(); } // bringing it down
     if (stillOn && !h.struck && h.cyc >= CANE_WIND + CANE_STRIKE) {
       h.struck = true;
       hurt(vic, sp.caneDamage, "igbb", owner.id);
-      playPunch(18);
+      playCaneWhack();
       var ax = vic.x - h.x, ay = vic.y - h.y, al = Math.sqrt(ax * ax + ay * ay) || 1;
       impacts.push({ x: vic.x - ax / al * vic.r * 0.6, y: vic.y - vic.r * 0.5, nx: ax / al, ny: ay / al, life: 0.32, max: 0.32, color: "#ffffff" });
       herbVictimRecoil(vic, ax / al, ay / al, 0.36);
