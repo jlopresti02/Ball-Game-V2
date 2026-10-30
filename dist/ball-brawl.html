@@ -9744,6 +9744,12 @@ function updateCheaterAct(self, other, dt) {
   if (a.kind === "bat") {
     // Cocks it back first (the tell), swings, and holds the follow-through.
     var swing = cfg.bat.swing, wind = cfg.bat.windup || 0, follow = cfg.bat.follow || 0;
+    // Stalks in on them through the wind-up and lunges with the swing, so
+    // the tell gives them a moment to get away but it isn't a free miss.
+    if (a.t < wind + swing && dd > self.r + other.r + 8) {
+      var chase = a.t < wind ? 230 : 460;
+      self.vx = a.nx * chase; self.vy = a.ny * chase;
+    } else if (a.t < wind + swing) { self.vx *= 0.5; self.vy *= 0.5; }
     if (!a.hit && a.t >= wind + swing * 0.55) {
       a.hit = true;
       var dist = Math.sqrt((other.x - self.x) * (other.x - self.x) + (other.y - self.y) * (other.y - self.y));
