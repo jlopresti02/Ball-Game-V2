@@ -776,13 +776,28 @@ function playChairShot() {
 // (cheater.js). The fades are in the clips themselves. Returns false if the
 // line got skipped, so it can be tried again on the next one.
 // Gane's Herb Dean special: Joe's clip as the special starts, as a priority
-// line, so no other talking clip cuts it off or plays over it.
+// line, so no other talking clip cuts it off or plays over it. The looping
+// crowd sits down under it, then swells back up as the clip fades out
+// (HERB_LINE_BLEND seconds before its end), so one hands over to the other.
+var HERB_LINE_BLEND = 1.6;
 function playHerbDeanLine() {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    withClip("ganeHerbDean", function () { playPriorityTalk("ganeHerbDean", 0.9); });
+    withClip("ganeHerbDean", function (buf) {
+      var src = playPriorityTalk("ganeHerbDean", 0.9);
+      if (!src) return;
+      var now = ctx.currentTime, c = crowd;
+      if (c && c.gain) {
+        c.duckUntil = now + buf.duration - HERB_LINE_BLEND;
+        c.gain.gain.cancelScheduledValues(now);
+        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.6, now, 0.3);
+      }
+      setTimeout(function () {
+        if (talkSrcs[0] === src) crowdReact(0.6); // still ours: the stands come back up
+      }, (buf.duration - HERB_LINE_BLEND) * 1000);
+    });
   } catch (e) { /* never let audio break the game */ }
 }
 function playGaneCall(name) {
