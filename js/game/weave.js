@@ -128,7 +128,8 @@ function updateWeave(self, other, dt) {
     cb.thrown++;
     var last = cb.thrown >= Math.max(1, Math.round(wv.comboHits));
     self.jabAnim = { t: 0, dur: last ? 0.24 : 0.11, sign: cb.thrown % 2 ? 1 : -1, big: last, dx: nx, dy: ny };
-    hurt(other, last ? wv.finalDamage : wv.comboDamage, "combo", self.id);
+    var cdealt = hurt(other, last ? wv.finalDamage : wv.comboDamage, "combo", self.id);
+    if (cdealt > 0) playCritPunch(last);
     if (self.combo !== cb) { checkEnd(); return true; } // reversed by the opponent mid-combo
     if (last) {
       if (!other.justDodged && other.alive) launch(other, nx, ny, Math.max(wv.finalKnockback, SPEED));
