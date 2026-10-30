@@ -153,11 +153,12 @@ function updateAbilities(dt) {
   if (updateSlugfest(dt)) return;
   // Grappler vs Grappler: if both could grab this frame, only one may.
   resolveGrabInitiative(dt);
+  tickDizzy(dt); // staggering about after a Gaethje haymaker (gaethje.js)
   for (var oi = 0; oi < 2; oi++) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
-    if (self.shocked || self.koOut || self.shelled || self.dazed) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
+    if (self.shocked || self.koOut || self.shelled || self.dazed || self.dizzy) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
@@ -213,7 +214,7 @@ function updateAbilities(dt) {
     if (self.char.hasPunch) {
       self.punchCd = Math.max(0, self.punchCd - dt * self.atkRate);
       var pu = self.char.punch;
-      if (!self.punch && !self.kick && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) { // (one limb at a time when it kicks too)
+      if (!self.punch && !self.kick && !self.swing && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) { // (one limb at a time when it kicks too)
         self.punch = { t: 0, hit: false };
         self.punchCd = pu.cooldown;
       }
@@ -224,7 +225,7 @@ function updateAbilities(dt) {
           self.punch.hit = true;
           if (other.alive) {
             var punchDealt = hurt(other, pu.damage, "punch", self.id);
-            if (punchDealt > 0) { if (bmfJabs(self.char)) playBmfJab(); else playPunch(punchDealt); }
+            if (punchDealt > 0) { if (bmfJabs(self.char)) playBmfJab(); else playPunch(punchDealt); violentHit(self, other, 0.5); }
             if (pu.knockback > 0 && !other.justDodged) {
               var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
               other.vx += kx / kd * pu.knockback;
@@ -274,11 +275,17 @@ function updateAbilities(dt) {
     if (self.char.hasGrapple) {
       self.grappleCd = Math.max(0, self.grappleCd - dt * self.atkRate);
       var gr = self.char.grapple, grabReach = gr.reach + (self.doBronx ? DB_REACH : 0);
-      if (!self.grapple && !self.grabHold && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + grabReach) {
+      if (!self.grapple && !self.grabHold && !self.swing && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + grabReach) {
         // Against another Grappler it only shoots for the takedown
         // vsGrapplerChance% of the time (always in the Do Bronx state);
         // otherwise it lets the moment pass.
         if (other.char.hasGrapple && !self.doBronx && Math.random() >= gr.vsGrapplerChance / 100) {
+          self.grappleCd = gr.cooldown;
+          self.initiativeReason = null;
+        } else if (gr.shotChance != null && Math.random() >= gr.shotChance / 100) {
+          // A striker with a takedown in his back pocket (Gaethje): only
+          // shoots shotChance% of the times he's close enough, and keeps
+          // throwing hands the rest of the time.
           self.grappleCd = gr.cooldown;
           self.initiativeReason = null;
         } else if (attemptGrab(self, other)) { // (handles the grab being weaved or blocked: an escape)
@@ -325,6 +332,7 @@ function updateAbilities(dt) {
           if (tgt.alive) {
             hurt(tgt, gr.damage, "grapple", self.id);
             if (!reduceMotion) shake = 14;
+            violentHit(self, tgt, 1);
             burst(tgt);
             checkEnd();
             if (tgt.alive && self.doBronx) {

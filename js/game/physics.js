@@ -23,7 +23,7 @@ function inOrdinaryMovement(b) {
 }
 
 function regulateSpeed(b, dt) {
-  if (!inOrdinaryMovement(b)) return;
+  if (!inOrdinaryMovement(b) || b.dizzy) return; // (dizzy fighters stagger at their own pace, gaethje.js)
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   var normal = b.baseSpeed || SPEED; // lighter fighters roll faster (weight.js)
   var target;

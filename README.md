@@ -82,6 +82,7 @@ Each saved roster fighter has a character file in `characters/` (one JSON file p
 | Charles Oliveira (fighter art) | Grappler | The Grappler's grab and wall slam (but against another Grappler he only shoots for it half the time on contact), Khabib's quick 5-damage punches every 0.7s, 10% block, and the guard (25%) with the BJJ artist submissions (rear naked choke or armbar), special move Do Bronx |
 | Josh Hokit (fighter art) | BMF | The BMF's rapid 5-damage jabs and 75% weave, the armbar shot (5%, and he always lets them go) and the thumbs down taunt. Unlike the BMF he can still weave 50% of attacks while celebrating (`weave.tauntDodge`), and his thumbs down is covered by his normal 75% weave. Special move Chair Shot. Heavyweight |
 | Ciryl Gane (fighter art) | Kicker | The Kicker's long 40-damage kicks (25% chance to be checked) on a longer 4.5s cooldown, plus a steady 12-damage punch up close (1.1s cooldown, 35 reach). He throws one or the other, never both at once. That's his Fighter mode; when the referee falls asleep he switches to Cheater mode (below). Special move Herb Dean. Heavyweight |
+| Justin Gaethje (fighter art) | Brawler | The Brawler's 25-damage punches every 1.2s and 5% opening KO Rush, plus one CTE-style haymaker (30 damage) every 6 seconds that leaves them dizzy for 2.2s, and a double leg: 15% of the times he's close enough he shoots for a takedown and a 35-damage slam into the cage. He sprawls on 40% of shots and reattacks after half his sprawls. 10% block. Everything he lands is violent. Lightweight |
 | Khabib Nurmagomedov (fighter art) | Grappler | The Grappler's grab and wall slam, plus quick 5-damage punches every 0.7s that charge his special extra fast, a back suplex on 60% of his grabs from behind, 10% block, special move Father's Plan |
 
 ## Fighter art
@@ -92,17 +93,21 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 |---|---|
 | `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours (`accent`: optional stripe colour for `pinstripe` shorts) |
 | `build` | `muscular`, `lean`, `stocky` |
-| `hair` | `bald`, `stubble`, `buzz`, `twists`, `short`, `long`, `mohawk`, `dreads` |
+| `core` | optional `solid`: a thick, smooth core with no six pack (muscular/lean builds) |
+| `hair` | `bald`, `stubble`, `buzz`, `crop` (buzzed sides, short top sitting high with deep temple recession and a forelock flicking to one side), `twists`, `short`, `long`, `mohawk`, `dreads` |
 | `hairPuff` | `true` puts big twisted hair as a second circle behind the top of the ball (contained layout) |
 | `cane` | `true` gives a white cane with a red tip at the right side (contained layout); pass `opts.caneSwing` (radians) to sweep it |
-| `beard` | `none`, `stubble`, `short`, `chinstrap`, `full` |
+| `beard` | `none`, `stubble`, `short`, `boxed` (short beard: thin sideburns, low cheek line, thin moustache, bare gap at the mouth, fuller chin), `chinstrap`, `full` |
+| `beardColor` | optional hex colour for the beard (defaults to `hairColor`) |
+| `beardChin` | optional extra length at the chin for a `boxed` beard, as a fraction of the radius (e.g. `0.12`) |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
-| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs), `slash` (jagged streaks in the trim colour) |
+| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs), `slash` (jagged streaks in the trim colour), `usa` (stars-and-stripes panel on one leg, white star on the waistband) |
 | `headwear` | optional: `bandana` (stars-and-stripes bandana over the head) |
 | `glasses` | optional: `shades` (dark sunglasses) |
 | `outfit` | optional: `polo` (collared shirt over the torso, for a referee; `shirt` colour, optional `badge` colour for a chest badge) |
-| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `medallion` (sun medallion on the sternum), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `armInk` gives the punching arms an inked texture |
+| `tattoos` | any of `chest`, `portraits`, `lionCrown` (crowned lion's head mid-chest), `medallion` (sun medallion on the sternum), `eyes` (pair of staring eyes low on the left side, above the waistband), `sidePiece` (big dark colour piece down the right side of the stomach), `script`, `claws`, `leftArm`, `rightArm`, `ribs`, `color` set to true; `leftArm`/`rightArm` can also be `"dense"` (near-solid sleeve, dark emblem on the delt), `"lion"` (lion head on the delt, patchy ink) or `"sun"` (sunburst on the delt, script down the arm); `ribs` can be `"left"` to put the script on the other side; `armInk` gives the punching arms an inked texture |
+| `tattoos.decals` | optional list of tattoo images traced from photos: `{img, x, y, w, h, alpha}`, with `img` a data URI and the box in fractions of the radius (contained layout, kept between the jaw and the shorts) |
 
 ## Submissions
 
@@ -126,6 +131,10 @@ A Grappler's `grapple.vsGrapplerChance` (100 by default) is how often it shoots 
 A fighter with `"hasArmbarShot": true` rolls once a second while it's touching the opponent: `armbarShot.chance`% (5) of the time it shoots a double leg. The shot always lands (no sprawl, weave or block): it drops its level, wraps both arms round their legs and drives them back, then goes straight into the armbar. Whether they tap is the fighter's own `"armbar"` odds; Josh Hokit has `tapBase` and `tapLowHp` at 0, so the one caught always escapes ("LETS IT GO"), and he goes straight into a thumbs down.
 
 A fighter with `"hasThumbsDown": true` mocks the opponent every `thumbsDown.cooldown` seconds (8) when there's some space between them: it stops, sticks an arm out and pumps a thumbs down at them. It gets to them: for `anger` seconds (3) they glow red with an anger mark over their head and steer straight at it, 25% faster than normal. The logic for both is in `js/game/hokit.js`. Josh Hokit has them.
+
+### Haymaker, dizzy, double leg and violent hits
+
+A fighter with `swing.cooldown` set only throws its CTE swing (`hasSwing`) once every that many seconds ("HAYMAKER"), never in the middle of a punch or a grab. With `swing.dizzy` set, a haymaker that lands leaves them dizzy for that many seconds: stars and a spiral circle their head and they stagger about on wobbly legs at half speed, unable to throw anything. A Grappler grab with `grapple.shotChance` set is only shot that share of the times it's in range (it keeps punching the rest of the time), and `grapple.shotName` is called out over its head ("DOUBLE LEG"). A fighter with `"violent": true` makes every punch, haymaker and slam it lands look like it hurts: a short freeze, a big screen shake, a squashed, flashing opponent, an impact ring and a spray of sweat. The logic is in `js/game/gaethje.js`. Justin Gaethje has all four.
 
 A fighter with `"hasCheater": true` cheats whenever the referee isn't looking (`js/game/cheater.js`). In its fights the ref falls asleep with cartoon Z's for `cheater.asleep` seconds (5) after every `cheater.awake` seconds (10) awake. While he sleeps, the fighter drops its normal attacks and picks one trick for the whole nap, each equally likely:
 - **Eye pokes**: does `poke.damage`, and if it lands the opponent is stunned on the spot for a combo (`poke.combo`) they can't slip or block.
@@ -174,6 +183,7 @@ js/game/cheater.js      Ciryl Gane's Cheater mode while the referee sleeps
 js/game/herbdean.js     Ciryl Gane's special move, blind Herb Dean
 js/game/dobronx.js      Do Bronx: the pose, camera flashes, the Brazil arena and the 15-second boost
 js/game/cte.js          CTE's wild swing and forget (heal) abilities
+js/game/gaethje.js      Justin Gaethje's dizzying haymaker and violent hits
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest
 js/game/special.js      Special moves for created characters (IGBB)
 js/dev-fighters.js      Dev Corner-only fighters (older versions and test versions of roster fighters)
