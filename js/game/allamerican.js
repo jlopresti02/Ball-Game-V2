@@ -60,6 +60,7 @@ function updateAllAmerican(self, other, dt) {
       other.dazed = "held"; other.vx = 0; other.vy = 0;
       self.vx = 0; self.vy = 0;
       m.phase = "windup"; m.t = 0; m.nx = dx / d; m.ny = dy / d;
+      playFreeBird(); // the solo kicks in as he lines up the hook, and plays on out on the highway (audio.js)
       m.side = dx >= 0 ? 1 : -1;
       return true;
     }
@@ -121,7 +122,6 @@ function startRoad(self, other, m) {
   self.x = AA_SHOULDER.x; self.y = AA_SHOULDER.y;
   other.x = AA_VICTIM.x; other.y = AA_VICTIM.y;
   aaScene = { t: 0, scrub: roadScrub() };
-  playFreeBird(); // audio.js
 }
 
 function updateRoad(self, other, m, dt) {
@@ -227,7 +227,7 @@ function backToCage(self, other, m) {
 }
 
 function endAllAmerican(self, other) {
-  if (aaScene) stopFreeBird();
+  if (freeBirdPlaying) stopFreeBird();
   aaScene = null;
   self.igbb = null;
   self.specialT = 0;
