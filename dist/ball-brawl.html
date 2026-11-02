@@ -2005,24 +2005,24 @@ function playCritPunch(last) {
 }
 
 // Random fight commentary, only when Justin Gaethje is fighting: the UFC
-// call from his Michael Johnson fight comes in at a random moment early in
-// the fight, then again now and then (COMMENTARY_EVERY). It's a talking clip,
-// so it waits or skips like the rest, and it stays out of special moves; a
-// skipped one tries again shortly.
-var COMMENTARY_FIRST = [6, 18];   // seconds into the fight for the first call
-var COMMENTARY_EVERY = [30, 50];  // seconds between calls after that
-var commentary = { t: 0, next: 0 };
-function between(r) { return r[0] + Math.random() * (r[1] - r[0]); }
-function resetCommentary() { commentary.t = 0; commentary.next = between(COMMENTARY_FIRST); }
+// call from his Michael Johnson fight comes in once per fight, at a random
+// moment between COMMENTARY_AT seconds in. It's a talking clip, so it follows
+// the same rule as the other lines (waits for one about to finish, else is
+// skipped); a skipped call isn't used up, it tries again a moment later.
+var COMMENTARY_AT = [6, 18];
+var commentary = { t: 0, next: 0, done: false };
+function resetCommentary() {
+  commentary.t = 0; commentary.done = false;
+  commentary.next = COMMENTARY_AT[0] + Math.random() * (COMMENTARY_AT[1] - COMMENTARY_AT[0]);
+}
 function gaethjeFighting() {
   return balls.some(function (b) { return b.char && String(b.char.id).indexOf("c-justin-gaethje") === 0; });
 }
 function tickCommentary(dt) {
-  if (!started || over || !gaethjeFighting()) return;
+  if (commentary.done || !started || over || !gaethjeFighting()) return;
   commentary.t += dt;
   if (commentary.t < commentary.next) return;
-  var special = balls.some(function (b) { return b.igbb; }); // a special move is its own show
-  if (!special && playTalk("gaethjeCommentary", 0.8)) commentary.next = commentary.t + between(COMMENTARY_EVERY);
+  if (playTalk("gaethjeCommentary", 0.8)) commentary.done = true;
   else commentary.next = commentary.t + 2;
 }
 
