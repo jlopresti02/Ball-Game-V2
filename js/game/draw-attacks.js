@@ -127,7 +127,7 @@ function drawHands(b, other) {
       var sx = b.x + sgn * b.r * 0.62, sy = b.y - b.r * 0.55;
       ctx.strokeStyle = theme.wall; ctx.lineWidth = b.r * 0.34;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.strokeStyle = armColor(b.char); ctx.lineWidth = b.r * 0.2;
+      ctx.strokeStyle = armColor(b.char, sgn); ctx.lineWidth = b.r * 0.2;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
       ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(hx, hy, b.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();

@@ -16,9 +16,14 @@ function defaultLook() {
 
 // Arms, legs and fists of fighters with art use skin and glove colours;
 // everyone else keeps their fighter colour.
-function armColor(ch) {
+// `side` (-1 screen left, 1 screen right) is passed where both arms show; a
+// lone punching arm leaves it out. tattoos.armInkSide limits the ink to one arm.
+function armColor(ch, side) {
   if (!ch.look) return ch.color;
-  return ch.look.tattoos && ch.look.tattoos.armInk ? sleevePattern(ch.look) : ch.look.skin;
+  var tat = ch.look.tattoos || {};
+  if (!tat.armInk) return ch.look.skin;
+  if (side && tat.armInkSide && side !== (tat.armInkSide === "left" ? -1 : 1)) return ch.look.skin;
+  return sleevePattern(ch.look);
 }
 function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
 
@@ -878,6 +883,16 @@ function drawArtBody(c, r, look, ink, name, contained) {
     var s = p[1], style = tat[p[0]];
     // Sleeve running over the shoulder: bands and curls
     c.save();
+    if (style === "trace") {
+      // A sleeve traced from a photo (tattoos.armDecal), laid down the arm
+      var aim = tat.armDecal && artDecalImage(tat.armDecal);
+      if (aim && aim.complete && aim.naturalWidth) {
+        armSleeveClip(c, r, s);
+        c.drawImage(aim, s > 0 ? r * 0.58 : -r, -r * 0.98, r * 0.42, r * 1.6);
+      }
+      c.restore();
+      return;
+    }
     if (style === "dense" || style === "lion" || style === "sun") {
       drawNamedSleeve(c, r, s, style, inkCol, lw, artSeed(name + p[0]), contained ? 0.86 / 0.59 : 1);
       c.restore();
@@ -1203,14 +1218,19 @@ function drawArtBody(c, r, look, ink, name, contained) {
 // Named sleeve styles, drawn inside the shoulder clip at side `s`.
 // "dense": near solid black-and-grey from shoulder down, dark emblem on the delt.
 // "lion": a lion's head with a shaggy mane on the delt, patchier ink below.
-function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
-  // The arm hangs down the side of the ball, from the shoulder to the shorts
-  var rnd = artRand(seed), inner = r * 0.64, x0 = s * r * 0.8;
+// The arm hangs down the side of the ball, from the shoulder to the shorts
+function armSleeveClip(c, r, s) {
+  var inner = r * 0.64;
   c.beginPath();
   c.moveTo(s * r, -r * 0.95);
   c.quadraticCurveTo(s * (inner - r * 0.04), -r * 0.9, s * (inner - r * 0.04), -r * 0.35);
   c.quadraticCurveTo(s * (inner - r * 0.04), r * 0.1, s * (inner + r * 0.02), r * 0.6);
   c.lineTo(s * r, r * 0.6); c.closePath(); c.clip();
+}
+
+function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
+  var rnd = artRand(seed), inner = r * 0.64, x0 = s * r * 0.8;
+  armSleeveClip(c, r, s);
   c.fillStyle = inkCol;
   c.globalAlpha = style === "dense" ? 0.95 : style === "sun" ? 0.6 : 0.2;
   c.fillRect(s > 0 ? inner - r * 0.1 : -r, -r, r * 0.5, r * 1.6);
@@ -1283,6 +1303,23 @@ function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
 // with black-and-grey swirls and shading, used as the arm stroke in attacks.
 var sleevePatterns = {};
 function sleevePattern(look) {
+  var tat = look.tattoos || {};
+  if (tat.armDecal && typeof document !== "undefined") {
+    // Tile the traced sleeve over the skin, once its image has loaded
+    var dk = look.skin + tat.armDecal.length + tat.armDecal.slice(-24);
+    if (sleevePatterns[dk]) return sleevePatterns[dk];
+    var dim = artDecalImage(tat.armDecal);
+    if (dim.complete && dim.naturalWidth) {
+      var tw = 90, th = Math.round(tw * dim.naturalHeight / dim.naturalWidth / 2);
+      var tc = document.createElement("canvas"); tc.width = tw; tc.height = th;
+      var tx = tc.getContext("2d");
+      tx.fillStyle = look.skin; tx.fillRect(0, 0, tw, th);
+      // the middle of the arm, where the ink is densest and least feathered
+      tx.drawImage(dim, dim.naturalWidth * 0.15, dim.naturalHeight * 0.25, dim.naturalWidth * 0.7, dim.naturalHeight * 0.5, 0, 0, tw, th);
+      sleevePatterns[dk] = tx.createPattern(tc, "repeat") || look.skin;
+      return sleevePatterns[dk];
+    }
+  }
   var key = look.skin;
   if (sleevePatterns[key]) return sleevePatterns[key];
   if (typeof document === "undefined") return look.skin;
