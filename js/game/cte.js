@@ -9,6 +9,10 @@
 // immediately: there's no cooldown. CTE stalks in while winding up, steps
 // into the punch as it's thrown, and shuffles slowly while stuck extended.
 //
+// A fighter with `swing.cooldown` set (Justin Gaethje) only throws it once
+// every that many seconds, never mid punch or mid grab, and with
+// `swing.dizzy` set it leaves anyone it lands on dizzy (gaethje.js).
+//
 // Forget: every few seconds CTE forgets some of the damage it's taken and
 // regains health.
 "use strict";
@@ -42,11 +46,16 @@ function updateSwing(self, other, dt) {
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
 
   if (!st) {
-    // Starts a hook at anyone in the general vicinity, no cooldown,
-    // alternating left and right.
+    // Starts a hook at anyone in the general vicinity, no cooldown (unless
+    // it has one), alternating left and right.
+    if (sw.cooldown) {
+      self.swingCd = Math.max(0, (self.swingCd == null ? sw.cooldown * 0.5 : self.swingCd) - dt * self.atkRate);
+      if (self.swingCd > 0 || self.punch || self.grapple || self.grabHold) return;
+    }
     if (other.alive && !other.invincible && d - self.r - other.r < sw.vicinity) {
       self.hookSide = -(self.hookSide || -1);
       self.swing = { phase: "windup", t: 0, ang: Math.atan2(dy, dx), side: self.hookSide, hit: false, k: 0 };
+      if (sw.cooldown) { self.swingCd = sw.cooldown; floater(self.x, self.y - self.r - 40, "HAYMAKER", "note"); }
     }
     return;
   }
@@ -93,6 +102,8 @@ function updateSwing(self, other, dt) {
             other.vy += ky / kl * SWING_KNOCKBACK;
           }
           if (!reduceMotion) shake = Math.max(shake, 10);
+          violentHit(self, other, 1);
+          if (sw.dizzy && other.alive && !other.justDodged) makeDizzy(other, sw.dizzy);
         }
         checkEnd();
       }

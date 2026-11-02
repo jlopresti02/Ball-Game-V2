@@ -52,6 +52,14 @@ function artSeed(str) {
 // outline color (theme.wall in game). opts.head: draw the head on top.
 // opts.layout "contained" keeps the whole fighter inside the ball instead:
 // head in the top third, torso in the middle, shorts in the bottom third.
+// Decal images are created once per source and reused every frame
+var artDecalCache = {};
+function artDecalImage(src) {
+  var im = artDecalCache[src];
+  if (!im) { im = artDecalCache[src] = new Image(); im.src = src; }
+  return im;
+}
+
 function drawFighterArt(c, x, y, r, look, ink, opts) {
   opts = opts || {};
   look = look || defaultLook();
@@ -271,7 +279,53 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.lineTo(r, -r * 0.5 - up); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
   };
   c.fillStyle = hc;
-  if (look.hair === "buzz" || look.hair === "stubble") {
+  if (look.hair === "crop") {
+    // Buzzed sides (a solid darker skin tone), and a short dark top sitting
+    // high on the head: deep recession at both temples, with a forelock
+    // in the middle flicking forward and over to one side
+    c.save(); c.beginPath(); c.rect(-r, -r, r * 0.26, r); c.rect(r * 0.74, -r, r * 0.26, r); c.clip();
+    c.fillStyle = mixHex(look.skin, hc, 0.35); hairline(); c.fill();
+    c.restore();
+    var crg = c.createLinearGradient(0, -r, 0, -r * 0.7);
+    crg.addColorStop(0, shadeHex(hc, -0.15)); crg.addColorStop(1, shadeHex(hc, 0.12));
+    c.fillStyle = crg;
+    var front = function () {
+      c.beginPath();
+      c.moveTo(-r * 0.74, -r);
+      c.lineTo(-r * 0.74, -r * 0.8);
+      // Temple, pulled well back
+      c.quadraticCurveTo(-r * 0.58, -r * 0.86, -r * 0.42, -r * 0.8);
+      // Forelock: dips down in the middle and flicks out to the side
+      c.quadraticCurveTo(-r * 0.3, -r * 0.74, -r * 0.18, -r * 0.7);
+      c.quadraticCurveTo(-r * 0.04, -r * 0.66, r * 0.02, -r * 0.7);
+      c.quadraticCurveTo(r * 0.12, -r * 0.76, r * 0.3, -r * 0.78);
+      c.quadraticCurveTo(r * 0.5, -r * 0.84, r * 0.6, -r * 0.86);
+      c.quadraticCurveTo(r * 0.7, -r * 0.84, r * 0.74, -r * 0.8);
+      c.lineTo(r * 0.74, -r);
+      c.closePath();
+    };
+    front(); c.fill();
+    c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.016); c.stroke();
+    // Texture: short strands brushed up and over toward the forelock
+    c.save(); front(); c.clip();
+    c.lineCap = "round";
+    for (var qs = -6; qs <= 6; qs++) {
+      var qx = qs * r * 0.1, qy = -r * (0.72 + Math.abs(qs + 1) * 0.012);
+      c.strokeStyle = qs % 2 ? shadeHex(hc, -0.3) : shadeHex(hc, 0.3);
+      c.lineWidth = lw(0.011); c.globalAlpha = 0.4;
+      c.beginPath(); c.moveTo(qx - r * 0.02, qy);
+      c.quadraticCurveTo(qx + r * 0.03, qy - r * 0.12, qx + r * 0.1, qy - r * 0.24); c.stroke();
+    }
+    c.globalAlpha = 1;
+    c.restore();
+    // Fade grain on the sides
+    var cr = artRand(9); c.fillStyle = shadeHex(hc, -0.3); c.globalAlpha = 0.4;
+    for (var cg = 0; cg < 50; cg++) {
+      var cgx = (cr() < 0.5 ? -1 : 1) * r * (0.82 + cr() * 0.15), cgy = -r * (0.5 + cr() * 0.25);
+      c.fillRect(cgx, cgy, r * 0.016, r * 0.016);
+    }
+    c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "buzz" || look.hair === "stubble") {
     // A stubble scalp is a see-through shadow, as light as the short beard
     c.globalAlpha = look.hair === "stubble" ? 0.32 : 0.88; hairline(); c.fill();
     var br = artRand(7);
@@ -334,7 +388,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.fillStyle = "rgba(255,255,255,0.35)";
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
-  if (look.hair !== "bald") {
+  if (look.hair !== "bald" && look.hair !== "crop") {  // the crop outlines its own shape
     c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
@@ -394,10 +448,50 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.globalAlpha = 1;
     drawEars();
   }
+  // Boxed beard: short and dense, sideburns running up into the hair, a low
+  // cheek line, a moustache across the top lip and stubble grain throughout
+  if (look.beard === "boxed") {
+    var bc = look.beardColor || hc, bch = r * (look.beardChin || 0);  // extra length at the chin
+    var boxed = function () {
+      // Thin sideburns from the ears down the side of the head, a low cheek
+      // line running diagonally in to a thin moustache, and a fuller chin
+      c.beginPath();
+      c.moveTo(-r * 0.9, -r * 0.6);
+      c.lineTo(-r * 0.8, -r * 0.6);
+      c.quadraticCurveTo(-r * 0.74, -r * 0.46, -r * 0.5, -r * 0.42);
+      c.quadraticCurveTo(-r * 0.36, -r * 0.39, -r * 0.24, -r * 0.43);
+      c.quadraticCurveTo(0, -r * 0.47, r * 0.24, -r * 0.43);
+      c.quadraticCurveTo(r * 0.36, -r * 0.39, r * 0.5, -r * 0.42);
+      c.quadraticCurveTo(r * 0.74, -r * 0.46, r * 0.8, -r * 0.6);
+      c.lineTo(r * 0.9, -r * 0.6);
+      c.quadraticCurveTo(r * 0.86, -r * 0.3, r * 0.36, jaw + r * 0.04 + bch * 0.4);
+      c.quadraticCurveTo(0, jaw + r * 0.17 + bch, -r * 0.36, jaw + r * 0.04 + bch * 0.4);
+      c.quadraticCurveTo(-r * 0.86, -r * 0.3, -r * 0.9, -r * 0.6);
+      c.closePath();
+      // Bare skin where the mouth would be, between moustache and chin
+      c.moveTo(r * 0.17, -r * 0.37);
+      c.quadraticCurveTo(0, -r * 0.43, -r * 0.17, -r * 0.37);
+      c.quadraticCurveTo(0, -r * 0.31, r * 0.17, -r * 0.37);
+      c.closePath();
+    };
+    c.fillStyle = bc; boxed(); c.fill("evenodd");
+    c.save(); boxed(); c.clip("evenodd");
+    // Fuller, darker chin under the lip
+    c.globalAlpha = 0.35; c.fillStyle = shadeHex(bc, -0.25);
+    c.beginPath(); c.ellipse(0, jaw - r * 0.01 + bch * 0.5, r * 0.26, r * 0.08 + bch * 0.5, 0, 0, Math.PI * 2); c.fill();
+    var br2 = artRand(17);
+    c.fillStyle = shadeHex(bc, -0.35); c.globalAlpha = 0.5;
+    for (var bg = 0; bg < 160; bg++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * (r * 0.42 + bch), r * 0.016, r * 0.016);
+    c.fillStyle = shadeHex(bc, 0.35); c.globalAlpha = 0.45;
+    for (var bh = 0; bh < 70; bh++) c.fillRect((br2() * 2 - 1) * r * 0.85, -r * 0.62 + br2() * (r * 0.38 + bch), r * 0.014, r * 0.014);
+    c.restore();
+    c.globalAlpha = 1;
+    drawEars();  // over the sideburns
+  }
   // Beard: sideburns down around the jaw to a full chin
-  if (look.beard !== "none" && look.beard !== "chinstrap") {
+  if (look.beard !== "none" && look.beard !== "chinstrap" && look.beard !== "boxed") {
     c.globalAlpha = look.beard === "stubble" ? 0.28 : look.beard === "short" ? 0.55 : 1;
-    c.fillStyle = hc;
+    c.fillStyle = look.beardColor || hc;
     c.beginPath();
     c.moveTo(-r * 0.74, -r * 0.66);
     c.quadraticCurveTo(-r * 0.62, -r * 0.44, -r * 0.32, -r * 0.5);
@@ -598,6 +692,17 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.globalAlpha = 0.4; c.strokeStyle = line; c.lineWidth = lw(0.04);
     c.beginPath(); c.moveTo(0, -r * 0.05); c.lineTo(0, r * 0.32); c.stroke();
     c.beginPath(); c.arc(0, r * 0.1, r * 0.42, 0.35, Math.PI - 0.35); c.stroke();
+  } else if (look.core === "solid") {
+    // Solid, thick core with no six pack: one broad smooth panel, a faint
+    // centre line and the obliques framing it
+    c.globalAlpha = 0.28; c.fillStyle = hi;
+    c.beginPath(); c.ellipse(0, r * 0.16, r * 0.3, r * 0.22, 0, 0, Math.PI * 2); c.fill();
+    c.globalAlpha = 0.3; c.strokeStyle = line; c.lineWidth = lw(0.035);
+    c.beginPath(); c.moveTo(0, -r * 0.06); c.lineTo(0, r * 0.3); c.stroke();
+    c.globalAlpha = 0.55; c.lineWidth = lw(0.045);
+    [-1, 1].forEach(function (s) {
+      c.beginPath(); c.moveTo(s * r * 0.4, -r * 0.08); c.quadraticCurveTo(s * r * 0.5, r * 0.16, s * r * 0.36, r * 0.4); c.stroke();
+    });
   } else {
     // Six pack
     var top = -r * 0.06, bot = r * 0.4, half = r * 0.2;
@@ -821,12 +926,65 @@ function drawArtBody(c, r, look, ink, name, contained) {
     });
     c.strokeStyle = inkCol;
   }
+  if (tat.sidePiece) {
+    // A big colour piece down the right side of the stomach (screen left),
+    // from under the pec to the waistband: a dark scene with a figure in it
+    var spT = contained ? -r * 0.12 : -r * 0.22, spB = contained ? r * 0.42 : r * 0.42;
+    c.save();
+    c.beginPath();
+    c.moveTo(-r * 0.66, spT + r * 0.06);
+    c.quadraticCurveTo(-r * 0.45, spT - r * 0.03, -r * 0.22, spT + r * 0.04);
+    c.quadraticCurveTo(-r * 0.17, (spT + spB) / 2, -r * 0.21, spB);
+    c.lineTo(-r * 0.58, spB);
+    c.quadraticCurveTo(-r * 0.7, (spT + spB) / 2, -r * 0.66, spT + r * 0.06);
+    c.closePath();
+    c.fillStyle = "#34404c"; c.globalAlpha = 0.72; c.fill(); c.clip();
+    var spr = artRand(21);
+    [["#4f6a8a", 5], ["#8b3a2e", 4], ["#c9a46a", 3]].forEach(function (pc) {
+      c.fillStyle = pc[0]; c.globalAlpha = 0.3;
+      for (var k = 0; k < pc[1]; k++) {
+        c.beginPath(); c.ellipse(-r * (0.22 + spr() * 0.4), spT + spr() * (spB - spT), r * (0.05 + spr() * 0.05), r * (0.06 + spr() * 0.08), spr() * 3, 0, Math.PI * 2); c.fill();
+      }
+    });
+    // A figure's head and shoulders near the top of the piece
+    c.globalAlpha = 0.5; c.fillStyle = shadeHex(look.skin, -0.3);
+    c.beginPath(); c.ellipse(-r * 0.4, spT + r * 0.14, r * 0.06, r * 0.09, 0.2, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(-r * 0.4, spT + r * 0.3, r * 0.15, r * 0.08, 0, Math.PI, 0); c.fill();
+    c.globalAlpha = 0.7; c.lineWidth = lw(0.016); c.strokeStyle = "#1e252c";
+    // Linework through the scene
+    for (var sl2 = 0; sl2 < 6; sl2++) {
+      var ly = spT + r * 0.32 + sl2 * r * 0.07;
+      c.beginPath(); c.moveTo(-r * 0.6, ly); c.quadraticCurveTo(-r * 0.4, ly - r * 0.05, -r * 0.2, ly + r * 0.02); c.stroke();
+    }
+    c.restore();
+    c.globalAlpha = 1;
+  }
+  if (tat.eyes) {
+    // A pair of staring eyes just below the left pec (screen right), linework only
+    var ey0 = contained ? r * 0.31 : r * 0.14, eyq = contained ? 0.86 / 0.59 : 1;
+    c.save(); c.translate(r * 0.6, ey0); c.scale(0.85, eyq * 0.85);
+    c.lineWidth = lw(0.022); c.globalAlpha = 0.85;
+    [-1, 1].forEach(function (es) {
+      var ex = es * r * 0.1;
+      c.beginPath();
+      c.moveTo(ex - r * 0.075, 0);
+      c.quadraticCurveTo(ex, -r * 0.055, ex + r * 0.075, 0);
+      c.quadraticCurveTo(ex, r * 0.045, ex - r * 0.075, 0);
+      c.stroke();
+      c.beginPath(); c.arc(ex, -r * 0.002, r * 0.022, 0, Math.PI * 2); c.fill();
+      // Brow sweeping up and out
+      c.beginPath(); c.moveTo(ex - es * r * 0.06, -r * 0.065); c.quadraticCurveTo(ex + es * r * 0.02, -r * 0.09, ex + es * r * 0.085, -r * 0.06); c.stroke();
+    });
+    c.globalAlpha = 1;
+    c.restore();
+  }
   if (tat.ribs) {
-    // Script running down the right ribs
+    // Script running down the ribs: the right side, or the left with "left"
+    var rbs = tat.ribs === "left" ? -1 : 1;
     c.lineWidth = lw(0.025);
     c.beginPath();
     for (var w = 0; w < 14; w++) {
-      var wy = -r * 0.2 + w * r * 0.035, wx = r * 0.58 + Math.sin(w * 1.9) * r * 0.035;
+      var wy = -r * 0.2 + w * r * 0.035, wx = rbs * (r * 0.58 + Math.sin(w * 1.9) * r * 0.035);
       if (w === 0) c.moveTo(wx, wy); else c.lineTo(wx, wy);
     }
     c.stroke();
@@ -834,6 +992,20 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   c.restore();
   if (contained) c.restore();
+
+  // Tattoo decals traced from reference photos: little images placed in ball
+  // units (x, y, w, h as fractions of r), kept between the jaw and the shorts
+  if (tat.decals && contained) {
+    c.save();
+    c.beginPath(); c.rect(-r, -r * 0.28, r * 2, r * 0.64); c.clip();
+    tat.decals.forEach(function (d) {
+      var im = artDecalImage(d.img);
+      if (!im.complete || !im.naturalWidth) return;
+      c.globalAlpha = d.alpha === undefined ? 1 : d.alpha;
+      c.drawImage(im, r * d.x, r * d.y, r * d.w, r * d.h);
+    });
+    c.restore();
+  }
 
   // A collared polo shirt (a referee's) covering the torso, sleeves at the sides
   if (look.outfit === "polo") {
@@ -948,6 +1120,18 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.beginPath(); c.moveTo(-r * (0.86 - k * 0.12), sTop + band); c.lineTo(-r * (0.5 - k * 0.12), r); c.stroke();
     });
   }
+  if (look.shortsStyle === "usa") {
+    // Stars-and-stripes panel down the outside of the right leg (screen left)
+    c.save();
+    c.beginPath(); c.moveTo(-r, sTop + band); c.lineTo(-r * 0.62, sTop + band); c.lineTo(-r * 0.12, r); c.lineTo(-r, r); c.closePath(); c.clip();
+    for (var us = 0; us < 14; us++) {
+      c.fillStyle = us % 2 ? "#f4f4f2" : "#c8202c";
+      c.beginPath();
+      var uy0 = sTop + band + r * 0.02 + us * r * 0.055;
+      c.moveTo(-r, uy0); c.lineTo(-r * 0.2, uy0 - r * 0.22); c.lineTo(-r * 0.2, uy0 - r * 0.165); c.lineTo(-r, uy0 + r * 0.055); c.closePath(); c.fill();
+    }
+    c.restore();
+  }
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {
@@ -960,6 +1144,17 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.fillStyle = look.shortsStyle === "split" ? shadeHex(look.shorts, -0.35) : look.shortsStyle === "print" ? "#111111" : look.trim;
   c.fillRect(-r, sTop, r * 2, band);
   c.fillStyle = "rgba(0,0,0,0.18)"; c.fillRect(-r, sTop + band * 0.75, r * 2, band * 0.25);
+  if (look.shortsStyle === "usa") {
+    // White star on the waistband over the left hip
+    var stx = r * 0.5, sty = sTop + band * 0.5, sto = band * 0.42;
+    c.fillStyle = "#f4f4f2";
+    c.beginPath();
+    for (var sti = 0; sti < 10; sti++) {
+      var sta = -Math.PI / 2 + sti * Math.PI / 5, strr = sti % 2 ? sto * 0.42 : sto;
+      if (sti === 0) c.moveTo(stx + Math.cos(sta) * strr, sty + Math.sin(sta) * strr); else c.lineTo(stx + Math.cos(sta) * strr, sty + Math.sin(sta) * strr);
+    }
+    c.closePath(); c.fill();
+  }
   if (look.shortsStyle === "print") {
     // Logo patch on the front of the waistband
     c.fillStyle = "#111111"; c.fillRect(r * 0.08, sTop, r * 0.4, band + r * 0.12);

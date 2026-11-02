@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -965,6 +965,175 @@ function playHokitTaunt() {
     if (!buf) { withClip(name); return; }
     if (playTalk(name, 0.9)) lastHokitLine = pick;
   } catch (e) { /* never let audio break the game */ }
+}
+
+// A bald eagle's scream: Joe's recording, a touch higher or lower each time.
+// Until it's decoded, a synthesized cry stands in.
+function playEagleScreech() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (playClip("eagleScreech", 0.8, now, 0.92 + Math.random() * 0.16)) return; // Joe's recording (the synth below is the stand-in)
+    [[0, 0.42, 1], [0.48, 0.24, 0.8]].forEach(function (c) {
+      var t0 = now + c[0], len = c[1];
+      var o = ctx.createOscillator(), o2 = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      o.type = "sawtooth"; o2.type = "square";
+      o.frequency.setValueAtTime(2300, t0); o.frequency.exponentialRampToValueAtTime(1500, t0 + len);
+      o2.frequency.setValueAtTime(2330, t0); o2.frequency.exponentialRampToValueAtTime(1480, t0 + len);
+      lfo.frequency.value = 38; lg.gain.value = 120;
+      lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+      var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 2;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.16 * c[2], t0 + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+      o.connect(bp); o2.connect(bp); bp.connect(g); g.connect(ctx.destination);
+      [o, o2, lfo].forEach(function (n) { n.start(t0); n.stop(t0 + len + 0.05); });
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The Free Bird solo, out on the highway in All American: the crowd drops
+// away to nothing and the solo comes in; back in the cage it fades out and
+// the crowd comes back up.
+var freeBirdPlaying = null; // { src, gain }
+function playFreeBird() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    stopFreeBird(0);
+    var buf = clipBuffers.freeBird;
+    if (!buf) { withClip("freeBird"); return; }
+    var now = ctx.currentTime, c = crowd;
+    if (c && c.gain) {
+      c.duckUntil = now + 60; // held down until the solo stops
+      c.gain.gain.cancelScheduledValues(now);
+      c.gain.gain.setTargetAtTime(0.0001, now, 0.08);
+    }
+    var src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf;
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.9, now + 0.12);
+    src.connect(g); g.connect(ctx.destination);
+    src.start(now);
+    freeBirdPlaying = { src: src, gain: g };
+  } catch (e) { /* never let audio break the game */ }
+}
+function stopFreeBird(fade) {
+  try {
+    var fb = freeBirdPlaying;
+    if (!fb || !audioCtx) return;
+    freeBirdPlaying = null;
+    var now = audioCtx.currentTime, f = fade == null ? 0.6 : fade;
+    fb.gain.gain.cancelScheduledValues(now);
+    fb.gain.gain.setValueAtTime(fb.gain.gain.value || 0.9, now);
+    fb.gain.gain.linearRampToValueAtTime(0, now + f + 0.01);
+    fb.src.stop(now + f + 0.05);
+    if (crowd) { crowd.duckUntil = now; crowdReact(0.8); } // the arena's back
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// "U-S-A! U-S-A!": the chant comes straight in loud the moment the truck
+// hits, holds for a couple of chants, and fades away.
+function playUsaChant() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var buf = clipBuffers.usaChant;
+    if (!buf) { withClip("usaChant"); return; }
+    var now = ctx.currentTime, g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(1.0, now + 0.08);
+    g.gain.setValueAtTime(1.0, now + 1.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + buf.duration);
+    g.connect(ctx.destination);
+    var src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(g);
+    src.start(now);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The truck hitting them: a deep boom you feel more than hear, a crunch of
+// metal on body, a ringing clang off the grille, and glass shattering and
+// skittering across the road after it.
+function playTruckImpact() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, out = ctx.createDynamicsCompressor();
+    out.threshold.value = -10; out.ratio.value = 6;
+    var master = ctx.createGain(); master.gain.value = 1.1;
+    out.connect(master); master.connect(ctx.destination);
+    var noise = makeNoiseBuffer(ctx, 1.6);
+    // Boom: a sub thump dropping in pitch.
+    var b = ctx.createOscillator(), bg = ctx.createGain();
+    b.type = "sine"; b.frequency.setValueAtTime(95, now); b.frequency.exponentialRampToValueAtTime(28, now + 0.6);
+    bg.gain.setValueAtTime(0.0001, now); bg.gain.exponentialRampToValueAtTime(1.0, now + 0.01); bg.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+    b.connect(bg); bg.connect(out); b.start(now); b.stop(now + 0.85);
+    // Crunch: a hard burst of low, distorted noise.
+    var cn = ctx.createBufferSource(), clp = ctx.createBiquadFilter(), cg = ctx.createGain(), sh = ctx.createWaveShaper();
+    var curve = new Float32Array(256);
+    for (var i = 0; i < 256; i++) { var x = i / 128 - 1; curve[i] = Math.tanh(x * 6); }
+    sh.curve = curve;
+    cn.buffer = noise; clp.type = "lowpass"; clp.frequency.setValueAtTime(2600, now); clp.frequency.exponentialRampToValueAtTime(300, now + 0.45);
+    cg.gain.setValueAtTime(0.0001, now); cg.gain.exponentialRampToValueAtTime(0.9, now + 0.005); cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+    cn.connect(sh); sh.connect(clp); clp.connect(cg); cg.connect(out); cn.start(now); cn.stop(now + 0.6);
+    // Clang: inharmonic metal partials ringing off.
+    [182, 431, 697, 1123, 1580].forEach(function (f, k) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = k % 2 ? "square" : "triangle"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12 / (k + 1) + 0.04, now + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5 + 0.25 * (5 - k) / 5);
+      o.connect(g); g.connect(out); o.start(now); o.stop(now + 0.8);
+    });
+    // Glass: bright noise bursts and tinkling bits scattering for a second.
+    for (var j = 0; j < 22; j++) {
+      var t0 = now + 0.02 + (j < 4 ? j * 0.015 : Math.pow(Math.random(), 1.6) * 1.1);
+      var gs = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), gg = ctx.createGain();
+      gs.buffer = noise; hp.type = "bandpass"; hp.frequency.value = 3500 + Math.random() * 5000; hp.Q.value = 6 + Math.random() * 10;
+      var len = j < 4 ? 0.18 : 0.03 + Math.random() * 0.06, vol = j < 4 ? 0.7 : 0.15 + Math.random() * 0.25;
+      gg.gain.setValueAtTime(0.0001, t0); gg.gain.exponentialRampToValueAtTime(vol, t0 + 0.003); gg.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+      gs.connect(hp); hp.connect(gg); gg.connect(out); gs.start(t0, Math.random() * 1.2); gs.stop(t0 + len + 0.02);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The truck bearing down: Joe's air horn (two blasts) over a diesel engine
+// roaring up as it gets closer, peaking as it hits (about 1.9s in).
+function playTruckHorn() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (!playClip("truckHorn", 0.9, now)) { // Joe's air horn (the synth is the stand-in)
+      var hg = ctx.createGain(), lp = ctx.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 2200;
+      hg.gain.setValueAtTime(0.0001, now);
+      hg.gain.exponentialRampToValueAtTime(0.22, now + 0.05);
+      hg.gain.setValueAtTime(0.22, now + 0.85);
+      hg.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+      [311, 392].forEach(function (f) {
+        var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
+        o.connect(lp); o.start(now); o.stop(now + 1.05);
+      });
+      lp.connect(hg); hg.connect(ctx.destination);
+    }
+    // The engine: low rumble rising in pitch and volume.
+    var e = ctx.createOscillator(), eg = ctx.createGain(), elp = ctx.createBiquadFilter();
+    e.type = "sawtooth";
+    e.frequency.setValueAtTime(40, now); e.frequency.exponentialRampToValueAtTime(100, now + 1.9);
+    elp.type = "lowpass"; elp.frequency.value = 400;
+    eg.gain.setValueAtTime(0.0001, now);
+    eg.gain.exponentialRampToValueAtTime(0.28, now + 1.9);
+    eg.gain.exponentialRampToValueAtTime(0.0001, now + 2.6);
+    e.connect(elp); elp.connect(eg); eg.connect(ctx.destination);
+    e.start(now); e.stop(now + 2.65);
+  } catch (e2) { /* never let audio break the game */ }
 }
 
 // The crowd's cameras going off: one loud shutter for the big white-out, then

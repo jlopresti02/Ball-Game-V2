@@ -162,6 +162,8 @@ function grabEscaped(attacker, target) {
 
 function attemptGrab(attacker, target) {
   if (target.slamSafe > 0) return false;
+  var ag = attacker.char.grapple;
+  if (ag && ag.shotName) floater(attacker.x, attacker.y - attacker.r - 44, ag.shotName, "crit"); // calls the shot (Gaethje's DOUBLE LEG)
   if (doBronxPosing(target)) {
     // Slips the grab mid pose (dobronx.js).
     doBronxDodge(target);
