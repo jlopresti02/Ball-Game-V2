@@ -1,11 +1,11 @@
 {
   "id": "c-justin-gaethje",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Justin Gaethje",
   "base": "Brawler",
-  "bio": "\"The Highlight\". Built on the Brawler base with the Brawler's heavy hands and opening KO Rush. Every few seconds he loads up one CTE-style haymaker; if it lands, the opponent is left dizzy, staggering about unable to fight back. The old wrestler in him shoots a double leg now and then for a slam into the cage, sprawls on takedowns and reattacks. Everything he lands looks like it hurts.",
+  "bio": "\"The Highlight\". Built on the Brawler base with the Brawler's heavy hands and opening KO Rush. Every few seconds he loads up one CTE-style haymaker; if it lands, the opponent is left dizzy, staggering about unable to fight back. The old wrestler in him shoots a double leg now and then for a slam into the cage, sprawls on takedowns and reattacks. Everything he lands looks like it hurts. Special move: All American.",
   "color": "#1c2f6e",
   "label": "",
   "imgData": null,
@@ -97,5 +97,15 @@
   },
   "hasForget": false,
   "violent": true,
-  "blockChance": 10
+  "blockChance": 10,
+  "hasSpecial": true,
+  "special": {
+    "move": "allamerican",
+    "chargeTime": 45,
+    "hitCut": 4,
+    "punchDamage": 25,
+    "eagleDamage": 6,
+    "truckDamage": 50,
+    "dazeTime": 1.5
+  }
 }

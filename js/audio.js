@@ -967,6 +967,65 @@ function playHokitTaunt() {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// A bald eagle's scream: a high, harsh cry that wavers and falls away,
+// then a shorter second call.
+function playEagleScreech() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    [[0, 0.42, 1], [0.48, 0.24, 0.8]].forEach(function (c) {
+      var t0 = now + c[0], len = c[1];
+      var o = ctx.createOscillator(), o2 = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      o.type = "sawtooth"; o2.type = "square";
+      o.frequency.setValueAtTime(2300, t0); o.frequency.exponentialRampToValueAtTime(1500, t0 + len);
+      o2.frequency.setValueAtTime(2330, t0); o2.frequency.exponentialRampToValueAtTime(1480, t0 + len);
+      lfo.frequency.value = 38; lg.gain.value = 120;
+      lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+      var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 2;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.16 * c[2], t0 + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+      o.connect(bp); o2.connect(bp); bp.connect(g); g.connect(ctx.destination);
+      [o, o2, lfo].forEach(function (n) { n.start(t0); n.stop(t0 + len + 0.05); });
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// A big pickup bearing down: a long two-tone truck horn over a diesel
+// engine roaring up as it gets closer.
+function playTruckHorn() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    var hg = ctx.createGain(), lp = ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 2200;
+    hg.gain.setValueAtTime(0.0001, now);
+    hg.gain.exponentialRampToValueAtTime(0.22, now + 0.05);
+    hg.gain.setValueAtTime(0.22, now + 0.85);
+    hg.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+    [311, 392].forEach(function (f) {
+      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
+      o.connect(lp); o.start(now); o.stop(now + 1.05);
+    });
+    lp.connect(hg); hg.connect(ctx.destination);
+    // The engine: low rumble rising in pitch and volume.
+    var e = ctx.createOscillator(), eg = ctx.createGain(), elp = ctx.createBiquadFilter();
+    e.type = "sawtooth";
+    e.frequency.setValueAtTime(45, now); e.frequency.exponentialRampToValueAtTime(95, now + 1.1);
+    elp.type = "lowpass"; elp.frequency.value = 400;
+    eg.gain.setValueAtTime(0.0001, now);
+    eg.gain.exponentialRampToValueAtTime(0.25, now + 1.0);
+    eg.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+    e.connect(elp); elp.connect(eg); eg.connect(ctx.destination);
+    e.start(now); e.stop(now + 1.55);
+  } catch (e2) { /* never let audio break the game */ }
+}
+
 // The crowd's cameras going off: one loud shutter for the big white-out, then
 // quieter ones scattered over the next 1.4 seconds as flashes pop in the stands.
 function playCameraFlashes() {

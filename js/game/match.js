@@ -57,6 +57,7 @@ function startMatchWith(ch0, ch1) {
   resetDoBronx();
   resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
+  resetAllAmerican();
   resetCheater();
   resetHerbDean();
 
