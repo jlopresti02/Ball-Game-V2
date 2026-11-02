@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -1032,6 +1032,29 @@ function stopFreeBird(fade) {
     fb.gain.gain.linearRampToValueAtTime(0, now + f + 0.01);
     fb.src.stop(now + f + 0.05);
     if (crowd) { crowd.duckUntil = now; crowdReact(0.8); } // the arena's back
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// "U-S-A! U-S-A!": the chant comes straight in loud the moment the truck
+// hits, carries on a second time over itself, and fades away.
+function playUsaChant() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var buf = clipBuffers.usaChant;
+    if (!buf) { withClip("usaChant"); return; }
+    var now = ctx.currentTime, g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(1.0, now + 0.08);
+    g.gain.setValueAtTime(1.0, now + 1.2);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + buf.duration * 1.85);
+    g.connect(ctx.destination);
+    [0, buf.duration - 0.2].forEach(function (off) {
+      var src = ctx.createBufferSource();
+      src.buffer = buf; src.connect(g);
+      src.start(now + off);
+    });
   } catch (e) { /* never let audio break the game */ }
 }
 

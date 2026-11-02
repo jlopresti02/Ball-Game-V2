@@ -191,6 +191,7 @@ function updateRoad(self, other, m, dt) {
       igbbSparks(other.x, other.y, 1, -0.6, "#cfe8ff", 24, 700); // glass
       m.fly = { x: other.x, y: other.y, vx: 1900, vy: -700, t: 0, spin: 0 };
       aaCheer(self, m, "USA! USA! USA!", 4);
+      playUsaChant(); // audio.js
       m.recoil = null;
     }
   }
