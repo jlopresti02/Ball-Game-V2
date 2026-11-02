@@ -131,6 +131,7 @@ function updateRoad(self, other, m, dt) {
   if (!m.fly) { other.x = AA_VICTIM.x; other.y = AA_VICTIM.y; }
   if (m.recoil) { m.recoil.t += dt; if (m.recoil.t > 0.6) m.recoil = null; }
   m.slashes = m.slashes.filter(function (sl) { sl.t += dt; return sl.t < 0.35; });
+  tickAaPanic(other, m, dt);
 
   // The eagles.
   m.eagles.forEach(function (e, i) {
@@ -247,7 +248,7 @@ function allAmericanOffset(b) {
     var rc = m.recoil, k = Math.exp(-rc.t * 7) * Math.cos(rc.t * 16) * b.r * 0.9;
     return { x: rc.x * k, y: rc.y * k };
   }
-  return { x: 0, y: 0 };
+  return aaPanicOffset(b, m);
 }
 // How far they're turned: cartwheeling after the truck, or wrenched round by an eagle.
 function allAmericanSpin(b) {
@@ -262,9 +263,87 @@ function aaVictimMove(b) {
   return m && m.move === "allamerican" && m.phase === "road" ? m : null;
 }
 // Covering up from the eagles (both gloves over the head).
-function aaCovering(b) {
-  var m = aaVictimMove(b);
-  return !!(m && !m.fly && !(m.truck && m.truck.on && m.truck.t > AA_TRUCK_HIT - 0.5));
+// ---------------------------------------------------------------
+// The victim freaking out
+// ---------------------------------------------------------------
+// "eagles": hopping about on the spot, jerking side to side and flailing at
+// the sky. "lights": the headlights are on them: frozen, shaking, both
+// gloves thrown up at the truck.
+var AA_PANIC_LINES = ["AAAH!", "GET OFF!", "HELP!", "NOT THE FACE!", "WHY EAGLES?!"];
+function aaPanicMode(m) {
+  if (!m || m.fly) return null;
+  if (m.truck && m.truck.on) return "lights";
+  return "eagles";
+}
+function aaCovering(b) { return !!aaPanicMode(aaVictimMove(b)); } // (hands drawn by drawAaPanic)
+
+// Runs each road frame for the victim (from updateRoad): yells, sweat.
+function tickAaPanic(other, m, dt) {
+  var mode = aaPanicMode(m);
+  if (!mode) return;
+  m.panicT = (m.panicT || 0) + dt;
+  if (!m.yelled) { m.yelled = true; floater(other.x, other.y - other.r - 40, "WHAT?!", "note"); }
+  m.yellCd = (m.yellCd == null ? 0.9 : m.yellCd) - dt;
+  if (mode === "eagles" && m.yellCd <= 0) {
+    m.yellCd = 0.75 + Math.random() * 0.4;
+    floater(other.x + (Math.random() - 0.5) * 40, other.y - other.r - 40, AA_PANIC_LINES[Math.floor(Math.random() * AA_PANIC_LINES.length)], "note");
+  }
+  if (mode === "lights" && !m.ohNo) { m.ohNo = true; floater(other.x, other.y - other.r - 46, "OH NO!", "crit"); }
+  // Sweat flying off them.
+  m.sweatCd = (m.sweatCd || 0) - dt;
+  if (m.sweatCd <= 0 && !reduceMotion) {
+    m.sweatCd = mode === "lights" ? 0.05 : 0.09;
+    var a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4, v = 120 + Math.random() * 160;
+    particles.push({ x: other.x + Math.cos(a) * other.r * 0.8, y: other.y - other.r * 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.45, max: 0.45, size: 2.5 + Math.random() * 1.5, color: "#bfe3ff" });
+  }
+}
+
+function aaPanicOffset(b, m) {
+  var mode = aaPanicMode(m);
+  if (!mode || reduceMotion) return { x: 0, y: 0 };
+  var t = m.panicT || 0;
+  if (mode === "eagles") {
+    // Jerking side to side and hopping on the spot.
+    return { x: Math.sin(t * 9) * b.r * 0.3 + (Math.random() - 0.5) * 3, y: -Math.abs(Math.sin(t * 13)) * b.r * 0.22 };
+  }
+  // Frozen in the headlights, shaking harder the closer it gets, leaning away.
+  var k = Math.min(1, m.truck.t / AA_TRUCK_HIT);
+  return { x: (Math.random() - 0.5) * (3 + 7 * k) + b.r * 0.12 * k, y: (Math.random() - 0.5) * (3 + 7 * k) };
+}
+
+// Arms: flailing over their head at the eagles, or both gloves thrown up at
+// the oncoming truck. Plus panic marks round the head.
+function drawAaPanic(b) {
+  var m = aaVictimMove(b), mode = aaPanicMode(m);
+  if (!mode) return;
+  var t = m.panicT || 0, r = b.r, size = (b.char.punch && b.char.punch.size) || 15;
+  [-1, 1].forEach(function (s, i) {
+    var sh = { x: b.x + s * r * 0.62, y: b.y - r * 0.35 }, hand;
+    if (mode === "eagles") {
+      var a = -Math.PI / 2 + s * (0.5 + 0.7 * Math.sin(t * 17 + i * 2.1));
+      hand = { x: sh.x + Math.cos(a) * r * 0.95, y: sh.y + Math.sin(a) * r * 0.95 };
+    } else {
+      // Toward the truck (coming from the left), palms out, trembling.
+      hand = { x: b.x - r * 1.35 + (Math.random() - 0.5) * 4, y: b.y - r * (0.05 + 0.55 * i) + (Math.random() - 0.5) * 4 };
+    }
+    strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
+    drawGloveAt(hand.x, hand.y, size * 0.9, b.char);
+  });
+  // Panic marks: lines popping out round the head, and a big "!" in the lights.
+  ctx.save();
+  ctx.strokeStyle = theme.hit; ctx.lineWidth = 3; ctx.lineCap = "round";
+  var pulse = 0.5 + 0.5 * Math.sin(t * 20);
+  for (var k = 0; k < 3; k++) {
+    var pa = -Math.PI / 2 + (k - 1) * 0.6;
+    var r0 = r * (1.15 + 0.08 * pulse), r1 = r * (1.45 + 0.12 * pulse);
+    ctx.beginPath(); ctx.moveTo(b.x + Math.cos(pa) * r0, b.y + Math.sin(pa) * r0); ctx.lineTo(b.x + Math.cos(pa) * r1, b.y + Math.sin(pa) * r1); ctx.stroke();
+  }
+  if (mode === "lights") {
+    ctx.fillStyle = "#ffd23f"; ctx.strokeStyle = "#16211f"; ctx.lineWidth = 5; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = '900 ' + Math.round(r * (1.1 + 0.15 * pulse)) + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
+    ctx.strokeText("!", b.x + r * 1.35, b.y - r * 0.75); ctx.fillText("!", b.x + r * 1.35, b.y - r * 0.75);
+  }
+  ctx.restore();
 }
 // Claw marks raked across them, fading fast.
 function drawAaSlashes(b) {
