@@ -6640,7 +6640,10 @@ function drawBjjLeg(ch, hip, knee, foot, limb, footTurn, footLen, noShorts) {
   });
 }
 
-function drawGloveAt(x, y, r, ch) {
+// With `ang` (the way the fist points) a fighter with art gets its real
+// glove (drawGlove, fighter-art.js); otherwise a plain round glove.
+function drawGloveAt(x, y, r, ch, ang) {
+  if (ang != null && ch.look) { drawGlove(ctx, x, y, r, ch.look, theme.wall, ang); return; }
   ctx.fillStyle = gloveColor(ch); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 }
@@ -8232,12 +8235,12 @@ function drawThunderLeg(b) {
       var sx = sd * r * 0.55, sy = -r * 0.2;
       var shp = { x: b.x + sx * c - sy * sn, y: b.y + sx * sn + sy * c };
       strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(shp.x, shp.y); ctx.lineTo(gp.x, gp.y); });
-      drawGloveAt(gp.x, gp.y, size * 0.9, b.char);
+      drawGloveAt(gp.x, gp.y, size * 0.9, b.char, Math.atan2(gp.y - shp.y, gp.x - shp.x));
     });
   } else if (tk.step === "hold" && tk.t < 0.3) {
     base = { x: b.x, y: b.y }; foot = { x: b.x + tk.nx * r * 1.7, y: b.y + tk.ny * r * 1.7 };
     var size2 = (b.char.punch && b.char.punch.size) || 15;
-    [-1, 1].forEach(function (sd) { drawGloveAt(b.x + sd * r * 0.9 - tk.nx * r * 0.3, b.y - r * 0.4 - tk.ny * r * 0.3, size2 * 0.9, b.char); }); // hands up, guarding
+    [-1, 1].forEach(function (sd) { drawGloveAt(b.x + sd * r * 0.9 - tk.nx * r * 0.3, b.y - r * 0.4 - tk.ny * r * 0.3, size2 * 0.9, b.char, -Math.PI / 2); }); // hands up, guarding
   } else return;
   ctx.save();
   strokeLimb(r * 0.36, leg, function () { ctx.moveTo(base.x, base.y); ctx.lineTo(foot.x, foot.y); });
@@ -8356,7 +8359,7 @@ function drawAaPanic(b) {
       hand = { x: b.x - r * 1.35 + (Math.random() - 0.5) * 4, y: b.y - r * (0.05 + 0.55 * i) + (Math.random() - 0.5) * 4 };
     }
     strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
-    drawGloveAt(hand.x, hand.y, size * 0.9, b.char);
+    drawGloveAt(hand.x, hand.y, size * 0.9, b.char, Math.atan2(hand.y - sh.y, hand.x - sh.x));
   });
   // Panic marks: lines popping out round the head, and a big "!" in the lights.
   ctx.save();
@@ -8692,10 +8695,10 @@ function drawAllAmerican(b) {
       ctx.restore();
     }
     strokeLimb(size * 0.8, armColor(b.char), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
-    drawGloveAt(hand.x, hand.y, size * (m.phase === "punch" ? 1.3 : 1.1), b.char);
+    drawGloveAt(hand.x, hand.y, size * (m.phase === "punch" ? 1.3 : 1.1), b.char, Math.atan2(hand.y - sh.y, hand.x - sh.x));
     // The lead hand stays up.
     var lead = { x: b.x + nx * b.r * 0.85 + px * b.r * 0.4, y: b.y + ny * b.r * 0.85 + py * b.r * 0.4 };
-    drawGloveAt(lead.x, lead.y, size * 0.9, b.char);
+    drawGloveAt(lead.x, lead.y, size * 0.9, b.char, Math.atan2(ny, nx));
     return;
   }
   if (m.phase === "road") { drawAaPatriot(b, m); return; }
@@ -8791,7 +8794,7 @@ function drawAaPatriot(b, m) {
   ctx.restore();
   [[fsh, fh], [osh, oh]].forEach(function (arm) {
     strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(arm[0].x, arm[0].y); ctx.lineTo(arm[1].x, arm[1].y); });
-    drawGloveAt(arm[1].x, arm[1].y, size * 0.9, b.char);
+    drawGloveAt(arm[1].x, arm[1].y, size * 0.9, b.char, Math.atan2(arm[1].y - arm[0].y, arm[1].x - arm[0].x));
   });
 }
 
@@ -10607,7 +10610,7 @@ function drawArmsUp(b, t) {
     var sh = { x: b.x + k * b.r * 0.62, y: b.y - b.r * 0.5 };
     var hand = { x: b.x + k * b.r * 0.9, y: b.y - b.r * 1.15 - pump };
     strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
-    drawGloveAt(hand.x, hand.y, size * 0.9, b.char);
+    drawGloveAt(hand.x, hand.y, size * 0.9, b.char, Math.atan2(hand.y - sh.y, hand.x - sh.x));
   });
 }
 
