@@ -1120,6 +1120,24 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.beginPath(); c.moveTo(-r * (0.86 - k * 0.12), sTop + band); c.lineTo(-r * (0.5 - k * 0.12), r); c.stroke();
     });
   }
+  if (look.shortsStyle === "flame") {
+    // Ornate flames licking up both legs from the hem: an outer layer in the
+    // accent colour with a brighter gold core
+    var flr = artRand(artSeed(name + "flame"));
+    [[look.accent || "#e8731c", 1], [look.accent2 || "#f6c445", 0.55]].forEach(function (layer) {
+      c.fillStyle = layer[0];
+      [-1, 1].forEach(function (sd) {
+        c.beginPath(); c.moveTo(sd * r, r);
+        for (var fl = 0; fl < 5; fl++) {
+          var fx0 = sd * r * (1 - fl * 0.2), fx1 = sd * r * (0.9 - fl * 0.2), fx2 = sd * r * (0.8 - fl * 0.2);
+          var tip = r - (r - sTop - band) * layer[1] * (0.55 + flr() * 0.45) * (fl % 2 ? 0.75 : 1);
+          c.quadraticCurveTo(fx0, (r + tip) / 2, fx1 + sd * r * 0.03, tip);
+          c.quadraticCurveTo(fx1 - sd * r * 0.02, (r + tip) / 2 + r * 0.04, fx2, r - r * 0.06);
+        }
+        c.lineTo(sd * r * 0.06, r); c.closePath(); c.fill();
+      });
+    });
+  }
   if (look.shortsStyle === "usa") {
     // Stars-and-stripes panel down the outside of the right leg (screen left)
     c.save();
@@ -1312,7 +1330,7 @@ function drawGlove(c, x, y, gr, look, ink, ang) {
     c.beginPath(); c.arc(gr * 0.82, i * gr * 0.3, gr * 0.17, 0, Math.PI * 2); c.fill(); c.stroke();
   }
   // Wrist strap
-  c.fillStyle = shadeHex(col, 0.75); c.lineWidth = Math.max(1.2, gr * 0.14);
+  c.fillStyle = look.gloveStrap || shadeHex(col, 0.75); c.lineWidth = Math.max(1.2, gr * 0.14);
   c.beginPath(); c.rect(-gr * 0.72, -gr * 0.62, gr * 0.3, gr * 1.24); c.fill(); c.stroke();
   c.restore();
 }

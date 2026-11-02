@@ -99,9 +99,10 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `beard` | `none`, `stubble`, `short`, `boxed` (short beard: thin sideburns, low cheek line, thin moustache, bare gap at the mouth, fuller chin), `chinstrap`, `full` |
 | `beardColor` | optional hex colour for the beard (defaults to `hairColor`) |
 | `beardChin` | optional extra length at the chin for a `boxed` beard, as a fraction of the radius (e.g. `0.12`) |
+| `gloveStrap` | optional colour for the glove wrist strap (defaults to a lighter shade of the glove) |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
-| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs), `slash` (jagged streaks in the trim colour), `usa` (stars-and-stripes panel on one leg, white star on the waistband) |
+| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs), `slash` (jagged streaks in the trim colour), `usa` (stars-and-stripes panel on one leg, white star on the waistband), `flame` (flames up both legs in `accent` with an `accent2` core) |
 | `headwear` | optional: `bandana` (stars-and-stripes bandana over the head) |
 | `glasses` | optional: `shades` (dark sunglasses) |
 | `outfit` | optional: `polo` (collared shirt over the torso, for a referee; `shirt` colour, optional `badge` colour for a chest badge) |
