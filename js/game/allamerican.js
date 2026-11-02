@@ -102,6 +102,7 @@ function updateAllAmerican(self, other, dt) {
     return true;
   }
   if (m.phase === "road") return updateRoad(self, other, m, dt);
+  if (m.phase === "thunder") return updateThunder(self, other, m, dt);
   if (m.phase === "back") {
     if (other.dazed && m.t >= sp.dazeTime) { other.dazed = false; setSpeed(other, (other.baseSpeed || SPEED) * 0.6); }
     if (m.t < sp.dazeTime) return true;
@@ -215,19 +216,100 @@ function updateRoad(self, other, m, dt) {
 }
 
 // Another white-out and they're back in the cage where they were.
+// The solo keeps going: they're left on their feet seeing stars, and he
+// backs off to get a run at them for the rolling thunder.
 function backToCage(self, other, m) {
   screenFlash = 1;
-  stopFreeBird();
   aaScene = null;
   m.fly = null;
-  m.phase = "back"; m.t = 0;
-  self.x = m.home.sx; self.y = m.home.sy;
+  m.phase = "thunder"; m.t = 0; m.tk = { step: "run", t: 0 };
   other.x = m.home.ox; other.y = m.home.oy;
-  other.holdAtOne = false;
-  if (other.hp <= 1 && other.alive) { other.dazed = false; hurt(other, 1, "igbb", self.id); }
-  if (!other.alive) { endAllAmerican(self, other); checkEnd(); return; }
+  var tx = m.home.sx - other.x, ty = m.home.sy - other.y, tl = Math.sqrt(tx * tx + ty * ty) || 1;
+  // Backs off (keeping inside the cage) for a run-up.
+  var bx = other.x + tx / tl * 230, by = other.y + ty / tl * 230;
+  if (bx < self.r || bx > W - self.r || by < self.r || by > H - self.r) { bx = other.x - tx / tl * 230; by = other.y - ty / tl * 230; }
+  self.x = Math.min(W - self.r, Math.max(self.r, bx)); self.y = Math.min(H - self.r, Math.max(self.r, by));
   other.dazed = true; // stars
   floater(other.x, other.y - other.r - 34, "DAZED", "note");
+}
+
+// Rolling thunder: a short run, a forward roll through the air, and his
+// heel comes down over the top onto their head.
+var AA_TK_RUN = 0.35, AA_TK_ROLL = 0.6, AA_TK_HOLD = 0.9;
+function updateThunder(self, other, m, dt) {
+  var sp = self.char.special, tk = m.tk;
+  tk.t += dt;
+  other.vx = 0; other.vy = 0;
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  if (tk.step === "run") {
+    if (tk.t < 0.05 && !tk.called) { tk.called = true; floater(self.x, self.y - self.r - 40, "ROLLING THUNDER!", "crit"); playWhoosh(); }
+    var v = 300; // a few quick steps in, leaving room for the roll
+    self.x += dx / d * v * dt; self.y += dy / d * v * dt;
+    if (tk.t >= AA_TK_RUN) {
+      tk.step = "roll"; tk.t = 0;
+      tk.from = { x: self.x, y: self.y }; tk.nx = dx / d; tk.ny = dy / d;
+      tk.to = { x: other.x - tk.nx * (other.r * 0.9), y: other.y - tk.ny * (other.r * 0.9) };
+      tk.side = tk.nx >= 0 ? 1 : -1;
+      playWhoosh();
+    }
+    return true;
+  }
+  if (tk.step === "roll") {
+    var k = Math.min(1, tk.t / AA_TK_ROLL), e = k * k * (3 - 2 * k);
+    self.x = tk.from.x + (tk.to.x - tk.from.x) * e; self.y = tk.from.y + (tk.to.y - tk.from.y) * e;
+    if (k < 1) return true;
+    // The heel lands.
+    other.holdAtOne = false; // this one can finish it
+    hurt(other, sp.thunderDamage, "igbb", self.id);
+    violentHit(self, other, 1.4);
+    other.squash = { t: 0.4, max: 0.4, nx: 0, ny: -1 }; // flattened from above
+    floater(other.x, other.y - other.r - 60, "THUNDER!", "crit");
+    playTruckImpact(); playSlam();
+    hitStop = Math.max(hitStop, 0.22);
+    if (!reduceMotion) shake = Math.max(shake, 44);
+    impacts.push({ x: other.x, y: other.y - other.r * 0.7, nx: 0, ny: -1, life: 0.8, max: 0.8, color: "#ffffff" });
+    impacts.push({ x: other.x, y: other.y, nx: tk.nx, ny: tk.ny, life: 0.6, max: 0.6, color: theme.hit });
+    igbbSparks(other.x, other.y - other.r * 0.7, 0, -1, "#ffe9a8", 40, 800);
+    cameraFlash(); playCameraFlashes();
+    tk.step = "hold"; tk.t = 0;
+    return true;
+  }
+  // Lands crouched over them, then up with both arms raised as the solo fades.
+  if (tk.t > 0.25 && !tk.faded) { tk.faded = true; stopFreeBird(1.6); }
+  if (!other.alive) { if (tk.t >= 0.6) { endAllAmerican(self, other); checkEnd(); return false; } return true; }
+  if (tk.t < AA_TK_HOLD) return true;
+  m.phase = "back"; m.t = 0;
+  return true;
+}
+// His body through the roll: a full forward flip, arcing up off the mat.
+function aaThunderRoll(b) {
+  var m = b.igbb;
+  if (!m || m.move !== "allamerican" || m.phase !== "thunder" || m.tk.step !== "roll") return null;
+  return Math.min(1, m.tk.t / AA_TK_ROLL);
+}
+// The kicking leg: tucked as he rolls over, then swinging over the top and
+// down onto their head heel first.
+function drawThunderLeg(b) {
+  var m = b.igbb;
+  if (!m || m.move !== "allamerican" || m.phase !== "thunder") return;
+  var tk = m.tk, r = b.r;
+  var leg = (b.char.look && b.char.look.skin) || b.char.color;
+  var base, foot;
+  if (tk.step === "roll") {
+    var k = Math.min(1, tk.t / AA_TK_ROLL), spin = tk.side * Math.PI * 2 * k;
+    var a = Math.atan2(tk.ny, tk.nx) + Math.PI + spin; // the leg starts trailing, comes over the top
+    var len = r * (0.9 + 0.8 * k);
+    base = { x: b.x, y: b.y };
+    foot = { x: b.x + Math.cos(a) * len, y: b.y + Math.sin(a) * len };
+    if (k > 0.75) foot = { x: b.x + tk.nx * r * 1.5, y: b.y + tk.ny * r * 1.5 - r * (1 - k) * 2 }; // heel dropping on them
+  } else if (tk.step === "hold" && tk.t < 0.3) {
+    base = { x: b.x, y: b.y }; foot = { x: b.x + tk.nx * r * 1.45, y: b.y + tk.ny * r * 1.45 };
+  } else return;
+  ctx.save();
+  strokeLimb(r * 0.36, leg, function () { ctx.moveTo(base.x, base.y); ctx.lineTo(foot.x, foot.y); });
+  ctx.fillStyle = leg; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.ellipse(foot.x, foot.y, r * 0.24, r * 0.17, Math.atan2(foot.y - base.y, foot.x - base.x), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
 }
 
 function endAllAmerican(self, other) {
@@ -244,6 +326,8 @@ function endAllAmerican(self, other) {
 // Where they're drawn while flying down the road after the truck (draw.js).
 // Or knocked reeling by an eagle: snapped hard one way, wobbling back.
 function allAmericanOffset(b) {
+  var rk0 = aaThunderRoll(b);
+  if (rk0 != null && !reduceMotion) return { x: 0, y: -Math.sin(Math.PI * rk0) * b.r * 1.1 }; // up through the air
   var om = b.igbb && b.igbb.move === "allamerican" && b.igbb.phase === "road" ? b.igbb : null;
   if (om && !reduceMotion) {
     // Bouncing on his toes on the shoulder, and leaping on every cheer.
@@ -261,6 +345,8 @@ function allAmericanOffset(b) {
 }
 // How far they're turned: cartwheeling after the truck, or wrenched round by an eagle.
 function allAmericanSpin(b) {
+  var rk = aaThunderRoll(b);
+  if (rk != null && !reduceMotion) return b.igbb.tk.side * Math.PI * 2 * (rk * rk * (3 - 2 * rk));
   var m = aaVictimMove(b);
   if (!m || reduceMotion) return 0;
   if (m.fly) return m.fly.spin;
@@ -679,6 +765,7 @@ function drawAllAmerican(b) {
     return;
   }
   if (m.phase === "road") { drawAaPatriot(b, m); return; }
+  if (m.phase === "thunder") { drawThunderLeg(b); if (m.tk.step === "hold" && m.tk.t > 0.3) drawArmsUp(b, m.tk.t); return; }
   if (m.phase === "back") drawArmsUp(b, m.t); // chairshot.js
 }
 var AA_HOOK_OPEN = 105 * Math.PI / 180;  // how far out to the side the hook's cocked
@@ -688,7 +775,7 @@ function aaHookFist(b, ang, off, R) {
 }
 function allAmericanHandsBusy(b) {
   var m = b.igbb;
-  return !!(m && m.move === "allamerican" && (m.phase === "windup" || m.phase === "punch" || m.phase === "road" || m.phase === "back"));
+  return !!(m && m.move === "allamerican" && (m.phase === "windup" || m.phase === "punch" || m.phase === "road" || m.phase === "back" || (m.phase === "thunder" && m.tk.step !== "run")));
 }
 
 // ---------------------------------------------------------------
