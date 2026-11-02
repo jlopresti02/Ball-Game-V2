@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -992,6 +992,46 @@ function playEagleScreech() {
       o.connect(bp); o2.connect(bp); bp.connect(g); g.connect(ctx.destination);
       [o, o2, lfo].forEach(function (n) { n.start(t0); n.stop(t0 + len + 0.05); });
     });
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The Free Bird solo, out on the highway in All American: the crowd drops
+// away to nothing and the solo comes in; back in the cage it fades out and
+// the crowd comes back up.
+var freeBirdPlaying = null; // { src, gain }
+function playFreeBird() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    stopFreeBird(0);
+    var buf = clipBuffers.freeBird;
+    if (!buf) { withClip("freeBird"); return; }
+    var now = ctx.currentTime, c = crowd;
+    if (c && c.gain) {
+      c.duckUntil = now + 60; // held down until the solo stops
+      c.gain.gain.cancelScheduledValues(now);
+      c.gain.gain.setTargetAtTime(0.0001, now, 0.08);
+    }
+    var src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf;
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.9, now + 0.12);
+    src.connect(g); g.connect(ctx.destination);
+    src.start(now);
+    freeBirdPlaying = { src: src, gain: g };
+  } catch (e) { /* never let audio break the game */ }
+}
+function stopFreeBird(fade) {
+  try {
+    var fb = freeBirdPlaying;
+    if (!fb || !audioCtx) return;
+    freeBirdPlaying = null;
+    var now = audioCtx.currentTime, f = fade == null ? 0.6 : fade;
+    fb.gain.gain.cancelScheduledValues(now);
+    fb.gain.gain.setValueAtTime(fb.gain.gain.value || 0.9, now);
+    fb.gain.gain.linearRampToValueAtTime(0, now + f + 0.01);
+    fb.src.stop(now + f + 0.05);
+    if (crowd) { crowd.duckUntil = now; crowdReact(0.8); } // the arena's back
   } catch (e) { /* never let audio break the game */ }
 }
 

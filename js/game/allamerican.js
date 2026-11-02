@@ -18,7 +18,7 @@
 var AA_CLOSE_SPEED = 900;     // running them down
 var AA_CLOSE_GIVEUP = 3.5;    // gives up (stays charged) if it can't get there
 var AA_WINDUP_TIME = 0.6;     // the haymaker cocked way back (the tell)
-var AA_PUNCH_TIME = 0.1;      // the punch driving through
+var AA_PUNCH_TIME = 0.14;     // the hook sweeping round into them
 var AA_FLASH_TIME = 0.5;      // the cameras going off before the road appears
 var AA_EAGLES = [0.45, 0.9, 1.3, 1.7]; // when each eagle starts its dive (road clock)
 var AA_EAGLE_DIVE = 0.5;      // one swoop, in and back out (talons hit halfway): fast
@@ -37,7 +37,7 @@ var AA_SHOULDER = { x: 110, y: 84 }; // where Gaethje watches from
 
 var aaScene = null; // the road, while it's showing: { t, scrub }
 
-function resetAllAmerican() { aaScene = null; }
+function resetAllAmerican() { aaScene = null; stopFreeBird(0); }
 function allAmericanOn() { return !!aaScene; }
 
 function updateAllAmerican(self, other, dt) {
@@ -83,7 +83,7 @@ function updateAllAmerican(self, other, dt) {
     other.holdAtOne = true; // nobody dies before the truck
     hurt(other, sp.punchDamage, "igbb", self.id);
     violentHit(self, other, 1.4);
-    other.squash = { t: 0.3, max: 0.3, nx: m.nx, ny: m.ny };
+    other.squash = { t: 0.3, max: 0.3, nx: (m.nx - m.ny * m.side) / Math.SQRT2, ny: (m.ny + m.nx * m.side) / Math.SQRT2 }; // knocked sideways along the hook
     floater(other.x, other.y - other.r - 60, "BOOM!", "crit");
     playSlam(); playPunch(40);
     cameraFlash(); playCameraFlashes(); // dobronx.js, audio.js
@@ -121,6 +121,7 @@ function startRoad(self, other, m) {
   self.x = AA_SHOULDER.x; self.y = AA_SHOULDER.y;
   other.x = AA_VICTIM.x; other.y = AA_VICTIM.y;
   aaScene = { t: 0, scrub: roadScrub() };
+  playFreeBird(); // audio.js
 }
 
 function updateRoad(self, other, m, dt) {
@@ -212,6 +213,7 @@ function updateRoad(self, other, m, dt) {
 // Another white-out and they're back in the cage where they were.
 function backToCage(self, other, m) {
   screenFlash = 1;
+  stopFreeBird();
   aaScene = null;
   m.fly = null;
   m.phase = "back"; m.t = 0;
@@ -225,6 +227,7 @@ function backToCage(self, other, m) {
 }
 
 function endAllAmerican(self, other) {
+  if (aaScene) stopFreeBird();
   aaScene = null;
   self.igbb = null;
   self.specialT = 0;
@@ -558,15 +561,25 @@ function drawAllAmerican(b) {
   if (m.phase === "windup" || m.phase === "punch") {
     var nx = m.nx, ny = m.ny, px = -ny * m.side, py = nx * m.side;
     var sh = { x: b.x - px * b.r * 0.6, y: b.y - py * b.r * 0.6 };
-    var hand;
+    // A hook: the fist's cocked out wide to the side, then sweeps round in
+    // an arc into the side of their head and follows through across.
+    var ang = Math.atan2(ny, nx), hand;
     if (m.phase === "windup") {
       var w = Math.min(1, m.t / AA_WINDUP_TIME), wob = Math.sin(m.t * 40) * 2 * w;
-      hand = { x: b.x - nx * b.r * (0.6 + 0.6 * w) - px * b.r * (1.1 + 0.2 * w) + wob, y: b.y - ny * b.r * (0.6 + 0.6 * w) - py * b.r * (1.1 + 0.2 * w) };
+      hand = aaHookFist(b, ang, -m.side * (AA_HOOK_OPEN + 0.35 * w), b.r * (1.2 - 0.15 * w));
+      hand.x += wob;
     } else {
       var k = Math.min(1, m.t / AA_PUNCH_TIME);
-      hand = { x: b.x + nx * b.r * (1.6 * k) - px * b.r * 0.9 * (1 - k), y: b.y + ny * b.r * (1.6 * k) - py * b.r * 0.9 * (1 - k) };
-      ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 3;
-      for (var s = 1; s <= 3; s++) { ctx.beginPath(); ctx.moveTo(hand.x - nx * 20 * s, hand.y - ny * 20 * s); ctx.lineTo(hand.x - nx * 8 * s, hand.y - ny * 8 * s); ctx.stroke(); }
+      var hk = function (kk) { var e = kk * kk * (3 - 2 * kk); return aaHookFist(b, ang, -m.side * (AA_HOOK_OPEN + 0.35) * (1 - e) + m.side * AA_HOOK_FOLLOW * e, b.r * (1.05 + 0.6 * Math.min(1, kk / 0.6))); };
+      hand = hk(k);
+      // Blur along the arc behind the fist.
+      ctx.save(); ctx.lineCap = "round";
+      [0.15, 0.3, 0.45].forEach(function (back, i) {
+        if (k - back <= 0) return;
+        var g = hk(k - back);
+        ctx.globalAlpha = 0.5 - i * 0.14; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = size * (1.6 - i * 0.4);
+        ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(hand.x, hand.y); ctx.stroke();
+      });
       ctx.restore();
     }
     strokeLimb(size * 0.8, armColor(b.char), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
@@ -577,6 +590,11 @@ function drawAllAmerican(b) {
     return;
   }
   if ((m.phase === "road" && m.fly) || m.phase === "back") drawArmsUp(b, m.t); // chairshot.js
+}
+var AA_HOOK_OPEN = 105 * Math.PI / 180;  // how far out to the side the hook's cocked
+var AA_HOOK_FOLLOW = 35 * Math.PI / 180; // how far past them it follows through
+function aaHookFist(b, ang, off, R) {
+  return { x: b.x + Math.cos(ang + off) * R, y: b.y + Math.sin(ang + off) * R };
 }
 function allAmericanHandsBusy(b) {
   var m = b.igbb;
