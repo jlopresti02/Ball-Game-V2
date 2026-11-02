@@ -132,6 +132,7 @@ function updateRoad(self, other, m, dt) {
   if (m.recoil) { m.recoil.t += dt; if (m.recoil.t > 0.6) m.recoil = null; }
   m.slashes = m.slashes.filter(function (sl) { sl.t += dt; return sl.t < 0.35; });
   tickAaPanic(other, m, dt);
+  tickAaCheer(self, m, dt);
 
   // The eagles.
   m.eagles.forEach(function (e, i) {
@@ -151,6 +152,7 @@ function updateRoad(self, other, m, dt) {
       other.flash = 0.22;
       m.recoil = { x: hx / hl, y: hy / hl, t: 0, spin: -e.side * 0.6 };
       m.slashes.push({ t: 0, side: e.side });
+      aaCheer(self, m, i === AA_EAGLES.length - 1 ? "AMERICA!" : "USA!");
       hitStop = Math.max(hitStop, 0.07);
       if (!reduceMotion) shake = Math.max(shake, 22);
       playPunch(30);
@@ -167,7 +169,7 @@ function updateRoad(self, other, m, dt) {
   // The truck.
   var tr = m.truck;
   if (m.t >= AA_TRUCK_AT) {
-    if (!tr.on) { tr.on = true; playTruckHorn(); }
+    if (!tr.on) { tr.on = true; playTruckHorn(); floater(self.x, self.y - self.r - 44, "HERE IT COMES!", "note"); }
     tr.t += dt;
     tr.x += AA_TRUCK_SPEED * dt;
     // They see it coming and turn to face the lights.
@@ -187,6 +189,7 @@ function updateRoad(self, other, m, dt) {
       igbbSparks(other.x - other.r, other.y, 1, -0.2, "#ffe9a8", 50, 1000);
       igbbSparks(other.x, other.y, 1, -0.6, "#cfe8ff", 24, 700); // glass
       m.fly = { x: other.x, y: other.y, vx: 1900, vy: -700, t: 0, spin: 0 };
+      aaCheer(self, m, "USA! USA! USA!", 4);
       m.recoil = null;
     }
   }
@@ -241,6 +244,12 @@ function endAllAmerican(self, other) {
 // Where they're drawn while flying down the road after the truck (draw.js).
 // Or knocked reeling by an eagle: snapped hard one way, wobbling back.
 function allAmericanOffset(b) {
+  var om = b.igbb && b.igbb.move === "allamerican" && b.igbb.phase === "road" ? b.igbb : null;
+  if (om && !reduceMotion) {
+    // Bouncing on his toes on the shoulder, and leaping on every cheer.
+    var hop = Math.abs(Math.sin((om.t || 0) * 9)) * b.r * 0.14 + (om.jump ? Math.sin(Math.PI * Math.min(1, om.jump.t / 0.45)) * b.r * 0.6 : 0);
+    return { x: 0, y: -hop };
+  }
   var m = aaVictimMove(b);
   if (!m) return { x: 0, y: 0 };
   if (m.fly) return { x: m.fly.x - b.x, y: m.fly.y - b.y };
@@ -623,6 +632,7 @@ function aaRoundRect(x, y, w, h, r) {
 function drawRoadActors() {
   var m = aaOwnerMove();
   if (!aaScene || !m) return;
+  drawAaFireworks(m);
   drawEagles(m);
   if (m.truck.on) drawTruck(m.truck.x);
 }
@@ -668,7 +678,8 @@ function drawAllAmerican(b) {
     drawGloveAt(lead.x, lead.y, size * 0.9, b.char);
     return;
   }
-  if ((m.phase === "road" && m.fly) || m.phase === "back") drawArmsUp(b, m.t); // chairshot.js
+  if (m.phase === "road") { drawAaPatriot(b, m); return; }
+  if (m.phase === "back") drawArmsUp(b, m.t); // chairshot.js
 }
 var AA_HOOK_OPEN = 105 * Math.PI / 180;  // how far out to the side the hook's cocked
 var AA_HOOK_FOLLOW = 35 * Math.PI / 180; // how far past them it follows through
@@ -677,5 +688,117 @@ function aaHookFist(b, ang, off, R) {
 }
 function allAmericanHandsBusy(b) {
   var m = b.igbb;
-  return !!(m && m.move === "allamerican" && (m.phase === "windup" || m.phase === "punch" || (m.phase === "road" && m.fly) || m.phase === "back"));
+  return !!(m && m.move === "allamerican" && (m.phase === "windup" || m.phase === "punch" || m.phase === "road" || m.phase === "back"));
+}
+
+// ---------------------------------------------------------------
+// Gaethje on the shoulder: the proud patriot
+// ---------------------------------------------------------------
+// Waves a little American flag in one glove and pumps the other fist,
+// bouncing on his toes. Every eagle that lands gets a leap, a "USA!" and
+// fireworks going up behind him; he points the truck out when the lights
+// come up; and when it hits he loses it: "USA! USA! USA!", both arms up,
+// flag going like mad, the sky full of fireworks.
+function aaCheer(self, m, text, bursts) {
+  floater(self.x, self.y - self.r - 50, text, "crit");
+  m.jump = { t: 0 };
+  m.cheerT = 0.7;
+  for (var i = 0; i < (bursts || 1); i++) aaFirework(m, i * 0.18);
+}
+function aaFirework(m, delay) {
+  var cols = ["#ff2a3d", "#ffffff", "#4d7dff"];
+  (m.fireworks = m.fireworks || []).push({ x: 40 + Math.random() * 420, y: -30 + Math.random() * 90, t: -(delay || 0), color: cols[Math.floor(Math.random() * 3)], seed: Math.random() * 6 });
+}
+function tickAaCheer(self, m, dt) {
+  if (m.jump) { m.jump.t += dt; if (m.jump.t > 0.45) m.jump = null; }
+  if (m.cheerT > 0) m.cheerT -= dt;
+  m.fwCd = (m.fwCd == null ? 0.8 : m.fwCd) - dt;
+  if (m.fwCd <= 0) { m.fwCd = m.fly ? 0.2 : 0.9; aaFirework(m, 0); } // a steady show, a barrage after the truck
+  (m.fireworks || []).forEach(function (f) { f.t += dt; });
+  m.fireworks = (m.fireworks || []).filter(function (f) { return f.t < 1.1; });
+}
+// Red, white and blue bursts over the desert: a rising trail, then a ring of
+// sparks that spreads, drops and fades.
+function drawAaFireworks(m) {
+  (m.fireworks || []).forEach(function (f) {
+    if (f.t < 0) return;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    if (f.t < 0.25) {
+      var k = f.t / 0.25;
+      ctx.fillStyle = "#ffe9a8";
+      ctx.beginPath(); ctx.arc(f.x, f.y + 120 * (1 - k), 3, 0, Math.PI * 2); ctx.fill();
+    } else {
+      var e = (f.t - 0.25) / 0.85, R = 18 + 70 * Math.sqrt(e);
+      ctx.globalAlpha = 1 - e;
+      ctx.fillStyle = f.color;
+      for (var i = 0; i < 18; i++) {
+        var a = f.seed + i / 18 * Math.PI * 2;
+        ctx.beginPath(); ctx.arc(f.x + Math.cos(a) * R, f.y + Math.sin(a) * R + 30 * e * e, 3.2 * (1 - e * 0.6), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = (1 - e) * 0.5; ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(f.x, f.y, 10 * (1 - e), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  });
+}
+
+function drawAaPatriot(b, m) {
+  var t = m.t, r = b.r, size = (b.char.punch && b.char.punch.size) || 15;
+  var wild = m.fly || m.cheerT > 0;
+  var lights = m.truck && m.truck.on && !m.fly;
+  // Flag hand (his right, screen left): waving it back and forth overhead.
+  var fsh = { x: b.x - r * 0.62, y: b.y - r * 0.35 };
+  var fa = -Math.PI / 2 - 0.35 + Math.sin(t * (wild ? 16 : 8)) * (wild ? 0.6 : 0.4);
+  var fh = { x: fsh.x + Math.cos(fa) * r * 0.95, y: fsh.y + Math.sin(fa) * r * 0.95 };
+  // Other hand: fist pumping, pointing at the truck, or straight up in the air.
+  var osh = { x: b.x + r * 0.62, y: b.y - r * 0.35 }, oh;
+  if (lights && m.truck.t < AA_TRUCK_HIT - 0.15) {
+    oh = { x: b.x + r * 0.2 - r * 1.3, y: b.y + r * 0.75 }; // "look, look!" down the road at it
+    oh.x += Math.sin(t * 20) * 3;
+  } else {
+    var pump = Math.max(0, Math.sin(t * (wild ? 18 : 11))) * r * (wild ? 0.5 : 0.35);
+    oh = { x: osh.x + r * 0.3, y: osh.y - r * 0.75 - pump };
+  }
+  // The flag on its pole.
+  var pa = fa + 0.15, pl = r * 1.5;
+  var top = { x: fh.x + Math.cos(pa) * pl, y: fh.y + Math.sin(pa) * pl };
+  ctx.save();
+  ctx.strokeStyle = "#8a6a3c"; ctx.lineWidth = 3; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(fh.x - Math.cos(pa) * 6, fh.y - Math.sin(pa) * 6); ctx.lineTo(top.x, top.y); ctx.stroke();
+  drawAaFlag(top.x, top.y, r * 1.45, r * 0.88, t * (wild ? 14 : 8), pa);
+  ctx.restore();
+  [[fsh, fh], [osh, oh]].forEach(function (arm) {
+    strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(arm[0].x, arm[0].y); ctx.lineTo(arm[1].x, arm[1].y); });
+    drawGloveAt(arm[1].x, arm[1].y, size * 0.9, b.char);
+  });
+}
+
+// A little stars and stripes flying off the top of the pole, rippling.
+function drawAaFlag(x, y, fw, fh, phase, poleA) {
+  var n = 10, stripes = 7;
+  var dirx = 1, diry = 0; // flies out to the right
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(Math.cos(poleA) * 0.3);
+  for (var i = 0; i < n; i++) {
+    var u0 = i / n, u1 = (i + 1) / n;
+    var w0 = Math.sin(phase + u0 * 5) * fh * 0.14 * u0, w1 = Math.sin(phase + u1 * 5) * fh * 0.14 * u1;
+    for (var sIdx = 0; sIdx < stripes; sIdx++) {
+      var v0 = sIdx / stripes, v1 = (sIdx + 1) / stripes;
+      var canton = u0 < 0.42 && v1 <= 4 / 7 + 0.001;
+      ctx.fillStyle = canton ? "#1f3a8a" : (sIdx % 2 ? "#ffffff" : "#c8102e");
+      ctx.beginPath();
+      ctx.moveTo(u0 * fw * dirx, v0 * fh + w0); ctx.lineTo(u1 * fw * dirx + 0.6, v0 * fh + w1);
+      ctx.lineTo(u1 * fw * dirx + 0.6, v1 * fh + w1); ctx.lineTo(u0 * fw * dirx, v1 * fh + w0);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  // Stars on the blue.
+  ctx.fillStyle = "#ffffff";
+  for (var sx = 0; sx < 3; sx++) for (var sy = 0; sy < 2; sy++) {
+    var uu = (sx + 0.7) / 3 * 0.42, ww = Math.sin(phase + uu * 5) * fh * 0.14 * uu;
+    ctx.beginPath(); ctx.arc(uu * fw, (sy + 0.6) / 2.4 * fh * 4 / 7 + ww, 1.6, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
 }
