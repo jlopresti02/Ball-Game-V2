@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -913,6 +913,28 @@ function playCritPunch(last) {
       [0.11, 0.22, 0.33].forEach(function (d, i) { caneBurst(ctx, hit + d, 1400, 0.8, 0.28 / (i + 1) * k, 0.1); }); // echo
     }
   } catch (e) { /* never let audio break the game */ }
+}
+
+// Random fight commentary, only when Justin Gaethje is fighting: the UFC
+// call from his Michael Johnson fight comes in at a random moment early in
+// the fight, then again now and then (COMMENTARY_EVERY). It's a talking clip,
+// so it waits or skips like the rest, and it stays out of special moves; a
+// skipped one tries again shortly.
+var COMMENTARY_FIRST = [6, 18];   // seconds into the fight for the first call
+var COMMENTARY_EVERY = [30, 50];  // seconds between calls after that
+var commentary = { t: 0, next: 0 };
+function between(r) { return r[0] + Math.random() * (r[1] - r[0]); }
+function resetCommentary() { commentary.t = 0; commentary.next = between(COMMENTARY_FIRST); }
+function gaethjeFighting() {
+  return balls.some(function (b) { return b.char && String(b.char.id).indexOf("c-justin-gaethje") === 0; });
+}
+function tickCommentary(dt) {
+  if (!started || over || !gaethjeFighting()) return;
+  commentary.t += dt;
+  if (commentary.t < commentary.next) return;
+  var special = balls.some(function (b) { return b.igbb; }); // a special move is its own show
+  if (!special && playTalk("gaethjeCommentary", 0.8)) commentary.next = commentary.t + between(COMMENTARY_EVERY);
+  else commentary.next = commentary.t + 2;
 }
 
 // Gane's Herb Dean special: Joe's clip as the special starts, as a priority

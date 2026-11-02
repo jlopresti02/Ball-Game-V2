@@ -115,6 +115,7 @@ function start() {
   rollKoRush(); // Brawler's opening KO Rush (usually doesn't happen)
   playHereWeGo();
   startCrowd();
+  resetCommentary();
 }
 
 // Damage shown on screen is always a whole number, rounded up (5.9 shows as
