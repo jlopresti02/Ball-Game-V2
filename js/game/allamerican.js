@@ -25,7 +25,11 @@ var AA_EAGLE_DIVE = 0.9;      // one swoop, in and back out (talons hit halfway)
 var AA_TRUCK_AT = 3.5;        // the horn, and the truck starts up the road
 var AA_TRUCK_FROM = -1000;    // where the truck starts (arena units, off to the left)
 var AA_TRUCK_SPEED = 1100;
-var AA_TRUCK_L = 270, AA_TRUCK_W = 124;
+var AA_TRUCK_L = 520;        // Joe's semi, nose to tail (arena units)
+var AA_TRUCK_BASE = 50;      // its wheels sit this far below the victim's centre
+var AA_TRUCK_W = 124;        // (the drawn stand-in pickup's width)
+var aaTruckImg = new Image();
+aaTruckImg.src = AA_TRUCK_SRC; // allamerican-art.js
 var AA_FLY_TIME = 1.1;        // how long they tumble down the road after the hit
 var AA_ROAD = { y: 250, half: 110 }; // the highway runs left to right across the middle
 var AA_VICTIM = { x: 310, y: 305 };  // standing in the eastbound lane
@@ -289,11 +293,11 @@ function drawRoadNight(m) {
 }
 
 function drawHeadlightBeams(tx) {
-  var front = tx + AA_TRUCK_L / 2, y = AA_VICTIM.y;
+  var front = tx + AA_TRUCK_L / 2, y = AA_VICTIM.y + AA_TRUCK_BASE - AA_TRUCK_L * AA_TRUCK_ASPECT * 0.3;
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
-  [-1, 1].forEach(function (s) {
-    var ly = y + s * (AA_TRUCK_W / 2 - 16);
+  [0].forEach(function () {
+    var ly = y;
     var g = ctx.createLinearGradient(front, 0, front + 560, 0);
     g.addColorStop(0, "rgba(255,240,190,0.45)"); g.addColorStop(1, "rgba(255,240,190,0)");
     ctx.fillStyle = g;
@@ -329,7 +333,26 @@ function bez(a, c, b, k) {
   return { x: u * u * a.x + 2 * u * k * c.x + k * k * b.x, y: u * u * a.y + 2 * u * k * c.y + k * k * b.y };
 }
 
+var aaEagleImg = new Image();
+aaEagleImg.src = AA_EAGLE_SRC; // allamerican-art.js
+
+// Joe's eagle picture, upright, turned to face the way it's flying (the
+// picture faces left), with a little wobble as it beats its wings. Until it's
+// loaded, the drawn eagle from above stands in.
 function drawEagle(x, y, ang, sc, flap, talons) {
+  if (aaEagleImg.complete && aaEagleImg.naturalWidth) {
+    var size = 170 * sc, dir = Math.cos(ang) > 0 ? -1 : 1;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(flap) * 0.06);
+    ctx.scale(dir, 1 + Math.sin(flap) * 0.04);
+    ctx.drawImage(aaEagleImg, -size / 2, -size * 0.62, size, size);
+    ctx.restore();
+    return;
+  }
+  drawTopDownEagle(x, y, ang, sc, flap, talons);
+}
+function drawTopDownEagle(x, y, ang, sc, flap, talons) {
   var span = 0.8 + 0.2 * Math.cos(flap);
   ctx.save();
   ctx.translate(x, y); ctx.rotate(ang); ctx.scale(sc, sc);
@@ -371,10 +394,19 @@ function drawEagle(x, y, ang, sc, flap, talons) {
   ctx.restore();
 }
 
-// The F-250, from above, heading right: a big red Super Duty pickup with a
-// chrome grille, headlights on, a crew cab and a long bed.
+// The truck: Joe's red semi, side on, heading right with its wheels on the
+// eastbound lane. Until the picture's loaded, a drawn red pickup from above
+// stands in (drawPickup).
 function drawTruck(tx) {
-  var L = AA_TRUCK_L, Wd = AA_TRUCK_W, y = AA_VICTIM.y;
+  if (aaTruckImg.complete && aaTruckImg.naturalWidth) {
+    var L = AA_TRUCK_L, Ht = L * AA_TRUCK_ASPECT, bottom = AA_VICTIM.y + AA_TRUCK_BASE;
+    ctx.drawImage(aaTruckImg, tx - L / 2, bottom - Ht, L, Ht);
+    return;
+  }
+  drawPickup(tx + (AA_TRUCK_L - 270) / 2);
+}
+function drawPickup(tx) {
+  var L = 270, Wd = AA_TRUCK_W, y = AA_VICTIM.y;
   ctx.save();
   ctx.translate(tx, y);
   ctx.lineJoin = "round";
