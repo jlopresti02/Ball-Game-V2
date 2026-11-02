@@ -248,7 +248,7 @@ function updateThunder(self, other, m, dt) {
     if (tk.t >= AA_TK_RUN) {
       tk.step = "roll"; tk.t = 0;
       tk.from = { x: self.x, y: self.y }; tk.nx = dx / d; tk.ny = dy / d;
-      tk.to = { x: other.x - tk.nx * (other.r * 0.9), y: other.y - tk.ny * (other.r * 0.9) };
+      tk.to = { x: other.x - tk.nx * (self.r + other.r + 8), y: other.y - tk.ny * (self.r + other.r + 8) }; // lands in front of them, not on them
       tk.side = tk.nx >= 0 ? 1 : -1;
       playWhoosh();
     }
@@ -263,6 +263,7 @@ function updateThunder(self, other, m, dt) {
     hurt(other, sp.thunderDamage, "igbb", self.id);
     violentHit(self, other, 1.4);
     other.squash = { t: 0.4, max: 0.4, nx: 0, ny: -1 }; // flattened from above
+    tk.kb = { vx: tk.nx * 900, vy: tk.ny * 900 }; // and sent flying back
     floater(other.x, other.y - other.r - 60, "THUNDER!", "crit");
     playTruckImpact(); playSlam();
     hitStop = Math.max(hitStop, 0.22);
@@ -274,7 +275,16 @@ function updateThunder(self, other, m, dt) {
     tk.step = "hold"; tk.t = 0;
     return true;
   }
-  // Lands crouched over them, then up with both arms raised as the solo fades.
+  // They go skidding back across the cage.
+  if (tk.kb) {
+    other.x += tk.kb.vx * dt; other.y += tk.kb.vy * dt;
+    if (other.x < other.r || other.x > W - other.r) tk.kb.vx *= -0.4;
+    if (other.y < other.r || other.y > H - other.r) tk.kb.vy *= -0.4;
+    other.x = Math.min(W - other.r, Math.max(other.r, other.x)); other.y = Math.min(H - other.r, Math.max(other.r, other.y));
+    var f = Math.exp(-4 * dt); tk.kb.vx *= f; tk.kb.vy *= f;
+    if (!reduceMotion && Math.abs(tk.kb.vx) + Math.abs(tk.kb.vy) > 150) particles.push({ x: other.x, y: other.y + other.r * 0.6, vx: 0, vy: 0, life: 0.25, max: 0.25, size: other.r * 0.3, color: "rgba(200,190,170,0.5)" });
+  }
+  // Lands in front of them, then up with both arms raised as the solo fades.
   if (tk.t > 0.25 && !tk.faded) { tk.faded = true; stopFreeBird(1.6); }
   if (!other.alive) { if (tk.t >= 0.6) { endAllAmerican(self, other); checkEnd(); return false; } return true; }
   if (tk.t < AA_TK_HOLD) return true;
@@ -298,12 +308,24 @@ function drawThunderLeg(b) {
   if (tk.step === "roll") {
     var k = Math.min(1, tk.t / AA_TK_ROLL), spin = tk.side * Math.PI * 2 * k;
     var a = Math.atan2(tk.ny, tk.nx) + Math.PI + spin; // the leg starts trailing, comes over the top
-    var len = r * (0.9 + 0.8 * k);
+    var len = r * (0.9 + 1.0 * k);
     base = { x: b.x, y: b.y };
     foot = { x: b.x + Math.cos(a) * len, y: b.y + Math.sin(a) * len };
-    if (k > 0.75) foot = { x: b.x + tk.nx * r * 1.5, y: b.y + tk.ny * r * 1.5 - r * (1 - k) * 2 }; // heel dropping on them
+    if (k > 0.75) foot = { x: b.x + tk.nx * r * 1.9, y: b.y + tk.ny * r * 1.9 - r * (1 - k) * 2 }; // heel dropping on them
+    // Both gloves tucked in at his sides, turning with him through the flip.
+    var size = (b.char.punch && b.char.punch.size) || 15;
+    [-1, 1].forEach(function (sd) {
+      var gx = sd * r * 0.85, gy = -r * 0.35, c = Math.cos(spin), sn = Math.sin(spin);
+      var gp = { x: b.x + gx * c - gy * sn, y: b.y + gx * sn + gy * c };
+      var sx = sd * r * 0.55, sy = -r * 0.2;
+      var shp = { x: b.x + sx * c - sy * sn, y: b.y + sx * sn + sy * c };
+      strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(shp.x, shp.y); ctx.lineTo(gp.x, gp.y); });
+      drawGloveAt(gp.x, gp.y, size * 0.9, b.char);
+    });
   } else if (tk.step === "hold" && tk.t < 0.3) {
-    base = { x: b.x, y: b.y }; foot = { x: b.x + tk.nx * r * 1.45, y: b.y + tk.ny * r * 1.45 };
+    base = { x: b.x, y: b.y }; foot = { x: b.x + tk.nx * r * 1.7, y: b.y + tk.ny * r * 1.7 };
+    var size2 = (b.char.punch && b.char.punch.size) || 15;
+    [-1, 1].forEach(function (sd) { drawGloveAt(b.x + sd * r * 0.9 - tk.nx * r * 0.3, b.y - r * 0.4 - tk.ny * r * 0.3, size2 * 0.9, b.char); }); // hands up, guarding
   } else return;
   ctx.save();
   strokeLimb(r * 0.36, leg, function () { ctx.moveTo(base.x, base.y); ctx.lineTo(foot.x, foot.y); });
