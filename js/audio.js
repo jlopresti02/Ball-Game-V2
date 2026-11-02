@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -967,14 +967,15 @@ function playHokitTaunt() {
   } catch (e) { /* never let audio break the game */ }
 }
 
-// A bald eagle's scream: a high, harsh cry that wavers and falls away,
-// then a shorter second call.
+// A bald eagle's scream: Joe's recording, a touch higher or lower each time.
+// Until it's decoded, a synthesized cry stands in.
 function playEagleScreech() {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime;
+    if (playClip("eagleScreech", 0.8, now, 0.92 + Math.random() * 0.16)) return; // Joe's recording (the synth below is the stand-in)
     [[0, 0.42, 1], [0.48, 0.24, 0.8]].forEach(function (c) {
       var t0 = now + c[0], len = c[1];
       var o = ctx.createOscillator(), o2 = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
@@ -994,35 +995,37 @@ function playEagleScreech() {
   } catch (e) { /* never let audio break the game */ }
 }
 
-// A big pickup bearing down: a long two-tone truck horn over a diesel
-// engine roaring up as it gets closer.
+// The truck bearing down: Joe's air horn (two blasts) over a diesel engine
+// roaring up as it gets closer, peaking as it hits (about 1.9s in).
 function playTruckHorn() {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime;
-    var hg = ctx.createGain(), lp = ctx.createBiquadFilter();
-    lp.type = "lowpass"; lp.frequency.value = 2200;
-    hg.gain.setValueAtTime(0.0001, now);
-    hg.gain.exponentialRampToValueAtTime(0.22, now + 0.05);
-    hg.gain.setValueAtTime(0.22, now + 0.85);
-    hg.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
-    [311, 392].forEach(function (f) {
-      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
-      o.connect(lp); o.start(now); o.stop(now + 1.05);
-    });
-    lp.connect(hg); hg.connect(ctx.destination);
+    if (!playClip("truckHorn", 0.9, now)) { // Joe's air horn (the synth is the stand-in)
+      var hg = ctx.createGain(), lp = ctx.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 2200;
+      hg.gain.setValueAtTime(0.0001, now);
+      hg.gain.exponentialRampToValueAtTime(0.22, now + 0.05);
+      hg.gain.setValueAtTime(0.22, now + 0.85);
+      hg.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+      [311, 392].forEach(function (f) {
+        var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
+        o.connect(lp); o.start(now); o.stop(now + 1.05);
+      });
+      lp.connect(hg); hg.connect(ctx.destination);
+    }
     // The engine: low rumble rising in pitch and volume.
     var e = ctx.createOscillator(), eg = ctx.createGain(), elp = ctx.createBiquadFilter();
     e.type = "sawtooth";
-    e.frequency.setValueAtTime(45, now); e.frequency.exponentialRampToValueAtTime(95, now + 1.1);
+    e.frequency.setValueAtTime(40, now); e.frequency.exponentialRampToValueAtTime(100, now + 1.9);
     elp.type = "lowpass"; elp.frequency.value = 400;
     eg.gain.setValueAtTime(0.0001, now);
-    eg.gain.exponentialRampToValueAtTime(0.25, now + 1.0);
-    eg.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+    eg.gain.exponentialRampToValueAtTime(0.28, now + 1.9);
+    eg.gain.exponentialRampToValueAtTime(0.0001, now + 2.6);
     e.connect(elp); elp.connect(eg); eg.connect(ctx.destination);
-    e.start(now); e.stop(now + 1.55);
+    e.start(now); e.stop(now + 2.65);
   } catch (e2) { /* never let audio break the game */ }
 }
 

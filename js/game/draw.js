@@ -132,6 +132,8 @@ function draw() {
       jx = (Math.random() - 0.5) * rmag;
       jy = (Math.random() - 0.5) * rmag;
     }
+    var aas = allAmericanSpin(b); // tumbling after the truck (allamerican.js)
+    if (aas) { spinning = true; spinAngle = aas; }
 
     ctx.save();
     ctx.translate(b.x + jx, b.y + jy);
@@ -296,6 +298,7 @@ function draw() {
     drawDazed(b);   // stars after a chair shot
     drawDizzy(b);   // stars and a spiral after a Gaethje haymaker
     drawAllAmerican(b); // and his All American haymaker
+    drawAaSlashes(b);   // eagle claw marks on whoever's out on the road
     drawMock(b);    // and his thumbs down
     drawCheater(b); // Gane cheating
     drawHerbDeanSpecial(b); // and his bat during his special

@@ -20,17 +20,17 @@ var AA_CLOSE_GIVEUP = 3.5;    // gives up (stays charged) if it can't get there
 var AA_WINDUP_TIME = 0.6;     // the haymaker cocked way back (the tell)
 var AA_PUNCH_TIME = 0.1;      // the punch driving through
 var AA_FLASH_TIME = 0.5;      // the cameras going off before the road appears
-var AA_EAGLES = [0.6, 1.25, 1.85, 2.4]; // when each eagle starts its dive (road clock)
-var AA_EAGLE_DIVE = 0.9;      // one swoop, in and back out (talons hit halfway)
-var AA_TRUCK_AT = 3.5;        // the horn, and the truck starts up the road
-var AA_TRUCK_FROM = -1000;    // where the truck starts (arena units, off to the left)
-var AA_TRUCK_SPEED = 1100;
+var AA_EAGLES = [0.45, 0.9, 1.3, 1.7]; // when each eagle starts its dive (road clock)
+var AA_EAGLE_DIVE = 0.5;      // one swoop, in and back out (talons hit halfway): fast
+var AA_TRUCK_AT = 2.4;        // the horn, and the truck starts up the road
+var AA_TRUCK_HIT = 1.9;       // seconds from the horn to the hit (during its second blast)
+var AA_TRUCK_SPEED = 1700;
 var AA_TRUCK_L = 520;        // Joe's semi, nose to tail (arena units)
 var AA_TRUCK_BASE = 50;      // its wheels sit this far below the victim's centre
 var AA_TRUCK_W = 124;        // (the drawn stand-in pickup's width)
 var aaTruckImg = new Image();
 aaTruckImg.src = AA_TRUCK_SRC; // allamerican-art.js
-var AA_FLY_TIME = 1.1;        // how long they tumble down the road after the hit
+var AA_FLY_TIME = 1.0;        // how long they tumble down the road after the hit
 var AA_ROAD = { y: 250, half: 110 }; // the highway runs left to right across the middle
 var AA_VICTIM = { x: 310, y: 305 };  // standing in the eastbound lane
 var AA_SHOULDER = { x: 110, y: 84 }; // where Gaethje watches from
@@ -113,7 +113,9 @@ function updateAllAmerican(self, other, dt) {
 function startRoad(self, other, m) {
   m.phase = "road"; m.t = 0;
   m.eagles = AA_EAGLES.map(function (at, i) { return { at: at, side: i % 2 ? -1 : 1, hit: false }; });
-  m.truck = { x: AA_TRUCK_FROM, on: false, hit: false };
+  // Starts far enough back that its nose reaches them AA_TRUCK_HIT after the horn.
+  m.truck = { x: AA_VICTIM.x - other.r * 0.6 - AA_TRUCK_SPEED * AA_TRUCK_HIT - AA_TRUCK_L / 2, on: false, hit: false, t: 0 };
+  m.recoil = null; m.slashes = [];
   m.fly = null;
   m.home = { sx: self.x, sy: self.y, ox: other.x, oy: other.y };
   self.x = AA_SHOULDER.x; self.y = AA_SHOULDER.y;
@@ -126,27 +128,36 @@ function updateRoad(self, other, m, dt) {
   aaScene.t = m.t;
   self.x = AA_SHOULDER.x; self.y = AA_SHOULDER.y;
   if (!m.fly) { other.x = AA_VICTIM.x; other.y = AA_VICTIM.y; }
+  if (m.recoil) { m.recoil.t += dt; if (m.recoil.t > 0.6) m.recoil = null; }
+  m.slashes = m.slashes.filter(function (sl) { sl.t += dt; return sl.t < 0.35; });
 
   // The eagles.
   m.eagles.forEach(function (e, i) {
     var k = (m.t - e.at) / AA_EAGLE_DIVE;
-    if (k > 0 && !e.called) {
+    if (k > -0.15 && !e.called) {
       e.called = true;
       playEagleScreech();
       if (i === 0) floater(other.x, other.y - other.r - 70, "SCREECH!", "crit");
     }
     if (k >= 0.5 && !e.hit) {
+      // Talons rake straight through them: a freeze, claw marks, feathers
+      // everywhere, and they're knocked reeling the way it was flying.
       e.hit = true;
       hurt(other, sp.eagleDamage, "igbb", self.id);
-      other.squash = { t: 0.18, max: 0.18, nx: e.side, ny: 0.4 };
-      other.flash = 0.18;
-      if (!reduceMotion) shake = Math.max(shake, 12);
-      playPunch(18);
-      impacts.push({ x: other.x, y: other.y - other.r * 0.3, nx: -e.side, ny: -0.5, life: 0.35, max: 0.35, color: "#ffffff" });
-      if (!reduceMotion) for (var f = 0; f < 12; f++) {
-        var a = Math.random() * Math.PI * 2, v = 120 + Math.random() * 260;
-        particles.push({ x: other.x, y: other.y - other.r * 0.4, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.7, max: 0.7,
-          size: 2.5 + Math.random() * 3, color: f % 3 ? "#5a3a20" : "#f4f1ea" });
+      var hx = -e.side, hy = 0.35, hl = Math.sqrt(hx * hx + hy * hy);
+      other.squash = { t: 0.26, max: 0.26, nx: hx / hl, ny: hy / hl };
+      other.flash = 0.22;
+      m.recoil = { x: hx / hl, y: hy / hl, t: 0, spin: -e.side * 0.6 };
+      m.slashes.push({ t: 0, side: e.side });
+      hitStop = Math.max(hitStop, 0.07);
+      if (!reduceMotion) shake = Math.max(shake, 22);
+      playPunch(30);
+      impacts.push({ x: other.x, y: other.y - other.r * 0.3, nx: hx, ny: -0.5, life: 0.4, max: 0.4, color: "#ffffff" });
+      impacts.push({ x: other.x, y: other.y, nx: hx, ny: hy, life: 0.3, max: 0.3, color: theme.hit });
+      if (!reduceMotion) for (var f = 0; f < 22; f++) {
+        var a = Math.atan2(hy, hx) + (Math.random() - 0.5) * 2.4, v = 160 + Math.random() * 420;
+        particles.push({ x: other.x, y: other.y - other.r * 0.4, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: 0.8, max: 0.8,
+          size: 2.5 + Math.random() * 3.5, color: f % 4 === 0 ? theme.hit : (f % 3 ? "#5a3a20" : "#f4f1ea") });
       }
     }
   });
@@ -155,19 +166,26 @@ function updateRoad(self, other, m, dt) {
   var tr = m.truck;
   if (m.t >= AA_TRUCK_AT) {
     if (!tr.on) { tr.on = true; playTruckHorn(); }
+    tr.t += dt;
     tr.x += AA_TRUCK_SPEED * dt;
+    // They see it coming and turn to face the lights.
+    if (!tr.hit && tr.t > AA_TRUCK_HIT - 0.5 && !m.brace) { m.brace = true; other.squash = { t: 0.5, max: 0.5, nx: 1, ny: 0 }; }
     if (!tr.hit && tr.x + AA_TRUCK_L / 2 >= other.x - other.r * 0.6) {
       tr.hit = true;
       hurt(other, sp.truckDamage, "igbb", self.id);
       floater(other.x, other.y - other.r - 70, "F-250!", "crit");
-      other.squash = { t: 0.3, max: 0.3, nx: 1, ny: 0 };
-      playSlam(); playPunch(50);
-      hitStop = Math.max(hitStop, 0.2);
-      if (!reduceMotion) shake = Math.max(shake, 46);
-      impacts.push({ x: other.x - other.r, y: other.y, nx: -1, ny: 0, life: 0.6, max: 0.6, color: "#ffffff" });
-      igbbSparks(other.x - other.r, other.y, 1, -0.2, "#ffe9a8", 34, 800);
-      m.fly = { x: other.x, y: other.y, vx: 1250, vy: -420, t: 0 };
-      m.cheerT = 0;
+      other.squash = { t: 0.4, max: 0.4, nx: -1, ny: 0 }; // flattened against the grille
+      other.flash = 0.3;
+      playSlam(); playPunch(60);
+      hitStop = Math.max(hitStop, 0.3);
+      screenFlash = Math.max(screenFlash, 0.55);
+      if (!reduceMotion) shake = Math.max(shake, 60);
+      impacts.push({ x: other.x - other.r, y: other.y, nx: -1, ny: 0, life: 0.8, max: 0.8, color: "#ffffff" });
+      impacts.push({ x: other.x, y: other.y, nx: 1, ny: 0, life: 0.6, max: 0.6, color: theme.hit });
+      igbbSparks(other.x - other.r, other.y, 1, -0.2, "#ffe9a8", 50, 1000);
+      igbbSparks(other.x, other.y, 1, -0.6, "#cfe8ff", 24, 700); // glass
+      m.fly = { x: other.x, y: other.y, vx: 1900, vy: -700, t: 0, spin: 0 };
+      m.recoil = null;
     }
   }
   if (m.fly) {
@@ -175,8 +193,16 @@ function updateRoad(self, other, m, dt) {
     var fl = m.fly;
     fl.t += dt;
     fl.x += fl.vx * dt; fl.y += fl.vy * dt;
-    fl.vx *= Math.exp(-1.4 * dt); fl.vy += 900 * dt;
-    if (fl.y > AA_VICTIM.y + 20) { fl.y = AA_VICTIM.y + 20; fl.vy = -Math.abs(fl.vy) * 0.45; } // bounces along the asphalt
+    fl.vx *= Math.exp(-1.6 * dt); fl.vy += 1500 * dt;
+    fl.spin += (fl.vx / 1900) * 22 * dt; // cartwheeling
+    if (fl.y > AA_VICTIM.y + 20) {
+      // Bounces along the asphalt, each bounce a little thud and a burst of grit.
+      fl.y = AA_VICTIM.y + 20; fl.vy = -Math.abs(fl.vy) * 0.5;
+      if (Math.abs(fl.vy) > 120) {
+        playPunch(14);
+        if (!reduceMotion) { shake = Math.max(shake, 10); igbbSparks(fl.x, fl.y + other.r * 0.6, 0, -1, "#8a8174", 10, 300); }
+      }
+    }
     if (!reduceMotion) particles.push({ x: fl.x, y: fl.y, vx: 0, vy: 0, life: 0.25, max: 0.25, size: other.r * 0.4, color: "rgba(200,200,200,0.5)" });
     if (fl.t >= AA_FLY_TIME) { backToCage(self, other, m); return true; }
   }
@@ -209,10 +235,51 @@ function endAllAmerican(self, other) {
 }
 
 // Where they're drawn while flying down the road after the truck (draw.js).
+// Or knocked reeling by an eagle: snapped hard one way, wobbling back.
 function allAmericanOffset(b) {
+  var m = aaVictimMove(b);
+  if (!m) return { x: 0, y: 0 };
+  if (m.fly) return { x: m.fly.x - b.x, y: m.fly.y - b.y };
+  if (m.recoil && !reduceMotion) {
+    var rc = m.recoil, k = Math.exp(-rc.t * 7) * Math.cos(rc.t * 16) * b.r * 0.9;
+    return { x: rc.x * k, y: rc.y * k };
+  }
+  return { x: 0, y: 0 };
+}
+// How far they're turned: cartwheeling after the truck, or wrenched round by an eagle.
+function allAmericanSpin(b) {
+  var m = aaVictimMove(b);
+  if (!m || reduceMotion) return 0;
+  if (m.fly) return m.fly.spin;
+  if (m.recoil) return m.recoil.spin * Math.exp(-m.recoil.t * 7) * Math.cos(m.recoil.t * 16);
+  return 0;
+}
+function aaVictimMove(b) {
   var o = balls[1 - b.id], m = o && o.igbb;
-  if (!m || m.move !== "allamerican" || !m.fly) return { x: 0, y: 0 };
-  return { x: m.fly.x - b.x, y: m.fly.y - b.y };
+  return m && m.move === "allamerican" && m.phase === "road" ? m : null;
+}
+// Covering up from the eagles (both gloves over the head).
+function aaCovering(b) {
+  var m = aaVictimMove(b);
+  return !!(m && !m.fly && !(m.truck && m.truck.on && m.truck.t > AA_TRUCK_HIT - 0.5));
+}
+// Claw marks raked across them, fading fast.
+function drawAaSlashes(b) {
+  var m = aaVictimMove(b);
+  if (!m || !m.slashes.length) return;
+  ctx.save(); ctx.lineCap = "round";
+  m.slashes.forEach(function (sl) {
+    var k = 1 - sl.t / 0.35;
+    for (var i = -1; i <= 1; i++) {
+      var ox = i * b.r * 0.28;
+      ctx.globalAlpha = k;
+      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.moveTo(b.x + ox - sl.side * b.r * 0.5, b.y - b.r * 0.7); ctx.lineTo(b.x + ox + sl.side * b.r * 0.5, b.y + b.r * 0.6); ctx.stroke();
+      ctx.strokeStyle = theme.hit; ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.moveTo(b.x + ox - sl.side * b.r * 0.5, b.y - b.r * 0.7); ctx.lineTo(b.x + ox + sl.side * b.r * 0.5, b.y + b.r * 0.6); ctx.stroke();
+    }
+  });
+  ctx.restore();
 }
 
 // ---------------------------------------------------------------
@@ -288,7 +355,20 @@ function drawRoadNight(m) {
   var g = ctx.createRadialGradient(W / 2, H / 2, W * 0.35, W / 2, H / 2, W * 1.6);
   g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.85)");
   ctx.fillStyle = g; ctx.fillRect(-900, -1600, 2300, 3700);
-  if (m && m.truck && m.truck.on) drawHeadlightBeams(m.truck.x);
+  if (m && m.truck && m.truck.on) { drawDistantLights(m.truck); drawHeadlightBeams(m.truck.x); }
+  ctx.restore();
+}
+
+// Headlights coming up the road out of the dark, before the truck's in view:
+// a glow at the left edge that grows as it gets closer.
+function drawDistantLights(tr) {
+  var k = Math.min(1, tr.t / AA_TRUCK_HIT), y = AA_VICTIM.y + AA_TRUCK_BASE - AA_TRUCK_L * AA_TRUCK_ASPECT * 0.3;
+  var x = Math.max(-160, tr.x + AA_TRUCK_L / 2);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  var g = ctx.createRadialGradient(x, y, 0, x, y, 80 + 260 * k);
+  g.addColorStop(0, "rgba(255,244,205," + (0.25 + 0.55 * k) + ")"); g.addColorStop(1, "rgba(255,244,205,0)");
+  ctx.fillStyle = g; ctx.fillRect(x - 400, y - 400, 800, 800);
   ctx.restore();
 }
 
@@ -325,6 +405,14 @@ function drawEagles(m) {
     ctx.fillStyle = "#000";
     ctx.beginPath(); ctx.ellipse(pos.x + h * 70, pos.y + h * 120 + 20, 60 * (1 - h * 0.3), 18, 0, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
+    // A blur of ghosts behind it, it's coming in that fast.
+    [0.09, 0.05].forEach(function (back, gi) {
+      if (k - back <= 0) return;
+      var gp = bez(p0, c, p2, k - back), gh = Math.abs(k - back - 0.5) * 2;
+      ctx.save(); ctx.globalAlpha = 0.18 + gi * 0.12;
+      drawEagle(gp.x, gp.y, ang, 1.3 + 0.8 * gh, m.t * 14 + e.at * 5, false);
+      ctx.restore();
+    });
     drawEagle(pos.x, pos.y, ang, 1.3 + 0.8 * h, m.t * 14 + e.at * 5, h < 0.25);
   });
 }
