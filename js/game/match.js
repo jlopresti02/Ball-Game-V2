@@ -37,7 +37,7 @@ function makeBall(id, ch) {
     powerCd: ch.powerPunch.cooldown * stagger(), powerState: null,
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
-    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, forgetT: 0, healGlow: 0,
+    slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, swingCd: null, dizzy: null, forgetT: 0, healGlow: 0,
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
     guillo: null, choked: false, guilloCd: 0, rnc: null, suplex: null, suplexCd: 0, guard: null, guardCd: 0, doBronx: null, dazed: false, cheater: null, chAct: null, fenceGrab: null,
@@ -57,7 +57,9 @@ function startMatchWith(ch0, ch1) {
   resetDoBronx();
   resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
+  resetAllAmerican();
   resetCheater();
+  resetHerbDean();
 
   document.getElementById("name0").textContent = ch0.name;
   document.getElementById("name1").textContent = ch1.name;
@@ -113,6 +115,7 @@ function start() {
   rollKoRush(); // Brawler's opening KO Rush (usually doesn't happen)
   playHereWeGo();
   startCrowd();
+  resetCommentary();
 }
 
 // Damage shown on screen is always a whole number, rounded up (5.9 shows as

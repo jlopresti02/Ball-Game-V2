@@ -458,13 +458,20 @@ function drawStadium(px) {
   for (var i = 0; i < stadiumFans.length; i++) {
     if (refClearsFan(stadiumFans[i])) continue; // the ref works ringside there (referee.js)
     var fan = br ? stadiumFans[i].br : stadiumFans[i];
+    herbShove(stadiumFans[i], fdt); // Herb Dean barging through (herbdean.js)
+    var sx = stadiumFans[i].shx, sy = stadiumFans[i].shy;
+    fan.x += sx; fan.y += sy;
     drawFan(fan, now, fanClock, roar, px, wild);
+    fan.x -= sx; fan.y -= sy;
   }
   for (var j = 0; j < stadiumFans.length; j++) {
     var f = br ? stadiumFans[j].br : stadiumFans[j];
     if (refClearsFan(stadiumFans[j])) continue;
+    var ox = stadiumFans[j].shx, oy = stadiumFans[j].shy;
+    f.x += ox; f.y += oy;
     if (f.sign) drawFanSign(f, now);
     else if (f.flag) drawBrazilFlag(f.x + f.r * 0.3, f.y - f.r * 1.55, f.r * 1.3, now, f.phase);
+    f.x -= ox; f.y -= oy;
   }
   drawCameraFlashes(now);
 }
@@ -607,6 +614,8 @@ function drawJumbotron(px) {
     jtText(String(a), sx + 50, yy + 1, 30, "#ffffff", "left", shadeHex(balls[0].char.color || "#888888", 0.35));
     jtText(String(b), sx + sw - 50, yy + 1, 30, "#ffffff", "right", shadeHex(balls[1].char.color || "#888888", 0.35));
   });
+
+  drawHerbJumbo(sx, sy, sw, jt.h - 28); // Gane's special (herbdean.js)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.jtFront, jt.x * px, jt.y * px);

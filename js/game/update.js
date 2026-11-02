@@ -20,6 +20,7 @@ function chargeProgress(b) {
 
 function update(dt) {
   tickCrowd(dt); // the crowd builds up and dies down (audio.js)
+  tickCommentary(dt); // random commentary in Gaethje's fights (audio.js)
   tickDoBronxFx(dt); // camera flashes keep going through freeze-frames
   tickChairDebris(dt);
   if (hitStop > 0) {
@@ -43,6 +44,7 @@ function update(dt) {
   updateReferee(dt);
   tickRefNap(dt);   // the ref nodding off in Gane's fights (cheater.js)
   tickCheater(dt);
+  updateHerb(dt);   // Herb Dean wandering the cage (herbdean.js)
 
   balls.forEach(function (b) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;

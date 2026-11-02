@@ -385,7 +385,10 @@ function drawBjjLeg(ch, hip, knee, foot, limb, footTurn, footLen, noShorts) {
   });
 }
 
-function drawGloveAt(x, y, r, ch) {
+// With `ang` (the way the fist points) a fighter with art gets its real
+// glove (drawGlove, fighter-art.js); otherwise a plain round glove.
+function drawGloveAt(x, y, r, ch, ang) {
+  if (ang != null && ch.look) { drawGlove(ctx, x, y, r, ch.look, theme.wall, ang); return; }
   ctx.fillStyle = gloveColor(ch); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 }

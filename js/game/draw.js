@@ -31,7 +31,8 @@ function draw() {
   ctx.setTransform(s, 0, 0, s, ox, oy);
   shakeScreen(s * canvas.getBoundingClientRect().width / canvas.width);
 
-  if (stadium) drawStadiumMat();
+  if (allAmericanOn()) { drawRoadScene(); drawRoadNight(aaOwnerMove()); } // out on the highway (allamerican.js)
+  else if (stadium) drawStadiumMat();
   else {
     ctx.strokeStyle = theme.grid; ctx.lineWidth = 1.5; ctx.beginPath();
     for (var gx = 50; gx < W; gx += 50) { ctx.moveTo(gx, 0); ctx.lineTo(gx, H); }
@@ -82,14 +83,15 @@ function draw() {
   });
 
   drawGuardZones(); // the circle round a fighter down in guard
-  drawReferee(); // under the fighters (referee.js)
+  if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
   // Father's Plan's ground and pound).
   // A shooter caught in a guillotine goes underneath, its head buried
   // under the defender (and the defender, once it's taken down).
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
-  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) ? [balls[1], balls[0]] : balls).forEach(function (b) {
+  // A bat swing goes over whoever it's hitting.
+  (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
     if (!b.alive) return;
     var other = balls[1 - b.id];
 
@@ -104,6 +106,10 @@ function draw() {
       woy = wfx * wa.sign * b.r * 0.75 * wk;
     }
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
+    var hjo = herbJoltOffset(b); wox += hjo.x; woy += hjo.y; // rocked by a bat or a cane (herbdean.js)
+    var gbl = ganeBatLean(b); wox += gbl.x; woy += gbl.y; // throwing his weight into a bat swing (cheater.js)
+    var dzo = dizzyOffset(b); wox += dzo.x; woy += dzo.y; // staggering after a haymaker (gaethje.js)
+    var aao = allAmericanOffset(b); wox += aao.x; woy += aao.y; // launched down the highway (allamerican.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -126,6 +132,8 @@ function draw() {
       jx = (Math.random() - 0.5) * rmag;
       jy = (Math.random() - 0.5) * rmag;
     }
+    var aas = allAmericanSpin(b); // tumbling after the truck (allamerican.js)
+    if (aas) { spinning = true; spinAngle = aas; }
 
     ctx.save();
     ctx.translate(b.x + jx, b.y + jy);
@@ -288,8 +296,12 @@ function draw() {
     drawShot(b);    // Hokit's double leg
     drawChairShot(b); // and his folding chair
     drawDazed(b);   // stars after a chair shot
+    drawDizzy(b);   // stars and a spiral after a Gaethje haymaker
+    drawAllAmerican(b); // and his All American haymaker
+    drawAaSlashes(b);   // eagle claw marks on whoever's out on the road
     drawMock(b);    // and his thumbs down
     drawCheater(b); // Gane cheating
+    drawHerbDeanSpecial(b); // and his bat during his special
     drawPokeStun(b);
     drawAngry(b);   // fuming at it
     b.x -= wox; b.y -= woy;
@@ -304,6 +316,8 @@ function draw() {
   drawArmbars();
   drawChairDebris();
   drawCheaterObjects();
+  drawHerb();
+  drawRoadActors(); // eagles and the truck (allamerican.js)
   drawSuplexes();
 
   projectiles.forEach(function (p) {
@@ -316,6 +330,7 @@ function draw() {
     }
   });
 
+  drawHerbBanner(); // "Herb Dean is entering the ring" when there's no jumbotron
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
     var t = f.life / f.max;

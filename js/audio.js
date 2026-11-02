@@ -148,6 +148,70 @@ function playPunch(damage) {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// BMF jab: a quick swish of air into a tight, bright leather pop, so his
+// rapid 5-damage jabs cut through the crowd and sound as fast as they are.
+// Used for the BMF and every fighter built on its base (bmfJabs).
+var BMF_WHOOSH = 0.045; // the swish leads, the pop lands this much later
+function bmfJabs(ch) { return !!ch && (ch.id === "builtin-bmf" || ch.base === "BMF"); }
+function synthBmfJab(ctx, out, now, noise) {
+  var vary = 0.9 + Math.random() * 0.2;
+  var hit = now + BMF_WHOOSH;
+
+  // Whoosh: noise through a band-pass sweeping up as the fist comes in.
+  var w = ctx.createBufferSource();
+  w.buffer = noise;
+  var wf = ctx.createBiquadFilter();
+  wf.type = "bandpass";
+  wf.Q.value = 2;
+  wf.frequency.setValueAtTime(800, now);
+  wf.frequency.exponentialRampToValueAtTime(4000, hit);
+  var wg = ctx.createGain();
+  wg.gain.setValueAtTime(0.0001, now);
+  wg.gain.exponentialRampToValueAtTime(0.35, hit - 0.005);
+  wg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.01);
+  w.connect(wf); wf.connect(wg); wg.connect(out);
+  w.start(now); w.stop(hit + 0.02);
+
+  // Pop: a short, bright crack of filtered noise for the glove.
+  var s = ctx.createBufferSource();
+  s.buffer = noise;
+  var bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.value = 1.2;
+  bp.frequency.setValueAtTime(2600 * vary, hit);
+  bp.frequency.exponentialRampToValueAtTime(900, hit + 0.04);
+  var sg = ctx.createGain();
+  sg.gain.setValueAtTime(0.0001, hit);
+  sg.gain.exponentialRampToValueAtTime(1.1, hit + 0.001);
+  sg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.05);
+  s.connect(bp); bp.connect(sg); sg.connect(out);
+  s.start(hit); s.stop(hit + 0.07);
+
+  // A small low thud under it so it still lands on something.
+  var o = ctx.createOscillator();
+  o.type = "sine";
+  o.frequency.setValueAtTime(240 * vary, hit);
+  o.frequency.exponentialRampToValueAtTime(110, hit + 0.05);
+  var og = ctx.createGain();
+  og.gain.setValueAtTime(0.0001, hit);
+  og.gain.exponentialRampToValueAtTime(0.45, hit + 0.003);
+  og.gain.exponentialRampToValueAtTime(0.0001, hit + 0.07);
+  o.connect(og); og.connect(out);
+  o.start(hit); o.stop(hit + 0.09);
+}
+function playBmfJab() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (now - lastPunchSound < 0.05) return;
+    lastPunchSound = now;
+    if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+    synthBmfJab(ctx, ctx.destination, now, punchNoise);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // A heavy crunch for power-punch wall slams: a low body thud that drops in
 // pitch plus a short burst of filtered noise for the crack of the impact.
 var noiseBuffer = null;
@@ -530,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -556,13 +620,13 @@ function playKnockout() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     withClip("knockout", function (buf) {
-      var now = ctx.currentTime;
-      cutInTalk("knockout", 0.85);
+      if (!cutInTalk("knockout", 0.85)) return;
+      var at = talkCutAt; // later than now if Gane's Herb Dean line is still going
       var c = crowd;
       if (c && c.gain) {
-        c.duckUntil = now + buf.duration - 1;
-        c.gain.gain.cancelScheduledValues(now);
-        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.4, now, 0.1);
+        c.duckUntil = at + buf.duration - 1;
+        c.gain.gain.cancelScheduledValues(ctx.currentTime);
+        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.4, at, 0.1);
       }
     });
   } catch (e) { /* never let audio break the game */ }
@@ -587,10 +651,14 @@ function playClip(name, gain, when, rate) {
 // time: if another line comes up while one is going and it's due to end
 // within TALK_WAIT seconds, the new line waits and plays right after it.
 // Otherwise the new line is skipped. The big moments (the knockout call and
-// Do Bronx) cut in instead: they stop whatever line is going.
+// Do Bronx) cut in instead: they stop whatever line is going. A priority line
+// (Gane's Herb Dean special) outranks all of them: it cuts in, and nothing
+// cuts it off; a cut-in waits for it to finish instead.
 var TALK_WAIT = 1.5;  // how long a line will wait for the current one to finish
 var TALK_GAP = 0.15;  // breath between two lines
 var talkSrcs = [], talkEnd = 0, talkQueued = false;
+var talkPriorityEnd = 0; // a priority line is playing until then
+var talkCutAt = 0;       // when the last cut-in actually starts
 // Plays `name` on the talk channel. Returns false if it was skipped.
 function playTalk(name, gain) {
   var ctx = audioCtx, buf = clipBuffers[name];
@@ -611,17 +679,37 @@ function playTalk(name, gain) {
   return true;
 }
 // Cuts in on the talk channel: whatever line is going (or waiting) stops.
+// While a priority line is going, it plays right after it instead.
 function cutInTalk(name, gain) {
+  var now = audioCtx.currentTime;
+  if (now < talkPriorityEnd) {
+    var at = talkEnd + TALK_GAP, later = playClip(name, gain, at);
+    if (!later) return null;
+    talkSrcs.push(later); talkQueued = true;
+    talkEnd = at + clipBuffers[name].duration;
+    talkCutAt = at;
+    return later;
+  }
   stopTalk();
   var src = playClip(name, gain);
   if (!src) return null;
   talkSrcs = [src];
-  talkEnd = audioCtx.currentTime + clipBuffers[name].duration;
+  talkEnd = now + clipBuffers[name].duration;
+  talkCutAt = now;
+  return src;
+}
+// A priority line: cuts in on everything, and nothing cuts it off.
+function playPriorityTalk(name, gain) {
+  stopTalk();
+  var src = playClip(name, gain);
+  if (!src) return null;
+  talkSrcs = [src];
+  talkEnd = talkPriorityEnd = audioCtx.currentTime + clipBuffers[name].duration;
   return src;
 }
 function stopTalk() {
   talkSrcs.forEach(function (src) { try { src.stop(); } catch (e) { /* already stopped */ } });
-  talkSrcs = []; talkEnd = 0; talkQueued = false;
+  talkSrcs = []; talkEnd = 0; talkQueued = false; talkPriorityEnd = 0;
 }
 
 // Do Bronx (dobronx.js): "Charrrles... Do... BRONX!" from the start of the
@@ -687,6 +775,240 @@ function playChairShot() {
 // ("ganeBatCall") or an eye poke ("ganePokeCall") in Cheater mode
 // (cheater.js). The fades are in the clips themselves. Returns false if the
 // line got skipped, so it can be tried again on the next one.
+// Herb Dean's white cane (herbdean.js): a cheap, rickety plastic one. A
+// quick swish as he brings it down (playCaneSwish, at the start of the
+// strike), then on contact a dull hollow plastic pok with the cane's loose
+// folding joints rattling a few times after it (playCaneWhack).
+function caneNoise(ctx) { if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2); return punchNoise; }
+function caneBurst(ctx, t, freq, q, peak, dur) {
+  var s = ctx.createBufferSource();
+  s.buffer = caneNoise(ctx);
+  var f = ctx.createBiquadFilter();
+  f.type = "bandpass"; f.Q.value = q; f.frequency.value = freq;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.001);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(ctx.destination);
+  s.start(t); s.stop(t + dur + 0.02);
+}
+function caneTone(ctx, t, type, f0, f1, peak, dur) {
+  var o = ctx.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+// One plastic pok: the dull hollow tube plus a papery top end.
+function canePok(ctx, t, v, peak) {
+  caneBurst(ctx, t, 2300 * v, 0.9, peak, 0.035);
+  caneBurst(ctx, t, 5200 * v, 1.2, peak * 0.35, 0.02);
+  caneTone(ctx, t, "triangle", 1350 * v, 1100 * v, peak * 0.28, 0.05);
+}
+function playCaneSwish() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + 0.08;
+    var w = ctx.createBufferSource();
+    w.buffer = caneNoise(ctx);
+    var f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = 3;
+    f.frequency.setValueAtTime(600, now);
+    f.frequency.exponentialRampToValueAtTime(3000, end);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.22, end - 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, end + 0.01);
+    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.start(now); w.stop(end + 0.03);
+  } catch (e) { /* never let audio break the game */ }
+}
+function playCaneWhack() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, v = 0.94 + Math.random() * 0.12;
+    canePok(ctx, now, v, 0.9);
+    caneTone(ctx, now, "sine", 210 * v, 120, 0.25, 0.06); // light, not much behind it
+    // The rattle: a few smaller poks, quieter and quicker each time.
+    var dt = 0.022, pk = 0.42;
+    for (var k = 0; k < 4; k++) {
+      dt *= 0.85 + Math.random() * 0.4; pk *= 0.62;
+      canePok(ctx, now + 0.03 + k * dt * 1.6, v * (1.15 + Math.random() * 0.2), pk);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Ciryl Gane's bat (the Herb Dean special and Cheater mode): a heavy swing
+// whoosh into a deep, meaty thud of the bat sinking in. A big one (the HOME
+// RUN) gets a sharp crack on top. Joe picked this one (option C).
+var BAT_GAIN = 0.5;
+function playBatHit(big) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, hit = now + 0.06; // the whoosh leads in
+    var v = 0.9 + Math.random() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
+    var w = ctx.createBufferSource();
+    w.buffer = caneNoise(ctx);
+    var f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = 2;
+    f.frequency.setValueAtTime(300, now);
+    f.frequency.exponentialRampToValueAtTime(1600, hit);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.35 * k, hit - 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.015);
+    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.start(now); w.stop(hit + 0.03);
+    caneBurst(ctx, hit, 900 * v, 0.8, 0.8 * k, 0.08);              // the slap of it landing
+    caneTone(ctx, hit, "sine", 95 * v, 42, 0.9 * k, big ? 0.35 : 0.2); // the weight
+    caneTone(ctx, hit, "triangle", 240 * v, 120, 0.3 * k, 0.1);
+    if (big) {
+      caneBurst(ctx, hit, 2600, 1.2, 0.9 * BAT_GAIN, 0.08);
+      caneTone(ctx, hit, "triangle", 600, 420, 0.35 * BAT_GAIN, 0.14);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The critical weave combo (weave.js): an anime flurry. Each quick punch is
+// a sharp slap riding a short whoosh; the last, launching one comes in on a
+// bigger whoosh and lands with a deep boom and a short echo. Joe picked this
+// one (option B).
+var CRIT_GAIN = 0.68;
+function playCritPunch(last) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, lead = last ? 0.06 : 0.03, hit = now + lead;
+    var v = 0.95 + Math.random() * 0.1, k = CRIT_GAIN;
+    var w = ctx.createBufferSource();
+    w.buffer = caneNoise(ctx);
+    var f = ctx.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = 2;
+    f.frequency.setValueAtTime(700, now);
+    f.frequency.exponentialRampToValueAtTime(last ? 2000 : 4500, hit);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime((last ? 0.4 : 0.28) * k, hit - 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.012);
+    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.start(now); w.stop(hit + 0.03);
+    if (!last) {
+      caneBurst(ctx, hit, 3800 * v, 1.0, 0.7 * k, 0.03);
+      caneBurst(ctx, hit, 1200 * v, 1.0, 0.35 * k, 0.04);
+    } else {
+      caneBurst(ctx, hit, 1600, 0.7, 1.0 * k, 0.12);
+      caneTone(ctx, hit, "sine", 90, 34, 1.0 * k, 0.6); // the boom
+      [0.11, 0.22, 0.33].forEach(function (d, i) { caneBurst(ctx, hit + d, 1400, 0.8, 0.28 / (i + 1) * k, 0.1); }); // echo
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Random fight commentary, only when Justin Gaethje is fighting: the UFC
+// call from his Michael Johnson fight comes in once per fight, at a random
+// moment between COMMENTARY_AT seconds in. It's a talking clip, so it follows
+// the same rule as the other lines (waits for one about to finish, else is
+// skipped); a skipped call isn't used up, it tries again a moment later.
+var COMMENTARY_AT = [6, 18];
+var commentary = { t: 0, next: 0, done: false };
+function resetCommentary() {
+  commentary.t = 0; commentary.done = false;
+  commentary.next = COMMENTARY_AT[0] + Math.random() * (COMMENTARY_AT[1] - COMMENTARY_AT[0]);
+}
+function gaethjeFighting() {
+  return balls.some(function (b) { return b.char && String(b.char.id).indexOf("c-justin-gaethje") === 0; });
+}
+function tickCommentary(dt) {
+  if (commentary.done || !started || over || !gaethjeFighting()) return;
+  commentary.t += dt;
+  if (commentary.t < commentary.next) return;
+  if (playTalk("gaethjeCommentary", 0.8)) commentary.done = true;
+  else commentary.next = commentary.t + 2;
+}
+
+// A short band-passed whoosh into `hit` (the big swings below).
+function swingWhoosh(ctx, now, hit, f0, f1, gain) {
+  var w = ctx.createBufferSource();
+  w.buffer = caneNoise(ctx);
+  var f = ctx.createBiquadFilter();
+  f.type = "bandpass"; f.Q.value = 2;
+  f.frequency.setValueAtTime(f0, now);
+  f.frequency.exponentialRampToValueAtTime(f1, hit);
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(gain, hit - 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.012);
+  w.connect(f); f.connect(g); g.connect(ctx.destination);
+  w.start(now); w.stop(hit + 0.03);
+}
+// The CTE haymaker landing (cte.js; Gaethje's dizzying one too): a bone
+// rattler, a huge low crunch with a short boom after it. Joe picked this
+// one (option B). The swing's own whoosh already plays at the strike.
+var HAYMAKER_GAIN = 0.68;
+function playHaymaker() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var t = ctx.currentTime, k = HAYMAKER_GAIN;
+    caneBurst(ctx, t, 900, 0.7, 1.0 * k, 0.12);
+    caneBurst(ctx, t + 0.008, 2800, 1.4, 0.6 * k, 0.05);
+    caneTone(ctx, t, "sine", 95, 35, 1.0 * k, 0.5);
+    [0.09, 0.18].forEach(function (d, i) { caneBurst(ctx, t + d, 700, 0.8, 0.3 / (i + 1) * k, 0.12); });
+  } catch (e) { /* never let audio break the game */ }
+}
+// A landed kick (abilities.js): a leg kick slap, a quick whoosh into a sharp,
+// stinging shin-on-skin slap. Joe picked this one (option A).
+var KICK_GAIN = 0.9;
+function playKick() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, hit = now + 0.05, v = 0.94 + Math.random() * 0.12, k = KICK_GAIN;
+    swingWhoosh(ctx, now, hit, 500, 2600, 0.25 * k);
+    caneBurst(ctx, hit, 3000 * v, 0.9, 1.0 * k, 0.05);
+    caneBurst(ctx, hit, 1400 * v, 1.0, 0.5 * k, 0.07);
+    caneTone(ctx, hit, "sine", 170 * v, 80, 0.45 * k, 0.12);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Gane's Herb Dean special: Joe's clip as the special starts, as a priority
+// line, so no other talking clip cuts it off or plays over it. The looping
+// crowd sits down under it, then swells back up as the clip fades out
+// (HERB_LINE_BLEND seconds before its end), so one hands over to the other.
+var HERB_LINE_BLEND = 1.6;
+function playHerbDeanLine() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    withClip("ganeHerbDean", function (buf) {
+      var src = playPriorityTalk("ganeHerbDean", 0.9);
+      if (!src) return;
+      var now = ctx.currentTime, c = crowd;
+      if (c && c.gain) {
+        c.duckUntil = now + buf.duration - HERB_LINE_BLEND;
+        c.gain.gain.cancelScheduledValues(now);
+        c.gain.gain.setTargetAtTime(CROWD_FLOOR * 0.6, now, 0.3);
+      }
+      setTimeout(function () {
+        if (talkSrcs[0] === src) crowdReact(0.6); // still ours: the stands come back up
+      }, (buf.duration - HERB_LINE_BLEND) * 1000);
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
 function playGaneCall(name) {
   try {
     var ctx = getAudioCtx();
@@ -712,6 +1034,175 @@ function playHokitTaunt() {
     if (!buf) { withClip(name); return; }
     if (playTalk(name, 0.9)) lastHokitLine = pick;
   } catch (e) { /* never let audio break the game */ }
+}
+
+// A bald eagle's scream: Joe's recording, a touch higher or lower each time.
+// Until it's decoded, a synthesized cry stands in.
+function playEagleScreech() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (playClip("eagleScreech", 0.8, now, 0.92 + Math.random() * 0.16)) return; // Joe's recording (the synth below is the stand-in)
+    [[0, 0.42, 1], [0.48, 0.24, 0.8]].forEach(function (c) {
+      var t0 = now + c[0], len = c[1];
+      var o = ctx.createOscillator(), o2 = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      o.type = "sawtooth"; o2.type = "square";
+      o.frequency.setValueAtTime(2300, t0); o.frequency.exponentialRampToValueAtTime(1500, t0 + len);
+      o2.frequency.setValueAtTime(2330, t0); o2.frequency.exponentialRampToValueAtTime(1480, t0 + len);
+      lfo.frequency.value = 38; lg.gain.value = 120;
+      lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+      var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2600; bp.Q.value = 2;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.16 * c[2], t0 + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+      o.connect(bp); o2.connect(bp); bp.connect(g); g.connect(ctx.destination);
+      [o, o2, lfo].forEach(function (n) { n.start(t0); n.stop(t0 + len + 0.05); });
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The Free Bird solo, out on the highway in All American: the crowd drops
+// away to nothing and the solo comes in; back in the cage it fades out and
+// the crowd comes back up.
+var freeBirdPlaying = null; // { src, gain }
+function playFreeBird() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    stopFreeBird(0);
+    var buf = clipBuffers.freeBird;
+    if (!buf) { withClip("freeBird"); return; }
+    var now = ctx.currentTime, c = crowd;
+    if (c && c.gain) {
+      c.duckUntil = now + 60; // held down until the solo stops
+      c.gain.gain.cancelScheduledValues(now);
+      c.gain.gain.setTargetAtTime(0.0001, now, 0.08);
+    }
+    var src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf;
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.9, now + 0.12);
+    src.connect(g); g.connect(ctx.destination);
+    src.start(now);
+    freeBirdPlaying = { src: src, gain: g };
+  } catch (e) { /* never let audio break the game */ }
+}
+function stopFreeBird(fade) {
+  try {
+    var fb = freeBirdPlaying;
+    if (!fb || !audioCtx) return;
+    freeBirdPlaying = null;
+    var now = audioCtx.currentTime, f = fade == null ? 0.6 : fade;
+    fb.gain.gain.cancelScheduledValues(now);
+    fb.gain.gain.setValueAtTime(fb.gain.gain.value || 0.9, now);
+    fb.gain.gain.linearRampToValueAtTime(0, now + f + 0.01);
+    fb.src.stop(now + f + 0.05);
+    if (crowd) { crowd.duckUntil = now; crowdReact(0.8); } // the arena's back
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// "U-S-A! U-S-A!": the chant comes straight in loud the moment the truck
+// hits, holds for a couple of chants, and fades away.
+function playUsaChant() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var buf = clipBuffers.usaChant;
+    if (!buf) { withClip("usaChant"); return; }
+    var now = ctx.currentTime, g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(1.0, now + 0.08);
+    g.gain.setValueAtTime(1.0, now + 1.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + buf.duration);
+    g.connect(ctx.destination);
+    var src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(g);
+    src.start(now);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The truck hitting them: a deep boom you feel more than hear, a crunch of
+// metal on body, a ringing clang off the grille, and glass shattering and
+// skittering across the road after it.
+function playTruckImpact() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, out = ctx.createDynamicsCompressor();
+    out.threshold.value = -10; out.ratio.value = 6;
+    var master = ctx.createGain(); master.gain.value = 1.1;
+    out.connect(master); master.connect(ctx.destination);
+    var noise = makeNoiseBuffer(ctx, 1.6);
+    // Boom: a sub thump dropping in pitch.
+    var b = ctx.createOscillator(), bg = ctx.createGain();
+    b.type = "sine"; b.frequency.setValueAtTime(95, now); b.frequency.exponentialRampToValueAtTime(28, now + 0.6);
+    bg.gain.setValueAtTime(0.0001, now); bg.gain.exponentialRampToValueAtTime(1.0, now + 0.01); bg.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+    b.connect(bg); bg.connect(out); b.start(now); b.stop(now + 0.85);
+    // Crunch: a hard burst of low, distorted noise.
+    var cn = ctx.createBufferSource(), clp = ctx.createBiquadFilter(), cg = ctx.createGain(), sh = ctx.createWaveShaper();
+    var curve = new Float32Array(256);
+    for (var i = 0; i < 256; i++) { var x = i / 128 - 1; curve[i] = Math.tanh(x * 6); }
+    sh.curve = curve;
+    cn.buffer = noise; clp.type = "lowpass"; clp.frequency.setValueAtTime(2600, now); clp.frequency.exponentialRampToValueAtTime(300, now + 0.45);
+    cg.gain.setValueAtTime(0.0001, now); cg.gain.exponentialRampToValueAtTime(0.9, now + 0.005); cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+    cn.connect(sh); sh.connect(clp); clp.connect(cg); cg.connect(out); cn.start(now); cn.stop(now + 0.6);
+    // Clang: inharmonic metal partials ringing off.
+    [182, 431, 697, 1123, 1580].forEach(function (f, k) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = k % 2 ? "square" : "triangle"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12 / (k + 1) + 0.04, now + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5 + 0.25 * (5 - k) / 5);
+      o.connect(g); g.connect(out); o.start(now); o.stop(now + 0.8);
+    });
+    // Glass: bright noise bursts and tinkling bits scattering for a second.
+    for (var j = 0; j < 22; j++) {
+      var t0 = now + 0.02 + (j < 4 ? j * 0.015 : Math.pow(Math.random(), 1.6) * 1.1);
+      var gs = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), gg = ctx.createGain();
+      gs.buffer = noise; hp.type = "bandpass"; hp.frequency.value = 3500 + Math.random() * 5000; hp.Q.value = 6 + Math.random() * 10;
+      var len = j < 4 ? 0.18 : 0.03 + Math.random() * 0.06, vol = j < 4 ? 0.7 : 0.15 + Math.random() * 0.25;
+      gg.gain.setValueAtTime(0.0001, t0); gg.gain.exponentialRampToValueAtTime(vol, t0 + 0.003); gg.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+      gs.connect(hp); hp.connect(gg); gg.connect(out); gs.start(t0, Math.random() * 1.2); gs.stop(t0 + len + 0.02);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The truck bearing down: Joe's air horn (two blasts) over a diesel engine
+// roaring up as it gets closer, peaking as it hits (about 1.9s in).
+function playTruckHorn() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (!playClip("truckHorn", 0.9, now)) { // Joe's air horn (the synth is the stand-in)
+      var hg = ctx.createGain(), lp = ctx.createBiquadFilter();
+      lp.type = "lowpass"; lp.frequency.value = 2200;
+      hg.gain.setValueAtTime(0.0001, now);
+      hg.gain.exponentialRampToValueAtTime(0.22, now + 0.05);
+      hg.gain.setValueAtTime(0.22, now + 0.85);
+      hg.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+      [311, 392].forEach(function (f) {
+        var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f;
+        o.connect(lp); o.start(now); o.stop(now + 1.05);
+      });
+      lp.connect(hg); hg.connect(ctx.destination);
+    }
+    // The engine: low rumble rising in pitch and volume.
+    var e = ctx.createOscillator(), eg = ctx.createGain(), elp = ctx.createBiquadFilter();
+    e.type = "sawtooth";
+    e.frequency.setValueAtTime(40, now); e.frequency.exponentialRampToValueAtTime(100, now + 1.9);
+    elp.type = "lowpass"; elp.frequency.value = 400;
+    eg.gain.setValueAtTime(0.0001, now);
+    eg.gain.exponentialRampToValueAtTime(0.28, now + 1.9);
+    eg.gain.exponentialRampToValueAtTime(0.0001, now + 2.6);
+    e.connect(elp); elp.connect(eg); eg.connect(ctx.destination);
+    e.start(now); e.stop(now + 2.65);
+  } catch (e2) { /* never let audio break the game */ }
 }
 
 // The crowd's cameras going off: one loud shutter for the big white-out, then

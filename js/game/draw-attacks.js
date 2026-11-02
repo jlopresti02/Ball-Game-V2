@@ -111,6 +111,10 @@ function drawHands(b, other) {
   if (b.mock) return; // giving a thumbs down (drawMock)
   if (cheaterHandsBusy(b)) return; // cheating (drawCheater)
   if (b.igbb && b.igbb.move === "chairshot") return; // both hands on the chair (drawChairShot)
+  if (b.igbb && b.igbb.move === "herbdean") return; // swinging the bat (drawHerbDeanSpecial)
+  if (allAmericanHandsBusy(b)) return; // the haymaker, or fists pumping (drawAllAmerican)
+  if (herbCovering(b)) { drawHerbCover(b); return; } // covering up from the bat and the cane
+  if (aaCovering(b)) { drawAaPanic(b); return; } // freaking out on the highway (allamerican.js)
   if (b.koRush && b.koRush.phase === "celebrate") return; // hands up (drawn by drawKoCelebrate)
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.

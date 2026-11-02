@@ -360,7 +360,7 @@ function drawArmsUp(b, t) {
     var sh = { x: b.x + k * b.r * 0.62, y: b.y - b.r * 0.5 };
     var hand = { x: b.x + k * b.r * 0.9, y: b.y - b.r * 1.15 - pump };
     strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
-    drawGloveAt(hand.x, hand.y, size * 0.9, b.char);
+    drawGloveAt(hand.x, hand.y, size * 0.9, b.char, Math.atan2(hand.y - sh.y, hand.x - sh.x));
   });
 }
 
