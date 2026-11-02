@@ -25,8 +25,8 @@ var AA_EAGLE_DIVE = 0.5;      // one swoop, in and back out (talons hit halfway)
 var AA_TRUCK_AT = 2.4;        // the horn, and the truck starts up the road
 var AA_TRUCK_HIT = 1.9;       // seconds from the horn to the hit (during its second blast)
 var AA_TRUCK_SPEED = 1700;
-var AA_TRUCK_L = 520;        // Joe's semi, nose to tail (arena units)
-var AA_TRUCK_BASE = 50;      // its wheels sit this far below the victim's centre
+var AA_TRUCK_L = 800;        // Joe's semi, nose to tail (arena units): towers over them
+var AA_TRUCK_BASE = 70;      // its wheels sit this far below the victim's centre
 var AA_TRUCK_W = 124;        // (the drawn stand-in pickup's width)
 var aaTruckImg = new Image();
 aaTruckImg.src = AA_TRUCK_SRC; // allamerican-art.js
@@ -176,7 +176,7 @@ function updateRoad(self, other, m, dt) {
       floater(other.x, other.y - other.r - 70, "F-250!", "crit");
       other.squash = { t: 0.4, max: 0.4, nx: -1, ny: 0 }; // flattened against the grille
       other.flash = 0.3;
-      playSlam(); playPunch(60);
+      playTruckImpact(); playSlam(); playPunch(60);
       hitStop = Math.max(hitStop, 0.3);
       screenFlash = Math.max(screenFlash, 0.55);
       if (!reduceMotion) shake = Math.max(shake, 60);

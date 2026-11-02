@@ -995,6 +995,52 @@ function playEagleScreech() {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// The truck hitting them: a deep boom you feel more than hear, a crunch of
+// metal on body, a ringing clang off the grille, and glass shattering and
+// skittering across the road after it.
+function playTruckImpact() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, out = ctx.createDynamicsCompressor();
+    out.threshold.value = -10; out.ratio.value = 6;
+    var master = ctx.createGain(); master.gain.value = 1.1;
+    out.connect(master); master.connect(ctx.destination);
+    var noise = makeNoiseBuffer(ctx, 1.6);
+    // Boom: a sub thump dropping in pitch.
+    var b = ctx.createOscillator(), bg = ctx.createGain();
+    b.type = "sine"; b.frequency.setValueAtTime(95, now); b.frequency.exponentialRampToValueAtTime(28, now + 0.6);
+    bg.gain.setValueAtTime(0.0001, now); bg.gain.exponentialRampToValueAtTime(1.0, now + 0.01); bg.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+    b.connect(bg); bg.connect(out); b.start(now); b.stop(now + 0.85);
+    // Crunch: a hard burst of low, distorted noise.
+    var cn = ctx.createBufferSource(), clp = ctx.createBiquadFilter(), cg = ctx.createGain(), sh = ctx.createWaveShaper();
+    var curve = new Float32Array(256);
+    for (var i = 0; i < 256; i++) { var x = i / 128 - 1; curve[i] = Math.tanh(x * 6); }
+    sh.curve = curve;
+    cn.buffer = noise; clp.type = "lowpass"; clp.frequency.setValueAtTime(2600, now); clp.frequency.exponentialRampToValueAtTime(300, now + 0.45);
+    cg.gain.setValueAtTime(0.0001, now); cg.gain.exponentialRampToValueAtTime(0.9, now + 0.005); cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+    cn.connect(sh); sh.connect(clp); clp.connect(cg); cg.connect(out); cn.start(now); cn.stop(now + 0.6);
+    // Clang: inharmonic metal partials ringing off.
+    [182, 431, 697, 1123, 1580].forEach(function (f, k) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = k % 2 ? "square" : "triangle"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12 / (k + 1) + 0.04, now + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5 + 0.25 * (5 - k) / 5);
+      o.connect(g); g.connect(out); o.start(now); o.stop(now + 0.8);
+    });
+    // Glass: bright noise bursts and tinkling bits scattering for a second.
+    for (var j = 0; j < 22; j++) {
+      var t0 = now + 0.02 + (j < 4 ? j * 0.015 : Math.pow(Math.random(), 1.6) * 1.1);
+      var gs = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), gg = ctx.createGain();
+      gs.buffer = noise; hp.type = "bandpass"; hp.frequency.value = 3500 + Math.random() * 5000; hp.Q.value = 6 + Math.random() * 10;
+      var len = j < 4 ? 0.18 : 0.03 + Math.random() * 0.06, vol = j < 4 ? 0.7 : 0.15 + Math.random() * 0.25;
+      gg.gain.setValueAtTime(0.0001, t0); gg.gain.exponentialRampToValueAtTime(vol, t0 + 0.003); gg.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+      gs.connect(hp); hp.connect(gg); gg.connect(out); gs.start(t0, Math.random() * 1.2); gs.stop(t0 + len + 0.02);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // The truck bearing down: Joe's air horn (two blasts) over a diesel engine
 // roaring up as it gets closer, peaking as it hits (about 1.9s in).
 function playTruckHorn() {
