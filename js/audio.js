@@ -1036,7 +1036,7 @@ function stopFreeBird(fade) {
 }
 
 // "U-S-A! U-S-A!": the chant comes straight in loud the moment the truck
-// hits, carries on a second time over itself, and fades away.
+// hits, holds for a couple of chants, and fades away.
 function playUsaChant() {
   try {
     var ctx = getAudioCtx();
@@ -1047,14 +1047,12 @@ function playUsaChant() {
     var now = ctx.currentTime, g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
     g.gain.exponentialRampToValueAtTime(1.0, now + 0.08);
-    g.gain.setValueAtTime(1.0, now + 1.2);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + buf.duration * 1.85);
+    g.gain.setValueAtTime(1.0, now + 1.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + buf.duration);
     g.connect(ctx.destination);
-    [0, buf.duration - 0.2].forEach(function (off) {
-      var src = ctx.createBufferSource();
-      src.buffer = buf; src.connect(g);
-      src.start(now + off);
-    });
+    var src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(g);
+    src.start(now);
   } catch (e) { /* never let audio break the game */ }
 }
 
