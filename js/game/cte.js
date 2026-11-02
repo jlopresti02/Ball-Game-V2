@@ -92,7 +92,7 @@ function updateSwing(self, other, dt) {
         st.hit = true;
         var dealt = hurt(other, sw.damage, "swing", self.id);
         if (dealt > 0) {
-          playPunch(dealt);
+          playHaymaker();
           if (!other.justDodged && !other.grappled) {
             // Knocked sideways along the sweep, and a bit away.
             var rx = Math.cos(f.a), ry = Math.sin(f.a);

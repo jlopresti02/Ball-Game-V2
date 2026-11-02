@@ -258,7 +258,8 @@ function updateAbilities(dt) {
           if (other.alive && tryCheckKick(other, self)) {
             // Checked: no damage, no knockback; the defender kicks back.
           } else if (other.alive) {
-            hurt(other, ki.damage, self.kick.counter ? "kickback" : "kick", self.id);
+            var kickDealt = hurt(other, ki.damage, self.kick.counter ? "kickback" : "kick", self.id);
+            if (kickDealt > 0) playKick();
             if (ki.knockback > 0 && !other.justDodged) {
               var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;
               other.vx += kkx / kkd * ki.knockback;

@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -912,6 +912,75 @@ function playCritPunch(last) {
       caneTone(ctx, hit, "sine", 90, 34, 1.0 * k, 0.6); // the boom
       [0.11, 0.22, 0.33].forEach(function (d, i) { caneBurst(ctx, hit + d, 1400, 0.8, 0.28 / (i + 1) * k, 0.1); }); // echo
     }
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Random fight commentary, only when Justin Gaethje is fighting: the UFC
+// call from his Michael Johnson fight comes in once per fight, at a random
+// moment between COMMENTARY_AT seconds in. It's a talking clip, so it follows
+// the same rule as the other lines (waits for one about to finish, else is
+// skipped); a skipped call isn't used up, it tries again a moment later.
+var COMMENTARY_AT = [6, 18];
+var commentary = { t: 0, next: 0, done: false };
+function resetCommentary() {
+  commentary.t = 0; commentary.done = false;
+  commentary.next = COMMENTARY_AT[0] + Math.random() * (COMMENTARY_AT[1] - COMMENTARY_AT[0]);
+}
+function gaethjeFighting() {
+  return balls.some(function (b) { return b.char && String(b.char.id).indexOf("c-justin-gaethje") === 0; });
+}
+function tickCommentary(dt) {
+  if (commentary.done || !started || over || !gaethjeFighting()) return;
+  commentary.t += dt;
+  if (commentary.t < commentary.next) return;
+  if (playTalk("gaethjeCommentary", 0.8)) commentary.done = true;
+  else commentary.next = commentary.t + 2;
+}
+
+// A short band-passed whoosh into `hit` (the big swings below).
+function swingWhoosh(ctx, now, hit, f0, f1, gain) {
+  var w = ctx.createBufferSource();
+  w.buffer = caneNoise(ctx);
+  var f = ctx.createBiquadFilter();
+  f.type = "bandpass"; f.Q.value = 2;
+  f.frequency.setValueAtTime(f0, now);
+  f.frequency.exponentialRampToValueAtTime(f1, hit);
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(gain, hit - 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.012);
+  w.connect(f); f.connect(g); g.connect(ctx.destination);
+  w.start(now); w.stop(hit + 0.03);
+}
+// The CTE haymaker landing (cte.js; Gaethje's dizzying one too): a bone
+// rattler, a huge low crunch with a short boom after it. Joe picked this
+// one (option B). The swing's own whoosh already plays at the strike.
+var HAYMAKER_GAIN = 0.68;
+function playHaymaker() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var t = ctx.currentTime, k = HAYMAKER_GAIN;
+    caneBurst(ctx, t, 900, 0.7, 1.0 * k, 0.12);
+    caneBurst(ctx, t + 0.008, 2800, 1.4, 0.6 * k, 0.05);
+    caneTone(ctx, t, "sine", 95, 35, 1.0 * k, 0.5);
+    [0.09, 0.18].forEach(function (d, i) { caneBurst(ctx, t + d, 700, 0.8, 0.3 / (i + 1) * k, 0.12); });
+  } catch (e) { /* never let audio break the game */ }
+}
+// A landed kick (abilities.js): a leg kick slap, a quick whoosh into a sharp,
+// stinging shin-on-skin slap. Joe picked this one (option A).
+var KICK_GAIN = 0.9;
+function playKick() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, hit = now + 0.05, v = 0.94 + Math.random() * 0.12, k = KICK_GAIN;
+    swingWhoosh(ctx, now, hit, 500, 2600, 0.25 * k);
+    caneBurst(ctx, hit, 3000 * v, 0.9, 1.0 * k, 0.05);
+    caneBurst(ctx, hit, 1400 * v, 1.0, 0.5 * k, 0.07);
+    caneTone(ctx, hit, "sine", 170 * v, 80, 0.45 * k, 0.12);
   } catch (e) { /* never let audio break the game */ }
 }
 
