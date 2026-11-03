@@ -1,11 +1,11 @@
 {
   "id": "c-ilia-topuria",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Ilia Topuria",
   "base": "Brawler",
-  "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He starts patient: single light punches, thrown rarely. The more he's hurt, the more often he throws and the longer his combos get, from 1 punch at full health up to 5 by three-quarter health. After that the combos keep coming faster and every punch hits harder. He sprawls on shots and checks kicks, and answers both with punches.",
+  "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He starts patient: single light punches, thrown rarely. The more he's hurt, the more often he throws and the longer his combos get, from 1 punch at full health up to 5 by three-quarter health. After that the combos keep coming faster and every punch hits harder. He sprawls on shots and checks kicks, and answers both with punches. Special move: Aura Farm.",
   "color": "#b3121b",
   "label": "",
   "imgData": null,
@@ -86,5 +86,12 @@
   "hasSwing": false,
   "hasForget": false,
   "blockChance": 10,
-  "hasSpecial": false
+  "hasSpecial": true,
+  "special": {
+    "move": "aurafarm",
+    "chargeTime": 45,
+    "hitCut": 4,
+    "bullDamage": 30,
+    "throwDamage": 35
+  }
 }

@@ -83,6 +83,7 @@ function draw() {
   });
 
   drawGuardZones(); // the circle round a fighter down in guard
+  drawAuraRoses(false); // roses thrown on the mat (aurafarm.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -110,6 +111,7 @@ function draw() {
     var gbl = ganeBatLean(b); wox += gbl.x; woy += gbl.y; // throwing his weight into a bat swing (cheater.js)
     var dzo = dizzyOffset(b); wox += dzo.x; woy += dzo.y; // staggering after a haymaker (gaethje.js)
     var aao = allAmericanOffset(b); wox += aao.x; woy += aao.y; // launched down the highway (allamerican.js)
+    var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -134,6 +136,8 @@ function draw() {
     }
     var aas = allAmericanSpin(b); // tumbling after the truck (allamerican.js)
     if (aas) { spinning = true; spinAngle = aas; }
+    var afs = auraSpin(b); // twirling in the Aura Farm dance (aurafarm.js)
+    if (afs) { spinning = true; spinAngle = afs; }
 
     ctx.save();
     ctx.translate(b.x + jx, b.y + jy);
@@ -298,6 +302,7 @@ function draw() {
     drawDazed(b);   // stars after a chair shot
     drawDizzy(b);   // stars and a spiral after a Gaethje haymaker
     drawAllAmerican(b); // and his All American haymaker
+    drawAuraFarm(b);    // Ilia dancing, with the cape, KOing and lifting the bull
     drawAaSlashes(b);   // eagle claw marks on whoever's out on the road
     drawMock(b);    // and his thumbs down
     drawCheater(b); // Gane cheating
@@ -318,6 +323,8 @@ function draw() {
   drawCheaterObjects();
   drawHerb();
   drawRoadActors(); // eagles and the truck (allamerican.js)
+  drawAuraRoses(true); // roses in the air
+  drawAuraActors();    // the bull
   drawSuplexes();
 
   projectiles.forEach(function (p) {
@@ -330,6 +337,7 @@ function draw() {
     }
   });
 
+  drawAuraLights(s, ox, oy); // the arena going dark, the spotlight, then the lights back up (aurafarm.js)
   drawHerbBanner(); // "Herb Dean is entering the ring" when there's no jumbotron
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {

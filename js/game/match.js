@@ -58,6 +58,7 @@ function startMatchWith(ch0, ch1) {
   resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
   resetAllAmerican();
+  resetAuraFarm();
   resetCheater();
   resetHerbDean();
 
