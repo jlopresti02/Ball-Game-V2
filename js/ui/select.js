@@ -9,7 +9,8 @@ var screens = {
   select: document.getElementById("screenSelect"),
   dev: document.getElementById("screenDev"),
   editor: document.getElementById("screenEditor"),
-  game: document.getElementById("screenGame")
+  game: document.getElementById("screenGame"),
+  gallery: document.getElementById("screenGallery")
 };
 // The menu you were last on ("select" or "dev"), so the editor and the
 // game's "Change fighters" button take you back to the right place.
@@ -18,9 +19,12 @@ var menuScreen = "select";
 function showScreen(name) {
   stopAllChargeSounds(); // leaving mid-charge shouldn't leave a hum playing
   if (name !== "game") stopCrowd();
-  if (name === "select" || name === "dev") menuScreen = name;
+  if (name === "select" || name === "dev" || name === "gallery") menuScreen = name;
+  if (name !== "game") endGalleryDemo(); // gallery.js
+  if (name !== "gallery") stopGallerySound();
   Object.keys(screens).forEach(function (k) { screens[k].hidden = k !== name; });
   if (name === "select" || name === "dev") renderMenu(name);
+  if (name === "gallery") renderGallery();
   if (name === "game") { resize(); }
   window.scrollTo(0, 0);
 }

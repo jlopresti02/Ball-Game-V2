@@ -6,6 +6,7 @@
 var gameScreen = document.getElementById("screenGame");
 // px: screen pixels per game unit.
 function shakeScreen(px) {
+  if (gamePaused) return; // a paused gallery demo holds still (gallery.js)
   if (shake > 0) {
     var sx = (Math.random() - 0.5) * shake * 2 * px, sy = (Math.random() - 0.5) * shake * 2 * px;
     gameScreen.style.transform = "translate(" + sx.toFixed(1) + "px," + sy.toFixed(1) + "px)";
