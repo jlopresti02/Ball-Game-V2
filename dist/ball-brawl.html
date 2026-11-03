@@ -2488,7 +2488,8 @@ function stopAuraFarmMusic(fade) {
     am.gain.gain.linearRampToValueAtTime(0, now + f + 0.01);
     var end = now + f + 0.05;
     am.srcs.forEach(function (s) { try { s.stop(end); } catch (e) { /* already stopped */ } });
-    setTimeout(function () { try { am.gain.disconnect(); } catch (e) { /* gone */ } }, (f + 0.1) * 1000);
+    // (no disconnect: the stopped sources are cleaned up on their own, and a
+    // disconnect would also cut it out of offline-rendered demo recordings)
   } catch (e) { /* never let audio break the game */ }
 }
 function auraClap(ctx, out, t, peak, srcs) {
