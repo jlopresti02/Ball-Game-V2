@@ -209,7 +209,7 @@ function updateAuraFarm(self, other, dt) {
     return true;
   }
   if (m.phase === "bow") {
-    if (m.t >= AF_BOW) { endAuraFarm(self, other, true); return false; }
+    if (m.t >= AF_BOW && (!a.bull || m.t >= AF_BOW + 1.2)) { endAuraFarm(self, other, true); return false; }
     return true;
   }
   return true;
@@ -392,15 +392,30 @@ function tickAuraBull(self, other, dt) {
       if (!reduceMotion) shake = Math.max(shake, 32);
       impacts.push({ x: other.x, y: other.y, nx: m.tx, ny: m.ty, life: 0.6, max: 0.6, color: "#ffd23f" });
       crowdReact(1);
-      b.phase = "gone"; b.t = 0; b.vx = -m.tx * 180; b.vy = -m.ty * 180;
+      // Bounces back off them, up over the fence and into the big stands
+      // below the cage (the opponent's up the top end by now).
+      var ux = -m.tx * 0.6 + (b.x < W / 2 ? -0.35 : 0.35), uy = Math.abs(m.ty) * 0.6 + 0.8, ul = Math.sqrt(ux * ux + uy * uy) || 1;
+      b.phase = "gone"; b.t = 0; b.vx = ux / ul * 560; b.vy = uy / ul * 560; b.z0 = b.z; b.spinV = (Math.random() < 0.5 ? -1 : 1) * 9;
       checkEnd();
     } else if (fk >= 1.4) { b.phase = "gone"; b.t = 0; b.vx = 0; b.vy = 0; }
   } else if (b.phase === "gone") {
-    // Bounces off and vanishes in a puff of dust.
-    b.x += b.vx * dt; b.y += b.vy * dt; b.vx *= 0.9; b.vy *= 0.9; b.z = Math.max(0, b.z - 300 * dt);
-    if (b.t > 0.35 && !b.poofed) { b.poofed = true; auraDust(b.x, b.y, 16); }
-    b.alpha = Math.max(0, 1 - (b.t - 0.35) / 0.3);
-    if (b.alpha <= 0) aura.bull = null;
+    // Tumbling away in a big arc over the fence, then crashing through the
+    // stands, scattering fans, and gone.
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    var inside = b.x > -AF_BULL_R * 0.3 && b.x < W + AF_BULL_R * 0.3 && b.y > -AF_BULL_R * 0.3 && b.y < H + AF_BULL_R * 0.3;
+    var arc = Math.min(1, b.t / 0.8);
+    b.z = (b.z0 || 0) * (1 - arc) + Math.sin(Math.PI * arc) * AF_BULL_R * 1.8;
+    b.spin += (b.spinV || 9) * dt * (arc < 1 ? 1 : 0.4);
+    if (arc >= 1) {
+      b.vx *= Math.exp(-1.6 * dt); b.vy *= Math.exp(-1.6 * dt);
+      if (!b.landed) { b.landed = true; playSlam(); crowdReact(1); if (!reduceMotion) shake = Math.max(shake, 8); }
+    }
+    if (!inside && arc >= 1 && Math.random() < 0.5) auraDust(b.x, b.y + AF_BULL_R * 0.6, 1);
+    if (inside && arc >= 1) { b.vx *= Math.exp(-3 * dt); b.vy *= Math.exp(-3 * dt); } // (only if it fell short)
+    var stageOut = stadiumOn() ? (b.x < -ST.AX * W / ST.A - AF_BULL_R || b.x > (STAGE_W - ST.AX) * W / ST.A + AF_BULL_R ||
+      b.y < -ST.AY * W / ST.A - AF_BULL_R || b.y > (STAGE_H - ST.AY) * W / ST.A + AF_BULL_R) : !inside;
+    if (b.t > 1.4) b.alpha = Math.max(0, 1 - (b.t - 1.4) / 0.5);
+    if (stageOut || b.alpha <= 0) aura.bull = null;
   }
 }
 function auraOffOf(b, f) {
@@ -437,7 +452,7 @@ function auraSteam(b) {
 // via herbShove).
 function auraBullPush(f) {
   var b = aura && aura.bull;
-  if (!b || b.y <= H) return null;
+  if (!b || (b.x > 0 && b.x < W && b.y > 0 && b.y < H)) return null;
   var k = ST.A / W, bx = ST.AX + b.x * k, by = ST.AY + b.y * k;
   var dx = f.x - bx, dy = f.y - by, d = Math.sqrt(dx * dx + dy * dy) || 1, reach = f.r * 0.85 + AF_BULL_R * k * 1.2;
   if (d >= reach) return null;
