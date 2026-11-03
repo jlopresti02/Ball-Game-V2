@@ -2645,7 +2645,7 @@ function startMusic() {
       token.src = ctx.createBufferSource(); token.src.buffer = buf; token.src.loop = true;
       token.gain = ctx.createGain();
       token.gain.gain.setValueAtTime(0.0001, now);
-      token.gain.gain.exponentialRampToValueAtTime(MUSIC_GAIN, now + 1.2);
+      token.gain.gain.exponentialRampToValueAtTime(MUSIC_GAIN, now + 0.03); // in right away (Joe)
       token.src.connect(token.gain); token.gain.connect(ctx.destination);
       token.src.start(now);
     });
