@@ -320,3 +320,54 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
 #screenGame.phase-fight .gameFooter, #screenGame.phase-win .gameFooter, #screenGame.phase-menu .gameFooter { visibility: hidden; }
 
 .gameFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+
+/* ---------- gallery ---------- */
+.titleBtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.galleryTabs { display: flex; gap: 8px; margin: 0 0 16px; flex-wrap: wrap; }
+.galleryTabs button { min-width: 92px; }
+.gCard { border: 3px solid var(--wall); border-radius: 8px; background: var(--floor); }
+.gFighter { padding: 14px; margin-bottom: 16px; border-left: 10px solid var(--fc, var(--wall)); }
+.gTop { display: flex; gap: 14px; align-items: center; }
+.gSkin { flex: none; width: 120px; max-width: 34vw; height: auto; }
+.gHead h3 { margin: 0; font-size: 26px; font-weight: 800; line-height: 1.05; }
+.gNick { color: var(--muted); font-size: 18px; font-style: italic; }
+.gMeta { font-size: 16px; font-weight: 700; margin-top: 4px; }
+.gSwatches { display: flex; gap: 5px; margin-top: 8px; }
+.gSwatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--wall); }
+.gBio { margin: 10px 0 12px; font-size: 16px; line-height: 1.3; color: var(--muted); }
+.gLabel { font-size: 14px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.gSpecial { border: 2px solid var(--fc, var(--wall)); border-radius: 6px; padding: 10px 12px; margin: 0 0 12px; background: var(--bg); }
+.gSpecial h4 { margin: 0 0 4px; font-size: 22px; font-weight: 800; }
+.gSpecial p { margin: 0 0 4px; font-size: 16px; line-height: 1.3; }
+.gSpecial .gCharge { color: var(--muted); font-size: 14px; margin: 0; }
+.gMoves { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.gMoves li { display: flex; gap: 8px; font-size: 16px; line-height: 1.28; }
+.gIcon { flex: none; width: 24px; text-align: center; }
+.gDemo { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-top: 2px dashed var(--track); padding-top: 12px; }
+.gVs { display: flex; align-items: center; gap: 6px; font-weight: 800; flex: 1 1 100%; }
+.gVs select { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 5px 8px; border: 2px solid var(--wall); border-radius: 5px; background: var(--floor); color: var(--ink); }
+.gAssets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.gAsset { margin: 0; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.gAsset.tall { grid-row: span 2; }
+.gArt { width: 100% !important; height: auto; border-radius: 4px; background: var(--bg); }
+.gAsset figcaption { display: flex; flex-direction: column; gap: 2px; font-size: 15px; line-height: 1.25; }
+.gAsset figcaption strong { font-size: 18px; }
+.gAsset figcaption span { color: var(--muted); }
+.gGroup { margin: 18px 0 8px; font-size: 20px; font-weight: 800; }
+.gGroup:first-child { margin-top: 0; }
+.gSounds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.gSounds li { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; }
+.gSounds li > div { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 15px; line-height: 1.25; }
+.gSounds li strong { font-size: 18px; }
+.gSounds li span { color: var(--muted); }
+.gSounds .gKind { flex: none; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.gPlay { flex: none; width: 46px; height: 46px; padding: 0; border-radius: 50%; font-size: 18px; }
+.gPlay.playing { background: var(--hit); }
+
+/* Gallery demos: a bar over the arena with pause, replay and back. */
+.demoBar { display: none; align-items: center; gap: 8px; margin: 0 0 10px; flex-wrap: wrap; }
+#screenGame.demo .demoBar { display: flex; }
+.demoTitle { flex: 1 1 100%; font-weight: 800; font-size: 20px; min-width: 0; }
+#demoPause { min-width: 96px; }
+#screenGame.demo.paused .arena { outline: 4px solid var(--blue); outline-offset: -4px; }
+#screenGame.stadium.demo .arena { max-width: calc((100svh - 140px) * 9 / 16); }
