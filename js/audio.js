@@ -594,9 +594,18 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
+// The referee's whistle as the fight starts (with "Here we go!").
+function playStartWhistle() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    withClip("refWhistle", function () { playClip("refWhistle", 0.55); });
+  } catch (e) { /* never let audio break the game */ }
+}
 function playHereWeGo() {
   try {
     var ctx = getAudioCtx();
@@ -676,6 +685,7 @@ function playTalk(name, gain) {
   if (!src) return false;
   talkSrcs.push(src);
   talkEnd = at + buf.duration;
+  duckMusic(at, talkEnd);
   return true;
 }
 // Cuts in on the talk channel: whatever line is going (or waiting) stops.
@@ -688,6 +698,7 @@ function cutInTalk(name, gain) {
     talkSrcs.push(later); talkQueued = true;
     talkEnd = at + clipBuffers[name].duration;
     talkCutAt = at;
+    duckMusic(at, talkEnd);
     return later;
   }
   stopTalk();
@@ -696,6 +707,7 @@ function cutInTalk(name, gain) {
   talkSrcs = [src];
   talkEnd = now + clipBuffers[name].duration;
   talkCutAt = now;
+  duckMusic(now, talkEnd);
   return src;
 }
 // A priority line: cuts in on everything, and nothing cuts it off.
@@ -705,6 +717,7 @@ function playPriorityTalk(name, gain) {
   if (!src) return null;
   talkSrcs = [src];
   talkEnd = talkPriorityEnd = audioCtx.currentTime + clipBuffers[name].duration;
+  duckMusic(audioCtx.currentTime, talkEnd);
   return src;
 }
 function stopTalk() {
@@ -1320,11 +1333,12 @@ function crowdRelease() {
   crowdMood.heat = crowdMood.level = Math.max(crowdMood.level, 0.6);
   crowdMood.keep = 0;
 }
-// Leaving or restarting a match: the crowd and anyone talking go quiet.
+// Leaving or restarting a match: the crowd, the music and anyone talking go quiet.
 function stopCrowd() {
   stopDoBronx();
   stopTalk();
   stopCrowdLoop();
+  stopMusic();
 }
 // Just the looping crowd. startCrowd uses this, so it doesn't cut off the
 // "Here we go!" that starts the same moment.

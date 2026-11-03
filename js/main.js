@@ -19,6 +19,13 @@ document.getElementById("backBtn").addEventListener("click", function () { showM
 Array.prototype.forEach.call(document.querySelectorAll(".arenaBtn"), function (btn) {
   btn.addEventListener("click", function () { setArenaMode(stadiumOn() ? "test" : "stadium"); });
 });
+// The Music button steps through the loops and Off (music.js).
+Array.prototype.forEach.call(document.querySelectorAll(".musicBtn"), function (btn) {
+  btn.addEventListener("click", function () {
+    setMusicChoice(MUSIC_LIST[(MUSIC_LIST.indexOf(musicChoice) + 1) % MUSIC_LIST.length]);
+  });
+});
+updateMusicButtons();
 // Tapping past the win banner opens the menu.
 banner.addEventListener("click", function (e) {
   if (gamePhase === "win" && e.target !== startBtn) setGamePhase("menu");
