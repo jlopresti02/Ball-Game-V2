@@ -999,7 +999,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <button id="menuRematch" type="button">Rematch</button>
         <button id="menuChange" type="button" class="secondary">Change fighters</button>
         <button id="menuArena" type="button" class="secondary arenaBtn">Arena: test</button>
-        <button id="menuMusic" type="button" class="secondary musicBtn">Music: Playful bounce</button>
+        <button id="menuMusic" type="button" class="secondary musicBtn">Music: War drums</button>
       </div>
     </div>
 
@@ -1007,7 +1007,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       <button id="backBtn" class="secondary">Change fighters</button>
       <button id="rematch" class="secondary">Reset</button>
       <button id="arenaBtn" class="secondary arenaBtn">Arena: test</button>
-      <button id="musicBtn" class="secondary musicBtn">Music: Playful bounce</button>
+      <button id="musicBtn" class="secondary musicBtn">Music: War drums</button>
     </div>
   </section>
 
@@ -1701,7 +1701,7 @@ function playStartWhistle() {
 }
 // "Here we go!" comes a few seconds after the whistle, so the whistle is the
 // first thing heard (Joe's call).
-var HERE_WE_GO_DELAY = 2.5;
+var HERE_WE_GO_DELAY = 1.5;
 var hereWeGoTimer = 0;
 function playHereWeGo() {
   clearTimeout(hereWeGoTimer);
@@ -2452,7 +2452,7 @@ function stopCrowdLoop() {
   } catch (e) { /* never let audio break the game */ }
 }
 
-// Background music: three loops built in code, picked with the Music button
+// Background music: six loops built in code, picked with the Music button
 // on the game screen (the choice is remembered per device). Each loop is
 // rendered once into a buffer the first time it's needed, then loops quietly
 // under the crowd for the whole fight and dips under the talking clips
@@ -2462,9 +2462,9 @@ function stopCrowdLoop() {
 var MUSIC_KEY = "ballbrawl_music_v1";
 var MUSIC_GAIN = 0.16;       // under the crowd
 var MUSIC_DUCK = 0.35;       // share of that while someone's talking
-var MUSIC_LIST = ["A", "B", "C", "off"];
-var MUSIC_NAMES = { A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
-var musicChoice = "A";
+var MUSIC_LIST = ["D", "E", "F", "A", "B", "C", "off"];
+var MUSIC_NAMES = { D: "War drums", E: "Metal", F: "Drill", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
+var musicChoice = "D";
 try { var savedMusic = localStorage.getItem(MUSIC_KEY); if (MUSIC_NAMES[savedMusic]) musicChoice = savedMusic; } catch (e) {}
 
 // ---------------------------------------------------------------- instruments
@@ -2552,6 +2552,83 @@ function mStab(ctx, out, notes, t, v, len) {
   });
 }
 
+// Heavier kit for the aggressive loops: distortion, big drums, 808s, guitars.
+var musicCurves = {};
+function mDrive(ctx, amt) {
+  var sh = ctx.createWaveShaper();
+  if (!musicCurves[amt]) {
+    var c = new Float32Array(1024);
+    for (var i = 0; i < 1024; i++) { var x = i / 511.5 - 1; c[i] = Math.tanh(x * amt) / Math.tanh(amt); }
+    musicCurves[amt] = c;
+  }
+  sh.curve = musicCurves[amt];
+  return sh;
+}
+function mBigKick(ctx, out, t, v) {
+  var o = ctx.createOscillator();
+  o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.09);
+  var d = mDrive(ctx, 3), g = mEnv(ctx, t, 0.002, 1.0 * v, 0.32);
+  o.connect(d); d.connect(g); g.connect(out); o.start(t); o.stop(t + 0.4);
+  mNz(ctx, out, t, "highpass", 3000, 0.7, 0.25 * v, 0.012); // beater click
+}
+function mBigSnare(ctx, out, t, v) {
+  mNz(ctx, out, t, "bandpass", 2200, 0.6, 0.75 * v, 0.22);
+  mNz(ctx, out, t, "highpass", 5000, 0.5, 0.3 * v, 0.12);
+  var o = ctx.createOscillator(); o.frequency.setValueAtTime(260, t); o.frequency.exponentialRampToValueAtTime(160, t + 0.08);
+  var g = mEnv(ctx, t, 0.002, 0.45 * v, 0.1); o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.15);
+}
+function mTom(ctx, out, t, f, v) {
+  var o = ctx.createOscillator();
+  o.frequency.setValueAtTime(f * 1.6, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.06);
+  var d = mDrive(ctx, 2), g = mEnv(ctx, t, 0.002, 0.9 * v, 0.5);
+  o.connect(d); d.connect(g); g.connect(out); o.start(t); o.stop(t + 0.6);
+  mNz(ctx, out, t, "bandpass", f * 4, 1, 0.3 * v, 0.08);
+}
+function mCrash(ctx, out, t, v) { mNz(ctx, out, t, "highpass", 4500, 0.4, 0.3 * v, 1.4); mNz(ctx, out, t, "bandpass", 3000, 0.5, 0.12 * v, 0.6); }
+function m808(ctx, out, m, t, v, len, glideFrom) {
+  var o = ctx.createOscillator(), f = mtof(m);
+  o.frequency.setValueAtTime(glideFrom ? mtof(glideFrom) : f * 1.5, t);
+  o.frequency.exponentialRampToValueAtTime(f, t + (glideFrom ? 0.12 : 0.03));
+  var d = mDrive(ctx, 2.5), g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.75 * v, t + 0.005);
+  g.gain.setValueAtTime(0.75 * v, t + len * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  o.connect(d); d.connect(g); g.connect(out); o.start(t); o.stop(t + len + 0.05);
+}
+// A distorted power chord (root, fifth, octave). Short = palm-muted chug.
+function mGuitar(ctx, out, m, t, v, len) {
+  var bus = ctx.createGain(); bus.gain.value = 0.12;
+  [0, 7, 12].forEach(function (iv) {
+    [-7, 7].forEach(function (dt) {
+      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(m + iv); o.detune.value = dt;
+      o.connect(bus); o.start(t); o.stop(t + len + 0.08);
+    });
+  });
+  var d = mDrive(ctx, 8), lp = ctx.createBiquadFilter(); lp.type = "lowpass";
+  lp.frequency.value = len < 0.2 ? 1400 : 3200; lp.Q.value = 1;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.28 * v, t + 0.004);
+  g.gain.setValueAtTime(0.28 * v, t + len * 0.75); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  bus.connect(d); d.connect(lp); lp.connect(g); g.connect(out);
+}
+function mBrass(ctx, out, notes, t, v, len) {
+  notes.forEach(function (m) {
+    [-12, 0, 12].forEach(function (dt) {
+      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(m); o.detune.value = dt;
+      var lp = ctx.createBiquadFilter(); lp.type = "lowpass";
+      lp.frequency.setValueAtTime(600, t); lp.frequency.exponentialRampToValueAtTime(3500, t + 0.06);
+      lp.frequency.exponentialRampToValueAtTime(900, t + len);
+      var g = mEnv(ctx, t, 0.02, 0.06 * v, len);
+      o.connect(lp); lp.connect(g); g.connect(out); o.start(t); o.stop(t + len + 0.1);
+    });
+  });
+}
+function mBell(ctx, out, m, t, v) {
+  var f = mtof(m);
+  mOsc(ctx, out, "sine", f, t, 0.002, 0.18 * v, 0.6);
+  mOsc(ctx, out, "sine", f * 2.76, t, 0.002, 0.06 * v, 0.25);
+  mOsc(ctx, out, "sine", f * 5.4, t, 0.001, 0.03 * v, 0.1);
+}
+
 // ---------------------------------------------------------------- the loops
 // Each is `bars` bars long at `bpm`; play(ctx, out, t0) schedules one pass.
 var MUSIC_SONGS = {
@@ -2599,6 +2676,53 @@ var MUSIC_SONGS = {
       for (var s = 0; s < 8; s++) mNz(ctx, out, bt + s * b / 2, "highpass", 8000, 0.5, 0.08, 0.03);
     }
     [0, 16].forEach(function (rep) { mel.forEach(function (n) { mSquare(ctx, out, n[0], t0 + (rep + n[1]) * b, 1, n[2] * b * 0.9); }); });
+  } },
+  // War drums: slow and huge. Pounding toms, a driven sub, brass hits.
+  D: { bpm: 96, bars: 8, level: 1.5, play: function (ctx, out, t0) {
+    var b = 60 / 96, roots = [38, 38, 41, 36], brass = [[62, 65, 69], [62, 65, 69], [65, 69, 72], [60, 64, 67]];
+    for (var bar = 0; bar < 8; bar++) {
+      var bt = t0 + bar * 4 * b, r = roots[bar % 4];
+      [0, 1.5, 2, 3.5].forEach(function (x) { mBigKick(ctx, out, bt + x * b, 1); });
+      [1, 3].forEach(function (x) { mBigSnare(ctx, out, bt + x * b, 1); });
+      [0.5, 0.75, 2.5, 2.75, 3.25].forEach(function (x, k) { mTom(ctx, out, bt + x * b, k < 2 ? 110 : 82, 0.8); });
+      if (bar % 2 === 1) [3, 3.25, 3.5, 3.75].forEach(function (x, k) { mTom(ctx, out, bt + x * b, [150, 120, 95, 75][k], 0.9); });
+      [0, 0.75, 1.5, 2, 2.75, 3.5].forEach(function (x) { m808(ctx, out, r - 12, bt + x * b, 0.9, 0.3 * b * 2); });
+      mBrass(ctx, out, brass[bar % 4], bt, 1.2, 0.6);
+      mBrass(ctx, out, brass[bar % 4], bt + 2.5 * b, 0.9, 0.3);
+      for (var s = 0; s < 8; s++) mHat(ctx, out, bt + s * b / 2, s % 2 ? 0.5 : 0.9, false);
+      if (bar % 4 === 0) mCrash(ctx, out, bt, 1);
+    }
+  } },
+  // Metal: chugging distorted guitars, double kick, crashes.
+  E: { bpm: 150, bars: 8, level: 1.4, play: function (ctx, out, t0) {
+    var b = 60 / 150, riff = [[40, 0, 1], [40, 0.5, 0], [40, 0.75, 0], [40, 1, 0], [43, 1.5, 1], [40, 2, 0], [40, 2.5, 0], [46, 2.75, 1], [45, 3.5, 1]];
+    var lift = [0, 0, 3, -2];
+    for (var bar = 0; bar < 8; bar++) {
+      var bt = t0 + bar * 4 * b, up = lift[bar % 4];
+      riff.forEach(function (n) { mGuitar(ctx, out, n[0] + up, bt + n[1] * b, 1, n[2] ? 0.42 * b * 2 : 0.11); });
+      for (var k = 0; k < 16; k++) mBigKick(ctx, out, bt + k * b / 4, k % 4 ? 0.55 : 0.9);
+      [1, 3].forEach(function (x) { mBigSnare(ctx, out, bt + x * b, 1.1); });
+      for (var s = 0; s < 4; s++) mNz(ctx, out, bt + s * b, "highpass", 6000, 0.5, 0.15, 0.25); // ride
+      if (bar % 2 === 0) mCrash(ctx, out, bt, 1);
+    }
+  } },
+  // Drill: dark bells, gliding 808s, hard snare, rolling hats.
+  F: { bpm: 142, bars: 8, level: 1.5, play: function (ctx, out, t0) {
+    var b = 60 / 142, bells = [[69, 72, 76, 72], [68, 71, 76, 71], [65, 69, 72, 69], [64, 68, 71, 74]];
+    var bass = [[33, 0, 1.5], [33, 1.5, 0.5], [40, 2, 1, 33], [36, 3, 1]];
+    for (var bar = 0; bar < 8; bar++) {
+      var bt = t0 + bar * 4 * b, ch = bells[(bar >> 1) % 4], dn = [0, -1, -4, -5][(bar >> 1) % 4];
+      for (var i = 0; i < 8; i++) mBell(ctx, out, ch[i % 4] + (i > 3 ? 12 : 0), bt + i * b / 2, i % 2 ? 0.6 : 1);
+      bass.forEach(function (n) { m808(ctx, out, n[0] + dn, bt + n[1] * b, 1, n[2] * b * 0.95, n[3] !== undefined ? n[3] + dn : 0); });
+      [0, 2.5].forEach(function (x) { mBigKick(ctx, out, bt + x * b, 0.9); });
+      mBigSnare(ctx, out, bt + 2 * b, 1.2); mClap(ctx, out, bt + 2 * b, 0.6);
+      if (bar % 2) mBigSnare(ctx, out, bt + 3.75 * b, 0.6);
+      for (var s = 0; s < 16; s++) {
+        var ht = bt + s * b / 4;
+        if (s === 11 || s === 15) { for (var r = 0; r < 3; r++) mHat(ctx, out, ht + r * b / 12, 0.7, false); }
+        else mHat(ctx, out, ht, s % 2 ? 0.55 : 0.9, false);
+      }
+    }
   } }
 };
 
@@ -2642,10 +2766,11 @@ function startMusic() {
     renderMusic(id, function (buf) {
       if (music !== token || musicChoice !== id) return; // stopped or changed while rendering
       var now = ctx.currentTime;
+      token.level = MUSIC_GAIN * (MUSIC_SONGS[id].level || 1);
       token.src = ctx.createBufferSource(); token.src.buffer = buf; token.src.loop = true;
       token.gain = ctx.createGain();
       token.gain.gain.setValueAtTime(0.0001, now);
-      token.gain.gain.exponentialRampToValueAtTime(MUSIC_GAIN, now + 0.03); // in right away (Joe)
+      token.gain.gain.exponentialRampToValueAtTime(token.level, now + 0.03); // in right away (Joe)
       token.src.connect(token.gain); token.gain.connect(ctx.destination);
       token.src.start(now);
     });
@@ -2668,8 +2793,8 @@ function duckMusic(at, until) {
   try {
     var g = m.gain.gain;
     g.cancelScheduledValues(at);
-    g.setTargetAtTime(MUSIC_GAIN * MUSIC_DUCK, at, 0.08);
-    g.setTargetAtTime(MUSIC_GAIN, until, 0.3);
+    g.setTargetAtTime(m.level * MUSIC_DUCK, at, 0.08);
+    g.setTargetAtTime(m.level, until, 0.3);
   } catch (e) { /* never let audio break the game */ }
 }
 

@@ -608,7 +608,7 @@ function playStartWhistle() {
 }
 // "Here we go!" comes a few seconds after the whistle, so the whistle is the
 // first thing heard (Joe's call).
-var HERE_WE_GO_DELAY = 2.5;
+var HERE_WE_GO_DELAY = 1.5;
 var hereWeGoTimer = 0;
 function playHereWeGo() {
   clearTimeout(hereWeGoTimer);
