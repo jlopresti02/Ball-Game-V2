@@ -1433,12 +1433,14 @@ function playSpotlightDrop() {
   } catch (e) { /* never let audio break the game */ }
 }
 // The bull bellowing as it's thrown (Joe's clip; a snort if it's not loaded).
-function playBullThrown() {
+// rate < 1 pitches it down (the KO punch uses it a little lower, so the two
+// don't sound the same so close together).
+function playBullThrown(rate) {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    if (!playClip("bullThrown", 0.9)) { withClip("bullThrown"); playBullSnort(); }
+    if (!playClip("bullThrown", 0.9, null, rate)) { withClip("bullThrown"); playBullSnort(); }
   } catch (e) { /* never let audio break the game */ }
 }
 // The bull roaring as it charges (Joe's clip; a snort if it's not loaded).
