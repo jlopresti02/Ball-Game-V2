@@ -197,7 +197,7 @@ function updateAuraFarm(self, other, dt) {
       bull.vx = tx / td * AF_THROW_SPEED; bull.vy = ty / td * AF_THROW_SPEED;
       bull.z0 = bull.z; bull.flight = td / AF_THROW_SPEED;
       m.phase = "throw"; m.t = 0; m.tx = tx / td; m.ty = ty / td;
-      playWhoosh();
+      playWhoosh(); playBullThrown();
     }
     return true;
   }
