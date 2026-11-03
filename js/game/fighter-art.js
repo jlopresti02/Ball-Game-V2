@@ -21,7 +21,8 @@ function defaultLook() {
 function armColor(ch, side) {
   if (!ch.look) return ch.color;
   var tat = ch.look.tattoos || {};
-  if (!tat.armInk) return ch.look.skin;
+  // A traced sleeve only shows on a punching arm, drawn by drawTracedArm
+  if (!tat.armInk || tat.armDecal) return ch.look.skin;
   if (side && tat.armInkSide && side !== (tat.armInkSide === "left" ? -1 : 1)) return ch.look.skin;
   return sleevePattern(ch.look);
 }
@@ -1302,6 +1303,32 @@ function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
 // Inked arm texture for fighters whose look sets tattoos.armInk: a skin tile
 // with black-and-grey swirls and shading, used as the arm stroke in attacks.
 var sleevePatterns = {};
+// The traced sleeve laid along an extended arm from (x0, y0) to (x1, y1),
+// as one image rather than a repeating pattern. Returns false when there is
+// no traced sleeve (or it hasn't loaded) so the caller keeps its plain arm.
+function drawTracedArm(c, ch, x0, y0, x1, y1, w) {
+  var tat = ch.look && ch.look.tattoos;
+  if (!tat || !tat.armInk || !tat.armDecal) return false;
+  var im = artDecalImage(tat.armDecal);
+  if (!im.complete || !im.naturalWidth) return false;
+  var dx = x1 - x0, dy = y1 - y0, len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 1) return false;
+  c.save();
+  c.translate(x0, y0); c.rotate(Math.atan2(dy, dx));
+  // Round-ended arm shape
+  c.beginPath();
+  c.arc(0, 0, w / 2, Math.PI / 2, Math.PI * 1.5);
+  c.lineTo(len, -w / 2); c.arc(len, 0, w / 2, -Math.PI / 2, Math.PI / 2); c.closePath();
+  c.clip();
+  // The photo runs shoulder (top) to wrist (bottom): turn it to lie along +x,
+  // trimmed to the middle so its feathered edges don't show
+  c.rotate(-Math.PI / 2);
+  var sw = im.naturalWidth, sh = im.naturalHeight;
+  c.drawImage(im, sw * 0.15, sh * 0.06, sw * 0.7, sh * 0.88, -w * 0.6, -w * 0.5, w * 1.2, len + w);
+  c.restore();
+  return true;
+}
+
 function sleevePattern(look) {
   var tat = look.tattoos || {};
   if (tat.armDecal && typeof document !== "undefined") {
