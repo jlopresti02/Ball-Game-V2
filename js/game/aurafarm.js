@@ -119,7 +119,7 @@ function updateAuraFarm(self, other, dt) {
       bull.phase = "charge"; bull.t = 0; bull.dx = ax / ad; bull.dy = ay / ad; bull.target = "victim";
       bull.face = bull.dx >= 0 ? 1 : -1;
       m.phase = "charge1"; m.t = 0; m.step = 0;
-      playBullSnort();
+      playBullCharge();
     }
     return true;
   }
@@ -364,6 +364,7 @@ function tickAuraBull(self, other, dt) {
     if (b.t >= AF_TURN) {
       var ix = self.x - b.x, iy = self.y - b.y, id = Math.sqrt(ix * ix + iy * iy) || 1;
       b.phase = "charge"; b.t = 0; b.dx = ix / id; b.dy = iy / id; b.target = "ilia"; b.face = b.dx >= 0 ? 1 : -1;
+      playBullCharge();
     }
   } else if (b.phase === "ko") {
     // Knocked flying onto its back.

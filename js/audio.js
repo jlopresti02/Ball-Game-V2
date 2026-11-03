@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "auraFarm", "bullThrown"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "auraFarm", "bullThrown", "bullCharge"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -1439,6 +1439,15 @@ function playBullThrown() {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     if (!playClip("bullThrown", 0.9)) { withClip("bullThrown"); playBullSnort(); }
+  } catch (e) { /* never let audio break the game */ }
+}
+// The bull roaring as it charges (Joe's clip; a snort if it's not loaded).
+function playBullCharge() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (!playClip("bullCharge", 0.85)) { withClip("bullCharge"); playBullSnort(); }
   } catch (e) { /* never let audio break the game */ }
 }
 // A heel stomp on the canvas.
