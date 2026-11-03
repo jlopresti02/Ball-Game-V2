@@ -9,7 +9,7 @@ var MUSIC_KEY = "ballbrawl_music_v1";
 var MUSIC_GAIN = 0.16;       // under the crowd
 var MUSIC_DUCK = 0.35;       // share of that while someone's talking
 var MUSIC_LIST = ["D", "E", "F", "A", "B", "C", "off"];
-var MUSIC_NAMES = { D: "War drums", E: "Metal", F: "Drill", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
+var MUSIC_NAMES = { D: "Aggressive: War drums", E: "Aggressive: Metal", F: "Aggressive: Drill", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
 var musicChoice = "D";
 try { var savedMusic = localStorage.getItem(MUSIC_KEY); if (MUSIC_NAMES[savedMusic]) musicChoice = savedMusic; } catch (e) {}
 

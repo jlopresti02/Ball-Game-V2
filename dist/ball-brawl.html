@@ -999,7 +999,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
         <button id="menuRematch" type="button">Rematch</button>
         <button id="menuChange" type="button" class="secondary">Change fighters</button>
         <button id="menuArena" type="button" class="secondary arenaBtn">Arena: test</button>
-        <button id="menuMusic" type="button" class="secondary musicBtn">Music: War drums</button>
+        <button id="menuMusic" type="button" class="secondary musicBtn">Music: Aggressive: War drums</button>
       </div>
     </div>
 
@@ -1007,7 +1007,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       <button id="backBtn" class="secondary">Change fighters</button>
       <button id="rematch" class="secondary">Reset</button>
       <button id="arenaBtn" class="secondary arenaBtn">Arena: test</button>
-      <button id="musicBtn" class="secondary musicBtn">Music: War drums</button>
+      <button id="musicBtn" class="secondary musicBtn">Music: Aggressive: War drums</button>
     </div>
   </section>
 
@@ -2463,7 +2463,7 @@ var MUSIC_KEY = "ballbrawl_music_v1";
 var MUSIC_GAIN = 0.16;       // under the crowd
 var MUSIC_DUCK = 0.35;       // share of that while someone's talking
 var MUSIC_LIST = ["D", "E", "F", "A", "B", "C", "off"];
-var MUSIC_NAMES = { D: "War drums", E: "Metal", F: "Drill", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
+var MUSIC_NAMES = { D: "Aggressive: War drums", E: "Aggressive: Metal", F: "Aggressive: Drill", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
 var musicChoice = "D";
 try { var savedMusic = localStorage.getItem(MUSIC_KEY); if (MUSIC_NAMES[savedMusic]) musicChoice = savedMusic; } catch (e) {}
 
