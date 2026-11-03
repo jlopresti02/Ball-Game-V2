@@ -15,7 +15,7 @@ function drawFist(self, other) {
   // Punch always launches from the same shoulder slot the guard hand rests
   // in (drawHands hides that one hand while this animates), so it reads as
   // one hand throwing the punch while the other stays up.
-  var perpx = -qny, perpy = qnx, gap = self.r * 0.4;
+  var perpx = -qny, perpy = qnx, gap = self.r * 0.4 * (self.punch.side || 1); // (combos alternate hands)
   var fistX = self.x + qnx * fistDist + perpx * gap, fistY = self.y + qny * fistDist + perpy * gap;
   var armX = self.x + qnx * (self.r - 2) + perpx * gap, armY = self.y + qny * (self.r - 2) + perpy * gap;
   ctx.save();
@@ -26,7 +26,7 @@ function drawFist(self, other) {
   ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = pu.size * 0.6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
-  drawTracedArm(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6);
+  if ((self.punch.side || 1) === 1) drawTracedArm(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6); // sleeve on one arm only
   ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 3;
@@ -170,7 +170,7 @@ function drawHands(b, other) {
   if (b.shelled) { fwd = b.r * 0.9; gap = b.r * 0.22; hr = b.r * 0.34; } // tight shell, gloves together
   var koHook = b.koRush && (b.koRush.phase === "run" || b.koRush.phase === "throw");
   var igbbGrab = b.igbb && (b.igbb.phase === "grab" || b.igbb.phase === "throw");
-  var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : (b.igbb && b.igbb.gp ? [] : [1, -1]));
+  var sides = b.punch ? [-(b.punch.side || 1)] : (b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : (b.igbb && b.igbb.gp ? [] : [1, -1]));
   ctx.save();
   ctx.fillStyle = gloveColor(b.char);
   ctx.strokeStyle = theme.wall;
