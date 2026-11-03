@@ -1355,7 +1355,7 @@ function playAuraFarmMusic() {
     if (ctx.state === "suspended") ctx.resume();
     stopAuraFarmMusic(0);
     var now = ctx.currentTime, out = ctx.createGain();
-    out.gain.setValueAtTime(0.0001, now); out.gain.exponentialRampToValueAtTime(0.9, now + 0.1);
+    out.gain.setValueAtTime(0.0001, now); out.gain.exponentialRampToValueAtTime(1, now + 0.1);
     out.connect(ctx.destination);
     auraMusic = { gain: out, srcs: [] };
     if (typeof SOUND_CLIPS !== "undefined" && SOUND_CLIPS.auraFarm) {

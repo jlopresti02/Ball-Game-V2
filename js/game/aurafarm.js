@@ -89,7 +89,7 @@ function updateAuraFarm(self, other, dt) {
     tickAuraDance(self, m, dt);
     if (m.t >= AF_LIGHTS_AT && !a.litOn) {
       a.litOn = true;
-      auraCrowdBack();
+      // (the crowd stays under the music until the bow)
       startChairFrenzy(); // the whole crowd on its feet (chairshot.js)
       floater(W / 2, 60, "OLÉ!", "crit");
     }
