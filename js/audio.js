@@ -606,18 +606,21 @@ function playStartWhistle() {
     withClip("refWhistle", function () { playClip("refWhistle", 0.55); });
   } catch (e) { /* never let audio break the game */ }
 }
+// "Here we go!" comes a few seconds after the whistle, so the whistle is the
+// first thing heard (Joe's call).
+var HERE_WE_GO_DELAY = 2.5;
+var hereWeGoTimer = 0;
 function playHereWeGo() {
+  clearTimeout(hereWeGoTimer);
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var startedAt = ctx.currentTime;
-    withClip("hereWeGo", function (buf) {
-      // Still decoding when the fight started: play it late only if it's
-      // still near the start, rather than out of nowhere mid-fight.
-      if (ctx.currentTime - startedAt > 1) return;
-      playTalk("hereWeGo", 0.8);
-    });
+    withClip("hereWeGo", function () {}); // start decoding now
+    hereWeGoTimer = setTimeout(function () {
+      if (!started || over) return; // fight already ended (or menu reopened)
+      withClip("hereWeGo", function () { playTalk("hereWeGo", 0.8); });
+    }, HERE_WE_GO_DELAY * 1000);
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -1335,6 +1338,7 @@ function crowdRelease() {
 }
 // Leaving or restarting a match: the crowd, the music and anyone talking go quiet.
 function stopCrowd() {
+  clearTimeout(hereWeGoTimer);
   stopDoBronx();
   stopTalk();
   stopCrowdLoop();
