@@ -356,7 +356,7 @@ var SAVED_ROSTER = [
       "cdFullCombo": 1.5,
       "cdMin": 0.5,
       "dmgStart": 6,
-      "dmgMax": 22,
+      "dmgMax": 9,
       "comboKnockback": 40,
       "comboSlack": 16,
       "chase": 420
