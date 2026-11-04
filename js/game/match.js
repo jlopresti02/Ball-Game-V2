@@ -311,6 +311,7 @@ function checkEnd() {
   if (alive.length > 1) return;
   over = true;
   crowdRelease();
+  releaseMusic(); // if a Do Bronx had it off (music.js)
   if (alive.length === 1 && winBy !== "submission") playKnockout(); else crowdRoar();
   if (alive.length === 1) {
     bannerText.textContent = alive[0].char.name + " wins" + (winBy ? " by " + winBy : "");

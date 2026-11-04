@@ -508,7 +508,7 @@ function startMusic() {
       token.src = ctx.createBufferSource(); token.src.buffer = buf; token.src.loop = true;
       token.gain = ctx.createGain();
       token.gain.gain.setValueAtTime(0.0001, now);
-      token.gain.gain.exponentialRampToValueAtTime(token.level, now + 0.03); // in right away (Joe)
+      if (!token.off) token.gain.gain.exponentialRampToValueAtTime(token.level, now + 0.03); // in right away (Joe)
       token.src.connect(token.gain); token.gain.connect(ctx.destination);
       token.src.start(now);
     });
@@ -527,12 +527,49 @@ function stopMusic() {
 // The music dips while a talking clip plays from `at` until `until`.
 function duckMusic(at, until) {
   var m = music;
-  if (!m || !m.gain) return;
+  if (!m || !m.gain || m.off) return;
   try {
     var g = m.gain.gain;
     g.cancelScheduledValues(at);
     g.setTargetAtTime(m.level * MUSIC_DUCK, at, 0.08);
     g.setTargetAtTime(m.level, until, 0.3);
+  } catch (e) { /* never let audio break the game */ }
+}
+// Charles's "Charrrles... Do... BRONX" clip has its own music, so the
+// background music fades out for it and comes back once it's finished
+// (Joe). While it's off, talking clips don't bring it back.
+// `at`: when to fade (audio clock), default now.
+function holdMusicOff(at) {
+  var m = music;
+  if (!m) return;
+  m.off = true;
+  if (!m.gain) return;
+  try {
+    var now = audioCtx.currentTime, g = m.gain.gain, t = Math.max(now, at || 0);
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(m.level, now);
+    g.setTargetAtTime(0.0001, t, 0.25);
+  } catch (e) { /* never let audio break the game */ }
+}
+function releaseMusic() {
+  var m = music;
+  if (!m || !m.off) return;
+  m.off = false;
+  if (!m.gain) return;
+  try {
+    var now = audioCtx.currentTime, g = m.gain.gain;
+    g.cancelScheduledValues(now);
+    g.setTargetAtTime(m.level, now, 0.6);
+  } catch (e) { /* never let audio break the game */ }
+}
+// Back to full level from `at` (a cheer cut off a line that had it down).
+function unduckMusic(at) {
+  var m = music;
+  if (!m || !m.gain || m.off) return;
+  try {
+    var g = m.gain.gain;
+    g.cancelScheduledValues(at);
+    g.setTargetAtTime(m.level, at, 0.08);
   } catch (e) { /* never let audio break the game */ }
 }
 function setMusicChoice(id) {
