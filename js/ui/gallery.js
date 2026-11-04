@@ -58,6 +58,7 @@ var SPECIAL_INFO = {
   dobronx: function (sp) { return "Double-biceps pose that blasts them away, \"Charrrles... Do... BRONX!\", every camera flashes and the arena turns Brazil themed for " + sp.duration + " seconds: " + (sp.damageMult || 2) + "x damage, takedowns every time, and every takedown goes into a submission."; },
   chairshot: function (sp) { return "Pulls a folding chair from under the ring, charges them down and swings it over their head for " + sp.damage + " (can't be weaved or blocked), leaving them dazed for " + sp.dazeTime + "s. Then hurls the chair into the stands and runs a lap celebrating."; },
   herbdean: function (sp) { return "The ref falls asleep and blind Herb Dean barges in through the crowd with his cane. Gane beats them with a bat (" + sp.batDamage + " a swing), Herb whacks them with the cane (" + sp.caneDamage + "), and a last bat swing does " + sp.finisher + "."; },
+  goatstampede: function (sp) { return "Floats up into the air, his tattoo flickering gold and red, and summons " + sp.goats + " goats. Each runs in through the crowd, leaps the fence and charges straight across the cage through center stage, down a lane shown in red first (" + sp.goatDamage + " if it rams them, then they pinball off " + sp.ramWalls + " walls for " + sp.ramWallDamage + " each). The lanes are random, so they can be dodged by being somewhere else."; },
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }
 };
 
@@ -117,6 +118,13 @@ function galleryMoves(ch) {
     add("😴", "Cheater mode", "The ref sleeps " + secs(c.asleep) + " after every " + secs(c.awake) + " awake. He picks one trick per nap: eye pokes into a combo, throwing objects (" + objs + "), or a bat (" + c.bat.damage + " a swing). Takedowns on him fail: he grabs the cage and stands up.");
   }
   if (ch.blockChance > 0) add("🛡️", "Block", "Blocks " + ch.blockChance + "% of strikes.");
+  if (ch.jon) {
+    // Jon Jones (jon.js): the moves above are his GOAT mode.
+    var j = ch.jon, pk = ch.cheater.poke, pkTotal = pk.combo.reduce(function (a, b) { return a + b; }, pk.damage);
+    var gnpTotal = j.gnp.reduce(function (a, b) { return a + b; }, 0);
+    add("🐐", "GOAT mode", "Everything above, with his chest tattoo glowing gold. " + j.rncChance + "% of his takedowns go to the back for a rear naked choke and " + j.gnpChance + "% into ground and pound (" + j.gnp.length + " punches, " + gnpTotal + " total). Swaps modes every " + secs(j.swapEvery) + ".");
+    add("😈", "EVIL mode", "Tattoo glowing red. Switches from kicks to punches, sprawls " + (j.evil.tdd ? j.evil.tdd.sprawlChance : 0) + "% of shots and slips " + ch.weave.dodgeChance + "% of attacks. " + ch.weave.critChance + "% of slips are an eye poke into a " + pk.combo.length + "-punch combination (" + pkTotal + " total).");
+  }
   return m;
 }
 

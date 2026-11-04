@@ -85,6 +85,7 @@ function draw() {
 
   drawGuardZones(); // the circle round a fighter down in guard
   drawAuraRoses(false); // roses thrown on the mat (aurafarm.js)
+  drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -113,6 +114,7 @@ function draw() {
     var dzo = dizzyOffset(b); wox += dzo.x; woy += dzo.y; // staggering after a haymaker (gaethje.js)
     var aao = allAmericanOffset(b); wox += aao.x; woy += aao.y; // launched down the highway (allamerican.js)
     var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
+    var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -306,7 +308,9 @@ function draw() {
     drawAuraFarm(b);    // Ilia dancing, with the cape, KOing and lifting the bull
     drawAaSlashes(b);   // eagle claw marks on whoever's out on the road
     drawMock(b);    // and his thumbs down
-    drawCheater(b); // Gane cheating
+    drawCheater(b); // Gane cheating (and EVIL Jon Jones's eye poke)
+    drawGoatStampede(b); // Jon floating, hands raised
+    drawJonGlow(b); // Jon Jones's chest tattoo glowing gold or red
     drawHerbDeanSpecial(b); // and his bat during his special
     drawPokeStun(b);
     drawAngry(b);   // fuming at it
@@ -326,6 +330,7 @@ function draw() {
   drawRoadActors(); // eagles and the truck (allamerican.js)
   drawAuraRoses(true); // roses in the air
   drawAuraActors();    // the bull
+  drawJonGoats();      // the goats (jon.js)
   drawSuplexes();
 
   projectiles.forEach(function (p) {

@@ -22,7 +22,22 @@ function inOrdinaryMovement(b) {
   return true;
 }
 
+// Gliding back down to normal speed after being sent flying (endWallSlam):
+// fast at first, settling smoothly, on whatever heading the last bounce
+// left it. Anything that takes hold of the fighter cancels it.
+function tickSpeedEase(b, dt) {
+  var e = b.speedEase;
+  if (!e) return false;
+  if (!inOrdinaryMovement(b) || b.dizzy) { b.speedEase = null; return false; }
+  e.t += dt;
+  var k = Math.min(1, e.t / e.dur), normal = b.baseSpeed || SPEED;
+  setSpeed(b, normal + (e.v0 - normal) * Math.pow(1 - k, 3));
+  if (k >= 1) b.speedEase = null;
+  return true;
+}
+
 function regulateSpeed(b, dt) {
+  if (tickSpeedEase(b, dt)) return;
   if (!inOrdinaryMovement(b) || b.dizzy) return; // (dizzy fighters stagger at their own pace, gaethje.js)
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   var normal = b.baseSpeed || SPEED; // lighter fighters roll faster (weight.js)

@@ -181,6 +181,7 @@ function attemptGrab(attacker, target) {
     return false;
   }
   if (tryTddSprawl(attacker, target)) return false; // takedown defense without grappling (ilia.js)
+  if (tryJonTakedown(attacker, target)) return true; // GOAT Jon Jones: to the back, or ground and pound (jon.js)
   beginGrapple(attacker, target);
   return true;
 }

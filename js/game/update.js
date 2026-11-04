@@ -44,6 +44,7 @@ function update(dt) {
   updateReferee(dt);
   tickRefNap(dt);   // the ref nodding off in Gane's fights (cheater.js)
   tickCheater(dt);
+  tickJon(dt);      // Jon Jones swapping between GOAT and EVIL mode (jon.js)
   updateHerb(dt);   // Herb Dean wandering the cage (herbdean.js)
 
   balls.forEach(function (b) {

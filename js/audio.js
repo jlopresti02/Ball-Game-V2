@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -1645,5 +1645,67 @@ function playHoof() {
     var now = ctx.currentTime;
     caneTone(ctx, now, "sine", 110 + Math.random() * 20, 50, 0.3, 0.09);
     caneBurst(ctx, now, 500, 1.2, 0.12, 0.04);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Jon Jones swapping modes (jon.js): GOAT is a bright rising shimmer, EVIL
+// a low growling hit with a dark rumble under it.
+function playJonModeSwap(mode) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, out = ctx.createGain();
+    out.gain.value = 0.5; out.connect(ctx.destination);
+    if (mode === "goat") {
+      [880, 1320, 1760].forEach(function (f, i) {
+        var o = ctx.createOscillator(), g = ctx.createGain(), t = now + i * 0.06;
+        o.type = "triangle"; o.frequency.setValueAtTime(f * 0.92, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.08);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+        o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.55);
+      });
+    } else {
+      var o2 = ctx.createOscillator(), g2 = ctx.createGain(), lp = ctx.createBiquadFilter();
+      o2.type = "sawtooth"; o2.frequency.setValueAtTime(110, now); o2.frequency.exponentialRampToValueAtTime(48, now + 0.5);
+      lp.type = "lowpass"; lp.frequency.value = 700;
+      g2.gain.setValueAtTime(0.0001, now); g2.gain.exponentialRampToValueAtTime(0.7, now + 0.02); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+      o2.connect(lp); lp.connect(g2); g2.connect(out); o2.start(now); o2.stop(now + 0.65);
+      if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+      synthPunch(ctx, out, now, 0.8, punchNoise);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// A goat leaping into the cage (GOAT Stampede, jon.js): every one baas,
+// one of the two baas from Joe's recording at random. The synth bleat
+// stands in until the clips are loaded.
+function playGoatBleat() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var clip = Math.random() < 0.5 ? "goatBaa1" : "goatBaa2";
+    if (playClip(clip, 1.3, null, 0.95 + Math.random() * 0.1)) return;
+    withClip(clip);
+    var now = ctx.currentTime, dur = 0.5 + Math.random() * 0.2, f0 = 420 + Math.random() * 160;
+    var o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    var bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = "sawtooth"; o.frequency.setValueAtTime(f0, now); o.frequency.linearRampToValueAtTime(f0 * 0.9, now + dur);
+    lfo.frequency.value = 22; lg.gain.value = f0 * 0.06; lfo.connect(lg); lg.connect(o.frequency);
+    bp.type = "bandpass"; bp.frequency.value = 1400; bp.Q.value = 2.2;
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.32, now + 0.04);
+    g.gain.setValueAtTime(0.32, now + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.connect(bp); bp.connect(g); g.connect(ctx.destination);
+    o.start(now); lfo.start(now); o.stop(now + dur + 0.05); lfo.stop(now + dur + 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Jon Jones's big baa as he floats up for GOAT Stampede (Joe's recording).
+function playJonBaa() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    withClip("jonBaa", function () { playClip("jonBaa", 1.1); });
   } catch (e) { /* never let audio break the game */ }
 }

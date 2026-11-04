@@ -119,7 +119,7 @@ function updateCheaterAct(self, other, dt) {
       // The first eye poke of the match (and only that one): the
       // commentators lose it. If someone else is talking and the line gets
       // skipped, it waits for the next poke that lands.
-      if (!self.pokeCalled) self.pokeCalled = playGaneCall("ganePokeCall");
+      if (self.char.hasCheater && !self.pokeCalled) self.pokeCalled = playGaneCall("ganePokeCall");
       clearActions(other);
       other.dazed = "poke"; other.vx = 0; other.vy = 0;
       // Straight into the combo while they can't see.
