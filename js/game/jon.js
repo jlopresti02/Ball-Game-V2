@@ -153,7 +153,7 @@ function drawJonGlow(b) {
 var GS_RISE = 0.9, GS_LAND = 0.6, GS_HOVER = 64;   // float up, come down, how high
 var GS_GOAT_R = 30;                                 // a goat's size (its hit radius)
 var GS_RUN = 520, GS_LEAP = 0.45, GS_AIM = 0.95;    // through the crowd, over the fence, the lane warning
-var GS_CHARGE = 980;                                // charging speed
+var GS_CHARGE = 1500;                               // charging speed
 var GS_MAX = 16;                                    // the whole special never runs longer than this
 var jonGoats = [];
 
