@@ -8,6 +8,7 @@
 var MUSIC_KEY = "ballbrawl_music_v1";
 var MUSIC_GAIN = 0.16;       // under the crowd
 var MUSIC_DUCK = 0.35;       // share of that while someone's talking
+var MUSIC_HIT_DUCK = 0.5;    // share of that for a beat after each punch or kick lands
 var MUSIC_LIST = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "A", "B", "C", "off"];
 var MUSIC_NAMES = { D: "Aggressive: War drums", E: "Aggressive: Metal", F: "Aggressive: Drill", G: "Aggressive: Phonk", H: "Aggressive: Wobble", I: "Aggressive: Industrial", J: "Aggressive: Hardstyle", K: "Aggressive: Drum & bass", L: "Aggressive: Battle orchestra", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
 var musicChoice = "D";
@@ -533,6 +534,22 @@ function duckMusic(at, until) {
     g.cancelScheduledValues(at);
     g.setTargetAtTime(m.level * MUSIC_DUCK, at, 0.08);
     g.setTargetAtTime(m.level, until, 0.3);
+    m.talkUntil = until;
+  } catch (e) { /* never let audio break the game */ }
+}
+// Each strike (audio.js) dips the music for a split second, then lets it
+// swell back, so punches and kicks sit on top of it. A talking clip's own
+// dip is left alone.
+function hitDuckMusic() {
+  var m = music;
+  if (!m || !m.gain || m.muted) return;
+  try {
+    var now = audioCtx.currentTime;
+    if (m.talkUntil && now < m.talkUntil + 0.5) return;
+    var g = m.gain.gain;
+    g.cancelScheduledValues(now);
+    g.setTargetAtTime(m.level * MUSIC_HIT_DUCK, now, 0.01);
+    g.setTargetAtTime(m.level, now + 0.12, 0.18);
   } catch (e) { /* never let audio break the game */ }
 }
 

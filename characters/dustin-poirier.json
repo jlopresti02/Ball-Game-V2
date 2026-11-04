@@ -1,6 +1,6 @@
 {
   "id": "c-dustin-poirier",
-  "rev": 6,
+  "rev": 7,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Dustin Poirier",
@@ -60,7 +60,7 @@
   "hasSpecial": true,
   "special": {
     "move": "igbb",
-    "chargeTime": 45,
+    "chargeTime": 68,
     "hitCut": 5,
     "punches": 7,
     "damage": 10,

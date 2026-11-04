@@ -1,6 +1,6 @@
 {
   "id": "c-charles-oliveira",
-  "rev": 5,
+  "rev": 6,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Charles Oliveira",
@@ -83,7 +83,7 @@
   "hasSpecial": true,
   "special": {
     "move": "dobronx",
-    "chargeTime": 40,
+    "chargeTime": 17,
     "hitCut": 4,
     "punchCut": 5,
     "duration": 15

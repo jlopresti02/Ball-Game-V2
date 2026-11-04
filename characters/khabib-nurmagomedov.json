@@ -1,6 +1,6 @@
 {
   "id": "c-khabib-nurmagomedov",
-  "rev": 3,
+  "rev": 4,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Khabib Nurmagomedov",
@@ -70,7 +70,7 @@
   "hasSpecial": true,
   "special": {
     "move": "fathersplan",
-    "chargeTime": 40,
+    "chargeTime": 96,
     "hitCut": 4,
     "punchCut": 7,
     "walls": 4,

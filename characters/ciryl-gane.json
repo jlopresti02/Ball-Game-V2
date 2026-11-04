@@ -1,6 +1,6 @@
 {
   "id": "c-ciryl-gane",
-  "rev": 4,
+  "rev": 5,
   "builtin": false,
   "weightClass": "heavyweight",
   "name": "Ciryl Gane",
@@ -95,7 +95,7 @@
   "hasSpecial": true,
   "special": {
     "move": "herbdean",
-    "chargeTime": 40,
+    "chargeTime": 49,
     "hitCut": 3,
     "punchCut": 1,
     "batDamage": 6,
