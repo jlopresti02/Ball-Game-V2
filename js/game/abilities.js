@@ -11,19 +11,22 @@
 var CHECK_TIME = 0.22; // the shin stays up this long before the kick back
 
 function canCheck(b) {
-  return b.char.hasKick && b.alive && !b.checkAnim && !(b.kick && b.kick.counter) && !b.grappled && !b.grapple && !b.slam &&
+  return (b.char.hasKick || b.char.kickCheck > 0) && b.alive && !b.checkAnim && !(b.kick && b.kick.counter) && !b.grappled && !b.grapple && !b.slam &&
     !b.combo && !b.taunt && !b.flow && !b.sprawl && !b.sprawled && !b.invincible;
 }
 
 function tryCheckKick(defender, attacker) {
   if (attacker.kick && attacker.kick.counter) return false; // kick backs can't be checked
-  if (!canCheck(defender) || Math.random() >= defender.char.kick.checkChance / 100) return false;
+  var checkChance = defender.char.hasKick ? defender.char.kick.checkChance : defender.char.kickCheck;
+  if (!canCheck(defender) || Math.random() >= checkChance / 100) return false;
   defender.checkAnim = { t: 0, towardId: attacker.id };
   // Pulls its own kick (if it was throwing one) to check instead.
   defender.kick = null; defender.punch = null; defender.swing = null; defender.throwAnim = null;
   // The kicker whose kick got checked is stuck planted on that leg until the
   // kick back lands, so it always connects.
-  attacker.checkStun = CHECK_TIME + defender.char.kick.speed * 0.35 + 0.08;
+  // A checker that doesn't kick (Ilia) answers with punches instead.
+  attacker.checkStun = defender.char.hasKick ? CHECK_TIME + defender.char.kick.speed * 0.35 + 0.08
+    : CHECK_TIME + defender.char.punch.speed * 0.35 + 0.12;
   attacker.vx = 0; attacker.vy = 0; defender.vx = 0; defender.vy = 0;
   floater(defender.x, defender.y - defender.r - 8, "CHECKED", "dodge");
   playPunch(14);
@@ -50,9 +53,14 @@ function updateCheck(b, dt) {
   var ca = b.checkAnim;
   if (!ca) return;
   ca.t += dt;
+  var atk = balls[ca.towardId];
+  if (!b.char.hasKick && atk) stepInForKickBack(b, atk); // closes in to punch back
   if (ca.t < CHECK_TIME) return;
   b.checkAnim = null;
-  var atk = balls[ca.towardId];
+  if (!b.char.hasKick) {
+    b.punchCd = 0; // straight into a punch combo
+    return;
+  }
   if (b.alive && atk && atk.alive && !b.grappled && !b.slam && !b.sprawl && !b.sprawled) {
     b.kick = { t: 0, hit: false, counter: true };
     b.kickCd = b.char.kick.cooldown;
@@ -211,7 +219,9 @@ function updateAbilities(dt) {
       }
     }
 
-    if (self.char.hasPunch) {
+    if (self.char.hasPunch && self.char.ramp) {
+      updateRampPunch(self, other, dt, d); // Ilia Topuria's punches build as he's hurt (ilia.js)
+    } else if (self.char.hasPunch) {
       self.punchCd = Math.max(0, self.punchCd - dt * self.atkRate);
       var pu = self.char.punch;
       if (!self.punch && !self.kick && !self.swing && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) { // (one limb at a time when it kicks too)

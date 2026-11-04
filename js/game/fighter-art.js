@@ -16,9 +16,15 @@ function defaultLook() {
 
 // Arms, legs and fists of fighters with art use skin and glove colours;
 // everyone else keeps their fighter colour.
-function armColor(ch) {
+// `side` (-1 screen left, 1 screen right) is passed where both arms show; a
+// lone punching arm leaves it out. tattoos.armInkSide limits the ink to one arm.
+function armColor(ch, side) {
   if (!ch.look) return ch.color;
-  return ch.look.tattoos && ch.look.tattoos.armInk ? sleevePattern(ch.look) : ch.look.skin;
+  var tat = ch.look.tattoos || {};
+  // A traced sleeve only shows on a punching arm, drawn by drawTracedArm
+  if (!tat.armInk || tat.armDecal) return ch.look.skin;
+  if (side && tat.armInkSide && side !== (tat.armInkSide === "left" ? -1 : 1)) return ch.look.skin;
+  return sleevePattern(ch.look);
 }
 function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
 
@@ -878,6 +884,16 @@ function drawArtBody(c, r, look, ink, name, contained) {
     var s = p[1], style = tat[p[0]];
     // Sleeve running over the shoulder: bands and curls
     c.save();
+    if (style === "trace") {
+      // A sleeve traced from a photo (tattoos.armDecal), laid down the arm
+      var aim = tat.armDecal && artDecalImage(tat.armDecal);
+      if (aim && aim.complete && aim.naturalWidth) {
+        armSleeveClip(c, r, s);
+        c.drawImage(aim, s > 0 ? r * 0.58 : -r, -r * 0.98, r * 0.42, r * 1.6);
+      }
+      c.restore();
+      return;
+    }
     if (style === "dense" || style === "lion" || style === "sun") {
       drawNamedSleeve(c, r, s, style, inkCol, lw, artSeed(name + p[0]), contained ? 0.86 / 0.59 : 1);
       c.restore();
@@ -1120,6 +1136,24 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.beginPath(); c.moveTo(-r * (0.86 - k * 0.12), sTop + band); c.lineTo(-r * (0.5 - k * 0.12), r); c.stroke();
     });
   }
+  if (look.shortsStyle === "flame") {
+    // Ornate flames licking up both legs from the hem: an outer layer in the
+    // accent colour with a brighter gold core
+    var flr = artRand(artSeed(name + "flame"));
+    [[look.accent || "#e8731c", 1], [look.accent2 || "#f6c445", 0.55]].forEach(function (layer) {
+      c.fillStyle = layer[0];
+      [-1, 1].forEach(function (sd) {
+        c.beginPath(); c.moveTo(sd * r, r);
+        for (var fl = 0; fl < 5; fl++) {
+          var fx0 = sd * r * (1 - fl * 0.2), fx1 = sd * r * (0.9 - fl * 0.2), fx2 = sd * r * (0.8 - fl * 0.2);
+          var tip = r - (r - sTop - band) * layer[1] * (0.55 + flr() * 0.45) * (fl % 2 ? 0.75 : 1);
+          c.quadraticCurveTo(fx0, (r + tip) / 2, fx1 + sd * r * 0.03, tip);
+          c.quadraticCurveTo(fx1 - sd * r * 0.02, (r + tip) / 2 + r * 0.04, fx2, r - r * 0.06);
+        }
+        c.lineTo(sd * r * 0.06, r); c.closePath(); c.fill();
+      });
+    });
+  }
   if (look.shortsStyle === "usa") {
     // Stars-and-stripes panel down the outside of the right leg (screen left)
     c.save();
@@ -1185,14 +1219,19 @@ function drawArtBody(c, r, look, ink, name, contained) {
 // Named sleeve styles, drawn inside the shoulder clip at side `s`.
 // "dense": near solid black-and-grey from shoulder down, dark emblem on the delt.
 // "lion": a lion's head with a shaggy mane on the delt, patchier ink below.
-function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
-  // The arm hangs down the side of the ball, from the shoulder to the shorts
-  var rnd = artRand(seed), inner = r * 0.64, x0 = s * r * 0.8;
+// The arm hangs down the side of the ball, from the shoulder to the shorts
+function armSleeveClip(c, r, s) {
+  var inner = r * 0.64;
   c.beginPath();
   c.moveTo(s * r, -r * 0.95);
   c.quadraticCurveTo(s * (inner - r * 0.04), -r * 0.9, s * (inner - r * 0.04), -r * 0.35);
   c.quadraticCurveTo(s * (inner - r * 0.04), r * 0.1, s * (inner + r * 0.02), r * 0.6);
   c.lineTo(s * r, r * 0.6); c.closePath(); c.clip();
+}
+
+function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
+  var rnd = artRand(seed), inner = r * 0.64, x0 = s * r * 0.8;
+  armSleeveClip(c, r, s);
   c.fillStyle = inkCol;
   c.globalAlpha = style === "dense" ? 0.95 : style === "sun" ? 0.6 : 0.2;
   c.fillRect(s > 0 ? inner - r * 0.1 : -r, -r, r * 0.5, r * 1.6);
@@ -1264,7 +1303,50 @@ function drawNamedSleeve(c, r, s, style, inkCol, lw, seed, tall) {
 // Inked arm texture for fighters whose look sets tattoos.armInk: a skin tile
 // with black-and-grey swirls and shading, used as the arm stroke in attacks.
 var sleevePatterns = {};
+// The traced sleeve laid along an extended arm from (x0, y0) to (x1, y1),
+// as one image rather than a repeating pattern. Returns false when there is
+// no traced sleeve (or it hasn't loaded) so the caller keeps its plain arm.
+function drawTracedArm(c, ch, x0, y0, x1, y1, w) {
+  var tat = ch.look && ch.look.tattoos;
+  if (!tat || !tat.armInk || !tat.armDecal) return false;
+  var im = artDecalImage(tat.armDecal);
+  if (!im.complete || !im.naturalWidth) return false;
+  var dx = x1 - x0, dy = y1 - y0, len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 1) return false;
+  c.save();
+  c.translate(x0, y0); c.rotate(Math.atan2(dy, dx));
+  // Round-ended arm shape
+  c.beginPath();
+  c.arc(0, 0, w / 2, Math.PI / 2, Math.PI * 1.5);
+  c.lineTo(len, -w / 2); c.arc(len, 0, w / 2, -Math.PI / 2, Math.PI / 2); c.closePath();
+  c.clip();
+  // The photo runs shoulder (top) to wrist (bottom): turn it to lie along +x,
+  // trimmed to the middle so its feathered edges don't show
+  c.rotate(-Math.PI / 2);
+  var sw = im.naturalWidth, sh = im.naturalHeight;
+  c.drawImage(im, sw * 0.15, sh * 0.06, sw * 0.7, sh * 0.88, -w * 0.6, -w * 0.5, w * 1.2, len + w);
+  c.restore();
+  return true;
+}
+
 function sleevePattern(look) {
+  var tat = look.tattoos || {};
+  if (tat.armDecal && typeof document !== "undefined") {
+    // Tile the traced sleeve over the skin, once its image has loaded
+    var dk = look.skin + tat.armDecal.length + tat.armDecal.slice(-24);
+    if (sleevePatterns[dk]) return sleevePatterns[dk];
+    var dim = artDecalImage(tat.armDecal);
+    if (dim.complete && dim.naturalWidth) {
+      var tw = 90, th = Math.round(tw * dim.naturalHeight / dim.naturalWidth / 2);
+      var tc = document.createElement("canvas"); tc.width = tw; tc.height = th;
+      var tx = tc.getContext("2d");
+      tx.fillStyle = look.skin; tx.fillRect(0, 0, tw, th);
+      // the middle of the arm, where the ink is densest and least feathered
+      tx.drawImage(dim, dim.naturalWidth * 0.15, dim.naturalHeight * 0.25, dim.naturalWidth * 0.7, dim.naturalHeight * 0.5, 0, 0, tw, th);
+      sleevePatterns[dk] = tx.createPattern(tc, "repeat") || look.skin;
+      return sleevePatterns[dk];
+    }
+  }
   var key = look.skin;
   if (sleevePatterns[key]) return sleevePatterns[key];
   if (typeof document === "undefined") return look.skin;
@@ -1312,7 +1394,7 @@ function drawGlove(c, x, y, gr, look, ink, ang) {
     c.beginPath(); c.arc(gr * 0.82, i * gr * 0.3, gr * 0.17, 0, Math.PI * 2); c.fill(); c.stroke();
   }
   // Wrist strap
-  c.fillStyle = shadeHex(col, 0.75); c.lineWidth = Math.max(1.2, gr * 0.14);
+  c.fillStyle = look.gloveStrap || shadeHex(col, 0.75); c.lineWidth = Math.max(1.2, gr * 0.14);
   c.beginPath(); c.rect(-gr * 0.72, -gr * 0.62, gr * 0.3, gr * 1.24); c.fill(); c.stroke();
   c.restore();
 }

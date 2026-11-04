@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -1367,5 +1367,253 @@ function stopCrowdLoop() {
     c.gain.gain.cancelScheduledValues(now);
     c.gain.gain.setTargetAtTime(0.0001, now, 0.15);
     c.src.stop(now + 0.8);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// ---------------------------------------------------------------
+// Ilia Topuria's Aura Farm (aurafarm.js).
+// The music: Joe's track goes in SOUND_CLIPS.auraFarm. Until it's there, a
+// flamenco stand-in plays: palmas (hand claps) on the 12-beat compás with
+// rasgueado guitar strums on the accents.
+var auraMusic = null;
+var AURA_BEAT = 0.3;
+function playAuraFarmMusic() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    stopAuraFarmMusic(0);
+    var now = ctx.currentTime, out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, now); out.gain.exponentialRampToValueAtTime(1, now + 0.1);
+    out.connect(ctx.destination);
+    auraMusic = { gain: out, srcs: [] };
+    auraBgMusic(now, 0); // the background music drops out under Desperado
+    if (typeof SOUND_CLIPS !== "undefined" && SOUND_CLIPS.auraFarm) {
+      withClip("auraFarm", function (buf) {
+        if (!auraMusic || auraMusic.gain !== out) return;
+        var s = ctx.createBufferSource(); s.buffer = buf; s.connect(out); s.start(ctx.currentTime);
+        auraMusic.srcs.push(s);
+      });
+      return;
+    }
+    // Stand-in: 8 bars of 12 beats.
+    var accents = { 2: true, 5: true, 7: true, 9: true, 11: true };
+    var chords = [[220, 261.6, 329.6, 440], [196, 246.9, 293.7, 392], [174.6, 220, 261.6, 349.2], [164.8, 207.7, 246.9, 329.6]];
+    for (var bar = 0; bar < 8; bar++) {
+      for (var i = 0; i < 12; i++) {
+        var t = now + 0.05 + (bar * 12 + i) * AURA_BEAT, acc = !!accents[i];
+        auraClap(ctx, out, t, acc ? 0.5 : 0.18, auraMusic.srcs);
+        if (acc) {
+          var ci = i === 2 ? 0 : (i === 5 ? 1 : (i === 11 ? 3 : 2));
+          auraStrum(ctx, out, t, chords[ci], i === 11 ? 0.32 : 0.24, auraMusic.srcs);
+        }
+      }
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+// Fades the background music (music.js) out for Aura Farm (k 0) and back (k 1).
+function auraBgMusic(at, k) {
+  try {
+    var m = typeof music !== "undefined" ? music : null;
+    if (!m || !m.gain) return;
+    var g = m.gain.gain;
+    g.cancelScheduledValues(at);
+    g.setTargetAtTime(k ? m.level : 0.0001, at, k ? 0.4 : 0.15);
+  } catch (e) { /* never let audio break the game */ }
+}
+function stopAuraFarmMusic(fade) {
+  try {
+    var am = auraMusic;
+    if (!am || !audioCtx) return;
+    auraMusic = null;
+    var now = audioCtx.currentTime, f = fade == null ? 0.6 : fade;
+    auraBgMusic(now + f, 1);
+    am.gain.gain.cancelScheduledValues(now);
+    am.gain.gain.setValueAtTime(Math.max(0.0001, am.gain.gain.value || 0.9), now);
+    am.gain.gain.linearRampToValueAtTime(0, now + f + 0.01);
+    var end = now + f + 0.05;
+    am.srcs.forEach(function (s) { try { s.stop(end); } catch (e) { /* already stopped */ } });
+    // (no disconnect: the stopped sources are cleaned up on their own, and a
+    // disconnect would also cut it out of offline-rendered demo recordings)
+  } catch (e) { /* never let audio break the game */ }
+}
+function auraClap(ctx, out, t, peak, srcs) {
+  if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+  [0, 0.008, 0.017].forEach(function (d, i) {
+    var s = ctx.createBufferSource(); s.buffer = punchNoise;
+    var f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1500 + i * 300; f.Q.value = 1.4;
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(peak * (i === 2 ? 1 : 0.6), t + d + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d + (i === 2 ? 0.09 : 0.02));
+    s.connect(f); f.connect(g); g.connect(out); s.start(t + d); s.stop(t + d + 0.12); srcs.push(s);
+  });
+}
+function auraStrum(ctx, out, t, notes, peak, srcs) {
+  notes.forEach(function (fq, i) {
+    var at = t + i * 0.014;
+    [1, 1.004].forEach(function (det) {
+      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = fq * det;
+      var lp = ctx.createBiquadFilter(); lp.type = "lowpass";
+      lp.frequency.setValueAtTime(3200, at); lp.frequency.exponentialRampToValueAtTime(700, at + 0.5);
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak * 0.25, at + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.7);
+      o.connect(lp); lp.connect(g); g.connect(out); o.start(at); o.stop(at + 0.75); srcs.push(o);
+    });
+  });
+}
+// A heavy spotlight thunking on, with a hum.
+function playSpotlightDrop() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    caneTone(ctx, now, "sine", 120, 45, 0.7, 0.35);
+    caneBurst(ctx, now, 900, 0.8, 0.5, 0.08);
+    caneTone(ctx, now + 0.02, "square", 60, 60, 0.04, 0.9);
+  } catch (e) { /* never let audio break the game */ }
+}
+// The bull bellowing as it's thrown (Joe's clip; a snort if it's not loaded).
+// rate < 1 pitches it down (the KO punch uses it a little lower, so the two
+// don't sound the same so close together).
+function playBullThrown(rate) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (!playClip("bullThrown", 0.9, null, rate)) { withClip("bullThrown"); playBullSnort(); }
+  } catch (e) { /* never let audio break the game */ }
+}
+// Joe's impact punch clips for Aura Farm hits (1: bull rams the opponent,
+// 2: thrown bull lands); falls back to the synth punch if not loaded.
+function playImpactClip(n, gain, fallback) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (!playClip("impactPunch" + n, gain)) { withClip("impactPunch" + n); playPunch(fallback); }
+  } catch (e) { /* never let audio break the game */ }
+}
+// The bull roaring as it charges (Joe's clip; a snort if it's not loaded).
+function playBullCharge(gain) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (!playClip("bullCharge", gain || 0.85)) { withClip("bullCharge"); playBullSnort(); }
+  } catch (e) { /* never let audio break the game */ }
+}
+// Ilia's KO punch on the bull: a full-weight punch, boosted well over a
+// normal one, with a crit-punch crack and a slam under it.
+function playKoPunch() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, g = ctx.createGain();
+    g.gain.value = 2.4;
+    g.connect(ctx.destination);
+    if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+    synthPunch(ctx, g, now, 1, punchNoise);
+    synthPunch(ctx, g, now + 0.012, 1, punchNoise);
+    playCritPunch(true);
+    playSlam();
+    // Joe's baseball bat crack; the synth crack stands in if it isn't loaded.
+    playClip("impactPunch2", 1.3) || withClip("impactPunch2");
+    auraCowbell(ctx, now + 0.01);
+    if (!playClip("batCrack", 1.4)) { withClip("batCrack"); auraCrack(ctx, now + 0.005); }
+  } catch (e) { /* never let audio break the game */ }
+}
+// A little cowbell clank on the bull: two detuned square waves through a
+// band-pass, with a quick metallic decay.
+function auraCowbell(ctx, t) {
+  var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2640; bp.Q.value = 1.4;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.9, t + 0.003);
+  g.gain.exponentialRampToValueAtTime(0.25, t + 0.06);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+  bp.connect(g); g.connect(ctx.destination);
+  [587, 845].forEach(function (f) {
+    var o = ctx.createOscillator(); o.type = "square"; o.frequency.value = f;
+    o.connect(bp); o.start(t); o.stop(t + 0.5);
+  });
+}
+// A huge, sharp CRACK, like a bat on a fastball: a near-instant broadband
+// snap, a bright woody ring, and a slapback off the arena roof.
+function auraCrack(ctx, t) {
+  // Everything goes through one loud bus with a compressor, so it hits hard
+  // without falling apart.
+  var bus = ctx.createGain(); bus.gain.value = 2.2;
+  var comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -14; comp.ratio.value = 6; comp.attack.value = 0.001; comp.release.value = 0.2;
+  bus.connect(comp); comp.connect(ctx.destination);
+  var noise = makeNoiseBuffer(ctx, 0.5);
+  function snap(at, peak, dur, hp, out) {
+    var s = ctx.createBufferSource(); s.buffer = noise;
+    var f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + 0.001);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    s.connect(f); f.connect(g); g.connect(out); s.start(at); s.stop(at + dur + 0.02);
+  }
+  // The ash bat ringing: a cluster of bright woody partials that die fast.
+  function ring(at, scale, out) {
+    [[620, 0.5, 0.22], [1310, 0.65, 0.18], [2240, 0.45, 0.14], [3480, 0.3, 0.1], [4900, 0.18, 0.07]].forEach(function (p) {
+      var o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = p[0] * (0.98 + Math.random() * 0.04);
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(p[1] * scale, at + 0.001);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + p[2]);
+      o.connect(g); g.connect(out); o.start(at); o.stop(at + p[2] + 0.02);
+    });
+  }
+  snap(t, 1.0, 0.05, 1500, bus);   // the CRACK itself
+  snap(t, 0.5, 0.14, 3500, bus);   // splinter fizz
+  ring(t, 1, bus);
+  caneTone(ctx, t, "sine", 160, 70, 0.6, 0.18); // the ball's thump under it
+  // The echo off the stands and the roof, as it goes out of the park.
+  [[0.13, 0.4], [0.27, 0.22], [0.42, 0.11]].forEach(function (ec) {
+    snap(t + ec[0], ec[1], 0.07, 1800, bus);
+    ring(t + ec[0], ec[1] * 0.8, bus);
+  });
+}
+// A heel stomp on the canvas.
+function playStomp() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var now = ctx.currentTime;
+    caneTone(ctx, now, "sine", 150, 60, 0.45, 0.12);
+    caneBurst(ctx, now, 700, 1, 0.25, 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+// The bull: a snort, and hooves pounding.
+function playBullSnort() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    [0, 0.16].forEach(function (d) {
+      if (!whooshNoise) whooshNoise = makeNoiseBuffer(ctx, 0.4);
+      var s = ctx.createBufferSource(); s.buffer = whooshNoise;
+      var f = ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 0.8;
+      f.frequency.setValueAtTime(400, now + d); f.frequency.exponentialRampToValueAtTime(1200, now + d + 0.12);
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now + d); g.gain.exponentialRampToValueAtTime(0.5, now + d + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + d + 0.18);
+      s.connect(f); f.connect(g); g.connect(ctx.destination); s.start(now + d); s.stop(now + d + 0.25);
+    });
+    caneTone(ctx, now, "sawtooth", 90, 70, 0.08, 0.3);
+  } catch (e) { /* never let audio break the game */ }
+}
+function playHoof() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var now = ctx.currentTime;
+    caneTone(ctx, now, "sine", 110 + Math.random() * 20, 50, 0.3, 0.09);
+    caneBurst(ctx, now, 500, 1.2, 0.12, 0.04);
   } catch (e) { /* never let audio break the game */ }
 }

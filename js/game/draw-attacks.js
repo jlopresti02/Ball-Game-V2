@@ -15,7 +15,7 @@ function drawFist(self, other) {
   // Punch always launches from the same shoulder slot the guard hand rests
   // in (drawHands hides that one hand while this animates), so it reads as
   // one hand throwing the punch while the other stays up.
-  var perpx = -qny, perpy = qnx, gap = self.r * 0.4;
+  var perpx = -qny, perpy = qnx, gap = self.r * 0.4 * (self.punch.side || 1); // (combos alternate hands)
   var fistX = self.x + qnx * fistDist + perpx * gap, fistY = self.y + qny * fistDist + perpy * gap;
   var armX = self.x + qnx * (self.r - 2) + perpx * gap, armY = self.y + qny * (self.r - 2) + perpy * gap;
   ctx.save();
@@ -26,6 +26,7 @@ function drawFist(self, other) {
   ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = pu.size * 0.6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
+  if ((self.punch.side || 1) === 1) drawTracedArm(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6); // sleeve on one arm only
   ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 3;
@@ -112,6 +113,7 @@ function drawHands(b, other) {
   if (cheaterHandsBusy(b)) return; // cheating (drawCheater)
   if (b.igbb && b.igbb.move === "chairshot") return; // both hands on the chair (drawChairShot)
   if (b.igbb && b.igbb.move === "herbdean") return; // swinging the bat (drawHerbDeanSpecial)
+  if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)
   if (allAmericanHandsBusy(b)) return; // the haymaker, or fists pumping (drawAllAmerican)
   if (herbCovering(b)) { drawHerbCover(b); return; } // covering up from the bat and the cane
   if (aaCovering(b)) { drawAaPanic(b); return; } // freaking out on the highway (allamerican.js)
@@ -127,7 +129,7 @@ function drawHands(b, other) {
       var sx = b.x + sgn * b.r * 0.62, sy = b.y - b.r * 0.55;
       ctx.strokeStyle = theme.wall; ctx.lineWidth = b.r * 0.34;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-      ctx.strokeStyle = armColor(b.char); ctx.lineWidth = b.r * 0.2;
+      ctx.strokeStyle = armColor(b.char, sgn); ctx.lineWidth = b.r * 0.2;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
       ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(hx, hy, b.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -169,7 +171,7 @@ function drawHands(b, other) {
   if (b.shelled) { fwd = b.r * 0.9; gap = b.r * 0.22; hr = b.r * 0.34; } // tight shell, gloves together
   var koHook = b.koRush && (b.koRush.phase === "run" || b.koRush.phase === "throw");
   var igbbGrab = b.igbb && (b.igbb.phase === "grab" || b.igbb.phase === "throw");
-  var sides = (b.punch || b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : (b.igbb && b.igbb.gp ? [] : [1, -1]));
+  var sides = b.punch ? [-(b.punch.side || 1)] : (b.throwAnim || koHook || igbbGrab) ? [-1] : (b.koPunch ? [-(b.koPunch.side || 1)] : (b.igbb && b.igbb.gp ? [] : [1, -1]));
   ctx.save();
   ctx.fillStyle = gloveColor(b.char);
   ctx.strokeStyle = theme.wall;
