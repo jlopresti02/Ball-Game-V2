@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -782,6 +782,14 @@ function playChairShot() {
     if (ctx.state === "suspended") ctx.resume();
     playClip("chairShot", 1);
   } catch (e) { /* never let audio break the game */ }
+}
+
+// Charles Oliveira's call, the first time in a fight he shoots a takedown
+// that isn't going into a submission attempt (so not in Do Bronx). It's a
+// talking clip: if another line is going it waits for the next shot.
+function playCharlesTakedownCall() {
+  if (!audioCtx || !clipBuffers.charlesTakedown) { withClip("charlesTakedown"); return false; }
+  return playTalk("charlesTakedown", 0.85);
 }
 
 // The commentators going off the first time Gane lands the bat
