@@ -4093,12 +4093,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
     "base": "Kicker",
-    "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 12 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): kicks with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination.",
+    "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 12 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): switches from kicks to punches, with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination.",
     "color": "#c9a227",
     "label": "",
     "imgData": null,
@@ -4219,10 +4219,11 @@ var SAVED_ROSTER = [
         "hasGuillotine": true,
         "hasWeave": false,
         "blockChance": 10,
-        "tdd": null
+        "tdd": null,
+        "hasKick": true
       },
       "evil": {
-        "hasPunch": false,
+        "hasPunch": true,
         "hasGrapple": false,
         "hasSuplex": false,
         "hasGuillotine": false,
@@ -4230,7 +4231,8 @@ var SAVED_ROSTER = [
         "blockChance": 0,
         "tdd": {
           "sprawlChance": 60
-        }
+        },
+        "hasKick": false
       },
       "evilLook": {
         "skin": "#5c3a28",
@@ -9393,7 +9395,7 @@ var AF_BULL_ASPECT = 1.1205; // height / width
 //   defense in the game except the guard pull and the weaves: blocks, kick
 //   checks, sprawls (and reattacks), grab counters and the guillotine.
 //
-//   EVIL mode (tattoo glowing red): kicks only, with grappling defense
+//   EVIL mode (tattoo glowing red): punches instead of kicks, with grappling defense
 //   (sprawls) and the BMF's weave. A critical weave isn't a punch flurry:
 //   it's an eye poke into a brutal combination (the same poke and combo
 //   moves as Gane's Cheater mode, drawn by drawCheater).
@@ -9402,7 +9404,7 @@ var AF_BULL_ASPECT = 1.1205; // height / width
 // changes that one fighter, never the roster.
 "use strict";
 
-var JON_MODE_FIELDS = ["hasPunch", "hasGrapple", "hasSuplex", "hasGuillotine", "hasWeave", "blockChance", "tdd"];
+var JON_MODE_FIELDS = ["hasPunch", "hasKick", "hasGrapple", "hasSuplex", "hasGuillotine", "hasWeave", "blockChance", "tdd"];
 
 function isJon(b) { return !!(b && b.char.jon); }
 
@@ -9428,7 +9430,7 @@ function setJonMode(b, mode, quiet) {
   b.jonT = 0;
   if (quiet) return;
   // Drops anything that belongs to the mode he's leaving.
-  b.punch = null; b.combo = null; b.taunt = null; b.flow = null;
+  b.punch = null; b.kick = null; b.combo = null; b.taunt = null; b.flow = null;
   b.jonGlow = 0.6;
   var gold = mode === "goat";
   floater(b.x, b.y - b.r - 30, gold ? "GOAT MODE" : "EVIL MODE", gold ? "note" : "crit");
@@ -17794,7 +17796,7 @@ function galleryMoves(ch) {
     var j = ch.jon, pk = ch.cheater.poke, pkTotal = pk.combo.reduce(function (a, b) { return a + b; }, pk.damage);
     var gnpTotal = j.gnp.reduce(function (a, b) { return a + b; }, 0);
     add("🐐", "GOAT mode", "Everything above, with his chest tattoo glowing gold. " + j.rncChance + "% of his takedowns go to the back for a rear naked choke and " + j.gnpChance + "% into ground and pound (" + j.gnp.length + " punches, " + gnpTotal + " total). Swaps modes every " + secs(j.swapEvery) + ".");
-    add("😈", "EVIL mode", "Tattoo glowing red. Kicks only, sprawls " + (j.evil.tdd ? j.evil.tdd.sprawlChance : 0) + "% of shots and slips " + ch.weave.dodgeChance + "% of attacks. " + ch.weave.critChance + "% of slips are an eye poke into a " + pk.combo.length + "-punch combination (" + pkTotal + " total).");
+    add("😈", "EVIL mode", "Tattoo glowing red. Switches from kicks to punches, sprawls " + (j.evil.tdd ? j.evil.tdd.sprawlChance : 0) + "% of shots and slips " + ch.weave.dodgeChance + "% of attacks. " + ch.weave.critChance + "% of slips are an eye poke into a " + pk.combo.length + "-punch combination (" + pkTotal + " total).");
   }
   return m;
 }

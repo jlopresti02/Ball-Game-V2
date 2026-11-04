@@ -7,7 +7,7 @@
 //   defense in the game except the guard pull and the weaves: blocks, kick
 //   checks, sprawls (and reattacks), grab counters and the guillotine.
 //
-//   EVIL mode (tattoo glowing red): kicks only, with grappling defense
+//   EVIL mode (tattoo glowing red): punches instead of kicks, with grappling defense
 //   (sprawls) and the BMF's weave. A critical weave isn't a punch flurry:
 //   it's an eye poke into a brutal combination (the same poke and combo
 //   moves as Gane's Cheater mode, drawn by drawCheater).
@@ -16,7 +16,7 @@
 // changes that one fighter, never the roster.
 "use strict";
 
-var JON_MODE_FIELDS = ["hasPunch", "hasGrapple", "hasSuplex", "hasGuillotine", "hasWeave", "blockChance", "tdd"];
+var JON_MODE_FIELDS = ["hasPunch", "hasKick", "hasGrapple", "hasSuplex", "hasGuillotine", "hasWeave", "blockChance", "tdd"];
 
 function isJon(b) { return !!(b && b.char.jon); }
 
@@ -42,7 +42,7 @@ function setJonMode(b, mode, quiet) {
   b.jonT = 0;
   if (quiet) return;
   // Drops anything that belongs to the mode he's leaving.
-  b.punch = null; b.combo = null; b.taunt = null; b.flow = null;
+  b.punch = null; b.kick = null; b.combo = null; b.taunt = null; b.flow = null;
   b.jonGlow = 0.6;
   var gold = mode === "goat";
   floater(b.x, b.y - b.r - 30, gold ? "GOAT MODE" : "EVIL MODE", gold ? "note" : "crit");

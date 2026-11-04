@@ -1,11 +1,11 @@
 {
  "id": "c-jon-jones",
- "rev": 1,
+ "rev": 2,
  "builtin": false,
  "weightClass": "lightheavyweight",
  "name": "Jon Jones",
  "base": "Kicker",
- "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 12 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): kicks with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination.",
+ "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 12 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): switches from kicks to punches, with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination.",
  "color": "#c9a227",
  "label": "",
  "imgData": null,
@@ -126,10 +126,11 @@
    "hasGuillotine": true,
    "hasWeave": false,
    "blockChance": 10,
-   "tdd": null
+   "tdd": null,
+   "hasKick": true
   },
   "evil": {
-   "hasPunch": false,
+   "hasPunch": true,
    "hasGrapple": false,
    "hasSuplex": false,
    "hasGuillotine": false,
@@ -137,7 +138,8 @@
    "blockChance": 0,
    "tdd": {
     "sprawlChance": 60
-   }
+   },
+   "hasKick": false
   },
   "evilLook": {
    "skin": "#5c3a28",
