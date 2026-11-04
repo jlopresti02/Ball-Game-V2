@@ -7,7 +7,7 @@ function frame(t) {
   var dt = Math.min((t - last) / 1000, 1 / 30);
   last = t;
   if (!screens.game.hidden) {
-    if (started) update(dt);
+    if (started && !gamePaused) update(dt); // a gallery demo can be paused (gallery.js)
     updateHud(false);
     draw();
   }
