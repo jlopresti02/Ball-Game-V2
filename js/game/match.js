@@ -114,7 +114,6 @@ function start() {
   setGamePhase("fight");
   rollKoRush(); // Brawler's opening KO Rush (usually doesn't happen)
   playStartWhistle();
-  playHereWeGo();
   startCrowd();
   startMusic();
   resetCommentary();

@@ -606,21 +606,18 @@ function playStartWhistle() {
     withClip("refWhistle", function () { playClip("refWhistle", 0.55); });
   } catch (e) { /* never let audio break the game */ }
 }
-// "Here we go!" comes a few seconds after the whistle, so the whistle is the
-// first thing heard (Joe's call).
-var HERE_WE_GO_DELAY = 1.5;
-var hereWeGoTimer = 0;
+// "Here we go!" opens Justin Gaethje's All American special: it plays as the
+// special starts, and Free Bird kicks in 1 second after it (Joe's call; they
+// overlap). It cuts in on the talk channel so it's never skipped.
+var HERE_WE_GO_LEAD = 1;
+var hereWeGoAt = -10;
 function playHereWeGo() {
-  clearTimeout(hereWeGoTimer);
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    withClip("hereWeGo", function () {}); // start decoding now
-    hereWeGoTimer = setTimeout(function () {
-      if (!started || over) return; // fight already ended (or menu reopened)
-      withClip("hereWeGo", function () { playTalk("hereWeGo", 0.8); });
-    }, HERE_WE_GO_DELAY * 1000);
+    if (!clipBuffers.hereWeGo) { withClip("hereWeGo"); return; }
+    if (cutInTalk("hereWeGo", 0.8)) hereWeGoAt = talkCutAt || ctx.currentTime;
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -1093,6 +1090,8 @@ function playFreeBird() {
     var buf = clipBuffers.freeBird;
     if (!buf) { withClip("freeBird"); return; }
     var now = ctx.currentTime, c = crowd;
+    // 1s after "Here we go!" if that just played (it opens the special).
+    if (now - hereWeGoAt < 4) now = Math.max(now, hereWeGoAt + HERE_WE_GO_LEAD);
     if (c && c.gain) {
       c.duckUntil = now + 60; // held down until the solo stops
       c.gain.gain.cancelScheduledValues(now);
@@ -1103,8 +1102,13 @@ function playFreeBird() {
     g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.9, now + 0.12);
     src.connect(g); g.connect(ctx.destination);
     src.start(now);
-    freeBirdPlaying = { src: src, gain: g };
+    freeBirdPlaying = { src: src, gain: g, at: now };
   } catch (e) { /* never let audio break the game */ }
+}
+// Seconds until the solo actually starts (it can be waiting on "Here we go!").
+function freeBirdWait() {
+  var fb = freeBirdPlaying;
+  return fb && audioCtx ? Math.max(0, fb.at - audioCtx.currentTime) : 0;
 }
 function stopFreeBird(fade) {
   try {
@@ -1338,7 +1342,6 @@ function crowdRelease() {
 }
 // Leaving or restarting a match: the crowd, the music and anyone talking go quiet.
 function stopCrowd() {
-  clearTimeout(hereWeGoTimer);
   stopDoBronx();
   stopTalk();
   stopCrowdLoop();
