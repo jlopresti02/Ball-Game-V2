@@ -113,13 +113,14 @@ function updateAuraFarm(self, other, dt) {
     m.cape = Math.min(1, m.t / 0.4);
     var mx = m.px - self.x, my = m.py - self.y, md = Math.sqrt(mx * mx + my * my);
     if (md > 2) { var s2 = Math.min(md, 320 * dt); self.x += mx / md * s2; self.y += my / md * s2; }
+    // The roar starts while it's pawing, getting ready, and runs on into the charge.
+    if (!m.roared && m.t >= AF_BULL_PAW - 0.6) { m.roared = true; playBullCharge(); }
     if (m.t >= AF_BULL_PAW && md <= 2) {
       // Charges him, aimed through him at the opponent behind.
       var ax = other.x - bull.x, ay = other.y - bull.y, ad = Math.sqrt(ax * ax + ay * ay) || 1;
       bull.phase = "charge"; bull.t = 0; bull.dx = ax / ad; bull.dy = ay / ad; bull.target = "victim";
       bull.face = bull.dx >= 0 ? 1 : -1;
       m.phase = "charge1"; m.t = 0; m.step = 0;
-      playBullCharge();
     }
     return true;
   }
@@ -360,10 +361,10 @@ function tickAuraBull(self, other, dt) {
     var want = self.x >= b.x ? 1 : -1;
     if (b.t > 0.45 && b.face !== want) b.face = want;
     if (b.t > 0.6 && Math.floor(b.t / 0.35) !== Math.floor((b.t - dt) / 0.35)) { auraDust(b.x - b.face * AF_BULL_R * 0.5, b.y + AF_BULL_R * 0.85, 4); auraSteam(b); }
+    if (!b.roared2 && b.t >= AF_TURN - 0.6) { b.roared2 = true; playBullCharge(); } // same again before it comes for Ilia
     if (b.t >= AF_TURN) {
       var ix = self.x - b.x, iy = self.y - b.y, id = Math.sqrt(ix * ix + iy * iy) || 1;
       b.phase = "charge"; b.t = 0; b.dx = ix / id; b.dy = iy / id; b.target = "ilia"; b.face = b.dx >= 0 ? 1 : -1;
-      playBullCharge();
     }
   } else if (b.phase === "ko") {
     // Knocked flying onto its back.
