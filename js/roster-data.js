@@ -288,7 +288,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -379,8 +379,8 @@ var SAVED_ROSTER = [
       "move": "aurafarm",
       "chargeTime": 45,
       "hitCut": 4,
-      "bullDamage": 30,
-      "throwDamage": 35
+      "bullDamage": 60,
+      "throwDamage": 70
     }
   },
   {
@@ -481,7 +481,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -586,7 +586,7 @@ var SAVED_ROSTER = [
       "hitCut": 4,
       "punchDamage": 25,
       "eagleDamage": 6,
-      "truckDamage": 50,
+      "truckDamage": 100,
       "dazeTime": 1.5,
       "thunderDamage": 20
     }
