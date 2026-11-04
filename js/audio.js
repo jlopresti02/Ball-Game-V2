@@ -761,6 +761,7 @@ function playDoBronx() {
     if (ctx.state === "suspended") ctx.resume();
     stopDoBronx();
     doBronxSrc = cutInTalk("doBronx", 0.85);
+    holdMusicOff(); // Do Bronx brings its own music (music.js)
     var buf = clipBuffers.doBronx;
     // Take over just as the clip starts fading.
     crowdHold(buf ? buf.duration - 1.4 : DO_BRONX_HIT);
