@@ -310,6 +310,7 @@ function goatRam(self, other, g) {
     var kx = g.dx * 0.65 + cx / cl * 0.35, ky = g.dy * 0.65 + cy / cl * 0.35, kl = Math.sqrt(kx * kx + ky * ky) || 1;
     var sp = self.char.special;
     beginWallSlam(other, kx / kl, ky / kl, { knockback: sp.ramSpeed, wallSlams: sp.ramWalls, slamDamage: sp.ramWallDamage });
+    if (other.slam) other.slam.ease = 0.9; // glides back to normal speed after (physics.js)
   }
   other.squash = { t: 0.2, max: 0.2, nx: g.dx, ny: g.dy }; other.flash = 0.16;
   floater(other.x, other.y - other.r - 30, "RAMMED!", "crit");

@@ -6362,7 +6362,22 @@ function inOrdinaryMovement(b) {
   return true;
 }
 
+// Gliding back down to normal speed after being sent flying (endWallSlam):
+// fast at first, settling smoothly, on whatever heading the last bounce
+// left it. Anything that takes hold of the fighter cancels it.
+function tickSpeedEase(b, dt) {
+  var e = b.speedEase;
+  if (!e) return false;
+  if (!inOrdinaryMovement(b) || b.dizzy) { b.speedEase = null; return false; }
+  e.t += dt;
+  var k = Math.min(1, e.t / e.dur), normal = b.baseSpeed || SPEED;
+  setSpeed(b, normal + (e.v0 - normal) * Math.pow(1 - k, 3));
+  if (k >= 1) b.speedEase = null;
+  return true;
+}
+
 function regulateSpeed(b, dt) {
+  if (tickSpeedEase(b, dt)) return;
   if (!inOrdinaryMovement(b) || b.dizzy) return; // (dizzy fighters stagger at their own pace, gaethje.js)
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   var normal = b.baseSpeed || SPEED; // lighter fighters roll faster (weight.js)
@@ -6578,7 +6593,11 @@ function onWallImpact(b, nx, ny) {
 }
 
 function endWallSlam(b) {
+  var ease = b.slam && b.slam.ease;
   b.slam = null;
+  // Some slams (a goat ram) glide back down to normal speed instead of
+  // snapping to it (tickSpeedEase, physics.js).
+  if (ease) { b.speedEase = { t: 0, dur: ease, v0: Math.sqrt(b.vx * b.vx + b.vy * b.vy) }; return; }
   setSpeed(b, SPEED);
 }
 
@@ -9736,6 +9755,7 @@ function goatRam(self, other, g) {
     var kx = g.dx * 0.65 + cx / cl * 0.35, ky = g.dy * 0.65 + cy / cl * 0.35, kl = Math.sqrt(kx * kx + ky * ky) || 1;
     var sp = self.char.special;
     beginWallSlam(other, kx / kl, ky / kl, { knockback: sp.ramSpeed, wallSlams: sp.ramWalls, slamDamage: sp.ramWallDamage });
+    if (other.slam) other.slam.ease = 0.9; // glides back to normal speed after (physics.js)
   }
   other.squash = { t: 0.2, max: 0.2, nx: g.dx, ny: g.dy }; other.flash = 0.16;
   floater(other.x, other.y - other.r - 30, "RAMMED!", "crit");

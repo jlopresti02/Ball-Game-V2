@@ -138,7 +138,11 @@ function onWallImpact(b, nx, ny) {
 }
 
 function endWallSlam(b) {
+  var ease = b.slam && b.slam.ease;
   b.slam = null;
+  // Some slams (a goat ram) glide back down to normal speed instead of
+  // snapping to it (tickSpeedEase, physics.js).
+  if (ease) { b.speedEase = { t: 0, dur: ease, v0: Math.sqrt(b.vx * b.vx + b.vy * b.vy) }; return; }
   setSpeed(b, SPEED);
 }
 
