@@ -300,6 +300,9 @@ function updateAbilities(dt) {
           self.grappleCd = gr.cooldown;
           self.initiativeReason = null;
         } else if (attemptGrab(self, other)) { // (handles the grab being weaved or blocked: an escape)
+          if (!self.doBronx && !self.charlesCallDone && String(self.char.id).indexOf("c-charles-oliveira") === 0) {
+            self.charlesCallDone = playCharlesTakedownCall(); // once a fight (audio.js)
+          }
           if (self.initiativeReason) {
             // Shows why this Grappler won the race to the grab.
             floater((self.x + other.x) / 2, Math.min(self.y, other.y) - self.r - 30, self.initiativeReason, "note");
