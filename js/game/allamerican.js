@@ -48,6 +48,7 @@ function updateAllAmerican(self, other, dt) {
     clearActions(self);
     floater(self.x, self.y - self.r - 26, "ALL AMERICAN!", "crit");
     playWhoosh();
+    playHereWeGo(); // Free Bird follows 1s later (audio.js)
   }
   var m = self.igbb;
   m.t += dt;
@@ -61,6 +62,7 @@ function updateAllAmerican(self, other, dt) {
       self.vx = 0; self.vy = 0;
       m.phase = "windup"; m.t = 0; m.nx = dx / d; m.ny = dy / d;
       playFreeBird(); // the solo kicks in as he lines up the hook, and plays on out on the highway (audio.js)
+      m.wait = freeBirdWait(); // squared up, holding, until the solo starts (1s after "Here we go!")
       m.side = dx >= 0 ? 1 : -1;
       return true;
     }
@@ -72,6 +74,7 @@ function updateAllAmerican(self, other, dt) {
   self.vx = 0; self.vy = 0;
   if (other.alive) { other.vx = 0; other.vy = 0; }
   if (m.phase === "windup") {
+    if (m.wait > 0) { m.wait -= dt; m.t = 0; return true; }
     // Rocks back away from them, loading up.
     var w = Math.min(1, m.t / AA_WINDUP_TIME);
     self.x -= m.nx * 70 * (1 - w) * dt; self.y -= m.ny * 70 * (1 - w) * dt;

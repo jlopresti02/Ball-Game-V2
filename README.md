@@ -28,6 +28,16 @@ The crowd (its sound, and the fans in the WWIT stadium) has a mood: big moments 
 
 When Ciryl Gane (`c-ciryl-gane`) is in a fight, or the fighter has `"hasReferee": true`, a referee works inside the cage. He's a ball in a black REF shirt, drawn under the fighters and see-through to the fight (nothing hits him or bumps into him). He keeps to whichever corner or edge spot is furthest from both fighters, steps back from anyone who gets close, and when a fighter is knocked out or taps he runs in over them and waves it off ("STOP!"). The logic is in `js/game/referee.js`.
 
+## Gallery
+
+The **Gallery** button at the top of the main screen opens a screen for browsing what's in the game, for planning and reviewing reels (`js/ui/gallery.js`). Everything on it is drawn or played by the game's own code, so new fighters, moves and sounds show up without the gallery needing changes.
+
+- **Fighters**: each roster fighter's skin, nickname, base, weight class, kit colours and bio, its special move (what it does and how it charges) and every move it has with its numbers. Pick a sparring partner and tap the special's **demo** button to start a fight with the special fully charged, so it goes off within a second or two, or **Fight demo** for a normal fight.
+- **Assets**: the WWIT stadium (and its Brazil version), the test arena, the WWIT badge, fans, the referee, blind Herb Dean, the folding chair, the bat, Gane's thrown objects, the semi truck, the bald eagle and the flags.
+- **Sounds**: every recorded clip and every sound made in code, with a play button and where it's used. Tap a playing clip to stop it.
+
+During a demo a bar over the arena has **Pause** (or tap the arena), **Again** and **Gallery**. Pausing freezes the fight, its animations and its sound, for a closer look or a screenshot.
+
 ## Character Bases
 
 | Base | Attack |

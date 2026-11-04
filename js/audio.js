@@ -594,21 +594,30 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
+// The referee's whistle as the fight starts (with "Here we go!").
+function playStartWhistle() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    withClip("refWhistle", function () { playClip("refWhistle", 0.55); });
+  } catch (e) { /* never let audio break the game */ }
+}
+// "Here we go!" opens Justin Gaethje's All American special: it plays as the
+// special starts, and Free Bird kicks in 1 second after it (Joe's call; they
+// overlap). It cuts in on the talk channel so it's never skipped.
+var HERE_WE_GO_LEAD = 1;
+var hereWeGoAt = -10;
 function playHereWeGo() {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var startedAt = ctx.currentTime;
-    withClip("hereWeGo", function (buf) {
-      // Still decoding when the fight started: play it late only if it's
-      // still near the start, rather than out of nowhere mid-fight.
-      if (ctx.currentTime - startedAt > 1) return;
-      playTalk("hereWeGo", 0.8);
-    });
+    if (!clipBuffers.hereWeGo) { withClip("hereWeGo"); return; }
+    if (cutInTalk("hereWeGo", 0.8)) hereWeGoAt = talkCutAt || ctx.currentTime;
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -676,6 +685,7 @@ function playTalk(name, gain) {
   if (!src) return false;
   talkSrcs.push(src);
   talkEnd = at + buf.duration;
+  duckMusic(at, talkEnd);
   return true;
 }
 // Cuts in on the talk channel: whatever line is going (or waiting) stops.
@@ -688,6 +698,7 @@ function cutInTalk(name, gain) {
     talkSrcs.push(later); talkQueued = true;
     talkEnd = at + clipBuffers[name].duration;
     talkCutAt = at;
+    duckMusic(at, talkEnd);
     return later;
   }
   stopTalk();
@@ -696,6 +707,7 @@ function cutInTalk(name, gain) {
   talkSrcs = [src];
   talkEnd = now + clipBuffers[name].duration;
   talkCutAt = now;
+  duckMusic(now, talkEnd);
   return src;
 }
 // A priority line: cuts in on everything, and nothing cuts it off.
@@ -705,6 +717,7 @@ function playPriorityTalk(name, gain) {
   if (!src) return null;
   talkSrcs = [src];
   talkEnd = talkPriorityEnd = audioCtx.currentTime + clipBuffers[name].duration;
+  duckMusic(audioCtx.currentTime, talkEnd);
   return src;
 }
 function stopTalk() {
@@ -1077,6 +1090,8 @@ function playFreeBird() {
     var buf = clipBuffers.freeBird;
     if (!buf) { withClip("freeBird"); return; }
     var now = ctx.currentTime, c = crowd;
+    // 1s after "Here we go!" if that just played (it opens the special).
+    if (now - hereWeGoAt < 4) now = Math.max(now, hereWeGoAt + HERE_WE_GO_LEAD);
     if (c && c.gain) {
       c.duckUntil = now + 60; // held down until the solo stops
       c.gain.gain.cancelScheduledValues(now);
@@ -1087,8 +1102,13 @@ function playFreeBird() {
     g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.9, now + 0.12);
     src.connect(g); g.connect(ctx.destination);
     src.start(now);
-    freeBirdPlaying = { src: src, gain: g };
+    freeBirdPlaying = { src: src, gain: g, at: now };
   } catch (e) { /* never let audio break the game */ }
+}
+// Seconds until the solo actually starts (it can be waiting on "Here we go!").
+function freeBirdWait() {
+  var fb = freeBirdPlaying;
+  return fb && audioCtx ? Math.max(0, fb.at - audioCtx.currentTime) : 0;
 }
 function stopFreeBird(fade) {
   try {
@@ -1320,11 +1340,12 @@ function crowdRelease() {
   crowdMood.heat = crowdMood.level = Math.max(crowdMood.level, 0.6);
   crowdMood.keep = 0;
 }
-// Leaving or restarting a match: the crowd and anyone talking go quiet.
+// Leaving or restarting a match: the crowd, the music and anyone talking go quiet.
 function stopCrowd() {
   stopDoBronx();
   stopTalk();
   stopCrowdLoop();
+  stopMusic();
 }
 // Just the looping crowd. startCrowd uses this, so it doesn't cut off the
 // "Here we go!" that starts the same moment.
@@ -1358,6 +1379,7 @@ function playAuraFarmMusic() {
     out.gain.setValueAtTime(0.0001, now); out.gain.exponentialRampToValueAtTime(1, now + 0.1);
     out.connect(ctx.destination);
     auraMusic = { gain: out, srcs: [] };
+    auraBgMusic(now, 0); // the background music drops out under Desperado
     if (typeof SOUND_CLIPS !== "undefined" && SOUND_CLIPS.auraFarm) {
       withClip("auraFarm", function (buf) {
         if (!auraMusic || auraMusic.gain !== out) return;
@@ -1381,12 +1403,23 @@ function playAuraFarmMusic() {
     }
   } catch (e) { /* never let audio break the game */ }
 }
+// Fades the background music (music.js) out for Aura Farm (k 0) and back (k 1).
+function auraBgMusic(at, k) {
+  try {
+    var m = typeof music !== "undefined" ? music : null;
+    if (!m || !m.gain) return;
+    var g = m.gain.gain;
+    g.cancelScheduledValues(at);
+    g.setTargetAtTime(k ? m.level : 0.0001, at, k ? 0.4 : 0.15);
+  } catch (e) { /* never let audio break the game */ }
+}
 function stopAuraFarmMusic(fade) {
   try {
     var am = auraMusic;
     if (!am || !audioCtx) return;
     auraMusic = null;
     var now = audioCtx.currentTime, f = fade == null ? 0.6 : fade;
+    auraBgMusic(now + f, 1);
     am.gain.gain.cancelScheduledValues(now);
     am.gain.gain.setValueAtTime(Math.max(0.0001, am.gain.gain.value || 0.9), now);
     am.gain.gain.linearRampToValueAtTime(0, now + f + 0.01);
