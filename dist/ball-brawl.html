@@ -2851,15 +2851,14 @@ function playJonModeSwap(mode) {
   } catch (e) { /* never let audio break the game */ }
 }
 
-// A goat leaping into the cage (GOAT Stampede, jon.js): half the time it
-// baas, one of the two baas from Joe's recording at random. The synth bleat
+// A goat leaping into the cage (GOAT Stampede, jon.js): every one baas,
+// one of the two baas from Joe's recording at random. The synth bleat
 // stands in until the clips are loaded.
 function playGoatBleat() {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    if (Math.random() >= 0.5) return;
     var clip = Math.random() < 0.5 ? "goatBaa1" : "goatBaa2";
     if (playClip(clip, 1.3, null, 0.95 + Math.random() * 0.1)) return;
     withClip(clip);
