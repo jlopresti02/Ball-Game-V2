@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -1662,13 +1662,18 @@ function playJonModeSwap(mode) {
   } catch (e) { /* never let audio break the game */ }
 }
 
-// A goat bleating as it leaps into the cage (GOAT Stampede, jon.js): a
-// nasal "meh-eh-eh" with a fast wobble.
+// A goat leaping into the cage (GOAT Stampede, jon.js): half the time it
+// baas, one of the two baas from Joe's recording at random. The synth bleat
+// stands in until the clips are loaded.
 function playGoatBleat() {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
+    if (Math.random() >= 0.5) return;
+    var clip = Math.random() < 0.5 ? "goatBaa1" : "goatBaa2";
+    if (playClip(clip, 1.3, null, 0.95 + Math.random() * 0.1)) return;
+    withClip(clip);
     var now = ctx.currentTime, dur = 0.5 + Math.random() * 0.2, f0 = 420 + Math.random() * 160;
     var o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
     var bp = ctx.createBiquadFilter(), g = ctx.createGain();
