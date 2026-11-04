@@ -180,6 +180,7 @@ function attemptGrab(attacker, target) {
     beginSprawl(attacker, target);
     return false;
   }
+  if (tryTddSprawl(attacker, target)) return false; // takedown defense without grappling (ilia.js)
   beginGrapple(attacker, target);
   return true;
 }
@@ -215,6 +216,7 @@ function updateSprawl(self, dt) {
   // The scramble: who comes out on top and slams the other.
   self.sprawl = null;
   atk.sprawled = false;
+  if (!self.char.hasGrapple) { endTddSprawl(self, atk); return; } // no reattack, just stuffs it
   var sprawlerWins = Math.random() < self.char.grapple.reattackChance / 100 * grappleScale(self, atk);
   var winner = sprawlerWins ? self : atk, loser = sprawlerWins ? atk : self;
   if (grabBlockedByImpunity(winner, loser)) { var tmp = winner; winner = loser; loser = tmp; }
