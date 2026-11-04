@@ -114,7 +114,7 @@ function updateAuraFarm(self, other, dt) {
     var mx = m.px - self.x, my = m.py - self.y, md = Math.sqrt(mx * mx + my * my);
     if (md > 2) { var s2 = Math.min(md, 320 * dt); self.x += mx / md * s2; self.y += my / md * s2; }
     // The roar starts while it's pawing, getting ready, and runs on into the charge.
-    if (!m.roared && m.t >= AF_BULL_PAW - 0.6) { m.roared = true; playBullCharge(); }
+    if (!m.roared && m.t >= AF_BULL_PAW - 0.6) { m.roared = true; playBullCharge(1.8); } // (the first one extra loud)
     if (m.t >= AF_BULL_PAW && md <= 2) {
       // Charges him, aimed through him at the opponent behind.
       var ax = other.x - bull.x, ay = other.y - bull.y, ad = Math.sqrt(ax * ax + ay * ay) || 1;

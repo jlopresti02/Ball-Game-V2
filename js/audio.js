@@ -1445,12 +1445,12 @@ function playBullThrown(rate) {
   } catch (e) { /* never let audio break the game */ }
 }
 // The bull roaring as it charges (Joe's clip; a snort if it's not loaded).
-function playBullCharge() {
+function playBullCharge(gain) {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    if (!playClip("bullCharge", 0.85)) { withClip("bullCharge"); playBullSnort(); }
+    if (!playClip("bullCharge", gain || 0.85)) { withClip("bullCharge"); playBullSnort(); }
   } catch (e) { /* never let audio break the game */ }
 }
 // Ilia's KO punch on the bull: a full-weight punch, boosted well over a
@@ -1474,22 +1474,40 @@ function playKoPunch() {
 // A huge, sharp CRACK, like a bat on a fastball: a near-instant broadband
 // snap, a bright woody ring, and a slapback off the arena roof.
 function auraCrack(ctx, t) {
+  // Everything goes through one loud bus with a compressor, so it hits hard
+  // without falling apart.
+  var bus = ctx.createGain(); bus.gain.value = 2.2;
+  var comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -14; comp.ratio.value = 6; comp.attack.value = 0.001; comp.release.value = 0.2;
+  bus.connect(comp); comp.connect(ctx.destination);
   var noise = makeNoiseBuffer(ctx, 0.5);
-  function snap(at, peak, dur, hp) {
+  function snap(at, peak, dur, hp, out) {
     var s = ctx.createBufferSource(); s.buffer = noise;
     var f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
     var g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + 0.0015);
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + 0.001);
     g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-    s.connect(f); f.connect(g); g.connect(ctx.destination); s.start(at); s.stop(at + dur + 0.02);
+    s.connect(f); f.connect(g); g.connect(out); s.start(at); s.stop(at + dur + 0.02);
   }
-  snap(t, 1.6, 0.09, 900);          // the snap
-  snap(t, 0.9, 0.22, 2500);         // fizz on top
-  caneBurst(ctx, t, 2900, 6, 1.1, 0.16); // woody ring
-  caneBurst(ctx, t, 1700, 5, 0.7, 0.2);
-  caneTone(ctx, t, "triangle", 1400, 900, 0.35, 0.12);
-  snap(t + 0.11, 0.45, 0.12, 1200); // slapback
-  snap(t + 0.2, 0.18, 0.12, 1500);
+  // The ash bat ringing: a cluster of bright woody partials that die fast.
+  function ring(at, scale, out) {
+    [[620, 0.5, 0.22], [1310, 0.65, 0.18], [2240, 0.45, 0.14], [3480, 0.3, 0.1], [4900, 0.18, 0.07]].forEach(function (p) {
+      var o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = p[0] * (0.98 + Math.random() * 0.04);
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(p[1] * scale, at + 0.001);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + p[2]);
+      o.connect(g); g.connect(out); o.start(at); o.stop(at + p[2] + 0.02);
+    });
+  }
+  snap(t, 1.0, 0.05, 1500, bus);   // the CRACK itself
+  snap(t, 0.5, 0.14, 3500, bus);   // splinter fizz
+  ring(t, 1, bus);
+  caneTone(ctx, t, "sine", 160, 70, 0.6, 0.18); // the ball's thump under it
+  // The echo off the stands and the roof, as it goes out of the park.
+  [[0.13, 0.4], [0.27, 0.22], [0.42, 0.11]].forEach(function (ec) {
+    snap(t + ec[0], ec[1], 0.07, 1800, bus);
+    ring(t + ec[0], ec[1] * 0.8, bus);
+  });
 }
 // A heel stomp on the canvas.
 function playStomp() {
