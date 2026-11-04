@@ -66,7 +66,7 @@ function updateDoBronx(self, other, dt) {
     if (m.phase === "pose") blastAway(self, other);
     cameraFlash();
     brazilMode = m.phase === "pose"; // swaps behind the white-out
-    if (m.phase === "outro") crowdRelease();
+    if (m.phase === "outro") { crowdRelease(); releaseMusic(); } // background music back (music.js)
   }
   if (m.t < (m.phase === "pose" ? DB_POSE_TIME : DB_OUTRO_TIME)) return true;
   self.igbb = null;

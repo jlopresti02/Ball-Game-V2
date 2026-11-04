@@ -701,8 +701,15 @@ function playTalk(name, gain) {
   if (!src) return false;
   talkSrcs.push(src);
   talkEnd = at + buf.duration;
-  duckMusic(at, talkEnd);
+  talkDuck(name, at, talkEnd);
   return true;
+}
+// Clips on the talk channel that are the crowd cheering, not someone talking:
+// the music plays straight through them (Joe: cheers must never mute it).
+var TALK_CHEERS = { knockout: true, doBronx: true };
+function talkDuck(name, at, until) {
+  if (TALK_CHEERS[name]) unduckMusic(at); // and back up if a cut-off line had it down
+  else duckMusic(at, until);
 }
 // Cuts in on the talk channel: whatever line is going (or waiting) stops.
 // While a priority line is going, it plays right after it instead.
@@ -714,7 +721,7 @@ function cutInTalk(name, gain) {
     talkSrcs.push(later); talkQueued = true;
     talkEnd = at + clipBuffers[name].duration;
     talkCutAt = at;
-    duckMusic(at, talkEnd);
+    talkDuck(name, at, talkEnd);
     return later;
   }
   stopTalk();
@@ -723,7 +730,7 @@ function cutInTalk(name, gain) {
   talkSrcs = [src];
   talkEnd = now + clipBuffers[name].duration;
   talkCutAt = now;
-  duckMusic(now, talkEnd);
+  talkDuck(name, now, talkEnd);
   return src;
 }
 // A priority line: cuts in on everything, and nothing cuts it off.
@@ -746,7 +753,7 @@ function stopTalk() {
 // seconds in. The clip's own crowd fades out after a few seconds, and the
 // looping crowd takes over going wild for as long as the Do Bronx state lasts.
 var DO_BRONX_HIT = 3.0;
-var doBronxSrc = null;
+var doBronxSrc = null, doBronxMusicTimer = 0;
 function playDoBronx() {
   try {
     var ctx = getAudioCtx();
@@ -755,11 +762,18 @@ function playDoBronx() {
     stopDoBronx();
     doBronxSrc = cutInTalk("doBronx", 0.85);
     var buf = clipBuffers.doBronx;
+    // The background music goes off for the clip and comes back as soon as
+    // it's finished (Joe; music.js).
+    holdMusicOff();
+    var token = doBronxSrc;
+    clearTimeout(doBronxMusicTimer);
+    doBronxMusicTimer = setTimeout(function () { if (doBronxSrc === token) releaseMusic(); }, (buf ? buf.duration : DO_BRONX_HIT) * 1000);
     // Take over just as the clip starts fading.
     crowdHold(buf ? buf.duration - 1.4 : DO_BRONX_HIT);
   } catch (e) { /* never let audio break the game */ }
 }
 function stopDoBronx() {
+  clearTimeout(doBronxMusicTimer);
   if (!doBronxSrc) return;
   try { doBronxSrc.stop(); } catch (e) { /* already stopped */ }
   doBronxSrc = null;
