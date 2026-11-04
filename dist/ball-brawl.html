@@ -2452,7 +2452,7 @@ function stopCrowdLoop() {
   } catch (e) { /* never let audio break the game */ }
 }
 
-// Background music: six loops built in code, picked with the Music button
+// Background music: nine loops built in code, picked with the Music button
 // on the game screen (the choice is remembered per device). Each loop is
 // rendered once into a buffer the first time it's needed, then loops quietly
 // under the crowd for the whole fight and dips under the talking clips
@@ -2462,8 +2462,8 @@ function stopCrowdLoop() {
 var MUSIC_KEY = "ballbrawl_music_v1";
 var MUSIC_GAIN = 0.16;       // under the crowd
 var MUSIC_DUCK = 0.35;       // share of that while someone's talking
-var MUSIC_LIST = ["D", "E", "F", "A", "B", "C", "off"];
-var MUSIC_NAMES = { D: "Aggressive: War drums", E: "Aggressive: Metal", F: "Aggressive: Drill", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
+var MUSIC_LIST = ["D", "E", "F", "G", "H", "I", "A", "B", "C", "off"];
+var MUSIC_NAMES = { D: "Aggressive: War drums", E: "Aggressive: Metal", F: "Aggressive: Drill", G: "Aggressive: Phonk", H: "Aggressive: Wobble", I: "Aggressive: Industrial", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
 var musicChoice = "D";
 try { var savedMusic = localStorage.getItem(MUSIC_KEY); if (MUSIC_NAMES[savedMusic]) musicChoice = savedMusic; } catch (e) {}
 
@@ -2629,6 +2629,46 @@ function mBell(ctx, out, m, t, v) {
   mOsc(ctx, out, "sine", f * 5.4, t, 0.001, 0.03 * v, 0.1);
 }
 
+function mCowbell(ctx, out, m, t, v) {
+  var f = mtof(m), bus = ctx.createGain(); bus.gain.value = 1;
+  [1, 1.48].forEach(function (k) {
+    var o = ctx.createOscillator(); o.type = "square"; o.frequency.value = f * k; o.connect(bus); o.start(t); o.stop(t + 0.4);
+  });
+  var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f * 1.6; bp.Q.value = 2;
+  var d = mDrive(ctx, 3), g = mEnv(ctx, t, 0.002, 0.14 * v, 0.3);
+  bus.connect(bp); bp.connect(d); d.connect(g); g.connect(out);
+}
+// Wobble bass: a growling saw whose filter opens and shuts `rate` times a beat.
+function mWobble(ctx, out, m, t, v, len, rate) {
+  var bus = ctx.createGain(); bus.gain.value = 0.3;
+  [-12, 0, 12].forEach(function (dt) {
+    var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(m); o.detune.value = dt;
+    o.connect(bus); o.start(t); o.stop(t + len + 0.05);
+  });
+  var sq = ctx.createOscillator(); sq.type = "square"; sq.frequency.value = mtof(m - 12); sq.connect(bus); sq.start(t); sq.stop(t + len + 0.05);
+  var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 9; lp.frequency.value = 500;
+  var lfo = ctx.createOscillator(); lfo.type = "sine"; lfo.frequency.value = rate;
+  var depth = ctx.createGain(); depth.gain.value = 420; lfo.connect(depth); depth.connect(lp.frequency);
+  lfo.start(t); lfo.stop(t + len + 0.05);
+  var d = mDrive(ctx, 4), g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32 * v, t + 0.01);
+  g.gain.setValueAtTime(0.32 * v, t + len * 0.9); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  bus.connect(lp); lp.connect(d); d.connect(g); g.connect(out);
+}
+// A metal clang (anvil / pipe hit) for the industrial loop.
+function mClang(ctx, out, t, v) {
+  [523, 1187, 1693, 2411].forEach(function (f, k) { mOsc(ctx, out, "square", f, t, 0.001, (0.05 - k * 0.008) * v, 0.25 - k * 0.04); });
+  mNz(ctx, out, t, "bandpass", 3500, 2, 0.25 * v, 0.06);
+}
+function mRiser(ctx, out, t, v, len) {
+  var s = ctx.createBufferSource(); s.buffer = mNoise(ctx); s.loop = true;
+  var f = ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 3;
+  f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(6000, t + len);
+  var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.2 * v, t + len);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.02);
+  s.connect(f); f.connect(g); g.connect(out); s.start(t); s.stop(t + len + 0.05);
+}
+
 // ---------------------------------------------------------------- the loops
 // Each is `bars` bars long at `bpm`; play(ctx, out, t0) schedules one pass.
 var MUSIC_SONGS = {
@@ -2722,6 +2762,48 @@ var MUSIC_SONGS = {
         if (s === 11 || s === 15) { for (var r = 0; r < 3; r++) mHat(ctx, out, ht + r * b / 12, 0.7, false); }
         else mHat(ctx, out, ht, s % 2 ? 0.55 : 0.9, false);
       }
+    }
+  } },
+  // Phonk: distorted cowbell melody over a heavy, sliding 808 and a hard snare.
+  G: { bpm: 130, bars: 8, level: 1.5, play: function (ctx, out, t0) {
+    var b = 60 / 130, bell = [[69, 0], [69, 0.5], [72, 0.75], [69, 1.25], [67, 1.5], [69, 2], [64, 2.5], [65, 3], [67, 3.5]];
+    var roots = [33, 33, 29, 31];
+    for (var bar = 0; bar < 8; bar++) {
+      var bt = t0 + bar * 4 * b, r = roots[bar % 4], up = bar % 4 === 2 ? -4 : (bar % 4 === 3 ? -2 : 0);
+      bell.forEach(function (n) { mCowbell(ctx, out, n[0] + up, bt + n[1] * b, 1); });
+      [0, 1.5, 2.75].forEach(function (x, k) { m808(ctx, out, r, bt + x * b, 1, (k === 2 ? 1.2 : 1.4) * b, k === 2 ? r + 7 : 0); });
+      [0, 1.5, 2.75].forEach(function (x) { mBigKick(ctx, out, bt + x * b, 0.9); });
+      [1, 3].forEach(function (x) { mBigSnare(ctx, out, bt + x * b, 1.1); mClap(ctx, out, bt + x * b, 0.7); });
+      for (var s = 0; s < 8; s++) mHat(ctx, out, bt + s * b / 2, s % 2 ? 0.5 : 0.9, s === 7);
+    }
+  } },
+  // Wobble: half-time drums with a growling wobble bass that speeds up.
+  H: { bpm: 140, bars: 8, level: 1.3, play: function (ctx, out, t0) {
+    var b = 60 / 140, roots = [38, 38, 41, 36];
+    for (var bar = 0; bar < 8; bar++) {
+      var bt = t0 + bar * 4 * b, r = roots[bar % 4] - 12;
+      mWobble(ctx, out, r, bt, 1, 1.5 * b, 2 / b);
+      mWobble(ctx, out, r, bt + 1.5 * b, 1, 1 * b, 4 / b);
+      mWobble(ctx, out, r + (bar % 2 ? 3 : 0), bt + 2.5 * b, 1, 1.5 * b, bar % 2 ? 6 / b : 3 / b);
+      [0, 2.5].forEach(function (x) { mBigKick(ctx, out, bt + x * b, 1); });
+      mBigSnare(ctx, out, bt + 2 * b, 1.3);
+      for (var s = 0; s < 8; s++) mHat(ctx, out, bt + s * b / 2, s % 2 ? 0.5 : 0.9, false);
+      if (bar % 4 === 3) mRiser(ctx, out, bt + 2 * b, 1, 2 * b);
+      if (bar % 4 === 0) mCrash(ctx, out, bt, 1);
+    }
+  } },
+  // Industrial: pounding four-on-the-floor, driven bass pulses, anvil clangs.
+  I: { bpm: 132, bars: 8, level: 1.4, play: function (ctx, out, t0) {
+    var b = 60 / 132, roots = [40, 40, 43, 38];
+    for (var bar = 0; bar < 8; bar++) {
+      var bt = t0 + bar * 4 * b, r = roots[bar % 4];
+      for (var k = 0; k < 4; k++) mBigKick(ctx, out, bt + k * b, 1);
+      [1, 3].forEach(function (x) { mBigSnare(ctx, out, bt + x * b, 1); });
+      for (var i = 0; i < 16; i++) if (i % 4) mSawBass(ctx, out, r - 12 + (i === 14 ? 12 : 0), bt + i * b / 4, 0.9, 0.1);
+      [0.75, 2.25, 3.5].forEach(function (x) { mClang(ctx, out, bt + x * b, 1); });
+      for (var s = 0; s < 16; s++) mHat(ctx, out, bt + s * b / 4, s % 4 === 2 ? 1 : 0.4, false);
+      if (bar % 2 === 1) mGuitar(ctx, out, r, bt + 3 * b, 0.8, b);
+      if (bar % 4 === 0) mCrash(ctx, out, bt, 1);
     }
   } }
 };
