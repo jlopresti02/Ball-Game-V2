@@ -1,6 +1,6 @@
 {
   "id": "c-justin-gaethje",
-  "rev": 4,
+  "rev": 5,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Justin Gaethje",
@@ -101,7 +101,7 @@
   "hasSpecial": true,
   "special": {
     "move": "allamerican",
-    "chargeTime": 45,
+    "chargeTime": 56,
     "hitCut": 4,
     "punchDamage": 25,
     "eagleDamage": 6,

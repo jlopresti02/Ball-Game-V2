@@ -134,6 +134,24 @@ function synthPunch(ctx, out, now, weight, noise) {
   snap.start(now); snap.stop(now + 0.03);
 }
 
+// Punches, kicks and other strikes all go through one bus, turned up well
+// over everything else and held under a limiter so a flurry can't clip, and
+// each one dips the background music for a moment (hitDuckMusic, music.js),
+// so strikes pop out over the music (Joe).
+var STRIKE_GAIN = 1.8;
+var strikeBus = null;
+function strikeOut(ctx) {
+  if (strikeBus && strikeBus.context === ctx) return strikeBus;
+  var lim = ctx.createDynamicsCompressor();
+  lim.threshold.value = -4; lim.knee.value = 2; lim.ratio.value = 16;
+  lim.attack.value = 0.002; lim.release.value = 0.12;
+  strikeBus = ctx.createGain();
+  strikeBus.gain.value = STRIKE_GAIN;
+  strikeBus.connect(lim); lim.connect(ctx.destination);
+  return strikeBus;
+}
+function strikeLanded() { if (typeof hitDuckMusic === "function") hitDuckMusic(); }
+
 var punchNoise = null;
 function playPunch(damage) {
   try {
@@ -144,7 +162,8 @@ function playPunch(damage) {
     if (now - lastPunchSound < 0.05) return; // rapid jabs don't pile into a buzz
     lastPunchSound = now;
     if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
-    synthPunch(ctx, ctx.destination, now, punchWeight(damage), punchNoise);
+    synthPunch(ctx, strikeOut(ctx), now, punchWeight(damage), punchNoise);
+    strikeLanded();
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -208,7 +227,8 @@ function playBmfJab() {
     if (now - lastPunchSound < 0.05) return;
     lastPunchSound = now;
     if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
-    synthBmfJab(ctx, ctx.destination, now, punchNoise);
+    synthBmfJab(ctx, strikeOut(ctx), now, punchNoise);
+    strikeLanded();
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -810,7 +830,7 @@ function caneBurst(ctx, t, freq, q, peak, dur) {
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(peak, t + 0.001);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  s.connect(f); f.connect(g); g.connect(ctx.destination);
+  s.connect(f); f.connect(g); g.connect(strikeOut(ctx));
   s.start(t); s.stop(t + dur + 0.02);
 }
 function caneTone(ctx, t, type, f0, f1, peak, dur) {
@@ -822,7 +842,7 @@ function caneTone(ctx, t, type, f0, f1, peak, dur) {
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(peak, t + 0.002);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g); g.connect(ctx.destination);
+  o.connect(g); g.connect(strikeOut(ctx));
   o.start(t); o.stop(t + dur + 0.02);
 }
 // One plastic pok: the dull hollow tube plus a papery top end.
@@ -847,7 +867,7 @@ function playCaneSwish() {
     g.gain.setValueAtTime(0.0001, now);
     g.gain.exponentialRampToValueAtTime(0.22, end - 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, end + 0.01);
-    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.connect(f); f.connect(g); g.connect(strikeOut(ctx));
     w.start(now); w.stop(end + 0.03);
   } catch (e) { /* never let audio break the game */ }
 }
@@ -877,6 +897,7 @@ function playBatHit(big) {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
+    strikeLanded();
     var now = ctx.currentTime, hit = now + 0.06; // the whoosh leads in
     var v = 0.9 + Math.random() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
     var w = ctx.createBufferSource();
@@ -889,7 +910,7 @@ function playBatHit(big) {
     g.gain.setValueAtTime(0.0001, now);
     g.gain.exponentialRampToValueAtTime(0.35 * k, hit - 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.015);
-    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.connect(f); f.connect(g); g.connect(strikeOut(ctx));
     w.start(now); w.stop(hit + 0.03);
     caneBurst(ctx, hit, 900 * v, 0.8, 0.8 * k, 0.08);              // the slap of it landing
     caneTone(ctx, hit, "sine", 95 * v, 42, 0.9 * k, big ? 0.35 : 0.2); // the weight
@@ -911,6 +932,7 @@ function playCritPunch(last) {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
+    strikeLanded();
     var now = ctx.currentTime, lead = last ? 0.06 : 0.03, hit = now + lead;
     var v = 0.95 + Math.random() * 0.1, k = CRIT_GAIN;
     var w = ctx.createBufferSource();
@@ -923,7 +945,7 @@ function playCritPunch(last) {
     g.gain.setValueAtTime(0.0001, now);
     g.gain.exponentialRampToValueAtTime((last ? 0.4 : 0.28) * k, hit - 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.012);
-    w.connect(f); f.connect(g); g.connect(ctx.destination);
+    w.connect(f); f.connect(g); g.connect(strikeOut(ctx));
     w.start(now); w.stop(hit + 0.03);
     if (!last) {
       caneBurst(ctx, hit, 3800 * v, 1.0, 0.7 * k, 0.03);
@@ -970,7 +992,7 @@ function swingWhoosh(ctx, now, hit, f0, f1, gain) {
   g.gain.setValueAtTime(0.0001, now);
   g.gain.exponentialRampToValueAtTime(gain, hit - 0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, hit + 0.012);
-  w.connect(f); f.connect(g); g.connect(ctx.destination);
+  w.connect(f); f.connect(g); g.connect(strikeOut(ctx));
   w.start(now); w.stop(hit + 0.03);
 }
 // The CTE haymaker landing (cte.js; Gaethje's dizzying one too): a bone
@@ -982,6 +1004,7 @@ function playHaymaker() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
+    strikeLanded();
     var t = ctx.currentTime, k = HAYMAKER_GAIN;
     caneBurst(ctx, t, 900, 0.7, 1.0 * k, 0.12);
     caneBurst(ctx, t + 0.008, 2800, 1.4, 0.6 * k, 0.05);
@@ -997,6 +1020,7 @@ function playKick() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
+    strikeLanded();
     var now = ctx.currentTime, hit = now + 0.05, v = 0.94 + Math.random() * 0.12, k = KICK_GAIN;
     swingWhoosh(ctx, now, hit, 500, 2600, 0.25 * k);
     caneBurst(ctx, hit, 3000 * v, 0.9, 1.0 * k, 0.05);
@@ -1417,6 +1441,7 @@ function auraBgMusic(at, k) {
     var m = typeof music !== "undefined" ? music : null;
     if (!m || !m.gain) return;
     var g = m.gain.gain;
+    m.muted = !k; // (strikes leave it alone while it's out: hitDuckMusic)
     g.cancelScheduledValues(at);
     g.setTargetAtTime(k ? m.level : 0.0001, at, k ? 0.4 : 0.15);
   } catch (e) { /* never let audio break the game */ }
@@ -1492,6 +1517,7 @@ function playImpactClip(n, gain, fallback) {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
+    strikeLanded();
     if (!playClip("impactPunch" + n, gain)) { withClip("impactPunch" + n); playPunch(fallback); }
   } catch (e) { /* never let audio break the game */ }
 }
@@ -1511,9 +1537,10 @@ function playKoPunch() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
+    strikeLanded();
     var now = ctx.currentTime, g = ctx.createGain();
     g.gain.value = 2.4;
-    g.connect(ctx.destination);
+    g.connect(strikeOut(ctx));
     if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
     synthPunch(ctx, g, now, 1, punchNoise);
     synthPunch(ctx, g, now + 0.012, 1, punchNoise);
