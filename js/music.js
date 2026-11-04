@@ -1,4 +1,4 @@
-// Background music: nine loops built in code, picked with the Music button
+// Background music: twelve loops built in code, picked with the Music button
 // on the game screen (the choice is remembered per device). Each loop is
 // rendered once into a buffer the first time it's needed, then loops quietly
 // under the crowd for the whole fight and dips under the talking clips
@@ -8,8 +8,8 @@
 var MUSIC_KEY = "ballbrawl_music_v1";
 var MUSIC_GAIN = 0.16;       // under the crowd
 var MUSIC_DUCK = 0.35;       // share of that while someone's talking
-var MUSIC_LIST = ["D", "E", "F", "G", "H", "I", "A", "B", "C", "off"];
-var MUSIC_NAMES = { D: "Aggressive: War drums", E: "Aggressive: Metal", F: "Aggressive: Drill", G: "Aggressive: Phonk", H: "Aggressive: Wobble", I: "Aggressive: Industrial", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
+var MUSIC_LIST = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "A", "B", "C", "off"];
+var MUSIC_NAMES = { D: "Aggressive: War drums", E: "Aggressive: Metal", F: "Aggressive: Drill", G: "Aggressive: Phonk", H: "Aggressive: Wobble", I: "Aggressive: Industrial", J: "Aggressive: Hardstyle", K: "Aggressive: Drum & bass", L: "Aggressive: Battle orchestra", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
 var musicChoice = "D";
 try { var savedMusic = localStorage.getItem(MUSIC_KEY); if (MUSIC_NAMES[savedMusic]) musicChoice = savedMusic; } catch (e) {}
 
@@ -215,6 +215,70 @@ function mRiser(ctx, out, t, v, len) {
   s.connect(f); f.connect(g); g.connect(out); s.start(t); s.stop(t + len + 0.05);
 }
 
+// A big detuned supersaw lead / chord (hardstyle).
+function mSupersaw(ctx, out, notes, t, v, len) {
+  var bus = ctx.createGain(); bus.gain.value = 0.05;
+  notes.forEach(function (m) {
+    [-22, -11, 0, 11, 22].forEach(function (dt) {
+      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(m); o.detune.value = dt;
+      o.connect(bus); o.start(t); o.stop(t + len + 0.05);
+    });
+  });
+  var hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 250;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5 * v, t + 0.01);
+  g.gain.setValueAtTime(0.5 * v, t + len * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  bus.connect(hp); hp.connect(g); g.connect(out);
+}
+// Hardstyle kick: a punchy, heavily distorted kick with a pitched tail.
+function mHardKick(ctx, out, t, v) {
+  var o = ctx.createOscillator();
+  o.frequency.setValueAtTime(260, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.06);
+  o.frequency.setValueAtTime(55, t + 0.06); o.frequency.exponentialRampToValueAtTime(42, t + 0.35);
+  var d = mDrive(ctx, 12), lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2500;
+  var g = mEnv(ctx, t, 0.002, 0.55 * v, 0.38);
+  o.connect(d); d.connect(lp); lp.connect(g); g.connect(out); o.start(t); o.stop(t + 0.45);
+}
+// Reese bass: two detuned saws, low-passed, for drum & bass.
+function mReese(ctx, out, m, t, v, len) {
+  var bus = ctx.createGain(); bus.gain.value = 0.25;
+  [-18, 18].forEach(function (dt) {
+    var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(m); o.detune.value = dt;
+    o.connect(bus); o.start(t); o.stop(t + len + 0.05);
+  });
+  var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 700; lp.Q.value = 2;
+  var d = mDrive(ctx, 2.5), g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.4 * v, t + 0.01);
+  g.gain.setValueAtTime(0.4 * v, t + len * 0.85); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  bus.connect(lp); lp.connect(d); d.connect(g); g.connect(out);
+  mOsc(ctx, out, "sine", mtof(m - 12), t, 0.005, 0.3 * v, len);
+}
+// Staccato strings (an ensemble of soft saws) for the battle orchestra.
+function mStrings(ctx, out, m, t, v, len) {
+  var g = mEnv(ctx, t, 0.012, 0.06 * v, len);
+  [-7, 7].forEach(function (dt) {
+    var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(m); o.detune.value = dt;
+    o.connect(g); o.start(t); o.stop(t + len + 0.05);
+  });
+  g.connect(out); // `out` is the section's shared low-pass (see loop L)
+}
+function mTimpani(ctx, out, m, t, v) {
+  var f = mtof(m), o = ctx.createOscillator();
+  o.frequency.setValueAtTime(f * 1.15, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.08);
+  var g = mEnv(ctx, t, 0.003, 0.8 * v, 0.9); o.connect(g); g.connect(out); o.start(t); o.stop(t + 1);
+  mNz(ctx, out, t, "lowpass", 600, 0.7, 0.4 * v, 0.15);
+}
+function mChoir(ctx, out, notes, t, v, len) {
+  notes.forEach(function (m) {
+    [-6, 6].forEach(function (dt) {
+      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(m); o.detune.value = dt;
+      var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 800; bp.Q.value = 1.5; // an "ah" vowel
+      var g = mEnv(ctx, t, 0.25, 0.05 * v, len);
+      o.connect(bp); bp.connect(g); g.connect(out); o.start(t); o.stop(t + len + 0.3);
+    });
+  });
+}
+
 // ---------------------------------------------------------------- the loops
 // Each is `bars` bars long at `bpm`; play(ctx, out, t0) schedules one pass.
 var MUSIC_SONGS = {
@@ -349,6 +413,52 @@ var MUSIC_SONGS = {
       [0.75, 2.25, 3.5].forEach(function (x) { mClang(ctx, out, bt + x * b, 1); });
       for (var s = 0; s < 16; s++) mHat(ctx, out, bt + s * b / 4, s % 4 === 2 ? 1 : 0.4, false);
       if (bar % 2 === 1) mGuitar(ctx, out, r, bt + 3 * b, 0.8, b);
+      if (bar % 4 === 0) mCrash(ctx, out, bt, 1);
+    }
+  } },
+  // Hardstyle: distorted kicks on every beat, off-beat bass, a screaming supersaw lead.
+  J: { bpm: 150, bars: 8, level: 1.3, play: function (ctx, out, t0) {
+    var b = 60 / 150, chords = [[57, 60, 64], [53, 57, 60], [55, 60, 64], [55, 59, 62]];
+    var lead = [[76, 0, 0.5], [76, 0.75, 0.25], [74, 1, 0.5], [72, 1.5, 0.5], [74, 2, 1], [69, 3, 1]];
+    for (var bar = 0; bar < 8; bar++) {
+      var bt = t0 + bar * 4 * b, ch = chords[bar % 4];
+      for (var k = 0; k < 4; k++) { mHardKick(ctx, out, bt + k * b, 1); mSawBass(ctx, out, ch[0] - 12, bt + (k + 0.5) * b, 0.7, 0.18); }
+      [1, 3].forEach(function (x) { mClap(ctx, out, bt + x * b, 1); });
+      for (var s = 0; s < 8; s++) if (s % 2) mHat(ctx, out, bt + s * b / 2, 1, true);
+      if (bar >= 4) lead.forEach(function (n) { mSupersaw(ctx, out, [n[0] + (bar % 4 === 1 ? -4 : bar % 4 === 2 ? -2 : 0)], bt + n[1] * b, 1, n[2] * b * 0.95); });
+      else mSupersaw(ctx, out, ch.map(function (m) { return m + 12; }), bt, 0.8, 4 * b * 0.95);
+      if (bar % 4 === 0) mCrash(ctx, out, bt, 1);
+    }
+  } },
+  // Drum & bass: fast breakbeat, rolling reese bass.
+  K: { bpm: 174, bars: 8, level: 1.4, play: function (ctx, out, t0) {
+    var b = 60 / 174, roots = [38, 38, 34, 36], stabs = [[62, 65, 69], [62, 65, 69], [58, 62, 65], [60, 64, 67]];
+    for (var bar = 0; bar < 8; bar++) {
+      var bt = t0 + bar * 4 * b, r = roots[bar % 4] - 12;
+      [0, 2.5].forEach(function (x) { mBigKick(ctx, out, bt + x * b, 1); });
+      [1, 3].forEach(function (x) { mBigSnare(ctx, out, bt + x * b, 1.1); });
+      mBigSnare(ctx, out, bt + 3.75 * b, 0.4); mBigSnare(ctx, out, bt + 1.75 * b, 0.35);
+      for (var s = 0; s < 16; s++) mHat(ctx, out, bt + s * b / 4, s % 2 ? 0.4 : 0.8, s === 14);
+      mReese(ctx, out, r, bt, 1, 1.5 * b); mReese(ctx, out, r + 3, bt + 1.5 * b, 1, b); mReese(ctx, out, r, bt + 2.5 * b, 1, 1.5 * b);
+      if (bar % 2 === 0) mStab(ctx, out, stabs[bar % 4], bt + 0.75 * b, 1.4, 0.2);
+      if (bar % 4 === 0) mCrash(ctx, out, bt, 0.9);
+    }
+  } },
+  // Battle orchestra: driving staccato strings, timpani, brass and a choir.
+  L: { bpm: 140, bars: 8, level: 1.5, play: function (ctx, out, t0) {
+    var b = 60 / 140, roots = [50, 50, 46, 48], chords = [[62, 65, 69], [62, 65, 69], [58, 62, 65], [60, 64, 67]];
+    var strs = ctx.createBiquadFilter(); strs.type = "lowpass"; strs.frequency.value = 2400; strs.connect(out);
+    for (var bar = 0; bar < 8; bar++) {
+      var bt = t0 + bar * 4 * b, r = roots[bar % 4], ch = chords[bar % 4];
+      for (var i = 0; i < 16; i++) {
+        var acc = i % 4 === 0 || i === 6 || i === 10;
+        mStrings(ctx, strs, (i % 4 === 3 ? r + 7 : r), bt + i * b / 4, acc ? 1.3 : 0.8, 0.1);
+        mStrings(ctx, strs, (i % 4 === 3 ? r + 7 : r) - 12, bt + i * b / 4, acc ? 1.3 : 0.8, 0.1);
+      }
+      [0, 1.5, 2, 3].forEach(function (x, k) { mTimpani(ctx, out, r - 24 + (k === 3 ? 7 : 0), bt + x * b, 1); });
+      [1, 3].forEach(function (x) { mBigSnare(ctx, out, bt + x * b, 0.6); });
+      mBrass(ctx, out, ch.map(function (m) { return m - 12; }), bt, 1.4, 1.2);
+      if (bar >= 4) mChoir(ctx, out, ch, bt, 1.2, 4 * b);
       if (bar % 4 === 0) mCrash(ctx, out, bt, 1);
     }
   } }
