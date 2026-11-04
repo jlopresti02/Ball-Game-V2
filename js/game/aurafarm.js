@@ -161,6 +161,7 @@ function updateAuraFarm(self, other, dt) {
       bull.vx = (kpx * 0.8 + hx / hd * 0.6) * 560; bull.vy = (kpy * 0.8 + hy / hd * 0.6) * 560;
       m.phase = "ko"; m.t = 0; m.punchT = 0;
       floater(bull.x, bull.y - AF_BULL_R - 30, "KO!", "crit");
+      floater(bull.x + 40, bull.y - AF_BULL_R - 62, "CRACK!", "crit");
       playKoPunch(); playBullThrown(0.85); // Joe's bull sound, pitched a little lower
       screenFlash = Math.max(screenFlash, 0.5);
       hitStop = Math.max(hitStop, 0.18);

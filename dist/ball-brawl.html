@@ -2564,7 +2564,28 @@ function playKoPunch() {
     synthPunch(ctx, g, now + 0.012, 1, punchNoise);
     playCritPunch(true);
     playSlam();
+    auraCrack(ctx, now + 0.005);
   } catch (e) { /* never let audio break the game */ }
+}
+// A huge, sharp CRACK, like a bat on a fastball: a near-instant broadband
+// snap, a bright woody ring, and a slapback off the arena roof.
+function auraCrack(ctx, t) {
+  var noise = makeNoiseBuffer(ctx, 0.5);
+  function snap(at, peak, dur, hp) {
+    var s = ctx.createBufferSource(); s.buffer = noise;
+    var f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + 0.0015);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    s.connect(f); f.connect(g); g.connect(ctx.destination); s.start(at); s.stop(at + dur + 0.02);
+  }
+  snap(t, 1.6, 0.09, 900);          // the snap
+  snap(t, 0.9, 0.22, 2500);         // fizz on top
+  caneBurst(ctx, t, 2900, 6, 1.1, 0.16); // woody ring
+  caneBurst(ctx, t, 1700, 5, 0.7, 0.2);
+  caneTone(ctx, t, "triangle", 1400, 900, 0.35, 0.12);
+  snap(t + 0.11, 0.45, 0.12, 1200); // slapback
+  snap(t + 0.2, 0.18, 0.12, 1500);
 }
 // A heel stomp on the canvas.
 function playStomp() {
@@ -8541,6 +8562,7 @@ function updateAuraFarm(self, other, dt) {
       bull.vx = (kpx * 0.8 + hx / hd * 0.6) * 560; bull.vy = (kpy * 0.8 + hy / hd * 0.6) * 560;
       m.phase = "ko"; m.t = 0; m.punchT = 0;
       floater(bull.x, bull.y - AF_BULL_R - 30, "KO!", "crit");
+      floater(bull.x + 40, bull.y - AF_BULL_R - 62, "CRACK!", "crit");
       playKoPunch(); playBullThrown(0.85); // Joe's bull sound, pitched a little lower
       screenFlash = Math.max(screenFlash, 0.5);
       hitStop = Math.max(hitStop, 0.18);
