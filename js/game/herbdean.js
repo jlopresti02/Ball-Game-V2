@@ -530,6 +530,8 @@ function herbShove(f, dt) {
   }
   var bp = auraBullPush(f); // or the bull charging through (aurafarm.js)
   if (bp) { tx += bp.x; ty += bp.y; }
+  var gp = jonGoatPush(f); // or goats running through (jon.js)
+  if (gp) { tx += gp.x; ty += gp.y; }
   var a = Math.min(1, dt * 12);
   f.shx = (f.shx || 0) + (tx - (f.shx || 0)) * a;
   f.shy = (f.shy || 0) + (ty - (f.shy || 0)) * a;

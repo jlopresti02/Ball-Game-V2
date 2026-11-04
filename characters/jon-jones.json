@@ -1,11 +1,11 @@
 {
  "id": "c-jon-jones",
- "rev": 2,
+ "rev": 3,
  "builtin": false,
  "weightClass": "lightheavyweight",
  "name": "Jon Jones",
  "base": "Kicker",
- "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 12 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): switches from kicks to punches, with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination.",
+ "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 12 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): switches from kicks to punches, with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination. Special move: GOAT Stampede.",
  "color": "#c9a227",
  "label": "",
  "imgData": null,
@@ -197,5 +197,14 @@
   "shortsStyle": "chevron",
   "gloves": "#151515",
   "beardChin": 0.12
+ },
+ "hasSpecial": true,
+ "special": {
+  "move": "goatstampede",
+  "chargeTime": 45,
+  "hitCut": 4,
+  "goats": 8,
+  "goatGap": 0.7,
+  "goatDamage": 22
  }
 }

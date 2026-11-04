@@ -1661,3 +1661,23 @@ function playJonModeSwap(mode) {
     }
   } catch (e) { /* never let audio break the game */ }
 }
+
+// A goat bleating as it leaps into the cage (GOAT Stampede, jon.js): a
+// nasal "meh-eh-eh" with a fast wobble.
+function playGoatBleat() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, dur = 0.5 + Math.random() * 0.2, f0 = 420 + Math.random() * 160;
+    var o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    var bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = "sawtooth"; o.frequency.setValueAtTime(f0, now); o.frequency.linearRampToValueAtTime(f0 * 0.9, now + dur);
+    lfo.frequency.value = 22; lg.gain.value = f0 * 0.06; lfo.connect(lg); lg.connect(o.frequency);
+    bp.type = "bandpass"; bp.frequency.value = 1400; bp.Q.value = 2.2;
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.32, now + 0.04);
+    g.gain.setValueAtTime(0.32, now + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.connect(bp); bp.connect(g); g.connect(ctx.destination);
+    o.start(now); lfo.start(now); o.stop(now + dur + 0.05); lfo.stop(now + dur + 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
