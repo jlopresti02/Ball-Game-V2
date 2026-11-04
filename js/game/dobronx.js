@@ -7,7 +7,7 @@
 // green walkway, a Brazil mat, every fan on their feet.
 //
 // For `duration` seconds (15) after that he's in the Do Bronx state:
-//   - all his hits do double damage
+//   - all his hits do extra damage (special.damageMult: 4x)
 //   - he's more likely to score takedowns: he always shoots on contact (even
 //     against a Grappler), his grab reaches further, and the opponent sprawls
 //     half as often
@@ -125,9 +125,11 @@ function cameraFlash() {
   playCameraFlashes();
 }
 
-// Double damage for everything a fighter in the Do Bronx state lands.
+// Extra damage for everything a fighter in the Do Bronx state lands
+// (special.damageMult, double if it isn't set).
 function doBronxMult(attackerId) {
-  return attackerId != null && balls[attackerId] && balls[attackerId].doBronx ? 2 : 1;
+  var b = attackerId != null && balls[attackerId];
+  return b && b.doBronx ? (b.char.special.damageMult || 2) : 1;
 }
 
 function tickDoBronxFx(dt) {

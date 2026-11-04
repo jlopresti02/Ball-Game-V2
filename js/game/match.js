@@ -262,7 +262,7 @@ function hurt(b, amount, source, attackerId) {
     var tm = b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2;
     amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }
-  // Everything a fighter in the Do Bronx state lands does double (dobronx.js).
+  // Everything a fighter in the Do Bronx state lands does extra (dobronx.js).
   if (source !== "laser") amount *= doBronxMult(attackerId);
   // Heavier hits harder, lighter hits softer (weight.js).
   amount *= weightDamageMult(b, attackerId);

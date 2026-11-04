@@ -135,9 +135,8 @@ function synthPunch(ctx, out, now, weight, noise) {
 }
 
 // Punches, kicks and other strikes all go through one bus, turned up well
-// over everything else and held under a limiter so a flurry can't clip, and
-// each one dips the background music for a moment (hitDuckMusic, music.js),
-// so strikes pop out over the music (Joe).
+// over everything else and held under a limiter so a flurry can't clip, so
+// strikes pop out over the music (Joe). The music itself stays put.
 var STRIKE_GAIN = 1.8;
 var strikeBus = null;
 function strikeOut(ctx) {
@@ -150,7 +149,6 @@ function strikeOut(ctx) {
   strikeBus.connect(lim); lim.connect(ctx.destination);
   return strikeBus;
 }
-function strikeLanded() { if (typeof hitDuckMusic === "function") hitDuckMusic(); }
 
 var punchNoise = null;
 function playPunch(damage) {
@@ -163,7 +161,6 @@ function playPunch(damage) {
     lastPunchSound = now;
     if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
     synthPunch(ctx, strikeOut(ctx), now, punchWeight(damage), punchNoise);
-    strikeLanded();
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -228,7 +225,6 @@ function playBmfJab() {
     lastPunchSound = now;
     if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
     synthBmfJab(ctx, strikeOut(ctx), now, punchNoise);
-    strikeLanded();
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -897,7 +893,6 @@ function playBatHit(big) {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var now = ctx.currentTime, hit = now + 0.06; // the whoosh leads in
     var v = 0.9 + Math.random() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
     var w = ctx.createBufferSource();
@@ -932,7 +927,6 @@ function playCritPunch(last) {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var now = ctx.currentTime, lead = last ? 0.06 : 0.03, hit = now + lead;
     var v = 0.95 + Math.random() * 0.1, k = CRIT_GAIN;
     var w = ctx.createBufferSource();
@@ -1004,7 +998,6 @@ function playHaymaker() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var t = ctx.currentTime, k = HAYMAKER_GAIN;
     caneBurst(ctx, t, 900, 0.7, 1.0 * k, 0.12);
     caneBurst(ctx, t + 0.008, 2800, 1.4, 0.6 * k, 0.05);
@@ -1020,7 +1013,6 @@ function playKick() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var now = ctx.currentTime, hit = now + 0.05, v = 0.94 + Math.random() * 0.12, k = KICK_GAIN;
     swingWhoosh(ctx, now, hit, 500, 2600, 0.25 * k);
     caneBurst(ctx, hit, 3000 * v, 0.9, 1.0 * k, 0.05);
@@ -1278,13 +1270,13 @@ function playCameraFlashes() {
 // the fans in the stands (crowdExcitement, stadium.js). The win brings one
 // last roar.
 // ---------------------------------------------------------------
-var CROWD_FLOOR = 0.1, CROWD_PEAK = 0.6;
+var CROWD_FLOOR = 0.06, CROWD_PEAK = 0.3; // background noise under the music and hits (Joe)
 var CROWD_RISE = 1.0;   // seconds to build from calm to fully excited
 var CROWD_KEEP = 3.0;   // seconds it stays up after the last big moment
 var CROWD_FADE = 4.0;   // seconds to die all the way back down
 var crowd = null; // { src, gain, filter, held, holdTimer, duckUntil }
 var crowdMood = { heat: 0, level: 0, keep: 0 }; // heat: where it's headed; level: where it is
-var CROWD_HOLD = 0.54, CROWD_HOLD_FREQ = 9000; // the crowd going wild through Do Bronx
+var CROWD_HOLD = 0.3, CROWD_HOLD_FREQ = 9000; // the crowd going wild through Do Bronx
 function crowdLevel(h) { return CROWD_FLOOR + (CROWD_PEAK - CROWD_FLOOR) * h; }
 // How excited the crowd is right now, 0 (murmur) to 1 (on its feet).
 function crowdExcitement() { return crowd && crowd.held ? Math.max(0.9, crowdMood.level) : crowdMood.level; }
@@ -1441,7 +1433,6 @@ function auraBgMusic(at, k) {
     var m = typeof music !== "undefined" ? music : null;
     if (!m || !m.gain) return;
     var g = m.gain.gain;
-    m.muted = !k; // (strikes leave it alone while it's out: hitDuckMusic)
     g.cancelScheduledValues(at);
     g.setTargetAtTime(k ? m.level : 0.0001, at, k ? 0.4 : 0.15);
   } catch (e) { /* never let audio break the game */ }
@@ -1517,7 +1508,6 @@ function playImpactClip(n, gain, fallback) {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     if (!playClip("impactPunch" + n, gain)) { withClip("impactPunch" + n); playPunch(fallback); }
   } catch (e) { /* never let audio break the game */ }
 }
@@ -1537,7 +1527,6 @@ function playKoPunch() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var now = ctx.currentTime, g = ctx.createGain();
     g.gain.value = 2.4;
     g.connect(strikeOut(ctx));

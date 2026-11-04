@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -92,13 +92,14 @@ var SAVED_ROSTER = [
       "chargeTime": 17,
       "hitCut": 4,
       "punchCut": 5,
-      "duration": 15
+      "duration": 15,
+      "damageMult": 4
     },
     "blockChance": 10
   },
   {
     "id": "c-ciryl-gane",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
@@ -193,18 +194,18 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "herbdean",
-      "chargeTime": 49,
+      "chargeTime": 37,
       "hitCut": 3,
       "punchCut": 1,
-      "batDamage": 6,
+      "batDamage": 12,
       "batGap": 0.42,
-      "finisher": 20,
-      "caneDamage": 4
+      "finisher": 40,
+      "caneDamage": 8
     }
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 7,
+    "rev": 8,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
@@ -264,10 +265,10 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "igbb",
-      "chargeTime": 68,
+      "chargeTime": 58,
       "hitCut": 5,
       "punches": 7,
-      "damage": 10,
+      "damage": 20,
       "shellTime": 5
     },
     "hasGuillotine": true,
@@ -288,7 +289,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -377,7 +378,7 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "aurafarm",
-      "chargeTime": 104,
+      "chargeTime": 85,
       "hitCut": 4,
       "bullDamage": 60,
       "throwDamage": 70
@@ -385,7 +386,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-josh-hokit",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Josh Hokit",
@@ -470,10 +471,10 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "chairshot",
-      "chargeTime": 96,
+      "chargeTime": 82,
       "hitCut": 3,
       "punchCut": 1,
-      "damage": 40,
+      "damage": 80,
       "dazeTime": 1.5,
       "celebrateTime": 3
     },
@@ -481,7 +482,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -582,7 +583,7 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "allamerican",
-      "chargeTime": 56,
+      "chargeTime": 48,
       "hitCut": 4,
       "punchDamage": 25,
       "eagleDamage": 6,
@@ -593,7 +594,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
@@ -663,14 +664,14 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "fathersplan",
-      "chargeTime": 96,
+      "chargeTime": 82,
       "hitCut": 4,
       "punchCut": 7,
       "walls": 4,
-      "wallDamage": 6,
-      "slamDamage": 12,
+      "wallDamage": 12,
+      "slamDamage": 24,
       "punches": 5,
-      "damage": 12,
+      "damage": 24,
       "shellTime": 5
     },
     "blockChance": 10
