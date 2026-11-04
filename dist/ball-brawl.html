@@ -1318,9 +1318,8 @@ function synthPunch(ctx, out, now, weight, noise) {
 }
 
 // Punches, kicks and other strikes all go through one bus, turned up well
-// over everything else and held under a limiter so a flurry can't clip, and
-// each one dips the background music for a moment (hitDuckMusic, music.js),
-// so strikes pop out over the music (Joe).
+// over everything else and held under a limiter so a flurry can't clip, so
+// strikes pop out over the music (Joe). The music itself stays put.
 var STRIKE_GAIN = 1.8;
 var strikeBus = null;
 function strikeOut(ctx) {
@@ -1333,7 +1332,6 @@ function strikeOut(ctx) {
   strikeBus.connect(lim); lim.connect(ctx.destination);
   return strikeBus;
 }
-function strikeLanded() { if (typeof hitDuckMusic === "function") hitDuckMusic(); }
 
 var punchNoise = null;
 function playPunch(damage) {
@@ -1346,7 +1344,6 @@ function playPunch(damage) {
     lastPunchSound = now;
     if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
     synthPunch(ctx, strikeOut(ctx), now, punchWeight(damage), punchNoise);
-    strikeLanded();
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -1411,7 +1408,6 @@ function playBmfJab() {
     lastPunchSound = now;
     if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
     synthBmfJab(ctx, strikeOut(ctx), now, punchNoise);
-    strikeLanded();
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -2080,7 +2076,6 @@ function playBatHit(big) {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var now = ctx.currentTime, hit = now + 0.06; // the whoosh leads in
     var v = 0.9 + Math.random() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
     var w = ctx.createBufferSource();
@@ -2115,7 +2110,6 @@ function playCritPunch(last) {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var now = ctx.currentTime, lead = last ? 0.06 : 0.03, hit = now + lead;
     var v = 0.95 + Math.random() * 0.1, k = CRIT_GAIN;
     var w = ctx.createBufferSource();
@@ -2187,7 +2181,6 @@ function playHaymaker() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var t = ctx.currentTime, k = HAYMAKER_GAIN;
     caneBurst(ctx, t, 900, 0.7, 1.0 * k, 0.12);
     caneBurst(ctx, t + 0.008, 2800, 1.4, 0.6 * k, 0.05);
@@ -2203,7 +2196,6 @@ function playKick() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var now = ctx.currentTime, hit = now + 0.05, v = 0.94 + Math.random() * 0.12, k = KICK_GAIN;
     swingWhoosh(ctx, now, hit, 500, 2600, 0.25 * k);
     caneBurst(ctx, hit, 3000 * v, 0.9, 1.0 * k, 0.05);
@@ -2461,13 +2453,13 @@ function playCameraFlashes() {
 // the fans in the stands (crowdExcitement, stadium.js). The win brings one
 // last roar.
 // ---------------------------------------------------------------
-var CROWD_FLOOR = 0.1, CROWD_PEAK = 0.6;
+var CROWD_FLOOR = 0.06, CROWD_PEAK = 0.3; // background noise under the music and hits (Joe)
 var CROWD_RISE = 1.0;   // seconds to build from calm to fully excited
 var CROWD_KEEP = 3.0;   // seconds it stays up after the last big moment
 var CROWD_FADE = 4.0;   // seconds to die all the way back down
 var crowd = null; // { src, gain, filter, held, holdTimer, duckUntil }
 var crowdMood = { heat: 0, level: 0, keep: 0 }; // heat: where it's headed; level: where it is
-var CROWD_HOLD = 0.54, CROWD_HOLD_FREQ = 9000; // the crowd going wild through Do Bronx
+var CROWD_HOLD = 0.3, CROWD_HOLD_FREQ = 9000; // the crowd going wild through Do Bronx
 function crowdLevel(h) { return CROWD_FLOOR + (CROWD_PEAK - CROWD_FLOOR) * h; }
 // How excited the crowd is right now, 0 (murmur) to 1 (on its feet).
 function crowdExcitement() { return crowd && crowd.held ? Math.max(0.9, crowdMood.level) : crowdMood.level; }
@@ -2624,7 +2616,6 @@ function auraBgMusic(at, k) {
     var m = typeof music !== "undefined" ? music : null;
     if (!m || !m.gain) return;
     var g = m.gain.gain;
-    m.muted = !k; // (strikes leave it alone while it's out: hitDuckMusic)
     g.cancelScheduledValues(at);
     g.setTargetAtTime(k ? m.level : 0.0001, at, k ? 0.4 : 0.15);
   } catch (e) { /* never let audio break the game */ }
@@ -2700,7 +2691,6 @@ function playImpactClip(n, gain, fallback) {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     if (!playClip("impactPunch" + n, gain)) { withClip("impactPunch" + n); playPunch(fallback); }
   } catch (e) { /* never let audio break the game */ }
 }
@@ -2720,7 +2710,6 @@ function playKoPunch() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    strikeLanded();
     var now = ctx.currentTime, g = ctx.createGain();
     g.gain.value = 2.4;
     g.connect(strikeOut(ctx));
@@ -2836,9 +2825,8 @@ function playHoof() {
 "use strict";
 
 var MUSIC_KEY = "ballbrawl_music_v1";
-var MUSIC_GAIN = 0.16;       // under the crowd
+var MUSIC_GAIN = 0.16;       // over the crowd's background noise
 var MUSIC_DUCK = 0.35;       // share of that while someone's talking
-var MUSIC_HIT_DUCK = 0.5;    // share of that for a beat after each punch or kick lands
 var MUSIC_LIST = ["D", "E", "F", "G", "H", "I", "J", "K", "L", "A", "B", "C", "off"];
 var MUSIC_NAMES = { D: "Aggressive: War drums", E: "Aggressive: Metal", F: "Aggressive: Drill", G: "Aggressive: Phonk", H: "Aggressive: Wobble", I: "Aggressive: Industrial", J: "Aggressive: Hardstyle", K: "Aggressive: Drum & bass", L: "Aggressive: Battle orchestra", A: "Playful bounce", B: "Fight night hype", C: "Arcade", off: "Off" };
 var musicChoice = "D";
@@ -3364,25 +3352,8 @@ function duckMusic(at, until) {
     g.cancelScheduledValues(at);
     g.setTargetAtTime(m.level * MUSIC_DUCK, at, 0.08);
     g.setTargetAtTime(m.level, until, 0.3);
-    m.talkUntil = until;
   } catch (e) { /* never let audio break the game */ }
 }
-// Each strike (audio.js) dips the music for a split second, then lets it
-// swell back, so punches and kicks sit on top of it. A talking clip's own
-// dip is left alone.
-function hitDuckMusic() {
-  var m = music;
-  if (!m || !m.gain || m.muted) return;
-  try {
-    var now = audioCtx.currentTime;
-    if (m.talkUntil && now < m.talkUntil + 0.5) return;
-    var g = m.gain.gain;
-    g.cancelScheduledValues(now);
-    g.setTargetAtTime(m.level * MUSIC_HIT_DUCK, now, 0.01);
-    g.setTargetAtTime(m.level, now + 0.12, 0.18);
-  } catch (e) { /* never let audio break the game */ }
-}
-
 function setMusicChoice(id) {
   musicChoice = id;
   try { localStorage.setItem(MUSIC_KEY, id); } catch (e) {}
@@ -3714,7 +3685,7 @@ function getImg(dataURL) {
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -3800,13 +3771,14 @@ var SAVED_ROSTER = [
       "chargeTime": 17,
       "hitCut": 4,
       "punchCut": 5,
-      "duration": 15
+      "duration": 15,
+      "damageMult": 4
     },
     "blockChance": 10
   },
   {
     "id": "c-ciryl-gane",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
@@ -3901,18 +3873,18 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "herbdean",
-      "chargeTime": 49,
+      "chargeTime": 37,
       "hitCut": 3,
       "punchCut": 1,
-      "batDamage": 6,
+      "batDamage": 12,
       "batGap": 0.42,
-      "finisher": 20,
-      "caneDamage": 4
+      "finisher": 40,
+      "caneDamage": 8
     }
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 7,
+    "rev": 8,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
@@ -3972,10 +3944,10 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "igbb",
-      "chargeTime": 68,
+      "chargeTime": 58,
       "hitCut": 5,
       "punches": 7,
-      "damage": 10,
+      "damage": 20,
       "shellTime": 5
     },
     "hasGuillotine": true,
@@ -3996,7 +3968,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -4085,7 +4057,7 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "aurafarm",
-      "chargeTime": 104,
+      "chargeTime": 85,
       "hitCut": 4,
       "bullDamage": 60,
       "throwDamage": 70
@@ -4093,7 +4065,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-josh-hokit",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Josh Hokit",
@@ -4178,10 +4150,10 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "chairshot",
-      "chargeTime": 96,
+      "chargeTime": 82,
       "hitCut": 3,
       "punchCut": 1,
-      "damage": 40,
+      "damage": 80,
       "dazeTime": 1.5,
       "celebrateTime": 3
     },
@@ -4189,7 +4161,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4290,7 +4262,7 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "allamerican",
-      "chargeTime": 56,
+      "chargeTime": 48,
       "hitCut": 4,
       "punchDamage": 25,
       "eagleDamage": 6,
@@ -4301,7 +4273,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
@@ -4371,14 +4343,14 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "fathersplan",
-      "chargeTime": 96,
+      "chargeTime": 82,
       "hitCut": 4,
       "punchCut": 7,
       "walls": 4,
-      "wallDamage": 6,
-      "slamDamage": 12,
+      "wallDamage": 12,
+      "slamDamage": 24,
       "punches": 5,
-      "damage": 12,
+      "damage": 24,
       "shellTime": 5
     },
     "blockChance": 10
@@ -6042,7 +6014,7 @@ function hurt(b, amount, source, attackerId) {
     var tm = b.char.weave.tauntVuln != null ? b.char.weave.tauntVuln : 2;
     amount = amount % 1 === 0 ? Math.round(amount * tm) : Math.round(amount * tm * 100) / 100;
   }
-  // Everything a fighter in the Do Bronx state lands does double (dobronx.js).
+  // Everything a fighter in the Do Bronx state lands does extra (dobronx.js).
   if (source !== "laser") amount *= doBronxMult(attackerId);
   // Heavier hits harder, lighter hits softer (weight.js).
   amount *= weightDamageMult(b, attackerId);
@@ -12195,7 +12167,7 @@ function updateSpecialHud(force) {
 // green walkway, a Brazil mat, every fan on their feet.
 //
 // For `duration` seconds (15) after that he's in the Do Bronx state:
-//   - all his hits do double damage
+//   - all his hits do extra damage (special.damageMult: 4x)
 //   - he's more likely to score takedowns: he always shoots on contact (even
 //     against a Grappler), his grab reaches further, and the opponent sprawls
 //     half as often
@@ -12313,9 +12285,11 @@ function cameraFlash() {
   playCameraFlashes();
 }
 
-// Double damage for everything a fighter in the Do Bronx state lands.
+// Extra damage for everything a fighter in the Do Bronx state lands
+// (special.damageMult, double if it isn't set).
 function doBronxMult(attackerId) {
-  return attackerId != null && balls[attackerId] && balls[attackerId].doBronx ? 2 : 1;
+  var b = attackerId != null && balls[attackerId];
+  return b && b.doBronx ? (b.char.special.damageMult || 2) : 1;
 }
 
 function tickDoBronxFx(dt) {
@@ -17378,7 +17352,7 @@ var SUB_NAMES = { rnc: "rear naked choke", armbar: "armbar", guillotine: "guillo
 var SPECIAL_INFO = {
   igbb: function (sp) { return "Grabs them one-handed and throws them into a corner, then unloads a flurry of " + sp.punches + " fast " + sp.damage + "-damage punches while they shell up. If they survive he backs off with his guard up."; },
   fathersplan: function (sp) { return "Hurls them off " + sp.walls + " walls (" + sp.wallDamage + " each), slams them to the floor (" + sp.slamDamage + "), then kneels over them for " + sp.punches + " telegraphed ground-and-pound punches (" + sp.damage + " each). \"I'm gonna smash your boy.\""; },
-  dobronx: function (sp) { return "Double-biceps pose that blasts them away, \"Charrrles... Do... BRONX!\", every camera flashes and the arena turns Brazil themed for " + sp.duration + " seconds: double damage, takedowns every time, and every takedown goes into a submission."; },
+  dobronx: function (sp) { return "Double-biceps pose that blasts them away, \"Charrrles... Do... BRONX!\", every camera flashes and the arena turns Brazil themed for " + sp.duration + " seconds: " + (sp.damageMult || 2) + "x damage, takedowns every time, and every takedown goes into a submission."; },
   chairshot: function (sp) { return "Pulls a folding chair from under the ring, charges them down and swings it over their head for " + sp.damage + " (can't be weaved or blocked), leaving them dazed for " + sp.dazeTime + "s. Then hurls the chair into the stands and runs a lap celebrating."; },
   herbdean: function (sp) { return "The ref falls asleep and blind Herb Dean barges in through the crowd with his cane. Gane beats them with a bat (" + sp.batDamage + " a swing), Herb whacks them with the cane (" + sp.caneDamage + "), and a last bat swing does " + sp.finisher + "."; },
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }

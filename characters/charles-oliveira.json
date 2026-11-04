@@ -1,6 +1,6 @@
 {
   "id": "c-charles-oliveira",
-  "rev": 6,
+  "rev": 7,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Charles Oliveira",
@@ -86,7 +86,8 @@
     "chargeTime": 17,
     "hitCut": 4,
     "punchCut": 5,
-    "duration": 15
+    "duration": 15,
+    "damageMult": 4
   },
   "blockChance": 10
 }
