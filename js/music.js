@@ -535,6 +535,16 @@ function duckMusic(at, until) {
     g.setTargetAtTime(m.level, until, 0.3);
   } catch (e) { /* never let audio break the game */ }
 }
+// Back to full level from `at` (a cheer cut off a line that had it down).
+function unduckMusic(at) {
+  var m = music;
+  if (!m || !m.gain) return;
+  try {
+    var g = m.gain.gain;
+    g.cancelScheduledValues(at);
+    g.setTargetAtTime(m.level, at, 0.08);
+  } catch (e) { /* never let audio break the game */ }
+}
 function setMusicChoice(id) {
   musicChoice = id;
   try { localStorage.setItem(MUSIC_KEY, id); } catch (e) {}

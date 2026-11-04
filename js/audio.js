@@ -701,8 +701,15 @@ function playTalk(name, gain) {
   if (!src) return false;
   talkSrcs.push(src);
   talkEnd = at + buf.duration;
-  duckMusic(at, talkEnd);
+  talkDuck(name, at, talkEnd);
   return true;
+}
+// Clips on the talk channel that are the crowd cheering, not someone talking:
+// the music plays straight through them (Joe: cheers must never mute it).
+var TALK_CHEERS = { knockout: true, doBronx: true };
+function talkDuck(name, at, until) {
+  if (TALK_CHEERS[name]) unduckMusic(at); // and back up if a cut-off line had it down
+  else duckMusic(at, until);
 }
 // Cuts in on the talk channel: whatever line is going (or waiting) stops.
 // While a priority line is going, it plays right after it instead.
@@ -714,7 +721,7 @@ function cutInTalk(name, gain) {
     talkSrcs.push(later); talkQueued = true;
     talkEnd = at + clipBuffers[name].duration;
     talkCutAt = at;
-    duckMusic(at, talkEnd);
+    talkDuck(name, at, talkEnd);
     return later;
   }
   stopTalk();
@@ -723,7 +730,7 @@ function cutInTalk(name, gain) {
   talkSrcs = [src];
   talkEnd = now + clipBuffers[name].duration;
   talkCutAt = now;
-  duckMusic(now, talkEnd);
+  talkDuck(name, now, talkEnd);
   return src;
 }
 // A priority line: cuts in on everything, and nothing cuts it off.
