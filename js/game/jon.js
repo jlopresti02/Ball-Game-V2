@@ -303,9 +303,13 @@ function goatRam(self, other, g) {
   // Sent flying, pinballing violently off the walls (the power punch's wall
   // slam, abilities.js), taking damage on every wall.
   if (other.alive && !other.grappled && !other.grapple) {
-    var ka = Math.atan2(g.dy, g.dx) + (Math.random() - 0.5) * 0.5;
+    // Knocked off the goat's horns: mostly the way the goat is running,
+    // pushed off to the side it caught them on (a glancing hit sends them
+    // out wider). The walls then bounce them off at the true angle.
+    var cx = other.x - g.x, cy = other.y - g.y, cl = Math.sqrt(cx * cx + cy * cy) || 1;
+    var kx = g.dx * 0.65 + cx / cl * 0.35, ky = g.dy * 0.65 + cy / cl * 0.35, kl = Math.sqrt(kx * kx + ky * ky) || 1;
     var sp = self.char.special;
-    beginWallSlam(other, Math.cos(ka), Math.sin(ka), { knockback: sp.ramSpeed, wallSlams: sp.ramWalls, slamDamage: sp.ramWallDamage });
+    beginWallSlam(other, kx / kl, ky / kl, { knockback: sp.ramSpeed, wallSlams: sp.ramWalls, slamDamage: sp.ramWallDamage });
   }
   other.squash = { t: 0.2, max: 0.2, nx: g.dx, ny: g.dy }; other.flash = 0.16;
   floater(other.x, other.y - other.r - 30, "RAMMED!", "crit");

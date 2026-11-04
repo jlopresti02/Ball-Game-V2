@@ -386,7 +386,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
@@ -592,7 +592,7 @@ var SAVED_ROSTER = [
       "goats": 8,
       "goatGap": 0.7,
       "goatDamage": 22,
-      "ramSpeed": 1100,
+      "ramSpeed": 1900,
       "ramWalls": 3,
       "ramWallDamage": 4
     }
