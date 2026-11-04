@@ -594,7 +594,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "auraFarm", "bullThrown", "bullCharge"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 function playHereWeGo() {
@@ -1444,6 +1444,16 @@ function playBullThrown(rate) {
     if (!playClip("bullThrown", 0.9, null, rate)) { withClip("bullThrown"); playBullSnort(); }
   } catch (e) { /* never let audio break the game */ }
 }
+// Joe's impact punch clips for Aura Farm hits (1: bull rams the opponent,
+// 2: thrown bull lands); falls back to the synth punch if not loaded.
+function playImpactClip(n, gain, fallback) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (!playClip("impactPunch" + n, gain)) { withClip("impactPunch" + n); playPunch(fallback); }
+  } catch (e) { /* never let audio break the game */ }
+}
 // The bull roaring as it charges (Joe's clip; a snort if it's not loaded).
 function playBullCharge(gain) {
   try {
@@ -1468,7 +1478,9 @@ function playKoPunch() {
     synthPunch(ctx, g, now + 0.012, 1, punchNoise);
     playCritPunch(true);
     playSlam();
-    auraCrack(ctx, now + 0.005);
+    // Joe's baseball bat crack; the synth crack stands in if it isn't loaded.
+    playClip("impactPunch2", 1.3) || withClip("impactPunch2");
+    if (!playClip("batCrack", 1.4)) { withClip("batCrack"); auraCrack(ctx, now + 0.005); }
   } catch (e) { /* never let audio break the game */ }
 }
 // A huge, sharp CRACK, like a bat on a fastball: a near-instant broadband

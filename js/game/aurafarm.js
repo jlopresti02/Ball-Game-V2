@@ -341,7 +341,7 @@ function tickAuraBull(self, other, dt) {
         if (self.igbb.kb.vy < 0 && other.y < other.r + 30) self.igbb.kb.vy = -self.igbb.kb.vy * 0.4; // off the fence
         other.dazed = true;
         floater(other.x, other.y - other.r - 40, "GORED!", "crit");
-        playSlam(); playPunch(36);
+        playSlam(); playImpactClip(1, 1.4, 36);
         hitStop = Math.max(hitStop, 0.12);
         if (!reduceMotion) shake = Math.max(shake, 22);
         impacts.push({ x: other.x - b.dx * other.r, y: other.y - b.dy * other.r, nx: b.dx, ny: b.dy, life: 0.5, max: 0.5, color: "#c41a1e" });
@@ -388,7 +388,7 @@ function tickAuraBull(self, other, dt) {
       violentHit(self, other, 1.5);
       m.kb = { vx: m.tx * 700, vy: m.ty * 700 };
       floater(other.x, other.y - other.r - 40, "MATADOR!", "crit");
-      playSlam(); playPunch(45);
+      playSlam(); playImpactClip(2, 1.4, 45);
       cameraFlash();
       hitStop = Math.max(hitStop, 0.16);
       if (!reduceMotion) shake = Math.max(shake, 32);
