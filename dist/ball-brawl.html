@@ -9567,7 +9567,8 @@ function drawJonGlow(b) {
 // between gold and red, and summons goats. Each one barges in through the
 // crowd (like Ilia's bull), leaps the fence, and stamps at the edge of the
 // mat while a red lane shows where it's about to run. Then it charges
-// straight across in that line. The lanes are random and don't follow
+// straight across in that line, always through center stage. The lanes
+// come in from random spots along the edges and don't follow
 // anyone, so the opponent can get out of the way just by being somewhere
 // else when it comes through. Every goat that hits rams them for
 // special.goatDamage.
@@ -9666,8 +9667,10 @@ function spawnGoat(self) {
     g.ox = side === "left" ? -f - GS_GOAT_R - 6 : W + f + GS_GOAT_R + 6; g.oy = along;
     g.ix = side === "left" ? inset : W - inset; g.iy = along; g.nx = -s; g.ny = 0;
   }
-  // The charge: anywhere up to 55 degrees either side of straight in.
-  var a = Math.atan2(g.ny, g.nx) + (Math.random() * 2 - 1) * 0.96;
+  // The charge: a straight line through center stage (give or take a
+  // little), from wherever along the edge it came in.
+  var cx = W / 2 + (Math.random() - 0.5) * 30, cy = H / 2 + (Math.random() - 0.5) * 30;
+  var a = Math.atan2(cy - g.iy, cx - g.ix);
   g.dx = Math.cos(a); g.dy = Math.sin(a);
   g.face = g.dx >= 0 ? 1 : -1;
   if (side === "bottom") g.face = Math.random() < 0.5 ? 1 : -1; // (side on to us while it runs up)
@@ -18069,7 +18072,7 @@ var SPECIAL_INFO = {
   dobronx: function (sp) { return "Double-biceps pose that blasts them away, \"Charrrles... Do... BRONX!\", every camera flashes and the arena turns Brazil themed for " + sp.duration + " seconds: " + (sp.damageMult || 2) + "x damage, takedowns every time, and every takedown goes into a submission."; },
   chairshot: function (sp) { return "Pulls a folding chair from under the ring, charges them down and swings it over their head for " + sp.damage + " (can't be weaved or blocked), leaving them dazed for " + sp.dazeTime + "s. Then hurls the chair into the stands and runs a lap celebrating."; },
   herbdean: function (sp) { return "The ref falls asleep and blind Herb Dean barges in through the crowd with his cane. Gane beats them with a bat (" + sp.batDamage + " a swing), Herb whacks them with the cane (" + sp.caneDamage + "), and a last bat swing does " + sp.finisher + "."; },
-  goatstampede: function (sp) { return "Floats up into the air, his tattoo flickering gold and red, and summons " + sp.goats + " goats. Each runs in through the crowd, leaps the fence and charges straight across the cage down a lane shown in red first (" + sp.goatDamage + " if it rams them). The lanes are random, so they can be dodged by being somewhere else."; },
+  goatstampede: function (sp) { return "Floats up into the air, his tattoo flickering gold and red, and summons " + sp.goats + " goats. Each runs in through the crowd, leaps the fence and charges straight across the cage through center stage, down a lane shown in red first (" + sp.goatDamage + " if it rams them). The lanes are random, so they can be dodged by being somewhere else."; },
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }
 };
 

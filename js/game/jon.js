@@ -144,7 +144,8 @@ function drawJonGlow(b) {
 // between gold and red, and summons goats. Each one barges in through the
 // crowd (like Ilia's bull), leaps the fence, and stamps at the edge of the
 // mat while a red lane shows where it's about to run. Then it charges
-// straight across in that line. The lanes are random and don't follow
+// straight across in that line, always through center stage. The lanes
+// come in from random spots along the edges and don't follow
 // anyone, so the opponent can get out of the way just by being somewhere
 // else when it comes through. Every goat that hits rams them for
 // special.goatDamage.
@@ -243,8 +244,10 @@ function spawnGoat(self) {
     g.ox = side === "left" ? -f - GS_GOAT_R - 6 : W + f + GS_GOAT_R + 6; g.oy = along;
     g.ix = side === "left" ? inset : W - inset; g.iy = along; g.nx = -s; g.ny = 0;
   }
-  // The charge: anywhere up to 55 degrees either side of straight in.
-  var a = Math.atan2(g.ny, g.nx) + (Math.random() * 2 - 1) * 0.96;
+  // The charge: a straight line through center stage (give or take a
+  // little), from wherever along the edge it came in.
+  var cx = W / 2 + (Math.random() - 0.5) * 30, cy = H / 2 + (Math.random() - 0.5) * 30;
+  var a = Math.atan2(cy - g.iy, cx - g.ix);
   g.dx = Math.cos(a); g.dy = Math.sin(a);
   g.face = g.dx >= 0 ? 1 : -1;
   if (side === "bottom") g.face = Math.random() < 0.5 ? 1 : -1; // (side on to us while it runs up)
