@@ -1480,8 +1480,24 @@ function playKoPunch() {
     playSlam();
     // Joe's baseball bat crack; the synth crack stands in if it isn't loaded.
     playClip("impactPunch2", 1.3) || withClip("impactPunch2");
+    auraCowbell(ctx, now + 0.01);
     if (!playClip("batCrack", 1.4)) { withClip("batCrack"); auraCrack(ctx, now + 0.005); }
   } catch (e) { /* never let audio break the game */ }
+}
+// A little cowbell clank on the bull: two detuned square waves through a
+// band-pass, with a quick metallic decay.
+function auraCowbell(ctx, t) {
+  var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2640; bp.Q.value = 1.4;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.9, t + 0.003);
+  g.gain.exponentialRampToValueAtTime(0.25, t + 0.06);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+  bp.connect(g); g.connect(ctx.destination);
+  [587, 845].forEach(function (f) {
+    var o = ctx.createOscillator(); o.type = "square"; o.frequency.value = f;
+    o.connect(bp); o.start(t); o.stop(t + 0.5);
+  });
 }
 // A huge, sharp CRACK, like a bat on a fastball: a near-instant broadband
 // snap, a bright woody ring, and a slapback off the arena roof.
