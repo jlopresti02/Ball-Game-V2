@@ -170,6 +170,7 @@ function updateGoatStampede(self, other, dt) {
     jonGoats = [];
     floater(self.x, self.y - self.r - 26, "GOAT STAMPEDE", "crit");
     playJonModeSwap("goat"); playJonModeSwap("evil");
+    playJonBaa(); // he baas as he floats up (Joe's clip)
   }
   var m = self.igbb;
   m.t += dt; m.all += dt;
