@@ -154,7 +154,7 @@ function guilloNotFinished(self, atk, g) {
 // Lets go: the fight carries on, and the defender can't go for another
 // guillotine for a while.
 function releaseGuillotine(self, atk, g) {
-  self.guilloCd = self.char.guillotine.cooldown;
+  self.guilloCd = self.char.guillotine ? self.char.guillotine.cooldown : 0;
   atk.grappleCd = atk.char.grapple ? atk.char.grapple.cooldown : 0;
   endGuillotine(self);
 }

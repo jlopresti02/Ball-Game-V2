@@ -1633,3 +1633,31 @@ function playHoof() {
     caneBurst(ctx, now, 500, 1.2, 0.12, 0.04);
   } catch (e) { /* never let audio break the game */ }
 }
+
+// Jon Jones swapping modes (jon.js): GOAT is a bright rising shimmer, EVIL
+// a low growling hit with a dark rumble under it.
+function playJonModeSwap(mode) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, out = ctx.createGain();
+    out.gain.value = 0.5; out.connect(ctx.destination);
+    if (mode === "goat") {
+      [880, 1320, 1760].forEach(function (f, i) {
+        var o = ctx.createOscillator(), g = ctx.createGain(), t = now + i * 0.06;
+        o.type = "triangle"; o.frequency.setValueAtTime(f * 0.92, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.08);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+        o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.55);
+      });
+    } else {
+      var o2 = ctx.createOscillator(), g2 = ctx.createGain(), lp = ctx.createBiquadFilter();
+      o2.type = "sawtooth"; o2.frequency.setValueAtTime(110, now); o2.frequency.exponentialRampToValueAtTime(48, now + 0.5);
+      lp.type = "lowpass"; lp.frequency.value = 700;
+      g2.gain.setValueAtTime(0.0001, now); g2.gain.exponentialRampToValueAtTime(0.7, now + 0.02); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+      o2.connect(lp); lp.connect(g2); g2.connect(out); o2.start(now); o2.stop(now + 0.65);
+      if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+      synthPunch(ctx, out, now, 0.8, punchNoise);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}

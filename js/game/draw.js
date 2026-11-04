@@ -306,7 +306,8 @@ function draw() {
     drawAuraFarm(b);    // Ilia dancing, with the cape, KOing and lifting the bull
     drawAaSlashes(b);   // eagle claw marks on whoever's out on the road
     drawMock(b);    // and his thumbs down
-    drawCheater(b); // Gane cheating
+    drawCheater(b); // Gane cheating (and EVIL Jon Jones's eye poke)
+    drawJonGlow(b); // Jon Jones's chest tattoo glowing gold or red
     drawHerbDeanSpecial(b); // and his bat during his special
     drawPokeStun(b);
     drawAngry(b);   // fuming at it

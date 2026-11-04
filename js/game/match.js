@@ -26,6 +26,7 @@ var winBy = null; // how the fight was won, when it isn't a knockout (e.g. "subm
 function stagger() { return 0.6 + Math.random() * 0.8; }
 
 function makeBall(id, ch) {
+  if (ch.jon) ch = jonCharCopy(ch); // Jon Jones swaps modes on his own copy (jon.js)
   var b = {
     id: id, char: ch,
     x: id === 0 ? W * 0.27 : W * 0.73,
@@ -44,6 +45,7 @@ function makeBall(id, ch) {
     hokitShot: null, shotRollCd: 0, mock: null, mockCd: (ch.thumbsDown ? ch.thumbsDown.cooldown : 8) * stagger(), angry: null
   };
   applyWeight(b); // size, speed and attack speed for its weight class (weight.js)
+  initJon(b);
   return b;
 }
 

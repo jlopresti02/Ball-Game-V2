@@ -56,8 +56,11 @@ function tryWeave(b, attackerId, mult) {
         beginCombo(b, atk);
       }
     } else {
-      floater(b.x, b.y - b.r - 8, "CRITICAL WEAVE", "crit");
-      beginCombo(b, atk);
+      // EVIL Jon Jones pokes them in the eye instead (jon.js).
+      if (!jonEvilPoke(b, atk)) {
+        floater(b.x, b.y - b.r - 8, "CRITICAL WEAVE", "crit");
+        beginCombo(b, atk);
+      }
     }
   } else {
     floater(b.x, b.y - b.r - 8, "WEAVE", "dodge");
