@@ -300,8 +300,13 @@ function tickGoats(self, other, dt) {
 function goatRam(self, other, g) {
   g.hit = true;
   var dealt = hurt(other, self.char.special.goatDamage, "igbb", self.id);
-  other.vx = g.dx * 520 + (Math.random() - 0.5) * 80; other.vy = g.dy * 520 + (Math.random() - 0.5) * 80;
-  other.knockFly = 0.5;
+  // Sent flying, pinballing violently off the walls (the power punch's wall
+  // slam, abilities.js), taking damage on every wall.
+  if (other.alive && !other.grappled && !other.grapple) {
+    var ka = Math.atan2(g.dy, g.dx) + (Math.random() - 0.5) * 0.5;
+    var sp = self.char.special;
+    beginWallSlam(other, Math.cos(ka), Math.sin(ka), { knockback: sp.ramSpeed, wallSlams: sp.ramWalls, slamDamage: sp.ramWallDamage });
+  }
   other.squash = { t: 0.2, max: 0.2, nx: g.dx, ny: g.dy }; other.flash = 0.16;
   floater(other.x, other.y - other.r - 30, "RAMMED!", "crit");
   impacts.push({ x: other.x - g.dx * other.r, y: other.y - g.dy * other.r, nx: g.dx, ny: g.dy, life: 0.4, max: 0.4, color: self.char.color });

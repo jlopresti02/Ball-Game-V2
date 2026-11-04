@@ -4113,7 +4113,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
@@ -4318,7 +4318,10 @@ var SAVED_ROSTER = [
       "hitCut": 4,
       "goats": 8,
       "goatGap": 0.7,
-      "goatDamage": 22
+      "goatDamage": 22,
+      "ramSpeed": 1100,
+      "ramWalls": 3,
+      "ramWallDamage": 4
     }
   },
   {
@@ -9723,8 +9726,13 @@ function tickGoats(self, other, dt) {
 function goatRam(self, other, g) {
   g.hit = true;
   var dealt = hurt(other, self.char.special.goatDamage, "igbb", self.id);
-  other.vx = g.dx * 520 + (Math.random() - 0.5) * 80; other.vy = g.dy * 520 + (Math.random() - 0.5) * 80;
-  other.knockFly = 0.5;
+  // Sent flying, pinballing violently off the walls (the power punch's wall
+  // slam, abilities.js), taking damage on every wall.
+  if (other.alive && !other.grappled && !other.grapple) {
+    var ka = Math.atan2(g.dy, g.dx) + (Math.random() - 0.5) * 0.5;
+    var sp = self.char.special;
+    beginWallSlam(other, Math.cos(ka), Math.sin(ka), { knockback: sp.ramSpeed, wallSlams: sp.ramWalls, slamDamage: sp.ramWallDamage });
+  }
   other.squash = { t: 0.2, max: 0.2, nx: g.dx, ny: g.dy }; other.flash = 0.16;
   floater(other.x, other.y - other.r - 30, "RAMMED!", "crit");
   impacts.push({ x: other.x - g.dx * other.r, y: other.y - g.dy * other.r, nx: g.dx, ny: g.dy, life: 0.4, max: 0.4, color: self.char.color });
@@ -18072,7 +18080,7 @@ var SPECIAL_INFO = {
   dobronx: function (sp) { return "Double-biceps pose that blasts them away, \"Charrrles... Do... BRONX!\", every camera flashes and the arena turns Brazil themed for " + sp.duration + " seconds: " + (sp.damageMult || 2) + "x damage, takedowns every time, and every takedown goes into a submission."; },
   chairshot: function (sp) { return "Pulls a folding chair from under the ring, charges them down and swings it over their head for " + sp.damage + " (can't be weaved or blocked), leaving them dazed for " + sp.dazeTime + "s. Then hurls the chair into the stands and runs a lap celebrating."; },
   herbdean: function (sp) { return "The ref falls asleep and blind Herb Dean barges in through the crowd with his cane. Gane beats them with a bat (" + sp.batDamage + " a swing), Herb whacks them with the cane (" + sp.caneDamage + "), and a last bat swing does " + sp.finisher + "."; },
-  goatstampede: function (sp) { return "Floats up into the air, his tattoo flickering gold and red, and summons " + sp.goats + " goats. Each runs in through the crowd, leaps the fence and charges straight across the cage through center stage, down a lane shown in red first (" + sp.goatDamage + " if it rams them). The lanes are random, so they can be dodged by being somewhere else."; },
+  goatstampede: function (sp) { return "Floats up into the air, his tattoo flickering gold and red, and summons " + sp.goats + " goats. Each runs in through the crowd, leaps the fence and charges straight across the cage through center stage, down a lane shown in red first (" + sp.goatDamage + " if it rams them, then they pinball off " + sp.ramWalls + " walls for " + sp.ramWallDamage + " each). The lanes are random, so they can be dodged by being somewhere else."; },
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }
 };
 
