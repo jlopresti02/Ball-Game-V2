@@ -160,7 +160,7 @@ function updateAuraFarm(self, other, dt) {
       bull.vx = (kpx * 0.8 + hx / hd * 0.6) * 560; bull.vy = (kpy * 0.8 + hy / hd * 0.6) * 560;
       m.phase = "ko"; m.t = 0; m.punchT = 0;
       floater(bull.x, bull.y - AF_BULL_R - 30, "KO!", "crit");
-      playSlam(); playPunch(40); playBullThrown(0.85); // Joe's bull sound, pitched a little lower
+      playKoPunch(); playBullThrown(0.85); // Joe's bull sound, pitched a little lower
       screenFlash = Math.max(screenFlash, 0.5);
       hitStop = Math.max(hitStop, 0.18);
       if (!reduceMotion) shake = Math.max(shake, 26);
@@ -296,8 +296,7 @@ function auraBullEnters(self, other) {
   var lx = Math.max(90, Math.min(W - 90, W / 2 - (other.x - W / 2) * 0.6));
   aura.bull = { x: lx + (Math.random() - 0.5) * 60, y: afOffY(), z: 0, t: 0, phase: "run", gx: lx, face: other.x >= lx ? 1 : -1,
     spin: 0, ko: false, alpha: 1, hoof: 0 };
-  floater(W / 2, H - 60, "A BULL?!", "note");
-  playBullSnort();
+  floater(W / 2, H - 60, "A BULL?!", "note"); // (silent until it charges: Joe wants the roar first)
 }
 
 function tickAuraBull(self, other, dt) {
@@ -359,7 +358,7 @@ function tickAuraBull(self, other, dt) {
     auraKeepIn(b);
     if (!reduceMotion && Math.random() < 0.5) auraDust(b.x, b.y + AF_BULL_R * 0.8, 1);
     var want = self.x >= b.x ? 1 : -1;
-    if (b.t > 0.45 && b.face !== want) { b.face = want; playBullSnort(); }
+    if (b.t > 0.45 && b.face !== want) b.face = want;
     if (b.t > 0.6 && Math.floor(b.t / 0.35) !== Math.floor((b.t - dt) / 0.35)) { auraDust(b.x - b.face * AF_BULL_R * 0.5, b.y + AF_BULL_R * 0.85, 4); auraSteam(b); }
     if (b.t >= AF_TURN) {
       var ix = self.x - b.x, iy = self.y - b.y, id = Math.sqrt(ix * ix + iy * iy) || 1;

@@ -1453,6 +1453,23 @@ function playBullCharge() {
     if (!playClip("bullCharge", 0.85)) { withClip("bullCharge"); playBullSnort(); }
   } catch (e) { /* never let audio break the game */ }
 }
+// Ilia's KO punch on the bull: a full-weight punch, boosted well over a
+// normal one, with a crit-punch crack and a slam under it.
+function playKoPunch() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, g = ctx.createGain();
+    g.gain.value = 2.4;
+    g.connect(ctx.destination);
+    if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+    synthPunch(ctx, g, now, 1, punchNoise);
+    synthPunch(ctx, g, now + 0.012, 1, punchNoise);
+    playCritPunch(true);
+    playSlam();
+  } catch (e) { /* never let audio break the game */ }
+}
 // A heel stomp on the canvas.
 function playStomp() {
   try {
