@@ -1936,7 +1936,7 @@ function stopTalk() {
 // seconds in. The clip's own crowd fades out after a few seconds, and the
 // looping crowd takes over going wild for as long as the Do Bronx state lasts.
 var DO_BRONX_HIT = 3.0;
-var doBronxSrc = null;
+var doBronxSrc = null, doBronxMusicTimer = 0;
 function playDoBronx() {
   try {
     var ctx = getAudioCtx();
@@ -1944,13 +1944,19 @@ function playDoBronx() {
     if (ctx.state === "suspended") ctx.resume();
     stopDoBronx();
     doBronxSrc = cutInTalk("doBronx", 0.85);
-    holdMusicOff(); // Do Bronx brings its own music (music.js)
     var buf = clipBuffers.doBronx;
+    // The background music goes off for the clip and comes back as soon as
+    // it's finished (Joe; music.js).
+    holdMusicOff();
+    var token = doBronxSrc;
+    clearTimeout(doBronxMusicTimer);
+    doBronxMusicTimer = setTimeout(function () { if (doBronxSrc === token) releaseMusic(); }, (buf ? buf.duration : DO_BRONX_HIT) * 1000);
     // Take over just as the clip starts fading.
     crowdHold(buf ? buf.duration - 1.4 : DO_BRONX_HIT);
   } catch (e) { /* never let audio break the game */ }
 }
 function stopDoBronx() {
+  clearTimeout(doBronxMusicTimer);
   if (!doBronxSrc) return;
   try { doBronxSrc.stop(); } catch (e) { /* already stopped */ }
   doBronxSrc = null;
@@ -3362,18 +3368,20 @@ function duckMusic(at, until) {
     g.setTargetAtTime(m.level, until, 0.3);
   } catch (e) { /* never let audio break the game */ }
 }
-// Charles's Do Bronx has its own music (the clip and the Brazil crowd), so
-// the background music fades out for it and comes back after the closing
-// pose (Joe). While it's off, talking clips don't bring it back.
-function holdMusicOff() {
+// Charles's "Charrrles... Do... BRONX" clip has its own music, so the
+// background music fades out for it and comes back once it's finished
+// (Joe). While it's off, talking clips don't bring it back.
+// `at`: when to fade (audio clock), default now.
+function holdMusicOff(at) {
   var m = music;
   if (!m) return;
   m.off = true;
   if (!m.gain) return;
   try {
-    var now = audioCtx.currentTime, g = m.gain.gain;
+    var now = audioCtx.currentTime, g = m.gain.gain, t = Math.max(now, at || 0);
     g.cancelScheduledValues(now);
-    g.setTargetAtTime(0.0001, now, 0.25);
+    g.setValueAtTime(m.level, now);
+    g.setTargetAtTime(0.0001, t, 0.25);
   } catch (e) { /* never let audio break the game */ }
 }
 function releaseMusic() {

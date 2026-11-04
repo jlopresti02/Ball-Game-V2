@@ -535,18 +535,20 @@ function duckMusic(at, until) {
     g.setTargetAtTime(m.level, until, 0.3);
   } catch (e) { /* never let audio break the game */ }
 }
-// Charles's Do Bronx has its own music (the clip and the Brazil crowd), so
-// the background music fades out for it and comes back after the closing
-// pose (Joe). While it's off, talking clips don't bring it back.
-function holdMusicOff() {
+// Charles's "Charrrles... Do... BRONX" clip has its own music, so the
+// background music fades out for it and comes back once it's finished
+// (Joe). While it's off, talking clips don't bring it back.
+// `at`: when to fade (audio clock), default now.
+function holdMusicOff(at) {
   var m = music;
   if (!m) return;
   m.off = true;
   if (!m.gain) return;
   try {
-    var now = audioCtx.currentTime, g = m.gain.gain;
+    var now = audioCtx.currentTime, g = m.gain.gain, t = Math.max(now, at || 0);
     g.cancelScheduledValues(now);
-    g.setTargetAtTime(0.0001, now, 0.25);
+    g.setValueAtTime(m.level, now);
+    g.setTargetAtTime(0.0001, t, 0.25);
   } catch (e) { /* never let audio break the game */ }
 }
 function releaseMusic() {

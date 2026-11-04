@@ -753,7 +753,7 @@ function stopTalk() {
 // seconds in. The clip's own crowd fades out after a few seconds, and the
 // looping crowd takes over going wild for as long as the Do Bronx state lasts.
 var DO_BRONX_HIT = 3.0;
-var doBronxSrc = null;
+var doBronxSrc = null, doBronxMusicTimer = 0;
 function playDoBronx() {
   try {
     var ctx = getAudioCtx();
@@ -761,13 +761,19 @@ function playDoBronx() {
     if (ctx.state === "suspended") ctx.resume();
     stopDoBronx();
     doBronxSrc = cutInTalk("doBronx", 0.85);
-    holdMusicOff(); // Do Bronx brings its own music (music.js)
     var buf = clipBuffers.doBronx;
+    // The background music goes off for the clip and comes back as soon as
+    // it's finished (Joe; music.js).
+    holdMusicOff();
+    var token = doBronxSrc;
+    clearTimeout(doBronxMusicTimer);
+    doBronxMusicTimer = setTimeout(function () { if (doBronxSrc === token) releaseMusic(); }, (buf ? buf.duration : DO_BRONX_HIT) * 1000);
     // Take over just as the clip starts fading.
     crowdHold(buf ? buf.duration - 1.4 : DO_BRONX_HIT);
   } catch (e) { /* never let audio break the game */ }
 }
 function stopDoBronx() {
+  clearTimeout(doBronxMusicTimer);
   if (!doBronxSrc) return;
   try { doBronxSrc.stop(); } catch (e) { /* already stopped */ }
   doBronxSrc = null;
