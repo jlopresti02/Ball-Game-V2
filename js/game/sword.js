@@ -2,19 +2,20 @@
 //
 // In Diamond Guard, whenever the other fighter has one of the weapons in
 // diamond.swordClash.weapons out (Gane's bat, in Cheater mode), Dustin
-// pulls out a diamond sword. He holds it front on, like Gane holds the bat,
-// and his whole body moves with it:
-//   ready     sword arm out toward them, the tip tracing a slow figure
-//             eight, bouncing on his toes, now and then a quick feint
-//   walking   blade trailing low behind him, leaning into the run
-//   flourish  stood still, he shows off: a double twirl, tossing it up
-//             spinning and catching it, or a salute (blade up past his face,
-//             then swept down)
-//   guard     as their swing winds up, he sinks back and raises it across
+// pulls out a diamond sword: a big two-handed longsword (Joe asked for
+// "less rapier, more Braveheart"). Both hands on a long grip, heavy swings
+// with his whole body behind them:
+//   ready     high guard, blade raised up over his shoulder, swaying with
+//             its weight; when they're close he heaves it back, threatening
+//   walking   blade carried up on his shoulder, leaning into the run
+//   flourish  stood still: hoisting it straight up over his head with a
+//             roar, a huge windmill swing round his body, or planting the
+//             tip in the mat and leaning on the pommel
+//   guard     as their swing winds up, he raises it across to take the hit
 //   parry     he twists into the hit, the blade slams the bat away and
-//             shudders, then a riposte flick
-// Every pose is a target the hand and blade ease toward, so they flow from
-// one to the next instead of snapping, and fast blade moves leave a trail.
+//             shudders, then he chops back down at them
+// Every pose is a target the hands and blade ease toward (slowly: it's
+// heavy), so they flow from one to the next, and fast swings leave a trail.
 //
 // Each swing that would land has parryChance% to be parried (decided as the
 // swing starts, so he can raise his guard in time): no damage, the swing is
@@ -28,7 +29,7 @@
 // them with a delayed Diamond Slash.
 "use strict";
 
-var SWORD_DRAW = 0.35, SWORD_PUT_AWAY = 0.3, SWORD_SLASH = 0.5, SWORD_LEN = 2.2;
+var SWORD_DRAW = 0.35, SWORD_PUT_AWAY = 0.3, SWORD_SLASH = 0.5, SWORD_LEN = 2.6;
 var swordDuel = null;   // the duel, while it's on
 var flyingBats = [];    // bats knocked out of someone's hands
 var clashFlashes = [];  // star flashes where the weapons meet
@@ -50,37 +51,42 @@ function wrapA(a) { return Math.atan2(Math.sin(a), Math.cos(a)); }
 // ---------------------------------------------------------------- holding it
 
 // Ball units, x measured toward the sword side: hand x/y, blade angle (for
-// the sword side on screen right; mirrored for the left), free glove x/y,
+// the sword side on screen right; mirrored for the left), two spare slots,
 // and his body leaning toward them (+) or back (-).
 function swordTarget(b, sw, other) {
   var t = sw.t + b.id * 1.3, sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   var swingIn = other && other.chAct && other.chAct.kind === "bat" && sw.actRef === other.chAct && sw.willParry;
   if (sw.parry >= 0) {
     var p = sw.parry / SWORD_SLASH;
-    if (p < 0.55) return { key: "parry", rate: 34, p: [1.25, -0.2, -Math.PI / 2 + 1.05, -0.35, -0.05, 0.22] };
-    return { key: "riposte", rate: 20, p: [1.3, 0.0, -0.15, -0.5, 0.1, 0.3] }; // flicks it out at them
+    if (p < 0.45) return { key: "parry", rate: 26, p: [0.85, -0.42, -Math.PI / 2 + 0.3, 0, 0, 0.2] }; // blade upright, taking the hit
+    return { key: "riposte", rate: 13, p: [1.0, 0.2, 0.8, 0, 0, 0.32] }; // a heavy chop back down at them
   }
-  if (swingIn) return { key: "guard", rate: 18, p: [0.95, -0.32, -Math.PI / 2 + 0.5, -0.3, -0.1, -0.12] };
-  if (sp > 70) {
+  if (swingIn) return { key: "guard", rate: 14, p: [0.7, -0.5, -0.3, 0, 0, -0.1] }; // raised across, both hands
+  if (sp > 70) { // carried up on his shoulder
     var step = Math.abs(Math.sin(t * 9)), lean = Math.min(1, sp / 300);
-    return { key: "walk", rate: 7, p: [0.55, 0.25 - step * 0.06, Math.PI / 2 + 0.9 - lean * 0.35, -0.5, 0.1 - step * 0.05, 0.05 * lean] };
+    return { key: "walk", rate: 5, p: [0.4, 0.05 - step * 0.05, -Math.PI / 2 - 0.45 + step * 0.06, 0, 0, 0.06 * lean] };
   }
-  // Ready: the tip tracing a slow figure eight, bouncing on his toes.
-  var f8a = Math.sin(t * 2.6), f8b = Math.sin(t * 5.2), bob = Math.abs(Math.sin(t * 4.4));
-  return { key: "ready", rate: 9, p: [0.98 + f8b * 0.05, 0.05 - bob * 0.06, -Math.PI / 2 + 0.85 + f8a * 0.22, -0.5, 0.06 - bob * 0.04, 0] };
+  // High guard: raised over his shoulder, swaying with the weight.
+  var sway = Math.sin(t * 1.7), breath = Math.sin(t * 3.1);
+  return { key: "ready", rate: 6, p: [0.55 + sway * 0.04, -0.05 + breath * 0.03, -Math.PI / 2 + 0.3 + sway * 0.12, 0, 0, sway * 0.03] };
 }
 
-// The flourishes he does when he's stood still. Each returns additions to
-// the pose (and how high the sword's been tossed) at u = 0..1.
+// The flourishes he does when he's stood still, at u = 0..1.
+// Each returns w (0..1, how far into the move's own pose), that pose's hand
+// x/y and blade angle, and any extra spin or lean.
 var SWORD_FLOURISHES = {
-  twirl: { dur: 0.85, f: function (u) { return { spin: ease(u) * Math.PI * 4 }; } },
-  toss: { dur: 1.05, f: function (u) {
-    var a = Math.max(0, Math.min(1, (u - 0.1) / 0.75));
-    return { toss: 4 * a * (1 - a) * 1.7, spin: a * Math.PI * 4, catchDip: u > 0.85 ? Math.sin((u - 0.85) / 0.15 * Math.PI) * 0.12 : 0 };
+  hoist: { dur: 1.4, f: function (u) { // straight up over his head, roaring
+    var w = u < 0.3 ? ease(u / 0.3) : u < 0.8 ? 1 : 1 - ease((u - 0.8) / 0.2);
+    return { w: w, hx: 0.1, hy: -1.0 + Math.sin(u * 30) * 0.02 * w, a: -Math.PI / 2, lean: -0.08 * w };
   } },
-  salute: { dur: 1.2, f: function (u) {
-    var up = u < 0.35 ? ease(u / 0.35) : u < 0.7 ? 1 : 1 - ease((u - 0.7) / 0.3);
-    return { salute: up, sweep: u > 0.7 ? Math.sin((u - 0.7) / 0.3 * Math.PI) : 0 };
+  windmill: { dur: 1.15, f: function (u) { // one huge swing right round his body
+    var w = u < 0.15 ? ease(u / 0.15) : u < 0.85 ? 1 : 1 - ease((u - 0.85) / 0.15);
+    var sp = ease((u - 0.1) / 0.75) * Math.PI * 2;
+    return { w: w, hx: 0.55 * Math.cos(sp - 0.4), hy: -0.15 + 0.35 * Math.sin(sp - 0.4), a: -Math.PI / 2 + 0.3, spin: sp, lean: 0.1 * Math.sin(sp) };
+  } },
+  plant: { dur: 1.9, f: function (u) { // tip in the mat, leaning on the pommel
+    var w = u < 0.25 ? ease(u / 0.25) : u < 0.8 ? 1 : 1 - ease((u - 0.8) / 0.2);
+    return { w: w, hx: 0.75, hy: 0.0, a: Math.PI / 2 - 0.12, lean: 0.06 * w };
   } }
 };
 
@@ -119,14 +125,14 @@ function tickDiamondSword(b, dt) {
   sw.still = sp < 70 && !busy ? sw.still + dt : 0;
   if (sw.fl) { sw.fl.t += dt; if (sw.fl.t > SWORD_FLOURISHES[sw.fl.kind].dur || busy) sw.fl = null; }
   else if (sw.still > 1.1 && Math.random() < dt * 0.9) {
-    var kinds = ["twirl", "toss", "salute"], kind = kinds[Math.floor(Math.random() * 3)];
+    var kinds = ["hoist", "windmill", "plant"], kind = kinds[Math.floor(Math.random() * 3)];
     if (kind === sw.lastFl) kind = kinds[(kinds.indexOf(kind) + 1) % 3];
     sw.fl = { kind: kind, t: 0 }; sw.lastFl = kind; sw.still = 0;
   }
   // A quick feint at them now and then, when they're close.
   var dd = Math.sqrt((o.x - b.x) * (o.x - b.x) + (o.y - b.y) * (o.y - b.y));
   sw.feintCd -= dt;
-  if (sw.feint >= 0) { sw.feint += dt; if (sw.feint > 0.4) sw.feint = -1; }
+  if (sw.feint >= 0) { sw.feint += dt; if (sw.feint > 0.6) sw.feint = -1; }
   else if (!busy && !sw.fl && sw.feintCd <= 0 && dd < b.r + o.r + 160) { sw.feint = 0; sw.feintCd = 2.5 + Math.random() * 2.5; }
   // Eases the pose toward its target.
   var tg = swordTarget(b, sw, o);
@@ -148,18 +154,13 @@ function swordDrawPose(b, sw) {
   var hx = ps[0], hy = ps[1], a = ps[2], fx = ps[3], fy = ps[4], lean = ps[5], toss = 0, twist = 0;
   if (sw.fl) {
     var F = SWORD_FLOURISHES[sw.fl.kind].f(sw.fl.t / SWORD_FLOURISHES[sw.fl.kind].dur);
-    if (F.spin) a += F.spin;
-    if (F.toss) toss = F.toss;
-    if (F.catchDip) hy += F.catchDip;
-    if (F.salute) { // blade straight up in front of his face
-      hx += (0.25 - hx) * F.salute; hy += (-0.55 - hy) * F.salute;
-      a += wrapA(-Math.PI / 2 - a) * F.salute;
-    }
-    if (F.sweep) { a += F.sweep * 1.6; hx += F.sweep * 0.3; }
+    hx += (F.hx - hx) * F.w; hy += (F.hy - hy) * F.w;
+    a += wrapA(F.a - a) * F.w + (F.spin || 0);
+    lean += F.lean || 0;
   }
-  if (sw.feint >= 0) { // a sharp stab at them and back
-    var fu = sw.feint / 0.4, fk = fu < 0.35 ? easeOut(fu / 0.35) : 1 - ease((fu - 0.35) / 0.65);
-    hx += 0.45 * fk; a += wrapA(-0.1 - a) * fk; lean += 0.18 * fk;
+  if (sw.feint >= 0) { // heaving it back over his shoulder, threatening a big swing
+    var fu = sw.feint / 0.6, fk = fu < 0.45 ? easeOut(fu / 0.45) : 1 - ease((fu - 0.45) / 0.55);
+    hx -= 0.2 * fk; hy -= 0.25 * fk; a += wrapA(-Math.PI / 2 - 0.9 - a) * fk; lean += 0.14 * fk;
   }
   if (sw.parry >= 0) {
     var pp = sw.parry / SWORD_SLASH;
@@ -500,16 +501,6 @@ function drawDuelShadow() {
   ctx.restore();
 }
 
-function drawSwordImg(im, x, y, ang, len, k, alpha) {
-  ctx.save();
-  ctx.globalAlpha *= alpha;
-  ctx.translate(x, y); ctx.rotate(ang + Math.PI / 4); ctx.scale(k, k);
-  ctx.imageSmoothingEnabled = false;
-  var u = len / (13 * Math.SQRT2); // 16 px image: grip at (2.5, 13.5), tip at (15.5, 0.5)
-  ctx.drawImage(im, -2.5 * u, -13.5 * u, 16 * u, 16 * u);
-  ctx.restore();
-}
-
 // Ghost copies of a fast-moving blade (or bat), fading behind it.
 function drawTrail(trail, fn) {
   for (var i = 0; i < trail.length - 1; i++) {
@@ -537,7 +528,7 @@ function drawDiamondSword(b, other, top) {
   if (!im || !sw.pose) return;
   var r = b.r, len = r * SWORD_LEN, k = 1, alpha = 1;
   var pz = inDuel ? duelSwordPose(b, swordDuel) : swordDrawPose(b, sw);
-  var hand = pz.hand, ang = pz.ang, free = pz.free, s = pz.side != null ? pz.side : sw.side;
+  var hand = pz.hand, ang = pz.ang, s = pz.side != null ? pz.side : sw.side;
   if (!inDuel && sw.out && sw.t < SWORD_DRAW) { // pulled out: swings up from his side
     var e = easeOut(sw.t / SWORD_DRAW);
     ang += (1 - e) * 2.4 * (s > 0 ? 1 : -1); k = 0.4 + 0.6 * e; alpha = e;
@@ -545,17 +536,42 @@ function drawDiamondSword(b, other, top) {
   if (!sw.out) { alpha = Math.max(0, 1 - sw.outT / SWORD_PUT_AWAY); k = 1 - 0.5 * (1 - alpha); }
   var sideK = Math.max(-1, Math.min(1, s * 1.5)); // shoulders swap smoothly as the side does
   var sh = { x: b.x + 0.66 * sideK * r, y: b.y - 0.3 * r }, fsh = { x: b.x - 0.66 * sideK * r, y: b.y - 0.3 * r };
-  // Where the sword itself is: in his hand, or up in the air mid toss.
-  var sx = hand.x, sy = hand.y - (pz.toss || 0) * r;
+  // Two hands on a long grip: the lead hand up by the crossguard, the other
+  // below it toward the pommel.
+  var ca = Math.cos(ang), sa = Math.sin(ang);
+  var h1 = { x: hand.x + ca * len * 0.035, y: hand.y + sa * len * 0.035 }, h2 = { x: hand.x - ca * len * 0.12, y: hand.y - sa * len * 0.12 };
   ctx.save();
   ctx.globalAlpha *= alpha;
-  if (!b.punch) { drawBentArm(b, fsh, free, -sideK || -1); drawGloveAt(free.x, free.y, r * 0.22, b.char); }
-  drawBentArm(b, sh, hand, sideK || 1);
+  drawBentArm(b, fsh, h2, -sideK || -1);
+  drawBentArm(b, sh, h1, sideK || 1);
   if (inDuel && swordDuel.slashLine && swordDuel.done) drawSlashLine(b, swordDuel);
-  drawTrail(sw.trail, function (g, a) { drawSwordImg(im, g.x, g.y, g.ang, len, k, a); });
-  drawSwordImg(im, sx, sy, ang, len, k, 1);
-  pushTrail(sw.trail, sx, sy, ang);
-  drawGloveAt(hand.x, hand.y, r * 0.24, b.char, pz.toss > 0.2 ? -Math.PI / 2 : ang);
+  drawTrail(sw.trail, function (g, a) { drawLongsword(im, g.x, g.y, g.ang, len, k, a); });
+  drawLongsword(im, hand.x, hand.y, ang, len, k, 1);
+  pushTrail(sw.trail, hand.x, hand.y, ang);
+  drawGloveAt(h2.x, h2.y, r * 0.21, b.char, ang);
+  drawGloveAt(h1.x, h1.y, r * 0.22, b.char, ang);
+  ctx.restore();
+}
+
+// The diamond sword with its grip lengthened for two hands: a wrapped
+// handle and a diamond pommel behind the picture's own hilt. (x, y) is the
+// middle of the grip.
+function drawLongsword(im, x, y, ang, len, k, alpha) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.translate(x, y); ctx.rotate(ang); ctx.scale(k, k);
+  var L = len * 0.2, w = len * 0.05;
+  ctx.fillStyle = "#281e0b"; ctx.fillRect(-L, -w * 0.5 - 1.5, L + len * 0.1, w + 3);
+  ctx.fillStyle = "#684e1e"; ctx.fillRect(-L, -w * 0.5, L + len * 0.1, w);
+  ctx.fillStyle = "#89672a"; for (var i = 0; i < 5; i++) ctx.fillRect(-L + (L + len * 0.08) * i / 5, -w * 0.5, w * 0.35, w); // wraps
+  ctx.fillStyle = "#081f1b"; ctx.fillRect(-L - w * 1.4, -w * 1.05, w * 1.5, w * 2.1); // pommel
+  ctx.fillStyle = "#0e3f36"; ctx.fillRect(-L - w * 1.2, -w * 0.85, w * 1.1, w * 1.7);
+  ctx.fillStyle = DIAMOND_C.L; ctx.fillRect(-L - w * 1.0, -w * 0.6, w * 0.55, w * 0.55);
+  // The picture's own short hilt is cut off: only crossguard and blade.
+  ctx.beginPath(); ctx.rect(len * 0.07, -len, len * 1.2, len * 2); ctx.clip();
+  ctx.rotate(Math.PI / 4); ctx.imageSmoothingEnabled = false;
+  var u = len / (13 * Math.SQRT2); // 16 px image: grip at (2.5, 13.5), tip at (15.5, 0.5)
+  ctx.drawImage(im, -2.5 * u, -13.5 * u, 16 * u, 16 * u);
   ctx.restore();
 }
 
@@ -566,10 +582,10 @@ function duelSwordPose(b, sd) {
   if (sd.done) S = { ux: sd.ux, uy: sd.uy, cy: -0.3, dir: 1, wind: 0, spin: 0, B: { bt: DUEL_BEATS[7] } };
   else S = duelState(sd, sd.t);
   var nx = S.ux, ny = S.uy, side = nx >= 0 ? 1 : -1;
-  var hand = { x: b.x + nx * r * 0.95, y: b.y + ny * r * 0.95 - r * 0.2 - (sd.lift || 0) * r };
+  var hand = { x: b.x + nx * r * 0.8, y: b.y + ny * r * 0.8 - r * 0.15 - (sd.lift || 0) * r };
   var c = duelContact(sd, S, S.cy);
   var aim = Math.atan2(c.y - hand.y, c.x - hand.x);
-  var ang = aim - S.dir * 1.35 * S.wind * side;
+  var ang = aim - S.dir * 1.8 * S.wind * side; // big, heavy two-handed arcs
   if (S.B.bt.k === "spin" && S.spin) ang = aim - (Math.PI * 2 - S.spin) * side; // the full circle, landing on the hit
   if (S.B.bt.k === "leap" && !sd.done && S.wind > 1) ang = -Math.PI / 2 - 0.9 * side; // raised high overhead
   if (sd.done) {
