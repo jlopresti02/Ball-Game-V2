@@ -1534,6 +1534,79 @@ function playBullCharge(gain) {
     if (!playClip("bullCharge", gain || 0.85)) { withClip("bullCharge"); playBullSnort(); }
   } catch (e) { /* never let audio break the game */ }
 }
+// Jon Jones's GOAT Stampede (jon.js): a goat ramming someone is a deep, heavy
+// thunder ram (Joe's pick "B3": horn crack, driven sub boom, long rumble),
+// and each wall they pinball off is a heavy bass thud with the cage clanging
+// and rattling ("A&B 2"). Both go through the strike bus, over the music.
+var GOAT_RAM_GAIN = 0.55, GOAT_WALL_GAIN = 0.6;
+function gtEnv(ctx, t, a, p, dec) { var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(p, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); return g; }
+var gtCurves = {};
+function gtDrive(ctx, amt) {
+  var sh = ctx.createWaveShaper();
+  if (!gtCurves[amt]) { var c = new Float32Array(1024); for (var i = 0; i < 1024; i++) { var x = i / 511.5 - 1; c[i] = Math.tanh(x * amt) / Math.tanh(amt); } gtCurves[amt] = c; }
+  sh.curve = gtCurves[amt]; return sh;
+}
+var gtNoiseBuf = null;
+function gtNoise(ctx, out, t, type, f, q, p, dec, a) {
+  if (!gtNoiseBuf || gtNoiseBuf.sampleRate !== ctx.sampleRate) gtNoiseBuf = makeNoiseBuffer(ctx, 2);
+  var s = ctx.createBufferSource(); s.buffer = gtNoiseBuf;
+  var fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+  var g = gtEnv(ctx, t, a || 0.001, p, dec);
+  s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random()); s.stop(t + (a || 0) + dec + 0.05);
+  return fl;
+}
+function gtSweep(ctx, out, t, type, f0, f1, glide, p, dec, drive) {
+  var o = ctx.createOscillator(); o.type = type;
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + glide);
+  var g = gtEnv(ctx, t, 0.002, p, dec);
+  if (drive) { var d = gtDrive(ctx, drive); o.connect(d); d.connect(g); } else o.connect(g);
+  g.connect(out); o.start(t); o.stop(t + dec + 0.05);
+}
+function playGoatRam() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var t = ctx.currentTime, k = 1, out = ctx.createGain();
+    out.gain.value = GOAT_RAM_GAIN; out.connect(strikeOut(ctx));
+    gtNoise(ctx, out, t, "highpass", 2500, 0.8, 0.9 * k, 0.04);          // horn crack
+    gtNoise(ctx, out, t + 0.004, "bandpass", 1800, 3, 0.7 * k, 0.07);
+    gtSweep(ctx, out, t, "sine", 140, 30, 0.22, 1.2 * k, 0.55, 8);         // driven body
+    gtSweep(ctx, out, t, "sine", 70, 22, 0.6, 1.1 * k, 1.1, 3);
+    gtSweep(ctx, out, t + 0.01, "triangle", 220, 45, 0.1, 0.6 * k, 0.18, 6);
+    var f = gtNoise(ctx, out, t, "lowpass", 400, 0.8, 1.0 * k, 1.6, 0.02);  // rolling rumble
+    f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(70, t + 1.6);
+    gtNoise(ctx, out, t + 0.12, "lowpass", 250, 0.7, 0.6 * k, 1.2, 0.15);
+    gtSweep(ctx, out, t + 0.04, "sine", 50, 25, 1.0, 0.8 * k, 1.4);
+    gtSweep(ctx, out, t, "sine", 90, 32, 0.3, 1.3 * k, 0.9, 4);           // heavy bass
+    gtSweep(ctx, out, t + 0.02, "sine", 45, 26, 0.8, 1.2 * k, 1.5, 2);
+    gtNoise(ctx, out, t, "lowpass", 120, 0.9, 1.2 * k, 0.9, 0.01);
+    crowdReact(0.6);
+  } catch (e) { /* never let audio break the game */ }
+}
+// k: 1 for the first wall, a little softer on each one after.
+function playGoatWall(k) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var t = ctx.currentTime, out = ctx.createGain();
+    out.gain.value = GOAT_WALL_GAIN * (k == null ? 1 : k); out.connect(strikeOut(ctx));
+    gtSweep(ctx, out, t, "sine", 140, 38, 0.2, 1.0, 0.35, 3);             // thud
+    gtNoise(ctx, out, t, "bandpass", 1800, 1, 0.55, 0.05);                // crack
+    gtNoise(ctx, out, t, "lowpass", 400, 0.7, 0.55, 0.3);
+    gtSweep(ctx, out, t, "sine", 85, 30, 0.25, 1.1, 0.45, 4);             // heavy bass
+    gtNoise(ctx, out, t, "lowpass", 150, 0.8, 0.8, 0.35);
+    [1, 2.32, 3.17, 4.56, 5.9].forEach(function (r, i) {                  // the cage clanging
+      gtSweep(ctx, out, t, "square", 310 * r, 310 * r * 0.995, 0.5, 0.22 / (i + 1.5), 0.5 * (1 - i * 0.12));
+    });
+    for (var i = 0; i < 20; i++) {                                         // and rattling
+      var tt = t + Math.pow(Math.random(), 1.6) * 0.45;
+      gtNoise(ctx, out, tt, "bandpass", 3200 * (0.7 + Math.random() * 0.8), 3, 0.28 * (1 - (tt - t) / 0.45 * 0.8), 0.025);
+    }
+    crowdReact(0.4);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // Ilia's KO punch on the bull: a full-weight punch, boosted well over a
 // normal one, with a crit-punch crack and a slam under it.
 function playKoPunch() {
