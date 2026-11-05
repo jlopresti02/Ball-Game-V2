@@ -86,6 +86,7 @@ function draw() {
   drawGuardZones(); // the circle round a fighter down in guard
   drawAuraRoses(false); // roses thrown on the mat (aurafarm.js)
   drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
+  drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -96,7 +97,7 @@ function draw() {
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
   // A bat swing goes over whoever it's hitting.
   (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
-    if (!b.alive) return;
+    if (!b.alive || duckHidden(b)) return; // (a duck, or up in the sky: drawDuckOver)
     var other = balls[1 - b.id];
 
     // Weaving slips the whole fighter sideways for a moment, and a taunting
@@ -339,6 +340,7 @@ function draw() {
   drawAuraRoses(true); // roses in the air
   drawAuraActors();    // the bull
   drawJonGoats();      // the goats (jon.js)
+  drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)
   drawSuplexes();
 
   projectiles.forEach(function (p) {

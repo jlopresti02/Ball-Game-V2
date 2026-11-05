@@ -114,7 +114,7 @@ function drawHands(b, other) {
   if (diamondHandsBusy(b)) return; // holding his diamond sword (drawDiamondSword, sword.js)
   if (b.igbb && b.igbb.move === "chairshot") return; // both hands on the chair (drawChairShot)
   if (b.igbb && b.igbb.move === "herbdean") return; // swinging the bat (drawHerbDeanSpecial)
-  if (jonHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
+  if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)
   if (allAmericanHandsBusy(b)) return; // the haymaker, or fists pumping (drawAllAmerican)
   if (herbCovering(b)) { drawHerbCover(b); return; } // covering up from the bat and the cane

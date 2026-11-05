@@ -414,12 +414,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
     "base": "Kicker",
-    "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 12 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): switches from kicks to punches, with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination. Special move: GOAT Stampede.",
+    "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 12 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): switches from kicks to punches, with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination. A few times a fight, at random, his tattoo flashes gold and red, he poofs into a duck and flies off the top of the screen, a red circle comes up in the middle of the ring, and he crashes down into it with his tattoo blazing red (Duck Drop: 45 damage and a big knockback, only to whoever's in the circle). Special move: GOAT Stampede.",
     "color": "#c9a227",
     "label": "",
     "imgData": null,
@@ -582,6 +582,23 @@ var SAVED_ROSTER = [
         "shortsStyle": "chevron",
         "gloves": "#151515",
         "beardChin": 0.12
+      },
+      "duck": {
+        "first": [
+          10,
+          16
+        ],
+        "every": [
+          16,
+          26
+        ],
+        "max": 3,
+        "radius": 130,
+        "warn": 1.6,
+        "damage": 45,
+        "knockback": 1700,
+        "wallSlams": 2,
+        "slamDamage": 5
       }
     },
     "look": {

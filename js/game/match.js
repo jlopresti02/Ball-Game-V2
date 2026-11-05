@@ -63,6 +63,7 @@ function startMatchWith(ch0, ch1) {
   resetAllAmerican();
   resetAuraFarm();
   resetJonGoats();
+  resetDuckDrop();
   resetCheater();
   resetHerbDean();
 
