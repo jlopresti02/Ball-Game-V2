@@ -14,14 +14,19 @@
 // touched while he's a duck or up in the sky.
 "use strict";
 
-var DD_FLICKER = 1.1, DD_DUCK = 0.8, DD_FLY = 1.0, DD_DROP = 0.32, DD_POSE = 0.85;
+var DD_FLICKER = 1.1, DD_DUCK = 0.8, DD_FLY = 1.0, DD_DROP = 0.6, DD_POSE = 1.35;
+var DD_KNEEL = 0.75, DD_RISE = 0.3; // in the pose: down on one knee, then up into a flex
 var duckPuffs = [];   // smoke and feathers from the poof
 var duckCrater = null; // the cracked mat after he lands
+var duckDebris = [];   // chunks of mat thrown up by the landing
 
-function resetDuckDrop() { duckPuffs = []; duckCrater = null; }
+function resetDuckDrop() { duckPuffs = []; duckCrater = null; duckDebris = []; }
 function duckDropOn(b) { return !!(b && b.igbb && b.igbb.move === "duckdrop"); }
 // Gone from the ring: a duck, or up off the top of the screen.
 function duckHidden(b) { return duckDropOn(b) && (b.igbb.phase === "duck" || b.igbb.phase === "fly" || b.igbb.phase === "warn"); }
+// Not drawn with the other fighters: hidden, or falling in from the top of
+// the screen over the stands and jumbotron (drawDuckSky).
+function duckDrawnApart(b) { return duckHidden(b) || (duckDropOn(b) && b.igbb.phase === "drop"); }
 function duckHandsBusy(b) { return duckDropOn(b) && b.igbb.phase === "pose"; }
 // Burning red like a superhero, from the drop to the end of the pose.
 function duckHeroic(b) { return duckDropOn(b) && (b.igbb.phase === "drop" || b.igbb.phase === "pose"); }
@@ -29,6 +34,17 @@ function duckHeroic(b) { return duckDropOn(b) && (b.igbb.phase === "drop" || b.i
 function ddRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
 // Just above the top of the screen, in arena units.
 function ddSkyY() { return stadiumOn() ? -(ST.AY + 140) * W / ST.A : -160; }
+// Where the drop starts: just above the very top of the screen.
+function ddTopY(r) { return (stadiumOn() ? -ST.AY * W / ST.A : 0) - r * 2.5; }
+// Down on one knee after landing, then standing back up (draw.js adds it
+// to his spot, via jonFloatOffset).
+function duckPoseOffset(b) {
+  var m = b.igbb;
+  if (!duckDropOn(b) || m.phase !== "pose") return { x: 0, y: 0 };
+  var down = m.t < DD_KNEEL ? 1 : 1 - ease((m.t - DD_KNEEL) / DD_RISE);
+  var hop = m.t > DD_KNEEL + DD_RISE * 0.6 && m.t < DD_KNEEL + DD_RISE + 0.15 ? -Math.sin((m.t - DD_KNEEL - DD_RISE * 0.6) / (DD_RISE * 0.4 + 0.15) * Math.PI) * 0.12 : 0;
+  return { x: 0, y: b.r * (0.24 * down + hop) };
+}
 
 // From initJon.
 function initDuckDrop(b) {
@@ -108,7 +124,11 @@ function updateDuckDrop(self, other, dt) {
   }
   if (m.phase === "drop") {
     var k = Math.min(1, m.t / DD_DROP);
-    self.x = m.cx; self.y = ddSkyY() + (m.cy - ddSkyY()) * k * k;
+    var top = ddTopY(self.r);
+    // Falling, faster and faster. Drawn from m.fallY: his real spot waits
+    // where he'll land (the walls would stop it above the ring).
+    m.fallY = top + (m.cy - top) * k * k;
+    self.x = m.cx; self.y = m.cy;
     if (k >= 1) { m.phase = "pose"; m.t = 0; duckLand(self, other, cfg, m); }
     return true;
   }
@@ -121,13 +141,24 @@ function updateDuckDrop(self, other, dt) {
 
 function duckLand(self, other, cfg, m) {
   self.invincible = false;
-  self.squash = { t: 0.22, max: 0.22, nx: 0, ny: 1 };
+  self.squash = { t: 0.3, max: 0.3, nx: 0, ny: 1 };
   duckCrater = { x: m.cx, y: m.cy, R: m.R, t: 0, seed: Math.random() * 10 };
   if (!reduceMotion) { shake = Math.max(shake, 30); hitStop = Math.max(hitStop, 0.14); }
   impacts.push({ x: m.cx, y: m.cy + self.r * 0.6, nx: 0, ny: -1, life: 0.5, max: 0.5, color: "#e0221b" });
   for (var i = 0; i < 34 && !reduceMotion; i++) { // dust and red embers thrown out round the edge
     var a = i / 34 * Math.PI * 2, s = 260 + Math.random() * 200;
     particles.push({ x: m.cx + Math.cos(a) * self.r, y: m.cy + Math.sin(a) * self.r * 0.6, vx: Math.cos(a) * s, vy: Math.sin(a) * s * 0.6, life: 0.6, max: 0.6, size: 3 + Math.random() * 4, color: i % 3 ? "#d8cdb5" : "#e0221b" });
+  }
+  if (!reduceMotion) {
+    for (var j = 0; j < 16; j++) { // chunks of mat flung up and raining back down
+      var ja = Math.random() * Math.PI * 2, js = 120 + Math.random() * 240;
+      duckDebris.push({ x: m.cx + Math.cos(ja) * self.r * 0.6, y: m.cy + Math.sin(ja) * self.r * 0.4, z: 0, vx: Math.cos(ja) * js, vy: Math.sin(ja) * js * 0.6, vz: 380 + Math.random() * 420,
+        rot: Math.random() * 6, spin: (Math.random() - 0.5) * 16, size: 5 + Math.random() * 7, col: j % 4 ? "#d8cdb5" : "#8b5a3c", t: 0 });
+    }
+    for (var q = 0; q < 12; q++) { // a dust cloud rolling out
+      var qa = q / 12 * Math.PI * 2;
+      duckPuffs.push({ x: m.cx + Math.cos(qa) * self.r * 0.8, y: m.cy + self.r * 0.5 + Math.sin(qa) * self.r * 0.35, vx: Math.cos(qa) * 170, vy: Math.sin(qa) * 60, r: self.r * 0.45, t: 0, max: 0.9, kind: "smoke", col: "#cdbf9f" });
+    }
   }
   playDuckLand();
   crowdReact(1);
@@ -173,6 +204,12 @@ function tickDuckDrop(dt) {
     return p.t < p.max;
   });
   if (duckCrater) { duckCrater.t += dt; if (duckCrater.t > 2.6) duckCrater = null; }
+  duckDebris = duckDebris.filter(function (c) {
+    c.t += dt; c.x += c.vx * dt; c.y += c.vy * dt; c.rot += c.spin * dt;
+    c.z += c.vz * dt; c.vz -= 1500 * dt;
+    if (c.z < 0) { c.z = 0; c.vz = Math.abs(c.vz) * 0.3; c.vx *= 0.5; c.vy *= 0.5; c.spin *= 0.5; }
+    return c.t < 1.6;
+  });
 }
 
 // ---------------------------------------------------------------- drawing
@@ -193,11 +230,13 @@ function drawDuckUnder() {
     ctx.fillStyle = "rgba(60,30,20,0.3)";
     ctx.beginPath(); ctx.ellipse(c.x, c.y + 6, 34, 20, 0, 0, Math.PI * 2); ctx.fill();
     // The shockwave ring rolling out.
-    if (c.t < 0.45) {
-      var k = c.t / 0.45;
-      ctx.globalAlpha = 1 - k; ctx.strokeStyle = "#e0221b"; ctx.lineWidth = 10 * (1 - k) + 2;
-      ctx.beginPath(); ctx.arc(c.x, c.y, c.R * (0.3 + 1.2 * k), 0, Math.PI * 2); ctx.stroke();
-    }
+    [[0, "#ffffff", 14], [0.1, "#e0221b", 10], [0.22, "#e0221b", 6]].forEach(function (w) { // shockwave rings rolling out
+      var wt = c.t - w[0];
+      if (wt < 0 || wt > 0.5) return;
+      var k = wt / 0.5;
+      ctx.globalAlpha = (1 - k) * fade; ctx.strokeStyle = w[1]; ctx.lineWidth = w[2] * (1 - k) + 2;
+      ctx.beginPath(); ctx.ellipse(c.x, c.y + 10, c.R * (0.25 + 1.4 * k), c.R * (0.25 + 1.4 * k) * 0.8, 0, 0, Math.PI * 2); ctx.stroke();
+    });
     ctx.restore();
   }
   balls.forEach(function (b) {
@@ -251,22 +290,29 @@ function drawDuckOver() {
       var fx = m.from.x + (m.cx - m.from.x) * e * 0.6 + m.face * 40 * k, fy = m.from.y + (ddSkyY() - m.from.y) * e;
       var flap = reduceMotion ? 1 : 0.75 + 0.25 * Math.cos(m.t * 26);
       drawDuckImg(JON_DUCK_FLY_SRC, JON_DUCK_FLY_ASPECT, fx, fy, r * 2.8, m.face < 0, flap, -0.35 * m.face);
-    } else if (m.phase === "drop") { // a red streak behind him on the way down
-      ctx.save();
-      var g = ctx.createLinearGradient(b.x, b.y - r * 6, b.x, b.y);
-      g.addColorStop(0, "rgba(224,34,27,0)"); g.addColorStop(1, "rgba(255,80,60,0.75)");
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.moveTo(b.x - r * 0.75, b.y); ctx.lineTo(b.x - r * 0.2, b.y - r * 6); ctx.lineTo(b.x + r * 0.2, b.y - r * 6); ctx.lineTo(b.x + r * 0.75, b.y); ctx.closePath(); ctx.fill();
-      ctx.restore();
     } else if (m.phase === "pose") {
       drawDuckPose(b, m);
     }
   });
+  duckDebris.forEach(function (c) {
+    var a = Math.min(1, (1.6 - c.t) / 0.4);
+    ctx.save();
+    ctx.globalAlpha = a * 0.3; ctx.fillStyle = "#000";
+    ctx.beginPath(); ctx.ellipse(c.x, c.y, c.size * 0.7, c.size * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = a; ctx.translate(c.x, c.y - c.z); ctx.rotate(c.rot);
+    ctx.fillStyle = c.col; ctx.strokeStyle = "rgba(60,40,25,0.8)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-c.size, -c.size * 0.5); ctx.lineTo(c.size * 0.7, -c.size * 0.7); ctx.lineTo(c.size, c.size * 0.4); ctx.lineTo(-c.size * 0.4, c.size * 0.7); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  });
+  if (duckCrater && duckCrater.t < 0.18) { // the whole ring flashing red on impact
+    ctx.save(); ctx.globalAlpha = 0.45 * (1 - duckCrater.t / 0.18); ctx.fillStyle = "#ff3b2a";
+    ctx.fillRect(-W, -H, W * 3, H * 3); ctx.restore();
+  }
   duckPuffs.forEach(function (p) {
     var a = 1 - p.t / p.max;
     ctx.save();
     if (p.kind === "smoke") {
-      ctx.globalAlpha = 0.7 * a; ctx.fillStyle = "#ecebe6";
+      ctx.globalAlpha = 0.7 * a; ctx.fillStyle = p.col || "#ecebe6";
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 + p.t * 1.4), 0, Math.PI * 2); ctx.fill();
     } else {
       ctx.globalAlpha = Math.min(1, a * 2); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.col;
@@ -276,17 +322,75 @@ function drawDuckOver() {
   });
 }
 
-// The superhero landing: one fist planted on the mat, the other arm flung
-// back, rising out of it at the end.
+// The superhero landing: down on one knee with a fist planted in the mat
+// and the other arm flung back, a red aura burning round him, then he
+// stands up into a double biceps flex.
 function drawDuckPose(b, m) {
   var ch = b.char, arm = (ch.punch.size || 15) * 0.75, gr = b.r * 0.24, r = b.r, s = m.face;
-  var up = m.t > DD_POSE * 0.6 ? ease((m.t - DD_POSE * 0.6) / (DD_POSE * 0.4)) : 0;
+  var off = duckPoseOffset(b), bx = b.x + off.x, by = b.y + off.y;
+  var up = m.t < DD_KNEEL ? 0 : ease((m.t - DD_KNEEL) / DD_RISE);
+  var pulse = 0.5 + 0.5 * Math.sin(m.t * 18);
+  // The aura.
+  ctx.save();
+  var ag = ctx.createRadialGradient(bx, by, r * 0.8, bx, by, r * 2);
+  ag.addColorStop(0, "rgba(255,60,40," + (0.35 + 0.2 * pulse) * (1 - 0.5 * up) + ")"); ag.addColorStop(1, "rgba(255,60,40,0)");
+  ctx.fillStyle = ag; ctx.globalCompositeOperation = "lighter";
+  ctx.beginPath(); ctx.arc(bx, by, r * 2, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  // Fist on the mat, other arm flung back; then both up into a flex.
   var limbs = [
-    { sx: b.x + s * r * 0.62, sy: b.y - r * 0.15, hx: b.x + s * r * (0.55 - 0.1 * up), hy: b.y + r * (1.05 - 0.85 * up) }, // fist on the mat
-    { sx: b.x - s * r * 0.62, sy: b.y - r * 0.15, hx: b.x - s * r * (1.25 - 0.45 * up), hy: b.y - r * (0.75 - 0.6 * up) } // flung back
+    { sx: bx + s * r * 0.62, sy: by - r * 0.15, kx: bx + s * r * 0.5, ky: by + r * 1.05, fx: bx + s * r * 1.0, fy: by - r * 0.8 },
+    { sx: bx - s * r * 0.62, sy: by - r * 0.15, kx: bx - s * r * 1.3, ky: by - r * 0.7, fx: bx - s * r * 1.0, fy: by - r * 0.8 }
   ];
-  limbs.forEach(function (L) {
-    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(L.sx, L.sy); ctx.lineTo(L.hx, L.hy); });
-    drawGloveAt(L.hx, L.hy, gr, ch);
+  limbs.forEach(function (L, i) {
+    var hx = L.kx + (L.fx - L.kx) * up, hy = L.ky + (L.fy - L.ky) * up;
+    // Flexing: the elbow out level with the shoulder, the fist up by the head.
+    var ex = L.sx + (i ? -s : s) * r * 0.45 * up, ey = L.sy - r * 0.05 * up;
+    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(L.sx, L.sy); if (up > 0.01) ctx.lineTo(ex, ey); ctx.lineTo(hx, hy); });
+    drawGloveAt(hx, hy, gr, ch);
+  });
+  // Sparks off the planted fist.
+  if (m.t < DD_KNEEL && !reduceMotion && Math.random() < 0.5) {
+    particles.push({ x: limbs[0].kx, y: limbs[0].ky, vx: (Math.random() - 0.5) * 160, vy: -60 - Math.random() * 120, life: 0.3, max: 0.3, size: 2 + Math.random() * 2, color: Math.random() < 0.5 ? "#ff3b2a" : "#ffd0a0" });
+  }
+}
+
+// Falling in from the very top of the screen, over the stands and the
+// jumbotron, fists first with a red streak behind him. From draw(), after
+// the jumbotron (sc/ox/oy place the arena on the canvas).
+function drawDuckSky(sc, ox, oy) {
+  balls.forEach(function (b) {
+    var m = b.igbb;
+    if (!duckDropOn(b) || m.phase !== "drop" || !b.alive) return;
+    var r = b.r, ch = b.char, top = ddTopY(r);
+    ctx.save();
+    ctx.setTransform(sc, 0, 0, sc, ox, oy);
+    // The streak, from the top of the screen down to him.
+    var bx = b.x, fy = m.fallY != null ? m.fallY : top;
+    var g = ctx.createLinearGradient(0, top, 0, fy);
+    g.addColorStop(0, "rgba(224,34,27,0)"); g.addColorStop(1, "rgba(255,80,60,0.85)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(bx - r * 0.9, fy); ctx.lineTo(bx - r * 0.25, top); ctx.lineTo(bx + r * 0.25, top); ctx.lineTo(bx + r * 0.9, fy); ctx.closePath(); ctx.fill();
+    // The red aura.
+    var ag = ctx.createRadialGradient(bx, fy, r * 0.7, bx, fy, r * 1.9);
+    ag.addColorStop(0, "rgba(255,60,40,0.6)"); ag.addColorStop(1, "rgba(255,60,40,0)");
+    ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(bx, fy, r * 1.9, 0, Math.PI * 2); ctx.fill();
+    // Him, stretched by the speed.
+    ctx.save();
+    ctx.translate(bx, fy); ctx.scale(0.88, 1.16); ctx.translate(-bx, -fy);
+    if (ch.look) drawFighterArt(ctx, bx, fy, r, ch.look, theme.wall, { layout: "contained", name: ch.name });
+    else { ctx.fillStyle = ch.color; ctx.beginPath(); ctx.arc(bx, fy, r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.lineWidth = 3; ctx.strokeStyle = theme.wall;
+    ctx.beginPath(); ctx.arc(bx, fy, r, 0, Math.PI * 2); ctx.stroke();
+    var sy0 = b.y; b.y = fy; drawJonGlow(b); b.y = sy0;
+    ctx.restore();
+    // Both fists down, leading the way.
+    var arm = (ch.punch.size || 15) * 0.75;
+    [-1, 1].forEach(function (sd) {
+      var sx = bx + sd * r * 0.6, sy = fy + r * 0.1, hx = bx + sd * r * 0.32, hy = fy + r * 1.25;
+      strokeLimb(arm, armColor(ch), function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
+      drawGloveAt(hx, hy, r * 0.24, ch);
+    });
+    ctx.restore();
   });
 }

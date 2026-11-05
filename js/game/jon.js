@@ -359,6 +359,7 @@ function jonGoatPush(f) {
 // How high he's floating (draw.js lifts him by this).
 function jonFloatOffset(b) {
   var m = b.igbb;
+  if (m && m.move === "duckdrop") return duckPoseOffset(b); // down on one knee after a Duck Drop (jon-duck.js)
   if (!m || m.move !== "goatstampede") return { x: 0, y: 0 };
   return { x: 0, y: -(m.z || 0) };
 }
