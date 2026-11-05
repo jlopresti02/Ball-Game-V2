@@ -12,10 +12,8 @@
 // throws a pixel diamond at them. It flies like any projectile (it can be
 // weaved or blocked) and does the same damage as his punch.
 //
-// Sword clash (diamondSwordClash below) is a placeholder, to be coded in
-// later: Dustin parrying hits from specific weapons (Ciryl Gane's bat to
-// start with) with a diamond sword. Gane's bat already asks it before it
-// lands; for now it always says no, so nothing changes yet.
+// Sword clash: when they have a weapon out (Ciryl Gane's bat), Dustin pulls
+// out a diamond sword and parries some of the swings (diamondSwordClash).
 "use strict";
 
 function hasDiamond(b) { return !!(b && b.char.diamond); }
@@ -29,7 +27,8 @@ function initDiamond(b) {
   diamondShow = 0;
   if (!hasDiamond(b)) return;
   getImg(DIAMOND_GEM_SRC); // starts decoding the diamond so the first throw has it
-  b.diamond = { on: false, t: 0, throwT: 0 };
+  getImg(DIAMOND_SWORD_SRC);
+  b.diamond = { on: false, t: 0, throwT: 0, sword: null };
 }
 
 // Every frame from update().
@@ -39,6 +38,7 @@ function tickDiamond(dt) {
     var dg = b.diamond;
     if (!dg) return;
     if (dg.on) dg.t += dt;
+    tickDiamondSword(b, dt);
     if (!b.alive || over || !started) return;
     var cfg = b.char.diamond, other = balls[1 - b.id];
     if (!dg.on) {
@@ -104,16 +104,134 @@ function diamondHitSparkle(target, p) {
   }
 }
 
-// Sword clash: TO BE CODED IN LATER (Joe, 2026-11-05). Dustin fights off a
-// hit from one of the weapons listed in diamond.swordClash.weapons (Gane's
-// "bat" to start) by parrying it with a diamond sword. Called by a weapon
-// right before it lands; returning true will mean the hit was parried and
-// the weapon should skip its damage. For now it never parries.
+// Sword clash (Joe, 2026-11-05). In Diamond Guard, whenever the other
+// fighter has one of the weapons in diamond.swordClash.weapons out (Gane's
+// bat, in Cheater mode), Dustin pulls out a diamond sword and holds it in
+// his guard hand. Each swing that would land has a parryChance% chance to
+// be parried: he slashes into it, the sword and bat clash with sparks and a
+// clang, no damage, and the swing is knocked away (Gane is shoved back and
+// has to reset before swinging again). The sword goes away once the
+// weapon does.
+
+function swordWeaponOut(o) {
+  return !!(o && o.alive && o.cheater && o.cheater.mode === "bat") ? "bat" : null;
+}
+
+function tickDiamondSword(b, dt) {
+  var dg = b.diamond, sc = b.char.diamond.swordClash, o = balls[1 - b.id];
+  var want = dg.on && b.alive && !over && sc && sc.enabled && sc.weapons.indexOf(swordWeaponOut(o)) >= 0;
+  var sw = dg.sword;
+  if (want && !sw) {
+    sw = dg.sword = { t: 0, out: true, outT: 0, parry: -1 };
+    playSwordDraw();
+    floater(b.x, b.y - b.r - 30, "DIAMOND SWORD", "crit");
+    for (var i = 0; i < 12 && !reduceMotion; i++) {
+      var a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 140;
+      particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.4, max: 0.4, size: 2 + Math.random() * 3, color: DIAMOND_C[i % 2 ? "L" : "W"] });
+    }
+  }
+  if (!sw) return;
+  sw.t += dt;
+  if (sw.parry >= 0) sw.parry += dt;
+  if (sw.parry > SWORD_SLASH) sw.parry = -1;
+  if (sw.out && !want) { sw.out = false; sw.outT = 0; }
+  if (!sw.out) { sw.outT += dt; if (sw.outT > SWORD_PUT_AWAY) dg.sword = null; }
+}
+var SWORD_DRAW = 0.35, SWORD_PUT_AWAY = 0.3, SWORD_SLASH = 0.32;
+
+// Called by a weapon right before it lands (Gane's bat, cheater.js). True
+// when Dustin parried it: the weapon skips its damage.
 function diamondSwordClash(defender, attacker, weapon) {
-  if (!defender || !defender.diamond || !defender.diamond.on) return false;
-  var sc = defender.char.diamond.swordClash;
+  if (!defender || !defender.diamond || !defender.diamond.on || !defender.alive) return false;
+  var sc = defender.char.diamond.swordClash, sw = defender.diamond.sword;
   if (!sc || !sc.enabled || sc.weapons.indexOf(weapon) < 0) return false;
-  return false; // the parry itself comes later
+  if (!sw || !sw.out || sw.t < SWORD_DRAW) return false; // still pulling it out
+  if (Math.random() * 100 >= sc.parryChance) return false;
+  sw.parry = 0;
+  var nx = defender.x - attacker.x, ny = defender.y - attacker.y, nd = Math.sqrt(nx * nx + ny * ny) || 1;
+  nx /= nd; ny /= nd;
+  // Where the bat meets the blade: just off Dustin, toward Gane.
+  var cx = defender.x - nx * (defender.r + 14), cy = defender.y - ny * (defender.r + 14);
+  sw.cx = cx; sw.cy = cy;
+  attacker.chAct = null; // the swing is knocked away
+  if (attacker.cheater) attacker.cheater.cd = Math.max(attacker.cheater.cd, sc.recover);
+  attacker.vx = -nx * sc.knockback; attacker.vy = -ny * sc.knockback;
+  defender.vx += nx * sc.knockback * 0.25; defender.vy += ny * sc.knockback * 0.25;
+  impacts.push({ x: cx, y: cy, nx: -nx, ny: -ny, life: 0.35, max: 0.35, color: DIAMOND_C.W });
+  for (var i = 0; i < 22 && !reduceMotion; i++) {
+    var a = Math.random() * Math.PI * 2, s = 160 + Math.random() * 320;
+    particles.push({ x: cx, y: cy, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.35, max: 0.35,
+      size: 2 + Math.random() * 3, color: i % 3 === 0 ? "#fff6c2" : (i % 3 === 1 ? DIAMOND_C.W : "#c98a4b") });
+  }
+  if (!reduceMotion) { shake = Math.max(shake, 12); hitStop = Math.max(hitStop, 0.07); }
+  floater(cx, Math.min(defender.y, attacker.y) - defender.r - 34, "PARRY!", "crit"); // over both of them
+  crowdReact(0.6);
+  playSwordClash();
+  return true;
+}
+
+function drawDiamondSwordsTop() {
+  balls.forEach(function (b) { drawDiamondSword(b, balls[1 - b.id], true); });
+}
+
+// Drawn just before his gloves, so the guard glove (the one on his -1 side)
+// sits over the grip.
+function drawDiamondSword(b, other, top) {
+  var sw = b.diamond && b.diamond.sword;
+  if (!sw || !b.alive) return;
+  // Mid parry it's drawn over both fighters (drawDiamondSwordsTop), so the
+  // clash isn't hidden behind them.
+  if ((sw.parry >= 0) !== !!top) return;
+  var im = getImg(DIAMOND_SWORD_SRC);
+  if (!im) return;
+  var fx, fy; // squared up to them (drawHands faces them too while it's out)
+  if (other && other.alive) { var dx = other.x - b.x, dy = other.y - b.y, dd = Math.sqrt(dx * dx + dy * dy) || 1; fx = dx / dd; fy = dy / dd; }
+  else { fx = b.id === 0 ? 1 : -1; fy = 0; }
+  var px = -fy, py = fx;
+  var hx = b.x + fx * b.r * 0.8 - px * b.r * 0.4, hy = b.y + fy * b.r * 0.8 - py * b.r * 0.4;
+  // The blade: raised up and out in front of him, ready.
+  var ox = other ? other.x - b.x : fx, oy = other ? other.y - b.y : fy, ol = Math.sqrt(ox * ox + oy * oy) || 1;
+  ox /= ol; oy /= ol;
+  var rx = fx * 0.55 - px * 0.35, ry = fy * 0.55 - py * 0.35 - 0.8;
+  var ang = Math.atan2(ry, rx);
+  var len = b.r * 1.45, k = 1, alpha = 1;
+  if (sw.out && sw.t < SWORD_DRAW) { // pulled out: swings up from his side
+    var e = sw.t / SWORD_DRAW; e = 1 - (1 - e) * (1 - e);
+    ang = ang + (1 - e) * 2.2; k = 0.4 + 0.6 * e; alpha = e;
+  }
+  if (!sw.out) { alpha = Math.max(0, 1 - sw.outT / SWORD_PUT_AWAY); k = 1 - 0.5 * (1 - alpha); }
+  if (sw.parry >= 0) {
+    // The parry: the blade is out on the bat the moment they clash, then
+    // swings back to ready.
+    var at = Math.atan2(oy, ox), p = sw.parry / SWORD_SLASH;
+    var hit = p < 0.25 ? 1 : 1 - (p - 0.25) / 0.75; // on the bat at the clash, then back to ready
+    hit = hit * hit * (3 - 2 * hit);
+    var da = Math.atan2(Math.sin(at - ang), Math.cos(at - ang));
+    ang = ang + da * hit;
+    hx += ox * b.r * 0.35 * hit; hy += oy * b.r * 0.35 * hit;
+  }
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.translate(hx, hy); ctx.rotate(ang + Math.PI / 4); ctx.scale(k, k);
+  ctx.imageSmoothingEnabled = false;
+  // The image is 16 px with the grip at (2.5, 13.5) and the tip at (15.5, 0.5).
+  var u = len / (13 * Math.SQRT2);
+  ctx.drawImage(im, -2.5 * u, -13.5 * u, 16 * u, 16 * u);
+  ctx.restore();
+  // A bright flash where they met.
+  if (sw.parry >= 0 && sw.parry < 0.16 && sw.cx != null) {
+    var f = 1 - sw.parry / 0.16;
+    ctx.save();
+    ctx.globalAlpha = f;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    for (var i = 0; i < 8; i++) {
+      var a2 = i * Math.PI / 4, rr = i % 2 ? 7 : 22 + 10 * (1 - f);
+      ctx.lineTo(sw.cx + Math.cos(a2) * rr, sw.cy + Math.sin(a2) * rr);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
 }
 
 // ---------------------------------------------------------------

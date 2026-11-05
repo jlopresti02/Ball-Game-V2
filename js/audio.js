@@ -1844,3 +1844,46 @@ function playDiamondHit() {
     });
   } catch (e) { /* never let audio break the game */ }
 }
+
+// Dustin's diamond sword (sword clash, diamond.js). Pulling it out: a bright
+// rising "shing" with a glassy ring on top.
+function playSwordDraw() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+    var src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = punchNoise; src.loop = true;
+    bp.type = "bandpass"; bp.Q.value = 6;
+    bp.frequency.setValueAtTime(2500, now); bp.frequency.exponentialRampToValueAtTime(7500, now + 0.3);
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.35, now + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+    src.start(now); src.stop(now + 0.4);
+    synthDiamondChime(ctx, now + 0.12, 0.3);
+  } catch (e) { /* never let audio break the game */ }
+}
+// The bat hitting the blade: a hard metallic clang (inharmonic partials
+// ringing out) over a sharp crack.
+function playSwordClash() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, out = ctx.createGain();
+    out.gain.value = 0.55; out.connect(ctx.destination);
+    [[523, 0.5, 0.9], [1187, 0.4, 0.7], [1764, 0.32, 0.55], [2633, 0.25, 0.45], [3517, 0.18, 0.3], [4680, 0.12, 0.22]].forEach(function (p) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(p[0] * 1.01, now); o.frequency.exponentialRampToValueAtTime(p[0], now + 0.05);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(p[1], now + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, now + p[2]);
+      o.connect(g); g.connect(out); o.start(now); o.stop(now + p[2] + 0.05);
+    });
+    if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
+    var src = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g2 = ctx.createGain();
+    src.buffer = punchNoise; hp.type = "highpass"; hp.frequency.value = 2000;
+    g2.gain.setValueAtTime(0.9, now); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+    src.connect(hp); hp.connect(g2); g2.connect(out); src.start(now); src.stop(now + 0.1);
+    playPunch(14); // the bat's weight behind it
+  } catch (e) { /* never let audio break the game */ }
+}

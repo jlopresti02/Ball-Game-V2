@@ -153,7 +153,8 @@ function drawHands(b, other) {
   var fx, fy;
   // Shelled up (or guarding while backing off after IGBB): faces the opponent.
   var shell = b.shelled || (b.igbb && b.igbb.phase !== "close");
-  if ((b.char.hasProjectile || shell) && other && other.alive) {
+  // (Dustin squares up to them with his diamond sword out, diamond.js.)
+  if ((b.char.hasProjectile || shell || (b.diamond && b.diamond.sword)) && other && other.alive) {
     var dx2 = other.x - b.x, dy2 = other.y - b.y, dd2 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
     fx = dx2 / dd2; fy = dy2 / dd2;
   } else {

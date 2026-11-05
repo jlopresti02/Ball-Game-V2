@@ -299,6 +299,7 @@ function draw() {
     drawThrow(b, other);
     drawPowerSpin(b);
     drawJab(b);
+    drawDiamondSword(b, other); // Dustin's diamond sword, under his guard glove (diamond.js)
     drawHands(b, other);
     drawDoBronx(b); // the pose and the glow while it's on
     drawShot(b);    // Hokit's double leg
@@ -321,6 +322,7 @@ function draw() {
   drawWatcherLasers();
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
+  drawDiamondSwordsTop(); // Dustin's sword slashing into a bat, over both fighters (diamond.js)
   drawSprawls();
   drawGuillotines();
   drawRncs();
