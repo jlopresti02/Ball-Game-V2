@@ -32,6 +32,7 @@ function initJon(b) {
   b.jonMode = null;
   b.jonT = 0;
   setJonMode(b, "goat", true);
+  initDuckDrop(b); // jon-duck.js
 }
 
 function setJonMode(b, mode, quiet) {
@@ -125,7 +126,8 @@ function drawJonGlow(b) {
   var k = (b.jonGlow || 0) / 0.6;
   var pulse = 0.5 + 0.5 * Math.sin(performance.now() / 260 + b.id);
   var a = 0.1 + 0.08 * pulse + 0.45 * k;
-  var red = b.igbb && b.igbb.move === "goatstampede" ? b.igbb.red : b.jonMode === "evil";
+  var red = b.igbb && (b.igbb.move === "goatstampede" || b.igbb.move === "duckdrop") ? (duckHeroic(b) || b.igbb.red) : b.jonMode === "evil";
+  if (duckHeroic(b)) { k = 1; a = 0.45 + 0.25 * pulse; } // blazing like a superhero (jon-duck.js)
   var col = red ? "224,34,27" : "245,197,66";
   // Where the tattoo sits: across his right pec (screen left).
   var cx = b.x - b.r * 0.38, cy = b.y - b.r * 0.04, rr = b.r * (0.55 + 0.35 * k);
@@ -357,6 +359,7 @@ function jonGoatPush(f) {
 // How high he's floating (draw.js lifts him by this).
 function jonFloatOffset(b) {
   var m = b.igbb;
+  if (m && m.move === "duckdrop") return duckPoseOffset(b); // down on one knee after a Duck Drop (jon-duck.js)
   if (!m || m.move !== "goatstampede") return { x: 0, y: 0 };
   return { x: 0, y: -(m.z || 0) };
 }

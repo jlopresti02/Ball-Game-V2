@@ -1902,3 +1902,86 @@ function playSwordSlash() {
     playPunch(50);
   } catch (e) { /* never let audio break the game */ }
 }
+
+// ---- Jon Jones's Duck Drop (jon-duck.js), all synthesized.
+function duckAudio(fn) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    fn(ctx, ctx.currentTime);
+  } catch (e) { /* never let audio break the game */ }
+}
+// A soft burst of smoke.
+function playDuckPoof() {
+  duckAudio(function (ctx, now) {
+    var src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = makeNoiseBuffer(ctx, 0.5);
+    bp.type = "bandpass"; bp.Q.value = 0.8; bp.frequency.setValueAtTime(2400, now); bp.frequency.exponentialRampToValueAtTime(300, now + 0.4);
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.8, now + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination); src.start(now); src.stop(now + 0.5);
+  });
+}
+// Two quacks: a buzzy sawtooth through a nasal band, pitch falling.
+function playDuckQuack() {
+  duckAudio(function (ctx, now) {
+    [0.12, 0.36].forEach(function (dt, i) {
+      var t = now + dt, o = ctx.createOscillator(), bp = ctx.createBiquadFilter(), bp2 = ctx.createBiquadFilter(), g = ctx.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(i ? 400 : 440, t); o.frequency.exponentialRampToValueAtTime(i ? 270 : 300, t + 0.16);
+      bp.type = "bandpass"; bp.frequency.value = 1150; bp.Q.value = 5;
+      bp2.type = "bandpass"; bp2.frequency.value = 2600; bp2.Q.value = 4;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.9, t + 0.015); g.gain.setValueAtTime(0.9, t + 0.1); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+      o.connect(bp); o.connect(bp2); bp.connect(g); bp2.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.2);
+    });
+  });
+}
+// Wings beating as it takes off.
+function playDuckFlap() {
+  duckAudio(function (ctx, now) {
+    var nb = makeNoiseBuffer(ctx, 0.12);
+    for (var i = 0; i < 7; i++) {
+      var t = now + i * 0.11, src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = nb; lp.type = "lowpass"; lp.frequency.value = 900;
+      var v = 0.5 * (1 - i / 9);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+      src.connect(lp); lp.connect(g); g.connect(ctx.destination); src.start(t); src.stop(t + 0.12);
+    }
+  });
+}
+// Warning beeps while the circle fills, speeding up.
+function playDuckWarn(dur) {
+  duckAudio(function (ctx, now) {
+    var t = 0.05, gap = 0.36;
+    while (t < dur - 0.35) {
+      var o = ctx.createOscillator(), g = ctx.createGain(), at = now + t;
+      o.type = "square"; o.frequency.value = 880;
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.12, at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.09);
+      o.connect(g); g.connect(ctx.destination); o.start(at); o.stop(at + 0.1);
+      t += gap; gap = Math.max(0.12, gap * 0.78);
+    }
+  });
+}
+// Whistling down out of the sky.
+function playDuckFall() {
+  duckAudio(function (ctx, now) {
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(1900, now); o.frequency.exponentialRampToValueAtTime(500, now + 0.34);
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.25, now + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
+    o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.38);
+    synthWhoosh(ctx, ctx.destination, now);
+  });
+}
+// Crashing into the mat: the slam, a deep boom and rumble.
+function playDuckLand() {
+  playSlam();
+  duckAudio(function (ctx, now) {
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(95, now); o.frequency.exponentialRampToValueAtTime(28, now + 0.9);
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(1.0, now + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+    o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 1.05);
+    var src = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), g2 = ctx.createGain();
+    src.buffer = makeNoiseBuffer(ctx, 1.0); lp.type = "lowpass"; lp.frequency.setValueAtTime(1800, now); lp.frequency.exponentialRampToValueAtTime(120, now + 0.9);
+    g2.gain.setValueAtTime(0.0001, now); g2.gain.exponentialRampToValueAtTime(0.9, now + 0.01); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+    src.connect(lp); lp.connect(g2); g2.connect(ctx.destination); src.start(now); src.stop(now + 1.0);
+  });
+}

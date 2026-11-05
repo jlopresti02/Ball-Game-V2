@@ -63,6 +63,7 @@ function startMatchWith(ch0, ch1) {
   resetAllAmerican();
   resetAuraFarm();
   resetJonGoats();
+  resetDuckDrop();
   resetCheater();
   resetHerbDean();
 
@@ -294,7 +295,7 @@ function hurt(b, amount, source, attackerId) {
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
   if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && source !== "igbb" && !b.koDuel &&
-      b.char.hasGrapple && !b.grapple && !b.grappled && !subLocked(b) && b.grappleCd === 0 && attackerId != null) {
+      b.char.hasGrapple && !b.grapple && !b.grappled && !subLocked(b) && b.grappleCd === 0 && attackerId != null && !duckDropOn(b)) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
