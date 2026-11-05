@@ -92,6 +92,7 @@ function draw() {
   // Father's Plan's ground and pound).
   // A shooter caught in a guillotine goes underneath, its head buried
   // under the defender (and the defender, once it's taken down).
+  drawDuelShadow(); // shadows under fighters leaping in a sword duel (sword.js)
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
   // A bat swing goes over whoever it's hitting.
   (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
@@ -115,6 +116,7 @@ function draw() {
     var aao = allAmericanOffset(b); wox += aao.x; woy += aao.y; // launched down the highway (allamerican.js)
     var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
+    var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -141,6 +143,8 @@ function draw() {
     if (aas) { spinning = true; spinAngle = aas; }
     var afs = auraSpin(b); // twirling in the Aura Farm dance (aurafarm.js)
     if (afs) { spinning = true; spinAngle = afs; }
+    var sws = swordBodySpin(b); // spinning into a sword strike (sword.js)
+    if (sws) { spinning = true; spinAngle = sws; }
 
     ctx.save();
     ctx.translate(b.x + jx, b.y + jy);
@@ -299,6 +303,7 @@ function draw() {
     drawThrow(b, other);
     drawPowerSpin(b);
     drawJab(b);
+    drawDiamondSword(b, other); // Dustin's diamond sword, under his guard glove (diamond.js)
     drawHands(b, other);
     drawDoBronx(b); // the pose and the glow while it's on
     drawShot(b);    // Hokit's double leg
@@ -321,6 +326,8 @@ function draw() {
   drawWatcherLasers();
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
+  drawDiamondSwordsTop(); // Dustin's sword slashing into a bat, over both fighters (sword.js)
+  drawDuelVignette(); // the duel's dark edges and impact flash (sword.js)
   drawSprawls();
   drawGuillotines();
   drawRncs();
@@ -371,4 +378,5 @@ function draw() {
 
   if (stadium) drawJumbotron(px);
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
+  swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
 }

@@ -47,6 +47,7 @@ function tickRefNap(dt) {
   if (rf.stop || over) { if (rf.asleep) wakeRef(rf); return; }
   // Out cold for the whole of Gane's special (herbdean.js wakes him after).
   if (herbDeanActive()) { rf.asleep = true; rf.napT = 0; return; }
+  if (swordDuelActive()) return; // stays asleep through a sword duel (sword.js)
   rf.napT = (rf.napT || 0) + dt;
   if (!rf.asleep && rf.napT >= ch.awake) {
     rf.asleep = true; rf.napT = 0;
@@ -182,7 +183,7 @@ function updateCheaterAct(self, other, dt) {
     if (!a.hit && a.t >= wind + swing * 0.55) {
       a.hit = true;
       var dist = Math.sqrt((other.x - self.x) * (other.x - self.x) + (other.y - self.y) * (other.y - self.y));
-      // Sword clash (diamond.js): Diamond Guard Dustin will parry the bat. Not coded in yet, so it never does.
+      // Sword clash (diamond.js): Diamond Guard Dustin can parry it with his diamond sword.
       if (other.alive && dist < self.r + other.r + cfg.bat.reach + 6 && !diamondSwordClash(other, self, "bat")) {
         var dealt = hurt(other, cfg.bat.damage, "bat", self.id);
         if (!other.justDodged) {
@@ -206,7 +207,7 @@ function updateCheaterAct(self, other, dt) {
         checkEnd();
       }
     }
-    if (a.t >= wind + swing + follow) self.chAct = null;
+    if (self.chAct && a.t >= wind + swing + follow) self.chAct = null;
   }
 }
 
@@ -385,7 +386,7 @@ function drawCheater(b) {
     drawGloveAt(hx3, hy3, gr, ch);
     return;
   }
-  if (b.cheater && b.cheater.mode === "bat") {
+  if (b.cheater && b.cheater.mode === "bat" && !swordDuelLocked(b)) { // (sword.js draws it in a sword duel)
     // The bat: held and played with between swings, or swung two-handed
     // across at them (one set of poses, so it flows between the two).
     var bc = ch.cheater.bat, bw = bc.windup || 0;

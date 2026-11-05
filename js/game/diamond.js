@@ -12,10 +12,8 @@
 // throws a pixel diamond at them. It flies like any projectile (it can be
 // weaved or blocked) and does the same damage as his punch.
 //
-// Sword clash (diamondSwordClash below) is a placeholder, to be coded in
-// later: Dustin parrying hits from specific weapons (Ciryl Gane's bat to
-// start with) with a diamond sword. Gane's bat already asks it before it
-// lands; for now it always says no, so nothing changes yet.
+// Sword clash: when they have a weapon out (Ciryl Gane's bat), Dustin pulls
+// out a diamond sword and parries some of the swings (diamondSwordClash).
 "use strict";
 
 function hasDiamond(b) { return !!(b && b.char.diamond); }
@@ -27,18 +25,22 @@ var diamondShow = 0, diamondShowId = 0; // time left on it, and whose show it is
 function initDiamond(b) {
   b.diamond = null;
   diamondShow = 0;
+  resetSwordClash(); // sword.js
   if (!hasDiamond(b)) return;
   getImg(DIAMOND_GEM_SRC); // starts decoding the diamond so the first throw has it
-  b.diamond = { on: false, t: 0, throwT: 0 };
+  getImg(DIAMOND_SWORD_SRC);
+  b.diamond = { on: false, t: 0, throwT: 0, sword: null };
 }
 
 // Every frame from update().
 function tickDiamond(dt) {
   if (diamondShow > 0) diamondShow = Math.max(0, diamondShow - dt);
+  tickSwordDuel(dt); // the sword duel (sword.js)
   balls.forEach(function (b) {
     var dg = b.diamond;
     if (!dg) return;
     if (dg.on) dg.t += dt;
+    tickDiamondSword(b, dt);
     if (!b.alive || over || !started) return;
     var cfg = b.char.diamond, other = balls[1 - b.id];
     if (!dg.on) {
@@ -73,7 +75,7 @@ function diamondProj(b) {
 function diamondBusy(b) {
   return !!(b.punch || b.kick || b.swing || b.throwAnim || b.jabAnim || b.koPunch || b.powerState || b.rageState ||
     b.guillo || b.choked || b.rnc || b.suplex || b.armbar || b.guard || b.chAct ||
-    specialBusy(b) || b.dazed || b.dizzy || (b.pokeStun || 0) > 0);
+    swordDuelLocked(b) || specialBusy(b) || b.dazed || b.dizzy || (b.pokeStun || 0) > 0);
 }
 
 function startDiamondGuard(b) {
@@ -104,17 +106,7 @@ function diamondHitSparkle(target, p) {
   }
 }
 
-// Sword clash: TO BE CODED IN LATER (Joe, 2026-11-05). Dustin fights off a
-// hit from one of the weapons listed in diamond.swordClash.weapons (Gane's
-// "bat" to start) by parrying it with a diamond sword. Called by a weapon
-// right before it lands; returning true will mean the hit was parried and
-// the weapon should skip its damage. For now it never parries.
-function diamondSwordClash(defender, attacker, weapon) {
-  if (!defender || !defender.diamond || !defender.diamond.on) return false;
-  var sc = defender.char.diamond.swordClash;
-  if (!sc || !sc.enabled || sc.weapons.indexOf(weapon) < 0) return false;
-  return false; // the parry itself comes later
-}
+// Sword clash (the diamond sword and its parries) lives in sword.js.
 
 // ---------------------------------------------------------------
 // The Diamond Dustin skin: flat pixel armor over his fighter art, built

@@ -205,12 +205,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 10,
+    "rev": 13,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
     "base": "Brawler",
-    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage.",
+    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage. If you pull a bat on him, he pulls out a diamond sword and parries 4 of every 5 swings. Every third parry locks you into a sword duel that ends with him disarming you or cutting straight through.",
     "color": "#1e3a8a",
     "look": {
       "skin": "#d9a07a",
@@ -296,10 +296,21 @@ var SAVED_ROSTER = [
       "gemSize": 14,
       "gemSpeed": 560,
       "swordClash": {
-        "enabled": false,
+        "enabled": true,
         "weapons": [
           "bat"
-        ]
+        ],
+        "parryChance": 80,
+        "knockback": 420,
+        "recover": 0.6,
+        "duel": {
+          "after": 3,
+          "clashes": 6,
+          "gap": 80,
+          "disarmChance": 50,
+          "slashDamage": 40,
+          "slashKnockback": 1500
+        }
       },
       "blockBonus": 5
     }

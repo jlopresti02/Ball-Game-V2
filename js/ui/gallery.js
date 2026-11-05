@@ -129,6 +129,8 @@ function galleryMoves(ch) {
     // Dustin Poirier's Diamond Guard (diamond.js).
     var dm = ch.diamond, gemDmg = dm.gemDamage != null ? dm.gemDamage : ch.punch.damage;
     add("💎", "Diamond Guard", "Below " + Math.round(dm.triggerHp * 100) + "% health he transforms: diamond armor on, blocks " + (dm.blockBonus || 0) + "% more, and every " + dm.throwEvery[0] + "-" + dm.throwEvery[1] + "s he throws a diamond for " + gemDmg + " damage (a punch's worth), on top of everything else.");
+    var scl = dm.swordClash;
+    if (scl && scl.enabled) add("🗡️", "Sword clash", "In Diamond Guard, when they pull a weapon (" + scl.weapons.join(", ") + ") he pulls out a diamond sword and parries " + scl.parryChance + "% of the swings: no damage, and the swing gets knocked away." + (scl.duel ? " Every " + scl.duel.after + " parries the weapons lock up in a sword duel: " + scl.duel.clashes + " clashes, then he disarms them (" + scl.duel.disarmChance + "%) or cuts through with a " + scl.duel.slashDamage + "-damage Diamond Slash." : ""));
   }
   return m;
 }
