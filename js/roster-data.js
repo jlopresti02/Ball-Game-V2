@@ -205,12 +205,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 8,
+    "rev": 10,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
     "base": "Brawler",
-    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine.",
+    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage.",
     "color": "#1e3a8a",
     "look": {
       "skin": "#d9a07a",
@@ -285,7 +285,24 @@ var SAVED_ROSTER = [
       },
       "slamDamage": 75
     },
-    "blockChance": 15
+    "blockChance": 15,
+    "diamond": {
+      "triggerHp": 0.5,
+      "firstThrow": 1.2,
+      "throwEvery": [
+        3.5,
+        5.5
+      ],
+      "gemSize": 14,
+      "gemSpeed": 560,
+      "swordClash": {
+        "enabled": false,
+        "weapons": [
+          "bat"
+        ]
+      },
+      "blockBonus": 5
+    }
   },
   {
     "id": "c-ilia-topuria",

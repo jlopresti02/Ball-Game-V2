@@ -182,7 +182,8 @@ function updateCheaterAct(self, other, dt) {
     if (!a.hit && a.t >= wind + swing * 0.55) {
       a.hit = true;
       var dist = Math.sqrt((other.x - self.x) * (other.x - self.x) + (other.y - self.y) * (other.y - self.y));
-      if (other.alive && dist < self.r + other.r + cfg.bat.reach + 6) {
+      // Sword clash (diamond.js): Diamond Guard Dustin will parry the bat. Not coded in yet, so it never does.
+      if (other.alive && dist < self.r + other.r + cfg.bat.reach + 6 && !diamondSwordClash(other, self, "bat")) {
         var dealt = hurt(other, cfg.bat.damage, "bat", self.id);
         if (!other.justDodged) {
           other.vx += a.nx * cfg.bat.knockback; other.vy += a.ny * cfg.bat.knockback;

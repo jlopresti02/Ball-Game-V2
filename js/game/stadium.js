@@ -616,6 +616,7 @@ function drawJumbotron(px) {
   });
 
   drawHerbJumbo(sx, sy, sw, jt.h - 28); // Gane's special (herbdean.js)
+  drawDiamondJumbo(sx, sy, sw, jt.h - 28); // Dustin turning into Diamond Guard (diamond.js)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.jtFront, jt.x * px, jt.y * px);
