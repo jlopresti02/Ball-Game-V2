@@ -740,12 +740,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 7,
+    "rev": 8,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
     "base": "Brawler",
-    "bio": "\"The Highlight\". Built on the Brawler base with the Brawler's heavy hands and opening KO Rush. Every few seconds he loads up one CTE-style haymaker; if it lands, the opponent is left dizzy, staggering about unable to fight back. The old wrestler in him shoots a double leg now and then for a slam into the cage, sprawls on takedowns and reattacks. Everything he lands looks like it hurts. A few times a fight a bald eagle screams, a red path cuts across the ring and the eagle swoops through it, raking anyone but him caught in it (Eagle Strike). Special move: All American.",
+    "bio": "\"The Highlight\". Built on the Brawler base with the Brawler's heavy hands and opening KO Rush. Every few seconds he loads up one CTE-style haymaker; if it lands, the opponent is left dizzy, staggering about unable to fight back. The old wrestler in him shoots a double leg now and then for a slam into the cage, sprawls on takedowns and reattacks. Everything he lands looks like it hurts. A few times a fight a bald eagle screams, a red path cuts across the ring and the eagle swoops through it, raking anyone but him caught in it (Eagle Strike). If it catches him instead, it carries him off and drops him in a red MAGA cap with a golf club: he swings it like a bat and stops to drive golf balls at them. An eagle also comes for him when Dustin goes Diamond Guard or Gane pulls his bat. Special move: All American.",
     "color": "#1c2f6e",
     "label": "",
     "imgData": null,
@@ -867,6 +867,27 @@ var SAVED_ROSTER = [
         "knockback": 1100,
         "wallSlams": 1,
         "slamDamage": 4
+      },
+      "golf": {
+        "duration": 15,
+        "club": {
+          "damage": 16,
+          "cooldown": 0.6,
+          "windup": 0.3,
+          "swing": 0.2,
+          "follow": 0.2,
+          "reach": 60,
+          "knockback": 300
+        },
+        "ball": {
+          "every": [
+            3,
+            5
+          ],
+          "damage": 14,
+          "speed": 640,
+          "minDist": 150
+        }
       }
     }
   },

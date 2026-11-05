@@ -6,7 +6,12 @@
 // from off one side of the screen and out the other (Joe's swoop clip
 // plays as it dives). Anyone but Gaethje caught in the path when it comes
 // through is raked by its talons: damage, claw marks, feathers and a hard
-// knock the way it was flying. Gaethje keeps fighting the whole time.
+// knock the way it was flying. Gaethje keeps fighting the whole time,
+// unless he gets caught in the path himself: then the eagle snatches him
+// up and drops him into golf mode (gaethje-golf.js). An eagle also comes
+// for him on purpose when Dustin goes into Diamond Guard or Gane pulls his
+// bat (a "snatch" eagle, whose path follows him; these don't count toward
+// `max`).
 //
 // Set up per fighter by `gaethje.eagle` in the character JSON:
 //   first, every   [min, max] seconds until the first one, then between them
@@ -33,6 +38,7 @@ function resetEagleStrikes() {
     var cfg = esCfg(b);
     b.eagleN = 0;
     b.eagleT = cfg ? esRand(cfg.first) : Infinity;
+    b.eagleSaw = { diamond: false, bat: false };
   });
 }
 
@@ -43,8 +49,18 @@ function tickEagleStrikes(dt) {
   if (!started || over) return;
   balls.forEach(function (self) {
     var cfg = esCfg(self), other = balls[1 - self.id];
-    if (!cfg || !self.alive || self.eagleN >= cfg.max) return;
+    if (!cfg || !self.alive) return;
     if (eagleStrikes.some(function (e) { return e.owner === self.id; })) return;
+    // Dustin's diamonds or Gane's bat coming out: the eagle comes to arm him.
+    var saw = self.eagleSaw || (self.eagleSaw = { diamond: false, bat: false });
+    var dia = !!(other.diamond && other.diamond.on), bat = !!(other.cheater && other.cheater.mode === "bat");
+    var cue = (dia && !saw.diamond) || (bat && !saw.bat);
+    saw.diamond = dia; saw.bat = bat;
+    if (cue && golfCfg(self) && !golfing(self) && !self.igbb && !allAmericanOn() && !swordDuelActive()) {
+      startEagleStrike(self, other, cfg, true);
+      return;
+    }
+    if (self.eagleN >= cfg.max) return;
     self.eagleT -= dt;
     if (self.eagleT > 0) return;
     // Not over the top of a special, a sword duel or the road.
@@ -56,23 +72,41 @@ function tickEagleStrikes(dt) {
   eagleStrikes = eagleStrikes.filter(function (e) { return updateEagleStrike(e, dt); });
 }
 
-function startEagleStrike(self, other, cfg) {
+function startEagleStrike(self, other, cfg, snatch) {
   // Mostly side to side (the eagle's a side-on picture), never straight up
   // and down, through somewhere near the middle.
   var ang = (Math.random() - 0.5) * 1.6 + (Math.random() < 0.5 ? 0 : Math.PI);
   var dx = Math.cos(ang), dy = Math.sin(ang), off = (Math.random() - 0.5) * 80;
   var e = { owner: self.id, cfg: cfg, dx: dx, dy: dy, cx: W / 2 - dy * off, cy: H / 2 + dx * off,
-    phase: "warn", t: 0, hit: false, x: 0, y: 0, k: 0 };
+    phase: "warn", t: 0, hit: false, x: 0, y: 0, k: 0, snatch: !!snatch };
+  if (snatch) { e.cx = self.x; e.cy = self.y; }
   e.x = e.cx - dx * ES_REACH; e.y = e.cy - dy * ES_REACH;
   eagleStrikes.push(e);
   playEagleScreech();
   floater(W / 2, 46, "EAGLE!", "crit");
 }
 
+// A snatch eagle's path keeps passing through him (slid sideways to follow).
+function esFollow(e, b) {
+  var px = b.x - e.cx, py = b.y - e.cy, perp = -px * e.dy + py * e.dx;
+  e.cx += -e.dy * perp; e.cy += e.dx * perp;
+}
+
 // False once it's flown off.
 function updateEagleStrike(e, dt) {
   e.t += dt;
-  var cfg = e.cfg;
+  var cfg = e.cfg, owner = balls[e.owner];
+  if (e.phase === "carry") {
+    // Carrying him (gaethje-golf.js moves him); once it lets go, off it flies.
+    var m = owner.igbb;
+    if (e.released || !m || m.move !== "eaglecarry") { e.phase = "leave"; e.t = 0; e.lx = owner.x; e.ly = owner.y; e.lz = m ? m.z : EC_HIGH; }
+    else { e.x = owner.x; e.y = owner.y; e.z = m.z; return true; }
+  }
+  if (e.phase === "leave") {
+    e.x = e.lx + e.dx * 700 * e.t; e.y = e.ly + e.dy * 700 * e.t; e.z = e.lz + 520 * e.t;
+    return e.t < 1.0;
+  }
+  if (e.snatch && e.k < 0.5 && canSnatch(owner)) esFollow(e, owner);
   if (e.phase === "warn") {
     if (e.t < cfg.warn) return true;
     e.phase = "swoop"; e.t = 0;
@@ -84,6 +118,12 @@ function updateEagleStrike(e, dt) {
   e.x = e.cx + e.dx * ES_REACH * (2 * k - 1);
   e.y = e.cy + e.dy * ES_REACH * (2 * k - 1);
   var low = Math.abs(k - 0.5) * 2 < ES_LOW;
+  if (low && canSnatch(owner) && segDist(owner.x, owner.y, px, py, e.x, e.y) < cfg.width + owner.r) {
+    // Caught Gaethje himself: picks him up (gaethje-golf.js).
+    e.phase = "carry"; e.t = 0; e.z = 0;
+    startEagleCarry(owner, e);
+    return true;
+  }
   if (low && !e.hit) {
     var self = balls[e.owner], other = balls[1 - e.owner];
     if (other.alive && !other.invincible && !other.igbb && segDist(other.x, other.y, px, py, e.x, e.y) < cfg.width + other.r) {
@@ -149,6 +189,12 @@ function drawEagleStrikeUnder() {
       }
       ctx.restore();
     }
+    if (e.phase === "carry") {
+      var b = balls[e.owner], zk = Math.min(1, (e.z || 0) / EC_HIGH);
+      ctx.save(); ctx.globalAlpha = 0.3 - 0.12 * zk; ctx.fillStyle = "#000";
+      ctx.beginPath(); ctx.ellipse(b.x, b.y + b.r * 0.85, b.r * (1 - 0.35 * zk), b.r * 0.3 * (1 - 0.35 * zk), 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
     if (e.phase === "swoop") {
       var h = Math.abs(e.k - 0.5) * 2;
       ctx.save();
@@ -178,6 +224,15 @@ function drawEagleStrikeOver() {
     ctx.restore();
   });
   eagleStrikes.forEach(function (e) {
+    if (e.phase === "carry" || e.phase === "leave") {
+      // Wings beating hard, talons in his shoulders, hauling him up.
+      var b = balls[e.owner], up = e.phase === "carry" ? 0 : Math.min(1, e.t * 3);
+      ctx.save();
+      if (e.phase === "leave") ctx.globalAlpha = Math.max(0, 1 - e.t);
+      drawEagle(e.x, e.y - e.z - b.r * (0.95 + up * 0.3), Math.atan2(e.dy, e.dx), 0.55 + Math.min(0.4, e.z / 600), (performance.now() / 1000) * 22, true);
+      ctx.restore();
+      return;
+    }
     if (e.phase !== "swoop") return;
     var h = Math.abs(e.k - 0.5) * 2;           // 0 at the bottom of the dive, 1 up high
     var lift = h * h * 90;                     // drawn higher up the screen when it's up in the air

@@ -931,6 +931,33 @@ function playBatHit(big) {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// Gaethje's golf club (gaethje-golf.js): the bat's whoosh and weight with a
+// metal ring on top.
+function playClubHit() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    playBatHit(false);
+    var hit = ctx.currentTime + 0.06, v = 0.95 + Math.random() * 0.1;
+    caneTone(ctx, hit, "triangle", 1900 * v, 1700 * v, 0.35 * BAT_GAIN, 0.18);
+    caneTone(ctx, hit, "sine", 3100 * v, 2900 * v, 0.18 * BAT_GAIN, 0.12);
+  } catch (e) { /* never let audio break the game */ }
+}
+// Teeing off: a quick whoosh and the high "ping" of a driver.
+function playGolfPing() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    caneBurst(ctx, now, 3200, 1.5, 0.7 * BAT_GAIN, 0.03);
+    caneTone(ctx, now, "triangle", 2650, 2500, 0.55 * BAT_GAIN, 0.16);
+    caneTone(ctx, now, "sine", 4100, 3900, 0.25 * BAT_GAIN, 0.1);
+    caneTone(ctx, now, "sine", 900, 600, 0.3 * BAT_GAIN, 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // The critical weave combo (weave.js): an anime flurry. Each quick punch is
 // a sharp slap riding a short whoosh; the last, launching one comes in on a
 // bigger whoosh and lands with a deep boom and a short echo. Joe picked this

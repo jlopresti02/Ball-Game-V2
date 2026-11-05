@@ -173,6 +173,7 @@ function updateAbilities(dt) {
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
     if (self.shocked || self.koOut || self.shelled || self.dazed || self.dizzy) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
     if (updateDuckDrop(self, other, dt)) continue; // Jon Jones's Duck Drop (jon-duck.js)
+    if (updateEagleCarry(self, other, dt)) continue; // Gaethje snatched up by his own eagle (gaethje-golf.js)
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
@@ -192,7 +193,7 @@ function updateAbilities(dt) {
     if (updateWeave(self, other, dt)) continue;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
     // Ciryl Gane cheating while the ref's asleep (cheater.js).
-    if ((self.char.hasCheater || self.chAct) && updateCheater(self, other, dt, d)) continue; // (and EVIL Jon Jones's eye poke, jon.js)
+    if ((self.char.hasCheater || self.chAct || self.cheater) && updateCheater(self, other, dt, d)) continue; // (and EVIL Jon Jones's eye poke, jon.js)
     // Josh Hokit's armbar shot and thumbs down (hokit.js).
     if ((self.char.hasArmbarShot || self.char.hasThumbsDown) && updateHokit(self, other, dt, d)) continue;
 

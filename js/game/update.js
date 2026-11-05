@@ -47,6 +47,7 @@ function update(dt) {
   tickJon(dt);      // Jon Jones swapping between GOAT and EVIL mode (jon.js)
   tickDuckDrop(dt); // smoke, feathers and the cracked mat from his Duck Drop (jon-duck.js)
   tickEagleStrikes(dt); // Gaethje's Eagle Strike: the red path and the swoop (gaethje-eagle.js)
+  tickGolf(dt);         // and his golf mode running out (gaethje-golf.js)
   tickDiamond(dt);  // Dustin turning into Diamond Guard and throwing diamonds (diamond.js)
   updateHerb(dt);   // Herb Dean wandering the cage (herbdean.js)
 

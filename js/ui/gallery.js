@@ -314,7 +314,9 @@ function gallerySounds() {
       clip("eagleScreech", "Eagle screech", "Each eagle dive in All American, and the warning for Gaethje's Eagle Strike."),
       clip("eagleSwoop", "Eagle swoop", "The eagle swooping through in Gaethje's Eagle Strike."),
       clip("truckHorn", "Truck horn", "The semi coming in All American."),
-      synth("Truck impact", "The semi hitting.", function () { playTruckImpact(); })
+      synth("Truck impact", "The semi hitting.", function () { playTruckImpact(); }),
+      synth("Golf club whack", "Gaethje's golf club landing in golf mode.", function () { lastPunchSound = 0; playClubHit(); }),
+      synth("Golf drive", "Gaethje teeing off at them in golf mode.", function () { playGolfPing(); })
     ] },
     { title: "Hits and moves", items: [
       synth("Light punch", "Small punches (5 damage).", function () { lastPunchSound = 0; playPunch(5); }),

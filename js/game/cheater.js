@@ -35,6 +35,10 @@ var cheaterObjs = []; // things he's thrown, in flight
 
 function resetCheater() { cheaterObjs = []; }
 
+// The settings for whatever he's got out: Gane's own, or the golf club
+// Justin Gaethje gets dropped with (gaethje-golf.js), which reuses the bat.
+function cheaterCfg(b) { return (b.cheater && b.cheater.cfg) || b.char.cheater; }
+
 function cheaterFight() { return balls.some(function (b) { return b.char.hasCheater; }); }
 function refAsleep() { return !!(referee && referee.asleep); }
 
@@ -61,7 +65,7 @@ function wakeRef(rf) {
   rf.wakeT = REF_WAKE; rf.gest = null; // the startled jolt (referee.js)
   floater(rf.x, refTop(rf), "!?", "note");
   balls.forEach(function (b) {
-    if (!b.cheater) return;
+    if (!b.cheater || b.cheater.club) return; // (Gaethje's golf club isn't cheating)
     b.cheater = null;
     if (b.alive) floater(b.x, b.y - b.r - 30, "FIGHTER MODE", "note");
   });
@@ -84,8 +88,15 @@ function updateCheater(self, other, dt, d) {
   if (!c) return false;
   if (!other.alive || over) return true;
   c.cd = Math.max(0, c.cd - dt * self.atkRate);
+  if (c.club) c.golfCd = Math.max(0, c.golfCd - dt * self.atkRate);
   if (c.cd > 0 || specialBusy(self) || specialBusy(other) || other.invincible) return true;
-  var cfg = self.char.cheater;
+  var cfg = cheaterCfg(self);
+  if (c.club && c.golfCd <= 0 && d > cfg.ball.minDist) {
+    // Stops, tees one up and drives it at them (gaethje-golf.js).
+    self.chAct = { kind: "golf", t: 0, fired: false, dir: other.x >= self.x ? 1 : -1 };
+    c.golfCd = golfGap(cfg);
+    return true;
+  }
   if (c.mode === "poke" && d < self.r + other.r + POKE_REACH) {
     self.chAct = { kind: "poke", t: 0, hit: false, side: Math.random() < 0.5 ? 1 : -1 };
   } else if (c.mode === "throw") {
@@ -100,7 +111,7 @@ function updateCheater(self, other, dt, d) {
 }
 
 function updateCheaterAct(self, other, dt) {
-  var a = self.chAct, cfg = self.char.cheater;
+  var a = self.chAct, cfg = cheaterCfg(self);
   a.t += dt;
   var dx = other.x - self.x, dy = other.y - self.y, dd = Math.sqrt(dx * dx + dy * dy) || 1;
   a.nx = dx / dd; a.ny = dy / dd;
@@ -156,6 +167,7 @@ function updateCheaterAct(self, other, dt) {
     }
     return;
   }
+  if (a.kind === "golf") { updateGolfShot(self, other, a, cfg, dt); return; } // gaethje-golf.js
   if (a.kind === "throw") {
     if (!a.fired && a.t >= 0.22) {
       a.fired = true;
@@ -188,7 +200,8 @@ function updateCheaterAct(self, other, dt) {
         var dealt = hurt(other, cfg.bat.damage, "bat", self.id);
         if (!other.justDodged) {
           other.vx += a.nx * cfg.bat.knockback; other.vy += a.ny * cfg.bat.knockback;
-          playBatHit(false); crowdReact(0.5);
+          if (self.cheater && self.cheater.club) playClubHit(); else playBatHit(false);
+          crowdReact(0.5);
           impacts.push({ x: other.x - a.nx * other.r, y: other.y - a.ny * other.r, nx: a.nx, ny: a.ny, life: 0.35, max: 0.35, color: "#c98a4b" });
           // Lands like a home run: freeze, big shake, splinters, and them
           // crushed flat by it.
@@ -198,11 +211,11 @@ function updateCheaterAct(self, other, dt) {
             var pa = Math.atan2(a.ny, a.nx) + (Math.random() - 0.5) * 1.8, pv = 200 + Math.random() * 260;
             particles.push({ x: other.x - a.nx * other.r * 0.6, y: other.y - a.ny * other.r * 0.6, vx: Math.cos(pa) * pv, vy: Math.sin(pa) * pv, life: 0.4, max: 0.4, size: 3 + Math.random() * 3, color: sp % 3 ? "#c98a4b" : "#ffffff" });
           }
-          if (dealt > 0) floater(other.x, other.y - other.r - 30, "CRACK!", "crit");
+          if (dealt > 0) floater(other.x, other.y - other.r - 30, self.cheater && self.cheater.club ? "WHACK!" : "CRACK!", "crit");
           // The first bat shot of the match (and only that one): the
           // commentators lose it. If someone else is talking and the line
           // gets skipped, it waits for the next bat shot that lands.
-          if (dealt > 0 && !self.batCalled) self.batCalled = playGaneCall("ganeBatCall");
+          if (dealt > 0 && self.char.hasCheater && !self.batCalled) self.batCalled = playGaneCall("ganeBatCall");
         }
         checkEnd();
       }
@@ -218,7 +231,7 @@ function endPokeStun(b) { if (b.dazed === "poke") b.dazed = false; }
 // and gets away with no damage. Called before any takedown on `target`
 // lands (attemptGrab, Hokit's double leg). True when it stopped it.
 function cheaterFenceGrab(attacker, target) {
-  if (!target.cheater || target.fenceGrab || !target.alive) return false;
+  if (!target.cheater || target.cheater.club || target.fenceGrab || !target.alive) return false;
   clearActions(target); target.chAct = null;
   clearActions(attacker);
   // Driven straight back the way he's being pushed, to where that meets the cage.
@@ -306,7 +319,7 @@ function cheaterHandsBusy(b) {
 }
 // Held still on the spot (physics leaves him alone).
 function cheaterHolding(b) {
-  return !!(b.fenceGrab || (b.chAct && (b.chAct.kind === "poke" || b.chAct.kind === "combo")));
+  return !!(b.fenceGrab || (b.chAct && (b.chAct.kind === "poke" || b.chAct.kind === "combo" || b.chAct.kind === "golf")));
 }
 
 // ---------------------------------------------------------------- drawing
@@ -344,6 +357,7 @@ function drawCheater(b) {
     return;
   }
   var a = b.chAct;
+  if (a && a.kind === "golf") { drawGolfShot(b, a); return; } // gaethje-golf.js
   if (a && a.kind === "poke") {
     // Two fingers stuck straight out at their eyes.
     var k = Math.min(1, a.t / POKE_AT);
@@ -389,7 +403,7 @@ function drawCheater(b) {
   if (b.cheater && b.cheater.mode === "bat" && !swordDuelLocked(b)) { // (sword.js draws it in a sword duel)
     // The bat: held and played with between swings, or swung two-handed
     // across at them (one set of poses, so it flows between the two).
-    var bc = ch.cheater.bat, bw = bc.windup || 0;
+    var bc = cheaterCfg(b).bat, bw = bc.windup || 0;
     if (a && a.kind === "bat") drawBatIdle(b, a.t < bw ? -(a.t / bw) : (a.t - bw) / bc.swing); // past 1: the follow-through
     else drawBatIdle(b, null);
   }
@@ -407,7 +421,7 @@ function batSide(b) { var o = balls[1 - b.id]; return o.x > b.x ? -1 : 1; } // 1
 // `swing`: null between swings, 0 to -1 while he winds up, 0 to 1 through
 // the swing itself.
 function drawBatIdle(b, swing) {
-  var ch = b.char, r = b.r, len = r * 1.6, s = batSide(b);
+  var ch = b.char, r = b.r, len = weaponLen(b), s = batSide(b);
   function P(x, y) { return { x: b.x + x * r, y: b.y + y * r }; } // x measured toward the bat side
   function Q(x, y) { return P(x * s, y); }
   function A(a) { return s > 0 ? a : Math.PI - a; } // mirrors an angle drawn for s = 1
@@ -504,7 +518,7 @@ function drawBatIdle(b, swing) {
   bH = { x: b.x + pose[0], y: b.y + pose[1] }; fH = { x: b.x + pose[2], y: b.y + pose[3] };
   bEl = { x: b.x + pose[4], y: b.y + pose[5] }; fEl = { x: b.x + pose[6], y: b.y + pose[7] };
   drawBentArm(b, fSh, fH, -s, fEl);
-  drawBat(bH.x, bH.y, pose[8], len);
+  drawWeapon(b, bH.x, bH.y, pose[8], len);
   drawBentArm(b, bSh, bH, s, bEl);
   drawGloveAt(fH.x, fH.y, r * 0.22, ch);
   drawGloveAt(bH.x, bH.y, r * 0.22, ch);
@@ -514,8 +528,8 @@ function drawBatIdle(b, swing) {
 // then lunges in with it and settles back (draw.js adds it to his spot).
 function ganeBatLean(b) {
   var a = b.chAct;
-  if (!a || a.kind !== "bat" || !b.cheater || !b.char.cheater) return { x: 0, y: 0 };
-  var bc = b.char.cheater.bat, bw = bc.windup || 0, o = balls[1 - b.id];
+  if (!a || a.kind !== "bat" || !b.cheater || !cheaterCfg(b)) return { x: 0, y: 0 };
+  var bc = cheaterCfg(b).bat, bw = bc.windup || 0, o = balls[1 - b.id];
   var nx = o.x - b.x, ny = o.y - b.y, nd = Math.sqrt(nx * nx + ny * ny) || 1, k;
   if (a.t < bw) { k = Math.min(1, a.t / bw / 0.7); k = -0.2 * k * (2 - k); }
   else { var f = (a.t - bw) / (bc.swing + (bc.follow || 0)); k = -0.2 + 0.5 * Math.sin(Math.min(1, f * 1.6) * Math.PI / 2) - 0.3 * Math.max(0, f - 0.6) / 0.4; }
@@ -592,6 +606,7 @@ function drawBat(x, y, a, len) {
 }
 
 function drawCheaterObject(shape, x, y, s, rot) {
+  if (shape === "golfball") { drawGolfBall(x, y, s, rot); return; } // gaethje-golf.js
   ctx.save();
   ctx.translate(x, y); ctx.rotate(rot);
   ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5; ctx.lineJoin = "round";

@@ -118,6 +118,7 @@ function draw() {
     var aao = allAmericanOffset(b); wox += aao.x; woy += aao.y; // launched down the highway (allamerican.js)
     var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
+    var eco = eagleCarryOffset(b); wox += eco.x; woy += eco.y; // carried up by his eagle (gaethje-golf.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
     b.x += wox; b.y += woy;
 
@@ -195,6 +196,7 @@ function draw() {
     ctx.lineWidth = 3; ctx.strokeStyle = theme.wall;
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
     drawDiamondArmor(b); // Dustin's Diamond Guard armor, over the outline like Joe's mockup (diamond.js)
+    drawGolfHat(b);      // Gaethje's red cap once his eagle's dropped him (gaethje-golf.js)
 
     if (b.char.label) {
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
