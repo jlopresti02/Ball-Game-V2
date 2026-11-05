@@ -640,25 +640,33 @@ function drawTruckerHat(c, r, look, ink) {
   // Button on top
   c.fillStyle = mesh;
   c.beginPath(); c.ellipse(0, -r * 1.37, r * 0.07, r * 0.035, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-  // Curved bill across the forehead
-  c.beginPath();
-  c.moveTo(-r * 0.9, -r * 0.63);
-  c.quadraticCurveTo(0, -r * 0.8, r * 0.9, -r * 0.63);
-  c.quadraticCurveTo(r * 1.0, -r * 0.58, r * 0.84, -r * 0.52);
-  c.quadraticCurveTo(0, -r * 0.36, -r * 0.84, -r * 0.52);
-  c.quadraticCurveTo(-r * 1.0, -r * 0.58, -r * 0.9, -r * 0.63);
-  c.closePath();
-  c.fillStyle = brimCol; c.fill();
-  c.save(); c.clip();
+  // Curved bill across the forehead: a crescent, deepest in the middle,
+  // with rounded ends tucked against the crown
+  var bill = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.84, -r * 0.64);
+    c.quadraticCurveTo(0, -r * 0.76, r * 0.84, -r * 0.64);
+    c.bezierCurveTo(r * 0.96, -r * 0.6, r * 0.96, -r * 0.52, r * 0.82, -r * 0.5);
+    c.quadraticCurveTo(0, -r * 0.3, -r * 0.82, -r * 0.5);
+    c.bezierCurveTo(-r * 0.96, -r * 0.52, -r * 0.96, -r * 0.6, -r * 0.84, -r * 0.64);
+    c.closePath();
+  };
+  bill(); c.fillStyle = brimCol; c.fill();
+  c.save(); bill(); c.clip();
+  // Shadow where the bill meets the crown, light along the curve of the top
   c.fillStyle = "rgba(0,0,0,0.3)";
   c.beginPath(); c.moveTo(-r, -r * 0.62); c.quadraticCurveTo(0, -r * 0.8, r, -r * 0.62);
-  c.quadraticCurveTo(0, -r * 0.68, -r, -r * 0.62); c.fill();
+  c.quadraticCurveTo(0, -r * 0.66, -r, -r * 0.62); c.fill();
+  var bg = c.createLinearGradient(-r, 0, r, 0);
+  bg.addColorStop(0, "rgba(0,0,0,0.25)"); bg.addColorStop(0.35, "rgba(255,255,255,0.12)");
+  bg.addColorStop(0.65, "rgba(255,255,255,0.12)"); bg.addColorStop(1, "rgba(0,0,0,0.25)");
+  c.fillStyle = bg; c.fillRect(-r, -r * 0.8, r * 2, r * 0.5);
   c.restore();
-  c.stroke();
-  // Stitching along the bill
+  bill(); c.stroke();
+  // Stitching following the front edge
   c.strokeStyle = "rgba(255,255,255,0.45)"; c.lineWidth = Math.max(0.6, r * 0.012);
   c.setLineDash([r * 0.04, r * 0.03]);
-  c.beginPath(); c.moveTo(-r * 0.8, -r * 0.55); c.quadraticCurveTo(0, -r * 0.42, r * 0.8, -r * 0.55); c.stroke();
+  c.beginPath(); c.moveTo(-r * 0.76, -r * 0.53); c.quadraticCurveTo(0, -r * 0.37, r * 0.76, -r * 0.53); c.stroke();
   c.setLineDash([]);
   c.restore();
 }
