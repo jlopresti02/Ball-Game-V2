@@ -608,6 +608,9 @@ function drawTruckerHat(c, r, look, ink) {
   };
   c.save();
   c.translate(0, -r * (look.hatLift || 0));  // sit the cap higher on the head
+  if (look.hatWidth) {  // narrower cap hugging the head, squeezed around the bill line
+    c.translate(0, -r * 0.6); c.scale(look.hatWidth, 1); c.translate(0, r * 0.6);
+  }
   crown(); c.fillStyle = mesh; c.fill();
   c.save(); crown(); c.clip();
   // Mesh holes on the side panels
@@ -625,7 +628,8 @@ function drawTruckerHat(c, r, look, ink) {
   if (look.hatLogo) {
     var im = artDecalImage(look.hatLogo);
     if (im.complete && im.naturalWidth) {
-      var lw = r * 0.84, lh = lw * im.naturalHeight / im.naturalWidth;
+      // Logo keeps its own shape even when the cap is squeezed narrower
+      var hw = look.hatWidth || 1, lw = r * 0.84, lh = lw * hw * im.naturalHeight / im.naturalWidth;
       c.drawImage(im, -lw / 2, -r * 0.99 - lh / 2, lw, lh);
     }
   }
