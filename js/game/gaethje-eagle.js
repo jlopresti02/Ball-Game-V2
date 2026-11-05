@@ -97,14 +97,9 @@ function updateEagleStrike(e, dt) {
   e.t += dt;
   var cfg = e.cfg, owner = balls[e.owner];
   if (e.phase === "carry") {
-    // Carrying him (gaethje-golf.js moves him); once it lets go, off it flies.
+    // Hauling him off (gaethje-golf.js draws them both); gone with him.
     var m = owner.igbb;
-    if (e.released || !m || m.move !== "eaglecarry") { e.phase = "leave"; e.t = 0; e.lx = owner.x; e.ly = owner.y; e.lz = m ? m.z : EC_HIGH; }
-    else { e.x = owner.x; e.y = owner.y; e.z = m.z; return true; }
-  }
-  if (e.phase === "leave") {
-    e.x = e.lx + e.dx * 700 * e.t; e.y = e.ly + e.dy * 700 * e.t; e.z = e.lz + 520 * e.t;
-    return e.t < 1.0;
+    return !(e.released || !m || m.move !== "eaglecarry");
   }
   if (e.snatch && e.k < 0.5 && canSnatch(owner)) esFollow(e, owner);
   if (e.phase === "warn") {
@@ -165,6 +160,7 @@ function eagleRake(e, self, other) {
 // Under the fighters: the red path while it's coming, and the eagle's
 // shadow sweeping across the mat.
 function drawEagleStrikeUnder() {
+  drawGolfDropUnder(); // where Gaethje will land (gaethje-golf.js)
   if (!eagleStrikes.length) return;
   var now = performance.now() / 1000;
   eagleStrikes.forEach(function (e) {
@@ -187,12 +183,6 @@ function drawEagleStrikeUnder() {
       for (var x = off; x < len - 10; x += 46) {
         ctx.beginPath(); ctx.moveTo(x, -wdt * 0.28); ctx.lineTo(x + 14, 0); ctx.lineTo(x, wdt * 0.28); ctx.lineTo(x + 6, 0); ctx.closePath(); ctx.fill();
       }
-      ctx.restore();
-    }
-    if (e.phase === "carry") {
-      var b = balls[e.owner], zk = Math.min(1, (e.z || 0) / EC_HIGH);
-      ctx.save(); ctx.globalAlpha = 0.3 - 0.12 * zk; ctx.fillStyle = "#000";
-      ctx.beginPath(); ctx.ellipse(b.x, b.y + b.r * 0.85, b.r * (1 - 0.35 * zk), b.r * 0.3 * (1 - 0.35 * zk), 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
     if (e.phase === "swoop") {
@@ -224,15 +214,6 @@ function drawEagleStrikeOver() {
     ctx.restore();
   });
   eagleStrikes.forEach(function (e) {
-    if (e.phase === "carry" || e.phase === "leave") {
-      // Wings beating hard, talons in his shoulders, hauling him up.
-      var b = balls[e.owner], up = e.phase === "carry" ? 0 : Math.min(1, e.t * 3);
-      ctx.save();
-      if (e.phase === "leave") ctx.globalAlpha = Math.max(0, 1 - e.t);
-      drawEagle(e.x, e.y - e.z - b.r * (0.95 + up * 0.3), Math.atan2(e.dy, e.dx), 0.55 + Math.min(0.4, e.z / 600), (performance.now() / 1000) * 22, true);
-      ctx.restore();
-      return;
-    }
     if (e.phase !== "swoop") return;
     var h = Math.abs(e.k - 0.5) * 2;           // 0 at the bottom of the dive, 1 up high
     var lift = h * h * 90;                     // drawn higher up the screen when it's up in the air

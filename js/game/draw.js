@@ -98,7 +98,7 @@ function draw() {
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
   // A bat swing goes over whoever it's hitting.
   (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
-    if (!b.alive || duckDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
+    if (!b.alive || duckDrawnApart(b) || golfDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
     var other = balls[1 - b.id];
 
     // Weaving slips the whole fighter sideways for a moment, and a taunting
@@ -118,7 +118,6 @@ function draw() {
     var aao = allAmericanOffset(b); wox += aao.x; woy += aao.y; // launched down the highway (allamerican.js)
     var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
-    var eco = eagleCarryOffset(b); wox += eco.x; woy += eco.y; // carried up by his eagle (gaethje-golf.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
     b.x += wox; b.y += woy;
 
@@ -384,6 +383,7 @@ function draw() {
 
   if (stadium) drawJumbotron(px);
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
+  drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
   swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
 }

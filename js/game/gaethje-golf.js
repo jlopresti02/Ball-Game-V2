@@ -1,9 +1,11 @@
 // Justin Gaethje's golf mode.
 //
 // If one of his own Eagle Strike eagles (gaethje-eagle.js) swoops through
-// him, it snatches him up instead: carries him up and across the ring and
-// drops him, and he lands wearing a red MAGA cap with a golf club in his
-// hands. An eagle also comes for him on purpose the moment Dustin goes into
+// him, it snatches him up instead and carries him off the screen. A moment
+// later he drops back in from the top of the screen to the middle of the
+// ring (like Jon's Duck Drop), wearing a red MAGA cap with a golf club in
+// his hands. The landing only does `land.damage`; it's there to knock back
+// anyone within `land.radius` so he has room. An eagle also comes for him on purpose the moment Dustin goes into
 // Diamond Guard (diamond.js) or Gane pulls out his bat (cheater.js).
 //
 // With the club he fights like Gane with his bat (it's the same code, in
@@ -23,7 +25,8 @@
 
 var GOLF_CLUB_LEN = 2.2;   // club length, in ball radii
 var GOLF_CLUB_THICK = 1.8; // the picture drawn this much fatter across, so the shaft and head read at fight size
-var EC_UP = 0.5, EC_MOVE = 0.9, EC_DROP = 0.35, EC_HIGH = 120; // the carry: lift, fly across, drop; how high
+var EC_OUT = 0.9, EC_SPEED = 650, EC_CLIMB = 260; // carried off: how long, how fast along the line, how fast it climbs
+var EC_GONE = 0.9, EC_DROP = 0.45;               // off screen, then the fall back in to the middle
 // The golf shot's timeline (seconds into it).
 var GS_SET = 0.25, GS_ADDRESS = 0.8, GS_TOP = 1.2, GS_HIT = 1.3, GS_END = 1.75;
 
@@ -46,15 +49,8 @@ function startEagleCarry(self, e) {
   self.dizzy = null; self.slam = null;
   self.vx = 0; self.vy = 0;
   self.invincible = true; self.immuneCd = 9;
-  // Dropped somewhere across the ring, away from the cage.
-  var other = balls[1 - self.id], to = null;
-  for (var i = 0; i < 12; i++) {
-    var p = { x: self.r * 2 + Math.random() * (W - self.r * 4), y: EC_HIGH + self.r * 1.6 + Math.random() * (H - EC_HIGH - self.r * 3.6) };
-    var dd = Math.hypot(p.x - self.x, p.y - self.y), od = Math.hypot(p.x - other.x, p.y - other.y);
-    if (dd > 120 && od > 110) { to = p; break; }
-  }
-  if (!to) to = { x: W - self.x, y: Math.max(EC_HIGH + self.r * 1.6, H - self.y) };
-  self.igbb = { move: "eaglecarry", t: 0, from: { x: self.x, y: self.y }, to: to, z: 0, e: e };
+  // Carried on along the eagle's line, up and off the screen.
+  self.igbb = { move: "eaglecarry", phase: "carry", t: 0, px: self.x, py: self.y, z: 0, dx: e.dx, dy: e.dy, e: e };
   floater(self.x, self.y - self.r - 40, "SNATCHED!", "crit");
   playEagleScreech();
   if (!reduceMotion) { shake = Math.max(shake, 8); hitStop = Math.max(hitStop, 0.05); }
@@ -64,48 +60,54 @@ function startEagleCarry(self, e) {
   }
 }
 
-// From the abilities loop, before the special. True while he's being carried.
+function eagleCarryOn(b) { return !!(b.igbb && b.igbb.move === "eaglecarry"); }
+// Drawn on his own, over the stands and the jumbotron (drawEagleSky), or
+// not at all while he's off screen.
+function golfDrawnApart(b) { return eagleCarryOn(b); }
+
+// From the abilities loop, before the special. True while he's away.
 function updateEagleCarry(self, other, dt) {
   var m = self.igbb;
   if (!m || m.move !== "eaglecarry") return false;
   m.t += dt;
   self.vx = 0; self.vy = 0; self.immuneCd = 9;
   if (over) { endEagleCarry(self, false); return false; }
-  var t = m.t, u;
-  if (t < EC_UP) {
-    u = t / EC_UP;
-    m.z = EC_HIGH * (1 - (1 - u) * (1 - u));
-    // Hauled down off the top wall as it climbs, so he stays in view.
-    self.y = Math.max(m.from.y, Math.min(m.to.y, m.z + self.r * 1.6));
-  } else if (t < EC_UP + EC_MOVE) {
-    u = (t - EC_UP) / EC_MOVE; u = u * u * (3 - 2 * u);
-    var fy = Math.max(m.from.y, Math.min(m.to.y, EC_HIGH + self.r * 1.6));
-    self.x = m.from.x + (m.to.x - m.from.x) * u; self.y = fy + (m.to.y - fy) * u;
-    m.z = EC_HIGH + Math.sin(u * Math.PI) * 30;
-  } else if (t < EC_UP + EC_MOVE + EC_DROP) {
-    if (!m.let) { m.let = true; floater(self.x, self.y - self.r - m.z - 30, "LET GO!", "note"); playWhoosh(); }
-    u = (t - EC_UP - EC_MOVE) / EC_DROP;
-    m.z = EC_HIGH * (1 - u * u);
-  } else {
-    endEagleCarry(self, true);
-    return false;
+  if (m.phase === "carry") {
+    // Hauled off along its line, climbing as it goes.
+    m.px += m.dx * EC_SPEED * dt; m.py += m.dy * EC_SPEED * dt;
+    m.z = EC_CLIMB * m.t + 200 * m.t * m.t;
+    if (m.t >= EC_OUT) {
+      m.phase = "gone"; m.t = 0;
+      if (m.e) m.e.released = true;
+      // Coming back down in the middle.
+      self.x = W / 2; self.y = H / 2;
+    }
+  } else if (m.phase === "gone") {
+    if (m.t >= EC_GONE) {
+      m.phase = "drop"; m.t = 0;
+      self.maga = true; // the eagle's kitted him out
+      playWhoosh();
+    }
+  } else if (m.phase === "drop") {
+    var u = Math.min(1, m.t / EC_DROP);
+    m.fallY = ddTopY(self.r) + (self.y - ddTopY(self.r)) * u * u; // jon-duck.js
+    if (u >= 1) { golfLand(self, other); return false; }
   }
   return true;
 }
 
-function endEagleCarry(self, landed) {
-  var m = self.igbb;
-  self.igbb = null; self.invincible = false; self.immuneCd = 0;
-  if (m && m.e) m.e.released = true;
-  setSpeed(self, self.baseSpeed || SPEED);
-  if (!landed || !self.alive) return;
-  // Thud: lands in a cloud of dust, cap on, club in hand.
-  self.squash = { t: 0.22, max: 0.22, nx: 0, ny: 1 };
-  if (!reduceMotion) { shake = Math.max(shake, 14); hitStop = Math.max(hitStop, 0.05); }
+// Lands in the middle: knocks back anyone close enough to clear himself
+// some room, then he's in golf mode.
+function golfLand(self, other) {
+  var cfg = golfCfg(self).land;
+  endEagleCarry(self, true);
+  self.squash = { t: 0.24, max: 0.24, nx: 0, ny: 1 };
+  if (!reduceMotion) { shake = Math.max(shake, 16); hitStop = Math.max(hitStop, 0.06); }
   playSlam();
-  for (var i = 0; i < 16 && !reduceMotion; i++) {
-    var a = Math.PI + Math.random() * Math.PI, sp = 120 + Math.random() * 200;
-    particles.push({ x: self.x, y: self.y + self.r * 0.8, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.4, life: 0.5, max: 0.5, size: 4 + Math.random() * 4, color: "rgba(190,175,150,0.8)" });
+  golfRing = { x: self.x, y: self.y, t: 0, R: cfg.radius };
+  for (var i = 0; i < 22 && !reduceMotion; i++) {
+    var a = Math.random() * Math.PI * 2, sp = 160 + Math.random() * 220;
+    particles.push({ x: self.x + Math.cos(a) * self.r * 0.8, y: self.y + self.r * 0.6 + Math.sin(a) * self.r * 0.3, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.45, life: 0.55, max: 0.55, size: 4 + Math.random() * 5, color: "rgba(190,175,150,0.85)" });
   }
   ["#c8102e", "#ffffff", "#1c2f6e"].forEach(function (c, ci) {
     for (var j = 0; j < 6 && !reduceMotion; j++) {
@@ -113,14 +115,97 @@ function endEagleCarry(self, landed) {
       particles.push({ x: self.x, y: self.y - self.r, vx: Math.cos(a2) * s2, vy: Math.sin(a2) * s2 - 120, life: 0.8, max: 0.8, size: 3 + ci, color: c });
     }
   });
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  if (other.alive && !other.invincible && !other.igbb && d < cfg.radius + other.r) {
+    hurt(other, cfg.damage, "igbb", self.id);
+    if (other.alive && inOrdinaryMovement(other)) {
+      other.vx = dx / d * cfg.knockback; other.vy = dy / d * cfg.knockback;
+    }
+    other.squash = { t: 0.16, max: 0.16, nx: dx / d, ny: dy / d };
+    floater(other.x, other.y - other.r - 40, "BACK OFF!", "note");
+    checkEnd();
+  }
   startGolfMode(self);
 }
 
-// Drawn this far up while he's carried (draw.js adds it to his spot).
-function eagleCarryOffset(b) {
-  var m = b.igbb;
-  if (!m || m.move !== "eaglecarry") return { x: 0, y: 0 };
-  return { x: 0, y: -m.z };
+function endEagleCarry(self, landed) {
+  var m = self.igbb;
+  self.igbb = null; self.invincible = false; self.immuneCd = 0;
+  if (m && m.e) m.e.released = true;
+  setSpeed(self, self.baseSpeed || SPEED);
+}
+
+// Under the fighters: where he's going to land (a red ring that fills in
+// and his shadow growing as he falls), and the shockwave once he does.
+var golfRing = null;
+function drawGolfDropUnder() {
+  balls.forEach(function (b) {
+    var m = b.igbb;
+    if (!eagleCarryOn(b) || (m.phase !== "gone" && m.phase !== "drop")) return;
+    var cfg = golfCfg(b).land, k = m.phase === "gone" ? m.t / EC_GONE : 1, now = performance.now() / 1000;
+    ctx.save();
+    ctx.strokeStyle = "rgba(220,20,20," + (0.6 + 0.3 * Math.sin(now * 16)) + ")"; ctx.lineWidth = 3.5; ctx.setLineDash([12, 8]);
+    ctx.beginPath(); ctx.arc(b.x, b.y, cfg.radius, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(220,20,20,0.16)";
+    ctx.beginPath(); ctx.arc(b.x, b.y, cfg.radius * Math.min(1, k), 0, Math.PI * 2); ctx.fill();
+    var f = m.phase === "drop" ? Math.min(1, m.t / EC_DROP) : 0;
+    ctx.fillStyle = "rgba(0,0,0," + (0.12 + 0.25 * f) + ")";
+    ctx.beginPath(); ctx.ellipse(b.x, b.y + b.r * 0.85, b.r * (0.4 + 0.6 * f), b.r * 0.3 * (0.4 + 0.6 * f), 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
+  if (golfRing) {
+    var g = golfRing, a = 1 - g.t / 0.45;
+    ctx.save(); ctx.globalAlpha = Math.max(0, a);
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(g.x, g.y + 10, g.R * (0.4 + 0.8 * (1 - a)), 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// Over everything (after the jumbotron): him dangling from the eagle as it
+// hauls him off, and him falling back in from the top of the screen.
+function drawEagleSky(sc, ox, oy) {
+  balls.forEach(function (b) {
+    var m = b.igbb;
+    if (!eagleCarryOn(b) || !b.alive || m.phase === "gone") return;
+    var r = b.r, x, y, flap = performance.now() / 1000 * 22;
+    ctx.save();
+    ctx.setTransform(sc, 0, 0, sc, ox, oy);
+    if (m.phase === "carry") {
+      x = m.px; y = m.py - m.z;
+      golfDrawFighter(b, x, y, 1, Math.sin(flap * 0.4) * 0.15);
+      drawEagle(x, y - r * 0.95, Math.atan2(m.dy, m.dx), 0.6, flap, true); // allamerican.js
+    } else {
+      x = b.x; y = m.fallY != null ? m.fallY : ddTopY(r);
+      var top = ddTopY(r);
+      var g = ctx.createLinearGradient(0, top, 0, y);
+      g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(255,255,255,0.75)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(x - r * 0.8, y); ctx.lineTo(x - r * 0.2, top); ctx.lineTo(x + r * 0.2, top); ctx.lineTo(x + r * 0.8, y); ctx.closePath(); ctx.fill();
+      golfDrawFighter(b, x, y, 1.12, 0);
+    }
+    ctx.restore();
+  });
+}
+// The fighter on his own at (x, y): stretched tall by `st`, swinging by `rot`.
+function golfDrawFighter(b, x, y, st, rot) {
+  var ch = b.char, r = b.r;
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(rot); ctx.scale(1 / Math.sqrt(st), st); ctx.translate(-x, -y);
+  if (ch.look) drawFighterArt(ctx, x, y, r, ch.look, theme.wall, { layout: "contained", name: ch.name });
+  else { ctx.fillStyle = ch.color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+  ctx.lineWidth = 3; ctx.strokeStyle = theme.wall;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  var sx = b.x, sy = b.y; b.x = x; b.y = y; drawGolfHat(b); b.x = sx; b.y = sy;
+  // Arms up, hanging on (or flung up as he falls).
+  var arm = (ch.punch.size || 15) * 0.75;
+  [-1, 1].forEach(function (sd) {
+    var shx = x + sd * r * 0.62, shy = y - r * 0.2, hx = x + sd * r * 0.45, hy = y - r * 1.15;
+    strokeLimb(arm, armColor(ch), function () { ctx.moveTo(shx, shy); ctx.lineTo(hx, hy); });
+    drawGloveAt(hx, hy, r * 0.22, ch);
+  });
+  ctx.restore();
 }
 
 // ---------------------------------------------------------------- golf mode
@@ -147,6 +232,7 @@ function endGolfMode(b, toss) {
 
 // Every frame (update.js): the club's clock.
 function tickGolf(dt) {
+  if (golfRing && (golfRing.t += dt) > 0.45) golfRing = null;
   balls.forEach(function (b) {
     if (!golfing(b)) return;
     if (!b.alive || over) { endGolfMode(b, false); return; }
