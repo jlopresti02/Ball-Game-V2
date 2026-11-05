@@ -607,6 +607,7 @@ function drawTruckerHat(c, r, look, ink) {
     c.closePath();
   };
   c.save();
+  c.translate(0, -r * (look.hatLift || 0));  // sit the cap higher on the head
   crown(); c.fillStyle = mesh; c.fill();
   c.save(); crown(); c.clip();
   // Mesh holes on the side panels
