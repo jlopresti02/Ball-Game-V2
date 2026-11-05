@@ -47,6 +47,7 @@ function tickRefNap(dt) {
   if (rf.stop || over) { if (rf.asleep) wakeRef(rf); return; }
   // Out cold for the whole of Gane's special (herbdean.js wakes him after).
   if (herbDeanActive()) { rf.asleep = true; rf.napT = 0; return; }
+  if (swordDuelActive()) return; // stays asleep through a sword duel (sword.js)
   rf.napT = (rf.napT || 0) + dt;
   if (!rf.asleep && rf.napT >= ch.awake) {
     rf.asleep = true; rf.napT = 0;
@@ -385,7 +386,7 @@ function drawCheater(b) {
     drawGloveAt(hx3, hy3, gr, ch);
     return;
   }
-  if (b.cheater && b.cheater.mode === "bat") {
+  if (b.cheater && b.cheater.mode === "bat" && !swordDuelLocked(b)) { // (sword.js draws it in a sword duel)
     // The bat: held and played with between swings, or swung two-handed
     // across at them (one set of poses, so it flows between the two).
     var bc = ch.cheater.bat, bw = bc.windup || 0;

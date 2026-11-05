@@ -1866,18 +1866,20 @@ function playSwordDraw() {
 }
 // The bat hitting the blade: a hard metallic clang (inharmonic partials
 // ringing out) over a sharp crack.
-function playSwordClash() {
+// `big` (1 = a normal parry) makes it heavier: louder, lower, longer ringing.
+function playSwordClash(big) {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var now = ctx.currentTime, out = ctx.createGain();
-    out.gain.value = 0.55; out.connect(ctx.destination);
+    big = big || 1;
+    var now = ctx.currentTime, out = ctx.createGain(), pitch = (1 - (big - 1) * 0.12) * (0.96 + Math.random() * 0.08), ring = 0.8 + big * 0.2;
+    out.gain.value = 0.55 * Math.min(1.8, big); out.connect(ctx.destination);
     [[523, 0.5, 0.9], [1187, 0.4, 0.7], [1764, 0.32, 0.55], [2633, 0.25, 0.45], [3517, 0.18, 0.3], [4680, 0.12, 0.22]].forEach(function (p) {
-      var o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = "sine"; o.frequency.setValueAtTime(p[0] * 1.01, now); o.frequency.exponentialRampToValueAtTime(p[0], now + 0.05);
-      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(p[1], now + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, now + p[2]);
-      o.connect(g); g.connect(out); o.start(now); o.stop(now + p[2] + 0.05);
+      var o = ctx.createOscillator(), g = ctx.createGain(), f = p[0] * pitch, len = p[2] * ring;
+      o.type = "sine"; o.frequency.setValueAtTime(f * 1.01, now); o.frequency.exponentialRampToValueAtTime(f, now + 0.05);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(p[1], now + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, now + len);
+      o.connect(g); g.connect(out); o.start(now); o.stop(now + len + 0.05);
     });
     if (!punchNoise) punchNoise = makeNoiseBuffer(ctx, 0.2);
     var src = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g2 = ctx.createGain();
@@ -1885,5 +1887,18 @@ function playSwordClash() {
     g2.gain.setValueAtTime(0.9, now); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
     src.connect(hp); hp.connect(g2); g2.connect(out); src.start(now); src.stop(now + 0.1);
     playPunch(14); // the bat's weight behind it
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The Diamond Slash at the end of a sword duel: a sharp rising "shing", a
+// glassy ring and a heavy hit.
+function playSwordSlash() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    playSwordDraw();
+    synthDiamondChime(ctx, ctx.currentTime, 0.5);
+    playPunch(50);
   } catch (e) { /* never let audio break the game */ }
 }

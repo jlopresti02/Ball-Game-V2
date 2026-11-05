@@ -181,6 +181,7 @@ function updateAbilities(dt) {
     if (self.armbar) { updateArmbar(self, dt); continue; }
     if (self.suplex) { updateSuplex(self, dt); continue; }
     if (self.checkStun > 0) continue; // planted after getting its kick checked
+    if (swordDuelLocked(self)) continue; // locked in a sword duel (sword.js)
     if (self.slam) {
       self.slam.t += dt;
       if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
