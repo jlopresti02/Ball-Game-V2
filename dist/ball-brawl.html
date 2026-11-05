@@ -6703,7 +6703,7 @@ function hurt(b, amount, source, attackerId) {
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
   if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && source !== "igbb" && !b.koDuel &&
-      b.char.hasGrapple && !b.grapple && !b.grappled && !subLocked(b) && b.grappleCd === 0 && attackerId != null) {
+      b.char.hasGrapple && !b.grapple && !b.grappled && !subLocked(b) && b.grappleCd === 0 && attackerId != null && !duckDropOn(b)) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
       var chance = (b.char.grapple.counterChance != null ? b.char.grapple.counterChance : 25) / 100;
@@ -6819,7 +6819,10 @@ function step(dt) {
   // Sees Red keeps a normal collision box even mid-charge-dash, so it
   // still bounces off the opponent on contact like any other pair of
   // balls; only its punch damage is handled separately, on a timer.
-  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || subLocked(a) || subLocked(c) || a.koDuel || c.koDuel || igbbLocked(a) || igbbLocked(c) || swordDuelLocked(a) || swordDuelLocked(c) || aSpin || cSpin) return;
+  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || subLocked(a) || subLocked(c) || a.koDuel || c.koDuel || (igbbLocked(a) && !duckSolid(a)) || (igbbLocked(c) && !duckSolid(c)) || swordDuelLocked(a) || swordDuelLocked(c) || aSpin || cSpin) return;
+  // Jon's Duck Drop duck, and Jon in its landing pose, are solid like a seat (jon-duck.js).
+  if (duckSolid(a)) aSit = true;
+  if (duckSolid(c)) cSit = true;
   // A seated Watcher is an immovable, solid object: whoever runs into it
   // just bounces off, the way they would off a wall.
   if (aSit || cSit) {
@@ -7989,6 +7992,7 @@ function grabEscaped(attacker, target) {
 }
 
 function attemptGrab(attacker, target) {
+  if (duckDropOn(attacker) || duckDropOn(target)) return false; // no grappling mid Duck Drop (jon-duck.js)
   if (target.slamSafe > 0) return false;
   var ag = attacker.char.grapple;
   if (ag && ag.shotName) floater(attacker.x, attacker.y - attacker.r - 44, ag.shotName, "crit"); // calls the shot (Gaethje's DOUBLE LEG)
@@ -10339,6 +10343,16 @@ function duckHidden(b) { return duckDropOn(b) && (b.igbb.phase === "duck" || b.i
 // Not drawn with the other fighters: hidden, or falling in from the top of
 // the screen over the stands and jumbotron (drawDuckSky).
 function duckDrawnApart(b) { return duckHidden(b) || (duckDropOn(b) && b.igbb.phase === "drop"); }
+// Solid but immovable (the fighters bounce off, physics.js): the duck, and
+// Jon in his landing pose.
+function duckSolid(b) { return duckDropOn(b) && (b.igbb.phase === "duck" || b.igbb.phase === "pose"); }
+// While it's on, a hit only does damage: no knockback, stuns, slams or
+// anything else (cleared every frame and at the end).
+function duckClearEffects(b) {
+  b.vx = 0; b.vy = 0;
+  b.slam = null; b.dazed = null; b.dizzy = null; b.shelled = null; b.shocked = null; b.angry = null;
+  b.checkStun = 0; b.knockFly = 0;
+}
 function duckHandsBusy(b) { return duckDropOn(b) && b.igbb.phase === "pose"; }
 // Burning red like a superhero, from the drop to the end of the pose.
 function duckHeroic(b) { return duckDropOn(b) && (b.igbb.phase === "drop" || b.igbb.phase === "pose"); }
@@ -10404,13 +10418,14 @@ function updateDuckDrop(self, other, dt) {
       self.invincible = true;
       m.from = { x: self.x, y: self.y };
       duckPoof(self.x, self.y, self.r);
-      self.x = m.cx; self.y = ddSkyY(); // the duck's just a picture: he's out of reach till he lands
       floater(m.from.x, m.from.y - self.r - 40, "QUACK!", "note");
       playDuckPoof(); playDuckQuack();
     }
     return true;
   }
-  if (m.phase === "duck" || m.phase === "fly") { self.x = m.cx; self.y = ddSkyY(); }
+  if (m.phase === "duck") { self.x = m.from.x; self.y = m.from.y; } // the duck stands where he was (solid, can't be hurt)
+  if (m.phase === "fly") { self.x = m.cx; self.y = ddSkyY(); }
+  duckClearEffects(self);
   if (duckHidden(self)) self.immuneCd = 1; // nothing reaches him, and no IMMUNE popping up off screen
   if (m.phase === "duck") {
     if (m.t >= DD_DUCK) { m.phase = "fly"; m.t = 0; playDuckFlap(); }
@@ -10491,6 +10506,7 @@ function duckLand(self, other, cfg, m) {
 
 function endDuckDrop(self) {
   self.igbb = null;
+  duckClearEffects(self);
   self.invincible = false;
   self.char.look = self.jonMode === "evil" ? self.char.jon.evilLook : self.char.jon.goatLook;
   setSpeed(self, self.baseSpeed || SPEED);
@@ -14416,6 +14432,7 @@ function igbbLocked(b) {
 }
 
 function specialGuarding(b) {
+  if (b.igbb && b.igbb.move === "duckdrop") return false; // Jon's Duck Drop landing can be hit (jon-duck.js)
   return b.igbb && b.igbb.phase !== "close";
 }
 

@@ -27,6 +27,16 @@ function duckHidden(b) { return duckDropOn(b) && (b.igbb.phase === "duck" || b.i
 // Not drawn with the other fighters: hidden, or falling in from the top of
 // the screen over the stands and jumbotron (drawDuckSky).
 function duckDrawnApart(b) { return duckHidden(b) || (duckDropOn(b) && b.igbb.phase === "drop"); }
+// Solid but immovable (the fighters bounce off, physics.js): the duck, and
+// Jon in his landing pose.
+function duckSolid(b) { return duckDropOn(b) && (b.igbb.phase === "duck" || b.igbb.phase === "pose"); }
+// While it's on, a hit only does damage: no knockback, stuns, slams or
+// anything else (cleared every frame and at the end).
+function duckClearEffects(b) {
+  b.vx = 0; b.vy = 0;
+  b.slam = null; b.dazed = null; b.dizzy = null; b.shelled = null; b.shocked = null; b.angry = null;
+  b.checkStun = 0; b.knockFly = 0;
+}
 function duckHandsBusy(b) { return duckDropOn(b) && b.igbb.phase === "pose"; }
 // Burning red like a superhero, from the drop to the end of the pose.
 function duckHeroic(b) { return duckDropOn(b) && (b.igbb.phase === "drop" || b.igbb.phase === "pose"); }
@@ -92,13 +102,14 @@ function updateDuckDrop(self, other, dt) {
       self.invincible = true;
       m.from = { x: self.x, y: self.y };
       duckPoof(self.x, self.y, self.r);
-      self.x = m.cx; self.y = ddSkyY(); // the duck's just a picture: he's out of reach till he lands
       floater(m.from.x, m.from.y - self.r - 40, "QUACK!", "note");
       playDuckPoof(); playDuckQuack();
     }
     return true;
   }
-  if (m.phase === "duck" || m.phase === "fly") { self.x = m.cx; self.y = ddSkyY(); }
+  if (m.phase === "duck") { self.x = m.from.x; self.y = m.from.y; } // the duck stands where he was (solid, can't be hurt)
+  if (m.phase === "fly") { self.x = m.cx; self.y = ddSkyY(); }
+  duckClearEffects(self);
   if (duckHidden(self)) self.immuneCd = 1; // nothing reaches him, and no IMMUNE popping up off screen
   if (m.phase === "duck") {
     if (m.t >= DD_DUCK) { m.phase = "fly"; m.t = 0; playDuckFlap(); }
@@ -179,6 +190,7 @@ function duckLand(self, other, cfg, m) {
 
 function endDuckDrop(self) {
   self.igbb = null;
+  duckClearEffects(self);
   self.invincible = false;
   self.char.look = self.jonMode === "evil" ? self.char.jon.evilLook : self.char.jon.goatLook;
   setSpeed(self, self.baseSpeed || SPEED);
