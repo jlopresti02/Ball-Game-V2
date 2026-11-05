@@ -125,6 +125,11 @@ function galleryMoves(ch) {
     add("🐐", "GOAT mode", "Everything above, with his chest tattoo glowing gold. " + j.rncChance + "% of his takedowns go to the back for a rear naked choke and " + j.gnpChance + "% into ground and pound (" + j.gnp.length + " punches, " + gnpTotal + " total). Swaps modes every " + secs(j.swapEvery) + ".");
     add("😈", "EVIL mode", "Tattoo glowing red. Switches from kicks to punches, sprawls " + (j.evil.tdd ? j.evil.tdd.sprawlChance : 0) + "% of shots and slips " + ch.weave.dodgeChance + "% of attacks. " + ch.weave.critChance + "% of slips are an eye poke into a " + pk.combo.length + "-punch combination (" + pkTotal + " total).");
   }
+  if (ch.diamond) {
+    // Dustin Poirier's Diamond Guard (diamond.js).
+    var dm = ch.diamond, gemDmg = dm.gemDamage != null ? dm.gemDamage : ch.punch.damage;
+    add("💎", "Diamond Guard", "Below " + Math.round(dm.triggerHp * 100) + "% health he transforms: diamond armor on, and every " + dm.throwEvery[0] + "-" + dm.throwEvery[1] + "s he throws a diamond for " + gemDmg + " damage (a punch's worth), on top of everything else.");
+  }
   return m;
 }
 

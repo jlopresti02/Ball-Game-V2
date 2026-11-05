@@ -171,6 +171,7 @@ function draw() {
     if (b.char.look) {
       // Fighter art: the muscled ball in its fight kit (beats a face photo)
       drawFighterArt(ctx, b.x, b.y, b.r, b.char.look, theme.wall, { layout: "contained", name: b.char.name });
+      drawDiamondArmor(b); // Dustin's Diamond Guard armor over it (diamond.js)
     } else if (img) {
       ctx.save();
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
@@ -335,7 +336,15 @@ function draw() {
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
-    if (pimg) {
+    if (pimg && p.aspect) {
+      // A shaped image (Dustin's diamond): true proportions, spinning.
+      var ph = p.r * 2, pw = ph * p.aspect;
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.angle || 0);
+      ctx.imageSmoothingEnabled = false; // keeps the pixel art crisp
+      ctx.drawImage(pimg, -pw / 2, -ph / 2, pw, ph);
+      ctx.restore();
+    } else if (pimg) {
       ctx.drawImage(pimg, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
     } else {
       ctx.fillStyle = p.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;

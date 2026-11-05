@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -1707,5 +1707,57 @@ function playJonBaa() {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     withClip("jonBaa", function () { playClip("jonBaa", 1.1); });
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Dustin Poirier turning into Diamond Guard (diamond.js): Joe's "Dustin
+// Diamond" clip. A big moment, so it cuts in on the talk channel and is
+// never skipped. A bright glassy shimmer plays under it (and stands in if
+// the clip isn't loaded yet).
+function playDiamondGuard() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    synthDiamondChime(ctx, ctx.currentTime, 0.5);
+    withClip("dustinDiamond", function () { cutInTalk("dustinDiamond", 0.9); });
+  } catch (e) { /* never let audio break the game */ }
+}
+function synthDiamondChime(ctx, now, vol) {
+  var out = ctx.createGain();
+  out.gain.value = vol; out.connect(ctx.destination);
+  [1568, 2093, 2637, 3136].forEach(function (f, i) {
+    var o = ctx.createOscillator(), g = ctx.createGain(), t = now + i * 0.05;
+    o.type = "sine"; o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.75);
+  });
+}
+// A diamond leaving his hand: a whoosh with a little glint on it.
+function playDiamondThrow() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    synthWhoosh(ctx, ctx.destination, ctx.currentTime);
+    var o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+    o.type = "triangle"; o.frequency.setValueAtTime(2400, t); o.frequency.exponentialRampToValueAtTime(3200, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+    o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.3);
+  } catch (e) { /* never let audio break the game */ }
+}
+// A diamond landing: a hard punch with a glassy crack on top.
+function playDiamondHit() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    [2794, 3729].forEach(function (f) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "square"; o.frequency.setValueAtTime(f, now);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.05, now + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.2);
+    });
   } catch (e) { /* never let audio break the game */ }
 }

@@ -200,14 +200,16 @@ function updateAbilities(dt) {
       if (!ta.fired && tp >= ta.relEnd) {
         ta.fired = true;
         if (other.alive) {
-          var pr2 = self.char.proj;
+          var pr2 = ta.proj || self.char.proj; // (Diamond Guard throws its own diamond, diamond.js)
           var tdx = other.x - self.x, tdy = other.y - self.y, tdd = Math.sqrt(tdx * tdx + tdy * tdy) || 1;
           projectiles.push({
             x: self.x + tdx / tdd * (self.r + 8), y: self.y + tdy / tdd * (self.r + 8),
             vx: tdx / tdd * pr2.speed, vy: tdy / tdd * pr2.speed,
-            r: pr2.size, damage: pr2.damage, color: self.char.color, imgData: pr2.imgData,
+            r: pr2.size, damage: pr2.damage, color: pr2.color || self.char.color, imgData: pr2.imgData,
+            aspect: pr2.aspect, spin: pr2.spin, angle: 0, gem: !!pr2.gem,
             ownerId: self.id
           });
+          if (pr2.gem) playDiamondThrow();
         }
       }
       if (tp >= 1) self.throwAnim = null;
@@ -591,12 +593,14 @@ function updateAbilities(dt) {
 
   projectiles = projectiles.filter(function (p) {
     p.x += p.vx * dt; p.y += p.vy * dt;
+    if (p.spin) p.angle += p.spin * dt;
     if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return false;
     var target = balls[1 - p.ownerId];
     if (target.alive && !p.weaved) {
       var px = p.x - target.x, py = p.y - target.y;
       if (px * px + py * py < (target.r + p.r) * (target.r + p.r)) {
-        hurt(target, p.damage, "proj", p.ownerId);
+        var pdealt = hurt(target, p.damage, "proj", p.ownerId);
+        if (p.gem && pdealt > 0) { playPunch(pdealt); playDiamondHit(); diamondHitSparkle(target, p); }
         if (target.justDodged && !target.invincible) {
           p.weaved = true; // slipped: the shot flies on past
           return true;
