@@ -10497,12 +10497,13 @@ function drawDiamondGem(x, y, s) {
 // swing starts, so he can raise his guard in time): no damage, the swing is
 // knocked away, and they're shoved back. On the duel.after-th parry the
 // weapons lock up in a duel. The camera pushes in and the arena darkens,
-// and they fight a choreographed exchange (DUEL_BEATS): a high clash, a low
-// one, Dustin spinning into a strike, the blades bound together grinding
-// sparks, a flurry, the two circling round each other locked, and a leaping
-// overhead strike in slow motion. Then Dustin either disarms them (twists
-// the bat away and it spins off into the crowd) or dashes straight through
-// them with a delayed Diamond Slash.
+// and they fight a choreographed exchange (DUEL_BEATS), every clash a full
+// two-handed swing: chopping down from over the shoulder, ripping up from
+// low, Dustin spinning round with the blade held out, a sped-up combo of
+// big swings, the two circling round each other, and a leaping overhead
+// strike in slow motion. Then Dustin either disarms them (winds round the
+// bat and it spins off into the crowd) or dashes straight through them with
+// a delayed Diamond Slash.
 "use strict";
 
 var SWORD_DRAW = 0.35, SWORD_PUT_AWAY = 0.3, SWORD_SLASH = 0.5, SWORD_LEN = 2.6;
@@ -10720,21 +10721,46 @@ function clashFx(x, y, nx, ny, big) {
 
 // ---------------------------------------------------------------- the duel
 
-// The choreography, beat by beat (seconds of duel time). `hits` are the
-// clashes in that beat, `y` where each lands (ball radii, up is -), `dir`
-// which way each swing comes from.
+// The choreography, beat by beat (seconds of duel time). Every clash is a
+// full two-handed swing: wound right back, whipped through a big arc into
+// the clash, and knocked back off it. `hits` are the clash times in the
+// beat, `sw` the swing type of each (SWINGS), `fast` for a sped-up combo.
 var DUEL_BEATS = [
-  { k: "lock", dur: 0.55, hits: [] },
-  { k: "strike", dur: 0.44, hits: [0.34], y: [-0.6], dir: [1] },
-  { k: "strike", dur: 0.38, hits: [0.28], y: [0.35], dir: [-1] },
-  { k: "spin", dur: 0.72, hits: [0.56], y: [-0.25], dir: [1] },
-  { k: "bind", dur: 1.0, hits: [0.06, 0.92], y: [-0.1, -0.45], dir: [-1, 1] },
-  { k: "flurry", dur: 0.78, hits: [0.12, 0.27, 0.42, 0.58], y: [-0.55, 0.3, -0.35, 0.15], dir: [1, -1, 1, -1] },
-  { k: "circle", dur: 0.85, hits: [0.74], y: [-0.25], dir: [1] },
-  { k: "leap", dur: 1.15, hits: [0.88], y: [-0.55], dir: [1], slow: [0.32, 0.92] }
+  { k: "lock", dur: 0.6, hits: [] },
+  { k: "strike", dur: 0.62, hits: [0.46], sw: ["high"] },
+  { k: "strike", dur: 0.58, hits: [0.42], sw: ["low"] },
+  { k: "spin", dur: 0.8, hits: [0.62], sw: ["side"] },
+  { k: "combo", dur: 1.05, hits: [0.3, 0.62, 0.94], sw: ["high", "low", "high"], fast: true },
+  { k: "circle", dur: 0.9, hits: [0.78], sw: ["high"] },
+  { k: "leap", dur: 1.15, hits: [0.88], sw: ["over"], slow: [0.32, 0.92] }
 ];
-var DUEL_FINISH = 1.1;
-(function () { var t = 0; DUEL_BEATS.forEach(function (bt) { bt.t0 = t; t += bt.dur; }); DUEL_BEATS.total = t; })();
+var DUEL_LEAP = 6, DUEL_FINISH = 1.1;
+// Blade angles (ball frame: 0 points at them, -PI/2 straight up): wound
+// back to s, the clash at c, knocked to c + reb. `t` is how long the swing
+// itself takes (the rest of the gap is winding up), cy where it clashes,
+// and the opponent's matching swing.
+var SWINGS = {
+  high: { s: -2.55, c: -0.45, reb: -0.5, t: 0.17, cy: -0.45, o: "high" }, // over the shoulder, chopping down
+  low: { s: 2.45, c: 0.45, reb: 0.5, t: 0.17, cy: 0.3, o: "low" },        // from down behind, ripping up
+  side: { s: 0, c: 0, reb: -0.45, t: 0.62, cy: -0.15, o: "high" },        // held out while he spins round with it
+  over: { s: -2.2, c: -0.3, reb: -0.55, t: 0.3, cy: -0.5, o: "high" },    // the leaping overhead
+  fin: { s: -2.7, c: -2.7, reb: 0, t: 0, cy: -0.3, o: "high" }            // raised for the finish
+};
+var DUEL_REB = 0.12, DUEL_GUARD = -Math.PI / 2 + 0.35;
+var DUEL_HITS = [];
+(function () {
+  var t = 0;
+  DUEL_BEATS.forEach(function (bt) {
+    bt.t0 = t;
+    bt.hits.forEach(function (h, j) {
+      var g = SWINGS[bt.sw[j]];
+      DUEL_HITS.push({ T: t + h, type: bt.sw[j], sw: bt.fast ? Math.min(g.t, 0.12) : g.t });
+    });
+    t += bt.dur;
+  });
+  DUEL_BEATS.total = t;
+  DUEL_HITS.push({ T: t + 0.08, type: "fin", sw: 0, fin: true });
+})();
 
 function startSwordDuel(d, o) {
   var sc = d.char.diamond.swordClash.duel;
@@ -10762,38 +10788,52 @@ function duelBeat(t) {
   return { i: 0, bt: DUEL_BEATS[0], u: 0 };
 }
 
-// Where everything is at duel time t: both fighters, Dustin's spin and
-// lift, the next (or last) clash point, and how far each weapon is wound.
+// Blade angle (ball frame) at duel time t, for Dustin or (opp) the
+// opponent's matching swings. Winding up always goes round the back (via
+// PI), never through the front where the other fighter is.
+function duelAlpha(t, opp) {
+  var prev = null, next = null;
+  for (var i = 0; i < DUEL_HITS.length; i++) { if (DUEL_HITS[i].T <= t) prev = DUEL_HITS[i]; else { next = DUEL_HITS[i]; break; } }
+  var G = function (h) { return SWINGS[opp && !h.fin ? SWINGS[h.type].o : h.type]; };
+  if (prev && !prev.fin && t - prev.T < DUEL_REB) { var g = G(prev); return g.c + g.reb * easeOut((t - prev.T) / DUEL_REB); }
+  var a0 = prev ? (prev.fin ? G(prev).s : G(prev).c + G(prev).reb) : DUEL_GUARD, t0 = prev ? prev.T + (prev.fin ? 0 : DUEL_REB) : 0;
+  if (!next) return a0;
+  var gn = G(next), sw = opp && next.type === "side" ? 0.17 : next.sw, ts = next.T - sw;
+  if (t >= ts && sw > 0) { // the swing itself, accelerating into the clash
+    var u = (t - ts) / sw;
+    if (!opp && next.type === "side") return gn.c;
+    return gn.s + (gn.c - gn.s) * u * u;
+  }
+  // Winding up for it.
+  var b0 = wrapA(a0 - Math.PI), b1 = wrapA(gn.s - Math.PI), k = ease((t - t0) / Math.max(0.01, ts - t0));
+  if (t0 >= ts) k = 1;
+  return Math.PI + b0 + (b1 - b0) * k;
+}
+
+// Where everything is at duel time t: which way they face, lunges, lift,
+// Dustin's spin, the next clash point.
 function duelState(sd, t) {
   var B = duelBeat(Math.min(t, DUEL_BEATS.total - 1e-6)), bt = B.bt, u = B.u;
-  var phi = sd.phi0 + (B.i > 6 || (B.i === 6 && u > bt.dur) ? Math.PI : 0);
-  if (bt.k === "circle") phi = sd.phi0 + Math.PI * ease(u / 0.74);
-  if (B.i === 7 || t >= DUEL_BEATS.total) phi = sd.phi0 + Math.PI;
+  var phi = sd.phi0 + (B.i > 5 ? Math.PI : 0);
+  if (bt.k === "circle") phi = sd.phi0 + Math.PI * ease(u / 0.6);
+  if (t >= DUEL_BEATS.total) phi = sd.phi0 + Math.PI;
   var ux = Math.cos(phi), uy = Math.sin(phi);
-  // Nearest clash: the next one in this beat, or the last one gone.
   var hi = -1, best = 1e9;
   bt.hits.forEach(function (h, j) { var dd = h - u; if (dd >= -0.12 && dd < best) { best = dd; hi = j; } });
   if (hi < 0 && bt.hits.length) hi = bt.hits.length - 1;
-  var cy = hi >= 0 ? bt.y[hi] : -0.4, dir = hi >= 0 ? bt.dir[hi] : 1, toHit = hi >= 0 ? bt.hits[hi] - u : 1;
-  // Lunging in before a clash, jolted back after.
+  var cy = hi >= 0 ? SWINGS[bt.sw[hi]].cy : -0.4;
+  // Stepping in behind each swing, jolted back off the clash.
   var push = 0;
-  bt.hits.forEach(function (h) {
-    var dd = u - h;
-    if (dd > -0.1 && dd < 0) push -= 0.14 * (1 + dd / 0.1);
-    else if (dd >= 0 && dd < 0.35) push += 0.2 * Math.exp(-dd * 8) * Math.cos(dd * 20);
+  bt.hits.forEach(function (h, j) {
+    var dd = u - h, sw = SWINGS[bt.sw[j]].t;
+    if (dd > -sw && dd < 0) push -= 0.18 * (1 + dd / sw);
+    else if (dd >= 0 && dd < 0.35) push += 0.22 * Math.exp(-dd * 8) * Math.cos(dd * 14);
   });
   var lockK = B.i === 0 ? ease(u / 0.45) : 1;
-  var spin = 0, lift = 0, wind = 0;
-  // How far the weapons are drawn back: most of the way through the gap
-  // between clashes, whipping through to the contact.
-  if (toHit > 0) wind = Math.min(1, toHit / 0.22);
-  else wind = -0.25 * Math.exp(toHit * 9); // a little past, then settles
-  if (bt.k === "lock") wind = 0.9 * lockK; // en garde: raised and waiting
-  if (bt.k === "bind") { wind = Math.sin(u * 47) * 0.03; push = -0.12 + Math.sin(u * 31) * 0.04; if (u > 0.9) push += 0.3 * ease((u - 0.9) / 0.1); cy = -0.1 - 0.35 * ease(u / 0.9); }
-  if (bt.k === "circle" && u < 0.62) wind = 0.05 * Math.sin(u * 30);
-  if (bt.k === "spin" && u < 0.56) spin = Math.PI * 2 * ease(u / 0.56);
-  if (bt.k === "leap") { var a = Math.min(1, u / 0.88); lift = u < 0.88 ? 4 * a * (1 - a) * 1.25 : 0; if (u < 0.6) wind = 1.6; }
-  return { B: B, ux: ux, uy: uy, cy: cy, dir: dir, push: push, lockK: lockK, spin: spin, lift: lift, wind: wind, toHit: toHit };
+  var spin = 0, lift = 0;
+  if (bt.k === "spin" && u < 0.62) spin = Math.PI * 2 * ease(u / 0.62) - Math.PI * 2; // one turn, finishing on the hit
+  if (bt.k === "leap") { var a = Math.min(1, u / 0.88); lift = u < 0.88 ? 4 * a * (1 - a) * 1.25 : 0; }
+  return { B: B, ux: ux, uy: uy, cy: cy, push: push, lockK: lockK, spin: spin, lift: lift };
 }
 
 // From tickDiamond (every frame, before anyone moves).
@@ -10815,11 +10855,11 @@ function tickSwordDuel(dt) {
   if (!d.alive || (!o.alive && !sd.done)) { swordDuel = null; return; }
   if (sd.done) { tickDuelFinish(d, o, sd, dt); return; }
   // Slow motion for the leap.
-  var leap = DUEL_BEATS[7], lu = sd.t - leap.t0;
+  var leap = DUEL_BEATS[DUEL_LEAP], lu = sd.t - leap.t0;
   var slow = lu > leap.slow[0] && lu < leap.slow[1] ? 0.3 : 1;
   sd.t += dt * slow;
   var S = duelState(sd, sd.t), half = sd.gap / 2;
-  sd.spin = S.spin; sd.lift = S.lift;
+  sd.spin = S.spin * (S.ux >= 0 ? 1 : -1); sd.lift = S.lift;
   var dxT = sd.mx - S.ux * (half + S.push * d.r), dyT = sd.my - S.uy * (half + S.push * d.r);
   var oxT = sd.mx + S.ux * (half + S.push * o.r), oyT = sd.my + S.uy * (half + S.push * o.r);
   d.x = sd.fromD.x + (dxT - sd.fromD.x) * S.lockK; d.y = sd.fromD.y + (dyT - sd.fromD.y) * S.lockK;
@@ -10831,7 +10871,7 @@ function tickSwordDuel(dt) {
     var key = B.i + ":" + j;
     if (sd.fired[key] || B.u < h) return;
     sd.fired[key] = true;
-    var c = duelContact(sd, S, B.bt.y[j]), big = B.i === 7 ? 3.5 : B.bt.k === "spin" || (B.bt.k === "bind" && j === 1) ? 2 : B.bt.k === "flurry" ? 0.9 : 1.3;
+    var c = duelContact(sd, S, SWINGS[B.bt.sw[j]].cy), big = B.i === DUEL_LEAP ? 3.5 : B.bt.k === "spin" ? 2 : B.bt.k === "combo" ? 1.1 : 1.4;
     clashFx(c.x, c.y, -S.ux, -S.uy, big);
     playSwordClash(big > 3 ? 2.2 : big);
     d.squash = { t: 0.12, max: 0.12, nx: S.ux, ny: S.uy }; o.squash = { t: 0.12, max: 0.12, nx: -S.ux, ny: -S.uy };
@@ -10846,17 +10886,6 @@ function tickSwordDuel(dt) {
       }
     }
   });
-  // Grinding sparks while the blades are bound.
-  if (B.bt.k === "bind" && B.u > 0.06 && B.u < 0.9 && !reduceMotion) {
-    var gc = duelContact(sd, S, S.cy);
-    for (var g = 0; g < 2; g++) {
-      var ga = -Math.PI / 2 + (Math.random() - 0.5) * 2.4, gs = 120 + Math.random() * 220;
-      particles.push({ x: gc.x, y: gc.y, vx: Math.cos(ga) * gs, vy: Math.sin(ga) * gs, life: 0.3, max: 0.3, size: 1.5 + Math.random() * 2, color: g ? "#fff6c2" : DIAMOND_C.W });
-    }
-    shake = Math.max(shake, 4 + 6 * B.u);
-    sd.grind = (sd.grind || 0) - dt;
-    if (sd.grind <= 0) { sd.grind = 0.13; playSwordClash(0.45); }
-  }
   // The finish.
   if (sd.t >= DUEL_BEATS.total + 0.08) {
     sd.done = true; sd.endT = sd.t; sd.spin = 0; sd.lift = 0;
@@ -11011,7 +11040,17 @@ function drawDiamondSword(b, other, top) {
   }
   if (!sw.out) { alpha = Math.max(0, 1 - sw.outT / SWORD_PUT_AWAY); k = 1 - 0.5 * (1 - alpha); }
   var sideK = Math.max(-1, Math.min(1, s * 1.5)); // shoulders swap smoothly as the side does
-  var sh = { x: b.x + 0.66 * sideK * r, y: b.y - 0.3 * r }, fsh = { x: b.x - 0.66 * sideK * r, y: b.y - 0.3 * r };
+  var sh, fsh;
+  if (pz.sh) { sh = pz.sh; fsh = pz.fsh; } // the duel works out its own (spinning, leaping)
+  else {
+    // Drawn over both fighters mid parry, his body isn't shifted for his lean
+    // and twist yet: the arms follow it so they stay on his shoulders.
+    var off = top ? swordBodyOffset(b) : { x: 0, y: 0 }, tw = top ? swordBodySpin(b) : 0;
+    var cx = b.x + off.x, cy = b.y + off.y, cT = Math.cos(tw), sT = Math.sin(tw);
+    var shp = function (sx) { return { x: cx + (sx * cT + 0.3 * sT) * r, y: cy + (sx * sT - 0.3 * cT) * r }; };
+    sh = shp(0.66 * sideK); fsh = shp(-0.66 * sideK);
+    hand = { x: hand.x + off.x, y: hand.y + off.y };
+  }
   // Two hands on a long grip: the lead hand up by the crossguard, the other
   // below it toward the pommel.
   var ca = Math.cos(ang), sa = Math.sin(ang);
@@ -11051,32 +11090,30 @@ function drawLongsword(im, x, y, ang, len, k, alpha) {
   ctx.restore();
 }
 
-// Through the duel: the sword arm reaching for each clash, wound back and
-// whipping in between, the spinning strike, the overhead leap, the finish.
+// Through the duel: both hands on the grip, swinging round his body with
+// the blade (so the hands travel the whole arc too), everything turning
+// with him in the spinning strike and lifted with him in the leap.
+function duelArmPose(cx, cy, r, side, al, R, reach) {
+  var a = al + R, cR = Math.cos(R), sR = Math.sin(R);
+  var lx = reach * Math.cos(a) + 0.12 * cR + 0.1 * sR, ly = reach * Math.sin(a) + 0.12 * sR - 0.1 * cR;
+  var shp = function (sx) { return { x: cx + side * (sx * cR + 0.3 * sR) * r, y: cy + (sx * sR - 0.3 * cR) * r }; };
+  return { hand: { x: cx + side * lx * r, y: cy + ly * r }, ang: side > 0 ? a : Math.PI - a, sh: shp(0.66), fsh: shp(-0.66), side: side, toss: 0 };
+}
 function duelSwordPose(b, sd) {
-  var r = b.r, S, o = balls[sd.oId];
-  if (sd.done) S = { ux: sd.ux, uy: sd.uy, cy: -0.3, dir: 1, wind: 0, spin: 0, B: { bt: DUEL_BEATS[7] } };
-  else S = duelState(sd, sd.t);
-  var nx = S.ux, ny = S.uy, side = nx >= 0 ? 1 : -1;
-  var hand = { x: b.x + nx * r * 0.8, y: b.y + ny * r * 0.8 - r * 0.15 - (sd.lift || 0) * r };
-  var c = duelContact(sd, S, S.cy);
-  var aim = Math.atan2(c.y - hand.y, c.x - hand.x);
-  var ang = aim - S.dir * 1.8 * S.wind * side; // big, heavy two-handed arcs
-  if (S.B.bt.k === "spin" && S.spin) ang = aim - (Math.PI * 2 - S.spin) * side; // the full circle, landing on the hit
-  if (S.B.bt.k === "leap" && !sd.done && S.wind > 1) ang = -Math.PI / 2 - 0.9 * side; // raised high overhead
+  var r = b.r, S = sd.done ? { ux: sd.ux, uy: sd.uy, spin: 0 } : duelState(sd, sd.t);
+  var side = S.ux >= 0 ? 1 : -1;
+  var al = duelAlpha(sd.done ? sd.endT : sd.t, false), R = sd.done ? 0 : S.spin;
   if (sd.done) {
     var f = sd.t - sd.endT;
     if (sd.outcome === "disarm") {
-      var w = ease(f / 0.38);
-      ang = aim + w * Math.PI * 2 * side; // winding round the bat to rip it out
-      if (f > 0.45) { var pt = ease((f - 0.45) / 0.3); ang = aim + Math.PI * 2 * side + wrapA(Math.atan2(o.y - hand.y, o.x - hand.x) - aim) * pt; hand.x += nx * r * 0.3 * pt; } // point at them: done
+      al = SWINGS.fin.s + ease(f / 0.38) * Math.PI * 2; // a full circle round the bat to rip it out
+      if (f > 0.45) al += wrapA(-al) * ease((f - 0.45) / 0.3); // then points it at them
     } else {
-      var cut = easeOut(Math.min(1, f / 0.16));
-      ang = (side > 0 ? -1.1 : Math.PI + 1.1) + cut * 2.2 * side; // one huge cut on the way through
-      if (f > 0.5) ang += wrapA(-Math.PI / 2 + 0.6 * side - ang) * ease((f - 0.5) / 0.4); // and up into a pose
+      al = SWINGS.fin.s + easeOut(Math.min(1, f / 0.16)) * 4.0; // one huge cut on the way through
+      if (f > 0.5) al += (DUEL_GUARD - al) * ease((f - 0.5) / 0.4); // and back up on guard
     }
   }
-  return { hand: hand, ang: ang, free: { x: b.x - nx * r * 0.5, y: b.y + r * 0.1 - (sd.lift || 0) * r }, side: side, toss: 0 };
+  return duelArmPose(b.x, b.y - (sd.lift || 0) * r, r, side, al, R, 0.62);
 }
 
 // The Diamond Slash: a bright line where he cut through, then it fades.
@@ -11127,24 +11164,17 @@ function drawDiamondSwordsTop() {
 var duelBatTrail = [];
 function drawDuelBat(o, sd) {
   if (!o.alive || sd.let || (sd.done && sd.outcome === "slash")) { duelBatTrail = []; return; }
-  var r = o.r, S;
-  if (sd.done) S = { ux: sd.ux, uy: sd.uy, cy: -0.3, dir: 1, wind: 0, B: { bt: DUEL_BEATS[7] } };
-  else S = duelState(sd, sd.t);
-  var nx = -S.ux, ny = -S.uy, side = nx >= 0 ? 1 : -1;
-  var hand = { x: o.x + nx * r * 0.85, y: o.y + ny * r * 0.85 - r * 0.1 };
-  var c = duelContact(sd, S, S.cy);
-  var aim = Math.atan2(c.y - hand.y, c.x - hand.x);
-  var ang = aim + S.dir * 1.2 * S.wind * side;
-  if (S.B.bt.k === "leap" && !sd.done && S.wind > 1) ang = side > 0 ? -0.25 : Math.PI + 0.25; // braced up high for it
-  if (sd.done) ang = aim + ease((sd.t - sd.endT) / 0.38) * Math.PI * 2 * -side; // wrenched round by the sword
-  var len = r * 1.6;
-  var sh1 = { x: o.x + r * 0.66 * side, y: o.y - r * 0.3 }, sh2 = { x: o.x - r * 0.66 * side, y: o.y - r * 0.3 };
+  var r = o.r, S = sd.done ? { ux: sd.ux, uy: sd.uy } : duelState(sd, sd.t);
+  var side = -S.ux >= 0 ? 1 : -1;
+  var al = duelAlpha(sd.done ? sd.endT : sd.t, true);
+  if (sd.done) al = SWINGS.fin.s - ease((sd.t - sd.endT) / 0.38) * Math.PI * 2; // wrenched round by the sword
+  var pz = duelArmPose(o.x, o.y, r, side, al, 0, 0.58), len = r * 1.6, ang = pz.ang, hand = pz.hand;
   var h2 = { x: hand.x - Math.cos(ang) * len * 0.12, y: hand.y - Math.sin(ang) * len * 0.12 };
-  drawBentArm(o, sh2, h2, -side);
+  drawBentArm(o, pz.fsh, h2, -side);
   drawTrail(duelBatTrail, function (g, a) { ctx.save(); ctx.globalAlpha *= a * 2; drawBat(g.x, g.y, g.ang, len); ctx.restore(); });
   drawBat(hand.x, hand.y, ang, len);
   pushTrail(duelBatTrail, hand.x, hand.y, ang);
-  drawBentArm(o, sh1, hand, side);
+  drawBentArm(o, pz.sh, hand, side);
   drawGloveAt(h2.x, h2.y, r * 0.22, o.char);
   drawGloveAt(hand.x, hand.y, r * 0.22, o.char);
 }
