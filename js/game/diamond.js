@@ -194,7 +194,7 @@ function drawDiamondSword(b, other, top) {
   ox /= ol; oy /= ol;
   var rx = fx * 0.55 - px * 0.35, ry = fy * 0.55 - py * 0.35 - 0.8;
   var ang = Math.atan2(ry, rx);
-  var len = b.r * 1.45, k = 1, alpha = 1;
+  var len = b.r * 2.2, k = 1, alpha = 1; // big enough to read on a phone (Joe)
   if (sw.out && sw.t < SWORD_DRAW) { // pulled out: swings up from his side
     var e = sw.t / SWORD_DRAW; e = 1 - (1 - e) * (1 - e);
     ang = ang + (1 - e) * 2.2; k = 0.4 + 0.6 * e; alpha = e;

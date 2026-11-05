@@ -4184,12 +4184,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 11,
+    "rev": 12,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
     "base": "Brawler",
-    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage. If you pull a bat on him, he pulls out a diamond sword and parries half your swings.",
+    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage. If you pull a bat on him, he pulls out a diamond sword and parries 4 of every 5 swings.",
     "color": "#1e3a8a",
     "look": {
       "skin": "#d9a07a",
@@ -4279,7 +4279,7 @@ var SAVED_ROSTER = [
         "weapons": [
           "bat"
         ],
-        "parryChance": 50,
+        "parryChance": 80,
         "knockback": 420,
         "recover": 0.6
       },
@@ -10379,7 +10379,7 @@ function drawDiamondSword(b, other, top) {
   ox /= ol; oy /= ol;
   var rx = fx * 0.55 - px * 0.35, ry = fy * 0.55 - py * 0.35 - 0.8;
   var ang = Math.atan2(ry, rx);
-  var len = b.r * 1.45, k = 1, alpha = 1;
+  var len = b.r * 2.2, k = 1, alpha = 1; // big enough to read on a phone (Joe)
   if (sw.out && sw.t < SWORD_DRAW) { // pulled out: swings up from his side
     var e = sw.t / SWORD_DRAW; e = 1 - (1 - e) * (1 - e);
     ang = ang + (1 - e) * 2.2; k = 0.4 + 0.6 * e; alpha = e;
