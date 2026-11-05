@@ -171,7 +171,6 @@ function draw() {
     if (b.char.look) {
       // Fighter art: the muscled ball in its fight kit (beats a face photo)
       drawFighterArt(ctx, b.x, b.y, b.r, b.char.look, theme.wall, { layout: "contained", name: b.char.name });
-      drawDiamondArmor(b); // Dustin's Diamond Guard armor over it (diamond.js)
     } else if (img) {
       ctx.save();
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
@@ -189,6 +188,7 @@ function draw() {
     }
     ctx.lineWidth = 3; ctx.strokeStyle = theme.wall;
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
+    drawDiamondArmor(b); // Dustin's Diamond Guard armor, over the outline like Joe's mockup (diamond.js)
 
     if (b.char.label) {
       ctx.textAlign = "center"; ctx.textBaseline = "middle";

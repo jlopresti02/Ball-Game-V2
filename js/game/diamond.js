@@ -199,6 +199,10 @@ function drawDiamondArmor(b) {
   }
   ctx.drawImage(im.cv, b.x - im.half, b.y - im.half, im.half * 2, im.half * 2);
   ctx.restore();
+  if (b.flash > 0) { // the white hit flash, over the armor too
+    ctx.fillStyle = "rgba(255,255,255," + (b.flash / 0.16) * 0.6 + ")";
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+  }
   if (dg.t < 0.6) {
     ctx.save();
     ctx.globalAlpha = (1 - dg.t / 0.6) * 0.8;
