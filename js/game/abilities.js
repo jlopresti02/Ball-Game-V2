@@ -101,7 +101,8 @@ function onWallImpact(b, nx, ny) {
   var sl = b.slam;
   if (!sl || !b.alive) return;
   hurt(b, sl.damage, "slam", sl.attackerId);
-  playSlam();
+  if (sl.goat) { playGoatWall(sl.goat); sl.goat *= 0.85; } // rammed by Jon's goats (audio.js)
+  else playSlam();
   var nl = Math.sqrt(nx * nx + ny * ny) || 1;
   nx /= nl; ny /= nl;
   var cx = b.x - nx * b.r, cy = b.y - ny * b.r; // where the ball meets the wall

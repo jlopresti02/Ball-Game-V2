@@ -171,6 +171,7 @@ function updateGoatStampede(self, other, dt) {
     floater(self.x, self.y - self.r - 26, "GOAT STAMPEDE", "crit");
     playJonModeSwap("goat"); playJonModeSwap("evil");
     playJonBaa(); // he baas as he floats up (Joe's clip)
+    playJonLevitate(); // and the telekinetic whoosh (audio.js)
   }
   var m = self.igbb;
   m.t += dt; m.all += dt;
@@ -312,11 +313,12 @@ function goatRam(self, other, g) {
     var sp = self.char.special;
     beginWallSlam(other, kx / kl, ky / kl, { knockback: sp.ramSpeed, wallSlams: sp.ramWalls, slamDamage: sp.ramWallDamage });
     if (other.slam) other.slam.ease = 0.9; // glides back to normal speed after (physics.js)
+    if (other.slam) other.slam.goat = 1; // the walls get the goat's cage-rattling thud (abilities.js)
   }
   other.squash = { t: 0.2, max: 0.2, nx: g.dx, ny: g.dy }; other.flash = 0.16;
   floater(other.x, other.y - other.r - 30, "RAMMED!", "crit");
   impacts.push({ x: other.x - g.dx * other.r, y: other.y - g.dy * other.r, nx: g.dx, ny: g.dy, life: 0.4, max: 0.4, color: self.char.color });
-  playSlam(); playPunch(Math.max(30, dealt)); crowdReact(0.6);
+  playGoatRam(); // a deep thunder ram (audio.js)
   if (!reduceMotion) { shake = Math.max(shake, 16); hitStop = Math.max(hitStop, 0.06); }
   checkEnd();
 }
