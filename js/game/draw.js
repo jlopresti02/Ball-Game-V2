@@ -354,6 +354,7 @@ function draw() {
 
   drawAuraLights(s, ox, oy); // the arena going dark, the spotlight, then the lights back up (aurafarm.js)
   drawHerbBanner(); // "Herb Dean is entering the ring" when there's no jumbotron
+  drawDiamondBanner(); // and "Diamond Guard" (diamond.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
     var t = f.life / f.max;
