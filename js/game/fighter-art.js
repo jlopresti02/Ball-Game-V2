@@ -75,6 +75,7 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   if (contained && look.hairPuff) drawHairPuff(c, r, look, ink);
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
+  if (contained && look.headwear === "trucker") drawTruckerHat(c, r, look, ink);
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
   c.restore();
 }
@@ -580,6 +581,80 @@ function drawLionChest(c, r, look, name, lw, contained) {
   }
   c.restore();
 
+  c.restore();
+}
+
+// A trucker cap sat on top of the head, front view. It rises past the ball's
+// outline. Foam front panel (with look.hatLogo, a data-URI image, on it), mesh
+// sides in look.hatColor and a curved bill across the forehead.
+function drawTruckerHat(c, r, look, ink) {
+  var mesh = look.hatColor || "#1d3f94", front = look.hatFront || "#f6f3ea";
+  var brimCol = look.hatBrim || mesh, lwid = Math.max(1, r * 0.03);
+  var crown = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.9, -r * 0.6);
+    c.bezierCurveTo(-r * 0.98, -r * 1.08, -r * 0.6, -r * 1.36, 0, -r * 1.36);
+    c.bezierCurveTo(r * 0.6, -r * 1.36, r * 0.98, -r * 1.08, r * 0.9, -r * 0.6);
+    c.quadraticCurveTo(0, -r * 0.72, -r * 0.9, -r * 0.6);
+    c.closePath();
+  };
+  var panel = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.6, -r * 0.6);
+    c.quadraticCurveTo(-r * 0.7, -r * 1.06, -r * 0.36, -r * 1.4);
+    c.lineTo(r * 0.36, -r * 1.4);
+    c.quadraticCurveTo(r * 0.7, -r * 1.06, r * 0.6, -r * 0.6);
+    c.closePath();
+  };
+  c.save();
+  crown(); c.fillStyle = mesh; c.fill();
+  c.save(); crown(); c.clip();
+  // Mesh holes on the side panels
+  c.fillStyle = "rgba(0,0,0,0.28)";
+  var step = r * 0.05;
+  for (var y = -r * 1.4; y < -r * 0.55; y += step)
+    for (var x = -r; x < r; x += step)
+      c.fillRect(x + ((Math.round(y / step) & 1) ? step / 2 : 0), y, step * 0.42, step * 0.42);
+  panel(); c.fillStyle = front; c.fill();
+  // Shading so the crown reads as round
+  var g = c.createLinearGradient(-r, 0, r, 0);
+  g.addColorStop(0, "rgba(0,0,0,0.28)"); g.addColorStop(0.3, "rgba(0,0,0,0)");
+  g.addColorStop(0.7, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.28)");
+  c.fillStyle = g; c.fillRect(-r, -r * 1.4, r * 2, r);
+  if (look.hatLogo) {
+    var im = artDecalImage(look.hatLogo);
+    if (im.complete && im.naturalWidth) {
+      var lw = r * 0.84, lh = lw * im.naturalHeight / im.naturalWidth;
+      c.drawImage(im, -lw / 2, -r * 0.99 - lh / 2, lw, lh);
+    }
+  }
+  c.restore();
+  c.strokeStyle = ink; c.lineWidth = lwid;
+  panel(); c.save(); crown(); c.clip(); panel(); c.stroke(); c.restore();
+  crown(); c.stroke();
+  // Button on top
+  c.fillStyle = mesh;
+  c.beginPath(); c.ellipse(0, -r * 1.37, r * 0.07, r * 0.035, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  // Curved bill across the forehead
+  c.beginPath();
+  c.moveTo(-r * 0.9, -r * 0.63);
+  c.quadraticCurveTo(0, -r * 0.8, r * 0.9, -r * 0.63);
+  c.quadraticCurveTo(r * 1.0, -r * 0.58, r * 0.84, -r * 0.52);
+  c.quadraticCurveTo(0, -r * 0.36, -r * 0.84, -r * 0.52);
+  c.quadraticCurveTo(-r * 1.0, -r * 0.58, -r * 0.9, -r * 0.63);
+  c.closePath();
+  c.fillStyle = brimCol; c.fill();
+  c.save(); c.clip();
+  c.fillStyle = "rgba(0,0,0,0.3)";
+  c.beginPath(); c.moveTo(-r, -r * 0.62); c.quadraticCurveTo(0, -r * 0.8, r, -r * 0.62);
+  c.quadraticCurveTo(0, -r * 0.68, -r, -r * 0.62); c.fill();
+  c.restore();
+  c.stroke();
+  // Stitching along the bill
+  c.strokeStyle = "rgba(255,255,255,0.45)"; c.lineWidth = Math.max(0.6, r * 0.012);
+  c.setLineDash([r * 0.04, r * 0.03]);
+  c.beginPath(); c.moveTo(-r * 0.8, -r * 0.55); c.quadraticCurveTo(0, -r * 0.42, r * 0.8, -r * 0.55); c.stroke();
+  c.setLineDash([]);
   c.restore();
 }
 
