@@ -3,7 +3,7 @@
 // If one of his own Eagle Strike eagles (gaethje-eagle.js) swoops through
 // him, it snatches him up instead and carries him off the screen. A moment
 // later he drops back in from the top of the screen to the middle of the
-// ring (like Jon's Duck Drop), wearing a red MAGA cap with a golf club in
+// ring (like Jon's Duck Drop), wearing his trucker hat with a golf club in
 // his hands. The landing only does `land.damage`; it's there to knock back
 // anyone within `land.radius` so he has room. An eagle also comes for him on purpose the moment Dustin goes into
 // Diamond Guard (diamond.js) or Gane pulls out his bat (cheater.js).
@@ -13,7 +13,7 @@
 // Dustin's sword clash parries it too, and a sword duel can rip it out of
 // his hands. Every few seconds, when they're far enough off, he stops, tees
 // one up and drives a golf ball at them ("FORE!"). After `duration` seconds
-// he tosses the club away and goes back to fighting; the cap stays on.
+// he tosses the club away and goes back to fighting; the hat stays on.
 //
 // Settings, under `gaethje.golf` in the character JSON:
 //   duration       seconds he has the club
@@ -85,7 +85,7 @@ function updateEagleCarry(self, other, dt) {
   } else if (m.phase === "gone") {
     if (m.t >= EC_GONE) {
       m.phase = "drop"; m.t = 0;
-      self.maga = true; // the eagle's kitted him out
+      golfPutHatOn(self); // the eagle's kitted him out
       playWhoosh();
     }
   } else if (m.phase === "drop") {
@@ -197,7 +197,6 @@ function golfDrawFighter(b, x, y, st, rot) {
   else { ctx.fillStyle = ch.color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
   ctx.lineWidth = 3; ctx.strokeStyle = theme.wall;
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-  var sx = b.x, sy = b.y; b.x = x; b.y = y; drawGolfHat(b); b.x = sx; b.y = sy;
   // Arms up, hanging on (or flung up as he falls).
   var arm = (ch.punch.size || 15) * 0.75;
   [-1, 1].forEach(function (sd) {
@@ -213,7 +212,7 @@ function golfDrawFighter(b, x, y, st, rot) {
 function startGolfMode(b) {
   var cfg = golfCfg(b);
   if (!cfg || !b.alive) return;
-  b.maga = true;
+  golfPutHatOn(b);
   b.golfLeft = cfg.duration;
   b.cheater = { mode: "bat", club: true, cd: 0.4, golfCd: 1.2, cfg: { bat: cfg.club, ball: cfg.ball } };
   floater(b.x, b.y - b.r - 40, "GOLF MODE", "crit");
@@ -348,41 +347,12 @@ function drawGolfBall(x, y, s, rot) {
   ctx.restore();
 }
 
-// The red cap, front on, low over the top of his head. Drawn in the
-// fighter's own frame (so it squashes with him).
-function drawGolfHat(b) {
-  if (!b.maga || !b.alive) return;
-  var x = b.x, y = b.y, r = b.r, red = "#c8102e", dark = "#8f0b20";
-  ctx.save();
-  ctx.lineJoin = "round"; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
-  // The crown: the top of the ball down to a gently curved band.
-  var bandY = y - r * 0.42;
-  ctx.beginPath();
-  ctx.arc(x, y - r * 0.03, r * 1.04, Math.PI + 0.42, -0.42);
-  ctx.quadraticCurveTo(x, bandY - r * 0.12, x - r * 0.95, y - r * 0.43);
-  ctx.closePath();
-  ctx.fillStyle = red; ctx.fill(); ctx.stroke();
-  // Panel seams and the button.
-  ctx.strokeStyle = "rgba(0,0,0,0.25)"; ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(x, y - r * 1.06); ctx.quadraticCurveTo(x - r * 0.05, y - r * 0.8, x, bandY - r * 0.1);
-  ctx.moveTo(x - r * 0.1, y - r * 1.05); ctx.quadraticCurveTo(x - r * 0.55, y - r * 0.85, x - r * 0.72, bandY - r * 0.04);
-  ctx.moveTo(x + r * 0.1, y - r * 1.05); ctx.quadraticCurveTo(x + r * 0.55, y - r * 0.85, x + r * 0.72, bandY - r * 0.04);
-  ctx.stroke();
-  ctx.fillStyle = dark; ctx.strokeStyle = theme.wall; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.arc(x, y - r * 1.06, r * 0.08, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  // The brim, sticking out toward us over the eyes.
-  ctx.fillStyle = dark; ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(x - r * 0.8, bandY + r * 0.02);
-  ctx.quadraticCurveTo(x, bandY - r * 0.16, x + r * 0.8, bandY + r * 0.02);
-  ctx.quadraticCurveTo(x + r * 0.72, bandY + r * 0.24, x, bandY + r * 0.26);
-  ctx.quadraticCurveTo(x - r * 0.72, bandY + r * 0.24, x - r * 0.8, bandY + r * 0.02);
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  // The lettering.
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "900 " + Math.round(r * 0.3) + "px Impact, 'Arial Black', sans-serif";
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText("MAGA", x, y - r * 0.68);
-  ctx.restore();
+// His golf look: the trucker hat Joe approved (`golf.hat`, drawn by
+// fighter-art.js as look.headwear "trucker"), put on his own copy of the
+// character so it stays on for the rest of the fight.
+function golfPutHatOn(b) {
+  var hat = golfCfg(b) && golfCfg(b).hat;
+  if (!hat || b.golfHat) return;
+  b.golfHat = true;
+  b.char = Object.assign({}, b.char, { look: Object.assign({}, b.char.look, hat) });
 }

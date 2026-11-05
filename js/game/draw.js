@@ -195,7 +195,6 @@ function draw() {
     ctx.lineWidth = 3; ctx.strokeStyle = theme.wall;
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
     drawDiamondArmor(b); // Dustin's Diamond Guard armor, over the outline like Joe's mockup (diamond.js)
-    drawGolfHat(b);      // Gaethje's red cap once his eagle's dropped him (gaethje-golf.js)
 
     if (b.char.label) {
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
