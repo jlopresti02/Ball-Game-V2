@@ -311,7 +311,8 @@ function gallerySounds() {
     { title: "Special move sounds", items: [
       clip("chairShot", "Chair shot clang", "Josh Hokit's Chair Shot."),
       clip("freeBird", "Free Bird solo", "Justin Gaethje's All American."),
-      clip("eagleScreech", "Eagle screech", "Each eagle dive in All American."),
+      clip("eagleScreech", "Eagle screech", "Each eagle dive in All American, and the warning for Gaethje's Eagle Strike."),
+      clip("eagleSwoop", "Eagle swoop", "The eagle swooping through in Gaethje's Eagle Strike."),
       clip("truckHorn", "Truck horn", "The semi coming in All American."),
       synth("Truck impact", "The semi hitting.", function () { playTruckImpact(); })
     ] },
