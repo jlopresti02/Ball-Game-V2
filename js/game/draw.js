@@ -31,7 +31,6 @@ function draw() {
 
   ctx.setTransform(s, 0, 0, s, ox, oy);
   shakeScreen(s * canvas.getBoundingClientRect().width / canvas.width);
-  var swCam = swordCamBegin(); // zooming in on a sword duel (sword.js)
 
   if (allAmericanOn()) { drawRoadScene(); drawRoadNight(aaOwnerMove()); } // out on the highway (allamerican.js)
   else if (stadium) drawStadiumMat();
@@ -377,7 +376,7 @@ function draw() {
   });
   ctx.globalAlpha = 1;
 
-  swordCamEnd(swCam);
   if (stadium) drawJumbotron(px);
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
+  swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
 }

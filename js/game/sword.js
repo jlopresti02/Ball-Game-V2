@@ -488,20 +488,26 @@ function endSwordDuel(d, o, sd) {
 
 // ---------------------------------------------------------------- camera
 
-// Pushes the camera in on the duel (draw.js, around everything in the
-// arena). Returns true when it changed the transform (end with swordCamEnd).
-function swordCamBegin() {
-  if (duelCam.z < 1.002) return false;
-  // Centred on the duel, but never looking past the cage walls, so fighters
-  // squared up near a wall stay fully in shot.
-  var z = duelCam.z, hw = W / (2 * z), hh = H / (2 * z);
-  var cx = Math.min(W - hw, Math.max(hw, duelCam.x)), cy = Math.min(H - hh, Math.max(hh, duelCam.y));
+// Pushes the camera in on the duel: the whole finished frame (stands,
+// jumbotron and all, not just the ring) is blown up around the duel at the
+// end of draw(). ox/oy/sc place the arena on the canvas.
+var swordZoomBuf = null;
+function swordScreenZoom(ox, oy, sc) {
+  var z = duelCam.z;
+  if (z < 1.002) return;
+  var cw = canvas.width, ch = canvas.height;
+  if (!swordZoomBuf) swordZoomBuf = document.createElement("canvas");
+  if (swordZoomBuf.width !== cw || swordZoomBuf.height !== ch) { swordZoomBuf.width = cw; swordZoomBuf.height = ch; }
+  var bx = swordZoomBuf.getContext("2d");
+  bx.setTransform(1, 0, 0, 1, 0, 0); bx.clearRect(0, 0, cw, ch); bx.drawImage(canvas, 0, 0);
+  // Centred on the duel, but never looking past the edge of the screen.
+  var vw = cw / z, vh = ch / z;
+  var fx = Math.min(cw - vw / 2, Math.max(vw / 2, ox + sc * duelCam.x)), fy = Math.min(ch - vh / 2, Math.max(vh / 2, oy + sc * duelCam.y));
   ctx.save();
-  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
-  ctx.translate(W / 2, H / 2); ctx.scale(z, z); ctx.translate(-cx, -cy);
-  return true;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(swordZoomBuf, fx - vw / 2, fy - vh / 2, vw, vh, 0, 0, cw, ch);
+  ctx.restore();
 }
-function swordCamEnd(on) { if (on) ctx.restore(); }
 
 // The arena darkening round the duel, and the white flash on the big hit.
 function drawDuelVignette() {
