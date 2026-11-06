@@ -76,6 +76,7 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
   if (contained && look.headwear === "trucker") drawTruckerHat(c, r, look, ink);
+  if (contained && look.headwear === "football") drawFootballHelmet(c, r, look, ink);
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
   c.restore();
 }
@@ -581,6 +582,106 @@ function drawLionChest(c, r, look, name, lw, contained) {
   }
   c.restore();
 
+  c.restore();
+}
+
+// A football helmet, front view, worn over the head. The shell is bigger than
+// the head and rises past the ball. Gold shell (look.helmetColor), red-white-red
+// stripe over the crown (helmetStripe / helmetStripe2), an SF-style oval logo on
+// both sides and the front bumper, grey facemask (helmetMask), white chin strap.
+function drawFootballHelmet(c, r, look, ink) {
+  var gold = look.helmetColor || "#b8975c", red = look.helmetStripe || "#b3202a";
+  var white = look.helmetStripe2 || "#f4f1ea", maskCol = look.helmetMask || "#a3a8ad";
+  var lwid = Math.max(1, r * 0.03);
+  c.save();
+  c.translate(0, -r * (look.helmetLift || 0));
+  var shell = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.9, -r * 0.36);
+    c.bezierCurveTo(-r * 1.08, -r * 0.8, -r * 0.92, -r * 1.42, 0, -r * 1.44);
+    c.bezierCurveTo(r * 0.92, -r * 1.42, r * 1.08, -r * 0.8, r * 0.9, -r * 0.36);
+    // jaw flap back up to the face opening
+    c.quadraticCurveTo(r * 0.76, -r * 0.32, r * 0.64, -r * 0.4);
+    c.quadraticCurveTo(r * 0.64, -r * 0.7, r * 0.5, -r * 0.8);
+    c.quadraticCurveTo(0, -r * 0.92, -r * 0.5, -r * 0.8);
+    c.quadraticCurveTo(-r * 0.64, -r * 0.7, -r * 0.64, -r * 0.4);
+    c.quadraticCurveTo(-r * 0.76, -r * 0.32, -r * 0.9, -r * 0.36);
+    c.closePath();
+  };
+  // Shadow the helmet throws on the head inside the opening
+  c.save();
+  c.fillStyle = "rgba(0,0,0,0.25)";
+  c.beginPath(); c.ellipse(0, -r * 0.74, r * 0.62, r * 0.12, 0, 0, Math.PI * 2); c.fill();
+  c.restore();
+  shell();
+  var g = c.createRadialGradient(-r * 0.3, -r * 1.15, r * 0.05, 0, -r * 0.9, r * 1.1);
+  g.addColorStop(0, shadeHex(gold, 0.55)); g.addColorStop(0.45, gold); g.addColorStop(1, shadeHex(gold, -0.35));
+  c.fillStyle = g; c.fill();
+  c.save(); shell(); c.clip();
+  // Stripe over the crown: red, white, red
+  var stripe = function (x0, x1, col) {
+    c.fillStyle = col;
+    c.beginPath(); c.moveTo(x0, -r * 1.5); c.lineTo(x1, -r * 1.5);
+    c.lineTo(x1 * 1.15, -r * 0.98); c.lineTo(x0 * 1.15, -r * 0.98); c.closePath(); c.fill();
+  };
+  stripe(-r * 0.15, r * 0.15, red);
+  stripe(-r * 0.05, r * 0.05, white);
+  // Glossy highlight
+  c.fillStyle = "rgba(255,255,255,0.28)";
+  c.beginPath(); c.ellipse(-r * 0.42, -r * 1.18, r * 0.22, r * 0.08, -0.5, 0, Math.PI * 2); c.fill();
+  c.restore();
+  c.strokeStyle = ink; c.lineWidth = lwid;
+  shell(); c.stroke();
+  // Front bumper with a small logo above the facemask
+  c.fillStyle = shadeHex(gold, -0.2);
+  c.beginPath(); c.moveTo(-r * 0.5, -r * 0.8); c.quadraticCurveTo(0, -r * 0.92, r * 0.5, -r * 0.8);
+  c.quadraticCurveTo(0, -r * 0.98, -r * 0.5, -r * 0.8); c.fill();
+  var logo = function (x, y, w, rot, squash) {
+    c.save(); c.translate(x, y); c.rotate(rot); c.scale(squash, 1);
+    c.fillStyle = "#151515"; c.beginPath(); c.ellipse(0, 0, w, w * 0.62, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#f4f1ea"; c.beginPath(); c.ellipse(0, 0, w * 0.9, w * 0.54, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = red; c.beginPath(); c.ellipse(0, 0, w * 0.8, w * 0.46, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#f4f1ea"; c.strokeStyle = "#151515"; c.lineWidth = Math.max(0.6, w * 0.06);
+    c.font = "italic 900 " + (w * 0.78) + "px Georgia, serif";
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.strokeText("SF", 0, w * 0.04); c.fillText("SF", 0, w * 0.04);
+    c.restore();
+  };
+  logo(0, -r * 0.94, r * 0.11, 0, 1);
+  logo(-r * 0.8, -r * 0.82, r * 0.2, -0.25, 0.55);
+  logo(r * 0.8, -r * 0.82, r * 0.2, 0.25, 0.55);
+  // Ear holes
+  c.fillStyle = shadeHex(gold, -0.55);
+  [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(s * r * 0.82, -r * 0.5, r * 0.035, r * 0.05, 0, 0, Math.PI * 2); c.fill(); });
+  // Chin strap and cup
+  c.strokeStyle = white; c.lineWidth = r * 0.04;
+  c.beginPath(); c.moveTo(-r * 0.66, -r * 0.42); c.quadraticCurveTo(-r * 0.4, -r * 0.24, -r * 0.14, -r * 0.24); c.stroke();
+  c.beginPath(); c.moveTo(r * 0.66, -r * 0.42); c.quadraticCurveTo(r * 0.4, -r * 0.24, r * 0.14, -r * 0.24); c.stroke();
+  c.fillStyle = white; c.strokeStyle = ink; c.lineWidth = lwid * 0.7;
+  c.beginPath(); c.ellipse(0, -r * 0.24, r * 0.15, r * 0.07, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  // Facemask: grey bars with a dark edge
+  var bar = function (pathFn) {
+    c.lineCap = "round"; c.lineJoin = "round";
+    c.strokeStyle = shadeHex(maskCol, -0.55); c.lineWidth = r * 0.07; pathFn(); c.stroke();
+    c.strokeStyle = maskCol; c.lineWidth = r * 0.045; pathFn(); c.stroke();
+  };
+  var frame = function () {
+    c.beginPath(); c.moveTo(-r * 0.64, -r * 0.72);
+    c.quadraticCurveTo(-r * 0.7, -r * 0.4, -r * 0.4, -r * 0.3);
+    c.quadraticCurveTo(0, -r * 0.2, r * 0.4, -r * 0.3);
+    c.quadraticCurveTo(r * 0.7, -r * 0.4, r * 0.64, -r * 0.72);
+  };
+  var bar1 = function () { c.beginPath(); c.moveTo(-r * 0.66, -r * 0.6); c.quadraticCurveTo(0, -r * 0.5, r * 0.66, -r * 0.6); };
+  var bar2 = function () { c.beginPath(); c.moveTo(-r * 0.64, -r * 0.44); c.quadraticCurveTo(0, -r * 0.34, r * 0.64, -r * 0.44); };
+  var mid = function () { c.beginPath(); c.moveTo(0, -r * 0.55); c.lineTo(0, -r * 0.25); };
+  var side = function () {
+    c.beginPath(); c.moveTo(-r * 0.3, -r * 0.53); c.lineTo(-r * 0.36, -r * 0.31);
+    c.moveTo(r * 0.3, -r * 0.53); c.lineTo(r * 0.36, -r * 0.31);
+  };
+  bar(mid); bar(side); bar(bar2); bar(bar1); bar(frame);
+  // Mask clips to the shell
+  c.fillStyle = shadeHex(maskCol, -0.3);
+  [-1, 1].forEach(function (s) { c.beginPath(); c.arc(s * r * 0.64, -r * 0.66, r * 0.035, 0, Math.PI * 2); c.fill(); });
   c.restore();
 }
 
