@@ -87,6 +87,7 @@ function draw() {
   drawAuraRoses(false); // roses thrown on the mat (aurafarm.js)
   drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
   drawHelmetChargeUnder(); // Helmet Charge: the red path he's about to run (hokit-helmet.js)
+  drawRapierLungeUnder(); // Ilia's lunge: the red line he's about to lunge down (rapier.js)
   drawTopRopeUnder();  // Top Rope Body Slam: the red circle (cut off at the cage), his shadow (hokit-toprope.js)
   drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
   drawEagleStrikeUnder(); // Eagle Strike: the red path and the eagle's shadow (gaethje-eagle.js)

@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd"].concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice"].concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -1963,6 +1963,16 @@ function playSwordClash(big) {
 
 // The Diamond Slash at the end of a sword duel: a sharp rising "shing", a
 // glassy ring and a heavy hit.
+// Ilia's rapier cutting someone (the duel's slash and his lunge landing):
+// Joe's slice clip, or the diamond slash sound until it's loaded.
+function playRapierSlice() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (!playClip("rapierSlice", 1.0)) { withClip("rapierSlice"); playSwordSlash(); }
+  } catch (e) { /* never let audio break the game */ }
+}
 function playSwordSlash() {
   try {
     var ctx = getAudioCtx();
