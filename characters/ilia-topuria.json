@@ -1,11 +1,11 @@
 {
   "id": "c-ilia-topuria",
-  "rev": 5,
+  "rev": 6,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Ilia Topuria",
   "base": "Brawler",
-  "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He starts patient: single light punches, thrown rarely. The more he's hurt, the more often he throws and the longer his combos get, from 1 punch at full health up to 5 by three-quarter health. After that the combos keep coming faster and every punch hits harder. He sprawls on shots and checks kicks, and answers both with punches. Special move: Aura Farm.",
+  "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He starts patient: single light punches, thrown rarely. The more he's hurt, the more often he throws and the longer his combos get, from 1 punch at full health up to 5 by three-quarter health. After that the combos keep coming faster and every punch hits harder. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 4 of 5 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Special move: Aura Farm.",
   "color": "#b3121b",
   "label": "",
   "imgData": null,
@@ -93,5 +93,41 @@
     "hitCut": 4,
     "bullDamage": 60,
     "throwDamage": 70
+  },
+  "rapier": {
+    "enabled": true,
+    "weapons": [
+      "bat"
+    ],
+    "parryChance": 80,
+    "knockback": 420,
+    "recover": 0.6,
+    "drawText": "RAPIER",
+    "duel": {
+      "after": 3,
+      "clashes": 6,
+      "gap": 80,
+      "disarmChance": 50,
+      "slashDamage": 40,
+      "slashKnockback": 1500,
+      "slashText": "RAPIER SLASH!"
+    },
+    "lunge": {
+      "first": [
+        1.2,
+        2.5
+      ],
+      "every": [
+        3,
+        5
+      ],
+      "warn": 0.5,
+      "range": 330,
+      "speed": 1500,
+      "damage": 24,
+      "knockback": 1000,
+      "wallSlams": 1,
+      "slamDamage": 3
+    }
   }
 }

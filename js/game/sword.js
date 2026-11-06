@@ -28,7 +28,18 @@
 // strike in slow motion. Then Dustin either disarms them (winds round the
 // bat and it spins off into the crowd) or dashes straight through them with
 // a delayed Diamond Slash.
+//
+// Ilia Topuria's Spanish rapier (rapier.js) runs on the same code: the same
+// parries, duel and finishes, with a one-handed fencer's poses and his own
+// lunge. bladeHost/bladeCfg pick out whichever one a fighter has.
 "use strict";
+
+// Whose sword it is: Dustin's Diamond Guard (b.diamond, config
+// diamond.swordClash) or Ilia's rapier (b.rapier, config rapier).
+function bladeHost(b) { return b ? (b.diamond || b.rapier || null) : null; }
+function bladeCfg(b) { return b.rapier ? b.char.rapier : b.char.diamond.swordClash; }
+function bladeColors(b) { return b && b.rapier ? RAPIER_C : DIAMOND_C; }
+function bladeLen(b) { return b && b.rapier ? RAPIER_LEN : SWORD_LEN; }
 
 var SWORD_DRAW = 0.35, SWORD_PUT_AWAY = 0.3, SWORD_SLASH = 0.5, SWORD_LEN = 2.6;
 var swordDuel = null;   // the duel, while it's on
@@ -55,6 +66,7 @@ function wrapA(a) { return Math.atan2(Math.sin(a), Math.cos(a)); }
 // the sword side on screen right; mirrored for the left), two spare slots,
 // and his body leaning toward them (+) or back (-).
 function swordTarget(b, sw, other) {
+  if (b.rapier) return rapierTarget(b, sw, other);
   var t = sw.t + b.id * 1.3, sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   var swingIn = other && other.chAct && other.chAct.kind === "bat" && sw.actRef === other.chAct && sw.willParry;
   if (sw.parry >= 0) {
@@ -91,19 +103,22 @@ var SWORD_FLOURISHES = {
   } }
 };
 
+function swordFlourishes(b) { return b.rapier ? RAPIER_FLOURISHES : SWORD_FLOURISHES; }
+
 function tickDiamondSword(b, dt) {
-  var dg = b.diamond, sc = b.char.diamond.swordClash, o = balls[1 - b.id];
-  var want = dg.on && b.alive && !over && sc && sc.enabled && sc.weapons.indexOf(swordWeaponOut(o)) >= 0;
+  var dg = bladeHost(b), sc = bladeCfg(b), o = balls[1 - b.id], C = bladeColors(b);
+  var want = dg.on && b.alive && !over && sc && sc.enabled && sc.weapons.indexOf(swordWeaponOut(o)) >= 0 &&
+    !(b.igbb && b.igbb.move !== "lunge"); // put away for his specials
   if (swordDuel && swordDuel.dId === b.id) want = true; // held through the duel
   var sw = dg.sword;
   if (want && !sw) {
     sw = dg.sword = { t: 0, out: true, outT: 0, parry: -1, parries: 0, side: o.x > b.x ? 1 : -1, pose: null,
       fl: null, still: 0, feint: -1, feintCd: 2, trail: [] };
     playSwordDraw();
-    floater(b.x, b.y - b.r - 30, "DIAMOND SWORD", "crit");
+    floater(b.x, b.y - b.r - 30, sc.drawText || "DIAMOND SWORD", "crit");
     for (var i = 0; i < 16 && !reduceMotion; i++) {
       var a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 160;
-      particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.45, max: 0.45, size: 2 + Math.random() * 3, color: DIAMOND_C[i % 2 ? "L" : "W"] });
+      particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.45, max: 0.45, size: 2 + Math.random() * 3, color: C[i % 2 ? "L" : "W"] });
     }
   }
   if (!sw) return;
@@ -122,12 +137,12 @@ function tickDiamondSword(b, dt) {
   var wantSide = o.x > b.x ? 1 : -1;
   sw.side += (wantSide - sw.side) * (1 - Math.exp(-dt * 7));
   // Showing off, when he's stood still and nothing's coming.
-  var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), busy = sw.parry >= 0 || b.punch || (o.chAct && o.chAct.kind === "bat") || swordDuel;
+  var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), busy = sw.parry >= 0 || b.punch || b.igbb || (o.chAct && o.chAct.kind === "bat") || swordDuel;
   sw.still = sp < 70 && !busy ? sw.still + dt : 0;
-  if (sw.fl) { sw.fl.t += dt; if (sw.fl.t > SWORD_FLOURISHES[sw.fl.kind].dur || busy) sw.fl = null; }
+  if (sw.fl) { sw.fl.t += dt; if (sw.fl.t > swordFlourishes(b)[sw.fl.kind].dur || busy) sw.fl = null; }
   else if (sw.still > 1.1 && Math.random() < dt * 0.9) {
-    var kinds = ["hoist", "windmill", "plant"], kind = kinds[Math.floor(Math.random() * 3)];
-    if (kind === sw.lastFl) kind = kinds[(kinds.indexOf(kind) + 1) % 3];
+    var kinds = Object.keys(swordFlourishes(b)), kind = kinds[Math.floor(Math.random() * kinds.length)];
+    if (kind === sw.lastFl) kind = kinds[(kinds.indexOf(kind) + 1) % kinds.length];
     sw.fl = { kind: kind, t: 0 }; sw.lastFl = kind; sw.still = 0;
   }
   // A quick feint at them now and then, when they're close.
@@ -154,12 +169,16 @@ function swordDrawPose(b, sw) {
   var r = b.r, s = sw.side, ps = sw.pose, sgn = s >= 0 ? 1 : -1;
   var hx = ps[0], hy = ps[1], a = ps[2], fx = ps[3], fy = ps[4], lean = ps[5], toss = 0, twist = 0;
   if (sw.fl) {
-    var F = SWORD_FLOURISHES[sw.fl.kind].f(sw.fl.t / SWORD_FLOURISHES[sw.fl.kind].dur);
+    var FL = swordFlourishes(b)[sw.fl.kind], F = FL.f(sw.fl.t / FL.dur);
+    if (F.fx != null) { fx += (F.fx - fx) * F.w; fy += (F.fy - fy) * F.w; }
     hx += (F.hx - hx) * F.w; hy += (F.hy - hy) * F.w;
     a += wrapA(F.a - a) * F.w + (F.spin || 0);
     lean += F.lean || 0;
   }
-  if (sw.feint >= 0) { // heaving it back over his shoulder, threatening a big swing
+  if (sw.feint >= 0 && b.rapier) { // a quick stab at them and back: testing the distance
+    var ru = sw.feint / 0.6, rk = ru < 0.3 ? easeOut(ru / 0.3) : 1 - ease((ru - 0.3) / 0.7);
+    hx += 0.35 * rk; a += wrapA(0 - a) * rk; lean += 0.12 * rk;
+  } else if (sw.feint >= 0) { // heaving it back over his shoulder, threatening a big swing
     var fu = sw.feint / 0.6, fk = fu < 0.45 ? easeOut(fu / 0.45) : 1 - ease((fu - 0.45) / 0.55);
     hx -= 0.2 * fk; hy -= 0.25 * fk; a += wrapA(-Math.PI / 2 - 0.9 - a) * fk; lean += 0.14 * fk;
   }
@@ -178,7 +197,7 @@ function swordDrawPose(b, sw) {
 
 // His body leaning and lunging with the sword (draw.js adds it to his spot).
 function swordBodyOffset(b) {
-  var sw = b.diamond && b.diamond.sword, o = balls[1 - b.id];
+  var sw = bladeHost(b) && bladeHost(b).sword, o = balls[1 - b.id];
   if (!sw || !b.alive) return { x: 0, y: 0 };
   if (swordDuel && swordDuel.dId === b.id) return { x: 0, y: -(swordDuel.lift || 0) * b.r };
   if (!sw.pose) return { x: 0, y: 0 };
@@ -187,7 +206,7 @@ function swordBodyOffset(b) {
 }
 // And twisting with it (the spinning strike in a duel, the parry twist).
 function swordBodySpin(b) {
-  var sw = b.diamond && b.diamond.sword;
+  var sw = bladeHost(b) && bladeHost(b).sword;
   if (!sw || !b.alive) return 0;
   if (swordDuel && swordDuel.dId === b.id) return swordDuel.spin || 0;
   if (!sw.pose || sw.parry < 0) return 0;
@@ -199,8 +218,9 @@ function swordBodySpin(b) {
 // Called by a weapon right before it lands (Gane's bat, cheater.js). True
 // when Dustin parried it: the weapon skips its damage.
 function diamondSwordClash(defender, attacker, weapon) {
-  if (!defender || !defender.diamond || !defender.diamond.on || !defender.alive || swordDuel) return false;
-  var sc = defender.char.diamond.swordClash, sw = defender.diamond.sword;
+  var host = bladeHost(defender);
+  if (!defender || !host || !host.on || !defender.alive || swordDuel) return false;
+  var sc = bladeCfg(defender), sw = host.sword;
   if (!sc || !sc.enabled || sc.weapons.indexOf(weapon) < 0) return false;
   if (!sw || !sw.out || sw.t < SWORD_DRAW) return false; // still pulling it out
   var will = sw.actRef === attacker.chAct ? sw.willParry : Math.random() * 100 < sc.parryChance;
@@ -216,7 +236,7 @@ function diamondSwordClash(defender, attacker, weapon) {
   attacker.vx = -nx * sc.knockback; attacker.vy = -ny * sc.knockback;
   defender.vx += nx * sc.knockback * 0.25; defender.vy += ny * sc.knockback * 0.25;
   attacker.squash = { t: 0.14, max: 0.14, nx: nx, ny: ny };
-  clashFx(cx, cy, -nx, -ny, 1.2);
+  clashFx(cx, cy, -nx, -ny, 1.2, bladeColors(defender));
   floater(cx, Math.min(defender.y, attacker.y) - defender.r - 34, "PARRY!", "crit"); // over both of them
   crowdReact(0.6);
   playSwordClash(1);
@@ -226,20 +246,21 @@ function diamondSwordClash(defender, attacker, weapon) {
 // A point `f` of the way up the blade (from the current pose).
 function swordPoint(b, sw, f) {
   if (!sw.pose) return { x: b.x, y: b.y };
-  var pz = swordDrawPose(b, sw), len = b.r * SWORD_LEN * f;
+  var pz = swordDrawPose(b, sw), len = b.r * bladeLen(b) * f;
   return { x: pz.hand.x + Math.cos(pz.ang) * len, y: pz.hand.y + Math.sin(pz.ang) * len };
 }
 
 // Sparks, a white flash and a jolt where the blade meets the bat.
-function clashFx(x, y, nx, ny, big) {
-  impacts.push({ x: x, y: y, nx: nx, ny: ny, life: 0.35, max: 0.35, color: DIAMOND_C.W });
+function clashFx(x, y, nx, ny, big, C) {
+  C = C || DIAMOND_C;
+  impacts.push({ x: x, y: y, nx: nx, ny: ny, life: 0.35, max: 0.35, color: C.W });
   var n = Math.round(18 * big);
   for (var i = 0; i < n && !reduceMotion; i++) {
     var a = Math.random() * Math.PI * 2, s = (160 + Math.random() * 320) * Math.sqrt(big);
     particles.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.35 + 0.1 * big, max: 0.35 + 0.1 * big,
-      size: 2 + Math.random() * 3 * Math.sqrt(big), color: i % 3 === 0 ? "#fff6c2" : (i % 3 === 1 ? DIAMOND_C.W : "#c98a4b") });
+      size: 2 + Math.random() * 3 * Math.sqrt(big), color: i % 3 === 0 ? "#fff6c2" : (i % 3 === 1 ? C.W : "#c98a4b") });
   }
-  clashFlashes.push({ x: x, y: y, t: 0, max: 0.14 + 0.06 * big, size: 22 * Math.sqrt(big), rot: Math.random() });
+  clashFlashes.push({ x: x, y: y, t: 0, max: 0.14 + 0.06 * big, size: 22 * Math.sqrt(big), rot: Math.random(), glow: C.L });
   if (!reduceMotion) { shake = Math.max(shake, 8 + 6 * big); hitStop = Math.max(hitStop, 0.03 + 0.025 * big); }
 }
 
@@ -287,7 +308,7 @@ var DUEL_HITS = [];
 })();
 
 function startSwordDuel(d, o) {
-  var sc = d.char.diamond.swordClash.duel;
+  var sc = bladeCfg(d).duel;
   clearActions(d); clearActions(o);
   d.vx = d.vy = o.vx = o.vy = 0;
   var gap = d.r + o.r + sc.gap;
@@ -396,14 +417,14 @@ function tickSwordDuel(dt) {
     if (sd.fired[key] || B.u < h) return;
     sd.fired[key] = true;
     var c = duelContact(sd, S, SWINGS[B.bt.sw[j]].cy), big = B.i === DUEL_LEAP ? 3.5 : B.bt.k === "spin" ? 2 : B.bt.k === "combo" ? 1.1 : 1.4;
-    clashFx(c.x, c.y, -S.ux, -S.uy, big);
+    clashFx(c.x, c.y, -S.ux, -S.uy, big, bladeColors(d));
     playSwordClash(big > 3 ? 2.2 : big);
     d.squash = { t: 0.12, max: 0.12, nx: S.ux, ny: S.uy }; o.squash = { t: 0.12, max: 0.12, nx: -S.ux, ny: -S.uy };
     crowdReact(big > 3 ? 1 : 0.35);
     if (big > 3) { // the leaping strike landing: everything goes white
       duelFlash = 1; sd.punch = 0.18;
       if (!reduceMotion) { hitStop = Math.max(hitStop, 0.18); shake = Math.max(shake, 30); }
-      impacts.push({ x: c.x, y: c.y + d.r, nx: 0, ny: -1, life: 0.5, max: 0.5, color: DIAMOND_C.L });
+      impacts.push({ x: c.x, y: c.y + d.r, nx: 0, ny: -1, life: 0.5, max: 0.5, color: bladeColors(d).L });
       for (var q = 0; q < 26 && !reduceMotion; q++) { // dust ring off the mat
         var qa = q / 26 * Math.PI * 2;
         particles.push({ x: d.x + Math.cos(qa) * d.r, y: d.y + d.r * 0.8 + Math.sin(qa) * d.r * 0.3, vx: Math.cos(qa) * 260, vy: Math.sin(qa) * 90, life: 0.5, max: 0.5, size: 3 + Math.random() * 3, color: "#d8cdb5" });
@@ -440,7 +461,7 @@ function duelDash(d, o, sd, S) {
 
 function tickDuelFinish(d, o, sd, dt) {
   sd.t += dt;
-  var f = sd.t - sd.endT, cfg = d.char.diamond.swordClash.duel;
+  var f = sd.t - sd.endT, cfg = bladeCfg(d).duel, C = bladeColors(d);
   d.vx = d.vy = 0;
   if (sd.outcome === "disarm") {
     if (f >= 0.38 && !sd.flung) { // ripped away: the bat goes flying into the crowd
@@ -450,7 +471,7 @@ function tickDuelFinish(d, o, sd, dt) {
       if (o.cheater) o.cheater = null; // empty handed: back to fighting fair
       o.vx = sd.ux * 380; o.vy = sd.uy * 380;
       o.squash = { t: 0.16, max: 0.16, nx: -sd.ux, ny: -sd.uy };
-      clashFx(o.x - sd.ux * o.r, o.y - o.r * 0.3, sd.ux, sd.uy, 2);
+      clashFx(o.x - sd.ux * o.r, o.y - o.r * 0.3, sd.ux, sd.uy, 2, C);
       if (!reduceMotion) shake = Math.max(shake, 20);
       crowdReact(1);
       playWhoosh();
@@ -462,11 +483,11 @@ function tickDuelFinish(d, o, sd, dt) {
     if (f >= 0.45 && !sd.cut) {
       sd.cut = true; sd.let = true;
       var dealt = hurt(o, cfg.slashDamage, "igbb", d.id); // through the bind: can't be slipped or blocked
-      floater(o.x, o.y - o.r - 34, "DIAMOND SLASH!", "crit");
+      floater(o.x, o.y - o.r - 34, cfg.slashText || "DIAMOND SLASH!", "crit");
       o.flash = 0.16; duelFlash = 0.7; sd.punch = 0.12;
       for (var i = 0; i < 30 && !reduceMotion; i++) {
         var a = Math.atan2(sd.uy, sd.ux) + (Math.random() - 0.5) * 2.2, s = 200 + Math.random() * 400;
-        particles.push({ x: o.x, y: o.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.55, max: 0.55, size: 2 + Math.random() * 4, color: DIAMOND_C[["W", "L", "m"][i % 3]] });
+        particles.push({ x: o.x, y: o.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.55, max: 0.55, size: 2 + Math.random() * 4, color: C[["W", "L", "m"][i % 3]] });
       }
       if (!reduceMotion) { shake = Math.max(shake, 28); hitStop = Math.max(hitStop, 0.12); }
       crowdReact(1);
@@ -480,9 +501,9 @@ function tickDuelFinish(d, o, sd, dt) {
 
 function endSwordDuel(d, o, sd) {
   swordDuel = null;
-  var sw = d.diamond.sword;
+  var sw = bladeHost(d) && bladeHost(d).sword;
   if (sw) { sw.parries = 0; sw.parry = -1; sw.fl = null; }
-  var cfg = d.char.diamond.swordClash;
+  var cfg = bladeCfg(d);
   if (o.cheater) o.cheater.cd = Math.max(o.cheater.cd, cfg.recover);
 }
 
@@ -523,7 +544,7 @@ function drawDuelVignette() {
 // ---------------------------------------------------------------- drawing
 
 // drawHands leaves his hands to us while the sword is out.
-function diamondHandsBusy(b) { return !!(b.diamond && b.diamond.sword && b.alive); }
+function diamondHandsBusy(b) { return !!(bladeHost(b) && bladeHost(b).sword && b.alive); }
 
 // His shadow on the mat while he's in the air (under the fighters).
 function drawDuelShadow() {
@@ -553,15 +574,15 @@ function pushTrail(trail, x, y, ang) {
 // Front on, like Gane's bat: shoulders at the top corners of the ball, the
 // sword arm on the side toward them. Drawn right before his gloves would be.
 function drawDiamondSword(b, other, top) {
-  var sw = b.diamond && b.diamond.sword;
+  var sw = bladeHost(b) && bladeHost(b).sword;
   if (!sw || !b.alive) return;
   var inDuel = swordDuel && swordDuel.dId === b.id;
   // Mid parry (and through a duel) it's drawn over both fighters
   // (drawDiamondSwordsTop), so the clash isn't hidden behind them.
   if ((sw.parry >= 0 || !!inDuel) !== !!top) return;
-  var im = getImg(DIAMOND_SWORD_SRC);
-  if (!im || !sw.pose) return;
-  var r = b.r, len = r * SWORD_LEN, k = 1, alpha = 1;
+  var im = b.rapier ? null : getImg(DIAMOND_SWORD_SRC);
+  if ((!im && !b.rapier) || !sw.pose) return;
+  var r = b.r, len = r * bladeLen(b), k = 1, alpha = 1;
   var pz = inDuel ? duelSwordPose(b, swordDuel) : swordDrawPose(b, sw);
   var hand = pz.hand, ang = pz.ang, s = pz.side != null ? pz.side : sw.side;
   if (!inDuel && sw.out && sw.t < SWORD_DRAW) { // pulled out: swings up from his side
@@ -581,6 +602,7 @@ function drawDiamondSword(b, other, top) {
     sh = shp(0.66 * sideK); fsh = shp(-0.66 * sideK);
     hand = { x: hand.x + off.x, y: hand.y + off.y };
   }
+  if (b.rapier) { drawRapierArms(b, sw, sh, fsh, hand, ang, len, k, alpha, sideK, pz, inDuel); return; }
   // Two hands on a long grip: the lead hand up by the crossguard, the other
   // below it toward the pommel.
   var ca = Math.cos(ang), sa = Math.sin(ang);
@@ -648,14 +670,14 @@ function duelSwordPose(b, sd) {
 
 // The Diamond Slash: a bright line where he cut through, then it fades.
 function drawSlashLine(b, sd) {
-  var f = sd.t - sd.endT, L = sd.slashLine;
+  var f = sd.t - sd.endT, L = sd.slashLine, C = bladeColors(b);
   var grow = easeOut(Math.min(1, f / 0.14)), fade = f < 0.45 ? 1 : Math.max(0, 1 - (f - 0.45) / 0.5);
   var x1 = L.x0 + (L.x1 - L.x0) * grow, y1 = L.y0 + (L.y1 - L.y0) * grow;
   ctx.save();
   ctx.globalAlpha = fade;
   ctx.lineCap = "round";
-  ctx.shadowColor = DIAMOND_C.m; ctx.shadowBlur = 24;
-  ctx.strokeStyle = DIAMOND_C.m; ctx.lineWidth = b.r * (f < 0.45 ? 0.16 : 0.5 * (1 - fade) + 0.16);
+  ctx.shadowColor = C.m; ctx.shadowBlur = 24;
+  ctx.strokeStyle = C.m; ctx.lineWidth = b.r * (f < 0.45 ? 0.16 : 0.5 * (1 - fade) + 0.16);
   ctx.beginPath(); ctx.moveTo(L.x0, L.y0 - b.r * 0.2); ctx.lineTo(x1, y1 - b.r * 0.2); ctx.stroke();
   ctx.strokeStyle = "#ffffff"; ctx.lineWidth = b.r * 0.06;
   ctx.beginPath(); ctx.moveTo(L.x0, L.y0 - b.r * 0.2); ctx.lineTo(x1, y1 - b.r * 0.2); ctx.stroke();
@@ -672,7 +694,7 @@ function drawDiamondSwordsTop() {
     ctx.save();
     ctx.globalAlpha = a;
     ctx.fillStyle = "#ffffff";
-    ctx.shadowColor = DIAMOND_C.L; ctx.shadowBlur = 20;
+    ctx.shadowColor = f.glow || DIAMOND_C.L; ctx.shadowBlur = 20;
     ctx.beginPath();
     for (var i = 0; i < 8; i++) {
       var ang = i * Math.PI / 4 + f.rot, rr = i % 2 ? f.size * 0.3 : f.size * (1 + (1 - a) * 0.6);

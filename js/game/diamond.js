@@ -37,6 +37,7 @@ function tickDiamond(dt) {
   if (diamondShow > 0) diamondShow = Math.max(0, diamondShow - dt);
   tickSwordDuel(dt); // the sword duel (sword.js)
   balls.forEach(function (b) {
+    tickRapier(b, dt); // Ilia's rapier (rapier.js), on the same sword code
     var dg = b.diamond;
     if (!dg) return;
     if (dg.on) dg.t += dt;
