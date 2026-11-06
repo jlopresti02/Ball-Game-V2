@@ -111,6 +111,7 @@ function drawHands(b, other) {
   if (b.igbb && b.igbb.move === "dobronx") return; // posing (drawDoBronx)
   if (b.mock) return; // giving a thumbs down (drawMock)
   if (cheaterHandsBusy(b)) return; // cheating (drawCheater)
+  if (bearHandsBusy(b)) return; // holding the bear up over his head (khabib-bear.js)
   if (diamondHandsBusy(b)) return; // holding his diamond sword (drawDiamondSword, sword.js)
   if (b.igbb && b.igbb.move === "chairshot") return; // both hands on the chair (drawChairShot)
   if (b.igbb && b.igbb.move === "herbdean") return; // swinging the bat (drawHerbDeanSpecial)
