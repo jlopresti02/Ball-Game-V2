@@ -313,10 +313,11 @@ function gallerySounds() {
       clip("freeBird", "Free Bird solo", "Justin Gaethje's All American."),
       clip("eagleScreech", "Eagle screech", "Each eagle dive in All American, and the warning for Gaethje's Eagle Strike."),
       clip("eagleSwoop", "Eagle swoop", "The eagle swooping through in Gaethje's Eagle Strike."),
+      clip("truckeesAd", "Truck-ee's ad", "The jumbotron ad when Gaethje lands from the eagle in golf mode.", 0.8),
       clip("truckHorn", "Truck horn", "The semi coming in All American."),
       synth("Truck impact", "The semi hitting.", function () { playTruckImpact(); }),
       synth("Golf club whack", "Gaethje's golf club landing in golf mode.", function () { lastPunchSound = 0; playClubHit(); }),
-      synth("Golf drive", "Gaethje teeing off at them in golf mode.", function () { playGolfPing(); })
+      synth("Golf drive", "Gaethje teeing off in golf mode: one of nine recorded club-on-ball impacts at random.", function () { playGolfPing(); })
     ] },
     { title: "Hits and moves", items: [
       synth("Light punch", "Small punches (5 damage).", function () { lastPunchSound = 0; playPunch(5); }),

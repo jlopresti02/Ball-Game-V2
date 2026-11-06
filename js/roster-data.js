@@ -740,7 +740,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 11,
+    "rev": 13,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -885,8 +885,10 @@ var SAVED_ROSTER = [
             5
           ],
           "damage": 14,
-          "speed": 1150,
-          "minDist": 150
+          "speed": 1700,
+          "minDist": 150,
+          "cone": 35,
+          "grace": 0.5
         },
         "land": {
           "damage": 10,

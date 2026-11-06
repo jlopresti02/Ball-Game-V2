@@ -28,7 +28,7 @@ var GOLF_CLUB_THICK = 1.8; // the picture drawn this much fatter across, so the 
 var EC_OUT = 0.9, EC_SPEED = 650, EC_CLIMB = 260; // carried off: how long, how fast along the line, how fast it climbs
 var EC_GONE = 0.9, EC_DROP = 0.45;               // off screen, then the fall back in to the middle
 // The golf shot's timeline (seconds into it).
-var GS_SET = 0.25, GS_ADDRESS = 0.75, GS_TOP = 1.22, GS_DOWN = 1.29, GS_HIT = 1.4, GS_END = 2.0;
+var GS_SET = 0.15, GS_ADDRESS = 0.42, GS_TOP = 0.82, GS_DOWN = 0.88, GS_HIT = 0.98, GS_END = 1.55;
 
 var golfBallImg = new Image(); golfBallImg.src = GOLF_BALL_SRC; // golf-art.js
 var golfClubImg = new Image(); golfClubImg.src = GOLF_CLUB_SRC;
@@ -126,6 +126,7 @@ function golfLand(self, other) {
     checkEnd();
   }
   startGolfMode(self);
+  if (self.alive && !over) startTruckeesAd(self); // the Truck-ee's ad on the jumbotron (truckees-ad.js)
 }
 
 function endEagleCarry(self, landed) {
@@ -139,6 +140,7 @@ function endEagleCarry(self, landed) {
 // and his shadow growing as he falls), and the shockwave once he does.
 var golfRing = null;
 function drawGolfDropUnder() {
+  balls.forEach(function (b) { if (b.alive && b.chAct && b.chAct.kind === "golf") drawGolfCone(b, b.chAct); }); // the golf shot's cone
   balls.forEach(function (b) {
     var m = b.igbb;
     if (!eagleCarryOn(b) || (m.phase !== "gone" && m.phase !== "drop")) return;
@@ -244,16 +246,43 @@ function tickGolf(dt) {
 
 // The shot itself (from updateCheaterAct, cheater.js): stopped dead, sets
 // the ball down, waggles, takes it back and rips it at them.
+// He only hits the way he's facing: the opponent has to be inside a cone
+// running from him out to the cage on that side (`ball.cone`, the half
+// angle in degrees either side of straight across).
+function golfInCone(self, other, dir, cfg) {
+  var dx = (other.x - self.x) * dir, dy = other.y - self.y;
+  if (dx <= 0) return false;
+  return Math.abs(Math.atan2(dy, dx)) <= cfg.ball.cone * Math.PI / 180;
+}
+// The direction the ball goes: at them, kept inside the cone.
+function golfAim(self, other, dir, cfg) {
+  var lim = cfg.ball.cone * Math.PI / 180;
+  var an = Math.atan2(other.y - self.y, (other.x - self.x) * dir);
+  an = Math.max(-lim, Math.min(lim, an));
+  return { x: Math.cos(an) * dir, y: Math.sin(an) };
+}
+
 function updateGolfShot(self, other, a, cfg, dt) {
   self.vx = 0; self.vy = 0;
+  // Out of the cone: they get `ball.grace` seconds to come back before he
+  // gives up on it (picks the ball back up).
+  if (!a.fired) {
+    if (!other.alive || golfInCone(self, other, a.dir, cfg)) a.outT = 0;
+    else if ((a.outT = (a.outT || 0) + dt) > cfg.ball.grace) {
+      self.chAct = null;
+      if (self.cheater) self.cheater.golfCd = Math.min(self.cheater.golfCd, 1);
+      floater(self.x, self.y - self.r - 40, "NO SHOT", "note");
+      return;
+    }
+  }
   // The ball sits where the club head addresses it (kept with him if he's nudged).
   var g = golfGrip(self, golfPose(a, 0));
   if (!a.fired) { a.bx = g.head.x; a.by = g.head.y; }
   if (!a.fired && a.t >= GS_HIT) {
     a.fired = true;
     if (other.alive) {
-      var dx = other.x - a.bx, dy = other.y - a.by, d = Math.sqrt(dx * dx + dy * dy) || 1;
-      cheaterObjs.push({ x: a.bx, y: a.by, vx: dx / d * cfg.ball.speed, vy: dy / d * cfg.ball.speed, rot: 0, spin: 30,
+      var aim = golfAim(self, other, a.dir, cfg);
+      cheaterObjs.push({ x: a.bx, y: a.by, vx: aim.x * cfg.ball.speed, vy: aim.y * cfg.ball.speed, rot: 0, spin: 30,
         size: self.r * 0.34, obj: { name: "FORE!", damage: cfg.ball.damage, shape: "golfball", source: "golf" }, ownerId: self.id, trail: [] });
     }
     floater(self.x, self.y - self.r - 40, "FORE!", "crit");
@@ -275,15 +304,17 @@ function updateGolfShot(self, other, a, cfg, dt) {
 // his shoulders turning. The club lags behind the hands on the way down and
 // the wrists only release at the bottom, so the head whips through the ball.
 var GP_ADDRESS = { arm: 1.32, hinge: -0.28, shift: 0, turn: 0 };
+var GP_CARRY = { arm: 0.6, hinge: -2.2, shift: 0, turn: 0.05 }; // walking up with the club up by his shoulder
 var GP_TOP = { arm: 3.2, hinge: 1.35, shift: -0.14, turn: -0.22 };
 var GP_FINISH = { arm: -0.95, hinge: -1.0, shift: 0.16, turn: 0.26 };
 function gpMix(p, q, u) { return { arm: p.arm + (q.arm - p.arm) * u, hinge: p.hinge + (q.hinge - p.hinge) * u, shift: p.shift + (q.shift - p.shift) * u, turn: p.turn + (q.turn - p.turn) * u }; }
 function golfPose(a, t) {
   var p;
   if (t < GS_ADDRESS) {
-    // Settling over the ball, with a couple of little waggles of the club head.
-    p = gpMix(GP_ADDRESS, GP_ADDRESS, 0);
-    if (t > GS_SET) { var w = (t - GS_SET) / (GS_ADDRESS - GS_SET); p.hinge += Math.sin(w * Math.PI * 4) * 0.22 * (1 - w); p.shift += Math.sin(w * Math.PI * 2) * 0.03; }
+    // One smooth move: the club swings down off his shoulder and settles in
+    // behind the ball.
+    var w = Math.min(1, t / GS_ADDRESS), we = w * w * (3 - 2 * w);
+    p = gpMix(GP_CARRY, GP_ADDRESS, we);
   } else if (t < GS_TOP) {
     // Takeaway: low and slow, the arms swinging back and up first, the wrists
     // cocking later, the weight easing onto the back foot.
@@ -330,6 +361,27 @@ function golfLean(b) {
   if (!a || a.kind !== "golf") return { x: 0, y: 0 };
   var p = golfPose(a, a.t), d = a.dir > 0 ? 1 : -1;
   return { x: d * p.shift * b.r, y: Math.abs(p.turn) * b.r * 0.08 };
+}
+
+// A faint cone out to the cage the way he's facing, while he sets up.
+function drawGolfCone(b, a) {
+  var cfg = cheaterCfg(b), lim = cfg.ball.cone * Math.PI / 180, d = a.dir > 0 ? 1 : -1;
+  var k = a.fired ? Math.max(0, 1 - (a.t - GS_HIT) / 0.2) : Math.min(1, a.t / 0.2);
+  if (k <= 0) return;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+  ctx.globalAlpha = 0.5 * k * (a.outT > 0 ? 0.5 + 0.5 * Math.sin(a.t * 30) : 1);
+  var base = d > 0 ? 0 : Math.PI, R = W * 1.5;
+  var gr = ctx.createRadialGradient(b.x, b.y, b.r, b.x, b.y, W);
+  gr.addColorStop(0, "rgba(255,255,255,0.35)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = gr;
+  ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.arc(b.x, b.y, R, base - lim, base + lim); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 2; ctx.setLineDash([8, 8]);
+  ctx.beginPath();
+  ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + Math.cos(base - lim) * R, b.y + Math.sin(base - lim) * R);
+  ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + Math.cos(base + lim) * R, b.y + Math.sin(base + lim) * R);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawGolfShot(b, a) {

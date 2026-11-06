@@ -91,9 +91,9 @@ function updateCheater(self, other, dt, d) {
   if (c.club) c.golfCd = Math.max(0, c.golfCd - dt * self.atkRate);
   if (c.cd > 0 || specialBusy(self) || specialBusy(other) || other.invincible) return true;
   var cfg = cheaterCfg(self);
-  if (c.club && c.golfCd <= 0 && d > cfg.ball.minDist) {
+  if (c.club && c.golfCd <= 0 && d > cfg.ball.minDist && golfInCone(self, other, other.x >= self.x ? 1 : -1, cfg)) {
     // Stops, tees one up and drives it at them (gaethje-golf.js).
-    self.chAct = { kind: "golf", t: 0, fired: false, dir: other.x >= self.x ? 1 : -1 };
+    self.chAct = { kind: "golf", t: 0, fired: false, dir: other.x >= self.x ? 1 : -1, outT: 0 };
     c.golfCd = golfGap(cfg);
     return true;
   }

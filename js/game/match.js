@@ -65,6 +65,7 @@ function startMatchWith(ch0, ch1) {
   resetJonGoats();
   resetDuckDrop();
   resetEagleStrikes();
+  resetJumboAds(); // truckees-ad.js
   resetCheater();
   resetHerbDean();
 

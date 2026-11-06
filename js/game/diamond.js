@@ -84,7 +84,6 @@ function startDiamondGuard(b) {
   dg.throwT = b.char.diamond.firstThrow; // the first one comes quickly so it's seen
   b.flash = 0.16;
   b.blockBonus = (b.blockBonus || 0) + (b.char.diamond.blockBonus || 0); // a tighter guard in the armor (+5%)
-  diamondShow = DIAMOND_SHOW; diamondShowId = b.id; // and he takes over the jumbotron
   floater(b.x, b.y - b.r - 30, "DIAMOND GUARD", "crit");
   if (!reduceMotion) shake = Math.max(shake, 10);
   for (var i = 0; i < 26 && !reduceMotion; i++) {
@@ -93,7 +92,8 @@ function startDiamondGuard(b) {
       size: 3 + Math.random() * 4, color: DIAMOND_C[["L", "m", "W", "d"][i % 4]] });
   }
   crowdReact(0.6);
-  playDiamondGuard();
+  // He takes over the jumbotron, with the clip (after any ad that's on: truckees-ad.js)
+  queueJumboAd(DIAMOND_SHOW, function () { diamondShow = DIAMOND_SHOW; diamondShowId = b.id; playDiamondGuard(); });
 }
 
 // A landed diamond: glassy shards off the hit.
