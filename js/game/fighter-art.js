@@ -592,7 +592,7 @@ function drawLionChest(c, r, look, name, lw, contained) {
 function drawFootballHelmet(c, r, look, ink) {
   var gold = look.helmetColor || "#b8975c", red = look.helmetStripe || "#b3202a";
   var white = look.helmetStripe2 || "#f4f1ea", maskCol = look.helmetMask || "#a3a8ad";
-  var lwid = Math.max(1, r * 0.03);
+  var lwid = Math.max(1, r * 0.03), txt = look.helmetLogoText || "SF";
   c.save();
   c.translate(0, -r * (look.helmetLift || 0));
   var shell = function () {
@@ -644,7 +644,7 @@ function drawFootballHelmet(c, r, look, ink) {
     c.fillStyle = "#f4f1ea"; c.strokeStyle = "#151515"; c.lineWidth = Math.max(0.6, w * 0.06);
     c.font = "italic 900 " + (w * 0.78) + "px Georgia, serif";
     c.textAlign = "center"; c.textBaseline = "middle";
-    c.strokeText("SF", 0, w * 0.04); c.fillText("SF", 0, w * 0.04);
+    c.strokeText(txt, 0, w * 0.04); c.fillText(txt, 0, w * 0.04);
     c.restore();
   };
   logo(0, -r * 0.94, r * 0.11, 0, 1);
