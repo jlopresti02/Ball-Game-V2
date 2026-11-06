@@ -173,6 +173,7 @@ function updateAbilities(dt) {
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
     if (self.shocked || self.koOut || self.shelled || self.dazed || self.dizzy) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
     if (updateDuckDrop(self, other, dt)) continue; // Jon Jones's Duck Drop (jon-duck.js)
+    if (updateTopRope(self, other, dt)) continue; // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
     if (updateEagleCarry(self, other, dt)) continue; // Gaethje snatched up by his own eagle (gaethje-golf.js)
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
