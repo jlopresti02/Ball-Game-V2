@@ -375,6 +375,7 @@ function draw() {
   drawNinersBanner(); // and the San Francisco 67'ers ad (hokit-helmet.js)
   drawPoorbetBanner(); // and the Poorbet sponsor ad (poorbet-ad.js)
   drawStillBanner(); // and the still fighter ads (still-ads.js)
+  drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
     var t = f.life / f.max;

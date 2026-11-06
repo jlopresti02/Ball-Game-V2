@@ -621,6 +621,7 @@ function drawJumbotron(px) {
   drawNinersJumbo(sx, sy, sw, jt.h - 28); // Hokit's San Francisco 67'ers ad (hokit-helmet.js)
   drawPoorbetJumbo(sx, sy, sw, jt.h - 28); // the Poorbet sponsor ad (poorbet-ad.js)
   drawStillJumbo(sx, sy, sw, jt.h - 28); // the still fighter ads (still-ads.js)
+  drawBearWarnJumbo(sx, sy, sw, jt.h - 28); // WARNING: BEAR IN ARENA, over everything (bear-warning.js)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.jtFront, jt.x * px, jt.y * px);
