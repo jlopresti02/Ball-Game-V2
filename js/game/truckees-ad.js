@@ -105,10 +105,12 @@ function drawTruckeesJumbo(x, y, w, h) {
   var lw = h * 0.62 * TRUCKEES_LOGO_SIZE[0] / TRUCKEES_LOGO_SIZE[1], lx = x + w - lw - 16;
   var tx0 = x + w * 0.31, tw0 = lx - tx0 - 10;
   var flash = Math.sin(t * 10) > 0;
-  jtText("JUSTIN GAETHJE", tx0 + tw0 / 2, y + h * 0.14, 30, "#ffffff", "center", "#000000", tw0);
-  jtText("EVERYDAY AMERICAN HERO", tx0 + tw0 / 2, y + h * 0.36, 58, "#ffffff", "center", "#b22234", tw0);
-  jtText("FUEL UP LIKE A HERO", tx0 + tw0 / 2, y + h * 0.58, 26, flash ? "#ffe066" : "#ffffff", "center", "#000000", tw0);
-  jtText("SPONSORED BY", lx + lw / 2, y + h * 0.12, 20, "#ffffff", "center", "#000000", lw);
+  var k = h / 250; // sized for the stadium jumbotron, scaled down for the test-arena banner
+  adText("JUSTIN GAETHJE", tx0 + tw0 / 2, y + h * 0.15, 34 * k, ["#fff4c2", "#f2c53d"], tw0);
+  adText("EVERYDAY AMERICAN", tx0 + tw0 / 2, y + h * 0.37, 52 * k, ["#ffffff", "#dfe6f5"], tw0);
+  adText("HERO", tx0 + tw0 / 2, y + h * 0.63, 84 * k, ["#ffffff", "#ffd2d2"], tw0 * 0.7, 1 + Math.max(0, 0.25 - Math.max(0, t - 0.6)) * 1.2);
+  adText("FUEL UP LIKE A HERO", tx0 + tw0 / 2, y + h * 0.91, 22 * k, flash ? ["#ffe066", "#ffb400"] : ["#ffffff", "#e6e6e6"], tw0);
+  jtText("SPONSORED BY", lx + lw / 2, y + h * 0.12, Math.max(12, 20 * k), "#ffffff", "center", "#000000", lw);
   if (truckeesLogoImg.complete && truckeesLogoImg.naturalWidth) {
     var lp = Math.min(1, Math.max(0, (t - 0.4) / 0.3)), ls = 0.5 + 0.5 * lp + Math.sin(lp * Math.PI) * 0.15;
     var lh = h * 0.62 * ls, lww = lw * ls;
@@ -117,6 +119,28 @@ function drawTruckeesJumbo(x, y, w, h) {
     ctx.globalAlpha = a;
   }
   ctx.strokeStyle = flash ? "#b22234" : "#ffffff"; ctx.lineWidth = 6; ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
+  ctx.restore();
+}
+// The ad's big words: heavy black type, slanted like a sports promo, with a
+// thick red-white-navy outline and a hard drop shadow so it pops off the
+// sunset. `fill` is a top-to-bottom gradient; `pop` scales it (for the HERO slam).
+function adText(txt, x, y, size, fill, maxW, pop) {
+  ctx.save();
+  ctx.translate(x, y); ctx.transform(1, 0, -0.14, 1, 0, 0);
+  if (pop && pop !== 1) ctx.scale(pop, pop);
+  var face = "Impact, 'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+  ctx.font = "900 " + size + "px " + face;
+  var tw = ctx.measureText(txt).width, sz = tw > maxW ? size * maxW / tw : size;
+  ctx.font = "900 " + sz + "px " + face;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+  ctx.shadowColor = "rgba(0,0,0,0)";
+  ctx.fillStyle = "#0b1433"; ctx.fillText(txt, sz * 0.06, sz * 0.08); // drop shadow
+  ctx.lineWidth = sz * 0.3; ctx.strokeStyle = "#0b1433"; ctx.strokeText(txt, 0, 0);
+  ctx.lineWidth = sz * 0.17; ctx.strokeStyle = "#b22234"; ctx.strokeText(txt, 0, 0);
+  ctx.lineWidth = sz * 0.06; ctx.strokeStyle = "#ffffff"; ctx.strokeText(txt, 0, 0);
+  var g = ctx.createLinearGradient(0, -sz / 2, 0, sz / 2);
+  g.addColorStop(0, fill[0]); g.addColorStop(1, fill[1]);
+  ctx.fillStyle = g; ctx.fillText(txt, 0, 0);
   ctx.restore();
 }
 // Old Glory rippling: thirteen stripes and a starry canton, faded into the sky.
