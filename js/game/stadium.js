@@ -620,6 +620,7 @@ function drawJumbotron(px) {
   drawTruckeesJumbo(sx, sy, sw, jt.h - 28); // Gaethje's Truck-ee's ad (truckees-ad.js)
   drawNinersJumbo(sx, sy, sw, jt.h - 28); // Hokit's San Francisco 67'ers ad (hokit-helmet.js)
   drawPoorbetJumbo(sx, sy, sw, jt.h - 28); // the Poorbet sponsor ad (poorbet-ad.js)
+  drawStillJumbo(sx, sy, sw, jt.h - 28); // the still fighter ads (still-ads.js)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.jtFront, jt.x * px, jt.y * px);
