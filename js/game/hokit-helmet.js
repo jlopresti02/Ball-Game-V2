@@ -79,7 +79,7 @@ function updateHelmetCharge(self, other, dt) {
     return true;
   }
   if (m.phase === "set") {
-    if (m.t >= cfg.warn) { m.phase = "charge"; m.t = 0; m.run = 0; self.invincible = true; playBullCharge(0.6); floater(self.x, self.y - self.r - 30, "HIKE!", "crit"); }
+    if (m.t >= cfg.warn) { m.phase = "charge"; m.t = 0; m.run = 0; self.invincible = true; playBullCharge(0.6, BULL_LEAD_IN); floater(self.x, self.y - self.r - 30, "HIKE!", "crit"); }
     return true;
   }
   if (m.phase === "charge") {

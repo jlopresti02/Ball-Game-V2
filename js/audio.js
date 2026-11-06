@@ -659,7 +659,7 @@ function playKnockout() {
 
 // Plays a decoded clip once at `when` (default now). Returns the source, or
 // null if it isn't decoded yet.
-function playClip(name, gain, when, rate) {
+function playClip(name, gain, when, rate, offset) {
   var ctx = audioCtx, buf = clipBuffers[name];
   if (!ctx || !buf) return null;
   var src = ctx.createBufferSource();
@@ -668,7 +668,7 @@ function playClip(name, gain, when, rate) {
   var g = ctx.createGain();
   g.gain.value = gain;
   src.connect(g); g.connect(ctx.destination);
-  src.start(when || ctx.currentTime);
+  src.start(when || ctx.currentTime, offset || 0);
   return src;
 }
 
@@ -1573,12 +1573,15 @@ function playImpactClip(n, gain, fallback) {
   } catch (e) { /* never let audio break the game */ }
 }
 // The bull roaring as it charges (Joe's clip; a snort if it's not loaded).
-function playBullCharge(gain) {
+// `skip` starts the clip that many seconds in (the bull's roar only gets
+// loud about 0.7s in), for moves where the sound has to hit right away.
+var BULL_LEAD_IN = 0.7;
+function playBullCharge(gain, skip) {
   try {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    if (!playClip("bullCharge", gain || 0.85)) { withClip("bullCharge"); playBullSnort(); }
+    if (!playClip("bullCharge", gain || 0.85, 0, 0, skip || 0)) { withClip("bullCharge"); playBullSnort(); }
   } catch (e) { /* never let audio break the game */ }
 }
 // Jon Jones's GOAT Stampede (jon.js): a goat ramming someone is a deep, heavy
