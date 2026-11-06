@@ -167,7 +167,7 @@ function dwTrack(x, y, w, h, k) {
   // A vertical loop that comes out still going forward.
   var xv = P[P.length - 2][0], R = h * 0.2, lc = R * 0.3;
   for (var l = 0; l <= 96; l++) { var th = l / 96 * Math.PI * 2; pts.push({ x: xv + lc * th + R * Math.sin(th), y: yb - R + R * Math.cos(th), loop: true }); }
-  for (var e = 1; e <= 10; e++) pts.push({ x: xv + lc * Math.PI * 2 + (x + w + 20 - xv - lc * Math.PI * 2) * e / 10, y: yb });
+  for (var e = 1; e <= 10; e++) pts.push({ x: xv + lc * Math.PI * 2 + (x + w * 0.95 - xv - lc * Math.PI * 2) * e / 10, y: yb }); // to the turnaround (dwReturnTrack)
   var len = 0;
   pts.forEach(function (p, j) {
     var a = pts[Math.max(0, j - 1)], b = pts[Math.min(pts.length - 1, j + 1)];
@@ -189,6 +189,7 @@ function dwAt(tr, s) {
 
 function dwCoaster(x, y, w, h, k) {
   var tr = dwTrack(x, y, w, h, k), pts = tr.pts, gap = tr.gap, yb = tr.yb, ground = y + h;
+  dwReturnTrack(x, y, w, h, k, tr); // the way back to the station, behind everything
   // Supports: steel columns every so often down to the ground, X-braced.
   ctx.save();
   ctx.strokeStyle = "#f2f2f2"; ctx.lineWidth = 2 * k;
@@ -252,6 +253,49 @@ function dwCoaster(x, y, w, h, k) {
     pts.forEach(function (p, j) { var a = p.x + p.nx * (gap * side + 0.8 * k), b = p.y + p.ny * (gap * side + 0.8 * k); if (j) ctx.lineTo(a, b); else ctx.moveTo(a, b); });
     ctx.stroke();
   });
+}
+
+// The track is one full circuit: after the loop it turns around at the
+// right (curving away into the distance), runs back behind the ride over a
+// couple of bunny hills, and turns again at the left into the station.
+// Being farther back, it's drawn thinner and paler, behind the front track.
+function dwReturnTrack(x, y, w, h, k, tr) {
+  var yb = tr.yb, ybB = yb - h * 0.075, xr = x + w * 0.95, xl = x + w * 0.47, ground = y + h;
+  var cy = (yb + ybB) / 2, ry = (yb - ybB) / 2, rx = w * 0.028, pts = [], a, i;
+  for (i = 0; i <= 24; i++) { a = Math.PI / 2 - Math.PI * i / 24; pts.push({ x: xr + rx * Math.cos(a), y: cy + ry * Math.sin(a) }); }
+  for (i = 1; i <= 120; i++) {
+    var u = i / 120, bx = xr + (xl - xr) * u;
+    var bump = (u > 0.12 && u < 0.38 ? Math.pow(Math.sin((u - 0.12) / 0.26 * Math.PI), 2) * 0.09 : 0) + (u > 0.42 && u < 0.6 ? Math.pow(Math.sin((u - 0.42) / 0.18 * Math.PI), 2) * 0.06 : 0);
+    pts.push({ x: bx, y: ybB - h * bump });
+  }
+  for (i = 1; i <= 24; i++) { a = -Math.PI / 2 - Math.PI * i / 24; pts.push({ x: xl + rx * Math.cos(a), y: cy + ry * Math.sin(a) }); }
+  pts.forEach(function (p, j) {
+    var q0 = pts[Math.max(0, j - 1)], q1 = pts[Math.min(pts.length - 1, j + 1)], dx = q1.x - q0.x, dy = q1.y - q0.y, d = Math.hypot(dx, dy) || 1;
+    p.nx = dy / d; p.ny = -dx / d;
+  });
+  var gap = tr.gap * 0.72;
+  ctx.save();
+  // Thin supports down to the ground.
+  ctx.strokeStyle = "rgba(240,240,240,0.85)"; ctx.lineWidth = 1.3 * k;
+  var last = -1e9;
+  pts.forEach(function (p) { if (Math.abs(p.x - last) < 14 * k) return; last = p.x; ctx.beginPath(); ctx.moveTo(p.x, p.y + gap); ctx.lineTo(p.x, ground); ctx.stroke(); });
+  // Ties and rails.
+  ctx.strokeStyle = "#6b6b6b"; ctx.lineWidth = 1.6 * k;
+  var acc = 0;
+  for (var t = 1; t < pts.length; t++) {
+    acc += Math.hypot(pts[t].x - pts[t - 1].x, pts[t].y - pts[t - 1].y);
+    if (acc < 6 * k) continue;
+    acc = 0;
+    var T = pts[t];
+    ctx.beginPath(); ctx.moveTo(T.x - T.nx * gap * 1.6, T.y - T.ny * gap * 1.6); ctx.lineTo(T.x + T.nx * gap * 1.6, T.y + T.ny * gap * 1.6); ctx.stroke();
+  }
+  [-1, 1].forEach(function (side) {
+    ctx.strokeStyle = "#c25555"; ctx.lineWidth = 2.3 * k; ctx.lineJoin = "round";
+    ctx.beginPath();
+    pts.forEach(function (p, j) { var px = p.x + p.nx * gap * side, py = p.y + p.ny * gap * side; if (j) ctx.lineTo(px, py); else ctx.moveTo(px, py); });
+    ctx.stroke();
+  });
+  ctx.restore();
 }
 
 // The train: Khabib in the front car just over the crest, arms up, a fan
