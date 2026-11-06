@@ -292,11 +292,21 @@ function tickCheater(dt) {
   cheaterObjs.forEach(function (o) {
     o.x += o.vx * dt; o.y += o.vy * dt; o.rot += o.spin * dt;
     var tgt = balls[1 - o.ownerId];
-    if (!o.done && tgt.alive) {
+    if (o.trail) { o.trail.push({ x: o.x, y: o.y }); if (o.trail.length > 6) o.trail.shift(); }
+    if (!o.done && !o.passed && tgt.alive) {
       var dx = tgt.x - o.x, dy = tgt.y - o.y;
       if (dx * dx + dy * dy < (tgt.r + o.size * 0.6) * (tgt.r + o.size * 0.6)) {
-        hurt(tgt, o.obj.damage, "throw", o.ownerId);
-        if (tgt.justDodged) return; // slipped it: it flies on past
+        var dealt = hurt(tgt, o.obj.damage, o.obj.source || "throw", o.ownerId);
+        if (tgt.justDodged) { o.passed = true; return; } // slipped it: it flies on past
+        if (dealt === 0 && o.obj.source === "golf") {
+          // Parried: knocked away off at an angle, still flying.
+          o.passed = true;
+          var sp0 = Math.sqrt(o.vx * o.vx + o.vy * o.vy), ang0 = Math.atan2(-o.vy, -o.vx) + (Math.random() < 0.5 ? -1 : 1) * (0.7 + Math.random() * 0.6);
+          o.vx = Math.cos(ang0) * sp0 * 0.7; o.vy = Math.sin(ang0) * sp0 * 0.7;
+          playPunch(6);
+          impacts.push({ x: o.x, y: o.y, nx: o.vx / sp0, ny: o.vy / sp0, life: 0.25, max: 0.25, color: "#ffffff" });
+          return;
+        }
         o.done = true;
         var sp = Math.sqrt(o.vx * o.vx + o.vy * o.vy) || 1;
         tgt.vx += o.vx / sp * 140; tgt.vy += o.vy / sp * 140;
@@ -528,6 +538,7 @@ function drawBatIdle(b, swing) {
 // then lunges in with it and settles back (draw.js adds it to his spot).
 function ganeBatLean(b) {
   var a = b.chAct;
+  if (a && a.kind === "golf") return golfLean(b); // Gaethje's golf swing (gaethje-golf.js)
   if (!a || a.kind !== "bat" || !b.cheater || !cheaterCfg(b)) return { x: 0, y: 0 };
   var bc = cheaterCfg(b).bat, bw = bc.windup || 0, o = balls[1 - b.id];
   var nx = o.x - b.x, ny = o.y - b.y, nd = Math.sqrt(nx * nx + ny * ny) || 1, k;
@@ -642,7 +653,17 @@ function drawCheaterObject(shape, x, y, s, rot) {
 }
 
 function drawCheaterObjects() {
-  cheaterObjs.forEach(function (o) { drawCheaterObject(o.obj.shape, o.x, o.y, o.size, o.rot); });
+  cheaterObjs.forEach(function (o) {
+    if (o.trail && o.trail.length > 1) { // a streak behind a golf ball, it's going that fast
+      ctx.save(); ctx.lineCap = "round";
+      for (var i = 1; i < o.trail.length; i++) {
+        ctx.globalAlpha = i / o.trail.length * 0.5; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = o.size * 0.55 * i / o.trail.length;
+        ctx.beginPath(); ctx.moveTo(o.trail[i - 1].x, o.trail[i - 1].y); ctx.lineTo(o.trail[i].x, o.trail[i].y); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    drawCheaterObject(o.obj.shape, o.x, o.y, o.size, o.rot);
+  });
 }
 
 // Stars round someone poked in the eye.

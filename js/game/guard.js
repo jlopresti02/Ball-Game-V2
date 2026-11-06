@@ -19,7 +19,7 @@ var GUARD_GETUP_SPEED = 300;  // backs away from the opponent once it's up
 
 // Strikes that can knock it down into guard (not grabs, slams, specials or
 // anything that's already moving it around).
-var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, proj: true, combo: true };
+var GUARD_SOURCES = { punch: true, kick: true, kickback: true, swing: true, combo: true }; // (never off a projectile)
 
 // Submission sets a fighter's guard `subs` can name instead of single
 // submissions. The BJJ artist set is the rear naked choke (rnc.js) and the
