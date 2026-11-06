@@ -1863,6 +1863,17 @@ function playTruckeesAd() {
     withClip("truckeesAd", function () { playClip("truckeesAd", 0.8); });
   } catch (e) { /* never let audio break the game */ }
 }
+// Hokit's San Francisco 67'ers ad (hokit-helmet.js): a ref's whistle and the
+// crowd going up, like kickoff.
+function playNinersAd() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    crowdReact(1);
+    withClip("refWhistle", function () { playClip("refWhistle", 0.6); });
+  } catch (e) { /* never let audio break the game */ }
+}
 function synthDiamondChime(ctx, now, vol) {
   var out = ctx.createGain();
   out.gain.value = vol; out.connect(ctx.destination);

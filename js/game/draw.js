@@ -86,6 +86,7 @@ function draw() {
   drawGuardZones(); // the circle round a fighter down in guard
   drawAuraRoses(false); // roses thrown on the mat (aurafarm.js)
   drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
+  drawHelmetChargeUnder(); // Helmet Charge: the red path he's about to run (hokit-helmet.js)
   drawTopRopeUnder();  // Top Rope Body Slam: the red circle (cut off at the cage), his shadow (hokit-toprope.js)
   drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
   drawEagleStrikeUnder(); // Eagle Strike: the red path and the eagle's shadow (gaethje-eagle.js)
@@ -342,6 +343,7 @@ function draw() {
   drawAuraRoses(true); // roses in the air
   drawAuraActors();    // the bull
   drawJonGoats();      // the goats (jon.js)
+  drawHelmetChargeOver(); // the helmet dropping onto Hokit's head (hokit-helmet.js)
   drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)
   drawEagleStrikeOver();  // the eagle swooping through, and its claw marks (gaethje-eagle.js)
   drawSuplexes();
@@ -368,6 +370,7 @@ function draw() {
   drawHerbBanner(); // "Herb Dean is entering the ring" when there's no jumbotron
   drawDiamondBanner(); // and "Diamond Guard" (diamond.js)
   drawTruckeesBanner(); // and the Truck-ee's ad (truckees-ad.js)
+  drawNinersBanner(); // and the San Francisco 67'ers ad (hokit-helmet.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
     var t = f.life / f.max;

@@ -3069,6 +3069,17 @@ function playTruckeesAd() {
     withClip("truckeesAd", function () { playClip("truckeesAd", 0.8); });
   } catch (e) { /* never let audio break the game */ }
 }
+// Hokit's San Francisco 67'ers ad (hokit-helmet.js): a ref's whistle and the
+// crowd going up, like kickoff.
+function playNinersAd() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    crowdReact(1);
+    withClip("refWhistle", function () { playClip("refWhistle", 0.6); });
+  } catch (e) { /* never let audio break the game */ }
+}
 function synthDiamondChime(ctx, now, vol) {
   var out = ctx.createGain();
   out.gain.value = vol; out.connect(ctx.destination);
@@ -4792,12 +4803,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-josh-hokit",
-    "rev": 8,
+    "rev": 9,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Josh Hokit",
     "base": "BMF",
-    "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Special move: Chair Shot.",
+    "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Now and then he straps on his football helmet, gets down in a three-point stance and charges a red path across the ring, running over whoever is still in it, while the jumbotron plays an ad for the San Francisco 67'ers. Special move: Chair Shot.",
     "color": "#c8202c",
     "label": "",
     "imgData": null,
@@ -4875,6 +4886,28 @@ var SAVED_ROSTER = [
       "anger": 3
     },
     "hasSpecial": true,
+    "helmetCharge": {
+      "first": [
+        18,
+        26
+      ],
+      "every": [
+        22,
+        32
+      ],
+      "max": 2,
+      "warn": 1.1,
+      "speed": 1250,
+      "width": 60,
+      "damage": 30,
+      "knockback": 1200,
+      "wallSlams": 1,
+      "slamDamage": 4,
+      "helmet": {
+        "headwear": "football",
+        "helmetLogoText": "67"
+      }
+    },
     "topRope": {
       "first": [
         12,
@@ -6600,6 +6633,7 @@ function makeBall(id, ch) {
   initJon(b);
   initDiamond(b); // Dustin's Diamond Guard (diamond.js)
   initTopRope(b); // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
+  initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
   return b;
 }
 
@@ -7182,6 +7216,7 @@ function updateAbilities(dt) {
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
     if (self.shocked || self.koOut || self.shelled || self.dazed || self.dizzy) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
     if (updateDuckDrop(self, other, dt)) continue; // Jon Jones's Duck Drop (jon-duck.js)
+    if (updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
     if (updateTopRope(self, other, dt)) continue; // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
     if (updateEagleCarry(self, other, dt)) continue; // Gaethje snatched up by his own eagle (gaethje-golf.js)
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
@@ -10905,30 +10940,32 @@ var TRUCKEES_TRUCK_SIZE = [480, 226];
 // audio is still playing (Do Bronx's pose), Father's Plan, Herb Dean's
 // announcement, or any other move that has a fighter in its `igbb` state
 // (Jon's Duck Drop, Gaethje being carried by the eagle). It waits until
-// it's completely finished.
-function jumboHold() {
+// it's completely finished. `owner`'s own move doesn't count when it's the
+// move that runs the ad (Hokit's helmet charge plays its 67'ers ad as it
+// starts).
+function jumboHold(owner) {
   if (typeof herbShow !== "undefined" && herbShow > 0) return true;
   if (typeof herb !== "undefined" && herb) return true;
   if (typeof allAmericanOn === "function" && allAmericanOn()) return true;
   if (typeof auraFarmOn === "function" && auraFarmOn()) return true;
-  return !!(balls && balls.some(function (b) { return b && b.igbb; }));
+  return !!(balls && balls.some(function (b) { return b && b.igbb && !(b === owner && b.igbb.adOwn); }));
 }
 
 var jumboAds = [], jumboAdLeft = 0; // waiting ads, and time left on the one playing
-function resetJumboAds() { jumboAds = []; jumboAdLeft = 0; truckeesShow = 0; }
+function resetJumboAds() { jumboAds = []; jumboAdLeft = 0; truckeesShow = 0; if (typeof ninersShow !== "undefined") ninersShow = 0; }
 // Every fighter-triggered ad on the jumbotron must start through here, so it
 // follows Joe's rules: one ad at a time, and none while a special is running
 // (jumboHold). `start` sets the ad's show going (and plays its sound); `dur`
 // is how long it runs.
-function queueJumboAd(dur, start) {
-  if (jumboAdLeft > 0 || jumboHold()) { jumboAds.push({ dur: dur, start: start }); return; }
+function queueJumboAd(dur, start, owner) {
+  if (jumboAdLeft > 0 || jumboHold(owner)) { jumboAds.push({ dur: dur, start: start, owner: owner }); return; }
   jumboAdLeft = dur; start();
 }
 // Every frame from update().
 function tickJumboAds(dt) {
   if (truckeesShow > 0) truckeesShow = Math.max(0, truckeesShow - dt);
   if (jumboAdLeft > 0) jumboAdLeft = Math.max(0, jumboAdLeft - dt);
-  if (jumboAdLeft > 0 || !jumboAds.length || jumboHold()) return;
+  if (jumboAdLeft > 0 || !jumboAds.length || jumboHold(jumboAds[0].owner)) return;
   var next = jumboAds.shift();
   jumboAdLeft = next.dur; next.start();
 }
@@ -11029,7 +11066,9 @@ function drawTruckeesJumbo(x, y, w, h) {
 // The ad's big words: heavy black type, slanted like a sports promo, with a
 // thick red-white-navy outline and a hard drop shadow so it pops off the
 // sunset. `fill` is a top-to-bottom gradient; `pop` scales it (for the HERO slam).
-function adText(txt, x, y, size, fill, maxW, pop) {
+// `outline` (optional): the outer, middle and inner outline colors.
+function adText(txt, x, y, size, fill, maxW, pop, outline) {
+  var ol = outline || ["#0b1433", "#b22234", "#ffffff"];
   ctx.save();
   ctx.translate(x, y); ctx.transform(1, 0, -0.14, 1, 0, 0);
   if (pop && pop !== 1) ctx.scale(pop, pop);
@@ -11039,10 +11078,10 @@ function adText(txt, x, y, size, fill, maxW, pop) {
   ctx.font = "900 " + sz + "px " + face;
   ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
   ctx.shadowColor = "rgba(0,0,0,0)";
-  ctx.fillStyle = "#0b1433"; ctx.fillText(txt, sz * 0.06, sz * 0.08); // drop shadow
-  ctx.lineWidth = sz * 0.3; ctx.strokeStyle = "#0b1433"; ctx.strokeText(txt, 0, 0);
-  ctx.lineWidth = sz * 0.17; ctx.strokeStyle = "#b22234"; ctx.strokeText(txt, 0, 0);
-  ctx.lineWidth = sz * 0.06; ctx.strokeStyle = "#ffffff"; ctx.strokeText(txt, 0, 0);
+  ctx.fillStyle = ol[0]; ctx.fillText(txt, sz * 0.06, sz * 0.08); // drop shadow
+  ctx.lineWidth = sz * 0.3; ctx.strokeStyle = ol[0]; ctx.strokeText(txt, 0, 0);
+  ctx.lineWidth = sz * 0.17; ctx.strokeStyle = ol[1]; ctx.strokeText(txt, 0, 0);
+  ctx.lineWidth = sz * 0.06; ctx.strokeStyle = ol[2]; ctx.strokeText(txt, 0, 0);
   var g = ctx.createLinearGradient(0, -sz / 2, 0, sz / 2);
   g.addColorStop(0, fill[0]); g.addColorStop(1, fill[1]);
   ctx.fillStyle = g; ctx.fillText(txt, 0, 0);
@@ -11070,6 +11109,277 @@ function drawTruckeesFlag(x, y, w, h, t) {
 function drawTruckeesBanner() {
   if (truckeesShow <= 0 || stadiumOn()) return;
   drawTruckeesJumbo(10, 10, W - 20, 110);
+}
+
+// The San Francisco 67'ers (a 49ers parody): Joe's 67 oval logo, used on
+// Josh Hokit's football helmet and in the team's jumbotron ad (hokit-helmet.js).
+// Original in project-files/previews/helmet-67-logo.png.
+"use strict";
+var SF67_LOGO_SRC = "data:image/webp;base64,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";
+var SF67_LOGO_SIZE = [300, 190];
+
+// Josh Hokit's Helmet Charge (Joe, 2026-11-06). A few times a fight, at random:
+//   suit    a football helmet drops onto his head (gold, 67 on the sides)
+//   set     he gets down in a three-point stance while a red path shows
+//           where he's going: from him, through where they are, all the way
+//           across the ring to the cage
+//   charge  he runs the path like a linebacker; whoever's still in it gets
+//           run over (helmetCharge.damage and a knockback into the cage)
+//   bonk    he runs into the cage, then pulls the helmet off
+// As he puts the helmet on, the jumbotron (a banner in the test arena)
+// plays an ad for the San Francisco 67'ers, a 49ers parody: "Watch them
+// this Sunday". It goes through queueJumboAd like every fighter ad, so it
+// never overlaps another ad and waits out any special (truckees-ad.js);
+// his own charge doesn't hold it up (`adOwn`).
+// Runs on b.igbb (move "helmetcharge"). Config: char.helmetCharge.
+"use strict";
+
+var HC_SUIT = 0.55, HC_BONK = 0.7;
+var NINERS_SHOW = 5.0;
+var ninersShow = 0, ninersId = 0;
+var sf67LogoImg = new Image(); sf67LogoImg.src = SF67_LOGO_SRC;
+
+function helmetChargeOn(b) { return !!(b && b.igbb && b.igbb.move === "helmetcharge"); }
+function hcRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
+
+// From makeBall.
+function initHelmetCharge(b) {
+  var cfg = b.char.helmetCharge;
+  b.helmetN = 0;
+  b.helmetT = cfg ? hcRand(cfg.first) : Infinity;
+}
+
+function hcPutOn(b, on) {
+  var cfg = b.char.helmetCharge;
+  if (on) {
+    if (!b.hcLookOff) b.hcLookOff = b.char.look;
+    b.char = Object.assign({}, b.char, { look: Object.assign({}, b.hcLookOff, cfg.helmet, { helmetLogo: SF67_LOGO_SRC }) });
+  } else if (b.hcLookOff) {
+    b.char = Object.assign({}, b.char, { look: b.hcLookOff });
+    b.hcLookOff = null;
+  }
+}
+
+// From the abilities loop, before the special. True while it's running.
+function updateHelmetCharge(self, other, dt) {
+  var cfg = self.char.helmetCharge;
+  if (!cfg) return false;
+  if (!self.igbb) {
+    if (!started || over || self.helmetN >= cfg.max) return false;
+    self.helmetT -= dt;
+    if (self.helmetT > 0 || !canStartIgbb(self, other) || swordDuelActive()) return false;
+    clearActions(self);
+    self.helmetN++;
+    self.helmetT = hcRand(cfg.every);
+    self.igbb = { move: "helmetcharge", phase: "suit", t: 0, adOwn: true, hit: false };
+    floater(self.x, self.y - self.r - 30, "HELMET ON!", "note");
+    startNinersAd(self);
+  }
+  var m = self.igbb;
+  if (m.move !== "helmetcharge") return false;
+  m.t += dt;
+  self.vx = 0; self.vy = 0;
+  if (over) { endHelmetCharge(self); return false; }
+
+  if (m.phase === "suit") {
+    if (m.t >= HC_SUIT * 0.7 && !m.on) { // it lands on his head
+      m.on = true; hcPutOn(self, true);
+      self.squash = { t: 0.18, max: 0.18, nx: 0, ny: 1 };
+      playPunch(8);
+    }
+    if (m.t >= HC_SUIT) {
+      m.phase = "set"; m.t = 0;
+      // The path: from him, through where they are, to the cage.
+      var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+      m.dx = dx / d; m.dy = dy / d; m.sx = self.x; m.sy = self.y;
+      m.len = hcRayToWall(self.x, self.y, m.dx, m.dy, self.r);
+      floater(self.x, self.y - self.r - 30, "HUT! HUT!", "crit");
+      crowdReact(0.7);
+    }
+    return true;
+  }
+  if (m.phase === "set") {
+    if (m.t >= cfg.warn) { m.phase = "charge"; m.t = 0; m.run = 0; self.invincible = true; playBullCharge(0.6); floater(self.x, self.y - self.r - 30, "HIKE!", "crit"); }
+    return true;
+  }
+  if (m.phase === "charge") {
+    self.immuneCd = 1;
+    var step = cfg.speed * dt;
+    m.run = Math.min(m.len, m.run + step);
+    self.x = m.sx + m.dx * m.run; self.y = m.sy + m.dy * m.run;
+    if (!reduceMotion && Math.random() < 0.6) {
+      particles.push({ x: self.x - m.dx * self.r, y: self.y + self.r * 0.6, vx: -m.dx * 80 + (Math.random() - 0.5) * 60, vy: -m.dy * 80 - 30, life: 0.35, max: 0.35, size: 3 + Math.random() * 3, color: "#d8cdb5" });
+    }
+    // Running them over.
+    var ox = other.x - self.x, oy = other.y - self.y;
+    if (!m.hit && other.alive && !other.invincible && ox * ox + oy * oy < (self.r + other.r) * (self.r + other.r)) {
+      m.hit = true;
+      var dealt = hurt(other, cfg.damage, "igbb", self.id); // can't be slipped or blocked, only got out of the way of
+      if (dealt > 0) {
+        floater(other.x, other.y - other.r - 30, "RUN OVER!", "crit");
+        other.flash = 0.16;
+        if (!reduceMotion) { shake = Math.max(shake, 18); hitStop = Math.max(hitStop, 0.1); }
+        playPunch(cfg.damage);
+        impacts.push({ x: (self.x + other.x) / 2, y: (self.y + other.y) / 2, nx: m.dx, ny: m.dy, life: 0.35, max: 0.35, color: "#ffffff" });
+        // Knocked off to the side of the path, and into the cage.
+        var side = (-m.dy * ox + m.dx * oy) >= 0 ? 1 : -1;
+        var kx = m.dx * 0.7 - m.dy * side * 0.7, ky = m.dy * 0.7 + m.dx * side * 0.7, kl = Math.sqrt(kx * kx + ky * ky);
+        if (other.alive) beginWallSlam(other, kx / kl, ky / kl, { knockback: cfg.knockback, wallSlams: cfg.wallSlams, slamDamage: cfg.slamDamage });
+        checkEnd();
+      }
+    }
+    if (m.run >= m.len) { // into the cage
+      m.phase = "bonk"; m.t = 0; self.invincible = false;
+      self.squash = { t: 0.25, max: 0.25, nx: m.dx, ny: m.dy };
+      if (!reduceMotion) shake = Math.max(shake, 12);
+      playSlam();
+      if (!m.hit && other.alive) floater(other.x, other.y - other.r - 30, "MISSED!", "dodge");
+    }
+    return true;
+  }
+  // Bonked into the cage, then the helmet comes off.
+  self.immuneCd = 0;
+  if (m.t >= HC_BONK) { endHelmetCharge(self); return false; }
+  return true;
+}
+
+// How far he can run from (x, y) along (dx, dy) before the cage stops him.
+function hcRayToWall(x, y, dx, dy, r) {
+  var t = Infinity;
+  if (dx > 1e-6) t = Math.min(t, (W - r - x) / dx); else if (dx < -1e-6) t = Math.min(t, (r - x) / dx);
+  if (dy > 1e-6) t = Math.min(t, (H - r - y) / dy); else if (dy < -1e-6) t = Math.min(t, (r - y) / dy);
+  return Math.max(0, t);
+}
+
+function endHelmetCharge(self) {
+  self.igbb = null;
+  self.invincible = false;
+  self.immuneCd = 0;
+  hcPutOn(self, false);
+}
+
+// Every frame from update().
+function tickHelmetCharge(dt) {
+  if (ninersShow > 0) ninersShow = Math.max(0, ninersShow - dt);
+}
+
+// ---------------------------------------------------------------- the ad
+
+function startNinersAd(b) {
+  queueJumboAd(NINERS_SHOW, function () {
+    ninersShow = NINERS_SHOW; ninersId = b.id;
+    playNinersAd();
+  }, b);
+}
+
+function drawNinersJumbo(x, y, w, h) {
+  if (ninersShow <= 0 || !balls || !balls[ninersId]) return;
+  var b = balls[ninersId], t = NINERS_SHOW - ninersShow, a = Math.min(1, t / 0.25, ninersShow / 0.3), k = h / 250;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  // The field: mowed stripes, yard lines and numbers scrolling past.
+  ctx.fillStyle = "#2f7a33"; ctx.fillRect(x, y, w, h);
+  var yd = w / 8, off = (t * 90) % (yd * 2);
+  for (var i = -2; i < 10; i++) {
+    var lx = x + i * yd - off;
+    if (i % 2 === 0) { ctx.fillStyle = "#378a3b"; ctx.fillRect(lx, y, yd, h); }
+    ctx.fillStyle = "rgba(255,255,255,0.75)"; ctx.fillRect(lx - 1.5, y, 3, h);
+    ctx.font = "900 " + (26 * k) + "px Impact, 'Arial Black', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.fillText(String(10 * (1 + ((i + 40) % 5))), lx, y + h * 0.88);
+  }
+  // Team colors across the top and bottom.
+  ctx.fillStyle = "#aa0000"; ctx.fillRect(x, y, w, h * 0.07); ctx.fillRect(x, y + h * 0.93, w, h * 0.07);
+  ctx.fillStyle = "#b3995d"; ctx.fillRect(x, y + h * 0.07, w, h * 0.02); ctx.fillRect(x, y + h * 0.91, w, h * 0.02);
+  // The logo, spinning in.
+  if (sf67LogoImg.complete && sf67LogoImg.naturalWidth) {
+    var lp = Math.min(1, t / 0.5), lh = h * 0.5 * (0.6 + 0.4 * easeOut(lp)), lw = lh * SF67_LOGO_SIZE[0] / SF67_LOGO_SIZE[1];
+    ctx.save();
+    ctx.translate(x + w * 0.16, y + h * 0.42); ctx.rotate((1 - easeOut(lp)) * -Math.PI);
+    ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 10 * k;
+    ctx.drawImage(sf67LogoImg, -lw / 2, -lh / 2, lw, lh);
+    ctx.restore();
+  }
+  // Hokit in his helmet, ball tucked, charging through the right of the ad.
+  var look = Object.assign({}, b.hcLookOff || b.char.look, b.char.helmetCharge.helmet, { helmetLogo: SF67_LOGO_SRC });
+  var r = h * 0.24, run = Math.min(1, t / 0.8), cx = x + w * (1.15 - 0.3 * easeOut(run)), cy = y + h * 0.56 + Math.abs(Math.sin(t * 9)) * -r * 0.08;
+  ctx.save();
+  ctx.translate(cx, cy); ctx.rotate(-0.12); ctx.translate(-cx, -cy);
+  drawFighterArt(ctx, cx, cy, r, look, "#0b0f12", { layout: "contained", name: b.char.name });
+  ctx.lineWidth = 3; ctx.strokeStyle = "#0b0f12"; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  drawNinersFootball(cx + r * 0.95, cy + r * 0.25, r * 0.42);
+  drawGlove(ctx, cx + r * 0.9, cy + r * 0.45, r * 0.34, look, "#0b0f12", 0.4);
+  drawGlove(ctx, cx - r * 1.1, cy - r * 0.1, r * 0.34, look, "#0b0f12", Math.PI + 0.3); // stiff arm
+  ctx.restore();
+  // The words.
+  var tx = x + w * 0.31, tw = w * 0.42, flash = Math.sin(t * 9) > 0;
+  var ol = ["#2a0000", "#b3995d", "#ffffff"];
+  adText("SAN FRANCISCO", tx + tw / 2, y + h * 0.2, 34 * k, ["#ffffff", "#e8e8e8"], tw, 1, ol);
+  adText("67'ERS", tx + tw / 2, y + h * 0.45, 92 * k, ["#d11a1a", "#8a0000"], tw * 0.8, 1 + Math.max(0, 0.3 - t) * 1.2, ol);
+  adText("WATCH THEM THIS SUNDAY", tx + tw / 2, y + h * 0.74, 30 * k, flash ? ["#ffe9a8", "#d8b964"] : ["#ffffff", "#e6e6e6"], tw, 1, ["#2a0000", "#aa0000", "#ffffff"]);
+  ctx.strokeStyle = flash ? "#b3995d" : "#aa0000"; ctx.lineWidth = 6; ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
+  ctx.restore();
+}
+function drawNinersFootball(x, y, s) {
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(-0.5);
+  ctx.fillStyle = "#7a3e1d"; ctx.strokeStyle = "#2a140a"; ctx.lineWidth = Math.max(1.5, s * 0.08);
+  ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = "#ffffff"; ctx.lineWidth = Math.max(1, s * 0.07);
+  ctx.beginPath(); ctx.moveTo(-s * 0.35, 0); ctx.lineTo(s * 0.35, 0); ctx.stroke();
+  for (var i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(i * s * 0.14, -s * 0.12); ctx.lineTo(i * s * 0.14, s * 0.12); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(-s * 0.78, -s * 0.3); ctx.lineTo(-s * 0.78, s * 0.3); ctx.moveTo(s * 0.78, -s * 0.3); ctx.lineTo(s * 0.78, s * 0.3); ctx.stroke();
+  ctx.restore();
+}
+function drawNinersBanner() {
+  if (ninersShow <= 0 || stadiumOn()) return;
+  drawNinersJumbo(10, 10, W - 20, 110);
+}
+
+// ---------------------------------------------------------------- the path
+
+// Under the fighters: the red path he's about to run, the helmet dropping in.
+function drawHelmetChargeUnder() {
+  var now = performance.now() / 1000;
+  balls.forEach(function (b) {
+    var m = b.igbb;
+    if (!helmetChargeOn(b) || !b.alive || (m.phase !== "set" && m.phase !== "charge")) return;
+    var wdt = b.char.helmetCharge.width * 2, len = m.len + b.r;
+    var show = m.phase === "set" ? Math.min(1, m.t / 0.15) : Math.max(0, 1 - m.t / 0.6);
+    if (show <= 0) return;
+    var pulse = 0.7 + 0.3 * Math.sin(now * 18);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+    ctx.translate(m.sx, m.sy); ctx.rotate(Math.atan2(m.dy, m.dx));
+    ctx.globalAlpha = show;
+    ctx.fillStyle = "rgba(220,20,20," + (0.22 * pulse) + ")";
+    ctx.fillRect(0, -wdt / 2, len, wdt);
+    ctx.strokeStyle = "rgba(220,20,20," + (0.85 * pulse) + ")"; ctx.lineWidth = 3; ctx.setLineDash([14, 10]);
+    ctx.beginPath(); ctx.moveTo(0, -wdt / 2); ctx.lineTo(len, -wdt / 2); ctx.moveTo(0, wdt / 2); ctx.lineTo(len, wdt / 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(235,30,30," + (0.75 * pulse) + ")";
+    var o = (now * 220) % 46;
+    for (var xx = o; xx < len - 10; xx += 46) {
+      ctx.beginPath(); ctx.moveTo(xx, -wdt * 0.28); ctx.lineTo(xx + 14, 0); ctx.lineTo(xx, wdt * 0.28); ctx.lineTo(xx + 6, 0); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  });
+}
+// Over the fighters: the helmet dropping onto his head.
+function drawHelmetChargeOver() {
+  balls.forEach(function (b) {
+    var m = b.igbb;
+    if (!helmetChargeOn(b) || !b.alive || m.phase !== "suit" || m.on) return;
+    var k = Math.min(1, m.t / (HC_SUIT * 0.7)), r = b.r;
+    var look = Object.assign({}, b.hcLookOff || b.char.look, b.char.helmetCharge.helmet, { helmetLogo: SF67_LOGO_SRC });
+    // Just the helmet, falling from above his head.
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, k * 3);
+    ctx.translate(b.x, b.y - (1 - k * k) * r * 2.2);
+    drawFootballHelmet(ctx, r, look, theme.wall);
+    ctx.restore();
+  });
 }
 
 // Ilia Topuria: a Brawler who starts the fight patient and light, and gets
@@ -18286,6 +18596,7 @@ function update(dt) {
   tickRefNap(dt);   // the ref nodding off in Gane's fights (cheater.js)
   tickCheater(dt);
   tickJon(dt);      // Jon Jones swapping between GOAT and EVIL mode (jon.js)
+  tickHelmetCharge(dt); // the 67'ers ad's clock (hokit-helmet.js)
   tickTopRope(dt); // the dented mat after Hokit's Top Rope Body Slam (hokit-toprope.js)
   tickDuckDrop(dt); // smoke, feathers and the cracked mat from his Duck Drop (jon-duck.js)
   tickJumboAds(dt); // ads on the jumbotron, one at a time (truckees-ad.js)
@@ -18480,6 +18791,7 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
   if (contained && look.headwear === "trucker") drawTruckerHat(c, r, look, ink);
+  if (contained && look.headwear === "football") drawFootballHelmet(c, r, look, ink);
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
   c.restore();
 }
@@ -18985,6 +19297,114 @@ function drawLionChest(c, r, look, name, lw, contained) {
   }
   c.restore();
 
+  c.restore();
+}
+
+// A football helmet, front view, worn over the head. The shell is bigger than
+// the head and rises past the ball. Gold shell (look.helmetColor), red-white-red
+// stripe over the crown (helmetStripe / helmetStripe2), an SF-style oval logo on
+// both sides and the front bumper, grey facemask (helmetMask), white chin strap.
+function drawFootballHelmet(c, r, look, ink) {
+  var gold = look.helmetColor || "#b8975c", red = look.helmetStripe || "#b3202a";
+  var white = look.helmetStripe2 || "#f4f1ea", maskCol = look.helmetMask || "#a3a8ad";
+  var lwid = Math.max(1, r * 0.03), txt = look.helmetLogoText || "SF";
+  c.save();
+  c.translate(0, -r * (look.helmetLift || 0));
+  var shell = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.9, -r * 0.36);
+    c.bezierCurveTo(-r * 1.08, -r * 0.8, -r * 0.92, -r * 1.42, 0, -r * 1.44);
+    c.bezierCurveTo(r * 0.92, -r * 1.42, r * 1.08, -r * 0.8, r * 0.9, -r * 0.36);
+    // jaw flap back up to the face opening
+    c.quadraticCurveTo(r * 0.76, -r * 0.32, r * 0.64, -r * 0.4);
+    c.quadraticCurveTo(r * 0.64, -r * 0.7, r * 0.5, -r * 0.8);
+    c.quadraticCurveTo(0, -r * 0.92, -r * 0.5, -r * 0.8);
+    c.quadraticCurveTo(-r * 0.64, -r * 0.7, -r * 0.64, -r * 0.4);
+    c.quadraticCurveTo(-r * 0.76, -r * 0.32, -r * 0.9, -r * 0.36);
+    c.closePath();
+  };
+  // Shadow the helmet throws on the head inside the opening
+  c.save();
+  c.fillStyle = "rgba(0,0,0,0.25)";
+  c.beginPath(); c.ellipse(0, -r * 0.74, r * 0.62, r * 0.12, 0, 0, Math.PI * 2); c.fill();
+  c.restore();
+  shell();
+  var g = c.createRadialGradient(-r * 0.3, -r * 1.15, r * 0.05, 0, -r * 0.9, r * 1.1);
+  g.addColorStop(0, shadeHex(gold, 0.55)); g.addColorStop(0.45, gold); g.addColorStop(1, shadeHex(gold, -0.35));
+  c.fillStyle = g; c.fill();
+  c.save(); shell(); c.clip();
+  // Stripe over the crown: red, white, red
+  var stripe = function (x0, x1, col) {
+    c.fillStyle = col;
+    c.beginPath(); c.moveTo(x0, -r * 1.5); c.lineTo(x1, -r * 1.5);
+    c.lineTo(x1 * 1.15, -r * 0.98); c.lineTo(x0 * 1.15, -r * 0.98); c.closePath(); c.fill();
+  };
+  stripe(-r * 0.15, r * 0.15, red);
+  stripe(-r * 0.05, r * 0.05, white);
+  // Glossy highlight
+  c.fillStyle = "rgba(255,255,255,0.28)";
+  c.beginPath(); c.ellipse(-r * 0.42, -r * 1.18, r * 0.22, r * 0.08, -0.5, 0, Math.PI * 2); c.fill();
+  c.restore();
+  c.strokeStyle = ink; c.lineWidth = lwid;
+  shell(); c.stroke();
+  // Front bumper with a small logo above the facemask
+  c.fillStyle = shadeHex(gold, -0.2);
+  c.beginPath(); c.moveTo(-r * 0.5, -r * 0.8); c.quadraticCurveTo(0, -r * 0.92, r * 0.5, -r * 0.8);
+  c.quadraticCurveTo(0, -r * 0.98, -r * 0.5, -r * 0.8); c.fill();
+  var logo = function (x, y, w, rot, squash) {
+    c.save(); c.translate(x, y); c.rotate(rot); c.scale(squash, 1);
+    if (look.helmetLogo) {  // a ready-made logo image in place of the drawn oval
+      var im = artDecalImage(look.helmetLogo);
+      if (im.complete && im.naturalWidth) {
+        var lh = w * 2 * im.naturalHeight / im.naturalWidth;
+        c.drawImage(im, -w, -lh / 2, w * 2, lh);
+      }
+      c.restore(); return;
+    }
+    c.fillStyle = "#151515"; c.beginPath(); c.ellipse(0, 0, w, w * 0.62, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#f4f1ea"; c.beginPath(); c.ellipse(0, 0, w * 0.9, w * 0.54, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = red; c.beginPath(); c.ellipse(0, 0, w * 0.8, w * 0.46, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#f4f1ea"; c.strokeStyle = "#151515"; c.lineWidth = Math.max(0.6, w * 0.06);
+    c.font = "italic 900 " + (w * 0.78) + "px Georgia, serif";
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.strokeText(txt, 0, w * 0.04); c.fillText(txt, 0, w * 0.04);
+    c.restore();
+  };
+  logo(0, -r * 0.95, r * 0.13, 0, 1);
+  logo(-r * 0.79, -r * 0.84, r * 0.23, -0.25, 0.62);
+  logo(r * 0.79, -r * 0.84, r * 0.23, 0.25, 0.62);
+  // Ear holes
+  c.fillStyle = shadeHex(gold, -0.55);
+  [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(s * r * 0.82, -r * 0.5, r * 0.035, r * 0.05, 0, 0, Math.PI * 2); c.fill(); });
+  // Chin strap and cup
+  c.strokeStyle = white; c.lineWidth = r * 0.04;
+  c.beginPath(); c.moveTo(-r * 0.66, -r * 0.42); c.quadraticCurveTo(-r * 0.4, -r * 0.24, -r * 0.14, -r * 0.24); c.stroke();
+  c.beginPath(); c.moveTo(r * 0.66, -r * 0.42); c.quadraticCurveTo(r * 0.4, -r * 0.24, r * 0.14, -r * 0.24); c.stroke();
+  c.fillStyle = white; c.strokeStyle = ink; c.lineWidth = lwid * 0.7;
+  c.beginPath(); c.ellipse(0, -r * 0.24, r * 0.15, r * 0.07, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  // Facemask: grey bars with a dark edge
+  var bar = function (pathFn) {
+    c.lineCap = "round"; c.lineJoin = "round";
+    c.strokeStyle = shadeHex(maskCol, -0.55); c.lineWidth = r * 0.07; pathFn(); c.stroke();
+    c.strokeStyle = maskCol; c.lineWidth = r * 0.045; pathFn(); c.stroke();
+  };
+  var frame = function () {
+    c.beginPath(); c.moveTo(-r * 0.64, -r * 0.72);
+    c.quadraticCurveTo(-r * 0.7, -r * 0.4, -r * 0.4, -r * 0.3);
+    c.quadraticCurveTo(0, -r * 0.2, r * 0.4, -r * 0.3);
+    c.quadraticCurveTo(r * 0.7, -r * 0.4, r * 0.64, -r * 0.72);
+  };
+  var bar1 = function () { c.beginPath(); c.moveTo(-r * 0.66, -r * 0.6); c.quadraticCurveTo(0, -r * 0.5, r * 0.66, -r * 0.6); };
+  var bar2 = function () { c.beginPath(); c.moveTo(-r * 0.64, -r * 0.44); c.quadraticCurveTo(0, -r * 0.34, r * 0.64, -r * 0.44); };
+  var mid = function () { c.beginPath(); c.moveTo(0, -r * 0.55); c.lineTo(0, -r * 0.25); };
+  var side = function () {
+    c.beginPath(); c.moveTo(-r * 0.3, -r * 0.53); c.lineTo(-r * 0.36, -r * 0.31);
+    c.moveTo(r * 0.3, -r * 0.53); c.lineTo(r * 0.36, -r * 0.31);
+  };
+  bar(mid); bar(side); bar(bar2); bar(bar1); bar(frame);
+  // Mask clips to the shell
+  c.fillStyle = shadeHex(maskCol, -0.3);
+  [-1, 1].forEach(function (s) { c.beginPath(); c.arc(s * r * 0.64, -r * 0.66, r * 0.035, 0, Math.PI * 2); c.fill(); });
   c.restore();
 }
 
@@ -21011,6 +21431,7 @@ function drawJumbotron(px) {
   drawHerbJumbo(sx, sy, sw, jt.h - 28); // Gane's special (herbdean.js)
   drawDiamondJumbo(sx, sy, sw, jt.h - 28); // Dustin turning into Diamond Guard (diamond.js)
   drawTruckeesJumbo(sx, sy, sw, jt.h - 28); // Gaethje's Truck-ee's ad (truckees-ad.js)
+  drawNinersJumbo(sx, sy, sw, jt.h - 28); // Hokit's San Francisco 67'ers ad (hokit-helmet.js)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.jtFront, jt.x * px, jt.y * px);
@@ -21106,6 +21527,7 @@ function draw() {
   drawGuardZones(); // the circle round a fighter down in guard
   drawAuraRoses(false); // roses thrown on the mat (aurafarm.js)
   drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
+  drawHelmetChargeUnder(); // Helmet Charge: the red path he's about to run (hokit-helmet.js)
   drawTopRopeUnder();  // Top Rope Body Slam: the red circle (cut off at the cage), his shadow (hokit-toprope.js)
   drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
   drawEagleStrikeUnder(); // Eagle Strike: the red path and the eagle's shadow (gaethje-eagle.js)
@@ -21362,6 +21784,7 @@ function draw() {
   drawAuraRoses(true); // roses in the air
   drawAuraActors();    // the bull
   drawJonGoats();      // the goats (jon.js)
+  drawHelmetChargeOver(); // the helmet dropping onto Hokit's head (hokit-helmet.js)
   drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)
   drawEagleStrikeOver();  // the eagle swooping through, and its claw marks (gaethje-eagle.js)
   drawSuplexes();
@@ -21388,6 +21811,7 @@ function draw() {
   drawHerbBanner(); // "Herb Dean is entering the ring" when there's no jumbotron
   drawDiamondBanner(); // and "Diamond Guard" (diamond.js)
   drawTruckeesBanner(); // and the Truck-ee's ad (truckees-ad.js)
+  drawNinersBanner(); // and the San Francisco 67'ers ad (hokit-helmet.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
     var t = f.life / f.max;

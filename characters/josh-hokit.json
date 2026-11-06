@@ -1,11 +1,11 @@
 {
   "id": "c-josh-hokit",
-  "rev": 8,
+  "rev": 9,
   "builtin": false,
   "weightClass": "heavyweight",
   "name": "Josh Hokit",
   "base": "BMF",
-  "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Special move: Chair Shot.",
+  "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Now and then he straps on his football helmet, gets down in a three-point stance and charges a red path across the ring, running over whoever is still in it, while the jumbotron plays an ad for the San Francisco 67'ers. Special move: Chair Shot.",
   "color": "#c8202c",
   "label": "",
   "imgData": null,
@@ -49,6 +49,7 @@
   "hasThumbsDown": true,
   "thumbsDown": { "cooldown": 8, "anger": 3 },
   "hasSpecial": true,
+  "helmetCharge": { "first": [18, 26], "every": [22, 32], "max": 2, "warn": 1.1, "speed": 1250, "width": 60, "damage": 30, "knockback": 1200, "wallSlams": 1, "slamDamage": 4, "helmet": { "headwear": "football", "helmetLogoText": "67" } },
   "topRope": { "first": [12, 18], "every": [18, 28], "max": 2, "radius": 120, "warn": 1.4, "damage": 35, "knockback": 1300, "wallSlams": 1, "slamDamage": 4 },
   "special": { "move": "chairshot", "chargeTime": 82, "hitCut": 3, "punchCut": 1, "damage": 80, "dazeTime": 1.5, "celebrateTime": 3 },
   "blockChance": 0
