@@ -23,7 +23,8 @@ function isJon(b) { return !!(b && b.char.jon); }
 // From makeBall: a private copy of the character, set to GOAT mode.
 function jonCharCopy(ch) {
   var c = JSON.parse(JSON.stringify(ch));
-  c.jon.goatLook = c.look;
+  c.jon.goatLook = c.jon.goatLook || c.look; // never a copy that was left in its red EVIL look
+  c.look = c.jon.goatLook;
   return c;
 }
 
@@ -32,6 +33,10 @@ function initJon(b) {
   b.jonMode = null;
   b.jonT = 0;
   setJonMode(b, "goat", true);
+  // Decodes both tattoos up front so a flicker shows each color right away.
+  [b.char.jon.goatLook, b.char.jon.evilLook].forEach(function (l) {
+    ((l && l.tattoos && l.tattoos.decals) || []).forEach(function (d) { artDecalImage(d.img); });
+  });
   initDuckDrop(b); // jon-duck.js
 }
 
