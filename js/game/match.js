@@ -48,6 +48,7 @@ function makeBall(id, ch) {
   applyWeight(b); // size, speed and attack speed for its weight class (weight.js)
   initJon(b);
   initDiamond(b); // Dustin's Diamond Guard (diamond.js)
+  initTopRope(b); // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
   return b;
 }
 
@@ -65,6 +66,7 @@ function startMatchWith(ch0, ch1) {
   resetAuraFarm();
   resetJonGoats();
   resetDuckDrop();
+  resetTopRope();
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
   resetCheater();

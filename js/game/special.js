@@ -275,6 +275,7 @@ function igbbLocked(b) {
 }
 
 function specialGuarding(b) {
+  if (b.igbb && b.igbb.move === "toprope" && b.igbb.phase === "down") return false; // Hokit flat on the mat can be hit (hokit-toprope.js)
   if (b.igbb && b.igbb.move === "duckdrop") return false; // Jon's Duck Drop landing can be hit (jon-duck.js)
   return b.igbb && b.igbb.phase !== "close";
 }

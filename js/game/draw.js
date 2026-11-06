@@ -86,6 +86,7 @@ function draw() {
   drawGuardZones(); // the circle round a fighter down in guard
   drawAuraRoses(false); // roses thrown on the mat (aurafarm.js)
   drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
+  drawTopRopeUnder();  // Top Rope Body Slam: the red circle (cut off at the cage), his shadow (hokit-toprope.js)
   drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
   drawEagleStrikeUnder(); // Eagle Strike: the red path and the eagle's shadow (gaethje-eagle.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
@@ -98,7 +99,7 @@ function draw() {
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
   // A bat swing goes over whoever it's hitting.
   (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
-    if (!b.alive || duckDrawnApart(b) || golfDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
+    if (!b.alive || duckDrawnApart(b) || golfDrawnApart(b) || topRopeDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
     var other = balls[1 - b.id];
 
     // Weaving slips the whole fighter sideways for a moment, and a taunting
@@ -382,6 +383,7 @@ function draw() {
   ctx.globalAlpha = 1;
 
   if (stadium) drawJumbotron(px);
+  drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
   drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
