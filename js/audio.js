@@ -1877,6 +1877,62 @@ function playNinersAd() {
     withClip("refWhistle", function () { playClip("refWhistle", 0.6); });
   } catch (e) { /* never let audio break the game */ }
 }
+// The Poorbet sponsor ad (poorbet-ad.js, ad-breaks.js): all synth, no clips.
+// A slot-machine jingle as it comes up, coins clinking as he throws his
+// cash away, a "ka-ching" as the last bill goes, and a sad trombone
+// (wah, wah, wah, waaah) when his balance hits $0.00 (POORBET_BROKE in).
+// Everything runs through one gain so a new match can cut it off.
+var poorbetOut = null;
+function stopPoorbetAd() {
+  if (!poorbetOut) return;
+  try { poorbetOut.disconnect(); } catch (e) { /* already gone */ }
+  poorbetOut = null;
+}
+function playPoorbetAd() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    stopPoorbetAd();
+    var out = poorbetOut = ctx.createGain(), now = ctx.currentTime;
+    out.gain.value = 0.55; out.connect(ctx.destination);
+    function tone(type, f, t, dur, vol, f2) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.05);
+    }
+    // Slot-machine jingle: a quick run up twice, then a "jackpot" chord.
+    [523, 659, 784, 1047, 659, 784, 1047, 1319].forEach(function (f, i) { tone("square", f, now + i * 0.07, 0.09, 0.12); });
+    [1047, 1319, 1568].forEach(function (f) { tone("triangle", f, now + 0.6, 0.45, 0.14); });
+    // Coins clinking into the trash can.
+    for (var c = 0; c < 8; c++) {
+      var t = now + 0.95 + c * 0.53;
+      tone("triangle", 2600 + (c % 3) * 400, t, 0.12, 0.08);
+      tone("sine", 3900 + (c % 2) * 300, t + 0.03, 0.1, 0.05);
+    }
+    // Ka-ching as the last of it goes.
+    var kc = now + POORBET_BROKE - 0.35;
+    tone("square", 180, kc, 0.06, 0.12, 90);
+    [2093, 2637].forEach(function (f, i) { tone("triangle", f, kc + 0.08 + i * 0.06, 0.5, 0.14); });
+    // Sad trombone: three short wahs and a long wobbly one, muted brass.
+    var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1100; lp.Q.value = 2; lp.connect(out);
+    [[293.7, 0, 0.42], [277.2, 0.48, 0.42], [261.6, 0.96, 0.42], [246.9, 1.44, 1.4]].forEach(function (n, i) {
+      var t0 = now + POORBET_BROKE + n[1], o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(n[0] * 1.03, t0); o.frequency.exponentialRampToValueAtTime(n[0], t0 + 0.12);
+      if (i === 3) { // the long one wobbles
+        var v = ctx.createOscillator(), vg = ctx.createGain();
+        v.frequency.value = 6; vg.gain.setValueAtTime(0, t0); vg.gain.linearRampToValueAtTime(9, t0 + 0.4);
+        v.connect(vg); vg.connect(o.frequency); v.start(t0); v.stop(t0 + n[2] + 0.1);
+        o.frequency.exponentialRampToValueAtTime(n[0] * 0.94, t0 + n[2]);
+      }
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.32, t0 + 0.06);
+      g.gain.setValueAtTime(0.32, t0 + n[2] - 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t0 + n[2]);
+      o.connect(g); g.connect(lp); o.start(t0); o.stop(t0 + n[2] + 0.05);
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
 function synthDiamondChime(ctx, now, vol) {
   var out = ctx.createGain();
   out.gain.value = vol; out.connect(ctx.destination);

@@ -372,6 +372,8 @@ function draw() {
   drawDiamondBanner(); // and "Diamond Guard" (diamond.js)
   drawTruckeesBanner(); // and the Truck-ee's ad (truckees-ad.js)
   drawNinersBanner(); // and the San Francisco 67'ers ad (hokit-helmet.js)
+  drawPoorbetBanner(); // and the Poorbet sponsor ad (poorbet-ad.js)
+  drawStillBanner(); // and the still fighter ads (still-ads.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
     var t = f.life / f.max;
