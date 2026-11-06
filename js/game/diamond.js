@@ -249,12 +249,35 @@ function drawDiamondJumbo(x, y, w, h) {
     drawGlove(ctx, cx + r * 1.12, cy + r * (0.42 - 1.0 * dn), gr, look, "#0b0f12", -Math.PI / 2 - 0.35 + dn * 0.5);
     ctx.restore();
   }
-  var tx = x + 56 + h * 0.3 * 3.1 + 14, tw2 = x + w - tx - 30;
+  // Sponsored by Chaels (a Zales parody), in a column on the right.
+  var k = h / 250, cw = w * 0.27, cx0 = x + w - cw - 14;
+  var tx = x + 56 + h * 0.3 * 3.1 + 14, tw2 = cx0 - tx - 16;
   jtText("DUSTIN POIRIER", tx + tw2 / 2, y + h * 0.24, 30, "#c9f7f2", "center", "#000000", tw2);
   jtText("DIAMOND GUARD", tx + tw2 / 2, y + h * 0.54, 80, DIAMOND_C.L, "center", DIAMOND_C.d, tw2);
   jtText("ACTIVATED", tx + tw2 / 2, y + h * 0.8, 26, flash ? "#ffffff" : DIAMOND_C.m, "center", "#000000", tw2);
+  ctx.globalAlpha = a * 0.35; ctx.fillStyle = DIAMOND_C.m; ctx.fillRect(cx0 - 8, y + h * 0.12, 2, h * 0.76); // a thin divider
+  ctx.globalAlpha = a;
+  jtText("SPONSORED BY", cx0 + cw / 2, y + h * 0.17, Math.max(10, 17 * k), "#c9f7f2", "center", "#000000", cw);
+  if (chaelsLogoImg.complete && chaelsLogoImg.naturalWidth) {
+    var lw = Math.min(cw, h * 0.3 * CHAELS_LOGO_SIZE[0] / CHAELS_LOGO_SIZE[1]), lh = lw * CHAELS_LOGO_SIZE[1] / CHAELS_LOGO_SIZE[0];
+    var ly = y + h * 0.43 - lh / 2;
+    ctx.shadowColor = DIAMOND_C.m; ctx.shadowBlur = 14 * k;
+    ctx.drawImage(chaelsLogoImg, cx0 + (cw - lw) / 2, ly, lw, lh);
+    ctx.shadowBlur = 0;
+    // a sparkle running across the logo
+    var sp = (t * 0.6) % 1;
+    if (sp < 0.4) drawDiamondGem(cx0 + (cw - lw) / 2 + lw * sp / 0.4, ly + lh * 0.2, 5 * k + 3);
+  }
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#ffffff";
+  ctx.shadowColor = "#000000"; ctx.shadowBlur = 6;
+  var tf = Math.max(9, 19 * k);
+  ctx.font = "italic 600 " + tf + "px Georgia, 'Times New Roman', serif";
+  ctx.fillText("When you can let", cx0 + cw / 2, y + h * 0.7, cw);
+  ctx.fillText("them get close", cx0 + cw / 2, y + h * 0.7 + tf * 1.2, cw);
+  ctx.shadowBlur = 0;
   ctx.restore();
 }
+var chaelsLogoImg = new Image(); chaelsLogoImg.src = CHAELS_LOGO_SRC;
 function drawDiamondBanner() {
   if (diamondShow <= 0 || stadiumOn()) return;
   drawDiamondJumbo(10, 10, W - 20, 110);
