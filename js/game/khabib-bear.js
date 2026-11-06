@@ -12,15 +12,16 @@
 // Config: char.bear. Art: Joe's picture, bear-art.js.
 "use strict";
 
-var BEAR_H = RADIUS * 3.1;   // standing height
-var BEAR_R = RADIUS * 0.85;  // how close counts as bumping into it
+var BEAR_H = RADIUS * 5.8;   // standing height (Joe: a lot bigger)
+var BEAR_R = RADIUS * 1.5;   // how close counts as bumping into it
+var BEAR_CLOUD = RADIUS * 2.1; // the dust cloud's size
 var BEAR_KO = 0.55, BEAR_LIFT = 0.45, BEAR_HOLD = 0.4, BEAR_AFTER = 0.3, BEAR_DAZE = 1.3;
 var BEAR_WORDS = ["POW!", "BAM!", "WHAM!", "SMACK!", "BONK!", "THWACK!", "OOF!"];
 
 var ringBear = null;
 var bearImg = new Image(); bearImg.src = BEAR_SRC;
 var bearSideImg = new Image(); bearSideImg.src = BEAR_SIDE_SRC;
-var BEAR_SIDE_H = RADIUS * 2.5; // on all fours, side on
+var BEAR_SIDE_H = RADIUS * 4.6; // on all fours, side on
 
 function bearRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
 function bearOn(b) { return !!(b && b.igbb && b.igbb.move === "bear"); }
@@ -131,7 +132,7 @@ function bearBumps(B) {
       B.phase = "maul"; B.t = 0; B.vsId = f.id; B.hitT = 0.15; B.dealt = 0;
     }
     B.cx = (B.x + f.x) / 2; B.cy = (B.y + f.y) / 2;
-    floater(B.cx, B.cy - BEAR_H * 0.75, f.char.bear ? "BEAR FIGHT!" : "MAULED!", "crit");
+    floater(B.cx, B.cy - BEAR_CLOUD * 1.6, f.char.bear ? "BEAR FIGHT!" : "MAULED!", "crit");
     playBearSound("bump", 1);
     crowdReact(1);
     if (!reduceMotion) shake = Math.max(shake, 10);
@@ -145,7 +146,7 @@ function tickBearCloud(B, dt, hitEvery, onHit) {
   if (B.hitT <= 0) {
     B.hitT = hitEvery * (0.7 + Math.random() * 0.6);
     var a = Math.random() * Math.PI * 2;
-    B.words.push({ txt: BEAR_WORDS[Math.floor(Math.random() * BEAR_WORDS.length)], x: B.cx + Math.cos(a) * BEAR_H * 0.45, y: B.cy - BEAR_H * 0.15 + Math.sin(a) * BEAR_H * 0.3, t: 0, rot: (Math.random() - 0.5) * 0.6 });
+    B.words.push({ txt: BEAR_WORDS[Math.floor(Math.random() * BEAR_WORDS.length)], x: B.cx + Math.cos(a) * BEAR_CLOUD * 1.15, y: B.cy - BEAR_CLOUD * 0.35 + Math.sin(a) * BEAR_CLOUD * 0.75, t: 0, rot: (Math.random() - 0.5) * 0.6 });
     if (onHit) onHit();
     playPunch(12 + Math.random() * 20);
     if (!reduceMotion) shake = Math.max(shake, 6);
@@ -156,7 +157,7 @@ function tickBearCloud(B, dt, hitEvery, onHit) {
   }
   if (!reduceMotion && Math.random() < dt * 20) {
     var pa = Math.random() * Math.PI * 2;
-    particles.push({ x: B.cx + Math.cos(pa) * BEAR_H * 0.4, y: B.cy + BEAR_H * 0.2, vx: Math.cos(pa) * 120, vy: -40 - Math.random() * 60, life: 0.4, max: 0.4, size: 3 + Math.random() * 4, color: "#d8cdb5" });
+    particles.push({ x: B.cx + Math.cos(pa) * BEAR_CLOUD, y: B.cy + BEAR_CLOUD * 0.5, vx: Math.cos(pa) * 120, vy: -40 - Math.random() * 60, life: 0.4, max: 0.4, size: 3 + Math.random() * 4, color: "#d8cdb5" });
   }
   B.words = B.words.filter(function (w) { w.t += dt; return w.t < 0.45; });
   B.pops = B.pops.filter(function (p) { p.t += dt; return p.t < p.life; });
@@ -181,7 +182,7 @@ function tickBearMaul(B, dt) {
     if (v.alive) { v.dazed = true; B.dazeT = BEAR_DAZE; B.dazeId = v.id; }
     else v.dazed = false;
     B.words = []; B.pops = [];
-    floater(B.cx, B.cy - BEAR_H * 0.7, "*GROWL*", "note");
+    floater(B.cx, B.cy - BEAR_CLOUD * 1.6, "*GROWL*", "note");
     playBearSound("leave");
     crowdReact(1);
     B.y = B.cy; B.x = B.cx + (v.x >= B.cx ? -1 : 1) * (BEAR_R + v.r) * 0.6; // steps out of the dust
@@ -203,7 +204,7 @@ function tickBearKhabib(B, k, dt) {
       var side = o.x >= k.x ? -1 : 1;
       k.x = B.cx; k.y = B.cy;
       B.phase = "ko"; B.t = 0; B.words = []; B.pops = [];
-      B.x = Math.max(BEAR_R, Math.min(W - BEAR_R, k.x + side * (k.r + BEAR_H * 0.45))); B.y = k.y + k.r * 0.4;
+      B.x = Math.max(BEAR_R, Math.min(W - BEAR_R, k.x + side * (k.r + BEAR_SIDE_H * 0.5))); B.y = k.y + k.r * 0.4;
       floater(k.x, k.y - k.r - 34, "KO!", "crit");
       playSlam(); playBearSound("ko"); crowdReact(1);
       if (!reduceMotion) shake = Math.max(shake, 14);
@@ -216,12 +217,12 @@ function tickBearKhabib(B, k, dt) {
   }
   if (B.phase === "lift") {
     var u = ease(Math.min(1, B.t / BEAR_LIFT));
-    B.x = B.fx + (k.x - B.fx) * u; B.y = B.fy + (k.y - B.fy) * u; B.z = u * (k.r + BEAR_H * 0.32);
+    B.x = B.fx + (k.x - B.fx) * u; B.y = B.fy + (k.y - B.fy) * u; B.z = u * (k.r + BEAR_SIDE_H * 0.32);
     if (B.t >= BEAR_LIFT) { B.phase = "hold"; B.t = 0; floater(k.x, k.y - k.r - 34 - B.z, "BEAR TOSS!", "crit"); crowdReact(1); }
     return;
   }
   // Held up over his head, then thrown.
-  B.x = k.x; B.y = k.y; B.z = k.r + BEAR_H * 0.32 + Math.sin(B.t * 18) * 2;
+  B.x = k.x; B.y = k.y; B.z = k.r + BEAR_SIDE_H * 0.32 + Math.sin(B.t * 18) * 2;
   if (B.t >= BEAR_HOLD) {
     var dx = o.x - k.x, dy = o.y - k.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
     B.phase = "thrown"; B.t = 0; B.dx = dx / d; B.dy = dy / d; B.dist = d; B.run = 0; B.z0 = B.z;
@@ -290,7 +291,7 @@ function drawRingBear() {
     drawBearSide(B.x, B.y, Math.PI, B.x < balls[B.ownerId].x ? 1 : -1); // flat on its back, legs in the air
     for (var i = 0; i < 3; i++) { // seeing stars
       var a = now * 5 + i * Math.PI * 2 / 3;
-      drawStar(B.x + Math.cos(a) * BEAR_H * 0.3, B.y - BEAR_H * 0.28 + Math.sin(a) * 6, 6, "#ffd23f");
+      drawStar(B.x + Math.cos(a) * BEAR_SIDE_H * 0.35, B.y - BEAR_SIDE_H * 0.5 + Math.sin(a) * 8, 9, "#ffd23f");
     }
   } else if (B.phase === "lift" || B.phase === "hold") {
     var k = balls[B.ownerId];
@@ -298,14 +299,14 @@ function drawRingBear() {
     // His arms up holding it.
     var r = k.r, by = B.y - B.z;
     [-1, 1].forEach(function (s) {
-      var sh = { x: k.x + s * r * 0.66, y: k.y - r * 0.3 }, hand = { x: k.x + s * BEAR_H * 0.32, y: by + 4 };
+      var sh = { x: k.x + s * r * 0.66, y: k.y - r * 0.3 }, hand = { x: k.x + s * BEAR_SIDE_H * 0.3, y: by + BEAR_SIDE_H * 0.12 };
       drawBentArm(k, sh, hand, s);
       drawGloveAt(hand.x, hand.y, r * 0.22, k.char);
     });
   } else if (B.phase === "thrown" || B.phase === "gone") {
     // Its shadow on the mat, then the bear spinning through the air.
     ctx.fillStyle = "rgba(0,0,0,0.18)";
-    ctx.beginPath(); ctx.ellipse(B.x, B.y + RADIUS * 0.7, BEAR_H * 0.35, BEAR_H * 0.1, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(B.x, B.y + RADIUS * 0.7, BEAR_SIDE_H * 0.45, BEAR_SIDE_H * 0.12, 0, 0, Math.PI * 2); ctx.fill();
     drawBearSide(B.x, B.y - B.z, Math.PI + B.spin, 1);
   } else {
     if (B.moving) {
@@ -348,7 +349,7 @@ function drawBearSprite(x, y, rot, face, k) {
 // The cartoon fight cloud: a churning ball of dust with fists, paws, feet
 // and stars poking out of it, and POW! BAM! words flying off.
 function drawBearCloud(B, now) {
-  var cx = B.cx, cy = B.cy - RADIUS * 0.15, R = BEAR_H * 0.56, i;
+  var cx = B.cx, cy = B.cy - RADIUS * 0.15, R = BEAR_CLOUD * 1.4, i;
   var puffs = [];
   for (i = 0; i < 11; i++) {
     var a = i / 11 * Math.PI * 2 + now * 2.2, wob = Math.sin(now * 17 + i * 2.3);
