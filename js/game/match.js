@@ -49,6 +49,7 @@ function makeBall(id, ch) {
   initJon(b);
   initDiamond(b); // Dustin's Diamond Guard (diamond.js)
   initTopRope(b); // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
+  initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
   return b;
 }
 

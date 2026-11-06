@@ -17,30 +17,32 @@
 // audio is still playing (Do Bronx's pose), Father's Plan, Herb Dean's
 // announcement, or any other move that has a fighter in its `igbb` state
 // (Jon's Duck Drop, Gaethje being carried by the eagle). It waits until
-// it's completely finished.
-function jumboHold() {
+// it's completely finished. `owner`'s own move doesn't count when it's the
+// move that runs the ad (Hokit's helmet charge plays its 67'ers ad as it
+// starts).
+function jumboHold(owner) {
   if (typeof herbShow !== "undefined" && herbShow > 0) return true;
   if (typeof herb !== "undefined" && herb) return true;
   if (typeof allAmericanOn === "function" && allAmericanOn()) return true;
   if (typeof auraFarmOn === "function" && auraFarmOn()) return true;
-  return !!(balls && balls.some(function (b) { return b && b.igbb; }));
+  return !!(balls && balls.some(function (b) { return b && b.igbb && !(b === owner && b.igbb.adOwn); }));
 }
 
 var jumboAds = [], jumboAdLeft = 0; // waiting ads, and time left on the one playing
-function resetJumboAds() { jumboAds = []; jumboAdLeft = 0; truckeesShow = 0; }
+function resetJumboAds() { jumboAds = []; jumboAdLeft = 0; truckeesShow = 0; if (typeof ninersShow !== "undefined") ninersShow = 0; }
 // Every fighter-triggered ad on the jumbotron must start through here, so it
 // follows Joe's rules: one ad at a time, and none while a special is running
 // (jumboHold). `start` sets the ad's show going (and plays its sound); `dur`
 // is how long it runs.
-function queueJumboAd(dur, start) {
-  if (jumboAdLeft > 0 || jumboHold()) { jumboAds.push({ dur: dur, start: start }); return; }
+function queueJumboAd(dur, start, owner) {
+  if (jumboAdLeft > 0 || jumboHold(owner)) { jumboAds.push({ dur: dur, start: start, owner: owner }); return; }
   jumboAdLeft = dur; start();
 }
 // Every frame from update().
 function tickJumboAds(dt) {
   if (truckeesShow > 0) truckeesShow = Math.max(0, truckeesShow - dt);
   if (jumboAdLeft > 0) jumboAdLeft = Math.max(0, jumboAdLeft - dt);
-  if (jumboAdLeft > 0 || !jumboAds.length || jumboHold()) return;
+  if (jumboAdLeft > 0 || !jumboAds.length || jumboHold(jumboAds[0].owner)) return;
   var next = jumboAds.shift();
   jumboAdLeft = next.dur; next.start();
 }
@@ -141,7 +143,9 @@ function drawTruckeesJumbo(x, y, w, h) {
 // The ad's big words: heavy black type, slanted like a sports promo, with a
 // thick red-white-navy outline and a hard drop shadow so it pops off the
 // sunset. `fill` is a top-to-bottom gradient; `pop` scales it (for the HERO slam).
-function adText(txt, x, y, size, fill, maxW, pop) {
+// `outline` (optional): the outer, middle and inner outline colors.
+function adText(txt, x, y, size, fill, maxW, pop, outline) {
+  var ol = outline || ["#0b1433", "#b22234", "#ffffff"];
   ctx.save();
   ctx.translate(x, y); ctx.transform(1, 0, -0.14, 1, 0, 0);
   if (pop && pop !== 1) ctx.scale(pop, pop);
@@ -151,10 +155,10 @@ function adText(txt, x, y, size, fill, maxW, pop) {
   ctx.font = "900 " + sz + "px " + face;
   ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
   ctx.shadowColor = "rgba(0,0,0,0)";
-  ctx.fillStyle = "#0b1433"; ctx.fillText(txt, sz * 0.06, sz * 0.08); // drop shadow
-  ctx.lineWidth = sz * 0.3; ctx.strokeStyle = "#0b1433"; ctx.strokeText(txt, 0, 0);
-  ctx.lineWidth = sz * 0.17; ctx.strokeStyle = "#b22234"; ctx.strokeText(txt, 0, 0);
-  ctx.lineWidth = sz * 0.06; ctx.strokeStyle = "#ffffff"; ctx.strokeText(txt, 0, 0);
+  ctx.fillStyle = ol[0]; ctx.fillText(txt, sz * 0.06, sz * 0.08); // drop shadow
+  ctx.lineWidth = sz * 0.3; ctx.strokeStyle = ol[0]; ctx.strokeText(txt, 0, 0);
+  ctx.lineWidth = sz * 0.17; ctx.strokeStyle = ol[1]; ctx.strokeText(txt, 0, 0);
+  ctx.lineWidth = sz * 0.06; ctx.strokeStyle = ol[2]; ctx.strokeText(txt, 0, 0);
   var g = ctx.createLinearGradient(0, -sz / 2, 0, sz / 2);
   g.addColorStop(0, fill[0]); g.addColorStop(1, fill[1]);
   ctx.fillStyle = g; ctx.fillText(txt, 0, 0);
