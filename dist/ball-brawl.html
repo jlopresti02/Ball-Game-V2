@@ -14620,19 +14620,16 @@ function tickRingBear(dt) {
     var dv = balls[B.dazeId];
     if (B.dazeT <= 0 && dv && dv.dazed === true) dv.dazed = false;
   }
-  if (over && B.phase !== "leave" && B.phase !== "gone") bearLetGo(B);
+  if (over && !B.exiting && B.phase !== "gone") bearLetGo(B);
 
-  if (B.phase === "enter" || B.phase === "wander" || B.phase === "leave") {
+  if (B.phase === "route") { tickBearRoute(B, dt); return; }
+  if (B.phase === "wander") {
     var dx = B.tx - B.x, dy = B.ty - B.y, d = Math.sqrt(dx * dx + dy * dy);
-    var sp = B.phase === "leave" ? cfg.speed * 1.6 : cfg.speed;
-    if (d > 2) { var st = Math.min(d, sp * dt); B.x += dx / d * st; B.y += dy / d * st; if (Math.abs(dx) > 4) B.face = dx > 0 ? 1 : -1; B.moving = true; }
+    if (d > 2) { var st = Math.min(d, cfg.speed * dt); B.x += dx / d * st; B.y += dy / d * st; if (Math.abs(dx) > 4) B.face = dx > 0 ? 1 : -1; B.moving = true; }
     else B.moving = false;
-    if (B.phase === "enter" && d <= 2) { B.phase = "wander"; B.t = 0; bearWaypoint(B); }
-    else if (B.phase === "wander") {
-      if (d <= 2) { B.pause = (B.pause || 0) + dt; if (B.pause > 1.3) { B.pause = 0; bearWaypoint(B); } } // (stood up having a look round)
-      if (B.t >= B.life) bearLeave(B);
-      else if (!over) bearBumps(B);
-    } else if (B.phase === "leave" && d <= 2) { ringBear = null; }
+    if (d <= 2) { B.pause = (B.pause || 0) + dt; if (B.pause > 1.3) { B.pause = 0; bearWaypoint(B); } } // (stood up having a look round)
+    if (B.t >= B.life) bearLeave(B);
+    else if (!over) bearBumps(B);
     return;
   }
   if (B.phase === "maul") { tickBearMaul(B, dt); return; }
@@ -14646,14 +14643,71 @@ function tickRingBear(dt) {
   }
 }
 
+// Joe: it comes through the crowd and hops over the cage into the ring, and
+// leaves the same way. In from the big stands below the cage most of the
+// time, otherwise the side columns (the top stands are under the jumbotron).
+var BEAR_HOP = 0.7;
+var bearForceSide = null; // (demos: 0 bottom, 1 left, 2 right)
+function bearSidePts(side, along) {
+  var st = stadiumOn(), k = W / ST.A, fence = st ? ST.CAGE / 2 * k : 0, half = BEAR_SIDE_H * 0.45;
+  if (side === 0) {
+    return { off: { x: along, y: st ? (STAGE_H - ST.AY) * k + BEAR_SIDE_H * 0.6 : H + BEAR_SIDE_H },
+      out: { x: along, y: H + fence + half }, inn: { x: along, y: H - half } };
+  }
+  var sx = side === 1 ? -1 : 1;
+  var offX = st ? (sx < 0 ? -ST.AX * k - BEAR_SIDE_H * 0.6 : (STAGE_W - ST.AX) * k + BEAR_SIDE_H * 0.6) : (sx < 0 ? -BEAR_SIDE_H : W + BEAR_SIDE_H);
+  return { off: { x: offX, y: along }, out: { x: sx < 0 ? -fence - half : W + fence + half, y: along }, inn: { x: sx < 0 ? half : W - half, y: along } };
+}
+function tickBearRoute(B, dt) {
+  var seg = B.route[0];
+  if (!seg) {
+    if (B.exiting) { ringBear = null; return; }
+    B.phase = "wander"; B.t = 0; bearWaypoint(B); return;
+  }
+  B.moving = true;
+  if (seg.hop) { // up and over the cage
+    if (seg.x0 == null) { seg.x0 = B.x; seg.y0 = B.y; seg.t = 0; playWhoosh(); }
+    seg.t += dt;
+    var u = Math.min(1, seg.t / BEAR_HOP);
+    B.x = seg.x0 + (seg.x - seg.x0) * u; B.y = seg.y0 + (seg.y - seg.y0) * u;
+    B.z = Math.sin(Math.PI * u) * BEAR_SIDE_H * 0.55;
+    if (Math.abs(seg.x - seg.x0) > 4) B.face = seg.x > seg.x0 ? 1 : -1;
+    if (u >= 1) {
+      B.z = 0; B.route.shift();
+      playSlam(); crowdReact(0.7);
+      if (!reduceMotion) shake = Math.max(shake, 12);
+      for (var i = 0; i < 16 && !reduceMotion; i++) {
+        var a = i / 16 * Math.PI * 2;
+        particles.push({ x: B.x + Math.cos(a) * BEAR_SIDE_H * 0.35, y: B.y + BEAR_SIDE_H * 0.4, vx: Math.cos(a) * 200, vy: Math.sin(a) * 60 - 30, life: 0.45, max: 0.45, size: 3 + Math.random() * 4, color: "#d8cdb5" });
+      }
+    }
+    return;
+  }
+  var dx = seg.x - B.x, dy = seg.y - B.y, d = Math.sqrt(dx * dx + dy * dy), sp = B.cfg.speed * (seg.fast ? 1.9 : 1.3);
+  if (d > 2) { var st = Math.min(d, sp * dt); B.x += dx / d * st; B.y += dy / d * st; if (Math.abs(dx) > 4) B.face = dx > 0 ? 1 : -1; }
+  else B.route.shift();
+}
+// Fans shoved aside as it barges through the stands (herbShove, herbdean.js).
+function bearCrowdPush(f) {
+  var B = ringBear;
+  if (!B || !stadiumOn() || (B.x > 0 && B.x < W && B.y > 0 && B.y < H)) return null;
+  var k = ST.A / W, bx = ST.AX + B.x * k, by = ST.AY + B.y * k;
+  var dx = f.x - bx, dy = f.y - by, d = Math.sqrt(dx * dx + dy * dy) || 1, reach = f.r * 0.85 + BEAR_SIDE_H * 0.5 * k;
+  if (d >= reach) return null;
+  var push = reach - d;
+  return { x: (dx < 0 ? -1 : 1) * push * 1.2, y: dy / d * push * 0.3 };
+}
+
 function spawnRingBear(owner) {
-  var cfg = owner.char.bear, side = Math.floor(Math.random() * 4), m = BEAR_R + 20;
-  var along = W * (0.25 + Math.random() * 0.5);
-  var sx = [along, W + m, along, -m][side], sy = [-m, along, H + m, along][side];
-  var tx = [along, W - m, along, m][side], ty = [m, along, H - m, along][side];
-  ringBear = { ownerId: owner.id, cfg: cfg, phase: "enter", t: 0, walkT: 0, x: sx, y: sy, tx: tx, ty: ty, face: 1, moving: true,
+  var cfg = owner.char.bear, r = Math.random(), side = r < 0.6 ? 0 : r < 0.8 ? 1 : 2;
+  if (bearForceSide != null) side = bearForceSide;
+  var along = (side === 0 ? W : H) * (0.25 + Math.random() * 0.5);
+  var P = bearSidePts(side, along);
+  ringBear = { ownerId: owner.id, cfg: cfg, phase: "route", t: 0, walkT: 0, x: P.off.x, y: P.off.y, face: side === 2 ? -1 : 1, moving: true,
+    route: [{ x: P.out.x, y: P.out.y, fast: true }, { x: P.inn.x, y: P.inn.y, hop: true }],
     life: bearRand(cfg.wander), spin: 0, z: 0, alpha: 1, puffs: [], pops: [], words: [], dazeT: 0, dazeId: -1 };
-  floater(tx, ty - BEAR_H * 0.6, "A BEAR?!", "crit");
+  var tx = P.inn.x, ty = P.inn.y;
+  floater(Math.max(60, Math.min(W - 60, tx)), Math.min(H - 30, ty) - BEAR_H * 0.3, "A BEAR?!", "crit");
   playBearSound("enter");
   crowdReact(0.8);
 }
@@ -14663,11 +14717,14 @@ function bearWaypoint(B) {
   B.tx = m + Math.random() * (W - 2 * m); B.ty = m + Math.random() * (H - 2 * m);
 }
 // Ambles off out of the cage, over the nearest side.
+// (back over the cage and off through the crowd: the bottom stands, or the
+// side it's nearest when it's up the top end)
 function bearLeave(B) {
-  var o = BEAR_R * 3, dl = B.x, dr = W - B.x, dt = B.y, db = H - B.y, mn = Math.min(dl, dr, dt, db);
-  B.phase = "leave"; B.t = 0;
-  if (mn === dl) { B.tx = -o; B.ty = B.y; } else if (mn === dr) { B.tx = W + o; B.ty = B.y; }
-  else if (mn === dt) { B.tx = B.x; B.ty = -o; } else { B.tx = B.x; B.ty = H + o; }
+  var side = B.y > H * 0.45 ? 0 : (B.x < W / 2 ? 1 : 2);
+  var along = side === 0 ? Math.max(BEAR_SIDE_H * 0.5, Math.min(W - BEAR_SIDE_H * 0.5, B.x)) : Math.max(BEAR_SIDE_H * 0.5, Math.min(H - BEAR_SIDE_H * 0.5, B.y));
+  var P = bearSidePts(side, along);
+  B.phase = "route"; B.t = 0; B.exiting = true; B.z = 0;
+  B.route = [{ x: P.inn.x, y: P.inn.y }, { x: P.out.x, y: P.out.y, hop: true }, { x: P.off.x, y: P.off.y, fast: true }];
 }
 function bearLetGo(B) {
   balls.forEach(function (f) { if (f.bearHeld) { f.bearHeld = false; f.invincible = false; f.immuneCd = 0; if (f.dazed === "held") f.dazed = false; } });
@@ -14878,7 +14935,7 @@ function drawRingBear() {
       var w = Math.sin(B.walkT * 7);
       ctx.fillStyle = "rgba(0,0,0,0.18)";
       ctx.beginPath(); ctx.ellipse(B.x, B.y + BEAR_SIDE_H * 0.45, BEAR_SIDE_H * 0.45, BEAR_SIDE_H * 0.08, 0, 0, Math.PI * 2); ctx.fill();
-      drawBearSide(B.x, B.y - Math.abs(w) * 2.5, w * 0.035, B.face);
+      drawBearSide(B.x, B.y - (B.z || 0) - Math.abs(w) * 2.5, w * 0.035, B.face);
     } else {
       // Stopped: up on its back legs, having a look round.
       var sw = Math.sin(B.walkT * 1.5) * 0.25;
@@ -20118,6 +20175,8 @@ function herbShove(f, dt) {
   if (bp) { tx += bp.x; ty += bp.y; }
   var gp = jonGoatPush(f); // or goats running through (jon.js)
   if (gp) { tx += gp.x; ty += gp.y; }
+  var brp = bearCrowdPush(f); // or Khabib's bear barging through (khabib-bear.js)
+  if (brp) { tx += brp.x; ty += brp.y; }
   var a = Math.min(1, dt * 12);
   f.shx = (f.shx || 0) + (tx - (f.shx || 0)) * a;
   f.shy = (f.shy || 0) + (ty - (f.shy || 0)) * a;

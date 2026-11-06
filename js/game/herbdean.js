@@ -532,6 +532,8 @@ function herbShove(f, dt) {
   if (bp) { tx += bp.x; ty += bp.y; }
   var gp = jonGoatPush(f); // or goats running through (jon.js)
   if (gp) { tx += gp.x; ty += gp.y; }
+  var brp = bearCrowdPush(f); // or Khabib's bear barging through (khabib-bear.js)
+  if (brp) { tx += brp.x; ty += brp.y; }
   var a = Math.min(1, dt * 12);
   f.shx = (f.shx || 0) + (tx - (f.shx || 0)) * a;
   f.shy = (f.shy || 0) + (ty - (f.shy || 0)) * a;
