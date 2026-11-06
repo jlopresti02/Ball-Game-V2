@@ -293,6 +293,7 @@ function tickCheater(dt) {
     o.x += o.vx * dt; o.y += o.vy * dt; o.rot += o.spin * dt;
     var tgt = balls[1 - o.ownerId];
     if (o.trail) { o.trail.push({ x: o.x, y: o.y }); if (o.trail.length > 6) o.trail.shift(); }
+    if (o.obj.source === "golf") golfBallWalls(o, dt); // a golf ball never leaves the ring (gaethje-golf.js)
     if (!o.done && !o.passed && tgt.alive) {
       var dx = tgt.x - o.x, dy = tgt.y - o.y;
       if (dx * dx + dy * dy < (tgt.r + o.size * 0.6) * (tgt.r + o.size * 0.6)) {
@@ -318,6 +319,7 @@ function tickCheater(dt) {
     }
   });
   cheaterObjs = cheaterObjs.filter(function (o) {
+    if (o.gone) return false;
     return !o.done && o.x > -40 && o.x < W + 40 && o.y > -40 && o.y < H + 40;
   });
 }

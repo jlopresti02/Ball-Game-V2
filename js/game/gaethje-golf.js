@@ -276,8 +276,8 @@ function updateGolfShot(self, other, a, cfg, dt) {
     }
   }
   // The ball sits where the club head addresses it (kept with him if he's nudged).
-  var g = golfGrip(self, golfPose(a, 0));
-  if (!a.fired) { a.bx = g.head.x; a.by = g.head.y; }
+  var g = golfBallSpot(self, a);
+  if (!a.fired) { a.bx = g.x; a.by = g.y; }
   if (!a.fired && a.t >= GS_HIT) {
     a.fired = true;
     if (other.alive) {
@@ -343,6 +343,31 @@ function golfPose(a, t) {
   p.dir = a.dir;
   return p;
 }
+// Where the ball sits: down by his feet, right where the club head rests at
+// address, like a real golfer setting up (kept inside the ring).
+function golfBallSpot(b, a) {
+  var h = golfGrip(b, golfPose(a, GS_ADDRESS)).head, m = b.r * 0.2;
+  return { x: Math.max(m, Math.min(W - m, h.x)), y: Math.max(m, Math.min(H - m, h.y)) };
+}
+// A golf ball stays in the ring: it caroms off the cage, loses pace rolling
+// along the mat, and is gone once it stops. After hitting the cage it's
+// harmless.
+function golfBallWalls(o, dt) {
+  var m = o.size * 0.5, hit = false;
+  if (o.x < m) { o.x = m; o.vx = Math.abs(o.vx) * 0.5; hit = true; }
+  else if (o.x > W - m) { o.x = W - m; o.vx = -Math.abs(o.vx) * 0.5; hit = true; }
+  if (o.y < m) { o.y = m; o.vy = Math.abs(o.vy) * 0.5; hit = true; }
+  else if (o.y > H - m) { o.y = H - m; o.vy = -Math.abs(o.vy) * 0.5; hit = true; }
+  if (hit) {
+    if (!o.bounced) { playPunch(3); impacts.push({ x: o.x, y: o.y, nx: 0, ny: 0, life: 0.2, max: 0.2, color: "#ffffff" }); }
+    o.bounced = true; o.passed = true;
+  }
+  if (o.bounced) {
+    var k = Math.exp(-3 * dt);
+    o.vx *= k; o.vy *= k; o.spin *= k;
+    if (o.vx * o.vx + o.vy * o.vy < 40 * 40) o.gone = true;
+  }
+}
 // Where his hands and the club head are for a pose. Arms hang from between
 // the shoulders (shifted with his weight), the club runs on from the hands at
 // the arm angle plus the wrist hinge.
@@ -389,7 +414,7 @@ function drawGolfShot(b, a) {
   var len = weaponLen(b), cs = Math.cos(g.ang), sn = Math.sin(g.ang), d = a.dir > 0 ? 1 : -1;
   // The ball on the ground until he hits it (dropped in at the start).
   if (!a.fired) {
-    var drop = Math.max(0, 1 - a.t / GS_SET), bp = golfGrip(b, golfPose(a, 0)).head;
+    var drop = Math.max(0, 1 - a.t / GS_SET), bp = golfBallSpot(b, a);
     drawGolfBall(bp.x, bp.y - drop * r * 0.6, r * 0.34, 0);
   }
   var h2 = { x: g.hand.x - cs * len * 0.1, y: g.hand.y - sn * len * 0.1 };
