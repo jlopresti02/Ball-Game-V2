@@ -12163,21 +12163,59 @@ var STILL_ADS = [
       ctx.fillRect(fx + Math.cos(sa) * fr - 6 * k, fy + Math.sin(sa) * fr, 12 * k, 10 * k);
     }
     ctx.beginPath(); ctx.moveTo(fx - fr * 0.5, y + h); ctx.lineTo(fx, fy); ctx.lineTo(fx + fr * 0.5, y + h); ctx.stroke();
-    // The roller coaster: a red track with a loop, on white trestles.
-    function trackY(u) { return y + h * (0.94 - 0.44 * Math.pow(Math.sin(u * Math.PI * 1.1), 2) * (u < 0.55 ? 1 : 0.6)); }
-    var x0 = x + w * 0.56, x1 = x + w * 1.02;
-    ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 2 * k;
-    for (var tr = 0; tr <= 14; tr++) { var tu = tr / 14, txx = x0 + (x1 - x0) * tu; ctx.beginPath(); ctx.moveTo(txx, trackY(tu)); ctx.lineTo(txx, y + h); ctx.stroke(); }
-    var lx = x + w * 0.88, ly = y + h * 0.45, lr = h * 0.22; // the loop
-    ctx.strokeStyle = "#d32f2f"; ctx.lineWidth = 7 * k;
-    ctx.beginPath(); ctx.arc(lx, ly, lr, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath();
-    for (var q = 0; q <= 60; q++) { var qu = q / 60, qx = x0 + (x1 - x0) * qu; if (q) ctx.lineTo(qx, trackY(qu)); else ctx.moveTo(qx, trackY(qu)); }
-    ctx.stroke();
-    ctx.strokeStyle = "#8a1c1c"; ctx.lineWidth = 2 * k; ctx.setLineDash([3 * k, 6 * k]); ctx.stroke(); ctx.setLineDash([]);
-    // Khabib in the front car, cresting the first hill, arms up.
-    var cu = 0.42, cx = x0 + (x1 - x0) * cu, cyT = trackY(cu), slope = (trackY(cu + 0.01) - trackY(cu - 0.01)) / ((x1 - x0) * 0.02);
-    var ang = Math.atan(slope) * 0.6, r = h * 0.15;
+    // The roller coaster: one smooth track (a camel-back hill, the drop,
+    // then a real vertical loop that comes out going forward), drawn as two
+    // steel rails on cross ties, held up by white lattice supports.
+    var yb = y + h * 0.9, H = h * 0.4, xs = x + w * 0.53, xv = x + w * 0.76, L = xv - xs;
+    var R = h * 0.2, lc = R * 0.32, cyL = yb - R;
+    var pts = [];
+    for (var hx = 0; hx <= 60; hx++) { var u = hx / 60; pts.push({ x: xs + L * u, y: yb - H * 0.5 * (1 - Math.cos(2 * Math.PI * u)), hill: true }); }
+    for (var lt = 1; lt <= 90; lt++) { var th = lt / 90 * Math.PI * 2; pts.push({ x: xv + lc * th + R * Math.sin(th), y: cyL + R * Math.cos(th), loop: true }); }
+    var xe = xv + lc * Math.PI * 2;
+    pts.push({ x: x + w + 10, y: yb });
+    pts.unshift({ x: x + w * 0.5, y: yb });
+    for (var pi = 0; pi < pts.length; pi++) { // tangents and normals
+      var pa = pts[Math.max(0, pi - 1)], pb = pts[Math.min(pts.length - 1, pi + 1)];
+      var tx0 = pb.x - pa.x, ty0 = pb.y - pa.y, tl = Math.hypot(tx0, ty0) || 1;
+      pts[pi].tx = tx0 / tl; pts[pi].ty = ty0 / tl; pts[pi].nx = -ty0 / tl; pts[pi].ny = tx0 / tl;
+    }
+    // Supports: lattice towers under the hill, legs under the loop.
+    ctx.strokeStyle = "rgba(255,255,255,0.95)"; ctx.lineWidth = 2 * k;
+    var hillPts = pts.filter(function (p) { return p.hill; });
+    for (var si = 4; si < hillPts.length - 2; si += 6) {
+      var P = hillPts[si], Q = hillPts[Math.min(hillPts.length - 1, si + 6)];
+      ctx.beginPath(); ctx.moveTo(P.x, P.y + 4 * k); ctx.lineTo(P.x, y + h); ctx.stroke();
+      for (var cr = P.y + 14 * k; cr < y + h - 8 * k; cr += 22 * k) { // cross-bracing
+        if (Q.x <= P.x) break;
+        ctx.beginPath(); ctx.moveTo(P.x, cr); ctx.lineTo(Q.x, Math.min(y + h, cr + 22 * k)); ctx.stroke();
+      }
+    }
+    [[xv + lc * Math.PI - R * 0.55, 1], [xv + lc * Math.PI + R * 0.55, -1]].forEach(function (lg) { // the loop's A-frame legs
+      ctx.beginPath(); ctx.moveTo(lg[0], cyL - R * 0.6); ctx.lineTo(lg[0] - lg[1] * R * 0.35, yb); ctx.stroke();
+    });
+    ctx.beginPath(); ctx.moveTo(xv + lc * Math.PI, cyL - R); ctx.lineTo(xv + lc * Math.PI, cyL - R * 0.6); ctx.stroke();
+    // Cross ties, then the two rails over them.
+    var gap = 4.5 * k;
+    ctx.strokeStyle = "#5a5a5a"; ctx.lineWidth = 2.5 * k;
+    var acc = 0;
+    for (var ti = 1; ti < pts.length; ti++) {
+      acc += Math.hypot(pts[ti].x - pts[ti - 1].x, pts[ti].y - pts[ti - 1].y);
+      if (acc < 9 * k) continue;
+      acc = 0;
+      var T = pts[ti];
+      ctx.beginPath(); ctx.moveTo(T.x - T.nx * gap * 1.6, T.y - T.ny * gap * 1.6); ctx.lineTo(T.x + T.nx * gap * 1.6, T.y + T.ny * gap * 1.6); ctx.stroke();
+    }
+    [-1, 1].forEach(function (side) {
+      ctx.strokeStyle = "#c62828"; ctx.lineWidth = 3 * k; ctx.lineJoin = "round";
+      ctx.beginPath();
+      pts.forEach(function (p, i) { var px = p.x + p.nx * gap * side, py = p.y + p.ny * gap * side; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); });
+      ctx.stroke();
+    });
+    ctx.strokeStyle = "rgba(255,255,255,0.45)"; ctx.lineWidth = 1 * k; // a shine on the rails
+    ctx.beginPath(); pts.forEach(function (p, i) { var px = p.x - p.nx * gap, py = p.y - p.ny * gap - 1; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }); ctx.stroke();
+    // Khabib in the front car, just over the top of the first hill, arms up.
+    var cp = hillPts[32], cx = cp.x, cyT = cp.y - gap * 1.6;
+    var ang = Math.atan2(cp.ty, cp.tx), r = h * 0.15;
     ctx.save();
     ctx.translate(cx, cyT); ctx.rotate(ang);
     var look = ch.look;
@@ -12187,11 +12225,11 @@ var STILL_ADS = [
     ctx.beginPath(); ctx.moveTo(-r * 0.6, -r * 1.2); ctx.lineTo(-r * 0.72, -r * 1.85); ctx.moveTo(r * 0.6, -r * 1.2); ctx.lineTo(r * 0.72, -r * 1.85); ctx.stroke();
     drawFighterArt(ctx, 0, -r * 1.05, r, look, "#0b0f12", { layout: "contained", name: ch.name });
     ctx.lineWidth = Math.max(2, r * 0.05); ctx.strokeStyle = "#0b0f12"; ctx.beginPath(); ctx.arc(0, -r * 1.05, r, 0, Math.PI * 2); ctx.stroke();
-    // The car in front of him (yellow, with a lap bar).
+    // The car in front of him (yellow, with a lap bar), wheels on the rails.
     ctx.fillStyle = "#ffd23f"; ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = 2.5 * k;
-    stillRoundRect(-r * 1.35, -r * 0.55, r * 2.7, r * 0.75, r * 0.2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#d32f2f"; ctx.fillRect(-r * 1.35, -r * 0.2, r * 2.7, r * 0.12);
-    ctx.fillStyle = "#333333"; [-0.85, 0.85].forEach(function (s) { ctx.beginPath(); ctx.arc(s * r, r * 0.22, r * 0.17, 0, Math.PI * 2); ctx.fill(); });
+    stillRoundRect(-r * 1.35, -r * 0.6, r * 2.7, r * 0.6, r * 0.2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#d32f2f"; ctx.fillRect(-r * 1.35, -r * 0.32, r * 2.7, r * 0.1);
+    ctx.fillStyle = "#333333"; [-0.85, 0.85].forEach(function (s) { ctx.beginPath(); ctx.arc(s * r, 0, r * 0.14, 0, Math.PI * 2); ctx.fill(); });
     ctx.restore();
     // A "WHEEE!" off the car.
     stillText("WHEEE!", cx - r * 2.6, cyT - r * 2.3, 26 * k, "#ffffff", w * 0.12, { stroke: "#d32f2f", strokeW: 0.18 });
