@@ -12,18 +12,35 @@
 // ---------------------------------------------------------------
 "use strict";
 
+// Nothing takes over the jumbotron (and Dustin doesn't go into Diamond Guard)
+// while a special is running: a cutscene-style one, one whose activation
+// audio is still playing (Do Bronx's pose), Father's Plan, Herb Dean's
+// announcement, or any other move that has a fighter in its `igbb` state
+// (Jon's Duck Drop, Gaethje being carried by the eagle). It waits until
+// it's completely finished.
+function jumboHold() {
+  if (typeof herbShow !== "undefined" && herbShow > 0) return true;
+  if (typeof herb !== "undefined" && herb) return true;
+  if (typeof allAmericanOn === "function" && allAmericanOn()) return true;
+  if (typeof auraFarmOn === "function" && auraFarmOn()) return true;
+  return !!(balls && balls.some(function (b) { return b && b.igbb; }));
+}
+
 var jumboAds = [], jumboAdLeft = 0; // waiting ads, and time left on the one playing
 function resetJumboAds() { jumboAds = []; jumboAdLeft = 0; truckeesShow = 0; }
-// `start` sets the ad's show going (and plays its sound); `dur` is how long it runs.
+// Every fighter-triggered ad on the jumbotron must start through here, so it
+// follows Joe's rules: one ad at a time, and none while a special is running
+// (jumboHold). `start` sets the ad's show going (and plays its sound); `dur`
+// is how long it runs.
 function queueJumboAd(dur, start) {
-  if (jumboAdLeft > 0 || (typeof herbShow !== "undefined" && herbShow > 0)) { jumboAds.push({ dur: dur, start: start }); return; }
+  if (jumboAdLeft > 0 || jumboHold()) { jumboAds.push({ dur: dur, start: start }); return; }
   jumboAdLeft = dur; start();
 }
 // Every frame from update().
 function tickJumboAds(dt) {
   if (truckeesShow > 0) truckeesShow = Math.max(0, truckeesShow - dt);
   if (jumboAdLeft > 0) jumboAdLeft = Math.max(0, jumboAdLeft - dt);
-  if (jumboAdLeft > 0 || !jumboAds.length || (typeof herbShow !== "undefined" && herbShow > 0)) return;
+  if (jumboAdLeft > 0 || !jumboAds.length || jumboHold()) return;
   var next = jumboAds.shift();
   jumboAdLeft = next.dur; next.start();
 }

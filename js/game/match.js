@@ -26,9 +26,10 @@ var winBy = null; // how the fight was won, when it isn't a knockout (e.g. "subm
 function stagger() { return 0.6 + Math.random() * 0.8; }
 
 function makeBall(id, ch) {
+  var base = ch;
   if (ch.jon) ch = jonCharCopy(ch); // Jon Jones swaps modes on his own copy (jon.js)
   var b = {
-    id: id, char: ch,
+    id: id, char: ch, baseChar: base,
     x: id === 0 ? W * 0.27 : W * 0.73,
     y: H / 2 + (Math.random() - 0.5) * 160,
     vx: 0, vy: 0, r: RADIUS,

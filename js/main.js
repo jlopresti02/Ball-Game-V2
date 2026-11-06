@@ -14,7 +14,7 @@ function frame(t) {
   requestAnimationFrame(frame);
 }
 
-document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
+document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].baseChar, balls[1].baseChar); });
 document.getElementById("backBtn").addEventListener("click", function () { showMenu(); });
 Array.prototype.forEach.call(document.querySelectorAll(".arenaBtn"), function (btn) {
   btn.addEventListener("click", function () { setArenaMode(stadiumOn() ? "test" : "stadium"); });
@@ -30,12 +30,12 @@ updateMusicButtons();
 banner.addEventListener("click", function (e) {
   if (gamePhase === "win" && e.target !== startBtn) setGamePhase("menu");
 });
-document.getElementById("menuRematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
+document.getElementById("menuRematch").addEventListener("click", function () { startMatchWith(balls[0].baseChar, balls[1].baseChar); });
 document.getElementById("menuChange").addEventListener("click", function () { showMenu(); });
 startBtn.addEventListener("click", function () {
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();
-  if (over) startMatchWith(balls[0].char, balls[1].char); else start();
+  if (over) startMatchWith(balls[0].baseChar, balls[1].baseChar); else start();
 });
 window.addEventListener("resize", resize);
 if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);

@@ -6560,9 +6560,10 @@ var winBy = null; // how the fight was won, when it isn't a knockout (e.g. "subm
 function stagger() { return 0.6 + Math.random() * 0.8; }
 
 function makeBall(id, ch) {
+  var base = ch;
   if (ch.jon) ch = jonCharCopy(ch); // Jon Jones swaps modes on his own copy (jon.js)
   var b = {
-    id: id, char: ch,
+    id: id, char: ch, baseChar: base,
     x: id === 0 ? W * 0.27 : W * 0.73,
     y: H / 2 + (Math.random() - 0.5) * 160,
     vx: 0, vy: 0, r: RADIUS,
@@ -10624,18 +10625,35 @@ var TRUCKEES_TRUCK_SIZE = [480, 226];
 // ---------------------------------------------------------------
 "use strict";
 
+// Nothing takes over the jumbotron (and Dustin doesn't go into Diamond Guard)
+// while a special is running: a cutscene-style one, one whose activation
+// audio is still playing (Do Bronx's pose), Father's Plan, Herb Dean's
+// announcement, or any other move that has a fighter in its `igbb` state
+// (Jon's Duck Drop, Gaethje being carried by the eagle). It waits until
+// it's completely finished.
+function jumboHold() {
+  if (typeof herbShow !== "undefined" && herbShow > 0) return true;
+  if (typeof herb !== "undefined" && herb) return true;
+  if (typeof allAmericanOn === "function" && allAmericanOn()) return true;
+  if (typeof auraFarmOn === "function" && auraFarmOn()) return true;
+  return !!(balls && balls.some(function (b) { return b && b.igbb; }));
+}
+
 var jumboAds = [], jumboAdLeft = 0; // waiting ads, and time left on the one playing
 function resetJumboAds() { jumboAds = []; jumboAdLeft = 0; truckeesShow = 0; }
-// `start` sets the ad's show going (and plays its sound); `dur` is how long it runs.
+// Every fighter-triggered ad on the jumbotron must start through here, so it
+// follows Joe's rules: one ad at a time, and none while a special is running
+// (jumboHold). `start` sets the ad's show going (and plays its sound); `dur`
+// is how long it runs.
 function queueJumboAd(dur, start) {
-  if (jumboAdLeft > 0 || (typeof herbShow !== "undefined" && herbShow > 0)) { jumboAds.push({ dur: dur, start: start }); return; }
+  if (jumboAdLeft > 0 || jumboHold()) { jumboAds.push({ dur: dur, start: start }); return; }
   jumboAdLeft = dur; start();
 }
 // Every frame from update().
 function tickJumboAds(dt) {
   if (truckeesShow > 0) truckeesShow = Math.max(0, truckeesShow - dt);
   if (jumboAdLeft > 0) jumboAdLeft = Math.max(0, jumboAdLeft - dt);
-  if (jumboAdLeft > 0 || !jumboAds.length || (typeof herbShow !== "undefined" && herbShow > 0)) return;
+  if (jumboAdLeft > 0 || !jumboAds.length || jumboHold()) return;
   var next = jumboAds.shift();
   jumboAdLeft = next.dur; next.start();
 }
@@ -10933,7 +10951,8 @@ function isJon(b) { return !!(b && b.char.jon); }
 // From makeBall: a private copy of the character, set to GOAT mode.
 function jonCharCopy(ch) {
   var c = JSON.parse(JSON.stringify(ch));
-  c.jon.goatLook = c.look;
+  c.jon.goatLook = c.jon.goatLook || c.look; // never a copy that was left in its red EVIL look
+  c.look = c.jon.goatLook;
   return c;
 }
 
@@ -10942,6 +10961,10 @@ function initJon(b) {
   b.jonMode = null;
   b.jonT = 0;
   setJonMode(b, "goat", true);
+  // Decodes both tattoos up front so a flicker shows each color right away.
+  [b.char.jon.goatLook, b.char.jon.evilLook].forEach(function (l) {
+    ((l && l.tattoos && l.tattoos.decals) || []).forEach(function (d) { artDecalImage(d.img); });
+  });
   initDuckDrop(b); // jon-duck.js
 }
 
@@ -11834,7 +11857,8 @@ function tickDiamond(dt) {
     if (!b.alive || over || !started) return;
     var cfg = b.char.diamond, other = balls[1 - b.id];
     if (!dg.on) {
-      if (b.hp > 0 && b.hp < MAX_HP * cfg.triggerHp) startDiamondGuard(b);
+      // Waits for any special (or Father's Plan) to be completely over (truckees-ad.js)
+      if (b.hp > 0 && b.hp < MAX_HP * cfg.triggerHp && !jumboHold()) startDiamondGuard(b);
       return;
     }
     // An occasional diamond, thrown when his hands are free.
@@ -21691,7 +21715,7 @@ function frame(t) {
   requestAnimationFrame(frame);
 }
 
-document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
+document.getElementById("rematch").addEventListener("click", function () { startMatchWith(balls[0].baseChar, balls[1].baseChar); });
 document.getElementById("backBtn").addEventListener("click", function () { showMenu(); });
 Array.prototype.forEach.call(document.querySelectorAll(".arenaBtn"), function (btn) {
   btn.addEventListener("click", function () { setArenaMode(stadiumOn() ? "test" : "stadium"); });
@@ -21707,12 +21731,12 @@ updateMusicButtons();
 banner.addEventListener("click", function (e) {
   if (gamePhase === "win" && e.target !== startBtn) setGamePhase("menu");
 });
-document.getElementById("menuRematch").addEventListener("click", function () { startMatchWith(balls[0].char, balls[1].char); });
+document.getElementById("menuRematch").addEventListener("click", function () { startMatchWith(balls[0].baseChar, balls[1].baseChar); });
 document.getElementById("menuChange").addEventListener("click", function () { showMenu(); });
 startBtn.addEventListener("click", function () {
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();
-  if (over) startMatchWith(balls[0].char, balls[1].char); else start();
+  if (over) startMatchWith(balls[0].baseChar, balls[1].baseChar); else start();
 });
 window.addEventListener("resize", resize);
 if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
