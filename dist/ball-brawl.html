@@ -2780,8 +2780,8 @@ function playImpactClip(n, gain, fallback) {
 }
 // The bull roaring as it charges (Joe's clip; a snort if it's not loaded).
 // `skip` starts the clip that many seconds in (the bull's roar only gets
-// loud about 0.7s in), for moves where the sound has to hit right away.
-var BULL_LEAD_IN = 0.7;
+// loud about 0.9s in), for moves where the sound has to hit right away.
+var BULL_LEAD_IN = 0.88;
 function playBullCharge(gain, skip) {
   try {
     var ctx = getAudioCtx();
