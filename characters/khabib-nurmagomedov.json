@@ -1,11 +1,11 @@
 {
   "id": "c-khabib-nurmagomedov",
-  "rev": 5,
+  "rev": 6,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Khabib Nurmagomedov",
   "base": "Grappler",
-  "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
+  "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Every so often a bear climbs into the cage and wanders round: bump into it and you get mauled in a cartoon dust cloud, unless you're Khabib, who knocks it out and throws it at you. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
   "color": "#8b1a1a",
   "label": "",
   "imgData": null,
@@ -80,5 +80,29 @@
     "damage": 24,
     "shellTime": 5
   },
-  "blockChance": 10
+  "blockChance": 10,
+  "bear": {
+    "first": [
+      14,
+      22
+    ],
+    "every": [
+      26,
+      38
+    ],
+    "max": 2,
+    "wander": [
+      9,
+      13
+    ],
+    "speed": 95,
+    "maulDamage": 30,
+    "maulTime": 2.0,
+    "scrapTime": 1.4,
+    "throwDamage": 32,
+    "throwSpeed": 1100,
+    "knockback": 1100,
+    "wallSlams": 1,
+    "slamDamage": 4
+  }
 }

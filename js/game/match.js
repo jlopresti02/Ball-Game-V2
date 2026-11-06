@@ -51,6 +51,7 @@ function makeBall(id, ch) {
   initTopRope(b); // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
   initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
+  initRingBear(b); // Khabib's ring bear (khabib-bear.js)
   return b;
 }
 

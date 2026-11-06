@@ -345,6 +345,7 @@ function draw() {
   drawAuraActors();    // the bull
   drawJonGoats();      // the goats (jon.js)
   drawHelmetChargeOver(); // the helmet dropping onto Hokit's head (hokit-helmet.js)
+  drawRingBear(); // Khabib's bear, or the dust cloud it's fighting in (khabib-bear.js)
   drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)
   drawEagleStrikeOver();  // the eagle swooping through, and its claw marks (gaethje-eagle.js)
   drawSuplexes();
