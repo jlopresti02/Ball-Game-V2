@@ -28,7 +28,10 @@ function jumboHold() {
 
 var jumboAds = [], jumboAdLeft = 0; // waiting ads, and time left on the one playing
 function resetJumboAds() { jumboAds = []; jumboAdLeft = 0; truckeesShow = 0; }
-// `start` sets the ad's show going (and plays its sound); `dur` is how long it runs.
+// Every fighter-triggered ad on the jumbotron must start through here, so it
+// follows Joe's rules: one ad at a time, and none while a special is running
+// (jumboHold). `start` sets the ad's show going (and plays its sound); `dur`
+// is how long it runs.
 function queueJumboAd(dur, start) {
   if (jumboAdLeft > 0 || jumboHold()) { jumboAds.push({ dur: dur, start: start }); return; }
   jumboAdLeft = dur; start();
