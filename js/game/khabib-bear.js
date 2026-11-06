@@ -72,10 +72,9 @@ function tickRingBear(dt) {
   if (B.phase === "scrap" || B.phase === "ko" || B.phase === "lift" || B.phase === "hold") { tickBearKhabib(B, owner, dt); return; }
   if (B.phase === "thrown") { tickBearThrown(B, dt); return; }
   if (B.phase === "gone") {
-    B.x += B.vx * dt; B.y += B.vy * dt; B.vy += 600 * dt; B.spin += B.spinV * dt;
-    B.z = Math.max(0, B.z + B.vz * dt); B.vz -= 900 * dt;
-    B.alpha = Math.max(0, 1 - B.t / 1.1);
-    if (B.t > 1.1) ringBear = null;
+    // Joe: once it's thrown it flies, spinning, clean off the screen.
+    B.x += B.vx * dt; B.y += B.vy * dt; B.z += B.vz * dt; B.spin += B.spinV * dt;
+    if (bearOffScreen(B) || B.t > 4) ringBear = null;
   }
 }
 
@@ -324,9 +323,33 @@ function tickBearThrown(B, dt) {
 }
 function bearGone(B, ux, uy) {
   var l = Math.sqrt(ux * ux + uy * uy) || 1;
-  B.phase = "gone"; B.t = 0; B.vx = ux / l * 380; B.vy = uy / l * 380; B.vz = 380; B.spinV *= 0.6;
+  B.phase = "gone"; B.t = 0; B.alpha = 1;
+  B.vx = ux / l * 1000; B.vy = uy / l * 1000; B.vz = 650; // and up, off the top of the shot
+  B.spinV = (B.spinV < 0 ? -1 : 1) * 16;
   var k = balls[B.ownerId];
   if (bearOn(k)) k.igbb = null;
+}
+
+// Fully past the edge of what's drawn: the whole stage in the stadium, the
+// arena otherwise.
+function bearOffScreen(B) {
+  var x = B.x, y = B.y - B.z, m = BEAR_SIDE_H;
+  if (typeof stadiumOn === "function" && stadiumOn()) {
+    var k = W / ST.A;
+    return x < -ST.AX * k - m || x > (STAGE_W - ST.AX) * k + m || y < -ST.AY * k - m || y > (STAGE_H - ST.AY) * k + m;
+  }
+  return x < -m || x > W + m || y < -m || y > H + m;
+}
+
+// Flying off after the throw, drawn over the jumbotron so it sails out the
+// top of the screen instead of vanishing behind it.
+function drawRingBearSky(sc, ox, oy) {
+  var B = ringBear;
+  if (!B || B.phase !== "gone") return;
+  ctx.save();
+  ctx.setTransform(sc, 0, 0, sc, ox, oy);
+  drawBearSide(B.x, B.y - B.z, Math.PI + B.spin, 1);
+  ctx.restore();
 }
 
 // drawHands leaves Khabib's hands to us while he's holding the bear up.
@@ -339,7 +362,7 @@ function bearHandsBusy(b) {
 // Over the fighters: the bear, or the dust cloud with the fight inside it.
 function drawRingBear() {
   var B = ringBear;
-  if (!B) return;
+  if (!B || B.phase === "gone") return; // (flying off: drawRingBearSky)
   var now = performance.now() / 1000;
   if (B.phase === "maul" || B.phase === "scrap") { drawBearCloud(B, now); return; }
   ctx.save();
@@ -362,7 +385,7 @@ function drawRingBear() {
     });
   } else if (B.phase === "thrown" || B.phase === "gone") {
     // Its shadow on the mat, then the bear spinning through the air.
-    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.fillStyle = "rgba(0,0,0," + (0.18 * Math.max(0, 1 - B.z / 400)).toFixed(3) + ")";
     ctx.beginPath(); ctx.ellipse(B.x, B.y + RADIUS * 0.7, BEAR_SIDE_H * 0.45, BEAR_SIDE_H * 0.12, 0, 0, Math.PI * 2); ctx.fill();
     drawBearSide(B.x, B.y - B.z, Math.PI + B.spin, 1);
   } else {
