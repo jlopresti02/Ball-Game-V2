@@ -8,6 +8,8 @@
 //               with his trading card
 //   Chaels      Dustin dancing in Diamond Guard -> a black-velvet jewelry
 //               print ad with an open ring box: THE DIAMOND STANDARD
+//   Poorbet     the animated casino-marquee ad -> a lost bet slip on a
+//               poker table: THE ONLY SURE BET IS NOT BETTING
 // Nothing moves and there's no sound; they just fade in, hold and fade out.
 // The fighters don't have to be in the fight: their looks come from the
 // roster.
@@ -33,12 +35,12 @@ function stillAdChar(name) {
   return null;
 }
 // Only fighters on the roster get their ad in the rotation.
-function stillAdReady(ad) { return !!stillAdChar(ad.fighter); }
+function stillAdReady(ad) { return !ad.fighter || !!stillAdChar(ad.fighter); }
 
 function drawStillJumbo(x, y, w, h) {
   if (stillShow <= 0 || !stillAd) return;
-  var ch = stillAdChar(stillAd.fighter);
-  if (!ch) return;
+  var ch = stillAd.fighter ? stillAdChar(stillAd.fighter) : null;
+  if (stillAd.fighter && !ch) return;
   var t = STILL_SHOW - stillShow, a = Math.min(1, t / 0.3, stillShow / 0.3), k = h / 250;
   ctx.save();
   ctx.globalAlpha = a;
@@ -49,6 +51,19 @@ function drawStillJumbo(x, y, w, h) {
 function drawStillBanner() {
   if (stillShow <= 0 || stadiumOn()) return;
   drawStillJumbo(10, 10, W - 20, 110);
+}
+
+// The Poorbet logo in any ink color (the art is white), made once per color.
+var stillTints = {};
+function stillTintedLogo(img, color) {
+  if (!img.complete || !img.naturalWidth) return null;
+  var key = img.src.length + color;
+  if (stillTints[key]) return stillTints[key];
+  var cv = document.createElement("canvas"); cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+  var g = cv.getContext("2d");
+  g.drawImage(img, 0, 0); g.globalCompositeOperation = "source-in"; g.fillStyle = color; g.fillRect(0, 0, cv.width, cv.height);
+  stillTints[key] = cv;
+  return cv;
 }
 
 // A fighter's ball with its outline, for the posters.
@@ -207,5 +222,60 @@ var STILL_ADS = [
     stillText("The Diamond Standard.", tx, y + h * 0.52, 40 * k, "#f3ead2", tw, { face: "Georgia, 'Times New Roman', serif", weight: "italic 600" });
     stillText("DUSTIN “THE DIAMOND” POIRIER WEARS CHAELS", tx, y + h * 0.67, 15 * k, "#c9a85a", tw, { face: "Georgia, 'Times New Roman', serif", weight: "600" });
     stillText("Ask about our Diamond Guard protection plan.", tx, y + h * 0.8, 15 * k, "#b8b2a6", tw, { face: "Georgia, 'Times New Roman', serif", weight: "italic 400" });
+  } },
+
+  // ---------------------------------------------------------------- Poorbet
+  { name: "poorbet-slip", draw: function (x, y, w, h, k) {
+    // A green poker-table felt.
+    var felt = ctx.createRadialGradient(x + w * 0.5, y + h * 0.5, h * 0.2, x + w * 0.5, y + h * 0.5, w * 0.6);
+    felt.addColorStop(0, "#1f7a45"); felt.addColorStop(1, "#0b3a20");
+    ctx.fillStyle = felt; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = "rgba(255,230,160,0.35)"; ctx.lineWidth = 2 * k;
+    ctx.beginPath(); ctx.ellipse(x + w * 0.5, y + h * 1.6, w * 0.62, h * 1.25, 0, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
+    // The logo in black on a cream card on the left.
+    var lx = x + w * 0.16, ly = y + h * 0.5, cw = w * 0.27, chh = h * 0.78;
+    ctx.save();
+    ctx.translate(lx, ly); ctx.rotate(-0.04);
+    ctx.fillStyle = "rgba(0,0,0,0.35)"; stillRoundRect(-cw / 2 + 5 * k, -chh / 2 + 5 * k, cw, chh, 14 * k); ctx.fill();
+    ctx.fillStyle = "#f6f0e2"; stillRoundRect(-cw / 2, -chh / 2, cw, chh, 14 * k); ctx.fill();
+    ctx.strokeStyle = "#111111"; ctx.lineWidth = 2 * k; stillRoundRect(-cw / 2 + 7 * k, -chh / 2 + 7 * k, cw - 14 * k, chh - 14 * k, 9 * k); ctx.stroke();
+    var logo = stillTintedLogo(poorbetLogoImg, "#111111");
+    if (logo) { var lw = cw * 0.86, lh = lw * POORBET_LOGO_SIZE[1] / POORBET_LOGO_SIZE[0]; ctx.drawImage(logo, -lw / 2, -lh / 2 - chh * 0.06, lw, lh); }
+    stillText("SPORTSBOOK", 0, chh * 0.36, 16 * k, "#111111", cw * 0.7, { face: "'Helvetica Neue', Helvetica, Arial, sans-serif", weight: "800" });
+    ctx.restore();
+    // The bet slip in the middle, stamped LOST.
+    var sx = x + w * 0.31, sy = y + h * 0.09, sw = w * 0.3, sh = h * 0.82;
+    ctx.save();
+    ctx.translate(sx + sw / 2, sy + sh / 2); ctx.rotate(0.03); ctx.translate(-sx - sw / 2, -sy - sh / 2);
+    ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.fillRect(sx + 5 * k, sy + 5 * k, sw, sh);
+    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + sw, sy);
+    for (var z = 0; z <= 12; z++) ctx.lineTo(sx + sw - z * sw / 12, sy + sh - (z % 2 ? 7 * k : 0)); // torn bottom
+    ctx.closePath(); ctx.fill();
+    var mono = "'Courier New', Courier, monospace", ix = sx + 12 * k, rx = sx + sw - 12 * k, row = sh * 0.105;
+    stillText("POORBET BET SLIP #000000", sx + sw / 2, sy + row * 0.8, 15 * k, "#111111", sw * 0.9, { face: mono, weight: "700" });
+    ctx.fillStyle = "#111111"; ctx.fillRect(ix, sy + row * 1.35, sw - 24 * k, 1.5 * k);
+    [["PICK", "\"MY GUY\""], ["WAGER", "RENT MONEY"], ["AMOUNT", "$1,200.00"], ["ODDS", "LOL"], ["PAYOUT", "$0.00"]].forEach(function (r, i) {
+      var ry = sy + row * (2.0 + i);
+      stillText(r[0], ix, ry, 15 * k, "#444444", sw * 0.4, { face: mono, weight: "700", align: "left" });
+      stillText(r[1], rx, ry, 15 * k, i === 4 ? "#c62828" : "#111111", sw * 0.5, { face: mono, weight: "700", align: "right" });
+    });
+    ctx.fillStyle = "#111111"; ctx.fillRect(ix, sy + row * 6.6, sw - 24 * k, 1.5 * k);
+    stillText("THANK YOU FOR YOUR DONATION", sx + sw / 2, sy + row * 7.3, 13 * k, "#111111", sw * 0.9, { face: mono, weight: "700" });
+    for (var bc = 0; bc < 34; bc++) { ctx.fillRect(sx + sw * 0.15 + bc * sw * 0.7 / 34, sy + row * 7.85, (bc % 3 ? 1.2 : 2.6) * k, row * 0.8); } // barcode
+    ctx.save(); // the LOST stamp
+    ctx.translate(sx + sw * 0.3, sy + sh * 0.47); ctx.rotate(-0.28);
+    ctx.globalAlpha *= 0.85;
+    ctx.strokeStyle = "#d32f2f"; ctx.lineWidth = 5 * k; stillRoundRect(-sw * 0.25, -sh * 0.11, sw * 0.5, sh * 0.22, 8 * k); ctx.stroke();
+    stillText("LOST", 0, 2 * k, 48 * k, "#d32f2f", sw * 0.42);
+    ctx.restore();
+    ctx.restore();
+    // The pitch on the right.
+    var tx = x + w * 0.81, tw = w * 0.34;
+    stillText("THE ONLY SURE BET", tx, y + h * 0.24, 40 * k, "#ffffff", tw, { stroke: "#06210f", strokeW: 0.14 });
+    stillText("IS NOT BETTING.", tx, y + h * 0.45, 48 * k, "#ffd54a", tw, { stroke: "#06210f", strokeW: 0.14 });
+    stillText("Gambling is throwing your money away.", tx, y + h * 0.65, 17 * k, "#e8f3ea", tw, { face: "'Helvetica Neue', Helvetica, Arial, sans-serif", weight: "700" });
+    ctx.fillStyle = "rgba(0,0,0,0.45)"; stillRoundRect(tx - tw / 2, y + h * 0.75, tw, h * 0.13, 8 * k); ctx.fill();
+    stillText("Gambling problem? Call 1-800-GAMBLER", tx, y + h * 0.815, 15 * k, "#ffffff", tw * 0.92, { face: "'Helvetica Neue', Helvetica, Arial, sans-serif", weight: "700" });
+    stillText("*Poorbet is a parody. Losses happen here.", tx, y + h * 0.94, 11 * k, "rgba(255,255,255,0.7)", tw, { face: "'Helvetica Neue', Helvetica, Arial, sans-serif", weight: "600" });
   } }
 ];
