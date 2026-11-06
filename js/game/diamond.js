@@ -56,6 +56,7 @@ function tickDiamond(dt) {
       b.throwAnim = { t: 0, dur: 0.5, wEnd: 0.55, relEnd: 0.72, fired: false, proj: diamondProj(b) };
     }
   });
+  tickBladeRivals(); // Dustin vs Ilia: sword against sword (sword.js)
 }
 
 function diamondThrowGap(cfg) {
@@ -95,7 +96,7 @@ function startDiamondGuard(b) {
   }
   crowdReact(0.6);
   // He takes over the jumbotron, with the clip (after any ad that's on: truckees-ad.js)
-  queueJumboAd(DIAMOND_SHOW, function () { diamondShow = DIAMOND_SHOW; diamondShowId = b.id; playDiamondGuard(); });
+  queueJumboAd(DIAMOND_SHOW, function () { diamondShow = DIAMOND_SHOW; diamondShowId = b.id; dg.shown = true; playDiamondGuard(); });
 }
 
 // A landed diamond: glassy shards off the hit.

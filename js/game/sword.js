@@ -41,6 +41,38 @@ function bladeCfg(b) { return b.rapier ? b.char.rapier : b.char.diamond.swordCla
 function bladeColors(b) { return b && b.rapier ? RAPIER_C : DIAMOND_C; }
 function bladeLen(b) { return b && b.rapier ? RAPIER_LEN : SWORD_LEN; }
 
+// Two sword fighters (Dustin in Diamond Guard vs Ilia, Joe 2026-11-06): both
+// draw on each other, and after a short standoff they duel. Who wins is a
+// coin flip, and it always ends in a disarm: the loser's sword goes flying
+// into the crowd and they fight empty handed for the rest of the fight.
+var RIVAL_STANDOFF = 1.4;
+// Dustin's counts once his Diamond Guard show on the jumbotron has finished
+// (Joe: Ilia draws on him as soon as it's over).
+function bladeReady(b) {
+  var h = bladeHost(b);
+  if (b && b.diamond && (!b.diamond.shown || diamondShow > 0)) return false;
+  return !!(h && h.on && !h.disarmed && b.alive);
+}
+function bladeRivals(b, o) { return bladeReady(b) && bladeReady(o); }
+function tickBladeRivals() {
+  if (swordDuel || over || !started) return;
+  var a = balls[0], c = balls[1];
+  if (!bladeRivals(a, c)) return;
+  var sa = bladeHost(a).sword, sb = bladeHost(c).sword;
+  if (!sa || !sb || !sa.out || !sb.out || sa.t < RIVAL_STANDOFF || sb.t < RIVAL_STANDOFF) return;
+  if (rivalBusy(a) || rivalBusy(c)) return;
+  var w = Math.random() < 0.5 ? a : c;
+  startSwordDuel(w, balls[1 - w.id], "disarm");
+}
+// Locked up in something a duel can't cut into (a combo or taunt it just
+// cuts short, like a parry would).
+function rivalBusy(b) {
+  return !!(b.igbb || b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.koRush ||
+    b.shocked || b.koOut || b.koDuel || b.shelled || b.dazed || b.fenceGrab);
+}
+// The other fighter in a duel, while they still have their own sword.
+function duelBladeOpp(b) { return !!(swordDuel && swordDuel.oId === b.id && !swordDuel.let && bladeHost(b)); }
+
 var SWORD_DRAW = 0.35, SWORD_PUT_AWAY = 0.3, SWORD_SLASH = 0.5, SWORD_LEN = 2.6;
 var swordDuel = null;   // the duel, while it's on
 var flyingBats = [];    // bats knocked out of someone's hands
@@ -107,9 +139,10 @@ function swordFlourishes(b) { return b.rapier ? RAPIER_FLOURISHES : SWORD_FLOURI
 
 function tickDiamondSword(b, dt) {
   var dg = bladeHost(b), sc = bladeCfg(b), o = balls[1 - b.id], C = bladeColors(b);
-  var want = dg.on && b.alive && !over && sc && sc.enabled && sc.weapons.indexOf(swordWeaponOut(o)) >= 0 &&
+  var want = dg.on && !dg.disarmed && b.alive && !over && sc && sc.enabled && (sc.weapons.indexOf(swordWeaponOut(o)) >= 0 || bladeRivals(b, o)) &&
     !(b.igbb && b.igbb.move !== "lunge"); // put away for his specials
   if (swordDuel && swordDuel.dId === b.id) want = true; // held through the duel
+  if (duelBladeOpp(b)) want = true;
   var sw = dg.sword;
   if (want && !sw) {
     sw = dg.sword = { t: 0, out: true, outT: 0, parry: -1, parries: 0, side: o.x > b.x ? 1 : -1, pose: null,
@@ -200,6 +233,7 @@ function swordBodyOffset(b) {
   var sw = bladeHost(b) && bladeHost(b).sword, o = balls[1 - b.id];
   if (!sw || !b.alive) return { x: 0, y: 0 };
   if (swordDuel && swordDuel.dId === b.id) return { x: 0, y: -(swordDuel.lift || 0) * b.r };
+  if (duelBladeOpp(b)) return { x: 0, y: 0 };
   if (!sw.pose) return { x: 0, y: 0 };
   var pz = swordDrawPose(b, sw), nx = o.x - b.x, ny = o.y - b.y, nd = Math.sqrt(nx * nx + ny * ny) || 1;
   return { x: nx / nd * pz.lean * b.r, y: ny / nd * pz.lean * b.r };
@@ -209,6 +243,7 @@ function swordBodySpin(b) {
   var sw = bladeHost(b) && bladeHost(b).sword;
   if (!sw || !b.alive) return 0;
   if (swordDuel && swordDuel.dId === b.id) return swordDuel.spin || 0;
+  if (duelBladeOpp(b)) return 0;
   if (!sw.pose || sw.parry < 0) return 0;
   return swordDrawPose(b, sw).twist;
 }
@@ -307,7 +342,7 @@ var DUEL_HITS = [];
   DUEL_HITS.push({ T: t + 0.08, type: "fin", sw: 0, fin: true });
 })();
 
-function startSwordDuel(d, o) {
+function startSwordDuel(d, o, force) {
   var sc = bladeCfg(d).duel;
   clearActions(d); clearActions(o);
   d.vx = d.vy = o.vx = o.vy = 0;
@@ -320,7 +355,7 @@ function startSwordDuel(d, o) {
   swordDuel = {
     dId: d.id, oId: o.id, t: 0, mx: mx, my: my, gap: gap, phi0: o.x >= d.x ? 0 : Math.PI,
     fromD: { x: d.x, y: d.y }, fromO: { x: o.x, y: o.y }, fired: {}, spin: 0, lift: 0,
-    outcome: Math.random() * 100 < sc.disarmChance ? "disarm" : "slash", done: false, endT: -1, let: false
+    outcome: force || (Math.random() * 100 < sc.disarmChance ? "disarm" : "slash"), done: false, endT: -1, let: false
   };
   floater(mx, my - d.r - 50, "SWORD CLASH!", "crit");
   crowdReact(1);
@@ -467,8 +502,10 @@ function tickDuelFinish(d, o, sd, dt) {
     if (f >= 0.38 && !sd.flung) { // ripped away: the bat goes flying into the crowd
       sd.flung = true; sd.let = true;
       var up = -1;
-      flyingBats.push({ x: o.x + sd.ux * o.r * 0.5, y: o.y - o.r * 0.4, vx: sd.ux * 380, vy: -820, rot: 0, spin: 19, t: 0, len: weaponLen(o), trail: [], club: !!(o.cheater && o.cheater.club) });
+      var oh = bladeHost(o), blade = oh && oh.sword ? (o.rapier ? "rapier" : "longsword") : null;
+      flyingBats.push({ x: o.x + sd.ux * o.r * 0.5, y: o.y - o.r * 0.4, vx: sd.ux * 380, vy: -820, rot: 0, spin: 19, t: 0, len: blade ? o.r * bladeLen(o) : weaponLen(o), trail: [], club: !!(o.cheater && o.cheater.club), blade: blade });
       if (o.cheater) o.cheater = null; // empty handed: back to fighting fair
+      if (blade) { oh.sword = null; oh.disarmed = true; } // a sword fighter loses theirs for the fight
       o.vx = sd.ux * 380; o.vy = sd.uy * 380;
       o.squash = { t: 0.16, max: 0.16, nx: -sd.ux, ny: -sd.uy };
       clashFx(o.x - sd.ux * o.r, o.y - o.r * 0.3, sd.ux, sd.uy, 2, C);
@@ -491,7 +528,7 @@ function tickDuelFinish(d, o, sd, dt) {
       }
       if (!reduceMotion) { shake = Math.max(shake, 28); hitStop = Math.max(hitStop, 0.12); }
       crowdReact(1);
-      playSwordSlash();
+      if (d.rapier) playRapierSlice(); else playSwordSlash();
       if (dealt > 0 && o.alive) beginWallSlam(o, -sd.ux, -sd.uy, { knockback: cfg.slashKnockback, wallSlams: 2, slamDamage: 4 });
       checkEnd();
     }
@@ -576,14 +613,14 @@ function pushTrail(trail, x, y, ang) {
 function drawDiamondSword(b, other, top) {
   var sw = bladeHost(b) && bladeHost(b).sword;
   if (!sw || !b.alive) return;
-  var inDuel = swordDuel && swordDuel.dId === b.id;
+  var inDuel = swordDuel && (swordDuel.dId === b.id || duelBladeOpp(b));
   // Mid parry (and through a duel) it's drawn over both fighters
   // (drawDiamondSwordsTop), so the clash isn't hidden behind them.
   if ((sw.parry >= 0 || !!inDuel) !== !!top) return;
   var im = b.rapier ? null : getImg(DIAMOND_SWORD_SRC);
   if ((!im && !b.rapier) || !sw.pose) return;
   var r = b.r, len = r * bladeLen(b), k = 1, alpha = 1;
-  var pz = inDuel ? duelSwordPose(b, swordDuel) : swordDrawPose(b, sw);
+  var pz = inDuel ? (swordDuel.dId === b.id ? duelSwordPose(b, swordDuel) : duelOppPose(b, swordDuel)) : swordDrawPose(b, sw);
   var hand = pz.hand, ang = pz.ang, s = pz.side != null ? pz.side : sw.side;
   if (!inDuel && sw.out && sw.t < SWORD_DRAW) { // pulled out: swings up from his side
     var e = easeOut(sw.t / SWORD_DRAW);
@@ -611,7 +648,7 @@ function drawDiamondSword(b, other, top) {
   ctx.globalAlpha *= alpha;
   drawBentArm(b, fsh, h2, -sideK || -1);
   drawBentArm(b, sh, h1, sideK || 1);
-  if (inDuel && swordDuel.slashLine && swordDuel.done) drawSlashLine(b, swordDuel);
+  if (inDuel && swordDuel.dId === b.id && swordDuel.slashLine && swordDuel.done) drawSlashLine(b, swordDuel);
   drawTrail(sw.trail, function (g, a) { drawLongsword(im, g.x, g.y, g.ang, len, k, a); });
   drawLongsword(im, hand.x, hand.y, ang, len, k, 1);
   pushTrail(sw.trail, hand.x, hand.y, ang);
@@ -668,6 +705,15 @@ function duelSwordPose(b, sd) {
   return duelArmPose(b.x, b.y - (sd.lift || 0) * r, r, side, al, R, 0.62);
 }
 
+// The other fighter's sword in a sword-vs-sword duel: swung like the bat.
+function duelOppPose(o, sd) {
+  var S = sd.done ? { ux: sd.ux, uy: sd.uy } : duelState(sd, sd.t);
+  var side = -S.ux >= 0 ? 1 : -1;
+  var al = duelAlpha(sd.done ? sd.endT : sd.t, true);
+  if (sd.done) al = SWINGS.fin.s - ease((sd.t - sd.endT) / 0.38) * Math.PI * 2; // wrenched round by the winner's sword
+  return duelArmPose(o.x, o.y, o.r, side, al, 0, 0.58);
+}
+
 // The Diamond Slash: a bright line where he cut through, then it fades.
 function drawSlashLine(b, sd) {
   var f = sd.t - sd.endT, L = sd.slashLine, C = bladeColors(b);
@@ -705,8 +751,11 @@ function drawDiamondSwordsTop() {
   });
   flyingBats.forEach(function (fb) {
     ctx.save(); ctx.globalAlpha = Math.min(1, (2.4 - fb.t) / 0.4);
-    drawTrail(fb.trail, function (g, a) { ctx.save(); ctx.globalAlpha *= a * 2; (fb.club ? drawClub : drawBat)(g.x, g.y, g.ang, fb.len); ctx.restore(); });
-    (fb.club ? drawClub : drawBat)(fb.x, fb.y, fb.rot, fb.len);
+    var dr = fb.blade === "rapier" ? function (x, y, a, l) { drawRapier(x, y, a, l, 1, 1); }
+      : fb.blade ? function (x, y, a, l) { var im = getImg(DIAMOND_SWORD_SRC); if (im) drawLongsword(im, x, y, a, l, 1, 1); }
+      : fb.club ? drawClub : drawBat;
+    drawTrail(fb.trail, function (g, a) { ctx.save(); ctx.globalAlpha *= a * 2; dr(g.x, g.y, g.ang, fb.len); ctx.restore(); });
+    dr(fb.x, fb.y, fb.rot, fb.len);
     pushTrail(fb.trail, fb.x, fb.y, fb.rot);
     ctx.restore();
   });
@@ -715,6 +764,7 @@ function drawDiamondSwordsTop() {
 // Gane in the duel: both hands on the bat, swinging it into each clash.
 var duelBatTrail = [];
 function drawDuelBat(o, sd) {
+  if (bladeHost(o) && bladeHost(o).sword) return; // a sword fighter's own sword (drawDiamondSword)
   if (!o.alive || sd.let || (sd.done && sd.outcome === "slash")) { duelBatTrail = []; return; }
   var r = o.r, S = sd.done ? { ux: sd.ux, uy: sd.uy } : duelState(sd, sd.t);
   var side = -S.ux >= 0 ? 1 : -1;

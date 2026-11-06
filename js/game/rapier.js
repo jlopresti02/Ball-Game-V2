@@ -94,7 +94,7 @@ function updateRapierLunge(self, other, dt) {
   var sw = self.rapier.sword;
   if (!lungeOn(self)) {
     if (!started || over) return false;
-    if (!sw || !sw.out || sw.t < SWORD_DRAW || sw.parry >= 0 || swordDuelActive()) return false;
+    if (!sw || !sw.out || sw.t < SWORD_DRAW || sw.parry >= 0 || swordDuelActive() || bladeRivals(self, other)) return false; // (against another sword it's a duel instead)
     self.lungeT -= dt;
     if (self.lungeT > 0) return false;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -147,7 +147,7 @@ function updateRapierLunge(self, other, dt) {
         floater(other.x, other.y - other.r - 30, "ESTOCADA!", "crit");
         other.flash = 0.16;
         if (!reduceMotion) { shake = Math.max(shake, 16); hitStop = Math.max(hitStop, 0.1); }
-        playSwordSlash();
+        playRapierSlice();
         crowdReact(1);
         impacts.push({ x: other.x - m.dx * other.r * 0.5, y: other.y - m.dy * other.r * 0.5, nx: m.dx, ny: m.dy, life: 0.35, max: 0.35, color: RAPIER_C.W });
         for (var i = 0; i < 18 && !reduceMotion; i++) {
@@ -228,7 +228,7 @@ function drawRapierArms(b, sw, sh, fsh, hand, ang, len, k, alpha, sideK, pz, inD
   ctx.globalAlpha *= alpha;
   drawBentArm(b, fsh, free, -sg);
   drawGloveAt(free.x, free.y, r * 0.2, b.char);
-  if (inDuel && swordDuel.slashLine && swordDuel.done) drawSlashLine(b, swordDuel);
+  if (inDuel && swordDuel.dId === b.id && swordDuel.slashLine && swordDuel.done) drawSlashLine(b, swordDuel);
   drawTrail(sw.trail, function (g, a) { drawRapier(g.x, g.y, g.ang, len, k, a); });
   drawRapier(hand.x, hand.y, ang, len, k, 1);
   pushTrail(sw.trail, hand.x, hand.y, ang);
