@@ -14,7 +14,9 @@ var TAUNT_LEADIN = 0.26;      // how long a launched fighter flies before slowin
 
 // Rolls the weave for `b` against an attack from `attackerId`. Returns true
 // if the attack was dodged (and kicks off a critical combo if that rolls too).
-function tryWeave(b, attackerId, mult) {
+// `noCounter`: it's a projectile, so it's only ever slipped, never turned
+// into a critical weave combo.
+function tryWeave(b, attackerId, mult, noCounter) {
   if (!b || !b.alive || !b.char.hasWeave) return false;
   // Can't slip anything while held or being slammed around.
   if (b.grappled || b.slam) return false;
@@ -37,7 +39,7 @@ function tryWeave(b, attackerId, mult) {
 
   b.weaveAnim = { t: 0, dur: 0.26, sign: Math.random() < 0.5 ? -1 : 1 };
   var atk = attackerId != null ? balls[attackerId] : null;
-  var canCrit = atk && atk.alive && !atk.invincible && !b.combo && !b.grapple;
+  var canCrit = !noCounter && atk && atk.alive && !atk.invincible && !b.combo && !b.grapple;
   if (canCrit && Math.random() < wv.critChance / 100) {
     if (atk.combo && atk.combo.targetId === b.id) {
       // Weaver vs weaver (e.g. BMF vs BMF): a critical weave in the middle of

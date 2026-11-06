@@ -446,7 +446,7 @@ function tickDuelFinish(d, o, sd, dt) {
     if (f >= 0.38 && !sd.flung) { // ripped away: the bat goes flying into the crowd
       sd.flung = true; sd.let = true;
       var up = -1;
-      flyingBats.push({ x: o.x + sd.ux * o.r * 0.5, y: o.y - o.r * 0.4, vx: sd.ux * 380, vy: -820, rot: 0, spin: 19, t: 0, len: o.r * 1.6, trail: [] });
+      flyingBats.push({ x: o.x + sd.ux * o.r * 0.5, y: o.y - o.r * 0.4, vx: sd.ux * 380, vy: -820, rot: 0, spin: 19, t: 0, len: weaponLen(o), trail: [], club: !!(o.cheater && o.cheater.club) });
       if (o.cheater) o.cheater = null; // empty handed: back to fighting fair
       o.vx = sd.ux * 380; o.vy = sd.uy * 380;
       o.squash = { t: 0.16, max: 0.16, nx: -sd.ux, ny: -sd.uy };
@@ -683,8 +683,8 @@ function drawDiamondSwordsTop() {
   });
   flyingBats.forEach(function (fb) {
     ctx.save(); ctx.globalAlpha = Math.min(1, (2.4 - fb.t) / 0.4);
-    drawTrail(fb.trail, function (g, a) { ctx.save(); ctx.globalAlpha *= a * 2; drawBat(g.x, g.y, g.ang, fb.len); ctx.restore(); });
-    drawBat(fb.x, fb.y, fb.rot, fb.len);
+    drawTrail(fb.trail, function (g, a) { ctx.save(); ctx.globalAlpha *= a * 2; (fb.club ? drawClub : drawBat)(g.x, g.y, g.ang, fb.len); ctx.restore(); });
+    (fb.club ? drawClub : drawBat)(fb.x, fb.y, fb.rot, fb.len);
     pushTrail(fb.trail, fb.x, fb.y, fb.rot);
     ctx.restore();
   });
@@ -698,11 +698,11 @@ function drawDuelBat(o, sd) {
   var side = -S.ux >= 0 ? 1 : -1;
   var al = duelAlpha(sd.done ? sd.endT : sd.t, true);
   if (sd.done) al = SWINGS.fin.s - ease((sd.t - sd.endT) / 0.38) * Math.PI * 2; // wrenched round by the sword
-  var pz = duelArmPose(o.x, o.y, r, side, al, 0, 0.58), len = r * 1.6, ang = pz.ang, hand = pz.hand;
+  var pz = duelArmPose(o.x, o.y, r, side, al, 0, 0.58), len = weaponLen(o), ang = pz.ang, hand = pz.hand;
   var h2 = { x: hand.x - Math.cos(ang) * len * 0.12, y: hand.y - Math.sin(ang) * len * 0.12 };
   drawBentArm(o, pz.fsh, h2, -side);
-  drawTrail(duelBatTrail, function (g, a) { ctx.save(); ctx.globalAlpha *= a * 2; drawBat(g.x, g.y, g.ang, len); ctx.restore(); });
-  drawBat(hand.x, hand.y, ang, len);
+  drawTrail(duelBatTrail, function (g, a) { ctx.save(); ctx.globalAlpha *= a * 2; drawWeapon(o, g.x, g.y, g.ang, len); ctx.restore(); });
+  drawWeapon(o, hand.x, hand.y, ang, len);
   pushTrail(duelBatTrail, hand.x, hand.y, ang);
   drawBentArm(o, pz.sh, hand, side);
   drawGloveAt(h2.x, h2.y, r * 0.22, o.char);

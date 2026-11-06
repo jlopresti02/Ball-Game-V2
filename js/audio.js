@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond"].concat(HOKIT_TAUNTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd"].concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -931,6 +931,42 @@ function playBatHit(big) {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// Gaethje's golf club (gaethje-golf.js): the bat's whoosh and weight with a
+// metal ring on top.
+function playClubHit() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    playBatHit(false);
+    var hit = ctx.currentTime + 0.06, v = 0.95 + Math.random() * 0.1;
+    caneTone(ctx, hit, "triangle", 1900 * v, 1700 * v, 0.35 * BAT_GAIN, 0.18);
+    caneTone(ctx, hit, "sine", 3100 * v, 2900 * v, 0.18 * BAT_GAIN, 0.12);
+  } catch (e) { /* never let audio break the game */ }
+}
+// Teeing off: one of Joe's nine recorded club-on-ball impacts at random
+// (never the same one twice running). The synth "ping" below stands in
+// until the clips are decoded.
+var GOLF_IMPACTS = ["golfImpact1", "golfImpact2", "golfImpact3", "golfImpact4", "golfImpact5", "golfImpact6", "golfImpact7", "golfImpact8", "golfImpact9"];
+var lastGolfImpact = -1;
+function playGolfPing() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var i = Math.floor(Math.random() * GOLF_IMPACTS.length);
+    if (i === lastGolfImpact) i = (i + 1) % GOLF_IMPACTS.length;
+    var name = GOLF_IMPACTS[i];
+    if (clipBuffers[name]) { lastGolfImpact = i; playClip(name, 0.9); return; }
+    withClip(name);
+    var now = ctx.currentTime;
+    caneBurst(ctx, now, 3200, 1.5, 0.7 * BAT_GAIN, 0.03);
+    caneTone(ctx, now, "triangle", 2650, 2500, 0.55 * BAT_GAIN, 0.16);
+    caneTone(ctx, now, "sine", 4100, 3900, 0.25 * BAT_GAIN, 0.1);
+    caneTone(ctx, now, "sine", 900, 600, 0.3 * BAT_GAIN, 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // The critical weave combo (weave.js): an anime flurry. Each quick punch is
 // a sharp slap riding a short whoosh; the last, launching one comes in on a
 // bigger whoosh and lands with a deep boom and a short echo. Joe picked this
@@ -1084,6 +1120,17 @@ function playHokitTaunt() {
     var name = HOKIT_TAUNTS[pick], buf = clipBuffers[name];
     if (!buf) { withClip(name); return; }
     if (playTalk(name, 0.9)) lastHokitLine = pick;
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// The eagle swooping down through its path in Gaethje's Eagle Strike
+// (Joe's clip, played whole).
+function playEagleSwoop() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    if (!playClip("eagleSwoop", 0.85)) withClip("eagleSwoop");
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -1804,6 +1851,16 @@ function playDiamondGuard() {
     if (ctx.state === "suspended") ctx.resume();
     synthDiamondChime(ctx, ctx.currentTime, 0.5);
     withClip("dustinDiamond", function () { cutInTalk("dustinDiamond", 0.9); });
+  } catch (e) { /* never let audio break the game */ }
+}
+// Gaethje's Truck-ee's ad (truckees-ad.js): a cut from Joe's song. It's the
+// ad's own music, not a voice line, so it stays off the talk channel.
+function playTruckeesAd() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    withClip("truckeesAd", function () { playClip("truckeesAd", 0.8); });
   } catch (e) { /* never let audio break the game */ }
 }
 function synthDiamondChime(ctx, now, vol) {

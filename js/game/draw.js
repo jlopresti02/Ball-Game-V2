@@ -87,6 +87,7 @@ function draw() {
   drawAuraRoses(false); // roses thrown on the mat (aurafarm.js)
   drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
   drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
+  drawEagleStrikeUnder(); // Eagle Strike: the red path and the eagle's shadow (gaethje-eagle.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -97,7 +98,7 @@ function draw() {
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
   // A bat swing goes over whoever it's hitting.
   (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
-    if (!b.alive || duckDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
+    if (!b.alive || duckDrawnApart(b) || golfDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
     var other = balls[1 - b.id];
 
     // Weaving slips the whole fighter sideways for a moment, and a taunting
@@ -341,6 +342,7 @@ function draw() {
   drawAuraActors();    // the bull
   drawJonGoats();      // the goats (jon.js)
   drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)
+  drawEagleStrikeOver();  // the eagle swooping through, and its claw marks (gaethje-eagle.js)
   drawSuplexes();
 
   projectiles.forEach(function (p) {
@@ -364,6 +366,7 @@ function draw() {
   drawAuraLights(s, ox, oy); // the arena going dark, the spotlight, then the lights back up (aurafarm.js)
   drawHerbBanner(); // "Herb Dean is entering the ring" when there's no jumbotron
   drawDiamondBanner(); // and "Diamond Guard" (diamond.js)
+  drawTruckeesBanner(); // and the Truck-ee's ad (truckees-ad.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
     var t = f.life / f.max;
@@ -380,6 +383,7 @@ function draw() {
 
   if (stadium) drawJumbotron(px);
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
+  drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
   swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
 }

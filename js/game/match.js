@@ -64,6 +64,8 @@ function startMatchWith(ch0, ch1) {
   resetAuraFarm();
   resetJonGoats();
   resetDuckDrop();
+  resetEagleStrikes();
+  resetJumboAds(); // truckees-ad.js
   resetCheater();
   resetHerbDean();
 
@@ -196,8 +198,13 @@ function wouldKill(b, amount) {
   return b.alive && b.hp <= amount * incomingMultiplier(b);
 }
 
+// Things that fly at you. They can only be slipped, blocked or parried,
+// never countered: no critical weave, counter grab or guard pull off them.
+var PROJECTILE_SOURCES = { proj: true, throw: true, golf: true };
+
 function hurt(b, amount, source, attackerId) {
   if (!b.alive || b.koOut) return 0;
+  var projectile = !!PROJECTILE_SOURCES[source];
   b.justDodged = false;
   // A seated Watcher can't be hurt by anything at all.
   if (b.invincible) {
@@ -234,7 +241,7 @@ function hurt(b, amount, source, attackerId) {
   // CTE's wild swings are easier to see coming.
   var swinger = source === "swing" && attackerId != null ? balls[attackerId].char.swing : null;
   if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" &&
-      tryWeave(b, attackerId, swinger ? swinger.weaveMult : 1)) {
+      tryWeave(b, attackerId, swinger ? swinger.weaveMult : 1, projectile)) {
     b.justDodged = true;
     return 0;
   }
@@ -249,7 +256,7 @@ function hurt(b, amount, source, attackerId) {
   // and you can't block a wall you're being slammed into).
   var blockChance = Math.min(100, (b.char.blockChance + (b.blockBonus || 0)) * (swinger ? swinger.blockMult : 1));
   if (blockChance > 0 && source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" && Math.random() < blockChance / 100) {
-    floater(b.x, b.y - b.r - 8, "BLOCK", "dodge");
+    floater(b.x, b.y - b.r - 8, source === "golf" ? "PARRY" : "BLOCK", "dodge"); // a golf ball's knocked away, not blocked
     b.flash = 0.1;
     return 0;
   }
@@ -294,7 +301,7 @@ function hurt(b, amount, source, attackerId) {
   }
   // Grappler's counter: a chance to grab back whoever just hit it, as long
   // as the hit wasn't a projectile, laser or wall slam and it isn't already grappling.
-  if (b.alive && source && source !== "proj" && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && source !== "igbb" && !b.koDuel &&
+  if (b.alive && source && !projectile && source !== "grapple" && source !== "laser" && source !== "slam" && source !== "finisher" && source !== "flow" && source !== "slugfest" && source !== "kofinal" && source !== "kopunch" && source !== "igbb" && !b.koDuel &&
       b.char.hasGrapple && !b.grapple && !b.grappled && !subLocked(b) && b.grappleCd === 0 && attackerId != null && !duckDropOn(b)) {
     var atk = balls[attackerId];
     if (atk && atk.alive && !atk.invincible && !grabBlockedByImpunity(b, atk)) {
@@ -303,7 +310,7 @@ function hurt(b, amount, source, attackerId) {
     }
   }
   // A strike can knock a fighter with the guard onto its back (guard.js).
-  if (b.alive && amount > 0) tryPullGuard(b, source, attackerId);
+  if (b.alive && amount > 0 && !projectile) tryPullGuard(b, source, attackerId);
   return amount;
 }
 
