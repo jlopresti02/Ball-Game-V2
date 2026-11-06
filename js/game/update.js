@@ -49,6 +49,7 @@ function update(dt) {
   tickTopRope(dt); // the dented mat after Hokit's Top Rope Body Slam (hokit-toprope.js)
   tickDuckDrop(dt); // smoke, feathers and the cracked mat from his Duck Drop (jon-duck.js)
   tickJumboAds(dt); // ads on the jumbotron, one at a time (truckees-ad.js)
+  tickAdBreaks(dt); // sponsor ads at random times, like Poorbet (ad-breaks.js)
   tickEagleStrikes(dt); // Gaethje's Eagle Strike: the red path and the swoop (gaethje-eagle.js)
   tickGolf(dt);         // and his golf mode running out (gaethje-golf.js)
   tickDiamond(dt);  // Dustin turning into Diamond Guard and throwing diamonds (diamond.js)
