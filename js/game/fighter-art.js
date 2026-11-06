@@ -638,6 +638,14 @@ function drawFootballHelmet(c, r, look, ink) {
   c.quadraticCurveTo(0, -r * 0.98, -r * 0.5, -r * 0.8); c.fill();
   var logo = function (x, y, w, rot, squash) {
     c.save(); c.translate(x, y); c.rotate(rot); c.scale(squash, 1);
+    if (look.helmetLogo) {  // a ready-made logo image in place of the drawn oval
+      var im = artDecalImage(look.helmetLogo);
+      if (im.complete && im.naturalWidth) {
+        var lh = w * 2 * im.naturalHeight / im.naturalWidth;
+        c.drawImage(im, -w, -lh / 2, w * 2, lh);
+      }
+      c.restore(); return;
+    }
     c.fillStyle = "#151515"; c.beginPath(); c.ellipse(0, 0, w, w * 0.62, 0, 0, Math.PI * 2); c.fill();
     c.fillStyle = "#f4f1ea"; c.beginPath(); c.ellipse(0, 0, w * 0.9, w * 0.54, 0, 0, Math.PI * 2); c.fill();
     c.fillStyle = red; c.beginPath(); c.ellipse(0, 0, w * 0.8, w * 0.46, 0, 0, Math.PI * 2); c.fill();
@@ -647,9 +655,9 @@ function drawFootballHelmet(c, r, look, ink) {
     c.strokeText(txt, 0, w * 0.04); c.fillText(txt, 0, w * 0.04);
     c.restore();
   };
-  logo(0, -r * 0.94, r * 0.11, 0, 1);
-  logo(-r * 0.8, -r * 0.82, r * 0.2, -0.25, 0.55);
-  logo(r * 0.8, -r * 0.82, r * 0.2, 0.25, 0.55);
+  logo(0, -r * 0.95, r * 0.13, 0, 1);
+  logo(-r * 0.79, -r * 0.84, r * 0.23, -0.25, 0.62);
+  logo(r * 0.79, -r * 0.84, r * 0.23, 0.25, 0.62);
   // Ear holes
   c.fillStyle = shadeHex(gold, -0.55);
   [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(s * r * 0.82, -r * 0.5, r * 0.035, r * 0.05, 0, 0, Math.PI * 2); c.fill(); });
