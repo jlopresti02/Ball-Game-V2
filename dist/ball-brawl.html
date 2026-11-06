@@ -13272,7 +13272,7 @@ function tickDuelFinish(d, o, sd, dt) {
       }
       if (!reduceMotion) { shake = Math.max(shake, 28); hitStop = Math.max(hitStop, 0.12); }
       crowdReact(1);
-      if (d.rapier) playRapierSlice(); else playSwordSlash();
+      playRapierSlice(); // Joe's slice, on every duel that ends in a slash (Dustin's too)
       if (dealt > 0 && o.alive) beginWallSlam(o, -sd.ux, -sd.uy, { knockback: cfg.slashKnockback, wallSlams: 2, slamDamage: 4 });
       checkEnd();
     }
