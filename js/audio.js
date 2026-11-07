@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice"].concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -2019,6 +2019,50 @@ function playSwordClash(big) {
 
 // The Diamond Slash at the end of a sword duel: a sharp rising "shing", a
 // glassy ring and a heavy hit.
+// Khabib's ring bear (khabib-bear.js), from Joe's recording (Joe's picks,
+// 2026-11-06): bear-B when Khabib knocks it out, bear-D when he throws it,
+// and a random one of the others for everything else (coming in, the dust
+// cloud going up, ambling off, landing on someone). The synth growl below
+// stands in until they're loaded.
+var BEAR_CLIPS = ["bearA", "bearB", "bearC", "bearD", "bearE", "bearF", "bearG", "bearH", "bearI", "bearJ"];
+var BEAR_RANDOM = ["bearA", "bearC", "bearE", "bearF", "bearG", "bearH", "bearI", "bearJ"], lastBearClip = null;
+function playBearSound(moment, gain) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var name = moment === "ko" ? "bearB" : moment === "throw" ? "bearD" : null;
+    if (!name) {
+      var pool = BEAR_RANDOM.filter(function (n) { return n !== lastBearClip; });
+      name = pool[Math.floor(Math.random() * pool.length)];
+      lastBearClip = name;
+    }
+    if (!playClip(name, gain || 0.9)) { withClip(name); playBearGrowl(gain || 1); }
+  } catch (e) { /* never let audio break the game */ }
+}
+// A low, rumbling growl, synthesized (the stand-in).
+function playBearGrowl(gain) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var t = ctx.currentTime, dur = 0.9, g = ctx.createGain(), lp = ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 520; lp.Q.value = 3;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5 * (gain || 1), t + 0.12);
+    g.gain.setValueAtTime(0.5 * (gain || 1), t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    var o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    o1.type = "sawtooth"; o2.type = "square"; o1.frequency.value = 78; o2.frequency.value = 52;
+    o1.frequency.linearRampToValueAtTime(64, t + dur);
+    lfo.frequency.value = 23; lg.gain.value = 14; lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
+    // A rasp of noise in it.
+    var nb = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate), nd = nb.getChannelData(0);
+    for (var i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * 0.5;
+    var ns = ctx.createBufferSource(); ns.buffer = nb;
+    var ng = ctx.createGain(); ng.gain.value = 0.35;
+    o1.connect(lp); o2.connect(lp); ns.connect(ng); ng.connect(lp); lp.connect(g); g.connect(ctx.destination);
+    [o1, o2, lfo, ns].forEach(function (n) { n.start(t); n.stop(t + dur + 0.05); });
+  } catch (e) { /* never let audio break the game */ }
+}
 // Ilia's rapier cutting someone (the duel's slash and his lunge landing):
 // Joe's slice clip, or the diamond slash sound until it's loaded.
 function playRapierSlice() {

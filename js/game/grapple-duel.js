@@ -162,6 +162,7 @@ function grabEscaped(attacker, target) {
 
 function attemptGrab(attacker, target) {
   if (duckDropOn(attacker) || duckDropOn(target)) return false; // no grappling mid Duck Drop (jon-duck.js)
+  if (bearOn(attacker) || bearOn(target) || attacker.bearHeld || target.bearHeld) return false; // or in the bear's dust cloud (khabib-bear.js)
   if (target.slamSafe > 0) return false;
   var ag = attacker.char.grapple;
   if (ag && ag.shotName) floater(attacker.x, attacker.y - attacker.r - 44, ag.shotName, "crit"); // calls the shot (Gaethje's DOUBLE LEG)
