@@ -24,6 +24,7 @@ function draw() {
   if (stadium) { theme.floor = WWIT.mat; theme.wall = STAGE_INK; theme.ink = STAGE_INK; }
   var s = stadium ? px * ST.A / W : canvas.width / W;
   var ox = stadium ? ST.AX * px : 0, oy = stadium ? ST.AY * px : 0;
+  lastArenaXf = { s: s, ox: ox, oy: oy }; // for the death animation's snapshot (death.js)
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = theme.floor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -376,6 +377,7 @@ function draw() {
   drawPoorbetBanner(); // and the Poorbet sponsor ad (poorbet-ad.js)
   drawStillBanner(); // and the still fighter ads (still-ads.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
+  drawDeathFx(); // the loser's death animation (death.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
     var t = f.life / f.max;
