@@ -10,6 +10,7 @@
 //               print ad with an open ring box: THE DIAMOND STANDARD
 //   Poorbet     the animated casino-marquee ad -> a lost bet slip on a
 //               poker table: THE ONLY SURE BET IS NOT BETTING
+// Plus Dagestan World, a theme park with Khabib on a roller coaster.
 // Nothing moves and there's no sound; they just fade in, hold and fade out.
 // The fighters don't have to be in the fight: their looks come from the
 // roster.
@@ -277,5 +278,10 @@ var STILL_ADS = [
     ctx.fillStyle = "rgba(0,0,0,0.45)"; stillRoundRect(tx - tw / 2, y + h * 0.75, tw, h * 0.13, 8 * k); ctx.fill();
     stillText("Gambling problem? Call 1-800-GAMBLER", tx, y + h * 0.815, 15 * k, "#ffffff", tw * 0.92, { face: "'Helvetica Neue', Helvetica, Arial, sans-serif", weight: "700" });
     stillText("*Poorbet is a parody. Losses happen here.", tx, y + h * 0.94, 11 * k, "rgba(255,255,255,0.7)", tw, { face: "'Helvetica Neue', Helvetica, Arial, sans-serif", weight: "600" });
-  } }
+  } },
+
+  // ---------------------------------------------------------------- Dagestan World
+  // (Joe, 2026-11-06) An amusement park ad: Khabib riding a roller coaster,
+  // arms up, having the time of his life. "2-3 week vacation and forget."
+  { name: "dagestan-world", fighter: "Khabib Nurmagomedov", draw: function (x, y, w, h, k, ch) { drawDagestanWorld(x, y, w, h, k, ch); } }
 ];

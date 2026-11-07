@@ -144,6 +144,7 @@ function spawnRingBear(owner) {
   var tx = P.inn.x, ty = P.inn.y;
   floater(Math.max(60, Math.min(W - 60, tx)), Math.min(H - 30, ty) - BEAR_H * 0.3, "A BEAR?!", "crit");
   playBearSound("enter");
+  startBearWarning(); // "WARNING: BEAR IN ARENA" on the jumbotron (bear-warning.js)
   crowdReact(0.8);
 }
 
