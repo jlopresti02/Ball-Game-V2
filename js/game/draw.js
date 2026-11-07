@@ -399,4 +399,5 @@ function draw() {
   drawRingBearSky(s, ox, oy); // Khabib's thrown bear flying off the screen (khabib-bear.js)
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
   swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
+  deathScreenZoom(ox, oy, s); // the camera riding in on a K.O. flight (death.js)
 }
