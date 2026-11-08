@@ -441,21 +441,27 @@ function playDeathIntro(style) {
     }
   });
 }
+// Joe's big bassy blast (from a clip he sent) for every burst; the chiptune
+// boom stands in if it hasn't loaded.
+function playDeathBlast(c, t) {
+  if (playClip("deathBoom", 1.0, t)) return true;
+  withClip("deathBoom");
+  return false;
+}
 function playDeathBoom(style) {
   withChip(function (c, t) {
+    var big = playDeathBlast(c, t);
     if (style === "explode") {
-      chipNoise(c, t, 1.6, 0.6, 4000, 120);
-      chipNote(c, t, 140, 0.9, "triangle", 0.35, 40);
+      if (!big) { chipNoise(c, t, 1.6, 0.6, 4000, 120); chipNote(c, t, 140, 0.9, "triangle", 0.35, 40); }
       // the game-over jingle as the dust settles
       [523, 494, 466, 440].forEach(function (f2, i) { chipNote(c, t + 0.9 + i * 0.22, f2, 0.2, "square", 0.1); });
       chipNote(c, t + 0.9 + 4 * 0.22, 415, 0.7, "square", 0.1, 207);
     } else if (style === "shatter") {
-      chipNoise(c, t, 0.7, 0.4, 9000, 2500);
+      chipNoise(c, t, 0.7, big ? 0.25 : 0.4, 9000, 2500); // the glass over the blast
       for (var i = 0; i < 9; i++) chipNote(c, t + 0.05 + Math.random() * 0.6, 2000 + Math.random() * 3000, 0.06, "triangle", 0.08);
       chipNote(c, t + 0.4, 330, 0.5, "square", 0.08, 110);
     } else if (style === "koflight") {
-      chipNoise(c, t, 0.9, 0.55, 3000, 100);
-      chipNote(c, t, 110, 0.6, "triangle", 0.4, 45);
+      if (!big) { chipNoise(c, t, 0.9, 0.55, 3000, 100); chipNote(c, t, 110, 0.6, "triangle", 0.4, 45); }
       [392, 523, 659, 784].forEach(function (f2, i) { chipNote(c, t + 0.15 + i * 0.09, f2, 0.09, "square", 0.1); });
       chipNote(c, t + 0.15 + 4 * 0.09, 1046, 0.45, "square", 0.1);
     }
