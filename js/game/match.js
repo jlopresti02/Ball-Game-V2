@@ -55,7 +55,18 @@ function makeBall(id, ch) {
   return b;
 }
 
-function startMatchWith(ch0, ch1) {
+// What's needed to play this fight again exactly (seed.js, saved-fights.js).
+var currentFight = null;
+// seed: replay a saved fight; left out, a fresh one is rolled.
+function startMatchWith(ch0, ch1, seed) {
+  if (seed == null) seed = newFightSeed();
+  setFightSeed(seed);
+  tickAcc = 0;
+  currentFight = { seed: fightSeed, a: ch0, b: ch1, arena: stadiumOn() ? "stadium" : "test", saved: false };
+  withFightRandom(function () { startMatchSeeded(ch0, ch1); });
+  if (typeof onFightStarted === "function") onFightStarted();
+}
+function startMatchSeeded(ch0, ch1) {
   stopAllChargeSounds();
   stopCrowd();
   loadSoundClips();
@@ -118,7 +129,8 @@ function setGamePhase(phase) {
   }
 }
 
-function start() {
+function start() { withFightRandom(startSeeded); }
+function startSeeded() {
   balls.forEach(function (b) {
     var angle = Math.random() * Math.PI * 2;
     b.vx = Math.cos(angle) * SPEED;
