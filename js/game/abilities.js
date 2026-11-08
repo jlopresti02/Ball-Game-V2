@@ -100,7 +100,7 @@ function beginWallSlam(target, dirX, dirY, pp) {
 function onWallImpact(b, nx, ny) {
   var sl = b.slam;
   if (!sl || !b.alive) return;
-  hurt(b, sl.damage, "slam", sl.attackerId);
+  if (sl.damage > 0) hurt(b, sl.damage, "slam", sl.attackerId); // (a death blast throws the winner without hurting them)
   if (sl.goat) { playGoatWall(sl.goat); sl.goat *= 0.85; } // rammed by Jon's goats (audio.js)
   else playSlam();
   var nl = Math.sqrt(nx * nx + ny * ny) || 1;

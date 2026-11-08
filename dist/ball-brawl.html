@@ -7339,7 +7339,7 @@ function beginWallSlam(target, dirX, dirY, pp) {
 function onWallImpact(b, nx, ny) {
   var sl = b.slam;
   if (!sl || !b.alive) return;
-  hurt(b, sl.damage, "slam", sl.attackerId);
+  if (sl.damage > 0) hurt(b, sl.damage, "slam", sl.attackerId); // (a death blast throws the winner without hurting them)
   if (sl.goat) { playGoatWall(sl.goat); sl.goat *= 0.85; } // rammed by Jon's goats (audio.js)
   else playSlam();
   var nl = Math.sqrt(nx * nx + ny * ny) || 1;
@@ -20760,7 +20760,7 @@ function startDeathFx(b) {
   if (deathStyle === "classic" || deathFx || !lastArenaXf) return false;
   var win = balls[1 - b.id], dx = b.x - win.x, dy = b.y - win.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   deathFx = {
-    style: deathStyle, t: 0, x: b.x, y: b.y, r: b.r, color: b.char.color,
+    style: deathStyle, t: 0, id: b.id, x: b.x, y: b.y, r: b.r, color: b.char.color,
     dirX: dx / d, dirY: dy / d, snap: snapFighter(b), after: null, boomed: false, shards: null
   };
   deathFx.last = performance.now();
@@ -20848,6 +20848,7 @@ function drawExplode(f, dt) {
     f.boomed = true;
     shake = Math.max(shake, inst ? 18 : 14);
     if (!inst) playDeathBoom(f.style); // (instant's blast already went off in startDeathFx)
+    blastKnockback(f);
     f.shards = inst ? makeTileShards(f, 6, 160, 420) : makeTileShards(f, 5, 70, 160);
     f.fire = [];
     for (var i = 0; i < (inst ? 90 : 70); i++) {
@@ -20875,6 +20876,22 @@ function drawExplode(f, dt) {
     ctx.fillStyle = "rgba(255,255,240," + core.toFixed(3) + ")";
     ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1.4 + bt * 3), 0, Math.PI * 2); ctx.fill();
   }
+}
+
+// The blast throws the winner hard across the cage, pinballing off two
+// walls (no damage), then they glide back to normal speed. The dead
+// fighter is already out of the physics, so nothing gets in the way.
+var BLAST_KNOCK = 1500;
+function blastKnockback(f) {
+  var w = balls[1 - f.id];
+  if (!w || !w.alive) return;
+  var dx = w.x - f.x, dy = w.y - f.y, d = Math.sqrt(dx * dx + dy * dy);
+  if (d < 1) { var a = Math.random() * Math.PI * 2; dx = Math.cos(a); dy = Math.sin(a); d = 1; }
+  // Let go of anything tying them to the dead fighter first.
+  w.grapple = null; w.grappled = null; w.sprawl = null; w.sprawled = false;
+  beginWallSlam(w, dx / d, dy / d, { knockback: BLAST_KNOCK, wallSlams: 2, slamDamage: 0 });
+  w.slam.ease = 0.9;
+  w.squash = { t: 0.18, max: 0.18, nx: -dx / d, ny: -dy / d };
 }
 
 // Square tiles cut from the snapshot, flying out from the middle.
