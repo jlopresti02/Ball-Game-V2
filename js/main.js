@@ -7,7 +7,8 @@ function frame(t) {
   var dt = Math.min((t - last) / 1000, 1 / 30);
   last = t;
   if (!screens.game.hidden) {
-    if (started && !gamePaused) update(dt); // a gallery demo can be paused (gallery.js)
+    var ts = deathTimeScale(); // slow motion or a freeze while the loser dies (death.js)
+    if (started && !gamePaused && ts > 0) update(dt * ts); // a gallery demo can be paused (gallery.js)
     updateHud(false);
     draw();
   }
@@ -26,6 +27,13 @@ Array.prototype.forEach.call(document.querySelectorAll(".musicBtn"), function (b
   });
 });
 updateMusicButtons();
+// The Death button steps through the death animations (death.js).
+Array.prototype.forEach.call(document.querySelectorAll(".deathBtn"), function (btn) {
+  btn.addEventListener("click", function () {
+    setDeathStyle(DEATH_LIST[(DEATH_LIST.indexOf(deathStyle) + 1) % DEATH_LIST.length]);
+  });
+});
+updateDeathButtons();
 // Tapping past the win banner opens the menu.
 banner.addEventListener("click", function (e) {
   if (gamePhase === "win" && e.target !== startBtn) setGamePhase("menu");

@@ -63,6 +63,7 @@ function startMatchWith(ch0, ch1) {
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
   resetDoBronx();
+  resetDeathFx();
   resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
   resetAllAmerican();
@@ -148,6 +149,7 @@ function floater(x, y, text, kind) {
 }
 
 function burst(b) {
+  if (startDeathFx(b)) return; // the chosen death animation takes over (death.js)
   for (var i = 0; i < 28; i++) {
     var a = Math.random() * Math.PI * 2, s = 80 + Math.random() * 260;
     particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.6 + Math.random() * 0.4, max: 1, size: 3 + Math.random() * 5, color: b.char.color });
@@ -328,15 +330,18 @@ function checkEnd() {
   crowdRelease();
   releaseMusic(); // if a Do Bronx had it off (music.js)
   if (alive.length === 1 && winBy !== "submission") playKnockout(); else crowdRoar();
-  if (alive.length === 1) {
-    bannerText.textContent = alive[0].char.name + " wins" + (winBy ? " by " + winBy : "");
-    bannerText.style.color = alive[0].char.color;
-  } else {
-    bannerText.textContent = "Draw";
-    bannerText.style.color = "var(--ink)";
-  }
-  bannerText.hidden = false;
-  startBtn.textContent = "New match";
-  banner.hidden = false;
-  setGamePhase("win");
+  // The banner waits for the death animation to finish (death.js).
+  afterDeathFx(function () {
+    if (alive.length === 1) {
+      bannerText.textContent = alive[0].char.name + " wins" + (winBy ? " by " + winBy : "");
+      bannerText.style.color = alive[0].char.color;
+    } else {
+      bannerText.textContent = "Draw";
+      bannerText.style.color = "var(--ink)";
+    }
+    bannerText.hidden = false;
+    startBtn.textContent = "New match";
+    banner.hidden = false;
+    setGamePhase("win");
+  });
 }
