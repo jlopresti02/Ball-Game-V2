@@ -63,7 +63,7 @@ function startMatchWith(ch0, ch1) {
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
   resetDoBronx();
-  resetDeathFx();
+  resetDeathFx(); resetIntroMsg();
   resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
   resetAllAmerican();
@@ -127,6 +127,7 @@ function start() {
   started = true;
   banner.hidden = true;
   setGamePhase("fight");
+  startIntroMsg(); // "WHO WINS?" for the viewer (intro-msg.js)
   rollKoRush(); // Brawler's opening KO Rush (usually doesn't happen)
   playStartWhistle();
   startCrowd();
