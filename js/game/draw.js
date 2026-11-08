@@ -400,4 +400,5 @@ function draw() {
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
   swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
   deathScreenZoom(ox, oy, s); // the camera riding in on a K.O. flight (death.js)
+  drawIntroMsg(s, ox, oy); // the instruction to the viewer at the start (intro-msg.js)
 }
