@@ -60,9 +60,13 @@ function updateAllAmerican(self, other, dt) {
       clearActions(other);
       other.dazed = "held"; other.vx = 0; other.vy = 0;
       self.vx = 0; self.vy = 0;
+      // Squared up, holding, until the solo starts (1s after "Here we go!").
+      // Counted in game time, not off the audio clock, so a saved fight
+      // replays the same (seed.js); the solo is lined up the same way.
+      var sinceCall = m.t;
       m.phase = "windup"; m.t = 0; m.nx = dx / d; m.ny = dy / d;
       playFreeBird(); // the solo kicks in as he lines up the hook, and plays on out on the highway (audio.js)
-      m.wait = freeBirdWait(); // squared up, holding, until the solo starts (1s after "Here we go!")
+      m.wait = Math.max(0, HERE_WE_GO_LEAD - sinceCall);
       m.side = dx >= 0 ? 1 : -1;
       return true;
     }

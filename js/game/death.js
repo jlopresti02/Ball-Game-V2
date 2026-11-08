@@ -114,7 +114,7 @@ function drawExplode(f, dt) {
   var t = f.t, inst = f.style === "instant", pop = inst ? 0 : EX_POP;
   if (t < pop) {
     var k = t / EX_POP, jit = k * k * f.r * 0.12;
-    var x = f.x + (Math.random() - 0.5) * jit, y = f.y + (Math.random() - 0.5) * jit;
+    var x = f.x + (nativeRandom() - 0.5) * jit, y = f.y + (nativeRandom() - 0.5) * jit;
     drawSnap(f, x, y, 1 + 0.35 * k * k, 0);
     // White flashes, quicker as it builds
     var flash = Math.max(0, Math.sin(t * (10 + 40 * k)));
@@ -130,8 +130,8 @@ function drawExplode(f, dt) {
     f.shards = inst ? makeTileShards(f, 6, 160, 420) : makeTileShards(f, 5, 70, 160);
     f.fire = [];
     for (var i = 0; i < (inst ? 90 : 70); i++) {
-      var a = Math.random() * Math.PI * 2, sp = inst ? 120 + Math.random() * 420 : 50 + Math.random() * 230;
-      f.fire.push({ x: f.x, y: f.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, s: 9 + Math.random() * 20, life: 0.9 + Math.random() * 1.1, smoke: Math.random() < 0.35 });
+      var a = nativeRandom() * Math.PI * 2, sp = inst ? 120 + nativeRandom() * 420 : 50 + nativeRandom() * 230;
+      f.fire.push({ x: f.x, y: f.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, s: 9 + nativeRandom() * 20, life: 0.9 + nativeRandom() * 1.1, smoke: nativeRandom() < 0.35 });
     }
   }
   var bt = t - pop, slow = inst ? 1 : deathTimeScale() * 0.7 + 0.3; // drifts slowly, then speeds up
@@ -164,7 +164,7 @@ function blastKnockback(f) {
   var w = balls[1 - f.id];
   if (!w || !w.alive) return;
   var dx = w.x - f.x, dy = w.y - f.y, d = Math.sqrt(dx * dx + dy * dy);
-  if (d < 1) { var a = Math.random() * Math.PI * 2; dx = Math.cos(a); dy = Math.sin(a); d = 1; }
+  if (d < 1) { var a = nativeRandom() * Math.PI * 2; dx = Math.cos(a); dy = Math.sin(a); d = 1; }
   // Let go of anything tying them to the dead fighter first.
   w.grapple = null; w.grappled = null; w.sprawl = null; w.sprawled = false;
   beginWallSlam(w, dx / d, dy / d, { knockback: BLAST_KNOCK, wallSlams: 2, slamDamage: 0 });
@@ -178,8 +178,8 @@ function makeTileShards(f, n, s0, s1) {
   for (var i = 0; i < n; i++) for (var j = 0; j < n; j++) {
     var cx = -rad + (i + 0.5) * cell, cy = -rad + (j + 0.5) * cell;
     if (cx * cx + cy * cy > f.r * f.r * 1.1) continue;
-    var a = Math.atan2(cy, cx) + (Math.random() - 0.5) * 0.6, sp = s0 + Math.random() * (s1 - s0);
-    out.push({ i: i, j: j, n: n, cell: cell, x: f.x + cx, y: f.y + cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: 0, vr: (Math.random() - 0.5) * 8, life: 1.6 + Math.random() * 0.6 });
+    var a = Math.atan2(cy, cx) + (nativeRandom() - 0.5) * 0.6, sp = s0 + nativeRandom() * (s1 - s0);
+    out.push({ i: i, j: j, n: n, cell: cell, x: f.x + cx, y: f.y + cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: 0, vr: (nativeRandom() - 0.5) * 8, life: 1.6 + nativeRandom() * 0.6 });
   }
   return out;
 }
@@ -222,8 +222,8 @@ function drawShatter(f, dt) {
   if (!f.cracks) {
     f.cracks = [];
     for (var i = 0; i < 9; i++) {
-      var a = i / 9 * Math.PI * 2 + Math.random() * 0.4, pts = [{ x: 0, y: 0 }], r = 0;
-      while (r < f.r * 1.05) { r += f.r * (0.15 + Math.random() * 0.15); var aa = a + (Math.random() - 0.5) * 0.5; pts.push({ x: Math.cos(aa) * r, y: Math.sin(aa) * r }); }
+      var a = i / 9 * Math.PI * 2 + nativeRandom() * 0.4, pts = [{ x: 0, y: 0 }], r = 0;
+      while (r < f.r * 1.05) { r += f.r * (0.15 + nativeRandom() * 0.15); var aa = a + (nativeRandom() - 0.5) * 0.5; pts.push({ x: Math.cos(aa) * r, y: Math.sin(aa) * r }); }
       f.cracks.push(pts);
     }
   }
@@ -250,11 +250,11 @@ function drawShatter(f, dt) {
     f.shards = f.cracks.map(function (pts, i) {
       var next = f.cracks[(i + 1) % f.cracks.length], a0 = Math.atan2(pts[1].y, pts[1].x), a1 = Math.atan2(next[1].y, next[1].x);
       if (a1 < a0) a1 += Math.PI * 2;
-      var mid = (a0 + a1) / 2, sp = 60 + Math.random() * 90;
-      return { a0: a0, a1: a1, x: f.x, y: f.y, vx: Math.cos(mid) * sp, vy: Math.sin(mid) * sp - 60, rot: 0, vr: (Math.random() - 0.5) * 5, life: 1.6 };
+      var mid = (a0 + a1) / 2, sp = 60 + nativeRandom() * 90;
+      return { a0: a0, a1: a1, x: f.x, y: f.y, vx: Math.cos(mid) * sp, vy: Math.sin(mid) * sp - 60, rot: 0, vr: (nativeRandom() - 0.5) * 5, life: 1.6 };
     });
     f.glints = [];
-    for (var j = 0; j < 30; j++) { var ga = Math.random() * Math.PI * 2, gs = 80 + Math.random() * 200; f.glints.push({ x: f.x, y: f.y, vx: Math.cos(ga) * gs, vy: Math.sin(ga) * gs, life: 0.6 + Math.random() * 0.6 }); }
+    for (var j = 0; j < 30; j++) { var ga = nativeRandom() * Math.PI * 2, gs = 80 + nativeRandom() * 200; f.glints.push({ x: f.x, y: f.y, vx: Math.cos(ga) * gs, vy: Math.sin(ga) * gs, life: 0.6 + nativeRandom() * 0.6 }); }
   }
   var slow = Math.max(0.3, deathTimeScale()), step = dt * slow;
   f.shards.forEach(function (p) {
@@ -386,7 +386,7 @@ function drawPixel(f, dt) {
       if (data) { a = data[k + 3] / 255; col = "rgb(" + data[k] + "," + data[k + 1] + "," + data[k + 2] + ")"; }
       else { var cx = -rad + (i + 0.5) * cell, cy = -rad + (j + 0.5) * cell; if (cx * cx + cy * cy > f.r * f.r) a = 0; }
       if (a < 0.4) continue;
-      f.pix.push({ x: f.x - rad + i * cell, y: f.y - rad + j * cell, s: cell, col: col, delay: j / n * 0.7 + Math.random() * 0.15, vx: (Math.random() - 0.5) * 60, vy: -40 - Math.random() * 90 });
+      f.pix.push({ x: f.x - rad + i * cell, y: f.y - rad + j * cell, s: cell, col: col, delay: j / n * 0.7 + nativeRandom() * 0.15, vx: (nativeRandom() - 0.5) * 60, vy: -40 - nativeRandom() * 90 });
     }
   }
   var t = f.t;
@@ -423,7 +423,7 @@ function chipNoise(ctx2, t, dur, gain, f0, f1) {
     // Stepped noise: each value held for several samples, for that 8-bit crunch
     var n = Math.floor(ctx2.sampleRate * 1.5); chipNoiseBuf = ctx2.createBuffer(1, n, ctx2.sampleRate);
     var d = chipNoiseBuf.getChannelData(0), v = 0;
-    for (var i = 0; i < n; i++) { if (i % 6 === 0) v = Math.random() * 2 - 1; d[i] = v; }
+    for (var i = 0; i < n; i++) { if (i % 6 === 0) v = nativeRandom() * 2 - 1; d[i] = v; }
   }
   var s = ctx2.createBufferSource(); s.buffer = chipNoiseBuf;
   var lp = ctx2.createBiquadFilter(); lp.type = "lowpass";
@@ -479,7 +479,7 @@ function playDeathBoom(style) {
       chipNote(c, t + 0.9 + 4 * 0.22, 415, 0.7, "square", 0.1, 207);
     } else if (style === "shatter") {
       chipNoise(c, t, 0.7, big ? 0.25 : 0.4, 9000, 2500); // the glass over the blast
-      for (var i = 0; i < 9; i++) chipNote(c, t + 0.05 + Math.random() * 0.6, 2000 + Math.random() * 3000, 0.06, "triangle", 0.08);
+      for (var i = 0; i < 9; i++) chipNote(c, t + 0.05 + nativeRandom() * 0.6, 2000 + nativeRandom() * 3000, 0.06, "triangle", 0.08);
       chipNote(c, t + 0.4, 330, 0.5, "square", 0.08, 110);
     } else if (style === "koflight") {
       if (!big) { chipNoise(c, t, 0.9, 0.55, 3000, 100); chipNote(c, t, 110, 0.6, "triangle", 0.4, 45); }

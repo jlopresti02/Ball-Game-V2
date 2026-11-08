@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20261108044815">
+<link rel="stylesheet" href="css/styles.css?v=20261108053021">
 </head>
 <body>
 <main>
@@ -18,6 +18,7 @@
       <h1>Ball Brawl</h1>
       <div class="titleBtns">
         <button id="galleryBtn" class="small secondary">Gallery</button>
+        <button id="savedBtn" class="small secondary">Saved fights</button>
         <button id="devCornerBtn" class="small secondary">The Dev Corner</button>
       </div>
     </div>
@@ -698,11 +699,15 @@
       </div>
       <div class="postMenu" id="postMenu" hidden>
         <div class="postTitle" id="postTitle"></div>
+        <div class="postSeed" id="postSeed"></div>
+        <button id="menuSave" type="button">Save fight</button>
+        <button id="menuReplay" type="button" class="secondary">Replay this fight</button>
         <button id="menuRematch" type="button">Rematch</button>
         <button id="menuChange" type="button" class="secondary">Change fighters</button>
         <button id="menuArena" type="button" class="secondary arenaBtn">Arena: test</button>
         <button id="menuMusic" type="button" class="secondary musicBtn">Music: Aggressive: War drums</button>
         <button id="menuDeath" type="button" class="secondary deathBtn">Death: Instant explode</button>
+        <button id="menuSaved" type="button" class="secondary">Saved fights</button>
       </div>
     </div>
 
@@ -717,79 +722,89 @@
 
 </main>
 
+<!-- Saved fights (saved-fights.js) -->
+<div class="savedPanel" id="savedPanel" hidden>
+  <div class="savedCard" role="dialog" aria-label="Saved fights">
+    <div class="savedHead"><h2>Saved fights</h2><button id="savedClose" type="button" class="small secondary">Close</button></div>
+    <div class="savedList" id="savedList"></div>
+  </div>
+</div>
+
 <!-- Scripts share one global scope and must load in this order. -->
-<script src="js/config.js?v=20261108044815"></script>
-<script src="js/sound-clips.js?v=20261108044815"></script>
-<script src="js/audio.js?v=20261108044815"></script>
-<script src="js/music.js?v=20261108044815"></script>
-<script src="js/characters.js?v=20261108044815"></script>
-<script src="js/roster-data.js?v=20261108044815"></script>
-<script src="js/dev-fighters.js?v=20261108044815"></script>
-<script src="js/roster-store.js?v=20261108044815"></script>
-<script src="js/game/weight.js?v=20261108044815"></script>
-<script src="js/ui/select.js?v=20261108044815"></script>
-<script src="js/ui/cropper.js?v=20261108044815"></script>
-<script src="js/ui/editor.js?v=20261108044815"></script>
-<script src="js/game/match.js?v=20261108044815"></script>
-<script src="js/game/physics.js?v=20261108044815"></script>
-<script src="js/game/abilities.js?v=20261108044815"></script>
-<script src="js/game/weave.js?v=20261108044815"></script>
-<script src="js/game/finisher.js?v=20261108044815"></script>
-<script src="js/game/grapple-duel.js?v=20261108044815"></script>
-<script src="js/game/bjj.js?v=20261108044815"></script>
-<script src="js/game/rnc.js?v=20261108044815"></script>
-<script src="js/game/armbar.js?v=20261108044815"></script>
-<script src="js/game/suplex.js?v=20261108044815"></script>
-<script src="js/game/guard.js?v=20261108044815"></script>
-<script src="js/game/hokit.js?v=20261108044815"></script>
-<script src="js/game/hokit-toprope.js?v=20261108044815"></script>
-<script src="js/game/cte.js?v=20261108044815"></script>
-<script src="js/game/gaethje.js?v=20261108044815"></script>
-<script src="js/game/gaethje-eagle.js?v=20261108044815"></script>
-<script src="js/game/golf-art.js?v=20261108044815"></script>
-<script src="js/game/gaethje-golf.js?v=20261108044815"></script>
-<script src="js/game/truckees-art.js?v=20261108044815"></script>
-<script src="js/game/truckees-ad.js?v=20261108044815"></script>
-<script src="js/game/niners-art.js?v=20261108044815"></script>
-<script src="js/game/hokit-helmet.js?v=20261108044815"></script>
-<script src="js/game/poorbet-art.js?v=20261108044815"></script>
-<script src="js/game/poorbet-ad.js?v=20261108044815"></script>
-<script src="js/game/still-ads.js?v=20261108044815"></script>
-<script src="js/game/dagestan-ad.js?v=20261108044815"></script>
-<script src="js/game/ad-breaks.js?v=20261108044815"></script>
-<script src="js/game/bear-warning.js?v=20261108044815"></script>
-<script src="js/game/ilia.js?v=20261108044815"></script>
-<script src="js/game/aurafarm-art.js?v=20261108044815"></script>
-<script src="js/game/jon-art.js?v=20261108044815"></script>
-<script src="js/game/jon-duck-art.js?v=20261108044815"></script>
-<script src="js/game/jon.js?v=20261108044815"></script>
-<script src="js/game/jon-duck.js?v=20261108044815"></script>
-<script src="js/game/diamond-art.js?v=20261108044815"></script>
-<script src="js/game/chaels-art.js?v=20261108044815"></script>
-<script src="js/game/diamond.js?v=20261108044815"></script>
-<script src="js/game/sword.js?v=20261108044815"></script>
-<script src="js/game/rapier.js?v=20261108044815"></script>
-<script src="js/game/bear-art.js?v=20261108044815"></script>
-<script src="js/game/khabib-bear.js?v=20261108044815"></script>
-<script src="js/game/aurafarm.js?v=20261108044815"></script>
-<script src="js/game/allamerican-art.js?v=20261108044815"></script>
-<script src="js/game/allamerican.js?v=20261108044815"></script>
-<script src="js/game/korush.js?v=20261108044815"></script>
-<script src="js/game/special.js?v=20261108044815"></script>
-<script src="js/game/dobronx.js?v=20261108044815"></script>
-<script src="js/game/chairshot.js?v=20261108044815"></script>
-<script src="js/game/referee.js?v=20261108044815"></script>
-<script src="js/game/cheater.js?v=20261108044815"></script>
-<script src="js/game/herbdean.js?v=20261108044815"></script>
-<script src="js/game/death.js?v=20261108044815"></script>
-  <script src="js/game/intro-msg.js?v=20261108044815"></script>
-<script src="js/game/update.js?v=20261108044815"></script>
-<script src="js/game/fighter-art.js?v=20261108044815"></script>
-<script src="js/game/draw-attacks.js?v=20261108044815"></script>
-<script src="js/game/wwit-badge.js?v=20261108044815"></script>
-<script src="js/game/stadium.js?v=20261108044815"></script>
-<script src="js/game/draw.js?v=20261108044815"></script>
-<script src="js/ui/gallery.js?v=20261108044815"></script>
-<script src="js/main.js?v=20261108044815"></script>
+<script src="js/config.js?v=20261108053021"></script>
+<script src="js/seed.js?v=20261108053021"></script>
+<script src="js/sound-clips.js?v=20261108053021"></script>
+<script src="js/audio.js?v=20261108053021"></script>
+<script src="js/music.js?v=20261108053021"></script>
+<script src="js/characters.js?v=20261108053021"></script>
+<script src="js/roster-data.js?v=20261108053021"></script>
+<script src="js/dev-fighters.js?v=20261108053021"></script>
+<script src="js/roster-store.js?v=20261108053021"></script>
+<script src="js/game/weight.js?v=20261108053021"></script>
+<script src="js/ui/select.js?v=20261108053021"></script>
+<script src="js/ui/cropper.js?v=20261108053021"></script>
+<script src="js/ui/editor.js?v=20261108053021"></script>
+<script src="js/game/match.js?v=20261108053021"></script>
+<script src="js/game/physics.js?v=20261108053021"></script>
+<script src="js/game/abilities.js?v=20261108053021"></script>
+<script src="js/game/weave.js?v=20261108053021"></script>
+<script src="js/game/finisher.js?v=20261108053021"></script>
+<script src="js/game/grapple-duel.js?v=20261108053021"></script>
+<script src="js/game/bjj.js?v=20261108053021"></script>
+<script src="js/game/rnc.js?v=20261108053021"></script>
+<script src="js/game/armbar.js?v=20261108053021"></script>
+<script src="js/game/suplex.js?v=20261108053021"></script>
+<script src="js/game/guard.js?v=20261108053021"></script>
+<script src="js/game/hokit.js?v=20261108053021"></script>
+<script src="js/game/hokit-toprope.js?v=20261108053021"></script>
+<script src="js/game/cte.js?v=20261108053021"></script>
+<script src="js/game/gaethje.js?v=20261108053021"></script>
+<script src="js/game/gaethje-eagle.js?v=20261108053021"></script>
+<script src="js/game/golf-art.js?v=20261108053021"></script>
+<script src="js/game/gaethje-golf.js?v=20261108053021"></script>
+<script src="js/game/truckees-art.js?v=20261108053021"></script>
+<script src="js/game/truckees-ad.js?v=20261108053021"></script>
+<script src="js/game/niners-art.js?v=20261108053021"></script>
+<script src="js/game/hokit-helmet.js?v=20261108053021"></script>
+<script src="js/game/poorbet-art.js?v=20261108053021"></script>
+<script src="js/game/poorbet-ad.js?v=20261108053021"></script>
+<script src="js/game/still-ads.js?v=20261108053021"></script>
+<script src="js/game/dagestan-ad.js?v=20261108053021"></script>
+<script src="js/game/ad-breaks.js?v=20261108053021"></script>
+<script src="js/game/bear-warning.js?v=20261108053021"></script>
+<script src="js/game/ilia.js?v=20261108053021"></script>
+<script src="js/game/aurafarm-art.js?v=20261108053021"></script>
+<script src="js/game/jon-art.js?v=20261108053021"></script>
+<script src="js/game/jon-duck-art.js?v=20261108053021"></script>
+<script src="js/game/jon.js?v=20261108053021"></script>
+<script src="js/game/jon-duck.js?v=20261108053021"></script>
+<script src="js/game/diamond-art.js?v=20261108053021"></script>
+<script src="js/game/chaels-art.js?v=20261108053021"></script>
+<script src="js/game/diamond.js?v=20261108053021"></script>
+<script src="js/game/sword.js?v=20261108053021"></script>
+<script src="js/game/rapier.js?v=20261108053021"></script>
+<script src="js/game/bear-art.js?v=20261108053021"></script>
+<script src="js/game/khabib-bear.js?v=20261108053021"></script>
+<script src="js/game/aurafarm.js?v=20261108053021"></script>
+<script src="js/game/allamerican-art.js?v=20261108053021"></script>
+<script src="js/game/allamerican.js?v=20261108053021"></script>
+<script src="js/game/korush.js?v=20261108053021"></script>
+<script src="js/game/special.js?v=20261108053021"></script>
+<script src="js/game/dobronx.js?v=20261108053021"></script>
+<script src="js/game/chairshot.js?v=20261108053021"></script>
+<script src="js/game/referee.js?v=20261108053021"></script>
+<script src="js/game/cheater.js?v=20261108053021"></script>
+<script src="js/game/herbdean.js?v=20261108053021"></script>
+<script src="js/game/death.js?v=20261108053021"></script>
+  <script src="js/game/intro-msg.js?v=20261108053021"></script>
+<script src="js/game/update.js?v=20261108053021"></script>
+<script src="js/game/fighter-art.js?v=20261108053021"></script>
+<script src="js/game/draw-attacks.js?v=20261108053021"></script>
+<script src="js/game/wwit-badge.js?v=20261108053021"></script>
+<script src="js/game/stadium.js?v=20261108053021"></script>
+<script src="js/game/draw.js?v=20261108053021"></script>
+<script src="js/ui/gallery.js?v=20261108053021"></script>
+<script src="js/ui/saved-fights.js?v=20261108053021"></script>
+<script src="js/main.js?v=20261108053021"></script>
 </body>
 </html>

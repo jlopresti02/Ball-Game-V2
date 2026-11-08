@@ -2,13 +2,22 @@
 "use strict";
 
 var last = null;
+// The fight runs in fixed 1/60s ticks on its seeded numbers (seed.js), so a
+// saved seed replays the same fight on any phone and frame rate.
+var TICK = 1 / 60, tickAcc = 0;
+function runTicks(dt) {
+  tickAcc = Math.min(tickAcc + dt, TICK * 4);
+  withFightRandom(function () {
+    while (tickAcc >= TICK - 1e-9) { update(TICK); tickAcc -= TICK; }
+  });
+}
 function frame(t) {
   if (last === null) last = t;
   var dt = Math.min((t - last) / 1000, 1 / 30);
   last = t;
   if (!screens.game.hidden) {
     var ts = deathTimeScale(); // slow motion or a freeze while the loser dies (death.js)
-    if (started && !gamePaused && ts > 0) update(dt * ts); // a gallery demo can be paused (gallery.js)
+    if (started && !gamePaused && ts > 0) runTicks(dt * ts); // a gallery demo can be paused (gallery.js)
     updateHud(false);
     draw();
   }

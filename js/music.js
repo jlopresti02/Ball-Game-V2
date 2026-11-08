@@ -20,7 +20,7 @@ var musicNoise = null;
 function mNoise(ctx) {
   if (!musicNoise || musicNoise.sampleRate !== ctx.sampleRate) {
     var b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0);
-    for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    for (var i = 0; i < d.length; i++) d[i] = nativeRandom() * 2 - 1;
     musicNoise = b;
   }
   return musicNoise;
@@ -70,7 +70,7 @@ function mNz(ctx, out, t, type, f, q, peak, dec) {
   var s = ctx.createBufferSource(); s.buffer = mNoise(ctx);
   var fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
   var g = mEnv(ctx, t, 0.001, peak, dec);
-  s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random() * 0.5); s.stop(t + dec + 0.05);
+  s.connect(fl); fl.connect(g); g.connect(out); s.start(t, nativeRandom() * 0.5); s.stop(t + dec + 0.05);
 }
 function mSnare(ctx, out, t, v) { mNz(ctx, out, t, "bandpass", 1800, 0.8, 0.5 * v, 0.16); mOsc(ctx, out, "triangle", 200, t, 0.002, 0.25 * v, 0.08); }
 function mClap(ctx, out, t, v) {

@@ -381,6 +381,23 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
 #demoPause { min-width: 96px; }
 #screenGame.demo.paused .arena { outline: 4px solid var(--blue); outline-offset: -4px; }
 #screenGame.stadium.demo .arena { max-width: calc((100svh - 140px) * 9 / 16); }
+
+/* ---------- saved fights (saved-fights.js) ---------- */
+.postSeed { font-size: 15px; font-weight: 700; letter-spacing: 0.04em; color: #fff; opacity: 0.85; margin: -4px 0 2px; }
+.savedPanel { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.savedPanel[hidden] { display: none; }
+.savedCard { background: var(--bg, var(--floor)); color: var(--ink); border: 3px solid var(--wall); border-radius: 10px; width: min(560px, 100%); max-height: 85vh; display: flex; flex-direction: column; }
+.savedHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 2px solid var(--wall); }
+.savedHead h2 { margin: 0; font-size: 22px; }
+.savedList { overflow-y: auto; padding: 8px 14px 14px; }
+.savedRow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--grid, #ccc); }
+.savedInfo { flex: 1; min-width: 0; }
+.savedNames { font-weight: 800; font-size: 17px; }
+.savedVs { color: var(--muted, #777); font-weight: 600; }
+.savedMeta { font-size: 13px; color: var(--muted, #777); margin-top: 2px; overflow-wrap: anywhere; }
+.savedBtns { display: flex; gap: 6px; flex-shrink: 0; }
+.savedBtns button { font-size: 15px; padding: 5px 12px 7px; }
+.savedEmpty { color: var(--muted, #777); }
 </style>
 </head>
 <body>
@@ -392,6 +409,7 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       <h1>Ball Brawl</h1>
       <div class="titleBtns">
         <button id="galleryBtn" class="small secondary">Gallery</button>
+        <button id="savedBtn" class="small secondary">Saved fights</button>
         <button id="devCornerBtn" class="small secondary">The Dev Corner</button>
       </div>
     </div>
@@ -1072,11 +1090,15 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
       </div>
       <div class="postMenu" id="postMenu" hidden>
         <div class="postTitle" id="postTitle"></div>
+        <div class="postSeed" id="postSeed"></div>
+        <button id="menuSave" type="button">Save fight</button>
+        <button id="menuReplay" type="button" class="secondary">Replay this fight</button>
         <button id="menuRematch" type="button">Rematch</button>
         <button id="menuChange" type="button" class="secondary">Change fighters</button>
         <button id="menuArena" type="button" class="secondary arenaBtn">Arena: test</button>
         <button id="menuMusic" type="button" class="secondary musicBtn">Music: Aggressive: War drums</button>
         <button id="menuDeath" type="button" class="secondary deathBtn">Death: Instant explode</button>
+        <button id="menuSaved" type="button" class="secondary">Saved fights</button>
       </div>
     </div>
 
@@ -1090,6 +1112,14 @@ canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: manipul
   </section>
 
 </main>
+
+<!-- Saved fights (saved-fights.js) -->
+<div class="savedPanel" id="savedPanel" hidden>
+  <div class="savedCard" role="dialog" aria-label="Saved fights">
+    <div class="savedHead"><h2>Saved fights</h2><button id="savedClose" type="button" class="small secondary">Close</button></div>
+    <div class="savedList" id="savedList"></div>
+  </div>
+</div>
 
 <!-- Scripts share one global scope and must load in this order. -->
 <script>
@@ -1113,6 +1143,43 @@ var SIT_SPOTS = [
 ];
 
 var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Fight seeds: every fight runs on its own seeded random numbers, so a saved
+// fight (its seed, both fighters and the arena) plays out exactly the same
+// again. The fight logic draws from the seeded generator; drawing, sound and
+// everything else keep the browser's own Math.random, so they can't knock a
+// replay off course. The game also steps in fixed 1/60s ticks (main.js), so
+// a 60Hz and a 120Hz phone run the same fight.
+"use strict";
+
+var NATIVE_RANDOM = Math.random;
+function nativeRandom() { return NATIVE_RANDOM(); }
+
+var fightSeed = 0, seedState = 0;
+function seededRandom() { // mulberry32
+  seedState = (seedState + 0x6D2B79F5) | 0;
+  var t = seedState;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+function setFightSeed(seed) { fightSeed = seed >>> 0; seedState = fightSeed; }
+function newFightSeed() { return Math.floor(NATIVE_RANDOM() * 4294967296) >>> 0; }
+// Runs fight logic on the seeded numbers.
+function withFightRandom(fn) {
+  var prev = Math.random;
+  Math.random = seededRandom;
+  try { return fn(); } finally { Math.random = prev; }
+}
+function seedCode(seed) {
+  var s = (seed >>> 0).toString(36).toUpperCase();
+  while (s.length < 7) s = "0" + s;
+  return s;
+}
+function parseSeedCode(code) {
+  var n = parseInt(String(code).replace(/[^0-9a-z]/gi, ""), 36);
+  return isFinite(n) ? (n >>> 0) : null;
+}
 
 // Recorded sound clips, inlined as MP3s so they work on GitHub Pages and
 // in the single-file build alike. Decoded and played by audio.js
@@ -1262,7 +1329,7 @@ function playBounce() {
     if (now - lastBounceSound < 0.03) return;
     lastBounceSound = now;
 
-    var freq = 300 + Math.random() * 220;
+    var freq = 300 + nativeRandom() * 220;
 
     var master = ctx.createGain();
     master.gain.setValueAtTime(0.0001, now);
@@ -1306,14 +1373,14 @@ function punchWeight(damage) {
 function makeNoiseBuffer(ctx, seconds) {
   var buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate);
   var data = buf.getChannelData(0);
-  for (var i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  for (var i = 0; i < data.length; i++) data[i] = nativeRandom() * 2 - 1;
   return buf;
 }
 
 // Builds one punch into `out` starting at `now`. Kept separate from
 // playPunch so it can also be rendered offline for previews.
 function synthPunch(ctx, out, now, weight, noise) {
-  var vary = 0.92 + Math.random() * 0.16; // no two punches sound identical
+  var vary = 0.92 + nativeRandom() * 0.16; // no two punches sound identical
 
   // Slap: a short burst of noise through a falling low-pass filter.
   var slap = ctx.createBufferSource();
@@ -1392,7 +1459,7 @@ function playPunch(damage) {
 var BMF_WHOOSH = 0.045; // the swish leads, the pop lands this much later
 function bmfJabs(ch) { return !!ch && (ch.id === "builtin-bmf" || ch.base === "BMF"); }
 function synthBmfJab(ctx, out, now, noise) {
-  var vary = 0.9 + Math.random() * 0.2;
+  var vary = 0.9 + nativeRandom() * 0.2;
   var hit = now + BMF_WHOOSH;
 
   // Whoosh: noise through a band-pass sweeping up as the fist comes in.
@@ -1475,7 +1542,7 @@ function playSlam() {
     if (!noiseBuffer) {
       noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.2), ctx.sampleRate);
       var data = noiseBuffer.getChannelData(0);
-      for (var i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      for (var i = 0; i < data.length; i++) data[i] = nativeRandom() * 2 - 1;
     }
     var noise = ctx.createBufferSource();
     noise.buffer = noiseBuffer;
@@ -2108,14 +2175,14 @@ function playCaneWhack() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var now = ctx.currentTime, v = 0.94 + Math.random() * 0.12;
+    var now = ctx.currentTime, v = 0.94 + nativeRandom() * 0.12;
     canePok(ctx, now, v, 0.9);
     caneTone(ctx, now, "sine", 210 * v, 120, 0.25, 0.06); // light, not much behind it
     // The rattle: a few smaller poks, quieter and quicker each time.
     var dt = 0.022, pk = 0.42;
     for (var k = 0; k < 4; k++) {
-      dt *= 0.85 + Math.random() * 0.4; pk *= 0.62;
-      canePok(ctx, now + 0.03 + k * dt * 1.6, v * (1.15 + Math.random() * 0.2), pk);
+      dt *= 0.85 + nativeRandom() * 0.4; pk *= 0.62;
+      canePok(ctx, now + 0.03 + k * dt * 1.6, v * (1.15 + nativeRandom() * 0.2), pk);
     }
   } catch (e) { /* never let audio break the game */ }
 }
@@ -2130,7 +2197,7 @@ function playBatHit(big) {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime, hit = now + 0.06; // the whoosh leads in
-    var v = 0.9 + Math.random() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
+    var v = 0.9 + nativeRandom() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
     var w = ctx.createBufferSource();
     w.buffer = caneNoise(ctx);
     var f = ctx.createBiquadFilter();
@@ -2161,7 +2228,7 @@ function playClubHit() {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     playBatHit(false);
-    var hit = ctx.currentTime + 0.06, v = 0.95 + Math.random() * 0.1;
+    var hit = ctx.currentTime + 0.06, v = 0.95 + nativeRandom() * 0.1;
     caneTone(ctx, hit, "triangle", 1900 * v, 1700 * v, 0.35 * BAT_GAIN, 0.18);
     caneTone(ctx, hit, "sine", 3100 * v, 2900 * v, 0.18 * BAT_GAIN, 0.12);
   } catch (e) { /* never let audio break the game */ }
@@ -2176,7 +2243,7 @@ function playGolfPing() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var i = Math.floor(Math.random() * GOLF_IMPACTS.length);
+    var i = Math.floor(nativeRandom() * GOLF_IMPACTS.length);
     if (i === lastGolfImpact) i = (i + 1) % GOLF_IMPACTS.length;
     var name = GOLF_IMPACTS[i];
     if (clipBuffers[name]) { lastGolfImpact = i; playClip(name, 0.9); return; }
@@ -2200,7 +2267,7 @@ function playCritPunch(last) {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime, lead = last ? 0.06 : 0.03, hit = now + lead;
-    var v = 0.95 + Math.random() * 0.1, k = CRIT_GAIN;
+    var v = 0.95 + nativeRandom() * 0.1, k = CRIT_GAIN;
     var w = ctx.createBufferSource();
     w.buffer = caneNoise(ctx);
     var f = ctx.createBiquadFilter();
@@ -2233,7 +2300,7 @@ var COMMENTARY_AT = [6, 18];
 var commentary = { t: 0, next: 0, done: false };
 function resetCommentary() {
   commentary.t = 0; commentary.done = false;
-  commentary.next = COMMENTARY_AT[0] + Math.random() * (COMMENTARY_AT[1] - COMMENTARY_AT[0]);
+  commentary.next = COMMENTARY_AT[0] + nativeRandom() * (COMMENTARY_AT[1] - COMMENTARY_AT[0]);
 }
 function gaethjeFighting() {
   return balls.some(function (b) { return b.char && String(b.char.id).indexOf("c-justin-gaethje") === 0; });
@@ -2285,7 +2352,7 @@ function playKick() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var now = ctx.currentTime, hit = now + 0.05, v = 0.94 + Math.random() * 0.12, k = KICK_GAIN;
+    var now = ctx.currentTime, hit = now + 0.05, v = 0.94 + nativeRandom() * 0.12, k = KICK_GAIN;
     swingWhoosh(ctx, now, hit, 500, 2600, 0.25 * k);
     caneBurst(ctx, hit, 3000 * v, 0.9, 1.0 * k, 0.05);
     caneBurst(ctx, hit, 1400 * v, 1.0, 0.5 * k, 0.07);
@@ -2337,7 +2404,7 @@ function playHokitTaunt() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var pick = Math.floor(Math.random() * (HOKIT_TAUNTS.length - (lastHokitLine < 0 ? 0 : 1)));
+    var pick = Math.floor(nativeRandom() * (HOKIT_TAUNTS.length - (lastHokitLine < 0 ? 0 : 1)));
     if (lastHokitLine >= 0 && pick >= lastHokitLine) pick++;
     var name = HOKIT_TAUNTS[pick], buf = clipBuffers[name];
     if (!buf) { withClip(name); return; }
@@ -2364,7 +2431,7 @@ function playEagleScreech() {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime;
-    if (playClip("eagleScreech", 0.8, now, 0.92 + Math.random() * 0.16)) return; // Joe's recording (the synth below is the stand-in)
+    if (playClip("eagleScreech", 0.8, now, 0.92 + nativeRandom() * 0.16)) return; // Joe's recording (the synth below is the stand-in)
     [[0, 0.42, 1], [0.48, 0.24, 0.8]].forEach(function (c) {
       var t0 = now + c[0], len = c[1];
       var o = ctx.createOscillator(), o2 = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
@@ -2488,12 +2555,12 @@ function playTruckImpact() {
     });
     // Glass: bright noise bursts and tinkling bits scattering for a second.
     for (var j = 0; j < 22; j++) {
-      var t0 = now + 0.02 + (j < 4 ? j * 0.015 : Math.pow(Math.random(), 1.6) * 1.1);
+      var t0 = now + 0.02 + (j < 4 ? j * 0.015 : Math.pow(nativeRandom(), 1.6) * 1.1);
       var gs = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), gg = ctx.createGain();
-      gs.buffer = noise; hp.type = "bandpass"; hp.frequency.value = 3500 + Math.random() * 5000; hp.Q.value = 6 + Math.random() * 10;
-      var len = j < 4 ? 0.18 : 0.03 + Math.random() * 0.06, vol = j < 4 ? 0.7 : 0.15 + Math.random() * 0.25;
+      gs.buffer = noise; hp.type = "bandpass"; hp.frequency.value = 3500 + nativeRandom() * 5000; hp.Q.value = 6 + nativeRandom() * 10;
+      var len = j < 4 ? 0.18 : 0.03 + nativeRandom() * 0.06, vol = j < 4 ? 0.7 : 0.15 + nativeRandom() * 0.25;
       gg.gain.setValueAtTime(0.0001, t0); gg.gain.exponentialRampToValueAtTime(vol, t0 + 0.003); gg.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
-      gs.connect(hp); hp.connect(gg); gg.connect(out); gs.start(t0, Math.random() * 1.2); gs.stop(t0 + len + 0.02);
+      gs.connect(hp); hp.connect(gg); gg.connect(out); gs.start(t0, nativeRandom() * 1.2); gs.stop(t0 + len + 0.02);
     }
   } catch (e) { /* never let audio break the game */ }
 }
@@ -2540,7 +2607,7 @@ function playCameraFlashes() {
     if (!ctx) return;
     var now = ctx.currentTime;
     playClip("cameraFlash", 0.7, now);
-    for (var i = 0; i < 10; i++) playClip("cameraFlash", 0.15 + Math.random() * 0.1, now + 0.1 + Math.random() * 1.4, 0.9 + Math.random() * 0.25);
+    for (var i = 0; i < 10; i++) playClip("cameraFlash", 0.15 + nativeRandom() * 0.1, now + 0.1 + nativeRandom() * 1.4, 0.9 + nativeRandom() * 0.25);
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -2589,7 +2656,7 @@ function startCrowd() {
       c.gain.gain.exponentialRampToValueAtTime(CROWD_FLOOR, now + 1.5);
       c.ready = now + 1.5; // fading in; the mood takes over after
       c.src.connect(c.filter); c.filter.connect(c.gain); c.gain.connect(ctx.destination);
-      c.src.start(now, Math.random() * (buf.duration - 1));
+      c.src.start(now, nativeRandom() * (buf.duration - 1));
     });
   } catch (e) { /* never let audio break the game */ }
 }
@@ -2824,7 +2891,7 @@ function gtNoise(ctx, out, t, type, f, q, p, dec, a) {
   var s = ctx.createBufferSource(); s.buffer = gtNoiseBuf;
   var fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
   var g = gtEnv(ctx, t, a || 0.001, p, dec);
-  s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random()); s.stop(t + (a || 0) + dec + 0.05);
+  s.connect(fl); fl.connect(g); g.connect(out); s.start(t, nativeRandom()); s.stop(t + (a || 0) + dec + 0.05);
   return fl;
 }
 function gtSweep(ctx, out, t, type, f0, f1, glide, p, dec, drive) {
@@ -2872,8 +2939,8 @@ function playGoatWall(k) {
       gtSweep(ctx, out, t, "square", 310 * r, 310 * r * 0.995, 0.5, 0.22 / (i + 1.5), 0.5 * (1 - i * 0.12));
     });
     for (var i = 0; i < 20; i++) {                                         // and rattling
-      var tt = t + Math.pow(Math.random(), 1.6) * 0.45;
-      gtNoise(ctx, out, tt, "bandpass", 3200 * (0.7 + Math.random() * 0.8), 3, 0.28 * (1 - (tt - t) / 0.45 * 0.8), 0.025);
+      var tt = t + Math.pow(nativeRandom(), 1.6) * 0.45;
+      gtNoise(ctx, out, tt, "bandpass", 3200 * (0.7 + nativeRandom() * 0.8), 3, 0.28 * (1 - (tt - t) / 0.45 * 0.8), 0.025);
     }
     crowdReact(0.4);
   } catch (e) { /* never let audio break the game */ }
@@ -2936,7 +3003,7 @@ function auraCrack(ctx, t) {
   // The ash bat ringing: a cluster of bright woody partials that die fast.
   function ring(at, scale, out) {
     [[620, 0.5, 0.22], [1310, 0.65, 0.18], [2240, 0.45, 0.14], [3480, 0.3, 0.1], [4900, 0.18, 0.07]].forEach(function (p) {
-      var o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = p[0] * (0.98 + Math.random() * 0.04);
+      var o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = p[0] * (0.98 + nativeRandom() * 0.04);
       var g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(p[1] * scale, at + 0.001);
       g.gain.exponentialRampToValueAtTime(0.0001, at + p[2]);
@@ -2988,7 +3055,7 @@ function playHoof() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     var now = ctx.currentTime;
-    caneTone(ctx, now, "sine", 110 + Math.random() * 20, 50, 0.3, 0.09);
+    caneTone(ctx, now, "sine", 110 + nativeRandom() * 20, 50, 0.3, 0.09);
     caneBurst(ctx, now, 500, 1.2, 0.12, 0.04);
   } catch (e) { /* never let audio break the game */ }
 }
@@ -3029,10 +3096,10 @@ function playGoatBleat() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var clip = Math.random() < 0.5 ? "goatBaa1" : "goatBaa2";
-    if (playClip(clip, 1.3, null, 0.95 + Math.random() * 0.1)) return;
+    var clip = nativeRandom() < 0.5 ? "goatBaa1" : "goatBaa2";
+    if (playClip(clip, 1.3, null, 0.95 + nativeRandom() * 0.1)) return;
     withClip(clip);
-    var now = ctx.currentTime, dur = 0.5 + Math.random() * 0.2, f0 = 420 + Math.random() * 160;
+    var now = ctx.currentTime, dur = 0.5 + nativeRandom() * 0.2, f0 = 420 + nativeRandom() * 160;
     var o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
     var bp = ctx.createBiquadFilter(), g = ctx.createGain();
     o.type = "sawtooth"; o.frequency.setValueAtTime(f0, now); o.frequency.linearRampToValueAtTime(f0 * 0.9, now + dur);
@@ -3222,7 +3289,7 @@ function playSwordClash(big) {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     big = big || 1;
-    var now = ctx.currentTime, out = ctx.createGain(), pitch = (1 - (big - 1) * 0.12) * (0.96 + Math.random() * 0.08), ring = 0.8 + big * 0.2;
+    var now = ctx.currentTime, out = ctx.createGain(), pitch = (1 - (big - 1) * 0.12) * (0.96 + nativeRandom() * 0.08), ring = 0.8 + big * 0.2;
     out.gain.value = 0.55 * Math.min(1.8, big); out.connect(ctx.destination);
     [[523, 0.5, 0.9], [1187, 0.4, 0.7], [1764, 0.32, 0.55], [2633, 0.25, 0.45], [3517, 0.18, 0.3], [4680, 0.12, 0.22]].forEach(function (p) {
       var o = ctx.createOscillator(), g = ctx.createGain(), f = p[0] * pitch, len = p[2] * ring;
@@ -3256,7 +3323,7 @@ function playBearSound(moment, gain) {
     var name = moment === "ko" ? "bearB" : moment === "throw" ? "bearD" : null;
     if (!name) {
       var pool = BEAR_RANDOM.filter(function (n) { return n !== lastBearClip; });
-      name = pool[Math.floor(Math.random() * pool.length)];
+      name = pool[Math.floor(nativeRandom() * pool.length)];
       lastBearClip = name;
     }
     if (!playClip(name, gain || 0.9)) { withClip(name); playBearGrowl(gain || 1); }
@@ -3278,7 +3345,7 @@ function playBearGrowl(gain) {
     lfo.frequency.value = 23; lg.gain.value = 14; lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
     // A rasp of noise in it.
     var nb = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate), nd = nb.getChannelData(0);
-    for (var i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * 0.5;
+    for (var i = 0; i < nd.length; i++) nd[i] = (nativeRandom() * 2 - 1) * 0.5;
     var ns = ctx.createBufferSource(); ns.buffer = nb;
     var ng = ctx.createGain(); ng.gain.value = 0.35;
     o1.connect(lp); o2.connect(lp); ns.connect(ng); ng.connect(lp); lp.connect(g); g.connect(ctx.destination);
@@ -3411,7 +3478,7 @@ var musicNoise = null;
 function mNoise(ctx) {
   if (!musicNoise || musicNoise.sampleRate !== ctx.sampleRate) {
     var b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = b.getChannelData(0);
-    for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    for (var i = 0; i < d.length; i++) d[i] = nativeRandom() * 2 - 1;
     musicNoise = b;
   }
   return musicNoise;
@@ -3461,7 +3528,7 @@ function mNz(ctx, out, t, type, f, q, peak, dec) {
   var s = ctx.createBufferSource(); s.buffer = mNoise(ctx);
   var fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
   var g = mEnv(ctx, t, 0.001, peak, dec);
-  s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random() * 0.5); s.stop(t + dec + 0.05);
+  s.connect(fl); fl.connect(g); g.connect(out); s.start(t, nativeRandom() * 0.5); s.stop(t + dec + 0.05);
 }
 function mSnare(ctx, out, t, v) { mNz(ctx, out, t, "bandpass", 1800, 0.8, 0.5 * v, 0.16); mOsc(ctx, out, "triangle", 200, t, 0.002, 0.25 * v, 0.08); }
 function mClap(ctx, out, t, v) {
@@ -6828,7 +6895,18 @@ function makeBall(id, ch) {
   return b;
 }
 
-function startMatchWith(ch0, ch1) {
+// What's needed to play this fight again exactly (seed.js, saved-fights.js).
+var currentFight = null;
+// seed: replay a saved fight; left out, a fresh one is rolled.
+function startMatchWith(ch0, ch1, seed) {
+  if (seed == null) seed = newFightSeed();
+  setFightSeed(seed);
+  tickAcc = 0;
+  currentFight = { seed: fightSeed, a: ch0, b: ch1, arena: stadiumOn() ? "stadium" : "test", saved: false };
+  withFightRandom(function () { startMatchSeeded(ch0, ch1); });
+  if (typeof onFightStarted === "function") onFightStarted();
+}
+function startMatchSeeded(ch0, ch1) {
   stopAllChargeSounds();
   stopCrowd();
   loadSoundClips();
@@ -6891,7 +6969,8 @@ function setGamePhase(phase) {
   }
 }
 
-function start() {
+function start() { withFightRandom(startSeeded); }
+function startSeeded() {
   balls.forEach(function (b) {
     var angle = Math.random() * Math.PI * 2;
     b.vx = Math.cos(angle) * SPEED;
@@ -6923,7 +7002,8 @@ function floater(x, y, text, kind) {
 }
 
 function burst(b) {
-  if (startDeathFx(b)) return; // the chosen death animation takes over (death.js)
+  // (burst is also the hit spray on slams; only a real death gets the animation)
+  if (!b.alive && startDeathFx(b)) return; // the chosen death animation takes over (death.js)
   for (var i = 0; i < 28; i++) {
     var a = Math.random() * Math.PI * 2, s = 80 + Math.random() * 260;
     particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.6 + Math.random() * 0.4, max: 1, size: 3 + Math.random() * 5, color: b.char.color });
@@ -16512,9 +16592,13 @@ function updateAllAmerican(self, other, dt) {
       clearActions(other);
       other.dazed = "held"; other.vx = 0; other.vy = 0;
       self.vx = 0; self.vy = 0;
+      // Squared up, holding, until the solo starts (1s after "Here we go!").
+      // Counted in game time, not off the audio clock, so a saved fight
+      // replays the same (seed.js); the solo is lined up the same way.
+      var sinceCall = m.t;
       m.phase = "windup"; m.t = 0; m.nx = dx / d; m.ny = dy / d;
       playFreeBird(); // the solo kicks in as he lines up the hook, and plays on out on the highway (audio.js)
-      m.wait = freeBirdWait(); // squared up, holding, until the solo starts (1s after "Here we go!")
+      m.wait = Math.max(0, HERE_WE_GO_LEAD - sinceCall);
       m.side = dx >= 0 ? 1 : -1;
       return true;
     }
@@ -20837,7 +20921,7 @@ function drawExplode(f, dt) {
   var t = f.t, inst = f.style === "instant", pop = inst ? 0 : EX_POP;
   if (t < pop) {
     var k = t / EX_POP, jit = k * k * f.r * 0.12;
-    var x = f.x + (Math.random() - 0.5) * jit, y = f.y + (Math.random() - 0.5) * jit;
+    var x = f.x + (nativeRandom() - 0.5) * jit, y = f.y + (nativeRandom() - 0.5) * jit;
     drawSnap(f, x, y, 1 + 0.35 * k * k, 0);
     // White flashes, quicker as it builds
     var flash = Math.max(0, Math.sin(t * (10 + 40 * k)));
@@ -20853,8 +20937,8 @@ function drawExplode(f, dt) {
     f.shards = inst ? makeTileShards(f, 6, 160, 420) : makeTileShards(f, 5, 70, 160);
     f.fire = [];
     for (var i = 0; i < (inst ? 90 : 70); i++) {
-      var a = Math.random() * Math.PI * 2, sp = inst ? 120 + Math.random() * 420 : 50 + Math.random() * 230;
-      f.fire.push({ x: f.x, y: f.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, s: 9 + Math.random() * 20, life: 0.9 + Math.random() * 1.1, smoke: Math.random() < 0.35 });
+      var a = nativeRandom() * Math.PI * 2, sp = inst ? 120 + nativeRandom() * 420 : 50 + nativeRandom() * 230;
+      f.fire.push({ x: f.x, y: f.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, s: 9 + nativeRandom() * 20, life: 0.9 + nativeRandom() * 1.1, smoke: nativeRandom() < 0.35 });
     }
   }
   var bt = t - pop, slow = inst ? 1 : deathTimeScale() * 0.7 + 0.3; // drifts slowly, then speeds up
@@ -20887,7 +20971,7 @@ function blastKnockback(f) {
   var w = balls[1 - f.id];
   if (!w || !w.alive) return;
   var dx = w.x - f.x, dy = w.y - f.y, d = Math.sqrt(dx * dx + dy * dy);
-  if (d < 1) { var a = Math.random() * Math.PI * 2; dx = Math.cos(a); dy = Math.sin(a); d = 1; }
+  if (d < 1) { var a = nativeRandom() * Math.PI * 2; dx = Math.cos(a); dy = Math.sin(a); d = 1; }
   // Let go of anything tying them to the dead fighter first.
   w.grapple = null; w.grappled = null; w.sprawl = null; w.sprawled = false;
   beginWallSlam(w, dx / d, dy / d, { knockback: BLAST_KNOCK, wallSlams: 2, slamDamage: 0 });
@@ -20901,8 +20985,8 @@ function makeTileShards(f, n, s0, s1) {
   for (var i = 0; i < n; i++) for (var j = 0; j < n; j++) {
     var cx = -rad + (i + 0.5) * cell, cy = -rad + (j + 0.5) * cell;
     if (cx * cx + cy * cy > f.r * f.r * 1.1) continue;
-    var a = Math.atan2(cy, cx) + (Math.random() - 0.5) * 0.6, sp = s0 + Math.random() * (s1 - s0);
-    out.push({ i: i, j: j, n: n, cell: cell, x: f.x + cx, y: f.y + cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: 0, vr: (Math.random() - 0.5) * 8, life: 1.6 + Math.random() * 0.6 });
+    var a = Math.atan2(cy, cx) + (nativeRandom() - 0.5) * 0.6, sp = s0 + nativeRandom() * (s1 - s0);
+    out.push({ i: i, j: j, n: n, cell: cell, x: f.x + cx, y: f.y + cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: 0, vr: (nativeRandom() - 0.5) * 8, life: 1.6 + nativeRandom() * 0.6 });
   }
   return out;
 }
@@ -20945,8 +21029,8 @@ function drawShatter(f, dt) {
   if (!f.cracks) {
     f.cracks = [];
     for (var i = 0; i < 9; i++) {
-      var a = i / 9 * Math.PI * 2 + Math.random() * 0.4, pts = [{ x: 0, y: 0 }], r = 0;
-      while (r < f.r * 1.05) { r += f.r * (0.15 + Math.random() * 0.15); var aa = a + (Math.random() - 0.5) * 0.5; pts.push({ x: Math.cos(aa) * r, y: Math.sin(aa) * r }); }
+      var a = i / 9 * Math.PI * 2 + nativeRandom() * 0.4, pts = [{ x: 0, y: 0 }], r = 0;
+      while (r < f.r * 1.05) { r += f.r * (0.15 + nativeRandom() * 0.15); var aa = a + (nativeRandom() - 0.5) * 0.5; pts.push({ x: Math.cos(aa) * r, y: Math.sin(aa) * r }); }
       f.cracks.push(pts);
     }
   }
@@ -20973,11 +21057,11 @@ function drawShatter(f, dt) {
     f.shards = f.cracks.map(function (pts, i) {
       var next = f.cracks[(i + 1) % f.cracks.length], a0 = Math.atan2(pts[1].y, pts[1].x), a1 = Math.atan2(next[1].y, next[1].x);
       if (a1 < a0) a1 += Math.PI * 2;
-      var mid = (a0 + a1) / 2, sp = 60 + Math.random() * 90;
-      return { a0: a0, a1: a1, x: f.x, y: f.y, vx: Math.cos(mid) * sp, vy: Math.sin(mid) * sp - 60, rot: 0, vr: (Math.random() - 0.5) * 5, life: 1.6 };
+      var mid = (a0 + a1) / 2, sp = 60 + nativeRandom() * 90;
+      return { a0: a0, a1: a1, x: f.x, y: f.y, vx: Math.cos(mid) * sp, vy: Math.sin(mid) * sp - 60, rot: 0, vr: (nativeRandom() - 0.5) * 5, life: 1.6 };
     });
     f.glints = [];
-    for (var j = 0; j < 30; j++) { var ga = Math.random() * Math.PI * 2, gs = 80 + Math.random() * 200; f.glints.push({ x: f.x, y: f.y, vx: Math.cos(ga) * gs, vy: Math.sin(ga) * gs, life: 0.6 + Math.random() * 0.6 }); }
+    for (var j = 0; j < 30; j++) { var ga = nativeRandom() * Math.PI * 2, gs = 80 + nativeRandom() * 200; f.glints.push({ x: f.x, y: f.y, vx: Math.cos(ga) * gs, vy: Math.sin(ga) * gs, life: 0.6 + nativeRandom() * 0.6 }); }
   }
   var slow = Math.max(0.3, deathTimeScale()), step = dt * slow;
   f.shards.forEach(function (p) {
@@ -21109,7 +21193,7 @@ function drawPixel(f, dt) {
       if (data) { a = data[k + 3] / 255; col = "rgb(" + data[k] + "," + data[k + 1] + "," + data[k + 2] + ")"; }
       else { var cx = -rad + (i + 0.5) * cell, cy = -rad + (j + 0.5) * cell; if (cx * cx + cy * cy > f.r * f.r) a = 0; }
       if (a < 0.4) continue;
-      f.pix.push({ x: f.x - rad + i * cell, y: f.y - rad + j * cell, s: cell, col: col, delay: j / n * 0.7 + Math.random() * 0.15, vx: (Math.random() - 0.5) * 60, vy: -40 - Math.random() * 90 });
+      f.pix.push({ x: f.x - rad + i * cell, y: f.y - rad + j * cell, s: cell, col: col, delay: j / n * 0.7 + nativeRandom() * 0.15, vx: (nativeRandom() - 0.5) * 60, vy: -40 - nativeRandom() * 90 });
     }
   }
   var t = f.t;
@@ -21146,7 +21230,7 @@ function chipNoise(ctx2, t, dur, gain, f0, f1) {
     // Stepped noise: each value held for several samples, for that 8-bit crunch
     var n = Math.floor(ctx2.sampleRate * 1.5); chipNoiseBuf = ctx2.createBuffer(1, n, ctx2.sampleRate);
     var d = chipNoiseBuf.getChannelData(0), v = 0;
-    for (var i = 0; i < n; i++) { if (i % 6 === 0) v = Math.random() * 2 - 1; d[i] = v; }
+    for (var i = 0; i < n; i++) { if (i % 6 === 0) v = nativeRandom() * 2 - 1; d[i] = v; }
   }
   var s = ctx2.createBufferSource(); s.buffer = chipNoiseBuf;
   var lp = ctx2.createBiquadFilter(); lp.type = "lowpass";
@@ -21202,7 +21286,7 @@ function playDeathBoom(style) {
       chipNote(c, t + 0.9 + 4 * 0.22, 415, 0.7, "square", 0.1, 207);
     } else if (style === "shatter") {
       chipNoise(c, t, 0.7, big ? 0.25 : 0.4, 9000, 2500); // the glass over the blast
-      for (var i = 0; i < 9; i++) chipNote(c, t + 0.05 + Math.random() * 0.6, 2000 + Math.random() * 3000, 0.06, "triangle", 0.08);
+      for (var i = 0; i < 9; i++) chipNote(c, t + 0.05 + nativeRandom() * 0.6, 2000 + nativeRandom() * 3000, 0.06, "triangle", 0.08);
       chipNote(c, t + 0.4, 330, 0.5, "square", 0.08, 110);
     } else if (style === "koflight") {
       if (!big) { chipNoise(c, t, 0.9, 0.55, 3000, 100); chipNote(c, t, 110, 0.6, "triangle", 0.4, 45); }
@@ -24307,6 +24391,7 @@ function draw() {
     var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
+    var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -24510,7 +24595,7 @@ function draw() {
     drawHerbDeanSpecial(b); // and his bat during his special
     drawPokeStun(b);
     drawAngry(b);   // fuming at it
-    b.x -= wox; b.y -= woy;
+    b.x = homeX; b.y = homeY;
   });
 
   drawWatcherLasers();
@@ -25156,17 +25241,145 @@ document.getElementById("demoBack").addEventListener("click", function () { show
 // Tapping the arena pauses and unpauses a demo too.
 canvas.addEventListener("click", function () { if (galleryDemo && started && !over) setGamePaused(!gamePaused); });
 
+// Saved fights: the post-fight menu can save the fight that just ended (its
+// seed, both fighters as they were, and the arena), replay it, and the
+// Saved fights list (main screen or the post-fight menu) brings any saved
+// fight back to watch again. Seeds: seed.js.
+"use strict";
+
+var SAVED_KEY = "ballbrawl_fights_v1";
+var SAVED_MAX = 100;
+
+function loadSavedFights() {
+  try { var v = JSON.parse(localStorage.getItem(SAVED_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+}
+function storeSavedFights(list) {
+  try { localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, SAVED_MAX))); return true; } catch (e) { return false; }
+}
+
+// A copy of the fighter exactly as it fought, so later tweaks to the roster
+// don't change how a saved fight plays out (too big a copy keeps just the id).
+function fighterSnapshot(ch) {
+  try { var s = JSON.stringify(ch); return s.length < 150000 ? JSON.parse(s) : null; } catch (e) { return null; }
+}
+function fighterFor(rec, side) {
+  var snap = rec[side], id = rec[side + "Id"];
+  if (snap) return JSON.parse(JSON.stringify(snap));
+  return id ? findChar(id) : null;
+}
+
+function saveCurrentFight() {
+  var f = currentFight;
+  if (!f || f.saved) return null;
+  var rec = {
+    when: new Date().toISOString(), seed: f.seed, code: seedCode(f.seed), arena: f.arena,
+    aId: f.a.id, bId: f.b.id, aName: f.a.name, bName: f.b.name, aColor: f.a.color, bColor: f.b.color,
+    result: bannerText.hidden ? "" : bannerText.textContent,
+    a: fighterSnapshot(f.a), b: fighterSnapshot(f.b)
+  };
+  var list = loadSavedFights();
+  list.unshift(rec);
+  if (!storeSavedFights(list)) { rec.a = rec.b = null; list[0] = rec; if (!storeSavedFights(list)) return null; }
+  f.saved = true;
+  return rec;
+}
+
+// Back into that fight, from the start, waiting on Start match.
+function replayFight(rec) {
+  var a = fighterFor(rec, "a"), b = fighterFor(rec, "b");
+  if (!a || !b) { alert("One of the fighters in that fight isn't on this phone anymore."); return; }
+  if (rec.arena && rec.arena !== (stadiumOn() ? "stadium" : "test")) setArenaMode(rec.arena);
+  closeSavedFights();
+  startMatchWith(a, b, rec.seed);
+}
+
+// --------------------------------------------------------- post-fight menu
+function updatePostSeed() {
+  var f = currentFight, el = document.getElementById("postSeed"), btn = document.getElementById("menuSave");
+  if (!f) return;
+  el.textContent = "Fight #" + seedCode(f.seed);
+  btn.textContent = f.saved ? "Saved ✓" : "Save fight";
+  btn.disabled = !!f.saved;
+}
+function onFightStarted() { updatePostSeed(); }
+
+document.getElementById("menuSave").addEventListener("click", function () {
+  if (saveCurrentFight()) updatePostSeed();
+  else alert("Couldn't save. The phone's storage for the game may be full.");
+});
+document.getElementById("menuReplay").addEventListener("click", function () {
+  var f = currentFight;
+  if (f) startMatchWith(f.a, f.b, f.seed);
+});
+
+// ------------------------------------------------------- saved fights list
+var savedPanel = document.getElementById("savedPanel");
+function openSavedFights() { renderSavedFights(); savedPanel.hidden = false; }
+function closeSavedFights() { savedPanel.hidden = true; }
+
+function renderSavedFights() {
+  var list = loadSavedFights(), box = document.getElementById("savedList");
+  box.innerHTML = "";
+  if (!list.length) {
+    var empty = document.createElement("p");
+    empty.className = "savedEmpty";
+    empty.textContent = "No saved fights yet. After a fight, tap the result and pick Save fight.";
+    box.appendChild(empty);
+    return;
+  }
+  list.forEach(function (rec, i) {
+    var row = document.createElement("div"); row.className = "savedRow";
+    var info = document.createElement("div"); info.className = "savedInfo";
+    var names = document.createElement("div"); names.className = "savedNames";
+    var a = document.createElement("span"); a.textContent = rec.aName; a.style.color = rec.aColor || "";
+    var vs = document.createElement("span"); vs.textContent = " vs "; vs.className = "savedVs";
+    var b = document.createElement("span"); b.textContent = rec.bName; b.style.color = rec.bColor || "";
+    names.appendChild(a); names.appendChild(vs); names.appendChild(b);
+    var meta = document.createElement("div"); meta.className = "savedMeta";
+    var d = new Date(rec.when);
+    meta.textContent = [rec.result, (rec.arena === "stadium" ? "WWIT stadium" : "Test arena"),
+      isNaN(d) ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+      "#" + rec.code].filter(Boolean).join(" · ");
+    info.appendChild(names); info.appendChild(meta);
+    var play = document.createElement("button"); play.type = "button"; play.textContent = "Replay";
+    play.addEventListener("click", function () { replayFight(rec); });
+    var del = document.createElement("button"); del.type = "button"; del.className = "secondary"; del.textContent = "Delete";
+    del.addEventListener("click", function () {
+      if (!confirm("Delete this saved fight?")) return;
+      var l = loadSavedFights(); l.splice(i, 1); storeSavedFights(l); renderSavedFights();
+    });
+    var btns = document.createElement("div"); btns.className = "savedBtns";
+    btns.appendChild(play); btns.appendChild(del);
+    row.appendChild(info); row.appendChild(btns);
+    box.appendChild(row);
+  });
+}
+
+document.getElementById("savedBtn").addEventListener("click", openSavedFights);
+document.getElementById("menuSaved").addEventListener("click", openSavedFights);
+document.getElementById("savedClose").addEventListener("click", closeSavedFights);
+savedPanel.addEventListener("click", function (e) { if (e.target === savedPanel) closeSavedFights(); });
+
 // Game loop, buttons, tap-to-set sliders, and startup. Load this last.
 "use strict";
 
 var last = null;
+// The fight runs in fixed 1/60s ticks on its seeded numbers (seed.js), so a
+// saved seed replays the same fight on any phone and frame rate.
+var TICK = 1 / 60, tickAcc = 0;
+function runTicks(dt) {
+  tickAcc = Math.min(tickAcc + dt, TICK * 4);
+  withFightRandom(function () {
+    while (tickAcc >= TICK - 1e-9) { update(TICK); tickAcc -= TICK; }
+  });
+}
 function frame(t) {
   if (last === null) last = t;
   var dt = Math.min((t - last) / 1000, 1 / 30);
   last = t;
   if (!screens.game.hidden) {
     var ts = deathTimeScale(); // slow motion or a freeze while the loser dies (death.js)
-    if (started && !gamePaused && ts > 0) update(dt * ts); // a gallery demo can be paused (gallery.js)
+    if (started && !gamePaused && ts > 0) runTicks(dt * ts); // a gallery demo can be paused (gallery.js)
     updateHud(false);
     draw();
   }
@@ -25241,14 +25454,15 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261108044815"></script>
-<script src="js/game/update.js?v=20261108044815"></script>
-<script src="js/game/fighter-art.js?v=20261108044815"></script>
-<script src="js/game/draw-attacks.js?v=20261108044815"></script>
-<script src="js/game/wwit-badge.js?v=20261108044815"></script>
-<script src="js/game/stadium.js?v=20261108044815"></script>
-<script src="js/game/draw.js?v=20261108044815"></script>
-<script src="js/ui/gallery.js?v=20261108044815"></script>
-<script src="js/main.js?v=20261108044815"></script>
+  <script src="js/game/intro-msg.js?v=20261108053021"></script>
+<script src="js/game/update.js?v=20261108053021"></script>
+<script src="js/game/fighter-art.js?v=20261108053021"></script>
+<script src="js/game/draw-attacks.js?v=20261108053021"></script>
+<script src="js/game/wwit-badge.js?v=20261108053021"></script>
+<script src="js/game/stadium.js?v=20261108053021"></script>
+<script src="js/game/draw.js?v=20261108053021"></script>
+<script src="js/ui/gallery.js?v=20261108053021"></script>
+<script src="js/ui/saved-fights.js?v=20261108053021"></script>
+<script src="js/main.js?v=20261108053021"></script>
 </body>
 </html>

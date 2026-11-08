@@ -123,6 +123,7 @@ function draw() {
     var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
+    var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -326,7 +327,7 @@ function draw() {
     drawHerbDeanSpecial(b); // and his bat during his special
     drawPokeStun(b);
     drawAngry(b);   // fuming at it
-    b.x -= wox; b.y -= woy;
+    b.x = homeX; b.y = homeY;
   });
 
   drawWatcherLasers();

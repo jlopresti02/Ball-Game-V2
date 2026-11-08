@@ -40,7 +40,7 @@ function playBounce() {
     if (now - lastBounceSound < 0.03) return;
     lastBounceSound = now;
 
-    var freq = 300 + Math.random() * 220;
+    var freq = 300 + nativeRandom() * 220;
 
     var master = ctx.createGain();
     master.gain.setValueAtTime(0.0001, now);
@@ -84,14 +84,14 @@ function punchWeight(damage) {
 function makeNoiseBuffer(ctx, seconds) {
   var buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate);
   var data = buf.getChannelData(0);
-  for (var i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  for (var i = 0; i < data.length; i++) data[i] = nativeRandom() * 2 - 1;
   return buf;
 }
 
 // Builds one punch into `out` starting at `now`. Kept separate from
 // playPunch so it can also be rendered offline for previews.
 function synthPunch(ctx, out, now, weight, noise) {
-  var vary = 0.92 + Math.random() * 0.16; // no two punches sound identical
+  var vary = 0.92 + nativeRandom() * 0.16; // no two punches sound identical
 
   // Slap: a short burst of noise through a falling low-pass filter.
   var slap = ctx.createBufferSource();
@@ -170,7 +170,7 @@ function playPunch(damage) {
 var BMF_WHOOSH = 0.045; // the swish leads, the pop lands this much later
 function bmfJabs(ch) { return !!ch && (ch.id === "builtin-bmf" || ch.base === "BMF"); }
 function synthBmfJab(ctx, out, now, noise) {
-  var vary = 0.9 + Math.random() * 0.2;
+  var vary = 0.9 + nativeRandom() * 0.2;
   var hit = now + BMF_WHOOSH;
 
   // Whoosh: noise through a band-pass sweeping up as the fist comes in.
@@ -253,7 +253,7 @@ function playSlam() {
     if (!noiseBuffer) {
       noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.2), ctx.sampleRate);
       var data = noiseBuffer.getChannelData(0);
-      for (var i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      for (var i = 0; i < data.length; i++) data[i] = nativeRandom() * 2 - 1;
     }
     var noise = ctx.createBufferSource();
     noise.buffer = noiseBuffer;
@@ -886,14 +886,14 @@ function playCaneWhack() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var now = ctx.currentTime, v = 0.94 + Math.random() * 0.12;
+    var now = ctx.currentTime, v = 0.94 + nativeRandom() * 0.12;
     canePok(ctx, now, v, 0.9);
     caneTone(ctx, now, "sine", 210 * v, 120, 0.25, 0.06); // light, not much behind it
     // The rattle: a few smaller poks, quieter and quicker each time.
     var dt = 0.022, pk = 0.42;
     for (var k = 0; k < 4; k++) {
-      dt *= 0.85 + Math.random() * 0.4; pk *= 0.62;
-      canePok(ctx, now + 0.03 + k * dt * 1.6, v * (1.15 + Math.random() * 0.2), pk);
+      dt *= 0.85 + nativeRandom() * 0.4; pk *= 0.62;
+      canePok(ctx, now + 0.03 + k * dt * 1.6, v * (1.15 + nativeRandom() * 0.2), pk);
     }
   } catch (e) { /* never let audio break the game */ }
 }
@@ -908,7 +908,7 @@ function playBatHit(big) {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime, hit = now + 0.06; // the whoosh leads in
-    var v = 0.9 + Math.random() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
+    var v = 0.9 + nativeRandom() * 0.2, k = (big ? 1.3 : 1) * BAT_GAIN;
     var w = ctx.createBufferSource();
     w.buffer = caneNoise(ctx);
     var f = ctx.createBiquadFilter();
@@ -939,7 +939,7 @@ function playClubHit() {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     playBatHit(false);
-    var hit = ctx.currentTime + 0.06, v = 0.95 + Math.random() * 0.1;
+    var hit = ctx.currentTime + 0.06, v = 0.95 + nativeRandom() * 0.1;
     caneTone(ctx, hit, "triangle", 1900 * v, 1700 * v, 0.35 * BAT_GAIN, 0.18);
     caneTone(ctx, hit, "sine", 3100 * v, 2900 * v, 0.18 * BAT_GAIN, 0.12);
   } catch (e) { /* never let audio break the game */ }
@@ -954,7 +954,7 @@ function playGolfPing() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var i = Math.floor(Math.random() * GOLF_IMPACTS.length);
+    var i = Math.floor(nativeRandom() * GOLF_IMPACTS.length);
     if (i === lastGolfImpact) i = (i + 1) % GOLF_IMPACTS.length;
     var name = GOLF_IMPACTS[i];
     if (clipBuffers[name]) { lastGolfImpact = i; playClip(name, 0.9); return; }
@@ -978,7 +978,7 @@ function playCritPunch(last) {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime, lead = last ? 0.06 : 0.03, hit = now + lead;
-    var v = 0.95 + Math.random() * 0.1, k = CRIT_GAIN;
+    var v = 0.95 + nativeRandom() * 0.1, k = CRIT_GAIN;
     var w = ctx.createBufferSource();
     w.buffer = caneNoise(ctx);
     var f = ctx.createBiquadFilter();
@@ -1011,7 +1011,7 @@ var COMMENTARY_AT = [6, 18];
 var commentary = { t: 0, next: 0, done: false };
 function resetCommentary() {
   commentary.t = 0; commentary.done = false;
-  commentary.next = COMMENTARY_AT[0] + Math.random() * (COMMENTARY_AT[1] - COMMENTARY_AT[0]);
+  commentary.next = COMMENTARY_AT[0] + nativeRandom() * (COMMENTARY_AT[1] - COMMENTARY_AT[0]);
 }
 function gaethjeFighting() {
   return balls.some(function (b) { return b.char && String(b.char.id).indexOf("c-justin-gaethje") === 0; });
@@ -1063,7 +1063,7 @@ function playKick() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var now = ctx.currentTime, hit = now + 0.05, v = 0.94 + Math.random() * 0.12, k = KICK_GAIN;
+    var now = ctx.currentTime, hit = now + 0.05, v = 0.94 + nativeRandom() * 0.12, k = KICK_GAIN;
     swingWhoosh(ctx, now, hit, 500, 2600, 0.25 * k);
     caneBurst(ctx, hit, 3000 * v, 0.9, 1.0 * k, 0.05);
     caneBurst(ctx, hit, 1400 * v, 1.0, 0.5 * k, 0.07);
@@ -1115,7 +1115,7 @@ function playHokitTaunt() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var pick = Math.floor(Math.random() * (HOKIT_TAUNTS.length - (lastHokitLine < 0 ? 0 : 1)));
+    var pick = Math.floor(nativeRandom() * (HOKIT_TAUNTS.length - (lastHokitLine < 0 ? 0 : 1)));
     if (lastHokitLine >= 0 && pick >= lastHokitLine) pick++;
     var name = HOKIT_TAUNTS[pick], buf = clipBuffers[name];
     if (!buf) { withClip(name); return; }
@@ -1142,7 +1142,7 @@ function playEagleScreech() {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime;
-    if (playClip("eagleScreech", 0.8, now, 0.92 + Math.random() * 0.16)) return; // Joe's recording (the synth below is the stand-in)
+    if (playClip("eagleScreech", 0.8, now, 0.92 + nativeRandom() * 0.16)) return; // Joe's recording (the synth below is the stand-in)
     [[0, 0.42, 1], [0.48, 0.24, 0.8]].forEach(function (c) {
       var t0 = now + c[0], len = c[1];
       var o = ctx.createOscillator(), o2 = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
@@ -1266,12 +1266,12 @@ function playTruckImpact() {
     });
     // Glass: bright noise bursts and tinkling bits scattering for a second.
     for (var j = 0; j < 22; j++) {
-      var t0 = now + 0.02 + (j < 4 ? j * 0.015 : Math.pow(Math.random(), 1.6) * 1.1);
+      var t0 = now + 0.02 + (j < 4 ? j * 0.015 : Math.pow(nativeRandom(), 1.6) * 1.1);
       var gs = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), gg = ctx.createGain();
-      gs.buffer = noise; hp.type = "bandpass"; hp.frequency.value = 3500 + Math.random() * 5000; hp.Q.value = 6 + Math.random() * 10;
-      var len = j < 4 ? 0.18 : 0.03 + Math.random() * 0.06, vol = j < 4 ? 0.7 : 0.15 + Math.random() * 0.25;
+      gs.buffer = noise; hp.type = "bandpass"; hp.frequency.value = 3500 + nativeRandom() * 5000; hp.Q.value = 6 + nativeRandom() * 10;
+      var len = j < 4 ? 0.18 : 0.03 + nativeRandom() * 0.06, vol = j < 4 ? 0.7 : 0.15 + nativeRandom() * 0.25;
       gg.gain.setValueAtTime(0.0001, t0); gg.gain.exponentialRampToValueAtTime(vol, t0 + 0.003); gg.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
-      gs.connect(hp); hp.connect(gg); gg.connect(out); gs.start(t0, Math.random() * 1.2); gs.stop(t0 + len + 0.02);
+      gs.connect(hp); hp.connect(gg); gg.connect(out); gs.start(t0, nativeRandom() * 1.2); gs.stop(t0 + len + 0.02);
     }
   } catch (e) { /* never let audio break the game */ }
 }
@@ -1318,7 +1318,7 @@ function playCameraFlashes() {
     if (!ctx) return;
     var now = ctx.currentTime;
     playClip("cameraFlash", 0.7, now);
-    for (var i = 0; i < 10; i++) playClip("cameraFlash", 0.15 + Math.random() * 0.1, now + 0.1 + Math.random() * 1.4, 0.9 + Math.random() * 0.25);
+    for (var i = 0; i < 10; i++) playClip("cameraFlash", 0.15 + nativeRandom() * 0.1, now + 0.1 + nativeRandom() * 1.4, 0.9 + nativeRandom() * 0.25);
   } catch (e) { /* never let audio break the game */ }
 }
 
@@ -1367,7 +1367,7 @@ function startCrowd() {
       c.gain.gain.exponentialRampToValueAtTime(CROWD_FLOOR, now + 1.5);
       c.ready = now + 1.5; // fading in; the mood takes over after
       c.src.connect(c.filter); c.filter.connect(c.gain); c.gain.connect(ctx.destination);
-      c.src.start(now, Math.random() * (buf.duration - 1));
+      c.src.start(now, nativeRandom() * (buf.duration - 1));
     });
   } catch (e) { /* never let audio break the game */ }
 }
@@ -1602,7 +1602,7 @@ function gtNoise(ctx, out, t, type, f, q, p, dec, a) {
   var s = ctx.createBufferSource(); s.buffer = gtNoiseBuf;
   var fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
   var g = gtEnv(ctx, t, a || 0.001, p, dec);
-  s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random()); s.stop(t + (a || 0) + dec + 0.05);
+  s.connect(fl); fl.connect(g); g.connect(out); s.start(t, nativeRandom()); s.stop(t + (a || 0) + dec + 0.05);
   return fl;
 }
 function gtSweep(ctx, out, t, type, f0, f1, glide, p, dec, drive) {
@@ -1650,8 +1650,8 @@ function playGoatWall(k) {
       gtSweep(ctx, out, t, "square", 310 * r, 310 * r * 0.995, 0.5, 0.22 / (i + 1.5), 0.5 * (1 - i * 0.12));
     });
     for (var i = 0; i < 20; i++) {                                         // and rattling
-      var tt = t + Math.pow(Math.random(), 1.6) * 0.45;
-      gtNoise(ctx, out, tt, "bandpass", 3200 * (0.7 + Math.random() * 0.8), 3, 0.28 * (1 - (tt - t) / 0.45 * 0.8), 0.025);
+      var tt = t + Math.pow(nativeRandom(), 1.6) * 0.45;
+      gtNoise(ctx, out, tt, "bandpass", 3200 * (0.7 + nativeRandom() * 0.8), 3, 0.28 * (1 - (tt - t) / 0.45 * 0.8), 0.025);
     }
     crowdReact(0.4);
   } catch (e) { /* never let audio break the game */ }
@@ -1714,7 +1714,7 @@ function auraCrack(ctx, t) {
   // The ash bat ringing: a cluster of bright woody partials that die fast.
   function ring(at, scale, out) {
     [[620, 0.5, 0.22], [1310, 0.65, 0.18], [2240, 0.45, 0.14], [3480, 0.3, 0.1], [4900, 0.18, 0.07]].forEach(function (p) {
-      var o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = p[0] * (0.98 + Math.random() * 0.04);
+      var o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = p[0] * (0.98 + nativeRandom() * 0.04);
       var g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(p[1] * scale, at + 0.001);
       g.gain.exponentialRampToValueAtTime(0.0001, at + p[2]);
@@ -1766,7 +1766,7 @@ function playHoof() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     var now = ctx.currentTime;
-    caneTone(ctx, now, "sine", 110 + Math.random() * 20, 50, 0.3, 0.09);
+    caneTone(ctx, now, "sine", 110 + nativeRandom() * 20, 50, 0.3, 0.09);
     caneBurst(ctx, now, 500, 1.2, 0.12, 0.04);
   } catch (e) { /* never let audio break the game */ }
 }
@@ -1807,10 +1807,10 @@ function playGoatBleat() {
     var ctx = getAudioCtx();
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
-    var clip = Math.random() < 0.5 ? "goatBaa1" : "goatBaa2";
-    if (playClip(clip, 1.3, null, 0.95 + Math.random() * 0.1)) return;
+    var clip = nativeRandom() < 0.5 ? "goatBaa1" : "goatBaa2";
+    if (playClip(clip, 1.3, null, 0.95 + nativeRandom() * 0.1)) return;
     withClip(clip);
-    var now = ctx.currentTime, dur = 0.5 + Math.random() * 0.2, f0 = 420 + Math.random() * 160;
+    var now = ctx.currentTime, dur = 0.5 + nativeRandom() * 0.2, f0 = 420 + nativeRandom() * 160;
     var o = ctx.createOscillator(), lfo = ctx.createOscillator(), lg = ctx.createGain();
     var bp = ctx.createBiquadFilter(), g = ctx.createGain();
     o.type = "sawtooth"; o.frequency.setValueAtTime(f0, now); o.frequency.linearRampToValueAtTime(f0 * 0.9, now + dur);
@@ -2000,7 +2000,7 @@ function playSwordClash(big) {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     big = big || 1;
-    var now = ctx.currentTime, out = ctx.createGain(), pitch = (1 - (big - 1) * 0.12) * (0.96 + Math.random() * 0.08), ring = 0.8 + big * 0.2;
+    var now = ctx.currentTime, out = ctx.createGain(), pitch = (1 - (big - 1) * 0.12) * (0.96 + nativeRandom() * 0.08), ring = 0.8 + big * 0.2;
     out.gain.value = 0.55 * Math.min(1.8, big); out.connect(ctx.destination);
     [[523, 0.5, 0.9], [1187, 0.4, 0.7], [1764, 0.32, 0.55], [2633, 0.25, 0.45], [3517, 0.18, 0.3], [4680, 0.12, 0.22]].forEach(function (p) {
       var o = ctx.createOscillator(), g = ctx.createGain(), f = p[0] * pitch, len = p[2] * ring;
@@ -2034,7 +2034,7 @@ function playBearSound(moment, gain) {
     var name = moment === "ko" ? "bearB" : moment === "throw" ? "bearD" : null;
     if (!name) {
       var pool = BEAR_RANDOM.filter(function (n) { return n !== lastBearClip; });
-      name = pool[Math.floor(Math.random() * pool.length)];
+      name = pool[Math.floor(nativeRandom() * pool.length)];
       lastBearClip = name;
     }
     if (!playClip(name, gain || 0.9)) { withClip(name); playBearGrowl(gain || 1); }
@@ -2056,7 +2056,7 @@ function playBearGrowl(gain) {
     lfo.frequency.value = 23; lg.gain.value = 14; lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
     // A rasp of noise in it.
     var nb = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate), nd = nb.getChannelData(0);
-    for (var i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * 0.5;
+    for (var i = 0; i < nd.length; i++) nd[i] = (nativeRandom() * 2 - 1) * 0.5;
     var ns = ctx.createBufferSource(); ns.buffer = nb;
     var ng = ctx.createGain(); ng.gain.value = 0.35;
     o1.connect(lp); o2.connect(lp); ns.connect(ng); ng.connect(lp); lp.connect(g); g.connect(ctx.destination);
