@@ -1,6 +1,7 @@
 // Death animations: what happens to the losing fighter when the fight ends.
 // The Death button (deathBtn) steps through the styles, saved per device:
 //   classic  - the old pop of coloured particles
+//   instant  - blows apart the moment it dies, on the big blast (default)
 //   explode  - slow motion: swells, flashes white, blows apart in chunks
 //   arcade   - everything freezes, the ball hops up and drops off the screen
 //   shatter  - freeze frame, cracks spread, then it breaks like glass
@@ -12,10 +13,10 @@
 "use strict";
 
 var DEATH_KEY = "ballbrawl_death_v1";
-var DEATH_LIST = ["explode", "arcade", "shatter", "koflight", "pixel", "classic"];
-var DEATH_NAMES = { explode: "Slow-mo explode", arcade: "Arcade drop", shatter: "Shatter", koflight: "K.O. flight", pixel: "Pixel dissolve", classic: "Classic" };
-var DEATH_LEN = { explode: 2.6, arcade: 2.6, shatter: 2.4, koflight: 2.6, pixel: 2.2, classic: 0 };
-var deathStyle = "explode";
+var DEATH_LIST = ["instant", "explode", "arcade", "shatter", "koflight", "pixel", "classic"];
+var DEATH_NAMES = { instant: "Instant explode", explode: "Slow-mo explode", arcade: "Arcade drop", shatter: "Shatter", koflight: "K.O. flight", pixel: "Pixel dissolve", classic: "Classic" };
+var DEATH_LEN = { instant: 1.9, explode: 2.6, arcade: 2.6, shatter: 2.4, koflight: 2.6, pixel: 2.2, classic: 0 };
+var deathStyle = "instant";
 try { var savedDeath = localStorage.getItem(DEATH_KEY); if (DEATH_NAMES[savedDeath]) deathStyle = savedDeath; } catch (e) {}
 
 var deathFx = null;        // the animation playing now
@@ -41,7 +42,8 @@ function startDeathFx(b) {
     dirX: dx / d, dirY: dy / d, snap: snapFighter(b), after: null, boomed: false, shards: null
   };
   deathFx.last = performance.now();
-  playDeathIntro(deathFx.style);
+  if (deathStyle === "instant") playDeathBoom("instant"); // no build-up: straight to the blast
+  else playDeathIntro(deathFx.style);
   return true;
 }
 function deathFxBusy() { return !!deathFx && deathFx.t < DEATH_LEN[deathFx.style]; }
@@ -55,6 +57,7 @@ function deathTimeScale() {
   if (!f || f.t >= DEATH_LEN[f.style]) return 1;
   var t = f.t;
   switch (f.style) {
+    case "instant": return t < 0.12 ? 0 : 1; // a split-second hit-stop on the blast
     case "explode": return t < 1.5 ? 0.18 : Math.min(1, 0.18 + (t - 1.5));
     case "arcade": return 0; // frozen, like the old platformers
     case "shatter": return t < 0.7 ? 0 : t < 1.7 ? 0.3 : 1;
@@ -99,7 +102,7 @@ function drawDeathFx() {
   var len = DEATH_LEN[f.style];
   if (f.t >= len && f.after) { var fn = f.after; f.after = null; fn(); }
   if (f.t > len + 0.5) return;
-  ({ explode: drawExplode, arcade: drawArcade, shatter: drawShatter, koflight: drawKoFlight, pixel: drawPixel })[f.style](f, dt);
+  ({ instant: drawExplode, explode: drawExplode, arcade: drawArcade, shatter: drawShatter, koflight: drawKoFlight, pixel: drawPixel })[f.style](f, dt);
 }
 
 // ---------------------------------------------------------------- explode
@@ -108,8 +111,8 @@ function drawDeathFx() {
 // in slow motion before the game speeds back up.
 var EX_POP = 0.95;
 function drawExplode(f, dt) {
-  var t = f.t;
-  if (t < EX_POP) {
+  var t = f.t, inst = f.style === "instant", pop = inst ? 0 : EX_POP;
+  if (t < pop) {
     var k = t / EX_POP, jit = k * k * f.r * 0.12;
     var x = f.x + (Math.random() - 0.5) * jit, y = f.y + (Math.random() - 0.5) * jit;
     drawSnap(f, x, y, 1 + 0.35 * k * k, 0);
@@ -121,16 +124,16 @@ function drawExplode(f, dt) {
   }
   if (!f.boomed) {
     f.boomed = true;
-    shake = Math.max(shake, 14);
-    playDeathBoom(f.style);
-    f.shards = makeTileShards(f, 5, 70, 160);
+    shake = Math.max(shake, inst ? 18 : 14);
+    if (!inst) playDeathBoom(f.style); // (instant's blast already went off in startDeathFx)
+    f.shards = inst ? makeTileShards(f, 6, 160, 420) : makeTileShards(f, 5, 70, 160);
     f.fire = [];
-    for (var i = 0; i < 70; i++) {
-      var a = Math.random() * Math.PI * 2, sp = 50 + Math.random() * 230;
+    for (var i = 0; i < (inst ? 90 : 70); i++) {
+      var a = Math.random() * Math.PI * 2, sp = inst ? 120 + Math.random() * 420 : 50 + Math.random() * 230;
       f.fire.push({ x: f.x, y: f.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, s: 9 + Math.random() * 20, life: 0.9 + Math.random() * 1.1, smoke: Math.random() < 0.35 });
     }
   }
-  var bt = t - EX_POP, slow = deathTimeScale() * 0.7 + 0.3; // drifts slowly, then speeds up
+  var bt = t - pop, slow = inst ? 1 : deathTimeScale() * 0.7 + 0.3; // drifts slowly, then speeds up
   // Fire and smoke
   f.fire.forEach(function (p) {
     p.x += p.vx * dt * slow; p.y += p.vy * dt * slow; p.life -= dt * slow;
@@ -141,11 +144,11 @@ function drawExplode(f, dt) {
   });
   stepShards(f, dt * slow, 0);
   // Shockwave ring and the white-hot core
-  var ring = Math.min(1, bt / 1.1);
+  var ring = Math.min(1, bt / (inst ? 0.6 : 1.1));
   ctx.strokeStyle = "rgba(255,255,255," + (1 - ring).toFixed(3) + ")";
   ctx.lineWidth = 10 * (1 - ring) + 1;
-  ctx.beginPath(); ctx.arc(f.x, f.y, f.r + 260 * ring, 0, Math.PI * 2); ctx.stroke();
-  var core = Math.max(0, 1 - bt / 0.35);
+  ctx.beginPath(); ctx.arc(f.x, f.y, f.r + (inst ? 340 : 260) * ring, 0, Math.PI * 2); ctx.stroke();
+  var core = Math.max(0, 1 - bt / (inst ? 0.25 : 0.35));
   if (core > 0) {
     ctx.fillStyle = "rgba(255,255,240," + core.toFixed(3) + ")";
     ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1.4 + bt * 3), 0, Math.PI * 2); ctx.fill();
@@ -451,6 +454,7 @@ function playDeathBlast(c, t) {
 function playDeathBoom(style) {
   withChip(function (c, t) {
     var big = playDeathBlast(c, t);
+    if (style === "instant" && !big) { chipNoise(c, t, 1.2, 0.6, 4000, 120); chipNote(c, t, 140, 0.7, "triangle", 0.35, 40); }
     if (style === "explode") {
       if (!big) { chipNoise(c, t, 1.6, 0.6, 4000, 120); chipNote(c, t, 140, 0.9, "triangle", 0.35, 40); }
       // the game-over jingle as the dust settles
