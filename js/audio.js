@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -2202,6 +2202,51 @@ function playTornadoWind(dur) {
     g.gain.exponentialRampToValueAtTime(0.0001, end);
     src.connect(bp); bp.connect(g); g.connect(ctx.destination);
     src.start(now); src.stop(end + 0.05); lfo.start(now); lfo.stop(end + 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Charles's Super Saiyan aura (Joe, 2026-11-09): a power-up whoosh as it
+// flares on, Joe's aura hum looping under it while he's blond, then a
+// power-down as it dies away.
+var AURA_VOL = 0.55;
+function playClipOnce(name, vol, at) {
+  var ctx = getAudioCtx(), buf = clipBuffers[name];
+  if (!ctx || !buf) { withClip(name); return; }
+  var src = ctx.createBufferSource(); src.buffer = buf;
+  var g = ctx.createGain(); g.gain.value = vol;
+  src.connect(g); g.connect(ctx.destination); src.start(at || ctx.currentTime);
+}
+function startAuraSound() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return null;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    playClipOnce("saiyanUp", AURA_VOL * 1.3, now);
+    var buf = clipBuffers.saiyanLoop;
+    if (!buf) { withClip("saiyanLoop"); return null; }
+    var src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.setValueAtTime(0.0001, now + 0.9);
+    g.gain.exponentialRampToValueAtTime(AURA_VOL, now + 1.7); // swells in under the end of the power-up
+    src.connect(g); g.connect(ctx.destination);
+    src.start(now);
+    src.stop(now + 60); // never runs on forever
+    return { src: src, g: g };
+  } catch (e) { return null; }
+}
+function stopAuraSound(h, quiet) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var now = ctx.currentTime, fade = quiet ? 0.15 : 0.5;
+    if (!quiet) playClipOnce("saiyanDown", AURA_VOL * 1.3, now);
+    if (!h) return;
+    h.g.gain.cancelScheduledValues(now);
+    h.g.gain.setValueAtTime(Math.max(0.0001, h.g.gain.value), now);
+    h.g.gain.exponentialRampToValueAtTime(0.0001, now + fade);
+    h.src.stop(now + fade + 0.05);
   } catch (e) { /* never let audio break the game */ }
 }
 

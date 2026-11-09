@@ -28,11 +28,14 @@ var DB_FLASH_TIME = 0.7;     // how long the white-out takes to clear
 var brazilMode = false;      // the arena is Brazil themed right now
 var screenFlash = 0;         // white-out over the whole screen (1 = full)
 var cameraFlashes = [];      // pops of camera flash in the crowd
+var auraSnd = null;          // the aura's looping hum (audio.js)
+var auraOn = false;          // the aura sound is on
 
 function resetDoBronx() {
   brazilMode = false;
   screenFlash = 0;
   cameraFlashes = [];
+  if (auraOn) { stopAuraSound(auraSnd, true); auraOn = false; auraSnd = null; }
   if (typeof stadiumCache !== "undefined") stadiumCache.key = null;
 }
 
@@ -88,6 +91,9 @@ function doBronxHair(b, on) {
   if (!hc) return;
   if (!b.dbBaseLook) b.dbBaseLook = b.char.look;
   b.char = Object.assign({}, b.char, { look: on ? Object.assign({}, b.dbBaseLook, { hairColor: hc }) : b.dbBaseLook });
+  // The aura powers up with the blond hair and dies down with it (Joe).
+  if (on && !auraOn) { auraSnd = startAuraSound(); auraOn = true; }
+  else if (!on && auraOn) { stopAuraSound(auraSnd); auraSnd = null; auraOn = false; }
 }
 
 // Joe (2026-11-09): whenever his hair is blond he has a Super Saiyan style
@@ -248,6 +254,7 @@ function tickDoBronxFx(dt) {
   // The state's clock keeps running whatever he's doing (even while he's
   // being slammed or choked), so it's always 15 real seconds.
   if (balls && started && !over) balls.forEach(function (b) { if (b.doBronx && b.alive) b.doBronx.t += dt; });
+  if (auraOn && (over || !balls || !balls.some(charlesBlond))) { stopAuraSound(auraSnd); auraSnd = null; auraOn = false; }
   if (screenFlash > 0) screenFlash = Math.max(0, screenFlash - dt / DB_FLASH_TIME);
   cameraFlashes.forEach(function (c) { c.at -= dt; });
   cameraFlashes = cameraFlashes.filter(function (c) { return c.at + c.life > 0; });
