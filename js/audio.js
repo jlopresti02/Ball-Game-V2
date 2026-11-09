@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["tornadoSpin", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -2202,5 +2202,43 @@ function playTornadoWind(dur) {
     g.gain.exponentialRampToValueAtTime(0.0001, end);
     src.connect(bp); bp.connect(g); g.connect(ctx.destination);
     src.start(now); src.stop(end + 0.05); lfo.start(now); lfo.stop(end + 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Joe's spin recording for the Rose Tornado: loops while it spins (winding
+// up from a little slower), then fades out as it winds down. Falls back to
+// the synth wind if the clip isn't loaded.
+function startTornadoSound(maxDur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return null;
+    if (ctx.state === "suspended") ctx.resume();
+    var buf = clipBuffers.tornadoSpin;
+    if (!buf) { withClip("tornadoSpin"); playTornadoWind(maxDur); return null; }
+    var now = ctx.currentTime;
+    var src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    src.playbackRate.setValueAtTime(0.8, now);
+    src.playbackRate.linearRampToValueAtTime(1, now + 0.7);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.9, now + 0.3);
+    src.connect(g); g.connect(ctx.destination);
+    src.start(now);
+    src.stop(now + maxDur); // never runs on past the longest a tornado can last
+    return { src: src, g: g };
+  } catch (e) { return null; }
+}
+function stopTornadoSound(h, fade) {
+  if (!h) return;
+  try {
+    var ctx = getAudioCtx(), now = ctx.currentTime;
+    h.g.gain.cancelScheduledValues(now);
+    h.g.gain.setValueAtTime(h.g.gain.value || 0.9, now);
+    h.g.gain.exponentialRampToValueAtTime(0.0001, now + fade);
+    h.src.playbackRate.cancelScheduledValues(now);
+    h.src.playbackRate.setValueAtTime(1, now);
+    h.src.playbackRate.linearRampToValueAtTime(0.75, now + fade);
+    h.src.stop(now + fade + 0.05);
   } catch (e) { /* never let audio break the game */ }
 }

@@ -56,7 +56,7 @@ function updateIliaTornado(self, other, dt) {
     var stepLen = cfg.walkSpeed * dt;
     if (d <= stepLen || m.t > 3) {
       self.x = m.cx; self.y = m.cy;
-      if (m.t > TOR_WALK) { m.phase = "spin"; m.t = 0; playTornadoWind(cfg.spin + TOR_WIND); }
+      if (m.t > TOR_WALK) { m.phase = "spin"; m.t = 0; m.snd = startTornadoSound(cfg.spin + 2.5 + TOR_WIND); }
     } else { self.x += dx / d * stepLen; self.y += dy / d * stepLen; }
     return true;
   }
@@ -81,7 +81,7 @@ function updateIliaTornado(self, other, dt) {
       torSuck(self, other, m, cfg, dt);
       // Runs its time, but always gets a moment after spitting someone out.
       var done = m.t >= cfg.spin && (!m.caught) && (m.spat < 0 || m.t - m.spat > 0.5);
-      if (done) { m.phase = "wind"; m.t = 0; }
+      if (done) { m.phase = "wind"; m.t = 0; stopTornadoSound(m.snd, TOR_WIND); m.snd = null; }
     } else if (m.t >= TOR_WIND) {
       m.phase = "ole"; m.t = 0; m.spinV = 0; m.grow = 0;
       floater(self.x, self.y - self.r - 30, "¡OLÉ!", "crit");
@@ -100,13 +100,22 @@ function torSuck(self, other, m, cfg, dt) {
   var R = torRadius(self) * m.grow;
   var c = m.caught;
   if (!c) {
-    if (!other.alive || other.invincible || other.torHeld || swordDuelLocked(other) || (specialBusy(other) && !other.slam)) return;
+    if (!other.alive || other.torHeld) return;
     var dx = m.cx - other.x, dy = m.cy - other.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-    if (m.spat < 0 && d < R * 3.2 && !other.slam) { // the suction (only before it's had someone)
+    var fresh = m.spat >= 0 && m.t - m.spat < 0.5; // just spat out: let them fly clear first
+    if (!fresh && d < R * 3.2 && !other.slam) { // the suction
       var pull = cfg.pull * (1 - d / (R * 3.2));
       other.vx += dx / d * pull * dt; other.vy += dy / d * pull * dt;
     }
-    if (m.spat >= 0 || d > R + other.r * 0.6) return;
+    var touch = R + other.r * 0.6;
+    if (d > touch) return;
+    // Every time they touch it they're sucked in (Joe), unless they can't be
+    // grabbed right now; then it's solid and shoves them back out.
+    var held = fresh || other.invincible || swordDuelLocked(other) || other.grapple || other.grappled || subLocked(other) || other.koOut || (other.igbb && !other.slam);
+    if (held) {
+      if (!fresh) { other.x = m.cx - dx / d * touch; other.y = m.cy - dy / d * touch; }
+      return;
+    }
     clearActions(other);
     if (other.slam) endWallSlam(other);
     other.torHeld = true; other.dazed = "held"; other.vx = other.vy = 0; other.invincible = true; other.immuneCd = 99;
@@ -160,6 +169,7 @@ function torLetGo(self, other) {
 }
 
 function endIliaTornado(self) {
+  if (self.igbb && self.igbb.snd) stopTornadoSound(self.igbb.snd, 0.3);
   self.igbb = null;
   self.invincible = false;
   self.immuneCd = 0;
