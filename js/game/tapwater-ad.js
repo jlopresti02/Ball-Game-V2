@@ -2,7 +2,7 @@
 // jumbotron (a banner in the test arena) the first time Charles Oliveira
 // goes into guard in a fight, and never again that fight.
 //   - Cool aqua, bubbles rising, the TAP WATER bottle in the middle.
-//   - Charles on his back in guard on the left while his opponent's glove
+//   - Charles, gone Super Saiyan (blond, golden aura), on his back in guard on the left while his opponent's glove
 //     taps out on the mat: TAP! TAP! TAP!, a ripple each time.
 //   - "Everybody taps." Bottled at the source: the guard of Charles
 //     Oliveira, the most submissions in UFC history. Product of Brazil.
@@ -30,6 +30,17 @@ function tapWaterOnGuard(b, atk) {
 function tickTapWater(dt) { if (tapWaterShow > 0) tapWaterShow = Math.max(0, tapWaterShow - dt); }
 
 var TW_BLUE = "#0b5fa5", TW_DEEP = "#073b6b";
+
+// Charles gone Super Saiyan for the ad (Joe): his blond Do Bronx hair and
+// the golden flame aura and lightning from dobronx.js, at (cx, cy).
+function tapWaterSaiyan(cx, cy, r, chr) {
+  var base = chr.look, hc = chr.special && chr.special.hairColor;
+  var look = hc ? Object.assign({}, base, { hairColor: hc }) : base;
+  var fake = { x: cx, y: cy, r: r, alive: true, dbBaseLook: base, char: { look: look } };
+  if (hc && typeof drawSaiyanAura === "function") drawSaiyanAura(fake);
+  stillFighter(cx, cy, r, look, chr.name);
+  if (hc && typeof drawSaiyanBolts === "function") drawSaiyanBolts(fake);
+}
 function twSans() { return "'Helvetica Neue', Helvetica, Arial, sans-serif"; }
 
 // The bottle, standing at (cx, base), h tall. `fill` 0-1 is how full it is.
@@ -124,7 +135,7 @@ function drawTapWaterJumbo(x, y, w, h) {
   // A strip of mat to tap on.
   ctx.fillStyle = "#1f6fb2"; stillRoundRect(x + w * 0.02, matY, w * 0.27, h * 0.07, 6 * k); ctx.fill();
   ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(x + w * 0.02 + 6 * k, matY + 3 * k, w * 0.27 - 12 * k, 2 * k);
-  stillFighter(cx, cy, cr, ch.char.look, ch.char.name);
+  tapWaterSaiyan(cx, cy, cr, ch.baseChar || ch.char);
   var gxT = cx + cr * 1.75, gyT = matY - cr * 0.3;
   if (opp) {
     var tapK = 0; // 1 = glove down on the mat
@@ -233,7 +244,7 @@ function drawTapWaterStill(x, y, w, h, k, ch) {
   // The bottle beside it.
   tapWaterBottle(x + w * 0.33, gBase, h * 0.7, k, 0.7);
   // The copy.
-  var cx = x + w * 0.6, cw = w * 0.36;
+  var cx = x + w * 0.565, cw = w * 0.32;
   stillText("TAP WATER", cx, y + h * 0.2, 46 * k, TW_BLUE, cw, { weight: "900" });
   stillText("STRAIGHT FROM THE GUARD.", cx, y + h * 0.4, 26 * k, TW_DEEP, cw, { face: sans, weight: "900" });
   ctx.fillStyle = TW_BLUE; ctx.fillRect(cx - cw * 0.3, y + h * 0.5, cw * 0.6, Math.max(1, 2 * k));
@@ -241,7 +252,7 @@ function drawTapWaterStill(x, y, w, h, k, ch) {
   stillText("ON TAP SINCE 2010 • PRODUCT OF BRAZIL", cx, y + h * 0.8, 13 * k, "#1f9d55", cw, { face: sans, weight: "900" });
   // Charles on the right.
   var jx = x + w * 0.88, jr = h * 0.3;
-  stillFighter(jx, y + h * 0.56, jr, ch.look, ch.name);
+  tapWaterSaiyan(jx, y + h * 0.56, jr, ch);
   ctx.strokeStyle = TW_BLUE; ctx.lineWidth = 3 * k; stillRoundRect(x + 5 * k, y + 5 * k, w - 10 * k, h - 10 * k, 12 * k); ctx.stroke();
 }
 
