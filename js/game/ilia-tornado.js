@@ -40,9 +40,10 @@ function updateIliaTornado(self, other, dt) {
     clearActions(self);
     self.torN++;
     self.torT = torRand(cfg.every);
-    self.igbb = { move: "tornado", phase: "walk", t: 0, ang: 0, spinV: 0, grow: 0, roseT: 0, caught: null, spat: -1, cx: W / 2, cy: H / 2 };
+    self.igbb = { move: "tornado", phase: "walk", t: 0, ang: 0, spinV: 0, grow: 0, roseT: 0, caught: null, spat: -1, cx: W / 2, cy: H / 2, adOwn: true }; // (his cologne ad plays while he spins)
     self.invincible = true;
     floater(self.x, self.y - self.r - 30, "ROSE TORNADO!", "crit");
+    startCologneAd(self); // the Who's Joe & Arman T? cologne ad, first tornado of the fight (cologne-ad.js)
     crowdReact(1);
   }
   var m = self.igbb;
