@@ -12,9 +12,11 @@
 //               poker table: THE ONLY SURE BET IS NOT BETTING
 // Plus Dagestan World, a theme park with Khabib on a roller coaster, and
 // GANE-PROOF (Gane's baby-proofing ad -> a boxed safety kit on a shelf, with
-// the ref napping in the gear: FOR WHEN THE REF IS NAPPING), and
+// the ref napping in the gear: FOR WHEN THE REF IS NAPPING),
 // Who's Joe & Arman T? (Ilia's cologne: a black-and-white magazine photo and
-// the bottle on satin: EVERY ROSE HAS ITS THORN).
+// the bottle on satin: EVERY ROSE HAS ITS THORN), and GoatGoatGo (Jon's
+// search-engine ad -> a bold orange poster: the GOAT of search engines, with
+// Jon and his duck).
 // Nothing moves and there's no sound; they just fade in, hold and fade out.
 // The fighters don't have to be in the fight: their looks come from the
 // roster.
@@ -296,5 +298,9 @@ var STILL_ADS = [
   // ---------------------------------------------------------------- Who's Joe & Arman T?
   // Ilia's cologne ad -> a magazine page: a black-and-white photo of him
   // with only the rose in color, and the bottle on blush satin (cologne-ad.js).
-  { name: "cologne-rose", fighter: "Ilia Topuria", draw: function (x, y, w, h, k, ch) { drawCologneStill(x, y, w, h, k, ch); } }
+  { name: "cologne-rose", fighter: "Ilia Topuria", draw: function (x, y, w, h, k, ch) { drawCologneStill(x, y, w, h, k, ch); } },
+
+  // ---------------------------------------------------------------- GoatGoatGo
+  // The search engine's orange poster, with Jon and his duck (goatgoatgo-ad.js).
+  { name: "goatgoatgo-poster", fighter: "Jon Jones", draw: function (x, y, w, h, k, ch) { drawGoatGoatGoStill(x, y, w, h, k, ch); } }
 ];

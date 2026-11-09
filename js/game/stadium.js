@@ -623,6 +623,7 @@ function drawJumbotron(px) {
   drawStillJumbo(sx, sy, sw, jt.h - 28); // the still fighter ads (still-ads.js)
   drawGaneAdJumbo(sx, sy, sw, jt.h - 28); // Gane's baby-proofing ad (gane-babyproof-ad.js)
   drawCologneJumbo(sx, sy, sw, jt.h - 28); // Ilia's Who's Joe & Arman T? cologne ad (cologne-ad.js)
+  drawGoatGoatGoJumbo(sx, sy, sw, jt.h - 28); // Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawBearWarnJumbo(sx, sy, sw, jt.h - 28); // WARNING: BEAR IN ARENA, over everything (bear-warning.js)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);

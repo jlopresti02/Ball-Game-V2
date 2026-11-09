@@ -77,6 +77,7 @@ function updateDuckDrop(self, other, dt) {
     self.igbb = { move: "duckdrop", phase: "flicker", t: 0, flick: 0, red: false, cx: W / 2, cy: H / 2, R: cfg.radius,
       from: { x: self.x, y: self.y }, face: other.x >= self.x ? 1 : -1 };
     playJonModeSwap("goat"); playJonModeSwap("evil");
+    goatGoatGoOnMove(self); // his GoatGoatGo ad, the first Duck Drop or GOAT Stampede (goatgoatgo-ad.js)
   }
   var m = self.igbb;
   if (m.move !== "duckdrop") return false;
