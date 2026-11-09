@@ -12773,7 +12773,7 @@ function drawBearWarnBanner() {
 
 // GANE-PROOF Baby Proofing (Joe, 2026-11-09): the first time Ciryl Gane
 // goes into Cheater mode in a fight, the jumbotron (a banner in the test
-// arena) runs a baby-proofing ad, to a music-box lullaby.
+// arena) runs a baby-proofing ad, to an upbeat music-box lullaby.
 //   - If he pulls the bat or goes for eye pokes, his call for it ("bat" /
 //     "poke" line, on his first landed hit) comes first: the ad waits for it
 //     to play and finish. If nothing lands, it waits for the ref to wake up
@@ -13080,9 +13080,9 @@ function playGaneAdMusic(dur) {
     if (!ac) return;
     if (ac.state === "suspended") ac.resume();
     stopGaneAdMusic();
-    var out = ganeAdOut = ac.createGain(), now = ac.currentTime + 0.05, beat = 0.36;
-    out.gain.setValueAtTime(0.0001, now); out.gain.exponentialRampToValueAtTime(0.5, now + 0.3);
-    out.gain.setValueAtTime(0.5, now + dur - 0.6); out.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    var out = ganeAdOut = ac.createGain(), now = ac.currentTime + 0.05, beat = 0.27;
+    out.gain.setValueAtTime(0.0001, now); out.gain.exponentialRampToValueAtTime(0.85, now + 0.3);
+    out.gain.setValueAtTime(0.85, now + dur - 0.6); out.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     out.connect(ac.destination);
     if (typeof duckMusic === "function") duckMusic(now, now + dur);
     function bell(f, at, len, vol) {
@@ -13094,14 +13094,53 @@ function playGaneAdMusic(dur) {
         o.connect(g); g.connect(out); o.start(at); o.stop(at + len + 0.05);
       });
     }
-    var t = now, bar = 0;
-    GANE_LULLABY.forEach(function (n) {
-      if (t > now + dur - 0.3) return;
-      var f = 523.25 * Math.pow(2, n[0] / 12) * 2; // up an octave, music-box high
-      bell(f, t, 1.6, 0.18);
-      if (Math.floor((t - now) / (beat * 3)) !== bar - 1) { bell(f / 4, t, 1.2, 0.08); bar = Math.floor((t - now) / (beat * 3)) + 1; }
-      t += n[1] * beat * 1.4;
-    });
+    // Upbeat version: quicker, with a bouncy oom-pah-pah underneath (bass
+    // on 1, chord plucks on 2 and 3), a soft kick and a shaker.
+    function pluck(f, at, len, vol) {
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = "triangle"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + len);
+      o.connect(g); g.connect(out); o.start(at); o.stop(at + len + 0.05);
+    }
+    function kick(at) {
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.setValueAtTime(150, at); o.frequency.exponentialRampToValueAtTime(45, at + 0.12);
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.35, at + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
+      o.connect(g); g.connect(out); o.start(at); o.stop(at + 0.2);
+    }
+    var noise = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.08), ac.sampleRate), nd = noise.getChannelData(0);
+    for (var ni = 0; ni < nd.length; ni++) nd[ni] = Math.random() * 2 - 1;
+    function shaker(at, vol) {
+      var src = ac.createBufferSource(), hp = ac.createBiquadFilter(), g = ac.createGain();
+      src.buffer = noise; hp.type = "highpass"; hp.frequency.value = 6500;
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.06);
+      src.connect(hp); hp.connect(g); g.connect(out); src.start(at); src.stop(at + 0.08);
+    }
+    var end = now + dur - 0.3;
+    // Melody, looped if it runs out before the ad does.
+    var t = now;
+    while (t < end) {
+      for (var mi = 0; mi < GANE_LULLABY.length && t < end; mi++) {
+        var n = GANE_LULLABY[mi], f = 523.25 * Math.pow(2, n[0] / 12) * 2; // up an octave, music-box high
+        bell(f, t, 0.9, 0.2);
+        t += n[1] * beat;
+      }
+    }
+    // The bar grid starts after the one-beat pickup. Harmony: I I V V V V I I.
+    var C = [130.81, 261.63, 329.63, 392.0], G = [98.0, 246.94, 293.66, 392.0];
+    var prog = [C, C, G, G, G, G, C, C];
+    for (var bi = 0, bt = now + beat; bt < end; bi++, bt += beat * 3) {
+      var ch = prog[bi % prog.length];
+      pluck(ch[0], bt, 0.35, 0.3); kick(bt);
+      [1, 2].forEach(function (k) {
+        var at = bt + k * beat;
+        if (at < end) ch.slice(1).forEach(function (cf) { pluck(cf, at, 0.16, 0.07); });
+      });
+      for (var si = 0; si < 6; si++) { var st = bt + si * beat / 2; if (st < end) shaker(st, si % 2 ? 0.05 : 0.09); }
+    }
   } catch (e) { /* never let audio break the game */ }
 }
 function stopGaneAdMusic() {
@@ -25798,15 +25837,15 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261109024311"></script>
-<script src="js/game/update.js?v=20261109024311"></script>
-<script src="js/game/fighter-art.js?v=20261109024311"></script>
-<script src="js/game/draw-attacks.js?v=20261109024311"></script>
-<script src="js/game/wwit-badge.js?v=20261109024311"></script>
-<script src="js/game/stadium.js?v=20261109024311"></script>
-<script src="js/game/draw.js?v=20261109024311"></script>
-<script src="js/ui/gallery.js?v=20261109024311"></script>
-<script src="js/ui/saved-fights.js?v=20261109024311"></script>
-<script src="js/main.js?v=20261109024311"></script>
+  <script src="js/game/intro-msg.js?v=20261109025426"></script>
+<script src="js/game/update.js?v=20261109025426"></script>
+<script src="js/game/fighter-art.js?v=20261109025426"></script>
+<script src="js/game/draw-attacks.js?v=20261109025426"></script>
+<script src="js/game/wwit-badge.js?v=20261109025426"></script>
+<script src="js/game/stadium.js?v=20261109025426"></script>
+<script src="js/game/draw.js?v=20261109025426"></script>
+<script src="js/ui/gallery.js?v=20261109025426"></script>
+<script src="js/ui/saved-fights.js?v=20261109025426"></script>
+<script src="js/main.js?v=20261109025426"></script>
 </body>
 </html>
