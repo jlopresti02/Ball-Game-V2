@@ -378,6 +378,7 @@ function draw() {
   drawPoorbetBanner(); // and the Poorbet sponsor ad (poorbet-ad.js)
   drawStillBanner(); // and the still fighter ads (still-ads.js)
   drawGaneAdBanner(); // and Gane's baby-proofing ad (gane-babyproof-ad.js)
+  drawGoatGoatGoBanner(); // and Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawDeathFx(); // the loser's death animation (death.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";

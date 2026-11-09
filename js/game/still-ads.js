@@ -12,7 +12,9 @@
 //               poker table: THE ONLY SURE BET IS NOT BETTING
 // Plus Dagestan World, a theme park with Khabib on a roller coaster, and
 // GANE-PROOF (Gane's baby-proofing ad -> a boxed safety kit on a shelf, with
-// the ref napping in the gear: FOR WHEN THE REF IS NAPPING).
+// the ref napping in the gear: FOR WHEN THE REF IS NAPPING), and GoatGoatGo
+// (Jon's search-engine ad -> a bold orange poster: the GOAT of search
+// engines, with Jon and his duck).
 // Nothing moves and there's no sound; they just fade in, hold and fade out.
 // The fighters don't have to be in the fight: their looks come from the
 // roster.
@@ -289,5 +291,9 @@ var STILL_ADS = [
 
   // ---------------------------------------------------------------- GANE-PROOF
   // A boxed safety kit, with the ref napping in the gear (gane-babyproof-ad.js).
-  { name: "ganeproof-kit", fighter: "Ciryl Gane", draw: function (x, y, w, h, k) { drawGaneProofStill(x, y, w, h, k); } }
+  { name: "ganeproof-kit", fighter: "Ciryl Gane", draw: function (x, y, w, h, k) { drawGaneProofStill(x, y, w, h, k); } },
+
+  // ---------------------------------------------------------------- GoatGoatGo
+  // The search engine's orange poster, with Jon and his duck (goatgoatgo-ad.js).
+  { name: "goatgoatgo-poster", fighter: "Jon Jones", draw: function (x, y, w, h, k, ch) { drawGoatGoatGoStill(x, y, w, h, k, ch); } }
 ];

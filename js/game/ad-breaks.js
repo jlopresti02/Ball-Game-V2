@@ -26,6 +26,7 @@ function resetAdBreaks() {
   stopPoorbetAd();
   bearWarnShow = 0;
   resetGaneAd();
+  resetGoatGoatGo();
 }
 // Every frame from update().
 function tickAdBreaks(dt) {
@@ -33,6 +34,7 @@ function tickAdBreaks(dt) {
   tickStillAds(dt);
   tickBearWarning(dt);
   tickGaneAd(dt);
+  tickGoatGoatGo(dt);
   // No ad breaks in gallery demos, or once the fight's over.
   if (over || (typeof galleryDemo !== "undefined" && galleryDemo) || !SPONSOR_ADS.length) return;
   adBreakT -= dt;
