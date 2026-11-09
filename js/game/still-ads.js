@@ -16,7 +16,8 @@
 // Who's Joe & Arman T? (Ilia's cologne: a black-and-white magazine photo and
 // the bottle on satin: EVERY ROSE HAS ITS THORN), and GoatGoatGo (Jon's
 // search-engine ad -> a bold orange poster: the GOAT of search engines, with
-// Jon and his duck).
+// Jon and his duck), and Tap Water (Charles's bottled-water ad -> a chrome
+// kitchen tap pouring into a glass: STRAIGHT FROM THE GUARD).
 // Nothing moves and there's no sound; they just fade in, hold and fade out.
 // The fighters don't have to be in the fight: their looks come from the
 // roster.
@@ -302,5 +303,9 @@ var STILL_ADS = [
 
   // ---------------------------------------------------------------- GoatGoatGo
   // The search engine's orange poster, with Jon and his duck (goatgoatgo-ad.js).
-  { name: "goatgoatgo-poster", fighter: "Jon Jones", draw: function (x, y, w, h, k, ch) { drawGoatGoatGoStill(x, y, w, h, k, ch); } }
+  { name: "goatgoatgo-poster", fighter: "Jon Jones", draw: function (x, y, w, h, k, ch) { drawGoatGoatGoStill(x, y, w, h, k, ch); } },
+
+  // ---------------------------------------------------------------- Tap Water
+  // Charles's water: a chrome tap pouring into a glass (tapwater-ad.js).
+  { name: "tapwater-kitchen", fighter: "Charles Oliveira", draw: function (x, y, w, h, k, ch) { drawTapWaterStill(x, y, w, h, k, ch); } }
 ];

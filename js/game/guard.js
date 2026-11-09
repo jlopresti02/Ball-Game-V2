@@ -70,6 +70,7 @@ function beginGuard(b, atk) {
   atk.vx = Math.cos(a) * SPEED; atk.vy = Math.sin(a) * SPEED;
   b.squash = { t: 0.18, max: 0.18, nx: 0, ny: -1 };
   floater(b.x, b.y - b.r - 30, "GUARD", "crit");
+  tapWaterOnGuard(b, atk); // Charles's Tap Water ad, the first time he pulls guard (tapwater-ad.js)
   playSlam();
   if (!reduceMotion) shake = Math.max(shake, 8);
 }
