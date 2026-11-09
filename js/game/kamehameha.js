@@ -1,16 +1,19 @@
-// Charles Oliveira's Kamehameha (Joe, 2026-11-09). While he's blond and in
-// the Do Bronx state, once per Do Bronx, he plants and cups his hands at his
-// side: a blue ball of energy grows between them as he calls out
+// Charles Oliveira's Kamehameha (Joe, 2026-11-09). Its own move, apart from
+// Do Bronx: once a match, at a random time, his Super Saiyan aura bursts on
+// (blond hair, gold flames, Joe's burst sound) and shoves the opponent back,
+// then he plants and cups his hands at his side: a blue ball of energy grows between them as he calls out
 // "KA... ME... HA... ME...", then he thrusts both hands forward on "HA!" and
 // a huge blue beam blasts across the ring to the cage. Whoever's in it takes
-// kamehameha.damage and is driven back into the cage (wall slams). It aims
-// at them while he charges and locks on just before it fires (a faint line
-// shows where), so a fighter that moves can still get out of the way.
+// kamehameha.damage and is driven back into the cage (wall slams). A blue
+// path shows where the beam will go: it tracks them until a second before
+// it fires, then locks and flashes, so a fighter that moves can still get
+// out of the way. Then the aura dies down and his hair goes back to black.
 // Nothing can hit him while he does it (an igbb move: specialGuarding).
 // Runs on b.igbb (move "kamehameha"). Config: char.kamehameha.
 "use strict";
 
-var KM_LOCK = 0.25;  // the aim locks this long before it fires
+var KM_LOCK = 1.0;   // he tracks them until a second before it fires (Joe)
+var KM_POWER = 0.9;  // the aura bursting on before he starts charging
 var KM_END = 0.4;    // hands coming back down after the beam
 var KM_SPEED = 2600; // how fast the beam shoots out
 var KM_CALLS = ["KA...", "ME...", "HA...", "ME..."];
@@ -18,22 +21,30 @@ var KM_CALLS = ["KA...", "ME...", "HA...", "ME..."];
 function kameOn(b) { return !!(b && b.igbb && b.igbb.move === "kamehameha"); }
 function kmRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
 
+// From makeBall: once a match, at a random time (kamehameha.first).
+function initKamehameha(b) {
+  var cfg = b.char.kamehameha;
+  b.kameN = 0;
+  b.kameT = cfg ? kmRand(cfg.first) : Infinity;
+}
+
 // From the abilities loop, before the special. True while it's running.
 function updateKamehameha(self, other, dt) {
   var cfg = self.char.kamehameha;
   if (!cfg) return false;
   if (!self.igbb) {
-    var db = self.doBronx;
-    if (!db || !started || over || !charlesBlond(self)) return false;
-    if (db.kameAt == null) db.kameAt = kmRand(cfg.after);
-    if (db.kameDone || db.t < db.kameAt || db.t > db.dur - cfg.charge - cfg.beamTime - 0.5) return false;
-    if (!canStartIgbb(self, other) || swordDuelActive()) return false;
+    if (!started || over || self.kameN >= 1 || self.doBronx || charlesBlond(self)) return false;
+    self.kameT -= dt;
+    if (self.kameT > 0 || !canStartIgbb(self, other) || swordDuelActive()) return false;
     clearActions(self);
-    db.kameDone = true;
-    self.igbb = { move: "kamehameha", phase: "charge", t: 0, calls: 0, hit: false };
+    self.kameN++;
+    self.igbb = { move: "kamehameha", phase: "power", t: 0, calls: 0, hit: false };
     kmAim(self, other);
+    // The aura bursts on: blond hair, the gold flames and Joe's burst (dobronx.js).
+    doBronxHair(self, true); self.kameBlond = true;
     kmPushAway(self, other); // the energy coming up shoves them back, so the beam has room to fly
-    playKameCharge(cfg.charge);
+    floater(self.x, self.y - self.r - 30, "POWER UP!", "crit");
+    if (!reduceMotion) shake = Math.max(shake, 10);
   }
   var m = self.igbb;
   if (m.move !== "kamehameha") return false;
@@ -41,6 +52,11 @@ function updateKamehameha(self, other, dt) {
   self.vx = 0; self.vy = 0;
   if (over) { endKamehameha(self); return false; }
 
+  if (m.phase === "power") {
+    if (other.alive) kmAim(self, other);
+    if (m.t >= KM_POWER) { m.phase = "charge"; m.t = 0; playKameCharge(cfg.charge); }
+    return true;
+  }
   if (m.phase === "charge") {
     if (m.t < cfg.charge - KM_LOCK && other.alive) kmAim(self, other);
     var call = Math.floor(m.t / (cfg.charge / (KM_CALLS.length + 0.4)));
@@ -112,6 +128,7 @@ function kmRayToWall(x, y, dx, dy) {
 
 function endKamehameha(self) {
   self.igbb = null;
+  if (self.kameBlond) { self.kameBlond = false; doBronxHair(self, false); } // the aura dies down and his hair goes back to black
   setSpeed(self, SPEED);
 }
 
@@ -171,13 +188,25 @@ function drawKamehameha() {
     ctx.save();
     ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
     ctx.translate(b.x, b.y); ctx.rotate(ang);
-    if (m.phase === "charge" && m.t > cfg.charge - KM_LOCK - 0.3) {
-      // Where it's about to go.
-      var len0 = kmRayToWall(b.x, b.y, m.dx, m.dy);
-      ctx.strokeStyle = "rgba(140,210,255," + (0.35 + 0.3 * Math.sin(t * 30)) + ")";
-      ctx.lineWidth = 2; ctx.setLineDash([10, 8]);
-      ctx.beginPath(); ctx.moveTo(r * 1.2, 0); ctx.lineTo(len0, 0); ctx.stroke();
+    if (m.phase === "power" || m.phase === "charge") {
+      // The path the beam will take: it follows them while he aims, then
+      // locks and flashes for the last second.
+      var len0 = kmRayToWall(b.x, b.y, m.dx, m.dy), wdt = cfg.width;
+      var locked = m.phase === "charge" && m.t >= cfg.charge - KM_LOCK;
+      var show = m.phase === "power" ? Math.min(1, m.t / 0.3) : 1;
+      var pulse = locked ? 0.6 + 0.4 * Math.sin(t * 30) : 0.75 + 0.25 * Math.sin(t * 10);
+      ctx.globalAlpha = show;
+      ctx.fillStyle = "rgba(70,160,255," + ((locked ? 0.3 : 0.16) * pulse) + ")";
+      ctx.fillRect(r, -wdt / 2, len0 - r, wdt);
+      ctx.strokeStyle = "rgba(90,180,255," + (0.85 * pulse) + ")"; ctx.lineWidth = locked ? 4 : 3; ctx.setLineDash([14, 10]);
+      ctx.beginPath(); ctx.moveTo(r, -wdt / 2); ctx.lineTo(len0, -wdt / 2); ctx.moveTo(r, wdt / 2); ctx.lineTo(len0, wdt / 2); ctx.stroke();
       ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(120,200,255," + (0.8 * pulse) + ")";
+      var o = (t * (locked ? 420 : 220)) % 46;
+      for (var xx = r + o; xx < len0 - 10; xx += 46) {
+        ctx.beginPath(); ctx.moveTo(xx, -wdt * 0.28); ctx.lineTo(xx + 14, 0); ctx.lineTo(xx, wdt * 0.28); ctx.lineTo(xx + 6, 0); ctx.closePath(); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
     } else if (m.phase === "fire" || (m.phase === "end" && m.t < 0.25)) {
       var fade = m.phase === "end" ? 1 - m.t / 0.25 : Math.min(1, m.t / 0.06);
       var len = m.phase === "fire" ? m.ext : m.len, x0 = r * 1.1;
@@ -204,5 +233,14 @@ function drawKamehameha() {
       }
     }
     ctx.restore();
+  });
+}
+
+// Every frame (from tickDoBronxFx): if something else cut the move off
+// (a bear, a grab...), the aura still dies down and his hair goes back.
+function tickKamehameha() {
+  if (!balls) return;
+  balls.forEach(function (b) {
+    if (b.kameBlond && !kameOn(b)) { b.kameBlond = false; doBronxHair(b, false); }
   });
 }
