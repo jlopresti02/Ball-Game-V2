@@ -193,33 +193,54 @@ function tickIliaTornado(dt) {
 
 // ---------------------------------------------------------------- drawing
 
-// Spinning on the spot (his body), or whipped round inside it (theirs).
+// Whipped round inside it: tumbling (theirs).
 function tornadoSpin(b) {
-  if (reduceMotion) return 0;
-  if (tornadoOn(b) && (b.igbb.phase === "spin" || b.igbb.phase === "wind")) return b.igbb.ang;
-  if (b.torHeld) {
-    var o = balls[1 - b.id], c = o && o.igbb && o.igbb.caught;
-    return c ? c.a * 1.6 : 0;
-  }
-  return 0;
+  if (reduceMotion || !b.torHeld) return 0;
+  var o = balls[1 - b.id], c = o && o.igbb && o.igbb.caught;
+  return c ? c.a * 1.6 : 0;
+}
+// His spin (Joe: on his own axis, like a pirouette): how far round he's
+// turned. 0 faces us, PI faces away.
+function tornadoTurnAng(b) {
+  var m = b.igbb;
+  if (!tornadoOn(b) || (m.phase !== "spin" && m.phase !== "wind")) return 0;
+  return m.ang * 0.5;
+}
+// How wide his body looks as he turns (cos of the turn): squeezed thin side
+// on, then opening back out.
+function tornadoTurn(b) {
+  if (reduceMotion) return 1;
+  var a = tornadoTurnAng(b);
+  if (!a) return 1;
+  var c = Math.cos(a);
+  return (c < 0 ? -1 : 1) * Math.max(0.12, Math.abs(c));
 }
 function tornadoHandsBusy(b) {
   return tornadoOn(b) && b.igbb.phase !== "walk";
 }
 
-// His arms: out wide while he spins, then up over his head for the olé.
+// His arms: flung out wide and turning round with him, then up over his head
+// for the olé.
 function drawTornadoArms(b) {
   if (!tornadoHandsBusy(b) || !b.alive) return;
   var m = b.igbb, ch = b.char, r = b.r, arm = (ch.punch.size || 15) * 0.6, gr = r * 0.3;
-  var spin = tornadoSpin(b), cs = Math.cos(spin), sn = Math.sin(spin);
-  function P(lx, ly) { return { x: b.x + lx * cs - ly * sn, y: b.y + lx * sn + ly * cs }; }
   function limb(s, e, h) {
     strokeLimb(arm, armColor(ch), function () { ctx.moveTo(s.x, s.y); ctx.quadraticCurveTo(e.x, e.y, h.x, h.y); });
     drawGloveAt(h.x, h.y, gr, ch, Math.atan2(h.y - e.y, h.x - e.x));
   }
+  if (m.phase === "ole" || m.phase === "walk") {
+    [-1, 1].forEach(function (k) { limb({ x: b.x + k * r * 0.62, y: b.y - r * 0.35 }, { x: b.x + k * r * 1.05, y: b.y - r * 1.05 }, { x: b.x + k * r * 0.3, y: b.y - r * 1.5 }); });
+    return;
+  }
+  // Each arm swings round a circle at shoulder height as he turns; the one
+  // going round behind him is hidden by his body.
+  var a = tornadoTurnAng(b), c = Math.cos(a), sn = Math.sin(a);
   [-1, 1].forEach(function (k) {
-    if (m.phase === "ole") limb(P(k * r * 0.62, -r * 0.35), P(k * r * 1.05, -r * 1.05), P(k * r * 0.3, -r * 1.5));
-    else limb(P(k * r * 0.7, -r * 0.1), P(k * r * 1.15, -r * 0.3), P(k * r * 1.55, -r * 0.15)); // a dancer's arms, flung out
+    var depth = -k * sn; // > 0: round in front of him
+    function pt(d, h) { return { x: b.x + k * c * r * d, y: b.y - r * h + depth * r * 0.22 * d / 1.55 }; }
+    var hand = pt(1.55, 0.15);
+    if (depth < 0 && Math.abs(hand.x - b.x) < r * 1.0) return;
+    limb(pt(0.6, 0.12), pt(1.1, 0.3), hand);
   });
 }
 

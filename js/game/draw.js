@@ -151,7 +151,7 @@ function draw() {
     if (aas) { spinning = true; spinAngle = aas; }
     var afs = auraSpin(b); // twirling in the Aura Farm dance (aurafarm.js)
     if (afs) { spinning = true; spinAngle = afs; }
-    var tns = tornadoSpin(b); // spinning in (or caught in) the Rose Tornado (ilia-tornado.js)
+    var tns = tornadoSpin(b); // tumbling round inside the Rose Tornado (ilia-tornado.js)
     if (tns) { spinning = true; spinAngle = tns; }
     var sws = swordBodySpin(b); // spinning into a sword strike (sword.js)
     if (sws) { spinning = true; spinAngle = sws; }
@@ -159,6 +159,8 @@ function draw() {
     ctx.save();
     ctx.translate(b.x + jx, b.y + jy);
     if (spinning) ctx.rotate(spinAngle);
+    var tnx = tornadoTurn(b); // Ilia turning on the spot in the Rose Tornado (ilia-tornado.js)
+    if (tnx !== 1) ctx.scale(tnx, 1);
     ctx.translate(-b.x, -b.y);
     if (b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser")) {
       // Sitting: squashed down toward the ground, a little wider.
