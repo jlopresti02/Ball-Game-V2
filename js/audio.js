@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["kameCharge", "kameFire", "saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -2250,7 +2250,8 @@ function stopAuraSound(h, quiet) {
   } catch (e) { /* never let audio break the game */ }
 }
 
-// Charles's Kamehameha (kamehameha.js), made in code: a rising energy hum
+// Charles's Kamehameha (kamehameha.js): Joe's charge and fire clips, with
+// these made-in-code versions as a fallback while they load: a rising energy hum
 // with a fast wobble while he charges, then the blast (a boom, a roaring
 // rush of noise and a bright whine) for as long as the beam fires.
 function playKameCharge(dur) {
@@ -2259,6 +2260,18 @@ function playKameCharge(dur) {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime, end = now + dur;
+    // Joe's charge clip, started so its peak lands right as it fires.
+    var cb = clipBuffers.kameCharge;
+    if (cb) {
+      var cs = ctx.createBufferSource(); cs.buffer = cb;
+      var cg = ctx.createGain(); cg.gain.value = 1.0;
+      var off = Math.max(0, cb.duration - dur);
+      cs.connect(cg); cg.connect(ctx.destination);
+      cg.gain.setValueAtTime(1.0, end); cg.gain.exponentialRampToValueAtTime(0.0001, end + 0.15);
+      cs.start(now, off); cs.stop(end + 0.2);
+      return;
+    }
+    withClip("kameCharge");
     [[110, 330, "sawtooth", 0.05], [220, 880, "sine", 0.08]].forEach(function (v) {
       var o = ctx.createOscillator(); o.type = v[2];
       o.frequency.setValueAtTime(v[0], now); o.frequency.exponentialRampToValueAtTime(v[1], end);
@@ -2279,6 +2292,9 @@ function playKameBlast(dur) {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime, end = now + dur + 0.3;
+    // Joe's fire clip (fades out on its own a couple of seconds in).
+    if (clipBuffers.kameFire) { playClipOnce("kameFire", 1.0, now); return; }
+    withClip("kameFire");
     // Rushing roar.
     var n = Math.ceil(ctx.sampleRate * (dur + 0.4)), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
     for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;

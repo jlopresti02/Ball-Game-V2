@@ -301,6 +301,8 @@ function gallerySounds() {
       clip("saiyanUp", "Aura power-up", "Charles's Super Saiyan aura bursting on."),
       clip("saiyanLoop", "Super Saiyan aura", "Joe's aura hum, looping while Charles is blond."),
       clip("saiyanDown", "Aura power-down", "The aura dying away."),
+      clip("kameCharge", "Kamehameha charge", "Charles charging the Kamehameha."),
+      clip("kameFire", "Kamehameha fire", "The Kamehameha blast."),
       clip("hokitKnee", "Break him over my knee", "Josh Hokit's thumbs down (one of 5)."),
       clip("hokitDog", "Like my dog", "Josh Hokit's thumbs down."),
       clip("hokitDivision", "Incredible Hok division", "Josh Hokit's thumbs down."),
