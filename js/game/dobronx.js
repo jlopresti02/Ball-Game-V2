@@ -66,6 +66,7 @@ function updateDoBronx(self, other, dt) {
     if (m.phase === "pose") blastAway(self, other);
     cameraFlash();
     brazilMode = m.phase === "pose"; // swaps behind the white-out
+    doBronxHair(self, m.phase === "pose"); // and his hair goes blond for it, brown again after (Joe)
     if (m.phase === "outro") { crowdRelease(); releaseMusic(); } // background music back (music.js)
   }
   if (m.t < (m.phase === "pose" ? DB_POSE_TIME : DB_OUTRO_TIME)) return true;
@@ -78,6 +79,15 @@ function updateDoBronx(self, other, dt) {
   }
   setSpeed(self, SPEED);
   return true;
+}
+
+// Joe (2026-11-09): his normal hair is brown, and it's blond for Do Bronx
+// (special.hairColor). Swapped on his own copy of the character.
+function doBronxHair(b, on) {
+  var hc = b.char.special && b.char.special.hairColor;
+  if (!hc) return;
+  if (!b.dbBaseLook) b.dbBaseLook = b.char.look;
+  b.char = Object.assign({}, b.char, { look: on ? Object.assign({}, b.dbBaseLook, { hairColor: hc }) : b.dbBaseLook });
 }
 
 // Striking a Do Bronx pose (the opening or the closing one): nothing can
