@@ -5,7 +5,7 @@
 //   - the bull standing in the haze behind;
 //   - Ilia with his rapier raised and a red rose, a beautiful woman in a red
 //     dress leaning on his shoulder;
-//   - the bottle ("EL MATADOR", eau de parfum) catching the light, then the
+//   - Joe's bottle ("Rose", eau de cologne) catching the light, then the
 //     brand and "Untouchable."
 // The tornado's igbb carries adOwn, so it plays while he spins. It goes
 // through queueJumboAd like every fighter ad, so it never overlaps another.
@@ -134,8 +134,8 @@ function drawCologneJumbo(x, y, w, h) {
   var tA = cologneFade(t, 4.4, 0.8);
   if (tA > 0) {
     ctx.save(); ctx.globalAlpha *= tA;
-    stillText("EL MATADOR", fx, y + h * 0.6, 26 * k, "#f3dca6", w * 0.2, { face: "Georgia, 'Times New Roman', serif", weight: "600" });
-    stillText("EAU DE PARFUM", fx, y + h * 0.7, 12 * k, "rgba(243,220,166,0.75)", w * 0.2, { face: "Georgia, 'Times New Roman', serif", weight: "400" });
+    stillText("Rose", fx, y + h * 0.6, 34 * k, "#f3dca6", w * 0.2, { face: "'Snell Roundhand', 'Brush Script MT', Georgia, serif", weight: "italic 600" });
+    stillText("EAU DE COLOGNE · SPAIN", fx, y + h * 0.7, 12 * k, "rgba(243,220,166,0.75)", w * 0.2, { face: "Georgia, 'Times New Roman', serif", weight: "400" });
     ctx.restore();
   }
   var gA = cologneFade(t, 5.4, 0.9);
@@ -285,47 +285,35 @@ function cologneWoman(cx, cy, r, t, k) {
   ctx.restore();
 }
 
-// The bottle: faceted glass, amber cologne, a heavy gold cap, the monogram.
+// The bottle: Joe's picture, with a glint sweeping across the glass and a
+// sparkle off the stopper.
+var cologneBottleImg = new Image(); cologneBottleImg.src = COLOGNE_BOTTLE_SRC;
+var cologneGlintCv = null;
 function cologneBottle(cx, cy, h, t, k) {
-  var bw = h * 0.5, bh = h * 0.62, top = cy - bh * 0.35, bot = top + bh;
-  // Shadow and reflection on the "table".
-  ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.beginPath(); ctx.ellipse(cx, bot + 4 * k, bw * 0.7, h * 0.04, 0, 0, Math.PI * 2); ctx.fill();
-  // Glass.
-  var gl = ctx.createLinearGradient(cx - bw / 2, 0, cx + bw / 2, 0);
-  gl.addColorStop(0, "rgba(255,255,255,0.25)"); gl.addColorStop(0.15, "rgba(255,255,255,0.08)"); gl.addColorStop(0.85, "rgba(255,255,255,0.05)"); gl.addColorStop(1, "rgba(255,255,255,0.3)");
-  ctx.fillStyle = gl; ctx.strokeStyle = "rgba(255,240,220,0.7)"; ctx.lineWidth = 2 * k;
-  stillRoundRect(cx - bw / 2, top, bw, bh, bw * 0.12); ctx.fill(); ctx.stroke();
-  // The cologne inside: deep amber to red.
-  var lq = ctx.createLinearGradient(0, top + bh * 0.12, 0, bot);
-  lq.addColorStop(0, "#d9862a"); lq.addColorStop(1, "#7a1410");
-  ctx.fillStyle = lq; stillRoundRect(cx - bw / 2 + 5 * k, top + bh * 0.12, bw - 10 * k, bh * 0.88 - 5 * k, bw * 0.08); ctx.fill();
-  // Facet lines.
-  ctx.strokeStyle = "rgba(255,255,255,0.22)"; ctx.lineWidth = 1.5 * k;
-  ctx.beginPath(); ctx.moveTo(cx - bw * 0.3, top + 4 * k); ctx.lineTo(cx - bw * 0.3, bot - 4 * k); ctx.moveTo(cx + bw * 0.3, top + 4 * k); ctx.lineTo(cx + bw * 0.3, bot - 4 * k); ctx.stroke();
-  // Label with the monogram.
-  ctx.fillStyle = "#0d0809"; stillRoundRect(cx - bw * 0.3, top + bh * 0.35, bw * 0.6, bh * 0.36, 4 * k); ctx.fill();
-  ctx.strokeStyle = "#e2b23e"; ctx.lineWidth = 1.5 * k; ctx.stroke();
-  if (cologneMonoImg.complete && cologneMonoImg.naturalWidth) {
-    var ms = bh * 0.26; ctx.drawImage(cologneMonoImg, cx - ms / 2, top + bh * 0.39, ms, ms);
-  }
-  // Neck and the heavy gold cap.
-  ctx.fillStyle = "#b8892c"; ctx.fillRect(cx - bw * 0.12, top - h * 0.05, bw * 0.24, h * 0.06);
-  var cg = ctx.createLinearGradient(cx - bw * 0.28, 0, cx + bw * 0.28, 0);
-  cg.addColorStop(0, "#7a5512"); cg.addColorStop(0.35, "#ffe9a8"); cg.addColorStop(0.6, "#e2b23e"); cg.addColorStop(1, "#6a470e");
-  ctx.fillStyle = cg; stillRoundRect(cx - bw * 0.28, top - h * 0.25, bw * 0.56, h * 0.21, 4 * k); ctx.fill();
-  ctx.strokeStyle = "#4a3008"; ctx.lineWidth = 1.5 * k; ctx.stroke();
-  // The glint sweeping across.
+  var im = cologneBottleImg;
+  if (!im.complete || !im.naturalWidth) return;
+  var bh = h * 1.25, bw = bh * COLOGNE_BOTTLE_ASPECT, top = cy - bh * 0.55, bot = top + bh;
+  ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.beginPath(); ctx.ellipse(cx, bot - 2 * k, bw * 0.55, h * 0.04, 0, 0, Math.PI * 2); ctx.fill();
+  // A soft rose glow behind it.
+  var gg = ctx.createRadialGradient(cx, cy, 0, cx, cy, bh * 0.6);
+  gg.addColorStop(0, "rgba(255,120,150,0.25)"); gg.addColorStop(1, "rgba(255,120,150,0)");
+  ctx.fillStyle = gg; ctx.fillRect(cx - bh * 0.6, cy - bh * 0.6, bh * 1.2, bh * 1.2);
+  ctx.drawImage(im, cx - bw / 2, top, bw, bh);
+  // The glint, only on the bottle (drawn through its shape off screen).
   var gp = (t - 3.2) / 0.9;
   if (gp > 0 && gp < 1) {
-    ctx.save();
-    stillRoundRect(cx - bw / 2, top - h * 0.25, bw, bh + h * 0.25, bw * 0.12); ctx.clip();
-    var gx = cx - bw + gp * bw * 2;
-    var sg = ctx.createLinearGradient(gx - bw * 0.2, 0, gx + bw * 0.2, 0);
-    sg.addColorStop(0, "rgba(255,255,255,0)"); sg.addColorStop(0.5, "rgba(255,255,255,0.6)"); sg.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = sg; ctx.fillRect(cx - bw, top - h * 0.3, bw * 2, bh + h * 0.4);
-    ctx.restore();
+    var cw = im.naturalWidth, ch = im.naturalHeight;
+    if (!cologneGlintCv) { cologneGlintCv = document.createElement("canvas"); cologneGlintCv.width = cw; cologneGlintCv.height = ch; }
+    var c = cologneGlintCv.getContext("2d");
+    c.globalCompositeOperation = "source-over"; c.clearRect(0, 0, cw, ch);
+    c.drawImage(im, 0, 0);
+    c.globalCompositeOperation = "source-in";
+    var gx = -cw * 0.6 + gp * cw * 2.2;
+    var sg = c.createLinearGradient(gx - cw * 0.25, 0, gx + cw * 0.25, ch * 0.3);
+    sg.addColorStop(0, "rgba(255,255,255,0)"); sg.addColorStop(0.5, "rgba(255,255,255,0.55)"); sg.addColorStop(1, "rgba(255,255,255,0)");
+    c.fillStyle = sg; c.fillRect(0, 0, cw, ch);
+    ctx.drawImage(cologneGlintCv, cx - bw / 2, top, bw, bh);
   }
-  // A sparkle off the cap.
   var sp = Math.max(0, Math.sin((t - 3.6) * 3));
-  if (t > 3.6 && t < 4.7) ganeAdStar(cx + bw * 0.22, top - h * 0.2, 9 * k * sp, "rgba(255,250,230," + sp + ")");
+  if (t > 3.6 && t < 4.7) ganeAdStar(cx + bw * 0.18, top + bh * 0.1, 10 * k * sp, "rgba(255,250,240," + sp + ")");
 }
