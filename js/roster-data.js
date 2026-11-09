@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 7,
+    "rev": 10,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -20,7 +20,7 @@ var SAVED_ROSTER = [
       "build": "lean",
       "bodyHair": "none",
       "hair": "short",
-      "hairColor": "#f4edd2",
+      "hairColor": "#17130f",
       "beard": "none",
       "ears": "normal",
       "tattoos": {
@@ -76,7 +76,7 @@ var SAVED_ROSTER = [
     "hasGuard": true,
     "guard": {
       "chance": 25,
-      "time": 6,
+      "time": 5,
       "radius": 130,
       "passChance": 50,
       "passPunches": 4,
@@ -89,11 +89,12 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "dobronx",
-      "chargeTime": 17,
-      "hitCut": 4,
-      "punchCut": 5,
+      "chargeTime": 45,
+      "hitCut": 3,
+      "punchCut": 3,
       "duration": 15,
-      "damageMult": 4
+      "damageMult": 4,
+      "hairColor": "#f4edd2"
     },
     "blockChance": 10
   },

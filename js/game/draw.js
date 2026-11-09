@@ -126,6 +126,7 @@ function draw() {
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
+    drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
 
     // While charging a power punch or rage attack, the ball jitters with
     // rising intensity; while throwing the power punch specifically, the
@@ -317,7 +318,8 @@ function draw() {
     drawJab(b);
     drawDiamondSword(b, other); // Dustin's diamond sword, under his guard glove (diamond.js)
     drawHands(b, other);
-    drawDoBronx(b); // the pose and the glow while it's on
+    drawDoBronx(b); // the pose
+    drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawShot(b);    // Hokit's double leg
     drawChairShot(b); // and his folding chair
     drawDazed(b);   // stars after a chair shot
