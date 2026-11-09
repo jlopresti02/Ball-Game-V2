@@ -7,9 +7,10 @@
 //     (the call can't come after that), so the line never plays over it. It also
 //     waits for anyone else who's talking, then goes through queueJumboAd
 //     like every ad, so it never overlaps another one and waits out specials.
-//   - The model is his opponent in this fight, kitted out against him:
-//     safety goggles (for the eye pokes) and a pillow strapped behind the
-//     head (for the shots to the back of the head), then AND MORE!
+//   - The model is a referee (in the ref's striped shirt), kitted out
+//     against him: safety goggles over his eyes (for the eye pokes) and a
+//     pillow strapped behind the head (for the shots to the back of the
+//     head), then AND MORE!
 //   - Near the end Gane sneaks in from the side for a poke, and his finger
 //     goes TINK off the goggles.
 "use strict";
@@ -43,15 +44,15 @@ function tickGaneAd(dt) {
   if (p.t > 0 || !callDone || ganeAdTalking()) return;
   ganeAdPending = null;
   queueJumboAd(GANE_AD_SHOW, function () {
-    ganeAdShow = GANE_AD_SHOW; ganeAdIds = { gane: p.id, model: 1 - p.id };
+    ganeAdShow = GANE_AD_SHOW; ganeAdIds = { gane: p.id };
     playGaneAdMusic(GANE_AD_SHOW);
   }, gane);
 }
 
 function drawGaneAdJumbo(x, y, w, h) {
   if (ganeAdShow <= 0 || !ganeAdIds || !balls) return;
-  var gane = balls[ganeAdIds.gane], model = balls[ganeAdIds.model];
-  if (!gane || !model) return;
+  var gane = balls[ganeAdIds.gane];
+  if (!gane) return;
   var t = GANE_AD_SHOW - ganeAdShow, a = Math.min(1, t / 0.3, ganeAdShow / 0.4), k = h / 250;
   ctx.save();
   ctx.globalAlpha = a;
@@ -96,7 +97,7 @@ function drawGaneAdJumbo(x, y, w, h) {
   // The model in the middle, under a slowly turning crib mobile.
   var mx = x + w * 0.5, my = y + h * 0.58, r = h * 0.25;
   ganeAdMobile(mx, y, h, t, k);
-  ganeAdModel(mx, my, r, model, t, k);
+  ganeAdModel(mx, my, r, t, k);
   // Gane peeking up from below, left of the model, for a poke at the
   // goggles, and TINK.
   var sneak = Math.max(0, Math.min(1, (t - 5.0) / 0.6)), back = Math.max(0, Math.min(1, (t - 6.5) / 0.5));
@@ -106,7 +107,7 @@ function drawGaneAdJumbo(x, y, w, h) {
     drawFighterArt(ctx, gx, gy, gr, gane.char.look, "#0b0f12", { layout: "contained", name: gane.char.name });
     ctx.lineWidth = 2 * k; ctx.strokeStyle = "#0b0f12"; ctx.beginPath(); ctx.arc(gx, gy, gr, 0, Math.PI * 2); ctx.stroke();
     // His poking hand: a glove with one finger out, jabbing at the goggles.
-    var tx = mx - r * 0.38, ty = my - r * 0.27, dx = tx - gx, dy = ty - gy, dd = Math.hypot(dx, dy) || 1;
+    var tx = mx - r * 0.24, ty = my - r * 0.6, dx = tx - gx, dy = ty - gy, dd = Math.hypot(dx, dy) || 1;
     dx /= dd; dy /= dd;
     var jab = t > 5.55 && t < 6.45 ? Math.max(0, Math.sin((t - 5.55) * 10)) : 0;
     var reach = gr * 1.0 + jab * Math.max(0, dd - gr * 1.0 - gr * 0.62);
@@ -128,7 +129,7 @@ function drawGaneAdJumbo(x, y, w, h) {
     if (t > 5.65 && t < 6.8) {
       var tp = (t - 5.65) / 1.15;
       ctx.save(); ctx.globalAlpha *= Math.min(1, (1 - tp) * 3);
-      ctx.translate(mx - r * 1.05, my - r * 1.0 - tp * 10 * k); ctx.rotate(-0.15);
+      ctx.translate(mx - r * 1.1, my - r * 1.15 - tp * 10 * k); ctx.rotate(-0.15);
       stillText("TINK!", 0, 0, 28 * k * (1 + 0.25 * Math.max(0, 1 - tp * 6)), "#ffe066", w * 0.12, { face: "'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif", weight: "900", stroke: "#3b4a6b", strokeW: 0.22 });
       ctx.restore();
     }
@@ -182,11 +183,23 @@ function ganeAdMobile(cx, top, h, t, k) {
   ctx.strokeStyle = "#b8c4dc"; ctx.lineWidth = 3 * k;
   ctx.beginPath(); ctx.ellipse(cx, hy, h * 0.22, h * 0.03, 0, 0, Math.PI * 2); ctx.stroke();
 }
-// The opponent, modelling the gear: a puffy pillow strapped behind the head
-// and big safety goggles.
-function ganeAdModel(cx, cy, r, b, t, k) {
-  var bob = Math.sin(t * 1.6) * r * 0.03, look = b.char.look;
+// The model: a referee (the ring ref's look, striped shirt, REF patch and
+// whistle), in a puffy pillow strapped behind the head and big safety
+// goggles right over his eyes.
+var GANE_AD_REF = null;
+function ganeAdRefFan() {
+  if (typeof referee !== "undefined" && referee && referee.fan) return referee.fan;
+  if (!GANE_AD_REF) {
+    var look = defaultLook();
+    look.skin = "#c99172"; look.hair = "bald"; look.beard = "none"; look.build = "lean";
+    GANE_AD_REF = { look: look, shirt: "#151515", style: "tee", team: null, shirtless: false, cap: null, phase: 0 };
+  }
+  return GANE_AD_REF;
+}
+function ganeAdModel(cx, cy, r, t, k) {
+  var bob = Math.sin(t * 1.6) * r * 0.03, fan = ganeAdRefFan(), skin = fan.look.skin;
   cy += bob;
+  var eyeY = cy - r * 0.6, strapY = cy - r * 0.86;
   // The pillow peeking out behind the head.
   var pw = r * 2.75, ph = r * 1.15, py = cy - r * 0.6;
   ctx.save();
@@ -205,40 +218,56 @@ function ganeAdModel(cx, cy, r, b, t, k) {
   ctx.quadraticCurveTo(-pw / 2 - r * 0.12, ph / 2 + r * 0.1, -pw / 2, ph * 0.3);
   ctx.quadraticCurveTo(-pw / 2 - r * 0.1, 0, -pw / 2, -ph * 0.3);
   ctx.closePath(); ctx.fill(); ctx.stroke();
-  // The strap, running across the pillow to the head.
-  ctx.fillStyle = "#7cc6fe"; ctx.strokeStyle = "#3b82c4"; ctx.lineWidth = 1.2 * k;
-  ctx.fillRect(-pw / 2 - r * 0.04, (cy - r * 0.66) - py, pw + r * 0.08, r * 0.13);
   ctx.setLineDash([3 * k, 3 * k]); ctx.strokeStyle = "#e0ad55";
   stillRoundRect(-pw * 0.44, -ph * 0.38, pw * 0.88, ph * 0.76, r * 0.2); ctx.stroke(); ctx.setLineDash([]);
+  // The pillow's strap, running across it to the head.
+  ctx.fillStyle = "#7cc6fe";
+  ctx.fillRect(-pw / 2 - r * 0.04, strapY - py - r * 0.065, pw + r * 0.08, r * 0.13);
   ctx.restore();
-  // The fighter.
+  // The ref.
   ctx.fillStyle = "rgba(59,74,107,0.18)"; ctx.beginPath(); ctx.ellipse(cx, cy + r * 1.05, r * 0.9, r * 0.14, 0, 0, Math.PI * 2); ctx.fill();
-  drawFighterArt(ctx, cx, cy, r, look, "#0b0f12", { layout: "contained", name: b.char.name });
-  ctx.lineWidth = 2.5 * k; ctx.strokeStyle = "#0b0f12"; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
-  // The pillow's strap across the forehead, buckled.
+  ctx.save();
+  ctx.translate(cx, cy);
+  drawFanBall(ctx, r, fan);
+  drawRefStripes(r);
+  ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = 1.5 * k;
+  stillRoundRect(-r * 0.42, r * 0.2, r * 0.84, r * 0.4, r * 0.08); ctx.fill(); ctx.stroke();
+  stillText("REF", 0, r * 0.41, r * 0.34, "#111111", r * 0.76, { face: "Impact, 'Arial Black', sans-serif", weight: "900" });
+  ctx.strokeStyle = "#e53935"; ctx.lineWidth = 1.6 * k;
+  ctx.beginPath(); ctx.moveTo(-r * 0.32, -r * 0.18); ctx.quadraticCurveTo(-r * 0.05, r * 0.08, r * 0.2, r * 0.02); ctx.stroke();
+  ctx.fillStyle = "#c9ccd1"; ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = 1.2 * k;
+  stillRoundRect(r * 0.14, -r * 0.04, r * 0.26, r * 0.14, r * 0.05); ctx.fill(); ctx.stroke();
+  // Hands: a proud thumbs-up pose, one each side.
+  [-1, 1].forEach(function (s) {
+    ctx.fillStyle = skin; ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = 2 * k;
+    ctx.beginPath(); ctx.arc(s * r * 1.02, r * 0.3, r * 0.24, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
+  ctx.restore();
+  // The pillow's strap round the top of his head, buckled at the front.
   ctx.save();
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
-  ctx.fillStyle = "#7cc6fe"; ctx.fillRect(cx - r, cy - r * 0.66, r * 2, r * 0.13);
+  ctx.fillStyle = "#7cc6fe"; ctx.fillRect(cx - r, strapY - r * 0.065, r * 2, r * 0.13);
   ctx.restore();
   ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#3b4a6b"; ctx.lineWidth = 1.5 * k;
-  stillRoundRect(cx - r * 0.1, cy - r * 0.69, r * 0.2, r * 0.19, r * 0.04); ctx.fill(); ctx.stroke();
-  // Safety goggles: a band round the head and two big lenses.
+  stillRoundRect(cx - r * 0.1, strapY - r * 0.095, r * 0.2, r * 0.19, r * 0.04); ctx.fill(); ctx.stroke();
+  // Safety goggles right over his eyes: a band round the head at eye level
+  // and two big lenses.
   ctx.save();
   ctx.beginPath(); ctx.arc(cx, cy, r * 1.02, 0, Math.PI * 2); ctx.clip();
-  ctx.fillStyle = "#3b4a6b"; ctx.fillRect(cx - r * 1.05, cy - r * 0.32, r * 2.1, r * 0.1);
+  ctx.fillStyle = "#3b4a6b"; ctx.fillRect(cx - r * 1.05, eyeY - r * 0.05, r * 2.1, r * 0.1);
   ctx.restore();
   [-1, 1].forEach(function (s) {
-    var lx = cx + s * r * 0.33, ly = cy - r * 0.27;
-    ctx.fillStyle = "#3b4a6b"; stillRoundRect(lx - r * 0.3, ly - r * 0.2, r * 0.6, r * 0.4, r * 0.15); ctx.fill();
-    var lg = ctx.createLinearGradient(lx - r * 0.25, ly - r * 0.15, lx + r * 0.25, ly + r * 0.15);
-    lg.addColorStop(0, "rgba(220,240,255,0.9)"); lg.addColorStop(1, "rgba(120,190,255,0.55)");
-    ctx.fillStyle = lg; stillRoundRect(lx - r * 0.24, ly - r * 0.14, r * 0.48, r * 0.28, r * 0.11); ctx.fill();
+    var lx = cx + s * r * 0.26, ly = eyeY;
+    ctx.fillStyle = "#3b4a6b"; stillRoundRect(lx - r * 0.25, ly - r * 0.17, r * 0.5, r * 0.34, r * 0.13); ctx.fill();
+    var lg = ctx.createLinearGradient(lx - r * 0.2, ly - r * 0.12, lx + r * 0.2, ly + r * 0.12);
+    lg.addColorStop(0, "rgba(220,240,255,0.92)"); lg.addColorStop(1, "rgba(120,190,255,0.6)");
+    ctx.fillStyle = lg; stillRoundRect(lx - r * 0.2, ly - r * 0.12, r * 0.4, r * 0.24, r * 0.09); ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 2 * k; // glint
-    ctx.beginPath(); ctx.moveTo(lx - r * 0.14, ly - r * 0.06); ctx.lineTo(lx - r * 0.04, ly - r * 0.1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lx - r * 0.12, ly - r * 0.04); ctx.lineTo(lx - r * 0.03, ly - r * 0.08); ctx.stroke();
   });
-  ctx.fillStyle = "#3b4a6b"; ctx.fillRect(cx - r * 0.06, cy - r * 0.3, r * 0.12, r * 0.08); // the bridge
+  ctx.fillStyle = "#3b4a6b"; ctx.fillRect(cx - r * 0.06, eyeY - r * 0.04, r * 0.12, r * 0.08); // the bridge
 }
-// A feature callout: a check in a circle, the name and a line under it.
+
 function ganeAdFeature(x, y, w, k, t, name, sub) {
   if (t <= 0) return;
   var p = Math.min(1, t / 0.35);
