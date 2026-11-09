@@ -320,6 +320,7 @@ function draw() {
     drawHands(b, other);
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
+    drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
     drawShot(b);    // Hokit's double leg
     drawChairShot(b); // and his folding chair
     drawDazed(b);   // stars after a chair shot
@@ -355,6 +356,7 @@ function draw() {
   drawAuraActors();    // the bull
   drawJonGoats();      // the goats (jon.js)
   drawHelmetChargeOver(); // the helmet dropping onto Hokit's head (hokit-helmet.js)
+  drawKamehameha(); // Charles's Kamehameha beam (kamehameha.js)
   drawTornadoOver(); // the Rose Tornado and the roses flying out of it (ilia-tornado.js)
   drawRingBear(); // Khabib's bear, or the dust cloud it's fighting in (khabib-bear.js)
   drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)

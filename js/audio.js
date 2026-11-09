@@ -2250,6 +2250,55 @@ function stopAuraSound(h, quiet) {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// Charles's Kamehameha (kamehameha.js), made in code: a rising energy hum
+// with a fast wobble while he charges, then the blast (a boom, a roaring
+// rush of noise and a bright whine) for as long as the beam fires.
+function playKameCharge(dur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + dur;
+    [[110, 330, "sawtooth", 0.05], [220, 880, "sine", 0.08]].forEach(function (v) {
+      var o = ctx.createOscillator(); o.type = v[2];
+      o.frequency.setValueAtTime(v[0], now); o.frequency.exponentialRampToValueAtTime(v[1], end);
+      var lfo = ctx.createOscillator(); lfo.frequency.setValueAtTime(6, now); lfo.frequency.linearRampToValueAtTime(22, end);
+      var lg = ctx.createGain(); lg.gain.value = v[3] * 0.5;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(v[3], end - 0.05); g.gain.exponentialRampToValueAtTime(0.0001, end + 0.05);
+      var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(600, now); lp.frequency.exponentialRampToValueAtTime(5000, end);
+      lfo.connect(lg); lg.connect(g.gain);
+      o.connect(lp); lp.connect(g); g.connect(ctx.destination);
+      o.start(now); o.stop(end + 0.1); lfo.start(now); lfo.stop(end + 0.1);
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+function playKameBlast(dur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + dur + 0.3;
+    // Rushing roar.
+    var n = Math.ceil(ctx.sampleRate * (dur + 0.4)), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+    for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    var src = ctx.createBufferSource(); src.buffer = buf;
+    var bp = ctx.createBiquadFilter(); bp.type = "lowpass"; bp.frequency.setValueAtTime(6000, now); bp.frequency.exponentialRampToValueAtTime(900, end);
+    var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.6, now + 0.03); g.gain.setValueAtTime(0.45, now + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, end);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination); src.start(now); src.stop(end + 0.05);
+    // Boom.
+    var o = ctx.createOscillator(); o.type = "sine";
+    o.frequency.setValueAtTime(120, now); o.frequency.exponentialRampToValueAtTime(40, now + 0.6);
+    var og = ctx.createGain(); og.gain.setValueAtTime(0.9, now); og.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+    o.connect(og); og.connect(ctx.destination); o.start(now); o.stop(now + 0.75);
+    // Bright energy whine.
+    var w = ctx.createOscillator(); w.type = "sawtooth"; w.frequency.setValueAtTime(900, now); w.frequency.linearRampToValueAtTime(760, end);
+    var wl = ctx.createBiquadFilter(); wl.type = "bandpass"; wl.frequency.value = 1800; wl.Q.value = 2;
+    var wg = ctx.createGain(); wg.gain.setValueAtTime(0.0001, now); wg.gain.exponentialRampToValueAtTime(0.12, now + 0.05); wg.gain.exponentialRampToValueAtTime(0.0001, end);
+    w.connect(wl); wl.connect(wg); wg.connect(ctx.destination); w.start(now); w.stop(end + 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // Joe's spin recording for the Rose Tornado: loops while it spins (winding
 // up from a little slower), then fades out as it winds down. Falls back to
 // the synth wind if the clip isn't loaded.

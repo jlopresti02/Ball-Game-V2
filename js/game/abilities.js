@@ -177,6 +177,7 @@ function updateAbilities(dt) {
     if (updateRapierLunge(self, other, dt)) continue; // Ilia's rapier lunge (rapier.js)
     if (updateIliaTornado(self, other, dt)) continue; // Ilia's Rose Tornado (ilia-tornado.js)
     if (updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
+    if (updateKamehameha(self, other, dt)) continue; // Charles's Kamehameha (kamehameha.js)
     if (updateTopRope(self, other, dt)) continue; // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
     if (updateEagleCarry(self, other, dt)) continue; // Gaethje snatched up by his own eagle (gaethje-golf.js)
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
