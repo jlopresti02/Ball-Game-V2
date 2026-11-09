@@ -52,6 +52,7 @@ function makeBall(id, ch) {
   initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
   initRingBear(b); // Khabib's ring bear (khabib-bear.js)
+  initIliaTornado(b); // Ilia's Rose Tornado (ilia-tornado.js)
   return b;
 }
 
