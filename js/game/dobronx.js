@@ -90,6 +90,51 @@ function doBronxHair(b, on) {
   b.char = Object.assign({}, b.char, { look: on ? Object.assign({}, b.dbBaseLook, { hairColor: hc }) : b.dbBaseLook });
 }
 
+// Joe (2026-11-09): whenever his hair is blond he has a Super Saiyan style
+// aura: golden flames licking up around him, flickering, with sparks rising
+// off it. Drawn behind his body (draw.js), so it frames him.
+function charlesBlond(b) {
+  return !!(b.dbBaseLook && b.char.look !== b.dbBaseLook);
+}
+
+function drawSaiyanAura(b) {
+  if (!b.alive || !charlesBlond(b)) return;
+  var r = b.r, t = performance.now() / 1000;
+  ctx.save();
+  // Three layers of flame, outer pale and tall, inner bright and tight.
+  [[1.0, "rgba(255,176,0,0.42)", 1.0], [0.84, "rgba(255,214,30,0.55)", 1.35], [0.7, "rgba(255,246,170,0.7)", 1.8]].forEach(function (L, li) {
+    var n = 16, sc = L[0], spd = L[2];
+    ctx.fillStyle = L[1];
+    ctx.beginPath();
+    for (var i = 0; i <= n * 2; i++) {
+      var a = i / (n * 2) * Math.PI * 2 + Math.sin(t * 0.7 + li) * 0.08;
+      var up = Math.max(0, -Math.sin(a)); // 1 at the top, 0 along the bottom half
+      var tip = i % 2 === 0;
+      var fl = 0.5 + 0.5 * Math.sin(t * 9 * spd + i * 1.7 + li * 2.1);
+      var rad = tip ? r * (1.3 + 0.2 * fl + 0.12 * up) : r * (1.1 + 0.05 * fl);
+      var lift = tip ? r * (0.25 + 1.2 * up * up) * (0.75 + 0.35 * fl) : r * 0.12 * up;
+      var x = b.x + Math.cos(a) * rad * sc + (tip ? Math.sin(t * 6 + i) * r * 0.05 : 0);
+      var y = b.y + Math.sin(a) * rad * sc - lift * sc;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.fill();
+    if (li === 0) { ctx.strokeStyle = "rgba(214,120,0,0.75)"; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.stroke(); }
+  });
+  // A soft glow hugging him.
+  var g = ctx.createRadialGradient(b.x, b.y, r * 0.8, b.x, b.y, r * 1.5);
+  g.addColorStop(0, "rgba(255,225,60,0.55)"); g.addColorStop(1, "rgba(255,200,0,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, r * 1.5, 0, Math.PI * 2); ctx.fill();
+  // Sparks floating up off the aura.
+  for (var k = 0; k < 9; k++) {
+    var ph = (t * 0.9 + k / 9) % 1;
+    var sx = b.x + Math.sin(k * 2.39 + t * 0.5) * r * 1.0;
+    var sy = b.y + r * 0.5 - ph * r * 2.6;
+    ctx.fillStyle = "rgba(255,200,20," + (0.95 * (1 - ph)) + ")";
+    ctx.beginPath(); ctx.arc(sx, sy, r * 0.06 * (1 - ph * 0.5), 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
 // Striking a Do Bronx pose (the opening or the closing one): nothing can
 // touch him. Hits and grabs that reach him are dodged, so a takedown can't
 // knock him out of the pose and leave him restarting it over and over.
@@ -191,23 +236,10 @@ function drawBrazilFloor() {
   ctx.restore();
 }
 
-// The poses: a double-biceps flex, gloves up by the head. While the state
-// is on he glows green and gold.
+// The poses: a double-biceps flex, gloves up by the head.
 function drawDoBronx(b) {
   if (!b.alive) return;
   var r = b.r;
-  if (b.doBronx) {
-    var pulse = 0.5 + 0.5 * Math.sin(b.doBronx.t * 8);
-    ctx.save();
-    ctx.lineWidth = 4;
-    ctx.globalAlpha = 0.55 + 0.3 * pulse;
-    ctx.strokeStyle = "#ffdf00";
-    ctx.beginPath(); ctx.arc(b.x, b.y, r + 7 + pulse * 3, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = "#009c3b"; ctx.lineWidth = 3;
-    ctx.setLineDash([8, 7]); ctx.lineDashOffset = -b.doBronx.t * 40;
-    ctx.beginPath(); ctx.arc(b.x, b.y, r + 13 + pulse * 3, 0, Math.PI * 2); ctx.stroke();
-    ctx.restore();
-  }
   var m = b.igbb;
   if (!m || m.move !== "dobronx") return;
   var k = Math.min(1, m.t / 0.25); k = k * k * (3 - 2 * k); // arms snap up
