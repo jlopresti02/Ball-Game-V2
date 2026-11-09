@@ -77,6 +77,7 @@ function startCheater(b) {
   b.punch = null; b.kick = null;
   floater(b.x, b.y - b.r - 30, "CHEATER MODE", "crit");
   floater(b.x, b.y - b.r - 8, CHEATER_LABELS[mode], "note");
+  ganeAdOnCheater(b); // his baby-proofing ad, the first time (gane-babyproof-ad.js)
 }
 
 // From updateAbilities. Returns true while Cheater mode has him (his
