@@ -20885,6 +20885,48 @@ function endKamehameha(self) {
   setSpeed(self, SPEED);
 }
 
+// ---------------------------------------------------------------- his pose
+// Joe (2026-11-09): the stance should look like the real thing. Powering up
+// he sinks into a crouch. Charging he leans back and tilts over the hip his
+// hands are cupped at, trembling harder as it builds. On "HA!" he lunges
+// forward, leaning into the blast with both arms locked out, palms open.
+
+function kmEase(k) { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); }
+
+// How far into the stance he is: crouch (0-1), lean back (0-1), lunge (0-1).
+function kmStance(b) {
+  var m = b.igbb, cfg = b.char.kamehameha;
+  if (m.phase === "power") return { crouch: kmEase(m.t / KM_POWER), back: kmEase(m.t / KM_POWER) * 0.4, lunge: 0, ck: 0 };
+  if (m.phase === "charge") return { crouch: 1, back: 0.4 + 0.6 * kmEase(m.t / 0.5), lunge: 0, ck: m.t / cfg.charge };
+  if (m.phase === "fire") { var l = kmEase(m.t / 0.08); return { crouch: 1 - 0.6 * l, back: 1 - l, lunge: l, ck: 1 }; }
+  var e = 1 - kmEase(m.t / KM_END); return { crouch: 0.4 * e, back: 0, lunge: e, ck: 0 };
+}
+
+// From draw.js: the whole fighter shifts (leaning back, then lunging in).
+function kameOffset(b) {
+  if (!kameOn(b) || !b.alive) return { x: 0, y: 0 };
+  var m = b.igbb, st = kmStance(b), r = b.r, dx = m.dx || 1, dy = m.dy || 0;
+  var trem = reduceMotion ? 0 : r * 0.035 * st.ck;
+  var t = performance.now() / 1000;
+  return {
+    x: (-dx * 0.16 * st.back + dx * 0.24 * st.lunge) * r + Math.sin(t * 61) * trem,
+    y: (-dy * 0.16 * st.back + dy * 0.24 * st.lunge) * r + 0.06 * r * st.crouch + Math.cos(t * 53) * trem
+  };
+}
+
+// From draw.js, on the body's transform: the crouch and the tilt.
+function applyKamePose(b) {
+  if (!kameOn(b) || !b.alive) return;
+  var m = b.igbb, st = kmStance(b), r = b.r, dx = m.dx || 1;
+  var side = m.side || (dx > 0 ? -1 : 1);
+  // Tilt over the hip his hands are at while he charges, into the blast on the fire.
+  var tilt = side * 0.24 * st.back + Math.max(-1, Math.min(1, dx * 1.6)) * 0.2 * st.lunge;
+  ctx.translate(b.x, b.y + r);
+  ctx.rotate(tilt);
+  ctx.scale(1 + 0.05 * st.crouch, 1 - 0.08 * st.crouch);
+  ctx.translate(-b.x, -(b.y + r));
+}
+
 // Where his hands are and how big the ball of energy is. The fighters are
 // drawn facing us, so the charge is always cupped at one hip, on the side
 // away from the opponent (never up by his head), and on the fire the hands
@@ -20894,57 +20936,96 @@ function kmHandPose(b) {
   var size = b.char.punch.size || 15, cfg = b.char.kamehameha;
   if (m.phase === "power" || m.phase === "charge") {
     if (m.side == null) m.side = dx > 0 ? -1 : 1;
-    var k = Math.min(1, (m.phase === "charge" ? m.t + 0.3 : m.t) / 0.3); k = k * k * (3 - 2 * k);
-    return { hx: b.x + m.side * r * (0.95 + 0.35 * k), hy: b.y + r * (0.15 + 0.15 * k), side: m.side, k: k,
-      ball: m.phase === "charge" ? size * (0.5 + 1.3 * Math.min(1, m.t / cfg.charge)) : 0 };
+    var k = kmEase((m.phase === "charge" ? m.t + KM_POWER : m.t) / (KM_POWER * 0.6));
+    return { hx: b.x + m.side * r * (0.85 + 0.45 * k), hy: b.y + r * (0.05 + 0.3 * k), side: m.side, k: k,
+      ball: m.phase === "charge" ? size * (0.5 + 1.3 * Math.min(1, m.t / cfg.charge)) : size * 0.35 * k };
   }
-  var k2 = m.phase === "fire" ? Math.min(1, m.t / 0.08) : 1 - Math.min(1, m.t / KM_END);
-  return { hx: b.x + dx * r * (0.95 + 0.45 * k2), hy: b.y + dy * r * (0.95 + 0.45 * k2), side: 0,
+  var k2 = m.phase === "fire" ? kmEase(m.t / 0.08) : 1 - kmEase(m.t / KM_END);
+  return { hx: b.x + dx * r * (0.95 + 0.6 * k2), hy: b.y + dy * r * (0.95 + 0.6 * k2), side: 0, k: k2,
     ball: m.phase === "fire" ? size * 1.9 : size * 1.2 * (1 - m.t / KM_END) };
 }
 
 // Hands pushed up above his shoulders go behind his head, so the arms are
-// drawn before his body (from draw.js, with the aura) and only the gloves
+// drawn before his body (from draw.js, with the aura) and only the hands
 // and the energy show over the top.
 function kmArmsBehind(b, h) { return h.side === 0 && h.hy < b.y - b.r * 0.25; }
 
 function drawKameArmsBehind(b) {
   if (!kameOn(b) || !b.alive) return;
   var h = kmHandPose(b);
-  if (kmArmsBehind(b, h)) kmDrawArms(b, h);
+  if (!h.side) kmDrawArms(b, h, "back");
 }
 
-function kmDrawArms(b, h) {
-  var r = b.r, size = b.char.punch.size || 15;
-  var shoulders, gloves;
+// An open hand: the fingerless glove's padding over the knuckles and back
+// of the hand, fingers and thumb spread out along (fx, fy).
+function kmOpenHand(b, x, y, fx, fy, size, curl) {
+  var skin = armColor(b.char), fa = Math.atan2(fy, fx);
+  ctx.lineCap = "round";
+  for (var i = 0; i < 5; i++) {
+    var thumb = i === 4, a = fa + (thumb ? -1.05 : (-0.42 + i * 0.28)) * (1 - 0.45 * curl);
+    var len = size * (thumb ? 0.55 : 0.78 - Math.abs(i - 1.5) * 0.06) * (1 - 0.35 * curl);
+    var bx = x + Math.cos(a) * size * 0.45, by = y + Math.sin(a) * size * 0.45;
+    [[theme.wall, size * 0.34], [skin, size * 0.22]].forEach(function (pass) {
+      ctx.strokeStyle = pass[0]; ctx.lineWidth = pass[1];
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(a) * len, by + Math.sin(a) * len); ctx.stroke();
+    });
+  }
+  ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(x, y, size * 0.62, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+}
+
+// which: "back" (arms that go behind his body), "front" (the rest, and the
+// hands), or "all".
+function kmDrawArms(b, h, which) {
+  which = which || "all";
+  var r = b.r, size = b.char.punch.size || 15, m = b.igbb, st = kmStance(b);
+  var arms = [];
   if (h.side) {
-    // Both arms from the near shoulder and side, wrists together at the hip.
-    var s = h.side;
-    shoulders = [[b.x + s * r * 0.8, b.y - r * 0.12], [b.x + s * r * 0.72, b.y + r * 0.35]];
-    gloves = [[h.hx, h.hy - size * 0.62], [h.hx, h.hy + size * 0.62]];
+    // Cupped at the hip, one hand above the ball and one below, palms facing
+    // each other round it; elbows bent out behind him.
+    var s = h.side, gap = Math.max(h.ball * 0.9, size * 0.5) + size * 0.45;
+    var hands = [[h.hx, h.hy - gap, 0.35, 1], [h.hx, h.hy + gap, 0.35, -1]];
+    var shs = [[b.x + s * r * 0.8, b.y - r * 0.15], [b.x + s * r * 0.72, b.y + r * 0.28]];
+    for (var i = 0; i < 2; i++) {
+      var sh = shs[i], hd = hands[i];
+      var ex = (sh[0] + hd[0]) / 2 + s * r * 0.18 * h.k - (m.dx || 0) * r * 0.25 * h.k, ey = (sh[1] + hd[1]) / 2 - (m.dy || 0) * r * 0.25 * h.k;
+      arms.push({ path: [sh, [ex, ey], [hd[0], hd[1]]], hand: [hd[0], hd[1], -s * 0.35, hd[3], hd[2]] });
+    }
   } else {
+    // Locked straight out from both shoulders, heels of the hands together,
+    // palms open toward them with the fingers splayed (the real thing).
     var ux = h.hx - b.x, uy = h.hy - b.y, ul = Math.sqrt(ux * ux + uy * uy) || 1;
     ux /= ul; uy /= ul;
-    shoulders = [[b.x - r * 0.75, b.y - r * 0.12], [b.x + r * 0.75, b.y - r * 0.12]];
-    gloves = [[h.hx - uy * size * 0.62, h.hy + ux * size * 0.62], [h.hx + uy * size * 0.62, h.hy - ux * size * 0.62]];
-    // Left shoulder to the left-most glove.
-    if (gloves[0][0] > gloves[1][0]) gloves.reverse();
+    var px = -uy, py = ux, shL = [b.x - r * 0.75, b.y - r * 0.12], shR = [b.x + r * 0.75, b.y - r * 0.12];
+    var hA = [h.hx + px * size * 0.55, h.hy + py * size * 0.55], hB = [h.hx - px * size * 0.55, h.hy - py * size * 0.55];
+    // Each shoulder to the hand on its own side.
+    var aFirst = (hA[0] - b.x) * 1 < (hB[0] - b.x);
+    arms.push({ path: [aFirst ? shL : shR, hA], hand: [hA[0], hA[1], px * 0.55 + ux * 0.85, py * 0.55 + uy * 0.85, 0] });
+    arms.push({ path: [aFirst ? shR : shL, hB], hand: [hB[0], hB[1], -px * 0.55 + ux * 0.85, -py * 0.55 + uy * 0.85, 0] });
+    // Reaching up over his head, both arms go behind it; reaching across to
+    // one side, the far arm goes behind his body instead of over his chest.
+    var up = kmArmsBehind(b, h);
+    arms.forEach(function (a) {
+      var shSide = a.path[0][0] - b.x, hdSide = a.hand[0] - b.x;
+      a.back = up || (Math.abs(ux) > 0.35 && shSide * hdSide < 0);
+    });
   }
-  for (var i = 0; i < 2; i++) {
-    var sh = shoulders[i], gl = gloves[i];
-    strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(sh[0], sh[1]); ctx.lineTo(gl[0], gl[1]); });
-  }
-  gloves.forEach(function (gl) {
-    ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(gl[0], gl[1], size * 0.85, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  var hs = size * 1.25; // open hands, bigger than a fist
+  arms.forEach(function (a) {
+    if (which !== "all" && (which === "back") !== !!a.back) return;
+    strokeLimb(size * 0.75, armColor(b.char), function () {
+      ctx.moveTo(a.path[0][0], a.path[0][1]);
+      for (var q = 1; q < a.path.length; q++) ctx.lineTo(a.path[q][0], a.path[q][1]);
+    });
   });
+  if (which !== "back") arms.forEach(function (a) { kmOpenHand(b, a.hand[0], a.hand[1], a.hand[2], a.hand[3], h.side ? size : hs, a.hand[4]); });
 }
 
 // His hands and the ball of energy (with the fighter, from draw.js).
 function drawKameHands(b) {
   if (!kameOn(b) || !b.alive) return;
   var t = performance.now() / 1000, h = kmHandPose(b), hx = h.hx, hy = h.hy, ball = h.ball;
-  if (!kmArmsBehind(b, h)) kmDrawArms(b, h);
+  if (h.side) kmDrawArms(b, h); // thrust out, they're drawn over the beam (drawKamehameha)
   var m = b.igbb;
   if (m.phase === "charge" && ball > 1) {
     ball *= 1 + 0.35 * (m.pulse || 0);
@@ -21058,6 +21139,10 @@ function drawKamehameha() {
       }
     }
     ctx.restore();
+    // Arms locked out in front: over the beam, pushing it out of his palms.
+    if (m.phase === "fire" || m.phase === "end") {
+      kmDrawArms(b, kmHandPose(b), "front");
+    }
     drawKameCaption(b);
   });
 }
@@ -26626,6 +26711,7 @@ function draw() {
     var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
+    var kmo = kameOffset(b); wox += kmo.x; woy += kmo.y; // leaning back to charge, lunging into the Kamehameha (kamehameha.js)
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
     drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
@@ -26686,6 +26772,7 @@ function draw() {
     applyGuardPose(b);  // flat on its back in guard
     applyArmbarPose(b); // pulled over in an armbar
     applySuplexPose(b); // arching back into (or flipped over by) a suplex
+    applyKamePose(b);   // crouched and tilted for the Kamehameha (kamehameha.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {

@@ -124,6 +124,7 @@ function draw() {
     var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
+    var kmo = kameOffset(b); wox += kmo.x; woy += kmo.y; // leaning back to charge, lunging into the Kamehameha (kamehameha.js)
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
     drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
@@ -184,6 +185,7 @@ function draw() {
     applyGuardPose(b);  // flat on its back in guard
     applyArmbarPose(b); // pulled over in an armbar
     applySuplexPose(b); // arching back into (or flipped over by) a suplex
+    applyKamePose(b);   // crouched and tilted for the Kamehameha (kamehameha.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
