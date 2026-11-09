@@ -2222,14 +2222,14 @@ function startAuraSound() {
     if (!ctx) return null;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime;
-    playClipOnce("saiyanUp", AURA_VOL * 1.3, now);
+    playClipOnce("saiyanUp", 1.0, now);
     var buf = clipBuffers.saiyanLoop;
     if (!buf) { withClip("saiyanLoop"); return null; }
     var src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
     var g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.setValueAtTime(0.0001, now + 0.25);
-    g.gain.exponentialRampToValueAtTime(AURA_VOL, now + 0.9); // takes over as the burst dies away
+    g.gain.setValueAtTime(0.0001, now + 0.6);
+    g.gain.exponentialRampToValueAtTime(AURA_VOL, now + 1.5); // takes over as the burst dies away
     src.connect(g); g.connect(ctx.destination);
     src.start(now);
     src.stop(now + 60); // never runs on forever
