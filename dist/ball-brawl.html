@@ -12054,7 +12054,9 @@ function drawPoorbetBanner() {
 //               poker table: THE ONLY SURE BET IS NOT BETTING
 // Plus Dagestan World, a theme park with Khabib on a roller coaster, and
 // GANE-PROOF (Gane's baby-proofing ad -> a boxed safety kit on a shelf, with
-// the ref napping in the gear: FOR WHEN THE REF IS NAPPING).
+// the ref napping in the gear: FOR WHEN THE REF IS NAPPING), and
+// Who's Joe & Arman T? (Ilia's cologne: a black-and-white magazine photo and
+// the bottle on satin: EVERY ROSE HAS ITS THORN).
 // Nothing moves and there's no sound; they just fade in, hold and fade out.
 // The fighters don't have to be in the fight: their looks come from the
 // roster.
@@ -12331,7 +12333,12 @@ var STILL_ADS = [
 
   // ---------------------------------------------------------------- GANE-PROOF
   // A boxed safety kit, with the ref napping in the gear (gane-babyproof-ad.js).
-  { name: "ganeproof-kit", fighter: "Ciryl Gane", draw: function (x, y, w, h, k) { drawGaneProofStill(x, y, w, h, k); } }
+  { name: "ganeproof-kit", fighter: "Ciryl Gane", draw: function (x, y, w, h, k) { drawGaneProofStill(x, y, w, h, k); } },
+
+  // ---------------------------------------------------------------- Who's Joe & Arman T?
+  // Ilia's cologne ad -> a magazine page: a black-and-white photo of him
+  // with only the rose in color, and the bottle on blush satin (cologne-ad.js).
+  { name: "cologne-rose", fighter: "Ilia Topuria", draw: function (x, y, w, h, k, ch) { drawCologneStill(x, y, w, h, k, ch); } }
 ];
 
 // Dagestan World (Joe, 2026-11-06): a still theme-park ad in the ad-break
@@ -16409,6 +16416,83 @@ function cologneBottle(cx, cy, h, t, k) {
   }
   var sp = Math.max(0, Math.sin((t - 3.6) * 3));
   if (t > 3.6 && t < 4.7) ganeAdStar(cx + bw * 0.18, top + bh * 0.1, 10 * k * sp, "rgba(255,250,240," + sp + ")");
+}
+
+// ---------------------------------------------------------------- still version
+// The still ad for the random rotation (still-ads.js), a magazine page
+// instead of the smoky film: a black-and-white photo of Ilia with his rapier
+// where only the rose he holds is in color, beside Joe's bottle on blush
+// satin and rose petals. "Every rose has its thorn."
+function drawCologneStill(x, y, w, h, k, ch) {
+  var look = ch.look;
+  // Blush satin, with soft folds.
+  var bg = ctx.createLinearGradient(x, y, x + w, y + h);
+  bg.addColorStop(0, "#f7dfe2"); bg.addColorStop(0.5, "#eec3c9"); bg.addColorStop(1, "#e2a8b1");
+  ctx.fillStyle = bg; ctx.fillRect(x, y, w, h);
+  for (var f = 0; f < 6; f++) {
+    var fx = x + w * (0.4 + f * 0.11);
+    var fg = ctx.createLinearGradient(fx - w * 0.05, 0, fx + w * 0.05, 0);
+    fg.addColorStop(0, "rgba(255,255,255,0)"); fg.addColorStop(0.5, "rgba(255,255,255," + (0.18 + (f % 2) * 0.12) + ")"); fg.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = fg;
+    ctx.beginPath(); ctx.moveTo(fx - w * 0.04, y); ctx.bezierCurveTo(fx + w * 0.05, y + h * 0.3, fx - w * 0.06, y + h * 0.7, fx + w * 0.03, y + h);
+    ctx.lineTo(fx + w * 0.09, y + h); ctx.bezierCurveTo(fx, y + h * 0.7, fx + w * 0.1, y + h * 0.3, fx + w * 0.02, y); ctx.closePath(); ctx.fill();
+  }
+
+  // The photo: Ilia in black and white.
+  var px = x + w * 0.03, py = y + h * 0.08, pw = w * 0.34, ph = h * 0.84;
+  ctx.save();
+  ctx.translate(px + pw / 2, py + ph / 2); ctx.rotate(-0.025); ctx.translate(-(px + pw / 2), -(py + ph / 2));
+  ctx.fillStyle = "rgba(0,0,0,0.25)"; ctx.fillRect(px + 5 * k, py + 6 * k, pw, ph);
+  ctx.fillStyle = "#fbfaf7"; ctx.fillRect(px - 6 * k, py - 6 * k, pw + 12 * k, ph + 12 * k);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(px, py, pw, ph); ctx.clip();
+  var pg = ctx.createRadialGradient(px + pw * 0.6, py + ph * 0.35, 0, px + pw * 0.5, py + ph * 0.5, pw * 0.75);
+  pg.addColorStop(0, "#4c4c4c"); pg.addColorStop(1, "#080808");
+  ctx.fillStyle = pg; ctx.fillRect(px, py, pw, ph);
+  var r = ph * 0.34, ix = px + pw * 0.56, iy = py + ph * 0.66;
+  cologneIlia(ix, iy, r, look, 0, k); // rapier raised behind his shoulder
+  var hx = ix - r * 0.78, hy = iy - r * 0.35;
+  cologneArm(ix - r * 0.62, iy - r * 0.2, ix - r * 1.0, iy - r * 0.0, hx, hy, r, look);
+  drawGlove(ctx, hx, hy, r * 0.24, look, "#0b0f12", -Math.PI * 0.6);
+  // Everything so far to black and white...
+  ctx.globalCompositeOperation = "saturation"; ctx.fillStyle = "#808080"; ctx.fillRect(px, py, pw, ph);
+  ctx.globalCompositeOperation = "source-over";
+  // ...except the rose in his hand.
+  drawRose(hx + r * 0.02, hy - r * 0.28, 0.25, r / 22);
+  var vg = ctx.createRadialGradient(px + pw / 2, py + ph / 2, pw * 0.3, px + pw / 2, py + ph / 2, pw * 0.75);
+  vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.45)");
+  ctx.fillStyle = vg; ctx.fillRect(px, py, pw, ph);
+  ctx.restore();
+  ctx.restore();
+
+  // Petals on the satin round the bottle.
+  var pts = [[0.47, 0.86, 0.4], [0.5, 0.78, 2.1], [0.55, 0.92, 1.2], [0.66, 0.9, 2.8], [0.71, 0.82, 0.9], [0.62, 0.95, 1.9], [0.45, 0.95, 2.5], [0.74, 0.94, 0.2], [0.52, 0.18, 1.4], [0.69, 0.12, 2.2]];
+  pts.forEach(function (p, i) {
+    ctx.save(); ctx.translate(x + w * p[0], y + h * p[1]); ctx.rotate(p[2]);
+    ctx.fillStyle = i % 2 ? "#b3122a" : "#d0213f";
+    ctx.beginPath(); ctx.ellipse(0, 0, 9 * k, 5 * k, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.beginPath(); ctx.ellipse(-2 * k, -1.5 * k, 4 * k, 2 * k, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
+  drawRose(x + w * 0.69, y + h * 0.84, -1.2, 2.0 * k);
+  // The bottle.
+  var im = cologneBottleImg;
+  if (im.complete && im.naturalWidth) {
+    var bh = h * 0.86, bw = bh * COLOGNE_BOTTLE_ASPECT, bx = x + w * 0.585, by = y + h * 0.07;
+    ctx.fillStyle = "rgba(90,20,30,0.25)"; ctx.beginPath(); ctx.ellipse(bx, by + bh - 3 * k, bw * 0.6, h * 0.035, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.drawImage(im, bx - bw / 2, by, bw, bh);
+  }
+  // The brand column.
+  var tx = x + w * 0.865, ink = "#2a0a10";
+  var mono = stillTintedLogo(cologneMonoImg, ink), word = stillTintedLogo(cologneWordImg, ink);
+  if (mono) { var ms = h * 0.22; ctx.drawImage(mono, tx - ms / 2, y + h * 0.07, ms, ms); }
+  if (word) { var ww = w * 0.24, wh = ww * word.height / word.width; ctx.drawImage(word, tx - ww / 2, y + h * 0.34, ww, wh); }
+  stillText("Rose", tx, y + h * 0.55, 36 * k, "#a3102a", w * 0.22, { face: "'Snell Roundhand', 'Brush Script MT', Georgia, serif", weight: "italic 600" });
+  stillText("EAU DE COLOGNE", tx, y + h * 0.67, 12 * k, ink, w * 0.22, { face: "Georgia, 'Times New Roman', serif", weight: "400" });
+  ctx.fillStyle = ink; ctx.fillRect(tx - w * 0.04, y + h * 0.725, w * 0.08, 1.5 * k);
+  stillText("Every rose has its thorn.", tx, y + h * 0.8, 17 * k, ink, w * 0.22, { face: "Georgia, 'Times New Roman', serif", weight: "italic 400" });
+  stillText("SPAIN · 100 ML", tx, y + h * 0.9, 10 * k, "rgba(42,10,16,0.7)", w * 0.22, { face: "Georgia, 'Times New Roman', serif", weight: "400" });
+  ctx.strokeStyle = "rgba(42,10,16,0.35)"; ctx.lineWidth = 1.5 * k; ctx.strokeRect(x + 5 * k, y + 5 * k, w - 10 * k, h - 10 * k);
 }
 
 // Joe's bear pictures (2026-11-06) for Khabib's ring bear (khabib-bear.js),
