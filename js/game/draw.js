@@ -127,6 +127,7 @@ function draw() {
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
     drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
+    drawKameArmsBehind(b); // his arms reaching up behind his head for a Kamehameha fired upward (kamehameha.js)
 
     // While charging a power punch or rage attack, the ball jitters with
     // rising intensity; while throwing the power punch specifically, the

@@ -130,24 +130,66 @@ function endKamehameha(self) {
   setSpeed(self, SPEED);
 }
 
+// Where his hands are and how big the ball of energy is. The fighters are
+// drawn facing us, so the charge is always cupped at one hip, on the side
+// away from the opponent (never up by his head), and on the fire the hands
+// push out toward them.
+function kmHandPose(b) {
+  var m = b.igbb, r = b.r, dx = m.dx || 1, dy = m.dy || 0;
+  var size = b.char.punch.size || 15, cfg = b.char.kamehameha;
+  if (m.phase === "power" || m.phase === "charge") {
+    if (m.side == null) m.side = dx > 0 ? -1 : 1;
+    var k = Math.min(1, (m.phase === "charge" ? m.t + 0.3 : m.t) / 0.3); k = k * k * (3 - 2 * k);
+    return { hx: b.x + m.side * r * (0.95 + 0.35 * k), hy: b.y + r * (0.15 + 0.15 * k), side: m.side, k: k,
+      ball: m.phase === "charge" ? size * (0.5 + 1.3 * Math.min(1, m.t / cfg.charge)) : 0 };
+  }
+  var k2 = m.phase === "fire" ? Math.min(1, m.t / 0.08) : 1 - Math.min(1, m.t / KM_END);
+  return { hx: b.x + dx * r * (0.95 + 0.45 * k2), hy: b.y + dy * r * (0.95 + 0.45 * k2), side: 0,
+    ball: m.phase === "fire" ? size * 1.9 : size * 1.2 * (1 - m.t / KM_END) };
+}
+
+// Hands pushed up above his shoulders go behind his head, so the arms are
+// drawn before his body (from draw.js, with the aura) and only the gloves
+// and the energy show over the top.
+function kmArmsBehind(b, h) { return h.side === 0 && h.hy < b.y - b.r * 0.25; }
+
+function drawKameArmsBehind(b) {
+  if (!kameOn(b) || !b.alive) return;
+  var h = kmHandPose(b);
+  if (kmArmsBehind(b, h)) kmDrawArms(b, h);
+}
+
+function kmDrawArms(b, h) {
+  var r = b.r, size = b.char.punch.size || 15;
+  var shoulders, gloves;
+  if (h.side) {
+    // Both arms from the near shoulder and side, wrists together at the hip.
+    var s = h.side;
+    shoulders = [[b.x + s * r * 0.8, b.y - r * 0.12], [b.x + s * r * 0.72, b.y + r * 0.35]];
+    gloves = [[h.hx, h.hy - size * 0.62], [h.hx, h.hy + size * 0.62]];
+  } else {
+    var ux = h.hx - b.x, uy = h.hy - b.y, ul = Math.sqrt(ux * ux + uy * uy) || 1;
+    ux /= ul; uy /= ul;
+    shoulders = [[b.x - r * 0.75, b.y - r * 0.12], [b.x + r * 0.75, b.y - r * 0.12]];
+    gloves = [[h.hx - uy * size * 0.62, h.hy + ux * size * 0.62], [h.hx + uy * size * 0.62, h.hy - ux * size * 0.62]];
+    // Left shoulder to the left-most glove.
+    if (gloves[0][0] > gloves[1][0]) gloves.reverse();
+  }
+  for (var i = 0; i < 2; i++) {
+    var sh = shoulders[i], gl = gloves[i];
+    strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(sh[0], sh[1]); ctx.lineTo(gl[0], gl[1]); });
+  }
+  gloves.forEach(function (gl) {
+    ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(gl[0], gl[1], size * 0.85, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
+}
+
 // His hands and the ball of energy (with the fighter, from draw.js).
 function drawKameHands(b) {
   if (!kameOn(b) || !b.alive) return;
-  var m = b.igbb, r = b.r, t = performance.now() / 1000;
-  var dx = m.dx || 1, dy = m.dy || 0, px = -dy, py = dx;
-  var size = b.char.punch.size || 15, cfg = b.char.kamehameha;
-  var hx, hy, ball;
-  if (m.phase === "charge") {
-    // Cupped at his side, pulled back away from them.
-    var k = Math.min(1, m.t / 0.3); k = k * k * (3 - 2 * k);
-    hx = b.x - dx * r * (0.2 + 0.75 * k) + px * r * (0.95 * k);
-    hy = b.y - dy * r * (0.2 + 0.75 * k) + py * r * (0.95 * k);
-    ball = size * (0.5 + 1.3 * Math.min(1, m.t / cfg.charge));
-  } else {
-    var k2 = m.phase === "fire" ? Math.min(1, m.t / 0.08) : 1 - Math.min(1, m.t / KM_END);
-    hx = b.x + dx * r * (0.3 + 0.85 * k2); hy = b.y + dy * r * (0.3 + 0.85 * k2);
-    ball = m.phase === "fire" ? size * 1.9 : size * 1.2 * (1 - m.t / KM_END);
-  }
+  var t = performance.now() / 1000, h = kmHandPose(b), hx = h.hx, hy = h.hy, ball = h.ball;
+  if (!kmArmsBehind(b, h)) kmDrawArms(b, h);
   // The ball of energy between his hands, glowing and crackling.
   if (ball > 1) {
     var fl = 1 + 0.12 * Math.sin(t * 40);
@@ -167,14 +209,6 @@ function drawKameHands(b) {
     }
     ctx.restore();
   }
-  // Both arms to the hands, wrists together.
-  [-1, 1].forEach(function (s) {
-    var shx = b.x + px * s * r * 0.7, shy = b.y + py * s * r * 0.7;
-    var gx = hx + px * s * size * 0.55, gy = hy + py * s * size * 0.55;
-    strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(shx, shy); ctx.lineTo(gx, gy); });
-    ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(gx, gy, size * 0.85, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  });
 }
 
 // The aim line and the beam itself, over both fighters (from draw.js).
@@ -207,7 +241,7 @@ function drawKamehameha() {
       ctx.globalAlpha = 1;
     } else if (m.phase === "fire" || (m.phase === "end" && m.t < 0.25)) {
       var fade = m.phase === "end" ? 1 - m.t / 0.25 : Math.min(1, m.t / 0.06);
-      var len = m.phase === "fire" ? m.ext : m.len, x0 = r * 1.1;
+      var len = m.phase === "fire" ? m.ext : m.len, x0 = r * 1.45; // starts at his hands, clear of his body
       var w = cfg.width * fade * (1 + 0.08 * Math.sin(t * 50));
       [[2.0, "rgba(40,120,255,0.28)"], [1.35, "rgba(80,170,255,0.6)"], [0.9, "rgba(150,215,255,0.95)"], [0.42, "rgba(255,255,255,1)"]].forEach(function (L) {
         var hw = w * L[0] / 2;
@@ -219,7 +253,7 @@ function drawKamehameha() {
         for (var x2 = len; x2 >= x0; x2 -= 12) ctx.lineTo(x2, hw * (0.85 + 0.15 * Math.sin(x2 * 0.08 + t * 60)));
         ctx.closePath(); ctx.fill();
         // A bigger ball where it leaves his hands.
-        ctx.beginPath(); ctx.arc(x0, 0, hw * 1.25, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x0, 0, hw * 0.75, 0, Math.PI * 2); ctx.fill();
       });
       // Splash against the cage.
       if (m.phase === "fire" && m.ext >= m.len - 1) {
