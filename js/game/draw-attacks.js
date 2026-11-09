@@ -118,6 +118,7 @@ function drawHands(b, other) {
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)
+  if (tornadoHandsBusy(b)) return; // spinning in the Rose Tornado (drawTornadoArms)
   if (allAmericanHandsBusy(b)) return; // the haymaker, or fists pumping (drawAllAmerican)
   if (herbCovering(b)) { drawHerbCover(b); return; } // covering up from the bat and the cane
   if (aaCovering(b)) { drawAaPanic(b); return; } // freaking out on the highway (allamerican.js)

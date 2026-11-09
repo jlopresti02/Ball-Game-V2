@@ -175,6 +175,7 @@ function updateAbilities(dt) {
     if (updateDuckDrop(self, other, dt)) continue; // Jon Jones's Duck Drop (jon-duck.js)
     if (bearOn(self)) continue; // Khabib fighting, lifting or throwing the bear (khabib-bear.js)
     if (updateRapierLunge(self, other, dt)) continue; // Ilia's rapier lunge (rapier.js)
+    if (updateIliaTornado(self, other, dt)) continue; // Ilia's Rose Tornado (ilia-tornado.js)
     if (updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
     if (updateTopRope(self, other, dt)) continue; // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
     if (updateEagleCarry(self, other, dt)) continue; // Gaethje snatched up by his own eagle (gaethje-golf.js)

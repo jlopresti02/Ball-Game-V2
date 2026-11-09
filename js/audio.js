@@ -2166,3 +2166,41 @@ function playDuckLand() {
     src.connect(lp); lp.connect(g2); g2.connect(ctx.destination); src.start(now); src.stop(now + 1.0);
   });
 }
+
+// Ilia's Rose Tornado (ilia-tornado.js): a howl of wind that winds up,
+// whistles round and round, and dies away over dur seconds.
+var tornadoNoise = null;
+function playTornadoWind(dur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + dur;
+    if (!tornadoNoise) {
+      tornadoNoise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 1.5), ctx.sampleRate);
+      var data = tornadoNoise.getChannelData(0);
+      for (var i = 0; i < data.length; i++) data[i] = nativeRandom() * 2 - 1;
+    }
+    var src = ctx.createBufferSource();
+    src.buffer = tornadoNoise; src.loop = true;
+    var bp = ctx.createBiquadFilter();
+    bp.type = "bandpass"; bp.Q.value = 3;
+    bp.frequency.setValueAtTime(250, now);
+    bp.frequency.exponentialRampToValueAtTime(900, now + 0.7);
+    // Whistling round: the pitch wobbling up and down as it turns.
+    var lfo = ctx.createOscillator(), lg = ctx.createGain();
+    lfo.frequency.setValueAtTime(1.5, now); lfo.frequency.linearRampToValueAtTime(5, now + 0.8);
+    lfo.frequency.linearRampToValueAtTime(1, end);
+    lg.gain.value = 350;
+    lfo.connect(lg); lg.connect(bp.frequency);
+    bp.frequency.setValueAtTime(900, Math.max(now + 0.7, end - 0.7));
+    bp.frequency.exponentialRampToValueAtTime(200, end);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.5, now + 0.6);
+    g.gain.setValueAtTime(0.5, Math.max(now + 0.6, end - 0.7));
+    g.gain.exponentialRampToValueAtTime(0.0001, end);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+    src.start(now); src.stop(end + 0.05); lfo.start(now); lfo.stop(end + 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}

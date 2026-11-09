@@ -86,6 +86,7 @@ function draw() {
 
   drawGuardZones(); // the circle round a fighter down in guard
   drawAuraRoses(false); // roses thrown on the mat (aurafarm.js)
+  drawTornadoUnder();   // and from the Rose Tornado, and the swirl at its foot (ilia-tornado.js)
   drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
   drawHelmetChargeUnder(); // Helmet Charge: the red path he's about to run (hokit-helmet.js)
   drawRapierLungeUnder(); // Ilia's lunge: the red line he's about to lunge down (rapier.js)
@@ -150,6 +151,8 @@ function draw() {
     if (aas) { spinning = true; spinAngle = aas; }
     var afs = auraSpin(b); // twirling in the Aura Farm dance (aurafarm.js)
     if (afs) { spinning = true; spinAngle = afs; }
+    var tns = tornadoSpin(b); // spinning in (or caught in) the Rose Tornado (ilia-tornado.js)
+    if (tns) { spinning = true; spinAngle = tns; }
     var sws = swordBodySpin(b); // spinning into a sword strike (sword.js)
     if (sws) { spinning = true; spinAngle = sws; }
 
@@ -319,6 +322,7 @@ function draw() {
     drawDizzy(b);   // stars and a spiral after a Gaethje haymaker
     drawAllAmerican(b); // and his All American haymaker
     drawAuraFarm(b);    // Ilia dancing, with the cape, KOing and lifting the bull
+    drawTornadoArms(b); // and his arms flung out in the Rose Tornado (ilia-tornado.js)
     drawAaSlashes(b);   // eagle claw marks on whoever's out on the road
     drawMock(b);    // and his thumbs down
     drawCheater(b); // Gane cheating (and EVIL Jon Jones's eye poke)
@@ -347,6 +351,7 @@ function draw() {
   drawAuraActors();    // the bull
   drawJonGoats();      // the goats (jon.js)
   drawHelmetChargeOver(); // the helmet dropping onto Hokit's head (hokit-helmet.js)
+  drawTornadoOver(); // the Rose Tornado and the roses flying out of it (ilia-tornado.js)
   drawRingBear(); // Khabib's bear, or the dust cloud it's fighting in (khabib-bear.js)
   drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)
   drawEagleStrikeOver();  // the eagle swooping through, and its claw marks (gaethje-eagle.js)
