@@ -377,6 +377,7 @@ function draw() {
   drawNinersBanner(); // and the San Francisco 67'ers ad (hokit-helmet.js)
   drawPoorbetBanner(); // and the Poorbet sponsor ad (poorbet-ad.js)
   drawStillBanner(); // and the still fighter ads (still-ads.js)
+  drawGaneAdBanner(); // and Gane's baby-proofing ad (gane-babyproof-ad.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawDeathFx(); // the loser's death animation (death.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
