@@ -20721,12 +20721,11 @@ function updateKamehameha(self, other, dt) {
     // The aura bursts on: blond hair, the gold flames and Joe's burst (dobronx.js).
     doBronxHair(self, true); self.kameBlond = true;
     kmPushAway(self, other); // the energy coming up shoves them back, so the beam has room to fly
-    floater(self.x, self.y - self.r - 30, "POWER UP!", "crit");
     if (!reduceMotion) shake = Math.max(shake, 10);
   }
   var m = self.igbb;
   if (m.move !== "kamehameha") return false;
-  m.t += dt;
+  m.t += dt; m.callT = (m.callT || 0) + dt;
   self.vx = 0; self.vy = 0;
   if (over) { endKamehameha(self); return false; }
 
@@ -20739,13 +20738,12 @@ function updateKamehameha(self, other, dt) {
     if (m.t < cfg.charge - KM_LOCK && other.alive) kmAim(self, other);
     var call = Math.floor(m.t / (cfg.charge / (KM_CALLS.length + 0.4)));
     if (call >= m.calls && m.calls < KM_CALLS.length) {
-      floater(self.x, self.y - self.r - 30 - m.calls * 4, KM_CALLS[m.calls], "note");
-      m.calls++;
+      m.calls++; m.callT = 0; // shown in the caption (drawKameCaption), not over his head (Joe)
     }
     if (m.t >= cfg.charge) {
       m.phase = "fire"; m.t = 0;
       m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
-      floater(self.x, self.y - self.r - 34, "HA!!!", "crit");
+      m.callT = 0;
       self.squash = { t: 0.2, max: 0.2, nx: -m.dx, ny: -m.dy };
       if (!reduceMotion) shake = Math.max(shake, 14);
       crowdReact(0.9);
@@ -20911,7 +20909,43 @@ function drawKamehameha() {
       }
     }
     ctx.restore();
+    drawKameCaption(b);
   });
+}
+
+// The call, built up word by word in one big caption on the far side of
+// the ring from him: POWER UP!, then KA... ME... HA... ME... and HA!!!
+function drawKameCaption(b) {
+  var m = b.igbb, words, last;
+  if (m.phase === "power") { words = ["POWER UP!"]; last = true; }
+  else if (m.phase === "charge") { words = KM_CALLS.slice(0, m.calls); last = false; }
+  else if (m.phase === "fire" || (m.phase === "end" && m.t < 0.3)) { words = KM_CALLS.concat(["HA!!!"]); last = true; }
+  else return;
+  if (!words.length) return;
+  var y = b.y < H / 2 ? H * 0.86 : H * 0.14;
+  var pop = Math.max(0, 1 - (m.callT || 0) / 0.18); // the newest word pops in
+  var fade = m.phase === "end" ? 1 - m.t / 0.3 : 1;
+  ctx.save();
+  ctx.globalAlpha = fade;
+  ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+  var fs = 30, big = last ? 44 : fs;
+  var font = function (n) { return "900 " + n + 'px "Barlow Condensed", "Arial Narrow", sans-serif'; };
+  // Measure the line so it sits centred.
+  var widths = words.map(function (w, i) { ctx.font = font(i === words.length - 1 ? big : fs); return ctx.measureText(w + " ").width; });
+  var total = widths.reduce(function (a, c) { return a + c; }, 0);
+  var x = W / 2 - total / 2;
+  words.forEach(function (w, i) {
+    var newest = i === words.length - 1, n = newest ? big * (1 + 0.35 * pop) : fs;
+    ctx.font = font(n);
+    ctx.textAlign = "left";
+    ctx.lineWidth = 6; ctx.strokeStyle = "rgba(10,30,70,0.85)"; ctx.strokeText(w, x, y);
+    ctx.fillStyle = w === "POWER UP!" ? "#ffd21f" : newest && last ? "#ffffff" : "#8fd3ff";
+    ctx.shadowColor = w === "POWER UP!" ? "rgba(255,190,0,0.9)" : "rgba(80,170,255,0.9)"; ctx.shadowBlur = 12;
+    ctx.fillText(w, x, y);
+    ctx.shadowBlur = 0;
+    x += widths[i];
+  });
+  ctx.restore();
 }
 
 // Every frame (from tickDoBronxFx): if something else cut the move off
