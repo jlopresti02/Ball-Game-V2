@@ -10,7 +10,9 @@
 //               print ad with an open ring box: THE DIAMOND STANDARD
 //   Poorbet     the animated casino-marquee ad -> a lost bet slip on a
 //               poker table: THE ONLY SURE BET IS NOT BETTING
-// Plus Dagestan World, a theme park with Khabib on a roller coaster.
+// Plus Dagestan World, a theme park with Khabib on a roller coaster, and
+// GANE-PROOF (Gane's baby-proofing ad -> a boxed safety kit on a shelf, with
+// the ref napping in the gear: FOR WHEN THE REF IS NAPPING).
 // Nothing moves and there's no sound; they just fade in, hold and fade out.
 // The fighters don't have to be in the fight: their looks come from the
 // roster.
@@ -283,5 +285,9 @@ var STILL_ADS = [
   // ---------------------------------------------------------------- Dagestan World
   // (Joe, 2026-11-06) An amusement park ad: Khabib riding a roller coaster,
   // arms up, having the time of his life. "2-3 week vacation and forget."
-  { name: "dagestan-world", fighter: "Khabib Nurmagomedov", draw: function (x, y, w, h, k, ch) { drawDagestanWorld(x, y, w, h, k, ch); } }
+  { name: "dagestan-world", fighter: "Khabib Nurmagomedov", draw: function (x, y, w, h, k, ch) { drawDagestanWorld(x, y, w, h, k, ch); } },
+
+  // ---------------------------------------------------------------- GANE-PROOF
+  // A boxed safety kit, with the ref napping in the gear (gane-babyproof-ad.js).
+  { name: "ganeproof-kit", fighter: "Ciryl Gane", draw: function (x, y, w, h, k) { drawGaneProofStill(x, y, w, h, k); } }
 ];

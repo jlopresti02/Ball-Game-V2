@@ -285,6 +285,109 @@ function ganeAdFeature(x, y, w, k, t, name, sub) {
   ctx.restore();
 }
 
+// ---------------------------------------------------------------- still version
+// The still, silent second version (in the still-ad rotation, still-ads.js):
+// the GANE-PROOF Safety Kit in its box, a REF APPROVED sticker, and the ref
+// fast asleep in the gear. FOR WHEN THE REF IS NAPPING.
+function drawGaneProofStill(x, y, w, h, k) {
+  var round = "'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif";
+  // Soft mint with candy stripes.
+  var bg = ctx.createLinearGradient(x, y, x + w, y + h);
+  bg.addColorStop(0, "#d9f5ec"); bg.addColorStop(1, "#fdf1d6");
+  ctx.fillStyle = bg; ctx.fillRect(x, y, w, h);
+  ctx.save();
+  ctx.globalAlpha *= 0.35; ctx.fillStyle = "#ffffff";
+  for (var sx = x - h; sx < x + w; sx += 46 * k) {
+    ctx.beginPath(); ctx.moveTo(sx, y + h); ctx.lineTo(sx + 20 * k, y + h); ctx.lineTo(sx + 20 * k + h, y); ctx.lineTo(sx + h, y); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  // The product box, standing a little tilted.
+  var bx = x + w * 0.17, by = y + h * 0.53, bw = w * 0.25, bh = h * 0.84;
+  ctx.save();
+  ctx.translate(bx, by); ctx.rotate(-0.04);
+  ctx.fillStyle = "rgba(59,74,107,0.2)"; stillRoundRect(-bw / 2 + 6 * k, -bh / 2 + 7 * k, bw, bh, 12 * k); ctx.fill();
+  ctx.fillStyle = "#8fd3ff"; ctx.strokeStyle = "#3b4a6b"; ctx.lineWidth = 2.5 * k;
+  stillRoundRect(-bw / 2, -bh / 2, bw, bh, 12 * k); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#ffffff"; stillRoundRect(-bw / 2 + 6 * k, -bh / 2 + 6 * k, bw - 12 * k, bh * 0.25, 8 * k); ctx.fill();
+  // Header: the block letters and the product name.
+  var letters = ["G", "A", "N", "E"], cols = ["#7cc6fe", "#ff9ec4", "#9be37c", "#ffd36b"], bs = bh * 0.13;
+  for (var i = 0; i < 4; i++) {
+    var lx = -bs * 1.6 + i * bs * 1.07, ly = -bh / 2 + bh * 0.1;
+    ctx.fillStyle = cols[i]; ctx.strokeStyle = "#3b4a6b"; ctx.lineWidth = 1.5 * k;
+    stillRoundRect(lx - bs / 2, ly - bs / 2, bs, bs, 4 * k); ctx.fill(); ctx.stroke();
+    stillText(letters[i], lx, ly + 1 * k, bs * 0.7, "#ffffff", bs * 0.8, { face: round, weight: "900", stroke: "#3b4a6b", strokeW: 0.14 });
+  }
+  stillText("-PROOF SAFETY KIT", 0, -bh / 2 + bh * 0.22, 15 * k, "#3b4a6b", bw * 0.86, { face: round, weight: "900" });
+  // The clear window with the goggles and the head pillow inside.
+  var wy = -bh * 0.015, ww = bw * 0.82, wh = bh * 0.37;
+  ctx.fillStyle = "#eaf6ff"; ctx.strokeStyle = "#3b4a6b"; ctx.lineWidth = 2 * k;
+  stillRoundRect(-ww / 2, wy - wh / 2, ww, wh, 10 * k); ctx.fill(); ctx.stroke();
+  ganeProofPillow(0, wy + wh * 0.18, ww * 0.6, wh * 0.36, k);
+  ganeProofGoggles(0, wy - wh * 0.17, ww * 0.34, k);
+  ctx.save(); ctx.globalAlpha *= 0.55; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3 * k; // shine on the plastic
+  ctx.beginPath(); ctx.moveTo(-ww * 0.38, wy - wh * 0.25); ctx.lineTo(-ww * 0.2, wy - wh * 0.42); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-ww * 0.38, wy - wh * 0.08); ctx.lineTo(-ww * 0.08, wy - wh * 0.42); ctx.stroke();
+  ctx.restore();
+  // Footer.
+  stillText("POKE-RESISTANT • BACK-OF-HEAD PADDED", 0, bh * 0.25, 9 * k, "#3b4a6b", bw * 0.86, { face: round, weight: "900" });
+  ctx.fillStyle = "#3b4a6b"; stillRoundRect(-bw / 2 + 6 * k, bh * 0.32, bw - 12 * k, bh * 0.13, 6 * k); ctx.fill();
+  stillText("AGES: ALL FIGHTERS", 0, bh * 0.385, 12 * k, "#ffffff", bw * 0.8, { face: round, weight: "900" });
+  ctx.restore();
+  // REF APPROVED sticker on the box's corner.
+  var stx = bx + bw * 0.45, sty = y + h * 0.2, sr = h * 0.13;
+  ctx.save(); ctx.translate(stx, sty); ctx.rotate(0.25);
+  ctx.fillStyle = "#ff6f91"; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2 * k;
+  ctx.beginPath();
+  for (var p = 0; p < 24; p++) { var pa = p / 24 * Math.PI * 2, pr = p % 2 ? sr * 0.84 : sr; ctx.lineTo(Math.cos(pa) * pr, Math.sin(pa) * pr); }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  stillText("REF", 0, -sr * 0.22, sr * 0.55, "#ffffff", sr * 1.3, { face: round, weight: "900" });
+  stillText("APPROVED", 0, sr * 0.28, sr * 0.3, "#ffffff", sr * 1.4, { face: round, weight: "900" });
+  ctx.restore();
+
+  // The copy.
+  var tx = x + w * 0.535, tw = w * 0.32;
+  stillText("FOR WHEN THE", tx, y + h * 0.2, 30 * k, "#3b4a6b", tw, { face: round, weight: "900" });
+  stillText("REF IS NAPPING.", tx, y + h * 0.38, 42 * k, "#ff6f91", tw, { face: round, weight: "900", stroke: "#ffffff", strokeW: 0.18 });
+  ctx.fillStyle = "#3b4a6b"; ctx.fillRect(tx - tw * 0.3, y + h * 0.5, tw * 0.6, Math.max(1, 2 * k));
+  stillText("Safety goggles • Head pillow • Corner bumpers", tx, y + h * 0.6, 14 * k, "#3b4a6b", tw, { face: "Georgia, 'Times New Roman', serif", weight: "italic 600" });
+  stillText("AND MORE!", tx, y + h * 0.73, 22 * k, "#ff6f91", tw, { face: round, weight: "900" });
+  ctx.fillStyle = "rgba(255,255,255,0.8)"; stillRoundRect(tx - tw * 0.36, y + h * 0.81, tw * 0.72, h * 0.12, 10 * k); ctx.fill();
+  stillText("GANE-PROOF  •  CALL 1-800-NO-POKE", tx, y + h * 0.872, 14 * k, "#3b4a6b", tw * 0.68, { face: round, weight: "900" });
+
+  // The ref, fast asleep in the gear, Zs floating up.
+  var rx = x + w * 0.83, ry = y + h * 0.6, rr = h * 0.25;
+  ctx.save();
+  ctx.translate(rx, ry); ctx.rotate(0.28); ctx.translate(-rx, -ry);
+  ganeAdModel(rx, ry, rr, 0, k);
+  ctx.restore();
+  [[1.05, -1.1, 15], [1.45, -1.45, 20], [1.9, -1.8, 27]].forEach(function (z) {
+    stillText("Z", rx + rr * z[0], ry + rr * z[1], z[2] * k, "#ffffff", 60 * k, { face: round, weight: "900", stroke: "#3b4a6b", strokeW: 0.25 });
+  });
+  ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3 * k; stillRoundRect(x + 4 * k, y + 4 * k, w - 8 * k, h - 8 * k, 14 * k); ctx.stroke();
+}
+function ganeProofGoggles(cx, cy, gw, k) {
+  ctx.fillStyle = "#3b4a6b"; ctx.fillRect(cx - gw * 0.95, cy - gw * 0.05, gw * 1.9, gw * 0.1);
+  [-1, 1].forEach(function (s) {
+    var lx = cx + s * gw * 0.3;
+    ctx.fillStyle = "#3b4a6b"; stillRoundRect(lx - gw * 0.28, cy - gw * 0.2, gw * 0.56, gw * 0.4, gw * 0.14); ctx.fill();
+    var lg = ctx.createLinearGradient(lx - gw * 0.2, cy - gw * 0.14, lx + gw * 0.2, cy + gw * 0.14);
+    lg.addColorStop(0, "rgba(220,240,255,0.95)"); lg.addColorStop(1, "rgba(120,190,255,0.7)");
+    ctx.fillStyle = lg; stillRoundRect(lx - gw * 0.22, cy - gw * 0.14, gw * 0.44, gw * 0.28, gw * 0.1); ctx.fill();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2 * k;
+    ctx.beginPath(); ctx.moveTo(lx - gw * 0.13, cy - gw * 0.04); ctx.lineTo(lx - gw * 0.03, cy - gw * 0.09); ctx.stroke();
+  });
+}
+function ganeProofPillow(cx, cy, pw, ph, k) {
+  var pg = ctx.createLinearGradient(0, cy - ph / 2, 0, cy + ph / 2);
+  pg.addColorStop(0, "#fff3c4"); pg.addColorStop(1, "#ffd98a");
+  ctx.fillStyle = pg; ctx.strokeStyle = "#c98f2e"; ctx.lineWidth = 2 * k;
+  stillRoundRect(cx - pw / 2, cy - ph / 2, pw, ph, ph * 0.4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#7cc6fe"; ctx.fillRect(cx - pw / 2 - 4 * k, cy - ph * 0.1, pw + 8 * k, ph * 0.2);
+  ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#3b4a6b"; ctx.lineWidth = 1.2 * k;
+  stillRoundRect(cx - ph * 0.14, cy - ph * 0.16, ph * 0.28, ph * 0.32, 2 * k); ctx.fill(); ctx.stroke();
+}
+
 function drawGaneAdBanner() {
   if (ganeAdShow <= 0 || stadiumOn()) return;
   drawGaneAdJumbo(10, 10, W - 20, 110);
