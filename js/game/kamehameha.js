@@ -61,20 +61,52 @@ function updateKamehameha(self, other, dt) {
     var call = Math.floor(m.t / (cfg.charge / (KM_CALLS.length + 0.4)));
     if (call >= m.calls && m.calls < KM_CALLS.length) {
       m.calls++; m.callT = 0; // shown in the caption (drawKameCaption), not over his head (Joe)
+      m.pulse = 1; // the ball flares on every syllable
+      if (!reduceMotion) shake = Math.max(shake, 3 + m.calls * 1.5);
+    }
+    m.pulse = Math.max(0, (m.pulse || 0) - dt * 3);
+    // The ground trembles harder and harder, and bits of the mat lift off round him.
+    var ck = m.t / cfg.charge;
+    if (!reduceMotion) {
+      shake = Math.max(shake, 1 + 3 * ck);
+      if (Math.random() < 0.25 + 0.5 * ck) {
+        var ra = Math.random() * Math.PI * 2, rd = self.r * (1.3 + Math.random() * 0.9);
+        particles.push({ x: self.x + Math.cos(ra) * rd, y: self.y + Math.sin(ra) * rd * 0.6 + self.r * 0.5, vx: (Math.random() - 0.5) * 20, vy: -60 - Math.random() * 90,
+          life: 0.7, max: 0.7, size: 2 + Math.random() * 3, color: Math.random() < 0.5 ? "#c9bfa6" : "#9fd6ff" });
+      }
     }
     if (m.t >= cfg.charge) {
       m.phase = "fire"; m.t = 0;
       m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
       m.callT = 0;
       self.squash = { t: 0.2, max: 0.2, nx: -m.dx, ny: -m.dy };
-      if (!reduceMotion) shake = Math.max(shake, 14);
+      if (!reduceMotion) { shake = Math.max(shake, 18); hitStop = Math.max(hitStop, 0.06); }
+      duelFlash = Math.max(duelFlash, 0.9); // a white flash as it goes off (sword.js draws it)
+      impacts.push({ x: self.x + m.dx * self.r * 1.4, y: self.y + m.dy * self.r * 1.4, nx: m.dx, ny: m.dy, life: 0.5, max: 0.5, color: "#bfe6ff" });
       crowdReact(0.9);
       playKameBlast(cfg.beamTime);
     }
     return true;
   }
   if (m.phase === "fire") {
+    // The blast's recoil slides him back a little.
+    if (m.t < cfg.beamTime * 0.6) {
+      self.x = Math.min(W - self.r, Math.max(self.r, self.x - m.dx * 40 * dt));
+      self.y = Math.min(H - self.r, Math.max(self.r, self.y - m.dy * 40 * dt));
+    }
+    m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
     m.ext = Math.min(m.len, m.t * KM_SPEED);
+    if (!reduceMotion) shake = Math.max(shake, 6);
+    // Sparks and dust thrown off the sides of the beam, and the cage taking it.
+    if (!reduceMotion && m.ext > self.r * 2) {
+      var along0 = self.r * 1.5 + Math.random() * (m.ext - self.r * 1.5), sd = Math.random() < 0.5 ? -1 : 1;
+      var bx = self.x + m.dx * along0 - m.dy * sd * cfg.width * 0.5, by = self.y + m.dy * along0 + m.dx * sd * cfg.width * 0.5;
+      particles.push({ x: bx, y: by, vx: -m.dy * sd * 160 + m.dx * 120, vy: m.dx * sd * 160 + m.dy * 120, life: 0.4, max: 0.4, size: 2 + Math.random() * 2.5, color: Math.random() < 0.6 ? "#bfe6ff" : "#ffffff" });
+      if (m.ext >= m.len - 1 && Math.random() < 0.6) {
+        var ex = self.x + m.dx * m.len, ey = self.y + m.dy * m.len, ea = Math.atan2(-m.dy, -m.dx) + (Math.random() - 0.5) * 2.4, ev = 200 + Math.random() * 260;
+        particles.push({ x: ex, y: ey, vx: Math.cos(ea) * ev, vy: Math.sin(ea) * ev, life: 0.5, max: 0.5, size: 3 + Math.random() * 4, color: Math.random() < 0.5 ? "#7cc8ff" : "#e8f6ff" });
+      }
+    }
     if (!m.hit && other.alive) {
       // Is any of them inside the beam so far?
       var ox = other.x - self.x, oy = other.y - self.y;
@@ -85,7 +117,12 @@ function updateKamehameha(self, other, dt) {
         if (dealt > 0) {
           floater(other.x, other.y - other.r - 30, "KAMEHAMEHA!", "crit");
           if (!reduceMotion) { shake = Math.max(shake, 22); hitStop = Math.max(hitStop, 0.08); }
-          impacts.push({ x: other.x, y: other.y, nx: m.dx, ny: m.dy, life: 0.5, max: 0.5, color: "#7cc8ff" });
+          impacts.push({ x: other.x, y: other.y, nx: m.dx, ny: m.dy, life: 0.6, max: 0.6, color: "#7cc8ff" });
+          impacts.push({ x: other.x, y: other.y, nx: -m.dx, ny: -m.dy, life: 0.6, max: 0.6, color: "#ffffff" });
+          for (var pi = 0; pi < 22 && !reduceMotion; pi++) {
+            var pa = Math.random() * Math.PI * 2, pv = 150 + Math.random() * 350;
+            particles.push({ x: other.x, y: other.y, vx: Math.cos(pa) * pv + m.dx * 200, vy: Math.sin(pa) * pv + m.dy * 200, life: 0.6, max: 0.6, size: 3 + Math.random() * 4, color: pi % 2 ? "#9fd6ff" : "#ffffff" });
+          }
           if (other.alive) beginWallSlam(other, m.dx, m.dy, { knockback: cfg.knockback, wallSlams: cfg.wallSlams, slamDamage: cfg.slamDamage });
           checkEnd();
         }
@@ -99,6 +136,21 @@ function updateKamehameha(self, other, dt) {
   }
   if (m.t >= KM_END) { endKamehameha(self); return false; }
   return true;
+}
+
+// The camera pushes in on him while he charges (closer on every syllable),
+// then snaps back out to show the beam crossing the ring. Uses the sword
+// duel's camera and vignette (sword.js). Null when nobody's doing it.
+function kameCam() {
+  var out = null;
+  balls.forEach(function (b) {
+    if (!kameOn(b) || !b.alive) return;
+    var m = b.igbb, cfg = b.char.kamehameha;
+    if (m.phase === "power") out = { z: 1 + 0.12 * Math.min(1, m.t / KM_POWER), x: b.x, y: b.y };
+    else if (m.phase === "charge") out = { z: 1.12 + 0.2 * (m.t / cfg.charge) + 0.03 * (m.pulse || 0), x: b.x, y: b.y };
+    else if (m.phase === "fire" && m.t < 0.12) out = { z: 1.36, x: b.x, y: b.y };
+  });
+  return out;
 }
 
 function kmPushAway(self, other) {
@@ -190,6 +242,34 @@ function drawKameHands(b) {
   if (!kameOn(b) || !b.alive) return;
   var t = performance.now() / 1000, h = kmHandPose(b), hx = h.hx, hy = h.hy, ball = h.ball;
   if (!kmArmsBehind(b, h)) kmDrawArms(b, h);
+  var m = b.igbb;
+  if (m.phase === "charge" && ball > 1) {
+    ball *= 1 + 0.35 * (m.pulse || 0);
+    var ck = m.t / b.char.kamehameha.charge;
+    ctx.save();
+    // Light rays spinning off the ball.
+    ctx.globalAlpha = 0.25 + 0.35 * ck;
+    ctx.fillStyle = "rgba(170,225,255,0.8)";
+    for (var ri = 0; ri < 8; ri++) {
+      var ra = t * 2.2 + ri * Math.PI / 4, rl = ball * (3.5 + 2.5 * ck) * (0.8 + 0.2 * Math.sin(t * 9 + ri));
+      ctx.beginPath(); ctx.moveTo(hx, hy);
+      ctx.lineTo(hx + Math.cos(ra - 0.07) * rl, hy + Math.sin(ra - 0.07) * rl);
+      ctx.lineTo(hx + Math.cos(ra + 0.07) * rl, hy + Math.sin(ra + 0.07) * rl);
+      ctx.closePath(); ctx.fill();
+    }
+    // Energy streaking in from all round and being drawn into his hands.
+    ctx.globalAlpha = 1;
+    ctx.lineCap = "round";
+    for (var si = 0; si < 14; si++) {
+      var ph = (t * 1.3 + si * 0.071 + (si % 3) * 0.33) % 1;
+      var sa = si * 2.39 + t * 0.6, sr = b.r * (2.6 - 2.2 * ph);
+      var sx = hx + Math.cos(sa + ph * 1.2) * sr, sy = hy + Math.sin(sa + ph * 1.2) * sr;
+      var tx = hx + Math.cos(sa + ph * 1.2 - 0.25) * sr * 0.75, ty = hy + Math.sin(sa + ph * 1.2 - 0.25) * sr * 0.75;
+      ctx.strokeStyle = "rgba(190,235,255," + (0.85 * Math.sin(ph * Math.PI)) + ")"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tx, ty); ctx.stroke();
+    }
+    ctx.restore();
+  }
   // The ball of energy between his hands, glowing and crackling.
   if (ball > 1) {
     var fl = 1 + 0.12 * Math.sin(t * 40);
@@ -255,6 +335,16 @@ function drawKamehameha() {
         // A bigger ball where it leaves his hands.
         ctx.beginPath(); ctx.arc(x0, 0, hw * 0.75, 0, Math.PI * 2); ctx.fill();
       });
+      // Rings of energy spiralling along it, and the big head while it's still flying.
+      ctx.strokeStyle = "rgba(220,245,255," + (0.6 * fade) + ")"; ctx.lineWidth = 2.5;
+      for (var rx = x0 + ((t * 700) % 60); rx < len - 10; rx += 60) {
+        ctx.beginPath(); ctx.ellipse(rx, 0, w * 0.18, w * 0.62, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (m.phase === "fire" && m.ext < m.len - 1) {
+        var hg = ctx.createRadialGradient(len, 0, 0, len, 0, w * 1.3);
+        hg.addColorStop(0, "rgba(255,255,255,1)"); hg.addColorStop(0.45, "rgba(150,215,255,0.9)"); hg.addColorStop(1, "rgba(60,150,255,0)");
+        ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(len, 0, w * 1.3, 0, Math.PI * 2); ctx.fill();
+      }
       // Splash against the cage.
       if (m.phase === "fire" && m.ext >= m.len - 1) {
         ctx.fillStyle = "rgba(200,235,255," + (0.6 + 0.3 * Math.sin(t * 45)) + ")";
