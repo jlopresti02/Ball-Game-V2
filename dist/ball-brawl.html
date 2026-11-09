@@ -20331,8 +20331,9 @@ function doBronxHair(b, on) {
 }
 
 // Joe (2026-11-09): whenever his hair is blond he has a Super Saiyan style
-// aura: golden flames licking up around him, flickering, with sparks rising
-// off it. Drawn behind his body (draw.js), so it frames him.
+// aura: a glowing golden flame shell flaring up high over his head, energy
+// streaking up through it and lightning crackling over him. The flames are
+// drawn behind his body, the lightning in front (draw.js).
 function charlesBlond(b) {
   return !!(b.dbBaseLook && b.char.look !== b.dbBaseLook);
 }
@@ -20340,37 +20341,93 @@ function charlesBlond(b) {
 function drawSaiyanAura(b) {
   if (!b.alive || !charlesBlond(b)) return;
   var r = b.r, t = performance.now() / 1000;
+  var pulse = 0.5 + 0.5 * Math.sin(t * 14); // the aura throbs fast, like it's powering up
   ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  // Three layers of flame, outer pale and tall, inner bright and tight.
-  [[1.0, "rgba(255,236,120,0.22)", 1.0], [0.82, "rgba(255,214,40,0.32)", 1.35], [0.66, "rgba(255,250,200,0.38)", 1.8]].forEach(function (L, li) {
-    var n = 16, sc = L[0], spd = L[2];
-    ctx.fillStyle = L[1];
+  // Three flame shells: a wide gold one, a brighter yellow one, a white-hot core.
+  [[1.0, 0.0], [0.8, 0.9], [0.6, 1.7]].forEach(function (L, li) {
+    var sc = L[0], ph = L[1];
     ctx.beginPath();
-    for (var i = 0; i <= n * 2; i++) {
-      var a = i / (n * 2) * Math.PI * 2 + Math.sin(t * 0.7 + li) * 0.08;
-      var up = Math.max(0, -Math.sin(a)); // 1 at the top, 0 along the bottom half
-      var tip = i % 2 === 0;
-      var fl = 0.5 + 0.5 * Math.sin(t * 9 * spd + i * 1.7 + li * 2.1);
-      var rad = tip ? r * (1.2 + 0.18 * fl + 0.12 * up) : r * (1.06 + 0.05 * fl);
-      var lift = tip ? r * (0.25 + 0.95 * up * up) * (0.75 + 0.35 * fl) : r * 0.12 * up;
-      var x = b.x + Math.cos(a) * rad * sc + (tip ? Math.sin(t * 6 + i) * r * 0.05 : 0);
-      var y = b.y + Math.sin(a) * rad * sc - lift * sc;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    saiyanFlamePath(b.x, b.y, r * sc, t, ph, li);
+    if (li === 0) {
+      var g = ctx.createLinearGradient(0, b.y + r * 1.3, 0, b.y - r * 2.8);
+      g.addColorStop(0, "rgba(255,170,0,0.6)");
+      g.addColorStop(0.5, "rgba(255,206,30,0.5)");
+      g.addColorStop(1, "rgba(255,236,120,0.28)");
+      ctx.fillStyle = g;
+      ctx.shadowColor = "rgba(255,200,0,0.9)"; ctx.shadowBlur = 18 + 10 * pulse;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 2.5; ctx.lineJoin = "round";
+      ctx.strokeStyle = "rgba(255,150,0," + (0.65 + 0.25 * pulse) + ")";
+      ctx.stroke();
+    } else if (li === 1) {
+      var g2 = ctx.createLinearGradient(0, b.y + r, 0, b.y - r * 2.6);
+      g2.addColorStop(0, "rgba(255,226,60,0.65)"); g2.addColorStop(1, "rgba(255,240,140,0.3)");
+      ctx.fillStyle = g2; ctx.fill();
+    } else {
+      var g3 = ctx.createLinearGradient(0, b.y + r * 0.8, 0, b.y - r * 2.0);
+      g3.addColorStop(0, "rgba(255,255,235,0.8)"); g3.addColorStop(1, "rgba(255,250,200,0.0)");
+      ctx.fillStyle = g3; ctx.fill();
     }
-    ctx.closePath(); ctx.fill();
   });
-  // A soft glow hugging him.
-  var g = ctx.createRadialGradient(b.x, b.y, r * 0.8, b.x, b.y, r * 1.5);
-  g.addColorStop(0, "rgba(255,230,90,0.45)"); g.addColorStop(1, "rgba(255,200,0,0)");
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, r * 1.5, 0, Math.PI * 2); ctx.fill();
-  // Sparks floating up off the aura.
-  for (var k = 0; k < 9; k++) {
-    var ph = (t * 0.9 + k / 9) % 1;
-    var sx = b.x + Math.sin(k * 2.39 + t * 0.5) * r * 1.0;
-    var sy = b.y + r * 0.5 - ph * r * 2.6;
-    ctx.fillStyle = "rgba(255,245,170," + (0.9 * (1 - ph)) + ")";
-    ctx.beginPath(); ctx.arc(sx, sy, r * 0.06 * (1 - ph * 0.5), 0, Math.PI * 2); ctx.fill();
+  // Streaks of energy shooting up through it.
+  ctx.lineCap = "round";
+  for (var k = 0; k < 10; k++) {
+    var p = (t * 1.6 + k * 0.137 + (k % 3) * 0.29) % 1;
+    var sx = b.x + Math.sin(k * 2.39) * r * 1.05;
+    var sy = b.y + r * 0.9 - p * r * 4.0;
+    var len = r * (0.35 + 0.25 * ((k * 7) % 3) / 2);
+    ctx.strokeStyle = "rgba(255,252,215," + (0.85 * Math.sin(p * Math.PI)) + ")";
+    ctx.lineWidth = 2 + (k % 2);
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - len); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// The flame outline: a teardrop that hugs his sides and flares up high over
+// his head, edged with tongues of flame that run up both sides.
+function saiyanFlamePath(cx, cy, r, t, ph, li) {
+  var n = 64;
+  for (var i = 0; i <= n; i++) {
+    var a = Math.PI / 2 + i / n * Math.PI * 2;       // starts at the bottom, goes all the way round
+    var side = Math.cos(a), vert = Math.sin(a);      // vert -1 = top, 1 = bottom
+    var up = Math.max(0, -vert);
+    var s = (1 - vert) / 2;                           // 0 at the bottom, 1 at the top
+    var base = r * (1.4 + 0.12 * up);
+    // Tongues of flame scrolling upward along the edge.
+    var wave = Math.sin(Math.PI * 2 * (s * 8 - t * 2.4) + ph + (side > 0 ? 0 : 1.3));
+    var tongue = Math.pow(Math.max(0, wave), 2.2) * r * (0.2 + 0.6 * s);
+    var flick = Math.sin(t * 23 + i * 2.1 + li) * r * 0.03;
+    var rad = base + tongue + flick;
+    var x = cx + side * rad * (1 - 0.22 * up * up);  // narrows toward the top
+    var y = cy + vert * rad - r * 1.5 * Math.pow(up, 1.4) * (0.9 + 0.1 * Math.sin(t * 9 + li));
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+// Lightning crackling over him now and then (drawn in front of him).
+function drawSaiyanBolts(b) {
+  if (!b.alive || !charlesBlond(b)) return;
+  var r = b.r, t = performance.now() / 1000;
+  var slot = Math.floor(t * 9);
+  ctx.save();
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  for (var j = 0; j < 2; j++) {
+    var h = Math.sin((slot + j * 17) * 12.9898) * 43758.5453; h -= Math.floor(h);
+    if (h > 0.45) continue;                             // only some slots crackle
+    var a0 = h * 40, sx = b.x + Math.cos(a0) * r * 1.1, sy = b.y + Math.sin(a0) * r * 0.9;
+    var pts = [[sx, sy]];
+    for (var q = 1; q <= 4; q++) {
+      var hh = Math.sin((slot * 5 + q * 31 + j * 7) * 78.233) * 12345.678; hh -= Math.floor(hh);
+      pts.push([sx + (hh - 0.5) * r * 0.9, sy - q * r * 0.32 + (hh - 0.5) * r * 0.2]);
+    }
+    [[5, "rgba(120,200,255,0.45)"], [2, "rgba(235,250,255,0.95)"]].forEach(function (st) {
+      ctx.lineWidth = st[0]; ctx.strokeStyle = st[1];
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+      for (var q = 1; q < pts.length; q++) ctx.lineTo(pts[q][0], pts[q][1]);
+      ctx.stroke();
+    });
   }
   ctx.restore();
 }
@@ -26210,7 +26267,8 @@ function draw() {
     drawJab(b);
     drawDiamondSword(b, other); // Dustin's diamond sword, under his guard glove (diamond.js)
     drawHands(b, other);
-    drawDoBronx(b); // the pose and the glow while it's on
+    drawDoBronx(b); // the pose
+    drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawShot(b);    // Hokit's double leg
     drawChairShot(b); // and his folding chair
     drawDazed(b);   // stars after a chair shot
