@@ -2205,7 +2205,7 @@ function playTornadoWind(dur) {
   } catch (e) { /* never let audio break the game */ }
 }
 
-// Charles's Super Saiyan aura (Joe, 2026-11-09): a power-up whoosh as it
+// Charles's Super Saiyan aura (Joe, 2026-11-09): a power-up BURST as it
 // flares on, Joe's aura hum looping under it while he's blond, then a
 // power-down as it dies away.
 var AURA_VOL = 0.55;
@@ -2228,8 +2228,8 @@ function startAuraSound() {
     var src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
     var g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.setValueAtTime(0.0001, now + 0.9);
-    g.gain.exponentialRampToValueAtTime(AURA_VOL, now + 1.7); // swells in under the end of the power-up
+    g.gain.setValueAtTime(0.0001, now + 0.25);
+    g.gain.exponentialRampToValueAtTime(AURA_VOL, now + 0.9); // takes over as the burst dies away
     src.connect(g); g.connect(ctx.destination);
     src.start(now);
     src.stop(now + 60); // never runs on forever

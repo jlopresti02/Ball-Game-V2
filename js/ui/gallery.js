@@ -298,7 +298,7 @@ function gallerySounds() {
       clip("igbb", "It's gonna be bad", "Dustin Poirier's IGBB."),
       clip("smashYourBoy", "I'm gonna smash your boy", "Khabib's Father's Plan ground and pound."),
       clip("doBronx", "Charrrles... Do Bronx!", "Charles Oliveira's Do Bronx."),
-      clip("saiyanUp", "Aura power-up", "Charles's Super Saiyan aura flaring on."),
+      clip("saiyanUp", "Aura power-up", "Charles's Super Saiyan aura bursting on."),
       clip("saiyanLoop", "Super Saiyan aura", "Joe's aura hum, looping while Charles is blond."),
       clip("saiyanDown", "Aura power-down", "The aura dying away."),
       clip("hokitKnee", "Break him over my knee", "Josh Hokit's thumbs down (one of 5)."),
