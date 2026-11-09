@@ -4441,7 +4441,7 @@ function getImg(dataURL) {
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 8,
+    "rev": 9,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -4455,7 +4455,7 @@ var SAVED_ROSTER = [
       "build": "lean",
       "bodyHair": "none",
       "hair": "short",
-      "hairColor": "#4a3121",
+      "hairColor": "#17130f",
       "beard": "none",
       "ears": "normal",
       "tattoos": {
@@ -4524,9 +4524,9 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "dobronx",
-      "chargeTime": 17,
-      "hitCut": 4,
-      "punchCut": 5,
+      "chargeTime": 45,
+      "hitCut": 3,
+      "punchCut": 3,
       "duration": 15,
       "damageMult": 4,
       "hairColor": "#f4edd2"
@@ -20306,7 +20306,7 @@ function updateDoBronx(self, other, dt) {
     if (m.phase === "pose") blastAway(self, other);
     cameraFlash();
     brazilMode = m.phase === "pose"; // swaps behind the white-out
-    doBronxHair(self, m.phase === "pose"); // and his hair goes blond for it, brown again after (Joe)
+    doBronxHair(self, m.phase === "pose"); // and his hair goes blond for it, black again after (Joe)
     if (m.phase === "outro") { crowdRelease(); releaseMusic(); } // background music back (music.js)
   }
   if (m.t < (m.phase === "pose" ? DB_POSE_TIME : DB_OUTRO_TIME)) return true;
@@ -20321,7 +20321,7 @@ function updateDoBronx(self, other, dt) {
   return true;
 }
 
-// Joe (2026-11-09): his normal hair is brown, and it's blond for Do Bronx
+// Joe (2026-11-09): his normal hair is black, and it's blond for Do Bronx
 // (special.hairColor). Swapped on his own copy of the character.
 function doBronxHair(b, on) {
   var hc = b.char.special && b.char.special.hairColor;
