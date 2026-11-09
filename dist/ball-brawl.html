@@ -20743,6 +20743,7 @@ function updateKamehameha(self, other, dt) {
     self.kameN++;
     self.igbb = { move: "kamehameha", phase: "power", t: 0, calls: 0, hit: false };
     kmAim(self, other);
+    self.igbb.side = self.igbb.dx > 0 ? -1 : 1;
     // The aura bursts on: blond hair, the gold flames and Joe's burst (dobronx.js).
     doBronxHair(self, true); self.kameBlond = true;
     kmPushAway(self, other); // the energy coming up shoves them back, so the beam has room to fly
@@ -20756,11 +20757,12 @@ function updateKamehameha(self, other, dt) {
 
   if (m.phase === "power") {
     if (other.alive) kmAim(self, other);
+    kmTurn(m, dt);
     if (m.t >= KM_POWER) { m.phase = "charge"; m.t = 0; playKameCharge(cfg.charge); }
     return true;
   }
   if (m.phase === "charge") {
-    if (m.t < cfg.charge - KM_LOCK && other.alive) kmAim(self, other);
+    if (m.t < cfg.charge - KM_LOCK && other.alive) { kmAim(self, other); kmTurn(m, dt); }
     var call = Math.floor(m.t / (cfg.charge / (KM_CALLS.length + 0.4)));
     if (call >= m.calls && m.calls < KM_CALLS.length) {
       m.calls++; m.callT = 0; // shown in the caption (drawKameCaption), not over his head (Joe)
@@ -20866,6 +20868,15 @@ function kmPushAway(self, other) {
   if (!reduceMotion) shake = Math.max(shake, 8);
 }
 
+// Joe: while he's aiming he always faces them, live. His stance turns as
+// they move: the hands swing round to the hip away from them (side -1 when
+// they're to his right, 1 to his left) and he leans and tilts with it.
+function kmTurn(m, dt) {
+  var target = m.dx >= 0 ? -1 : 1;
+  if (m.side == null) m.side = target;
+  m.side += Math.max(-dt * 5, Math.min(dt * 5, target - m.side));
+}
+
 function kmAim(self, other) {
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   self.igbb.dx = dx / d; self.igbb.dy = dy / d;
@@ -20923,7 +20934,9 @@ function applyKamePose(b) {
   var tilt = side * 0.24 * st.back + Math.max(-1, Math.min(1, dx * 1.6)) * 0.2 * st.lunge;
   ctx.translate(b.x, b.y + r);
   ctx.rotate(tilt);
-  ctx.scale(1 + 0.05 * st.crouch, 1 - 0.08 * st.crouch);
+  // Mid-turn (his hands swinging across) he narrows a little, as if turning side-on.
+  var turn = m.phase === "power" || m.phase === "charge" ? 0.82 + 0.18 * Math.min(1, Math.abs(side)) : 1;
+  ctx.scale((1 + 0.05 * st.crouch) * turn, 1 - 0.08 * st.crouch);
   ctx.translate(-b.x, -(b.y + r));
 }
 
@@ -20936,8 +20949,9 @@ function kmHandPose(b) {
   var size = b.char.punch.size || 15, cfg = b.char.kamehameha;
   if (m.phase === "power" || m.phase === "charge") {
     if (m.side == null) m.side = dx > 0 ? -1 : 1;
+    var cs = m.side;
     var k = kmEase((m.phase === "charge" ? m.t + KM_POWER : m.t) / (KM_POWER * 0.6));
-    return { hx: b.x + m.side * r * (0.85 + 0.45 * k), hy: b.y + r * (0.05 + 0.3 * k), side: m.side, k: k,
+    return { hx: b.x + cs * r * (0.85 + 0.45 * k), hy: b.y + r * (0.05 + 0.3 * k), side: cs, cup: true, k: k,
       ball: m.phase === "charge" ? size * (0.5 + 1.3 * Math.min(1, m.t / cfg.charge)) : size * 0.35 * k };
   }
   var k2 = m.phase === "fire" ? kmEase(m.t / 0.08) : 1 - kmEase(m.t / KM_END);
@@ -20948,12 +20962,12 @@ function kmHandPose(b) {
 // Hands pushed up above his shoulders go behind his head, so the arms are
 // drawn before his body (from draw.js, with the aura) and only the hands
 // and the energy show over the top.
-function kmArmsBehind(b, h) { return h.side === 0 && h.hy < b.y - b.r * 0.25; }
+function kmArmsBehind(b, h) { return !h.cup && h.hy < b.y - b.r * 0.25; }
 
 function drawKameArmsBehind(b) {
   if (!kameOn(b) || !b.alive) return;
   var h = kmHandPose(b);
-  if (!h.side) kmDrawArms(b, h, "back");
+  if (!h.cup) kmDrawArms(b, h, "back");
 }
 
 // An open hand: the fingerless glove's padding over the knuckles and back
@@ -20980,7 +20994,7 @@ function kmDrawArms(b, h, which) {
   which = which || "all";
   var r = b.r, size = b.char.punch.size || 15, m = b.igbb, st = kmStance(b);
   var arms = [];
-  if (h.side) {
+  if (h.cup) {
     // Cupped at the hip, one hand above the ball and one below, palms facing
     // each other round it; elbows bent out behind him.
     var s = h.side, gap = Math.max(h.ball * 0.9, size * 0.5) + size * 0.45;
@@ -21018,14 +21032,14 @@ function kmDrawArms(b, h, which) {
       for (var q = 1; q < a.path.length; q++) ctx.lineTo(a.path[q][0], a.path[q][1]);
     });
   });
-  if (which !== "back") arms.forEach(function (a) { kmOpenHand(b, a.hand[0], a.hand[1], a.hand[2], a.hand[3], h.side ? size : hs, a.hand[4]); });
+  if (which !== "back") arms.forEach(function (a) { kmOpenHand(b, a.hand[0], a.hand[1], a.hand[2], a.hand[3], h.cup ? size : hs, a.hand[4]); });
 }
 
 // His hands and the ball of energy (with the fighter, from draw.js).
 function drawKameHands(b) {
   if (!kameOn(b) || !b.alive) return;
   var t = performance.now() / 1000, h = kmHandPose(b), hx = h.hx, hy = h.hy, ball = h.ball;
-  if (h.side) kmDrawArms(b, h); // thrust out, they're drawn over the beam (drawKamehameha)
+  if (h.cup) kmDrawArms(b, h); // thrust out, they're drawn over the beam (drawKamehameha)
   var m = b.igbb;
   if (m.phase === "charge" && ball > 1) {
     ball *= 1 + 0.35 * (m.pulse || 0);
