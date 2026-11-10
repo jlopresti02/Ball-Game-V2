@@ -396,6 +396,7 @@ function draw() {
   drawGaneAdBanner(); // and Gane's baby-proofing ad (gane-babyproof-ad.js)
   drawCologneBanner(); // and Ilia's cologne ad (cologne-ad.js)
   drawGoatGoatGoBanner(); // and Jon's GoatGoatGo ad (goatgoatgo-ad.js)
+  drawTapWaterBanner(); // and Charles's Tap Water ad (tapwater-ad.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawDeathFx(); // the loser's death animation (death.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
