@@ -403,7 +403,8 @@ function updateAbilities(dt) {
       var pp = self.char.powerPunch;
       if (!self.powerState) {
         self.powerCd -= dt;
-        if (self.powerCd <= 0) {
+        if (self.powerCd <= 0 && self.swing) self.powerCd = 0; // waits for a CTE hook to finish (Ngannou)
+        else if (self.powerCd <= 0) {
           self.powerCd += pp.cooldown;
           var spd0 = Math.sqrt(self.vx * self.vx + self.vy * self.vy);
           self.powerState = {
