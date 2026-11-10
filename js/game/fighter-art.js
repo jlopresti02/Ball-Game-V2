@@ -586,8 +586,9 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     if (look.beard === "stubble" && look.beardGrain) {
       // Dense grain of short hairs over the shadow, so stubble reads on dark skin
       c.save(); beardShape(); c.clip();
-      var sg2 = artRand(53); c.fillStyle = look.beardColor || hc; c.globalAlpha = 0.6;
-      for (var sb = 0; sb < 420; sb++) c.fillRect((sg2() * 2 - 1) * r * 0.82, -r * 0.68 + sg2() * r * 0.5, r * 0.014, r * 0.014);
+      var gd = look.beardGrain === true ? 1 : look.beardGrain;  // a number thins it out
+      var sg2 = artRand(53); c.fillStyle = look.beardColor || hc; c.globalAlpha = 0.6 * Math.min(1, gd + 0.3);
+      for (var sb = 0; sb < 420 * gd; sb++) c.fillRect((sg2() * 2 - 1) * r * 0.82, -r * 0.68 + sg2() * r * 0.5, r * 0.014, r * 0.014);
       c.restore();
     }
     if (look.beard === "full") {

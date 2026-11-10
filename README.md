@@ -97,7 +97,7 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `hair` | `bald`, `stubble`, `buzz`, `crop` (buzzed sides, short top sitting high with deep temple recession and a forelock flicking to one side), `twists`, `short`, `long`, `mohawk`, `dreads`, `coils` (tight curly short top with faded sides; add `hairHigh`, about 0.1, to raise it as a high top above the ball) |
 | `hairPuff` | `true` puts big twisted hair as a second circle behind the top of the ball (contained layout) |
 | `cane` | `true` gives a white cane with a red tip at the right side (contained layout); pass `opts.caneSwing` (radians) to sweep it |
-| `beard` | `none`, `stubble`, `short`, `boxed` (short beard: thin sideburns, low cheek line, thin moustache, bare gap at the mouth, fuller chin), `chinstrap`, `full`; with `stubble`, `beardAlpha` (e.g. 0.45) makes the shadow stronger and `beardGrain: true` adds a dense grain of short hairs so it reads on dark skin |
+| `beard` | `none`, `stubble`, `short`, `boxed` (short beard: thin sideburns, low cheek line, thin moustache, bare gap at the mouth, fuller chin), `chinstrap`, `full`; with `stubble`, `beardAlpha` (e.g. 0.45) makes the shadow stronger and `beardGrain` (true, or 0 to 1 for lighter) adds a grain of short hairs so it reads on dark skin |
 | `beardColor` | optional hex colour for the beard (defaults to `hairColor`) |
 | `beardChin` | optional extra length at the chin for a `boxed` beard, as a fraction of the radius (e.g. `0.12`) |
 | `waistText` | optional lettering on the front of the waistband, e.g. `UFC` (`waistTextColor`, default white) |
