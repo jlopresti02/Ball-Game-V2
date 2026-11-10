@@ -75,6 +75,7 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   if (contained && look.hairPuff) drawHairPuff(c, r, look, ink);
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
+  if (contained && look.hair === "coils" && look.hairHigh) drawCoilTop(c, r, look, ink);
   if (contained && look.headwear === "trucker") drawTruckerHat(c, r, look, ink);
   if (contained && look.headwear === "football") drawFootballHelmet(c, r, look, ink);
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
@@ -108,6 +109,41 @@ function drawCane(c, r, ink, swing) {
 
 // Big hair as a second circle sitting behind the top of the ball: a lumpy
 // cloud of twists, outlined as one shape (all the lumps stroked, then filled)
+// A short high top of tight coils that rises above the ball, for hair
+// "coils" with look.hairHigh (0.1 to 0.2 ball radii). Drawn over the ball so
+// its outline doesn't cut through the hair.
+function drawCoilTop(c, r, look, ink) {
+  var hc = look.hairColor, h = r * look.hairHigh;
+  var hairEdge = function () {
+    c.moveTo(-r * 0.72, -r * 0.64);
+    c.quadraticCurveTo(-r * 0.68, -r * 0.75, -r * 0.52, -r * 0.73);
+    c.quadraticCurveTo(0, -r * 0.77, r * 0.52, -r * 0.73);
+    c.quadraticCurveTo(r * 0.68, -r * 0.75, r * 0.72, -r * 0.64);
+  };
+  var top = function () {
+    c.moveTo(r * 0.72, -r * 0.64);
+    c.bezierCurveTo(r * 0.8, -r * 0.86, r * 0.72, -r - h, 0, -r - h);
+    c.bezierCurveTo(-r * 0.72, -r - h, -r * 0.8, -r * 0.86, -r * 0.72, -r * 0.64);
+  };
+  var shape = function () { c.beginPath(); hairEdge(); top(); c.closePath(); };
+  c.save();
+  c.fillStyle = hc; shape(); c.fill();
+  c.save(); shape(); c.clip();
+  var co = artRand(41);
+  for (var i = 0; i < 520; i++) {
+    var x = (co() * 2 - 1) * r * 0.8, y = -r * 0.62 - co() * (r * 0.4 + h), z = r * (0.014 + co() * 0.012);
+    c.fillStyle = i % 3 ? shadeHex(hc, 0.16) : shadeHex(hc, -0.4); c.globalAlpha = 0.38;
+    c.beginPath(); c.arc(x, y, z, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+  c.lineJoin = "round";
+  c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.06);
+  c.beginPath(); top(); c.stroke();
+  c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = Math.max(1, r * 0.016);
+  c.beginPath(); hairEdge(); c.stroke();
+  c.restore();
+}
+
 function drawHairPuff(c, r, look, ink) {
   var hc = look.hairColor, py = -r * 0.8, pr = r * 0.62;
   var lumps = [[0, 0, 1]];
@@ -333,6 +369,41 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.fillRect(cgx, cgy, r * 0.016, r * 0.016);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "coils") {
+    // Tight curly hair: faded sides, and a short rounded top of small coils
+    // sitting high on the head with a squared-off hairline
+    c.save(); c.beginPath(); c.rect(-r, -r, r * 0.22, r); c.rect(r * 0.78, -r, r * 0.22, r); c.clip();
+    c.fillStyle = mixHex(look.skin, hc, 0.55); hairline(); c.fill();
+    c.restore();
+    var coilTop = function () {
+      c.beginPath();
+      c.moveTo(-r * 0.8, -r);
+      c.lineTo(-r * 0.8, -r * 0.66);
+      c.quadraticCurveTo(-r * 0.74, -r * 0.74, -r * 0.56, -r * 0.73);
+      c.quadraticCurveTo(0, -r * 0.77, r * 0.56, -r * 0.73);
+      c.quadraticCurveTo(r * 0.74, -r * 0.74, r * 0.8, -r * 0.66);
+      c.lineTo(r * 0.8, -r);
+      c.closePath();
+    };
+    c.fillStyle = hc; coilTop(); c.fill();
+    c.save(); coilTop(); c.clip();
+    var co = artRand(23);
+    for (var ci = 0; ci < 420; ci++) {
+      var cx2 = (co() * 2 - 1) * r * 0.84, cy2 = -r * (0.7 + co() * 0.32), cz = r * (0.014 + co() * 0.012);
+      c.fillStyle = ci % 3 ? shadeHex(hc, 0.22) : shadeHex(hc, -0.4);
+      c.globalAlpha = 0.45;
+      c.beginPath(); c.arc(cx2, cy2, cz, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+    c.restore();
+    c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.016); coilTop(); c.stroke();
+    // Fade grain on the sides
+    var cfr = artRand(31); c.fillStyle = shadeHex(hc, -0.2); c.globalAlpha = 0.5;
+    for (var cf = 0; cf < 60; cf++) {
+      var cfx = (cfr() < 0.5 ? -1 : 1) * r * (0.8 + cfr() * 0.16), cfy = -r * (0.5 + cfr() * 0.25);
+      c.fillRect(cfx, cfy, r * 0.016, r * 0.016);
+    }
+    c.globalAlpha = 1; c.fillStyle = hc;
   } else if (look.hair === "buzz" || look.hair === "stubble") {
     // A stubble scalp is a see-through shadow, as light as the short beard
     c.globalAlpha = look.hair === "stubble" ? 0.32 : 0.88; hairline(); c.fill();
@@ -396,7 +467,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.fillStyle = "rgba(255,255,255,0.35)";
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
-  if (look.hair !== "bald" && look.hair !== "crop") {  // the crop outlines its own shape
+  if (look.hair !== "bald" && look.hair !== "crop" && look.hair !== "coils") {  // these outline their own shape
     c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
@@ -498,8 +569,9 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   }
   // Beard: sideburns down around the jaw to a full chin
   if (look.beard !== "none" && look.beard !== "chinstrap" && look.beard !== "boxed") {
-    c.globalAlpha = look.beard === "stubble" ? 0.28 : look.beard === "short" ? 0.55 : 1;
+    c.globalAlpha = look.beard === "stubble" ? (look.beardAlpha || 0.28) : look.beard === "short" ? 0.55 : 1;
     c.fillStyle = look.beardColor || hc;
+    var beardShape = function () {
     c.beginPath();
     c.moveTo(-r * 0.74, -r * 0.66);
     c.quadraticCurveTo(-r * 0.62, -r * 0.44, -r * 0.32, -r * 0.5);
@@ -508,7 +580,17 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.3, jaw + r * 0.02);
     c.quadraticCurveTo(0, jaw + r * (look.beard === "full" ? 0.2 : 0.12), -r * 0.3, jaw + r * 0.02);
     c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.74, -r * 0.66);
-    c.closePath(); c.fill();
+    c.closePath();
+    };
+    beardShape(); c.fill();
+    if (look.beard === "stubble" && look.beardGrain) {
+      // Dense grain of short hairs over the shadow, so stubble reads on dark skin
+      c.save(); beardShape(); c.clip();
+      var gd = look.beardGrain === true ? 1 : look.beardGrain;  // a number thins it out
+      var sg2 = artRand(53); c.fillStyle = look.beardColor || hc; c.globalAlpha = 0.6 * Math.min(1, gd + 0.3);
+      for (var sb = 0; sb < 420 * gd; sb++) c.fillRect((sg2() * 2 - 1) * r * 0.82, -r * 0.68 + sg2() * r * 0.5, r * 0.014, r * 0.014);
+      c.restore();
+    }
     if (look.beard === "full") {
       c.globalAlpha = 0.5; c.strokeStyle = shadeHex(hc, 0.3); c.lineWidth = lw(0.022);
       for (var k = -3; k <= 3; k++) {
@@ -1295,6 +1377,17 @@ function drawArtBody(c, r, look, ink, name, contained) {
     }
     c.globalAlpha = 1;
   }
+  if (look.shortsStyle === "marble") {
+    // Grey marbled fight shorts: soft lighter and darker blotches
+    var mr = artRand(artSeed(name + "marble"));
+    for (var mb = 0; mb < 90; mb++) {
+      var mbx = (mr() * 2 - 1) * r, mby = sTop + band + mr() * (r - sTop), mbz = r * (0.03 + mr() * 0.09);
+      c.fillStyle = mb % 2 ? shadeHex(look.shorts, 0.35) : shadeHex(look.shorts, -0.22);
+      c.globalAlpha = 0.18 + mr() * 0.2;
+      c.beginPath(); c.ellipse(mbx, mby, mbz * 1.4, mbz * (0.25 + mr() * 0.35), mr() * Math.PI, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+  }
   if (look.shortsStyle === "slash") {
     // Jagged streaks raking across the legs, in the trim colour
     var slr = artRand(artSeed(name + "slash"));
@@ -1386,6 +1479,13 @@ function drawArtBody(c, r, look, ink, name, contained) {
     }
     c.closePath(); c.fill();
   }
+  if (look.waistText) {
+    // Lettering on the front of the waistband
+    c.fillStyle = look.waistTextColor || "#f2f2f2";
+    c.font = "900 " + (band * 0.78) + "px Arial, Helvetica, sans-serif";
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(look.waistText, r * 0.3, sTop + band * 0.52);
+  }
   if (look.shortsStyle === "print") {
     // Logo patch on the front of the waistband
     c.fillStyle = "#111111"; c.fillRect(r * 0.08, sTop, r * 0.4, band + r * 0.12);
@@ -1395,7 +1495,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.fillStyle = ink;
   c.beginPath(); c.moveTo(-r * 0.07, r); c.lineTo(0, r * 0.8); c.lineTo(r * 0.07, r); c.closePath(); c.fill();
   c.fillStyle = look.shortsStyle === "split" ? look.shorts : look.trim;
-  c.globalAlpha = look.shortsStyle === "print" ? 0 : 0.85;
+  c.globalAlpha = look.shortsStyle === "print" || look.legPatch === false ? 0 : 0.85;
   c.fillRect(-r * 0.42, sTop + band + r * 0.1, r * 0.18, r * 0.09);
   c.globalAlpha = 1;
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
@@ -1503,6 +1603,64 @@ var sleevePatterns = {};
 // The traced sleeve laid along an extended arm from (x0, y0) to (x1, y1),
 // as one image rather than a repeating pattern. Returns false when there is
 // no traced sleeve (or it hasn't loaded) so the caller keeps its plain arm.
+// Jacked arms (look.armMuscle, about 1): the whole arm drawn as one muscled
+// shape from the shoulder (x0, y0) to the wrist (x1, y1), base width w:
+// rounded delt, peaked bicep, tricep underneath, narrow elbow, thick forearm
+// tapering to the wrist, with shading for definition. edge is the outline
+// colour. Callers skip their plain arm stroke when hasArmMuscle(ch).
+function hasArmMuscle(ch) { return !!(ch && ch.look && ch.look.armMuscle); }
+function drawArmMuscle(c, ch, x0, y0, x1, y1, w, edge) {
+  if (!hasArmMuscle(ch)) return;
+  var k = ch.look.armMuscle, col = armColor(ch), skin = ch.look.skin;
+  var dx = x1 - x0, dy = y1 - y0, L = Math.sqrt(dx * dx + dy * dy);
+  if (L < w * 0.5) return;
+  w *= 1 + 0.3 * k;  // jacked arms are thicker than the plain stroke
+  var line = shadeHex(skin, -0.42), hi = shadeHex(skin, 0.18);
+  var hw = w * 0.5, sh = hw * (1.08 + 0.08 * k), wr = hw * 0.62;
+  // Smooth outline: thick at the shoulder, one gentle swell over the bicep,
+  // tapering to the wrist, rounded at both ends
+  var bump = 1 + 0.25 * k;
+  var outline = function () {
+    c.beginPath();
+    c.moveTo(0, -sh);
+    // Bicep: one big rounded hump, then the forearm swell down to the wrist
+    c.bezierCurveTo(L * 0.18, -hw * 1.5 * bump, L * 0.44, -hw * 1.42 * bump, L * 0.56, -hw * 0.8);
+    c.bezierCurveTo(L * 0.64, -hw * 1.12 * bump, L * 0.84, -hw * 0.92, L, -wr);
+    c.quadraticCurveTo(L + wr * 0.8, 0, L, wr);
+    // Forearm underside, then the tricep curving back to the shoulder
+    c.bezierCurveTo(L * 0.84, hw * 0.74, L * 0.68, hw * 0.94, L * 0.58, hw * 0.82);
+    c.bezierCurveTo(L * 0.44, hw * 1.32 * bump, L * 0.18, hw * 1.34 * bump, 0, sh);
+    c.quadraticCurveTo(-sh * 0.8, 0, 0, -sh);
+    c.closePath();
+  };
+  c.save();
+  c.translate(x0, y0); c.rotate(Math.atan2(dy, dx));
+  c.lineJoin = "round"; c.lineCap = "round";
+  c.strokeStyle = edge || "#16211f"; c.lineWidth = Math.max(2, w * 0.16); outline(); c.stroke();
+  c.fillStyle = col; outline(); c.fill();
+  c.save(); outline(); c.clip();
+  // Round form: light on top, shadow underneath
+  var g = c.createLinearGradient(0, -sh, 0, sh);
+  g.addColorStop(0, "rgba(255,255,255,0.14)"); g.addColorStop(0.45, "rgba(255,255,255,0)");
+  g.addColorStop(0.6, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.32)");
+  c.fillStyle = g; c.fillRect(-sh, -sh * 1.3, L + sh * 2, sh * 2.6);
+  // Definition: the line under the bicep, the elbow crease, the forearm ridge
+  c.strokeStyle = line; c.globalAlpha = 0.6; c.lineWidth = Math.max(1, w * 0.055);
+  c.beginPath(); c.moveTo(L * 0.08, hw * 0.05); c.quadraticCurveTo(L * 0.32, hw * 0.32, L * 0.55, -hw * 0.25); c.stroke();
+  c.beginPath(); c.moveTo(L * 0.56, -hw * 0.8); c.quadraticCurveTo(L * 0.6, -hw * 0.3, L * 0.57, hw * 0.1); c.stroke();
+  c.globalAlpha = 0.45; c.lineWidth = Math.max(1, w * 0.045);
+  c.beginPath(); c.moveTo(L * 0.62, -hw * 0.2); c.quadraticCurveTo(L * 0.78, -hw * 0.05, L * 0.95, -wr * 0.35); c.stroke();
+  c.globalAlpha = 1;
+  // Highlights on the bicep peak and forearm
+  [[0.3, -0.7, 0.15, 0.24], [0.74, -0.55, 0.1, 0.16]].forEach(function (h) {
+    var hg = c.createRadialGradient(h[0] * L, h[1] * hw, 0, h[0] * L, h[1] * hw, h[2] * L);
+    hg.addColorStop(0, "rgba(255,255,255," + h[3] + ")"); hg.addColorStop(1, "rgba(255,255,255,0)");
+    c.fillStyle = hg; c.beginPath(); c.ellipse(h[0] * L, h[1] * hw, h[2] * L, hw * 0.5, 0, 0, Math.PI * 2); c.fill();
+  });
+  c.restore();
+  c.restore();
+}
+
 function drawTracedArm(c, ch, x0, y0, x1, y1, w) {
   var tat = ch.look && ch.look.tattoos;
   if (!tat || !tat.armInk || !tat.armDecal) return false;
