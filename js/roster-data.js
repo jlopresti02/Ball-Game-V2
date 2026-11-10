@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 10,
+    "rev": 15,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -96,7 +96,35 @@ var SAVED_ROSTER = [
       "damageMult": 4,
       "hairColor": "#f4edd2"
     },
-    "blockChance": 10
+    "blockChance": 10,
+    "kamehameha": {
+      "first": [
+        10,
+        25
+      ],
+      "charge": 3.0,
+      "beamTime": 1.5,
+      "width": 56,
+      "damage": 35,
+      "knockback": 1500,
+      "wallSlams": 2,
+      "slamDamage": 6
+    },
+    "instantTransmission": {
+      "every": [
+        2.5,
+        4.5
+      ],
+      "dodgeChance": 40,
+      "dodgeCd": 0.8,
+      "projDodgeChance": 60,
+      "projDodgeCd": 0.3,
+      "comboAt": 3,
+      "damage": 12,
+      "knockback": 1300,
+      "wallSlams": 1,
+      "slamDamage": 4
+    }
   },
   {
     "id": "c-ciryl-gane",

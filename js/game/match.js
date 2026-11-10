@@ -50,6 +50,7 @@ function makeBall(id, ch) {
   initDiamond(b); // Dustin's Diamond Guard (diamond.js)
   initTopRope(b); // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
   initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
+  initKamehameha(b); // and Charles's Kamehameha (kamehameha.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
   initRingBear(b); // Khabib's ring bear (khabib-bear.js)
   initIliaTornado(b); // Ilia's Rose Tornado (ilia-tornado.js)
@@ -243,6 +244,8 @@ function hurt(b, amount, source, attackerId) {
     b.justDodged = true;
     return 0;
   }
+  // Charles teleporting out of the way (instant-transmission.js).
+  if (itDodge(b, source, attackerId)) return 0;
   // Mid Do Bronx pose: dodges everything.
   if (doBronxPosing(b)) {
     if (source !== "laser") doBronxDodge(b);

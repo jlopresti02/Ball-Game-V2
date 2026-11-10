@@ -428,8 +428,11 @@ function tickSwordDuel(dt) {
   // The camera pushing in for the duel, and back out after.
   var zt = sd ? (sd.done ? 1.32 - 0.32 * ease((sd.t - sd.endT - 0.45) / 0.6) : 1 + 0.32 * ease(sd.t / 0.5)) : 1;
   if (sd && sd.punch) { zt += sd.punch; sd.punch = Math.max(0, sd.punch - dt * 0.8); }
-  duelCam.z += (zt - duelCam.z) * (1 - Math.exp(-dt * 8));
+  var kc = !sd && typeof kameCam === "function" ? kameCam() : null; // Charles's Kamehameha (kamehameha.js)
+  if (kc) zt = kc.z;
+  duelCam.z += (zt - duelCam.z) * (1 - Math.exp(-dt * (kc ? 5 : 8)));
   if (sd) { duelCam.x += (sd.mx - duelCam.x) * (1 - Math.exp(-dt * 10)); duelCam.y += (sd.my - duelCam.y) * (1 - Math.exp(-dt * 10)); }
+  else if (kc) { duelCam.x += (kc.x - duelCam.x) * (1 - Math.exp(-dt * 10)); duelCam.y += (kc.y - duelCam.y) * (1 - Math.exp(-dt * 10)); }
   if (!sd) return;
   var d = balls[sd.dId], o = balls[sd.oId];
   if (!d.alive || (!o.alive && !sd.done)) { swordDuel = null; return; }

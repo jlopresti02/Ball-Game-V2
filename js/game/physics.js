@@ -81,10 +81,13 @@ function step(dt) {
   // Sees Red keeps a normal collision box even mid-charge-dash, so it
   // still bounces off the opponent on contact like any other pair of
   // balls; only its punch damage is handled separately, on a timer.
-  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || subLocked(a) || subLocked(c) || a.koDuel || c.koDuel || (igbbLocked(a) && !duckSolid(a)) || (igbbLocked(c) && !duckSolid(c)) || swordDuelLocked(a) || swordDuelLocked(c) || aSpin || cSpin) return;
+  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || subLocked(a) || subLocked(c) || a.koDuel || c.koDuel || (igbbLocked(a) && !duckSolid(a) && !kameOn(a)) || (igbbLocked(c) && !duckSolid(c) && !kameOn(c)) || swordDuelLocked(a) || swordDuelLocked(c) || aSpin || cSpin) return;
   // Jon's Duck Drop duck, and Jon in its landing pose, are solid like a seat (jon-duck.js).
   if (duckSolid(a)) aSit = true;
   if (duckSolid(c)) cSit = true;
+  // Charles planted for his Kamehameha is solid too: they bounce off him (kamehameha.js).
+  if (kameOn(a)) aSit = true;
+  if (kameOn(c)) cSit = true;
   // A seated Watcher is an immovable, solid object: whoever runs into it
   // just bounces off, the way they would off a wall.
   if (aSit || cSit) {

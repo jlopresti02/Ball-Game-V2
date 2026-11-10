@@ -89,6 +89,7 @@ function draw() {
   drawTornadoUnder();   // and from the Rose Tornado, and the swirl at its foot (ilia-tornado.js)
   drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
   drawHelmetChargeUnder(); // Helmet Charge: the red path he's about to run (hokit-helmet.js)
+  drawItGhosts(); // Charles's afterimage where he teleported from (instant-transmission.js)
   drawRapierLungeUnder(); // Ilia's lunge: the red line he's about to lunge down (rapier.js)
   drawTopRopeUnder();  // Top Rope Body Slam: the red circle (cut off at the cage), his shadow (hokit-toprope.js)
   drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
@@ -124,9 +125,11 @@ function draw() {
     var afo = auraOffset(b); wox += afo.x; woy += afo.y; // dancing, bowing, or shaking at the bull (aurafarm.js)
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
+    var kmo = kameOffset(b); wox += kmo.x; woy += kmo.y; // leaning back to charge, lunging into the Kamehameha (kamehameha.js)
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
     drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
+    drawKameArmsBehind(b); // his arms reaching up behind his head for a Kamehameha fired upward (kamehameha.js)
 
     // While charging a power punch or rage attack, the ball jitters with
     // rising intensity; while throwing the power punch specifically, the
@@ -183,6 +186,7 @@ function draw() {
     applyGuardPose(b);  // flat on its back in guard
     applyArmbarPose(b); // pulled over in an armbar
     applySuplexPose(b); // arching back into (or flipped over by) a suplex
+    applyKamePose(b);   // crouched and tilted for the Kamehameha (kamehameha.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -320,6 +324,7 @@ function draw() {
     drawHands(b, other);
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
+    drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
     drawShot(b);    // Hokit's double leg
     drawChairShot(b); // and his folding chair
     drawDazed(b);   // stars after a chair shot
@@ -355,6 +360,8 @@ function draw() {
   drawAuraActors();    // the bull
   drawJonGoats();      // the goats (jon.js)
   drawHelmetChargeOver(); // the helmet dropping onto Hokit's head (hokit-helmet.js)
+  drawKamehameha(); // Charles's Kamehameha beam (kamehameha.js)
+  drawItFx(); // and his Instant Transmission zip lines and hard shot (instant-transmission.js)
   drawTornadoOver(); // the Rose Tornado and the roses flying out of it (ilia-tornado.js)
   drawRingBear(); // Khabib's bear, or the dust cloud it's fighting in (khabib-bear.js)
   drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)

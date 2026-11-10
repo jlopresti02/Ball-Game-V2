@@ -309,7 +309,8 @@ function tickGoats(self, other, dt) {
 
 function goatRam(self, other, g) {
   g.hit = true;
-  var dealt = hurt(other, self.char.special.goatDamage, "igbb", self.id);
+  var dealt = hurtProjectile(other, self.char.special.goatDamage, self.id, g.dx, g.dy);
+  if (other.justDodged) return; // Charles teleported out of its way: it charges on past
   // Sent flying, pinballing violently off the walls (the power punch's wall
   // slam, abilities.js), taking damage on every wall.
   if (other.alive && !other.grappled && !other.grapple) {

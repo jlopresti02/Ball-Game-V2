@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["itTeleport", "itShot", "kameCharge", "kameFire", "saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -2202,6 +2202,116 @@ function playTornadoWind(dur) {
     g.gain.exponentialRampToValueAtTime(0.0001, end);
     src.connect(bp); bp.connect(g); g.connect(ctx.destination);
     src.start(now); src.stop(end + 0.05); lfo.start(now); lfo.stop(end + 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Charles's Super Saiyan aura (Joe, 2026-11-09): a power-up BURST as it
+// flares on, Joe's aura hum looping under it while he's blond, then a
+// power-down as it dies away.
+var AURA_VOL = 0.55;
+function playClipOnce(name, vol, at) {
+  var ctx = getAudioCtx(), buf = clipBuffers[name];
+  if (!ctx || !buf) { withClip(name); return; }
+  var src = ctx.createBufferSource(); src.buffer = buf;
+  var g = ctx.createGain(); g.gain.value = vol;
+  src.connect(g); g.connect(ctx.destination); src.start(at || ctx.currentTime);
+}
+function startAuraSound() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return null;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    playClipOnce("saiyanUp", 1.0, now);
+    var buf = clipBuffers.saiyanLoop;
+    if (!buf) { withClip("saiyanLoop"); return null; }
+    var src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.setValueAtTime(0.0001, now + 0.6);
+    g.gain.exponentialRampToValueAtTime(AURA_VOL, now + 1.5); // takes over as the burst dies away
+    src.connect(g); g.connect(ctx.destination);
+    src.start(now);
+    src.stop(now + 60); // never runs on forever
+    return { src: src, g: g };
+  } catch (e) { return null; }
+}
+function stopAuraSound(h, quiet) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var now = ctx.currentTime, fade = quiet ? 0.15 : 0.5;
+    if (!quiet) playClipOnce("saiyanDown", AURA_VOL * 1.3, now);
+    if (!h) return;
+    h.g.gain.cancelScheduledValues(now);
+    h.g.gain.setValueAtTime(Math.max(0.0001, h.g.gain.value), now);
+    h.g.gain.exponentialRampToValueAtTime(0.0001, now + fade);
+    h.src.stop(now + fade + 0.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// Charles's Kamehameha (kamehameha.js): Joe's charge and fire clips, with
+// these made-in-code versions as a fallback while they load: a rising energy hum
+// with a fast wobble while he charges, then the blast (a boom, a roaring
+// rush of noise and a bright whine) for as long as the beam fires.
+function playKameCharge(dur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + dur;
+    // Joe's charge clip, started so its peak lands right as it fires.
+    var cb = clipBuffers.kameCharge;
+    if (cb) {
+      var cs = ctx.createBufferSource(); cs.buffer = cb;
+      var cg = ctx.createGain(); cg.gain.value = 1.0;
+      var off = Math.max(0, cb.duration - dur);
+      cs.connect(cg); cg.connect(ctx.destination);
+      cg.gain.setValueAtTime(1.0, end); cg.gain.exponentialRampToValueAtTime(0.0001, end + 0.15);
+      cs.start(now, off); cs.stop(end + 0.2);
+      return;
+    }
+    withClip("kameCharge");
+    [[110, 330, "sawtooth", 0.05], [220, 880, "sine", 0.08]].forEach(function (v) {
+      var o = ctx.createOscillator(); o.type = v[2];
+      o.frequency.setValueAtTime(v[0], now); o.frequency.exponentialRampToValueAtTime(v[1], end);
+      var lfo = ctx.createOscillator(); lfo.frequency.setValueAtTime(6, now); lfo.frequency.linearRampToValueAtTime(22, end);
+      var lg = ctx.createGain(); lg.gain.value = v[3] * 0.5;
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(v[3], end - 0.05); g.gain.exponentialRampToValueAtTime(0.0001, end + 0.05);
+      var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(600, now); lp.frequency.exponentialRampToValueAtTime(5000, end);
+      lfo.connect(lg); lg.connect(g.gain);
+      o.connect(lp); lp.connect(g); g.connect(ctx.destination);
+      o.start(now); o.stop(end + 0.1); lfo.start(now); lfo.stop(end + 0.1);
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+function playKameBlast(dur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + dur + 0.3;
+    // Joe's fire clip (fades out on its own a couple of seconds in).
+    if (clipBuffers.kameFire) { playClipOnce("kameFire", 1.0, now); return; }
+    withClip("kameFire");
+    // Rushing roar.
+    var n = Math.ceil(ctx.sampleRate * (dur + 0.4)), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+    for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    var src = ctx.createBufferSource(); src.buffer = buf;
+    var bp = ctx.createBiquadFilter(); bp.type = "lowpass"; bp.frequency.setValueAtTime(6000, now); bp.frequency.exponentialRampToValueAtTime(900, end);
+    var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.6, now + 0.03); g.gain.setValueAtTime(0.45, now + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, end);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination); src.start(now); src.stop(end + 0.05);
+    // Boom.
+    var o = ctx.createOscillator(); o.type = "sine";
+    o.frequency.setValueAtTime(120, now); o.frequency.exponentialRampToValueAtTime(40, now + 0.6);
+    var og = ctx.createGain(); og.gain.setValueAtTime(0.9, now); og.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+    o.connect(og); og.connect(ctx.destination); o.start(now); o.stop(now + 0.75);
+    // Bright energy whine.
+    var w = ctx.createOscillator(); w.type = "sawtooth"; w.frequency.setValueAtTime(900, now); w.frequency.linearRampToValueAtTime(760, end);
+    var wl = ctx.createBiquadFilter(); wl.type = "bandpass"; wl.frequency.value = 1800; wl.Q.value = 2;
+    var wg = ctx.createGain(); wg.gain.setValueAtTime(0.0001, now); wg.gain.exponentialRampToValueAtTime(0.12, now + 0.05); wg.gain.exponentialRampToValueAtTime(0.0001, end);
+    w.connect(wl); wl.connect(wg); wg.connect(ctx.destination); w.start(now); w.stop(end + 0.05);
   } catch (e) { /* never let audio break the game */ }
 }
 
