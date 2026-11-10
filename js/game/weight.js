@@ -1,5 +1,5 @@
-// Weight classes. Every fighter is in one of the nine UFC classes, or Super Heavyweight
-// for the giants (`weightClass` on the character, Middleweight if it hasn't got one).
+// Weight classes. Every fighter is in one of the nine UFC classes
+// (`weightClass` on the character, Middleweight if it hasn't got one).
 // Middleweight is the baseline: heavier fighters are bigger, slower, swing a
 // little slower and block a little more; lighter ones are smaller, quicker and
 // throw faster. When the two fighters are in different classes, each class
@@ -20,9 +20,7 @@ var WEIGHT_CLASSES = [
   { id: "welterweight", name: "Welterweight", lb: 170 },
   { id: "middleweight", name: "Middleweight", lb: 185 },
   { id: "lightheavyweight", name: "Light Heavyweight", lb: 205 },
-  { id: "heavyweight", name: "Heavyweight", lb: 265 },
-  // Not a UFC class: for the giants (Francis Ngannou), bigger than any heavyweight.
-  { id: "superheavyweight", name: "Super Heavyweight", lb: 330 }
+  { id: "heavyweight", name: "Heavyweight", lb: 265 }
 ];
 var WEIGHT_BASE_LB = 185;
 var WEIGHT_HURT_UP = 0.06;    // extra damage per class the attacker is heavier
@@ -31,7 +29,7 @@ var WEIGHT_WHIFF = 4;         // % per class a lighter fighter slips a heavier o
 var WEIGHT_GRAPPLE = 0.05;    // heavier fighter's edge in grappling, per class
 var WEIGHT_GRAPPLE_MAX = 0.85;
 
-// The class's index in WEIGHT_CLASSES (0 Strawweight .. 8 Heavyweight, 9 Super Heavyweight).
+// The class's index in WEIGHT_CLASSES (0 Strawweight .. 8 Heavyweight).
 function weightIndex(ch) {
   var id = ch && ch.weightClass;
   for (var i = 0; i < WEIGHT_CLASSES.length; i++) if (WEIGHT_CLASSES[i].id === id) return i;
@@ -47,7 +45,7 @@ function applyWeight(b) {
   b.r = Math.round(RADIUS * size);
   b.baseSpeed = SPEED / size;
   b.atkRate = 1 / Math.pow(size, 0.25);
-  b.blockBonus = wc; // +0% Strawweight up to +9% Super Heavyweight
+  b.blockBonus = wc; // +0% Strawweight up to +8% Heavyweight
 }
 
 // Classes the attacker is above the defender (negative if it's lighter).
