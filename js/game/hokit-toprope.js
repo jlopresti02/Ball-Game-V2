@@ -3,11 +3,12 @@
 //   run    he sprints to the nearest corner of the cage
 //   climb  he climbs up onto the top rope
 //   perch  standing on the corner, pumping his fists to the crowd, while a
-//          red circle comes up wherever they are and fills in as the
-//          countdown (the circle can sit anywhere in the ring; the parts of
+//          red circle comes up on them and fills in as the countdown. The
+//          circle follows them round the ring the whole time (the parts of
 //          it that would go past the cage are cut off)
 //   leap   he flies off the top rope in a big arc, spreading out for a
-//          belly-flop body slam
+//          belly-flop body slam, still steering at them until the last
+//          moment, when the circle locks (Joe, 2026-11-10: more accurate)
 //   down   he lands flat in the middle of the circle, then pops back up
 // Only whoever's inside the circle when he lands gets hit: topRope.damage and
 // a knockback into the walls. It's an area attack, so it can't be slipped or
@@ -20,6 +21,9 @@ var TR_RUN_MAX = 1.6, TR_CLIMB = 0.5, TR_LEAP = 0.8, TR_DOWN = 0.8;
 var TR_POST = 46;       // how high the top rope is, in arena units
 var TR_ARC = 170;       // how high he flies at the top of the leap
 var TR_RUN_SPEED = 620;
+var TR_TRACK = 900;     // how fast the red circle follows them while he's on the corner
+var TR_HOME = 300;      // how fast it still follows them while he's in the air
+var TR_LOCK = 0.77;      // how far into the leap it stops following (the escape window)
 var trCrater = null;    // the dented mat after he lands
 
 function resetTopRope() { trCrater = null; }
@@ -92,11 +96,9 @@ function updateTopRope(self, other, dt) {
     m.z = TR_POST * ease(m.t / TR_CLIMB);
     if (m.t >= TR_CLIMB) {
       m.phase = "perch"; m.t = 0; m.z = TR_POST;
-      // The circle: wherever they are right now (give or take), so they have
-      // to move. It can sit right up against the cage.
-      var ja = Math.random() * Math.PI * 2, jr = Math.random() * 50;
-      m.cx = Math.max(0, Math.min(W, other.x + Math.cos(ja) * jr));
-      m.cy = Math.max(0, Math.min(H, other.y + Math.sin(ja) * jr));
+      // The circle: right on them, and it follows them from here on. It can
+      // sit right up against the cage.
+      m.cx = other.x; m.cy = other.y;
       floater(cc.x, cc.y - self.r - TR_POST - 30, "TOP ROPE!", "crit");
       floater(m.cx, m.cy - 20, "INCOMING!", "crit");
       playDuckWarn(cfg.warn);
@@ -106,11 +108,13 @@ function updateTopRope(self, other, dt) {
   }
   if (m.phase === "perch") {
     self.x = cc.x; self.y = cc.y;
+    trFollow(m, other, TR_TRACK, dt);
     if (m.t >= cfg.warn) { m.phase = "leap"; m.t = 0; m.fx = cc.x; m.fy = cc.y; playDuckFall(); }
     return true;
   }
   if (m.phase === "leap") {
     var k = Math.min(1, m.t / TR_LEAP);
+    if (k < TR_LOCK) trFollow(m, other, TR_HOME, dt); // still adjusting in the air
     self.x = m.fx + (m.cx - m.fx) * k; self.y = m.fy + (m.cy - m.fy) * k;
     m.z = TR_POST * (1 - k) + TR_ARC * 4 * k * (1 - k);
     if (k >= 1) { m.phase = "down"; m.t = 0; m.z = 0; self.x = m.cx; self.y = m.cy; topRopeLand(self, other, cfg, m); }
@@ -121,6 +125,13 @@ function updateTopRope(self, other, dt) {
   if (m.t < TR_DOWN * 0.6) self.squash = { t: 0.2, max: 0.3, nx: 0, ny: 1 };
   if (m.t >= TR_DOWN) { endTopRope(self); return false; }
   return true;
+}
+
+// The red circle sliding after them, at most `speed` units a second.
+function trFollow(m, other, speed, dt) {
+  if (!other.alive) return;
+  var dx = other.x - m.cx, dy = other.y - m.cy, d = Math.sqrt(dx * dx + dy * dy), step = speed * dt;
+  if (d <= step) { m.cx = other.x; m.cy = other.y; } else { m.cx += dx / d * step; m.cy += dy / d * step; }
 }
 
 function topRopeLand(self, other, cfg, m) {
