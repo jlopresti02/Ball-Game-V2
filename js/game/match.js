@@ -247,6 +247,8 @@ function hurt(b, amount, source, attackerId) {
   }
   // Charles teleporting out of the way (instant-transmission.js).
   if (itDodge(b, source, attackerId)) return 0;
+  // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
+  if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.
   if (doBronxPosing(b)) {
     if (source !== "laser") doBronxDodge(b);

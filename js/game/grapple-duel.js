@@ -166,6 +166,10 @@ function attemptGrab(attacker, target) {
   if (bearOn(attacker) || bearOn(target) || attacker.bearHeld || target.bearHeld) return false; // or in the bear's dust cloud (khabib-bear.js)
   if (tornadoOn(attacker) || tornadoOn(target) || attacker.torHeld || target.torHeld) return false; // or Ilia's Rose Tornado (ilia-tornado.js)
   if (target.slamSafe > 0) return false;
+  if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
+    attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
+    return false;
+  }
   var ag = attacker.char.grapple;
   if (ag && ag.shotName) floater(attacker.x, attacker.y - attacker.r - 44, ag.shotName, "crit"); // calls the shot (Gaethje's DOUBLE LEG)
   if (doBronxPosing(target)) {

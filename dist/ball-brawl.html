@@ -7377,6 +7377,8 @@ function hurt(b, amount, source, attackerId) {
   }
   // Charles teleporting out of the way (instant-transmission.js).
   if (itDodge(b, source, attackerId)) return 0;
+  // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
+  if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.
   if (doBronxPosing(b)) {
     if (source !== "laser") doBronxDodge(b);
@@ -8770,6 +8772,10 @@ function attemptGrab(attacker, target) {
   if (bearOn(attacker) || bearOn(target) || attacker.bearHeld || target.bearHeld) return false; // or in the bear's dust cloud (khabib-bear.js)
   if (tornadoOn(attacker) || tornadoOn(target) || attacker.torHeld || target.torHeld) return false; // or Ilia's Rose Tornado (ilia-tornado.js)
   if (target.slamSafe > 0) return false;
+  if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
+    attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
+    return false;
+  }
   var ag = attacker.char.grapple;
   if (ag && ag.shotName) floater(attacker.x, attacker.y - attacker.r - 44, ag.shotName, "crit"); // calls the shot (Gaethje's DOUBLE LEG)
   if (doBronxPosing(target)) {
@@ -21099,6 +21105,10 @@ function drawDoBronx(b) {
 // it fires, then locks and flashes, so a fighter that moves can still get
 // out of the way. Then the aura dies down and his hair goes back to black.
 // Nothing can hit him while he does it (an igbb move: specialGuarding).
+// Grabbed or hit while he's still powering up or charging, he Instant
+// Transmissions away to another part of the ring and keeps charging; his
+// aim snaps straight back onto them, and if it was about to go off he holds
+// it a moment so the new path shows before it fires (Joe, 2026-11-10).
 // Runs on b.igbb (move "kamehameha"). Config: char.kamehameha.
 "use strict";
 
@@ -21107,6 +21117,8 @@ var KM_POWER = 0.9;  // the aura bursting on before he starts charging
 var KM_END = 0.4;    // hands coming back down after the beam
 var KM_SPEED = 2600; // how fast the beam shoots out
 var KM_CALLS = ["KA...", "ME...", "HA...", "ME..."];
+var KM_SNAP = 0.55;  // after teleporting out, at least this long before it fires
+var KM_ESC_CD = 0.25; // a burst of hits (diamonds, laser ticks) is blocked, not one teleport each
 
 function kameOn(b) { return !!(b && b.igbb && b.igbb.move === "kamehameha"); }
 function kmRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
@@ -21139,6 +21151,8 @@ function updateKamehameha(self, other, dt) {
   var m = self.igbb;
   if (m.move !== "kamehameha") return false;
   m.t += dt; m.callT = (m.callT || 0) + dt;
+  if (m.escCd) m.escCd = Math.max(0, m.escCd - dt);
+  if (m.snap) m.snap = Math.max(0, m.snap - dt);
   self.vx = 0; self.vy = 0;
   if (over) { endKamehameha(self); return false; }
 
@@ -21149,7 +21163,10 @@ function updateKamehameha(self, other, dt) {
     return true;
   }
   if (m.phase === "charge") {
-    if (m.t < cfg.charge - KM_LOCK && other.alive) { kmAim(self, other); kmTurn(m, dt); }
+    // (Right after a teleport out, it follows them for a moment even in the
+    // last second, then locks again.)
+    if ((m.t < cfg.charge - KM_LOCK || m.track > 0) && other.alive) { kmAim(self, other); kmTurn(m, dt); }
+    if (m.track) m.track = Math.max(0, m.track - dt);
     var call = Math.floor(m.t / (cfg.charge / (KM_CALLS.length + 0.4)));
     if (call >= m.calls && m.calls < KM_CALLS.length) {
       m.calls++; m.callT = 0; // shown in the caption (drawKameCaption), not over his head (Joe)
@@ -21262,6 +21279,55 @@ function kmTurn(m, dt) {
   var target = m.dx >= 0 ? -1 : 1;
   if (m.side == null) m.side = target;
   m.side += Math.max(-dt * 5, Math.min(dt * 5, target - m.side));
+}
+
+// Powering up or charging (not yet fired): the part he can be got at in.
+function kameCharging(b) {
+  return kameOn(b) && b.alive && (b.igbb.phase === "power" || b.igbb.phase === "charge");
+}
+
+// From hurt() and attemptGrab(): grabbed or hit while charging, he
+// teleports away (Instant Transmission) instead of being stopped. True if
+// he got away. path: a projectile's line of flight, to land off it. A
+// grab always gets away; hits right after a teleport are just blocked.
+function kameEscape(b, attackerId, grab, path) {
+  if (!kameCharging(b) || attackerId == null || attackerId === b.id) return false;
+  var other = balls[attackerId], m = b.igbb;
+  if (!other) return false;
+  if ((m.escCd || 0) > 0) { b.justDodged = true; return true; } // only just teleported: whatever else was coming misses
+  var spot = kmEscapeSpot(b, other, path);
+  itTeleport(b, spot.x, spot.y);
+  b.vx = 0; b.vy = 0;
+  other.punch = null; other.kick = null; other.jabAnim = null; // swinging at thin air (and the arm doesn't chase him across the ring)
+  floater(b.x, b.y - b.r - 8, grab ? "ESCAPED!" : "DODGE", "dodge");
+  m.escCd = KM_ESC_CD;
+  m.esc = (m.esc || 0) + 1;
+  // His aim snaps onto them from where he is now, and his stance turns with it.
+  if (other.alive) kmAim(b, other);
+  m.side = m.dx >= 0 ? -1 : 1;
+  m.snap = 0.25; // the path flashes as it snaps across (drawKamehameha)
+  // About to fire: hold it a moment, so they can see where it's going now.
+  var cfg = b.char.kamehameha;
+  if (m.phase === "charge" && m.t > cfg.charge - KM_SNAP) m.t = cfg.charge - KM_SNAP;
+  m.track = KM_SNAP - 0.3; // then locks for the last 0.3s
+  b.justDodged = true;
+  return true;
+}
+
+// Somewhere well away from them (room for the beam to fly), in the ring,
+// and out of a projectile's line.
+function kmEscapeSpot(b, other, path) {
+  var good = [], best = null, minD = Math.min(W, H) * 0.45;
+  for (var i = 0; i < 24; i++) {
+    var x = b.r + Math.random() * (W - 2 * b.r), y = b.r + Math.random() * (H - 2 * b.r);
+    var d = Math.sqrt((x - other.x) * (x - other.x) + (y - other.y) * (y - other.y));
+    var clear = !path || Math.abs(-path.dy * (x - path.x) + path.dx * (y - path.y)) > b.r * 3;
+    if (!clear) continue;
+    if (d >= minD) good.push({ x: x, y: y });
+    if (!best || d > best.d) best = { x: x, y: y, d: d };
+  }
+  if (good.length) return good[Math.floor(Math.random() * good.length)];
+  return best || { x: W - other.x, y: H - other.y };
 }
 
 function kmAim(self, other) {
@@ -21492,6 +21558,7 @@ function drawKamehameha() {
       var locked = m.phase === "charge" && m.t >= cfg.charge - KM_LOCK;
       var show = m.phase === "power" ? Math.min(1, m.t / 0.3) : 1;
       var pulse = locked ? 0.6 + 0.4 * Math.sin(t * 30) : 0.75 + 0.25 * Math.sin(t * 10);
+      if (m.snap) pulse = 1 + 1.5 * m.snap / 0.25; // snapping onto them after a teleport
       ctx.globalAlpha = show;
       ctx.fillStyle = "rgba(70,160,255," + ((locked ? 0.3 : 0.16) * pulse) + ")";
       ctx.fillRect(r, -wdt / 2, len0 - r, wdt);
@@ -28661,15 +28728,15 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261110174802"></script>
-<script src="js/game/update.js?v=20261110174802"></script>
-<script src="js/game/fighter-art.js?v=20261110174802"></script>
-<script src="js/game/draw-attacks.js?v=20261110174802"></script>
-<script src="js/game/wwit-badge.js?v=20261110174802"></script>
-<script src="js/game/stadium.js?v=20261110174802"></script>
-<script src="js/game/draw.js?v=20261110174802"></script>
-<script src="js/ui/gallery.js?v=20261110174802"></script>
-<script src="js/ui/saved-fights.js?v=20261110174802"></script>
-<script src="js/main.js?v=20261110174802"></script>
+  <script src="js/game/intro-msg.js?v=20261110181205"></script>
+<script src="js/game/update.js?v=20261110181205"></script>
+<script src="js/game/fighter-art.js?v=20261110181205"></script>
+<script src="js/game/draw-attacks.js?v=20261110181205"></script>
+<script src="js/game/wwit-badge.js?v=20261110181205"></script>
+<script src="js/game/stadium.js?v=20261110181205"></script>
+<script src="js/game/draw.js?v=20261110181205"></script>
+<script src="js/ui/gallery.js?v=20261110181205"></script>
+<script src="js/ui/saved-fights.js?v=20261110181205"></script>
+<script src="js/main.js?v=20261110181205"></script>
 </body>
 </html>
