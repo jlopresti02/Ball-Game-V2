@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-charles-oliveira",
-    "rev": 14,
+    "rev": 15,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -117,6 +117,8 @@ var SAVED_ROSTER = [
       ],
       "dodgeChance": 40,
       "dodgeCd": 0.8,
+      "projDodgeChance": 60,
+      "projDodgeCd": 0.3,
       "comboAt": 3,
       "damage": 12,
       "knockback": 1300,

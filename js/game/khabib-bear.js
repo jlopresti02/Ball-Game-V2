@@ -299,7 +299,8 @@ function tickBearThrown(B, dt) {
   B.spin += B.spinV * dt;
   var ox = o.x - B.x, oy = o.y - B.y;
   if (o.alive && !o.invincible && ox * ox + oy * oy < (o.r + BEAR_R) * (o.r + BEAR_R)) {
-    var dealt = hurt(o, cfg.throwDamage, "igbb", k.id);
+    var dealt = hurtProjectile(o, cfg.throwDamage, k.id, B.dx, B.dy);
+    if (o.justDodged && !o.invincible) return; // Charles teleported out of its way: it sails on
     if (dealt > 0) {
       floater(o.x, o.y - o.r - 34, "BEAR BOMB!", "crit");
       playBearSound("land");

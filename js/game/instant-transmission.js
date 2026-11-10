@@ -39,39 +39,56 @@ function itTeleport(b, x, y) {
 }
 
 // A random open spot: in the ring, not on top of them.
-function itSpot(b, other, minD) {
+function itSpot(b, other, minD, path) {
   var best = null;
-  for (var i = 0; i < 12; i++) {
+  for (var i = 0; i < 16; i++) {
     var x = b.r + Math.random() * (W - 2 * b.r), y = b.r + Math.random() * (H - 2 * b.r);
     var d = Math.sqrt((x - other.x) * (x - other.x) + (y - other.y) * (y - other.y));
     var move = Math.sqrt((x - b.x) * (x - b.x) + (y - b.y) * (y - b.y));
-    if (d >= minD && move > b.r * 2.5) return { x: x, y: y };
-    if (!best || d > best.d) best = { x: x, y: y, d: d };
+    // Out of a projectile's line of flight, so it sails on past.
+    var clear = !path || Math.abs(-path.dy * (x - path.x) + path.dx * (y - path.y)) > b.r * 3;
+    if (d >= minD && move > b.r * 2.5 && clear) return { x: x, y: y };
+    if (clear && (!best || d > best.d)) best = { x: x, y: y, d: d };
   }
-  return best;
+  return best || { x: b.x - path.dy * b.r * 3.5, y: b.y + path.dx * b.r * 3.5 };
+}
+
+// Special-move projectiles (eagles, goats, a thrown bear, a beam) hit with
+// "igbb" so nothing can slip or block them, but he can still teleport out
+// of their way. Callers check justDodged and let the thing fly on.
+var itProjHit = null;
+function hurtProjectile(b, amount, attackerId, dx, dy) {
+  itProjHit = { x: b.x, y: b.y, dx: dx || 0, dy: dy || 0 };
+  try { return hurt(b, amount, "igbb", attackerId); } finally { itProjHit = null; }
 }
 
 // From hurt() (match.js): a strike or a projectile about to land. True if
 // he teleported out of the way (no damage).
 function itDodge(b, source, attackerId) {
   if (!itActive(b) || attackerId == null || attackerId === b.id) return false;
-  if (source === "laser" || source === "slam" || source === "grapple" || source === "finisher" || source === "flow" ||
-      source === "slugfest" || source === "kofinal" || source === "igbb") return false;
+  var proj = !!PROJECTILE_SOURCES[source] || (source === "igbb" && !!itProjHit);
+  if (!proj && (source === "laser" || source === "slam" || source === "grapple" || source === "finisher" || source === "flow" ||
+      source === "slugfest" || source === "kofinal" || source === "igbb")) return false;
   var cfg = b.char.instantTransmission, st = itState(b);
-  if (st.cd > 0 || Math.random() * 100 >= cfg.dodgeChance) return false;
+  // Anything thrown or fired at him he sees coming: a better chance, and a
+  // shorter wait (a volley of diamonds can be dodged one after another).
+  if (proj ? st.pcd > 0 : st.cd > 0) return false;
+  if (Math.random() * 100 >= (proj ? cfg.projDodgeChance : cfg.dodgeChance)) return false;
   var other = balls[attackerId];
-  var spot = itSpot(b, other, (b.r + other.r) * 2.2);
+  var path = proj && itProjHit && (itProjHit.dx || itProjHit.dy) ? itProjHit : null;
+  var spot = itSpot(b, other, (b.r + other.r) * 2.2, path);
   itTeleport(b, spot.x, spot.y);
   floater(b.x, b.y - b.r - 8, "DODGE", "dodge");
   b.justDodged = true;
   st.cd = cfg.dodgeCd;
+  st.pcd = cfg.projDodgeCd;
   st.dodges++;
   if (st.dodges >= cfg.comboAt) { st.dodges = 0; st.shotDue = true; } // the hard shot, as soon as he can
   return true;
 }
 
 function itState(b) {
-  if (!b.itState) b.itState = { moveT: itRand(b.char.instantTransmission.every), cd: 0, dodges: 0, shotDue: 0 };
+  if (!b.itState) b.itState = { moveT: itRand(b.char.instantTransmission.every), cd: 0, pcd: 0, dodges: 0, shotDue: 0 };
   return b.itState;
 }
 
@@ -84,6 +101,7 @@ function updateInstantTransmission(self, other, dt) {
   if (!itActive(self)) { if (self.itState && !self.doBronx) self.itState = null; return false; }
   var st = itState(self);
   st.cd = Math.max(0, st.cd - dt);
+  st.pcd = Math.max(0, (st.pcd || 0) - dt);
   // The 3rd dodge: straight behind them for the hard shot.
   if (st.shotDue) {
     // Waits only while they're tied up in something he can't hit them out of.

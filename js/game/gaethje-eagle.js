@@ -140,8 +140,8 @@ function segDist(x, y, ax, ay, bx, by) {
 // Talons straight through them.
 function eagleRake(e, self, other) {
   var cfg = e.cfg;
-  hurt(other, cfg.damage, "igbb", self.id);
-  if (!other.alive) return;
+  hurtProjectile(other, cfg.damage, self.id, e.dx, e.dy); // Charles can teleport out of its way (instant-transmission.js)
+  if (!other.alive || other.justDodged) return;
   other.squash = { t: 0.24, max: 0.24, nx: e.dx, ny: e.dy };
   other.flash = 0.22;
   eagleSlashes.push({ id: other.id, t: 0, side: e.dx >= 0 ? 1 : -1 });

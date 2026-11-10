@@ -115,7 +115,7 @@ function updateKamehameha(self, other, dt) {
       var along = ox * m.dx + oy * m.dy, across = Math.abs(-m.dy * ox + m.dx * oy);
       if (along > 0 && along < m.ext + other.r && across < cfg.width / 2 + other.r * 0.85) {
         m.hit = true;
-        var dealt = hurt(other, cfg.damage, "igbb", self.id);
+        var dealt = hurtProjectile(other, cfg.damage, self.id, m.dx, m.dy);
         if (dealt > 0) {
           floater(other.x, other.y - other.r - 30, "KAMEHAMEHA!", "crit");
           if (!reduceMotion) { shake = Math.max(shake, 22); hitStop = Math.max(hitStop, 0.08); }
