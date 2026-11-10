@@ -94,16 +94,18 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `skin`, `hairColor`, `shorts`, `trim`, `gloves` | hex colours (`accent`: optional stripe colour for `pinstripe` shorts) |
 | `build` | `muscular`, `lean`, `stocky` |
 | `core` | optional `solid`: a thick, smooth core with no six pack (muscular/lean builds) |
-| `hair` | `bald`, `stubble`, `buzz`, `crop` (buzzed sides, short top sitting high with deep temple recession and a forelock flicking to one side), `twists`, `short`, `long`, `mohawk`, `dreads` |
+| `hair` | `bald`, `stubble`, `buzz`, `crop` (buzzed sides, short top sitting high with deep temple recession and a forelock flicking to one side), `twists`, `short`, `long`, `mohawk`, `dreads`, `coils` (tight curly short top with faded sides; add `hairHigh`, about 0.1, to raise it as a high top above the ball) |
 | `hairPuff` | `true` puts big twisted hair as a second circle behind the top of the ball (contained layout) |
 | `cane` | `true` gives a white cane with a red tip at the right side (contained layout); pass `opts.caneSwing` (radians) to sweep it |
 | `beard` | `none`, `stubble`, `short`, `boxed` (short beard: thin sideburns, low cheek line, thin moustache, bare gap at the mouth, fuller chin), `chinstrap`, `full` |
 | `beardColor` | optional hex colour for the beard (defaults to `hairColor`) |
 | `beardChin` | optional extra length at the chin for a `boxed` beard, as a fraction of the radius (e.g. `0.12`) |
+| `waistText` | optional lettering on the front of the waistband, e.g. `UFC` (`waistTextColor`, default white) |
+| `legPatch` | `false` hides the small patch on the left leg |
 | `gloveStrap` | optional colour for the glove wrist strap (defaults to a lighter shade of the glove) |
 | `ears` | `normal`, `cauliflower` |
 | `bodyHair` | `none`, `light`, `heavy` |
-| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs), `slash` (jagged streaks in the trim colour), `usa` (stars-and-stripes panel on one leg, white star on the waistband), `flame` (flames up both legs in `accent` with an `accent2` core) |
+| `shortsStyle` | `plain`, `stripe`, `split`, `print`, `chevron` (diagonal panel up one leg), `pinstripe` (thin stripes down both legs), `slash` (jagged streaks in the trim colour), `usa` (stars-and-stripes panel on one leg, white star on the waistband), `flame` (flames up both legs in `accent` with an `accent2` core), `marble` (mottled grey streaks over the base colour) |
 | `headwear` | optional: `bandana` (stars-and-stripes bandana over the head) or `football` (gold football helmet with red-white-red stripe, SF-style oval logos, grey facemask and white chin strap, rising past the ball, contained layout only; `helmetColor`, `helmetStripe`, `helmetStripe2`, `helmetMask`, `helmetLift`, `helmetLogoText` for the oval text, default "SF", or `helmetLogo` a data-URI logo image used instead) or `trucker` (trucker cap that rises past the ball, contained layout only; `hatLogo` data-URI image on the foam front, `hatColor` mesh, `hatFront` panel, `hatBrim` bill, `hatLift` raises it, in ball radii, `hatWidth` narrows it to hug the head, e.g. 0.78) |
 | `glasses` | optional: `shades` (dark sunglasses) |
 | `outfit` | optional: `polo` (collared shirt over the torso, for a referee; `shirt` colour, optional `badge` colour for a chest badge) |

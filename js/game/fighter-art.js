@@ -75,6 +75,7 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   if (contained && look.hairPuff) drawHairPuff(c, r, look, ink);
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
+  if (contained && look.hair === "coils" && look.hairHigh) drawCoilTop(c, r, look, ink);
   if (contained && look.headwear === "trucker") drawTruckerHat(c, r, look, ink);
   if (contained && look.headwear === "football") drawFootballHelmet(c, r, look, ink);
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
@@ -108,6 +109,41 @@ function drawCane(c, r, ink, swing) {
 
 // Big hair as a second circle sitting behind the top of the ball: a lumpy
 // cloud of twists, outlined as one shape (all the lumps stroked, then filled)
+// A short high top of tight coils that rises above the ball, for hair
+// "coils" with look.hairHigh (0.1 to 0.2 ball radii). Drawn over the ball so
+// its outline doesn't cut through the hair.
+function drawCoilTop(c, r, look, ink) {
+  var hc = look.hairColor, h = r * look.hairHigh;
+  var hairEdge = function () {
+    c.moveTo(-r * 0.72, -r * 0.64);
+    c.quadraticCurveTo(-r * 0.68, -r * 0.75, -r * 0.52, -r * 0.73);
+    c.quadraticCurveTo(0, -r * 0.77, r * 0.52, -r * 0.73);
+    c.quadraticCurveTo(r * 0.68, -r * 0.75, r * 0.72, -r * 0.64);
+  };
+  var top = function () {
+    c.moveTo(r * 0.72, -r * 0.64);
+    c.bezierCurveTo(r * 0.8, -r * 0.86, r * 0.72, -r - h, 0, -r - h);
+    c.bezierCurveTo(-r * 0.72, -r - h, -r * 0.8, -r * 0.86, -r * 0.72, -r * 0.64);
+  };
+  var shape = function () { c.beginPath(); hairEdge(); top(); c.closePath(); };
+  c.save();
+  c.fillStyle = hc; shape(); c.fill();
+  c.save(); shape(); c.clip();
+  var co = artRand(41);
+  for (var i = 0; i < 520; i++) {
+    var x = (co() * 2 - 1) * r * 0.8, y = -r * 0.62 - co() * (r * 0.4 + h), z = r * (0.014 + co() * 0.012);
+    c.fillStyle = i % 3 ? shadeHex(hc, 0.16) : shadeHex(hc, -0.4); c.globalAlpha = 0.38;
+    c.beginPath(); c.arc(x, y, z, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+  c.lineJoin = "round";
+  c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.06);
+  c.beginPath(); top(); c.stroke();
+  c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = Math.max(1, r * 0.016);
+  c.beginPath(); hairEdge(); c.stroke();
+  c.restore();
+}
+
 function drawHairPuff(c, r, look, ink) {
   var hc = look.hairColor, py = -r * 0.8, pr = r * 0.62;
   var lumps = [[0, 0, 1]];
@@ -333,6 +369,41 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.fillRect(cgx, cgy, r * 0.016, r * 0.016);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "coils") {
+    // Tight curly hair: faded sides, and a short rounded top of small coils
+    // sitting high on the head with a squared-off hairline
+    c.save(); c.beginPath(); c.rect(-r, -r, r * 0.22, r); c.rect(r * 0.78, -r, r * 0.22, r); c.clip();
+    c.fillStyle = mixHex(look.skin, hc, 0.55); hairline(); c.fill();
+    c.restore();
+    var coilTop = function () {
+      c.beginPath();
+      c.moveTo(-r * 0.8, -r);
+      c.lineTo(-r * 0.8, -r * 0.66);
+      c.quadraticCurveTo(-r * 0.74, -r * 0.74, -r * 0.56, -r * 0.73);
+      c.quadraticCurveTo(0, -r * 0.77, r * 0.56, -r * 0.73);
+      c.quadraticCurveTo(r * 0.74, -r * 0.74, r * 0.8, -r * 0.66);
+      c.lineTo(r * 0.8, -r);
+      c.closePath();
+    };
+    c.fillStyle = hc; coilTop(); c.fill();
+    c.save(); coilTop(); c.clip();
+    var co = artRand(23);
+    for (var ci = 0; ci < 420; ci++) {
+      var cx2 = (co() * 2 - 1) * r * 0.84, cy2 = -r * (0.7 + co() * 0.32), cz = r * (0.014 + co() * 0.012);
+      c.fillStyle = ci % 3 ? shadeHex(hc, 0.22) : shadeHex(hc, -0.4);
+      c.globalAlpha = 0.45;
+      c.beginPath(); c.arc(cx2, cy2, cz, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+    c.restore();
+    c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.016); coilTop(); c.stroke();
+    // Fade grain on the sides
+    var cfr = artRand(31); c.fillStyle = shadeHex(hc, -0.2); c.globalAlpha = 0.5;
+    for (var cf = 0; cf < 60; cf++) {
+      var cfx = (cfr() < 0.5 ? -1 : 1) * r * (0.8 + cfr() * 0.16), cfy = -r * (0.5 + cfr() * 0.25);
+      c.fillRect(cfx, cfy, r * 0.016, r * 0.016);
+    }
+    c.globalAlpha = 1; c.fillStyle = hc;
   } else if (look.hair === "buzz" || look.hair === "stubble") {
     // A stubble scalp is a see-through shadow, as light as the short beard
     c.globalAlpha = look.hair === "stubble" ? 0.32 : 0.88; hairline(); c.fill();
@@ -396,7 +467,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.fillStyle = "rgba(255,255,255,0.35)";
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
-  if (look.hair !== "bald" && look.hair !== "crop") {  // the crop outlines its own shape
+  if (look.hair !== "bald" && look.hair !== "crop" && look.hair !== "coils") {  // these outline their own shape
     c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
@@ -1295,6 +1366,17 @@ function drawArtBody(c, r, look, ink, name, contained) {
     }
     c.globalAlpha = 1;
   }
+  if (look.shortsStyle === "marble") {
+    // Grey marbled fight shorts: soft lighter and darker blotches
+    var mr = artRand(artSeed(name + "marble"));
+    for (var mb = 0; mb < 90; mb++) {
+      var mbx = (mr() * 2 - 1) * r, mby = sTop + band + mr() * (r - sTop), mbz = r * (0.03 + mr() * 0.09);
+      c.fillStyle = mb % 2 ? shadeHex(look.shorts, 0.35) : shadeHex(look.shorts, -0.22);
+      c.globalAlpha = 0.18 + mr() * 0.2;
+      c.beginPath(); c.ellipse(mbx, mby, mbz * 1.4, mbz * (0.25 + mr() * 0.35), mr() * Math.PI, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+  }
   if (look.shortsStyle === "slash") {
     // Jagged streaks raking across the legs, in the trim colour
     var slr = artRand(artSeed(name + "slash"));
@@ -1386,6 +1468,13 @@ function drawArtBody(c, r, look, ink, name, contained) {
     }
     c.closePath(); c.fill();
   }
+  if (look.waistText) {
+    // Lettering on the front of the waistband
+    c.fillStyle = look.waistTextColor || "#f2f2f2";
+    c.font = "900 " + (band * 0.78) + "px Arial, Helvetica, sans-serif";
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(look.waistText, r * 0.3, sTop + band * 0.52);
+  }
   if (look.shortsStyle === "print") {
     // Logo patch on the front of the waistband
     c.fillStyle = "#111111"; c.fillRect(r * 0.08, sTop, r * 0.4, band + r * 0.12);
@@ -1395,7 +1484,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.fillStyle = ink;
   c.beginPath(); c.moveTo(-r * 0.07, r); c.lineTo(0, r * 0.8); c.lineTo(r * 0.07, r); c.closePath(); c.fill();
   c.fillStyle = look.shortsStyle === "split" ? look.shorts : look.trim;
-  c.globalAlpha = look.shortsStyle === "print" ? 0 : 0.85;
+  c.globalAlpha = look.shortsStyle === "print" || look.legPatch === false ? 0 : 0.85;
   c.fillRect(-r * 0.42, sTop + band + r * 0.1, r * 0.18, r * 0.09);
   c.globalAlpha = 1;
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
