@@ -36,6 +36,7 @@ function resetDoBronx() {
   screenFlash = 0;
   cameraFlashes = [];
   if (auraOn) { stopAuraSound(auraSnd, true); auraOn = false; auraSnd = null; }
+  resetInstantTransmission();
   if (typeof stadiumCache !== "undefined") stadiumCache.key = null;
 }
 
@@ -252,6 +253,7 @@ function doBronxMult(attackerId) {
 
 function tickDoBronxFx(dt) {
   tickKamehameha(); // the Kamehameha's aura never gets left on (kamehameha.js)
+  tickInstantTransmission(dt); // afterimages and zip lines fading (instant-transmission.js)
   // The state's clock keeps running whatever he's doing (even while he's
   // being slammed or choked), so it's always 15 real seconds.
   if (balls && started && !over) balls.forEach(function (b) { if (b.doBronx && b.alive) b.doBronx.t += dt; });

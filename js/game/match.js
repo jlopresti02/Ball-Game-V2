@@ -244,6 +244,8 @@ function hurt(b, amount, source, attackerId) {
     b.justDodged = true;
     return 0;
   }
+  // Charles teleporting out of the way (instant-transmission.js).
+  if (itDodge(b, source, attackerId)) return 0;
   // Mid Do Bronx pose: dodges everything.
   if (doBronxPosing(b)) {
     if (source !== "laser") doBronxDodge(b);

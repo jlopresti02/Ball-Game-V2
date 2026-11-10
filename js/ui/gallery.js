@@ -303,6 +303,8 @@ function gallerySounds() {
       clip("saiyanDown", "Aura power-down", "The aura dying away."),
       clip("kameCharge", "Kamehameha charge", "Charles charging the Kamehameha."),
       clip("kameFire", "Kamehameha fire", "The Kamehameha blast."),
+      clip("itTeleport", "Instant Transmission", "Charles teleporting."),
+      clip("itShot", "Instant Transmission hard shot", "The hard shot after his 3rd teleport dodge."),
       clip("hokitKnee", "Break him over my knee", "Josh Hokit's thumbs down (one of 5)."),
       clip("hokitDog", "Like my dog", "Josh Hokit's thumbs down."),
       clip("hokitDivision", "Incredible Hok division", "Josh Hokit's thumbs down."),
