@@ -87,6 +87,7 @@ function beginIowaStyle(self, tgt, g) {
   g.phase = "iowa";
   g.pressT = 0;
   tgt.grappled = true;
+  if (g.toss) tossSkipBounce(tgt); // thrown into the wall, then pinned there (toss.js)
   floater((self.x + tgt.x) / 2, Math.min(self.y, tgt.y) - self.r - 34, "IOWA STYLE", "crit");
 }
 
