@@ -18,10 +18,12 @@ var tossZoomBuf = null;
 function resetToss() { tossFx = []; tossCam.z = 1; tossCam.dur = 0; }
 
 // From beginGrapple (match.js): every regular takedown is a throw, except
-// the finisher, Do Bronx (straight into a submission) and Grappler vs
-// Grappler (pressed into the wall, grapple-duel.js).
+// the finisher and Do Bronx (straight into a submission). Grappler vs
+// Grappler grabs throw too (Joe, 2026-11-10): the reattack out of a sprawl
+// scramble, and the Iowa Style slam, which lands the throw at the wall and
+// then presses them into it (grapple-duel.js).
 function setupToss(attacker, target, g, gr) {
-  if (g.finisher || attacker.doBronx || isGrapplerDuel(attacker, target)) return;
+  if (g.finisher || attacker.doBronx) return;
   g.toss = true;
   g.dur = gr.speed + TOSS_EXTRA;
   // Spins away from the side the thrower is on (no dice roll, so seeded
@@ -145,6 +147,11 @@ function tossImpact(atk, b, g) {
     tossCam.z = tossCam.peak = 1.22; tossCam.x = x; tossCam.y = y; tossCam.t = 0; tossCam.dur = 0.6;
   }
   playTossLand();
+}
+// Iowa Style takes over right after the landing: the pinned fighter is
+// pressed flat into the wall, so it skips the bounce.
+function tossSkipBounce(b) {
+  tossFx = tossFx.filter(function (f) { return !(f.kind === "bounce" && f.id === b.id); });
 }
 function tossDust(x, y, n, big) {
   for (var i = 0; i < n; i++) {
