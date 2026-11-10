@@ -1603,37 +1603,63 @@ var sleevePatterns = {};
 // The traced sleeve laid along an extended arm from (x0, y0) to (x1, y1),
 // as one image rather than a repeating pattern. Returns false when there is
 // no traced sleeve (or it hasn't loaded) so the caller keeps its plain arm.
-// Jacked arms (look.armMuscle, about 1): a bulging bicep near the shoulder
-// and a thick forearm near the glove, drawn over a plain arm stroke from
-// (x0, y0) to (x1, y1) of width w. edge is the outline colour.
+// Jacked arms (look.armMuscle, about 1): the whole arm drawn as one muscled
+// shape from the shoulder (x0, y0) to the wrist (x1, y1), base width w:
+// rounded delt, peaked bicep, tricep underneath, narrow elbow, thick forearm
+// tapering to the wrist, with shading for definition. edge is the outline
+// colour. Callers skip their plain arm stroke when hasArmMuscle(ch).
+function hasArmMuscle(ch) { return !!(ch && ch.look && ch.look.armMuscle); }
 function drawArmMuscle(c, ch, x0, y0, x1, y1, w, edge) {
-  if (!ch || !ch.look || !ch.look.armMuscle) return;
+  if (!hasArmMuscle(ch)) return;
   var k = ch.look.armMuscle, col = armColor(ch), skin = ch.look.skin;
-  var dx = x1 - x0, dy = y1 - y0, len = Math.sqrt(dx * dx + dy * dy);
-  if (len < w) return;
-  var line = shadeHex(skin, -0.38);
+  var dx = x1 - x0, dy = y1 - y0, L = Math.sqrt(dx * dx + dy * dy);
+  if (L < w * 0.5) return;
+  w *= 1 + 0.3 * k;  // jacked arms are thicker than the plain stroke
+  var line = shadeHex(skin, -0.45), m = function (v) { return 1 + (v - 1) * k; };
+  // Outline points along the top (bicep side) then back along the bottom
+  var pts = [
+    [0, -0.95], [0.12, -1.05 * m(1.08)], [0.22, -0.96], [0.36, -1.08 * m(1.14)],
+    [0.5, -0.84], [0.58, -0.76], [0.67, -0.8 * m(1.06)], [0.85, -0.58], [1, -0.48],
+    [1, 0.48], [0.86, 0.54], [0.7, 0.66 * m(1.06)], [0.56, 0.7],
+    [0.4, 0.86 * m(1.1)], [0.2, 0.92], [0, 0.95]
+  ].map(function (p) { return [p[0] * L, p[1] * w]; });
+  var shape = function () {
+    // Smooth closed curve through the points (Catmull-Rom as Beziers)
+    var n = pts.length;
+    c.beginPath(); c.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 0; i < n; i++) {
+      var p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+      c.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6,
+        p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]);
+    }
+    c.closePath();
+  };
   c.save();
   c.translate(x0, y0); c.rotate(Math.atan2(dy, dx));
-  // bicep (upper side bulge), tricep (lower), forearm
-  var bulges = [
-    [len * 0.3, -w * 0.22, len * 0.25, w * (0.72 + 0.38 * k)],
-    [len * 0.28, w * 0.16, len * 0.24, w * (0.66 + 0.22 * k)],
-    [len * 0.74, -w * 0.06, len * 0.22, w * (0.66 + 0.22 * k)]
-  ];
-  var all = function () { c.beginPath(); bulges.forEach(function (b) { c.moveTo(b[0] + b[2], b[1]); c.ellipse(b[0], b[1], b[2], b[3], 0, 0, Math.PI * 2); }); };
-  c.strokeStyle = edge || "#16211f"; c.lineWidth = Math.max(2, w * 0.18); all(); c.stroke();
-  c.fillStyle = col; all(); c.fill();
-  c.save(); all(); c.clip();
-  // Light along the top of the arm, shade underneath
+  c.lineJoin = "round"; c.lineCap = "round";
+  c.strokeStyle = edge || "#16211f"; c.lineWidth = Math.max(2, w * 0.16); shape(); c.stroke();
+  c.fillStyle = col; shape(); c.fill();
+  c.save(); shape(); c.clip();
+  // Round form: light along the top, shadow underneath
   var g = c.createLinearGradient(0, -w, 0, w);
-  g.addColorStop(0, "rgba(255,255,255,0.22)"); g.addColorStop(0.45, "rgba(255,255,255,0)");
-  g.addColorStop(0.6, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.3)");
-  c.fillStyle = g; c.fillRect(-w, -w * 1.5, len + w * 2, w * 3);
-  // Muscle lines: bicep/tricep split, the elbow crease, forearm ridge
-  c.strokeStyle = line; c.lineWidth = Math.max(1, w * 0.07); c.lineCap = "round";
-  c.beginPath(); c.moveTo(len * 0.1, w * 0.05); c.quadraticCurveTo(len * 0.3, w * 0.2, len * 0.5, w * 0.02); c.stroke();
-  c.beginPath(); c.moveTo(len * 0.55, -w * 0.6); c.quadraticCurveTo(len * 0.51, 0, len * 0.55, w * 0.6); c.stroke();
-  c.beginPath(); c.moveTo(len * 0.6, -w * 0.25); c.quadraticCurveTo(len * 0.74, -w * 0.5, len * 0.9, -w * 0.2); c.stroke();
+  g.addColorStop(0, "rgba(255,255,255,0.16)"); g.addColorStop(0.4, "rgba(255,255,255,0)");
+  g.addColorStop(0.55, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.38)");
+  c.fillStyle = g; c.fillRect(-w, -w * 1.5, L + w * 2, w * 3);
+  // Highlights on the delt, bicep peak and forearm
+  [[0.11, -0.55, 0.09, 0.2], [0.36, -0.6, 0.12, 0.24], [0.68, -0.42, 0.1, 0.16]].forEach(function (h) {
+    var hg = c.createRadialGradient(h[0] * L, h[1] * w, 0, h[0] * L, h[1] * w, h[2] * L);
+    hg.addColorStop(0, "rgba(255,255,255," + h[3] + ")"); hg.addColorStop(1, "rgba(255,255,255,0)");
+    c.fillStyle = hg; c.beginPath(); c.ellipse(h[0] * L, h[1] * w, h[2] * L, w * 0.4, 0, 0, Math.PI * 2); c.fill();
+  });
+  // Definition lines
+  c.strokeStyle = line; c.globalAlpha = 0.7; c.lineWidth = Math.max(1, w * 0.06);
+  c.beginPath(); c.moveTo(L * 0.22, -w * 0.95); c.quadraticCurveTo(L * 0.18, -w * 0.4, L * 0.26, w * 0.1); c.stroke();   // delt cap
+  c.beginPath(); c.moveTo(L * 0.26, w * 0.12); c.quadraticCurveTo(L * 0.38, w * 0.26, L * 0.54, w * 0.18); c.stroke();  // bicep / tricep split
+  c.beginPath(); c.moveTo(L * 0.57, -w * 0.76); c.quadraticCurveTo(L * 0.55, -w * 0.45, L * 0.58, -w * 0.2); c.stroke(); // elbow crease
+  c.lineWidth = Math.max(1, w * 0.05);
+  c.beginPath(); c.moveTo(L * 0.6, -w * 0.15); c.quadraticCurveTo(L * 0.74, -w * 0.05, L * 0.9, -w * 0.12); c.stroke(); // forearm
+  c.globalAlpha = 0.3; c.lineWidth = Math.max(1, w * 0.035);
+  c.beginPath(); c.moveTo(L * 0.62, w * 0.3); c.quadraticCurveTo(L * 0.74, w * 0.4, L * 0.86, w * 0.28); c.stroke();  // vein
   c.restore();
   c.restore();
 }
