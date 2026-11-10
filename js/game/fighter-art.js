@@ -1615,51 +1615,48 @@ function drawArmMuscle(c, ch, x0, y0, x1, y1, w, edge) {
   var dx = x1 - x0, dy = y1 - y0, L = Math.sqrt(dx * dx + dy * dy);
   if (L < w * 0.5) return;
   w *= 1 + 0.3 * k;  // jacked arms are thicker than the plain stroke
-  var line = shadeHex(skin, -0.45), m = function (v) { return 1 + (v - 1) * k; };
-  // Outline points along the top (bicep side) then back along the bottom
-  var pts = [
-    [0, -0.95], [0.12, -1.05 * m(1.08)], [0.22, -0.96], [0.36, -1.08 * m(1.14)],
-    [0.5, -0.84], [0.58, -0.76], [0.67, -0.8 * m(1.06)], [0.85, -0.58], [1, -0.48],
-    [1, 0.48], [0.86, 0.54], [0.7, 0.66 * m(1.06)], [0.56, 0.7],
-    [0.4, 0.86 * m(1.1)], [0.2, 0.92], [0, 0.95]
-  ].map(function (p) { return [p[0] * L, p[1] * w]; });
-  var shape = function () {
-    // Smooth closed curve through the points (Catmull-Rom as Beziers)
-    var n = pts.length;
-    c.beginPath(); c.moveTo(pts[0][0], pts[0][1]);
-    for (var i = 0; i < n; i++) {
-      var p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
-      c.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6,
-        p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]);
-    }
+  var line = shadeHex(skin, -0.42), hi = shadeHex(skin, 0.18);
+  var hw = w * 0.5, sh = hw * (1.08 + 0.08 * k), wr = hw * 0.62;
+  // Smooth outline: thick at the shoulder, one gentle swell over the bicep,
+  // tapering to the wrist, rounded at both ends
+  var bump = 1 + 0.25 * k;
+  var outline = function () {
+    c.beginPath();
+    c.moveTo(0, -sh);
+    // Bicep: one big rounded hump, then the forearm swell down to the wrist
+    c.bezierCurveTo(L * 0.18, -hw * 1.5 * bump, L * 0.44, -hw * 1.42 * bump, L * 0.56, -hw * 0.8);
+    c.bezierCurveTo(L * 0.64, -hw * 1.12 * bump, L * 0.84, -hw * 0.92, L, -wr);
+    c.quadraticCurveTo(L + wr * 0.8, 0, L, wr);
+    // Forearm underside, then the tricep curving back to the shoulder
+    c.bezierCurveTo(L * 0.84, hw * 0.74, L * 0.68, hw * 0.94, L * 0.58, hw * 0.82);
+    c.bezierCurveTo(L * 0.44, hw * 1.32 * bump, L * 0.18, hw * 1.34 * bump, 0, sh);
+    c.quadraticCurveTo(-sh * 0.8, 0, 0, -sh);
     c.closePath();
   };
   c.save();
   c.translate(x0, y0); c.rotate(Math.atan2(dy, dx));
   c.lineJoin = "round"; c.lineCap = "round";
-  c.strokeStyle = edge || "#16211f"; c.lineWidth = Math.max(2, w * 0.16); shape(); c.stroke();
-  c.fillStyle = col; shape(); c.fill();
-  c.save(); shape(); c.clip();
-  // Round form: light along the top, shadow underneath
-  var g = c.createLinearGradient(0, -w, 0, w);
-  g.addColorStop(0, "rgba(255,255,255,0.16)"); g.addColorStop(0.4, "rgba(255,255,255,0)");
-  g.addColorStop(0.55, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.38)");
-  c.fillStyle = g; c.fillRect(-w, -w * 1.5, L + w * 2, w * 3);
-  // Highlights on the delt, bicep peak and forearm
-  [[0.11, -0.55, 0.09, 0.2], [0.36, -0.6, 0.12, 0.24], [0.68, -0.42, 0.1, 0.16]].forEach(function (h) {
-    var hg = c.createRadialGradient(h[0] * L, h[1] * w, 0, h[0] * L, h[1] * w, h[2] * L);
+  c.strokeStyle = edge || "#16211f"; c.lineWidth = Math.max(2, w * 0.16); outline(); c.stroke();
+  c.fillStyle = col; outline(); c.fill();
+  c.save(); outline(); c.clip();
+  // Round form: light on top, shadow underneath
+  var g = c.createLinearGradient(0, -sh, 0, sh);
+  g.addColorStop(0, "rgba(255,255,255,0.14)"); g.addColorStop(0.45, "rgba(255,255,255,0)");
+  g.addColorStop(0.6, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.32)");
+  c.fillStyle = g; c.fillRect(-sh, -sh * 1.3, L + sh * 2, sh * 2.6);
+  // Definition: the line under the bicep, the elbow crease, the forearm ridge
+  c.strokeStyle = line; c.globalAlpha = 0.6; c.lineWidth = Math.max(1, w * 0.055);
+  c.beginPath(); c.moveTo(L * 0.08, hw * 0.05); c.quadraticCurveTo(L * 0.32, hw * 0.32, L * 0.55, -hw * 0.25); c.stroke();
+  c.beginPath(); c.moveTo(L * 0.56, -hw * 0.8); c.quadraticCurveTo(L * 0.6, -hw * 0.3, L * 0.57, hw * 0.1); c.stroke();
+  c.globalAlpha = 0.45; c.lineWidth = Math.max(1, w * 0.045);
+  c.beginPath(); c.moveTo(L * 0.62, -hw * 0.2); c.quadraticCurveTo(L * 0.78, -hw * 0.05, L * 0.95, -wr * 0.35); c.stroke();
+  c.globalAlpha = 1;
+  // Highlights on the bicep peak and forearm
+  [[0.3, -0.7, 0.15, 0.24], [0.74, -0.55, 0.1, 0.16]].forEach(function (h) {
+    var hg = c.createRadialGradient(h[0] * L, h[1] * hw, 0, h[0] * L, h[1] * hw, h[2] * L);
     hg.addColorStop(0, "rgba(255,255,255," + h[3] + ")"); hg.addColorStop(1, "rgba(255,255,255,0)");
-    c.fillStyle = hg; c.beginPath(); c.ellipse(h[0] * L, h[1] * w, h[2] * L, w * 0.4, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = hg; c.beginPath(); c.ellipse(h[0] * L, h[1] * hw, h[2] * L, hw * 0.5, 0, 0, Math.PI * 2); c.fill();
   });
-  // Definition lines
-  c.strokeStyle = line; c.globalAlpha = 0.7; c.lineWidth = Math.max(1, w * 0.06);
-  c.beginPath(); c.moveTo(L * 0.22, -w * 0.95); c.quadraticCurveTo(L * 0.18, -w * 0.4, L * 0.26, w * 0.1); c.stroke();   // delt cap
-  c.beginPath(); c.moveTo(L * 0.26, w * 0.12); c.quadraticCurveTo(L * 0.38, w * 0.26, L * 0.54, w * 0.18); c.stroke();  // bicep / tricep split
-  c.beginPath(); c.moveTo(L * 0.57, -w * 0.76); c.quadraticCurveTo(L * 0.55, -w * 0.45, L * 0.58, -w * 0.2); c.stroke(); // elbow crease
-  c.lineWidth = Math.max(1, w * 0.05);
-  c.beginPath(); c.moveTo(L * 0.6, -w * 0.15); c.quadraticCurveTo(L * 0.74, -w * 0.05, L * 0.9, -w * 0.12); c.stroke(); // forearm
-  c.globalAlpha = 0.3; c.lineWidth = Math.max(1, w * 0.035);
-  c.beginPath(); c.moveTo(L * 0.62, w * 0.3); c.quadraticCurveTo(L * 0.74, w * 0.4, L * 0.86, w * 0.28); c.stroke();  // vein
   c.restore();
   c.restore();
 }
