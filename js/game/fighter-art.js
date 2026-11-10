@@ -1603,6 +1603,41 @@ var sleevePatterns = {};
 // The traced sleeve laid along an extended arm from (x0, y0) to (x1, y1),
 // as one image rather than a repeating pattern. Returns false when there is
 // no traced sleeve (or it hasn't loaded) so the caller keeps its plain arm.
+// Jacked arms (look.armMuscle, about 1): a bulging bicep near the shoulder
+// and a thick forearm near the glove, drawn over a plain arm stroke from
+// (x0, y0) to (x1, y1) of width w. edge is the outline colour.
+function drawArmMuscle(c, ch, x0, y0, x1, y1, w, edge) {
+  if (!ch || !ch.look || !ch.look.armMuscle) return;
+  var k = ch.look.armMuscle, col = armColor(ch), skin = ch.look.skin;
+  var dx = x1 - x0, dy = y1 - y0, len = Math.sqrt(dx * dx + dy * dy);
+  if (len < w) return;
+  var line = shadeHex(skin, -0.38);
+  c.save();
+  c.translate(x0, y0); c.rotate(Math.atan2(dy, dx));
+  // bicep (upper side bulge), tricep (lower), forearm
+  var bulges = [
+    [len * 0.3, -w * 0.22, len * 0.25, w * (0.72 + 0.38 * k)],
+    [len * 0.28, w * 0.16, len * 0.24, w * (0.66 + 0.22 * k)],
+    [len * 0.74, -w * 0.06, len * 0.22, w * (0.66 + 0.22 * k)]
+  ];
+  var all = function () { c.beginPath(); bulges.forEach(function (b) { c.moveTo(b[0] + b[2], b[1]); c.ellipse(b[0], b[1], b[2], b[3], 0, 0, Math.PI * 2); }); };
+  c.strokeStyle = edge || "#16211f"; c.lineWidth = Math.max(2, w * 0.18); all(); c.stroke();
+  c.fillStyle = col; all(); c.fill();
+  c.save(); all(); c.clip();
+  // Light along the top of the arm, shade underneath
+  var g = c.createLinearGradient(0, -w, 0, w);
+  g.addColorStop(0, "rgba(255,255,255,0.22)"); g.addColorStop(0.45, "rgba(255,255,255,0)");
+  g.addColorStop(0.6, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.3)");
+  c.fillStyle = g; c.fillRect(-w, -w * 1.5, len + w * 2, w * 3);
+  // Muscle lines: bicep/tricep split, the elbow crease, forearm ridge
+  c.strokeStyle = line; c.lineWidth = Math.max(1, w * 0.07); c.lineCap = "round";
+  c.beginPath(); c.moveTo(len * 0.1, w * 0.05); c.quadraticCurveTo(len * 0.3, w * 0.2, len * 0.5, w * 0.02); c.stroke();
+  c.beginPath(); c.moveTo(len * 0.55, -w * 0.6); c.quadraticCurveTo(len * 0.51, 0, len * 0.55, w * 0.6); c.stroke();
+  c.beginPath(); c.moveTo(len * 0.6, -w * 0.25); c.quadraticCurveTo(len * 0.74, -w * 0.5, len * 0.9, -w * 0.2); c.stroke();
+  c.restore();
+  c.restore();
+}
+
 function drawTracedArm(c, ch, x0, y0, x1, y1, w) {
   var tat = ch.look && ch.look.tattoos;
   if (!tat || !tat.armInk || !tat.armDecal) return false;

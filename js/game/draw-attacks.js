@@ -26,6 +26,7 @@ function drawFist(self, other) {
   ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = pu.size * 0.6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
+  drawArmMuscle(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6, theme.wall);
   drawTracedArm(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6);
   ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
@@ -130,6 +131,7 @@ function drawHands(b, other) {
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
       ctx.strokeStyle = armColor(b.char, sgn); ctx.lineWidth = b.r * 0.2;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+      drawArmMuscle(ctx, b.char, sx, sy, hx, hy, b.r * 0.2, theme.wall);
       ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(hx, hy, b.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     });

@@ -101,6 +101,7 @@ A roster fighter with a `"look"` in its character file is drawn as a muscled bal
 | `beardColor` | optional hex colour for the beard (defaults to `hairColor`) |
 | `beardChin` | optional extra length at the chin for a `boxed` beard, as a fraction of the radius (e.g. `0.12`) |
 | `waistText` | optional lettering on the front of the waistband, e.g. `UFC` (`waistTextColor`, default white) |
+| `armMuscle` | about `1`: jacked arms, a bulging bicep and tricep and a thick forearm with muscle lines, on punches and the celebration (bigger number, bigger arms) |
 | `legPatch` | `false` hides the small patch on the left leg |
 | `gloveStrap` | optional colour for the glove wrist strap (defaults to a lighter shade of the glove) |
 | `ears` | `normal`, `cauliflower` |
