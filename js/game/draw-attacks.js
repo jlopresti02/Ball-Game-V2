@@ -403,6 +403,7 @@ function drawGrapple(self) {
   var g = self.grapple;
   if (!g) return;
   if (g.finisher && g.phase !== "carry") return; // the pin is drawn by drawFinishers
+  if (drawTossGrip(self)) return; // the ragdoll throw (toss.js)
   if (g.phase === "iowa") {
     // Iowa Style: both hands shoving the opponent flat into the wall.
     var tg = balls[g.targetId];

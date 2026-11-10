@@ -365,6 +365,7 @@ function updateAbilities(dt) {
             if (!reduceMotion) shake = 14;
             violentHit(self, tgt, 1);
             burst(tgt);
+            if (g.toss && tgt.alive) tossImpact(self, tgt, g); // the ragdoll throw lands (toss.js)
             checkEnd();
             if (tgt.alive && self.doBronx) {
               // Do Bronx: every takedown goes straight into a submission.
