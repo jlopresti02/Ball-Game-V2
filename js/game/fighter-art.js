@@ -569,8 +569,9 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   }
   // Beard: sideburns down around the jaw to a full chin
   if (look.beard !== "none" && look.beard !== "chinstrap" && look.beard !== "boxed") {
-    c.globalAlpha = look.beard === "stubble" ? 0.28 : look.beard === "short" ? 0.55 : 1;
+    c.globalAlpha = look.beard === "stubble" ? (look.beardAlpha || 0.28) : look.beard === "short" ? 0.55 : 1;
     c.fillStyle = look.beardColor || hc;
+    var beardShape = function () {
     c.beginPath();
     c.moveTo(-r * 0.74, -r * 0.66);
     c.quadraticCurveTo(-r * 0.62, -r * 0.44, -r * 0.32, -r * 0.5);
@@ -579,7 +580,16 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.3, jaw + r * 0.02);
     c.quadraticCurveTo(0, jaw + r * (look.beard === "full" ? 0.2 : 0.12), -r * 0.3, jaw + r * 0.02);
     c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.74, -r * 0.66);
-    c.closePath(); c.fill();
+    c.closePath();
+    };
+    beardShape(); c.fill();
+    if (look.beard === "stubble" && look.beardGrain) {
+      // Dense grain of short hairs over the shadow, so stubble reads on dark skin
+      c.save(); beardShape(); c.clip();
+      var sg2 = artRand(53); c.fillStyle = look.beardColor || hc; c.globalAlpha = 0.6;
+      for (var sb = 0; sb < 420; sb++) c.fillRect((sg2() * 2 - 1) * r * 0.82, -r * 0.68 + sg2() * r * 0.5, r * 0.014, r * 0.014);
+      c.restore();
+    }
     if (look.beard === "full") {
       c.globalAlpha = 0.5; c.strokeStyle = shadeHex(hc, 0.3); c.lineWidth = lw(0.022);
       for (var k = -3; k <= 3; k++) {
