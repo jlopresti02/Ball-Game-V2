@@ -2352,3 +2352,41 @@ function stopTornadoSound(h, fade) {
     h.src.stop(now + fade + 0.05);
   } catch (e) { /* never let audio break the game */ }
 }
+
+// The ragdoll-throw takedown (toss.js): whooshes as they spin through the
+// air, then a heavy thud with a softer thunder rumble under it on the
+// landing, and two smaller thuds as they bounce.
+var TOSS_LAND_GAIN = 0.75;
+function playTossWhooshes(dur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var t = ctx.currentTime, step = (dur - TOSS_HOLD * dur) / 3.2;
+    for (var i = 0; i < 3; i++) synthWhoosh(ctx, strikeOut(ctx), t + TOSS_HOLD * dur + i * step);
+  } catch (e) { /* never let audio break the game */ }
+}
+function tossThud(ctx, out, t, k) {
+  gtSweep(ctx, out, t, "sine", 140, 38, 0.2, 1.0 * k, 0.35, 3);
+  gtNoise(ctx, out, t, "bandpass", 1800, 1, 0.45 * k, 0.05);
+  gtNoise(ctx, out, t, "lowpass", 400, 0.7, 0.55 * k, 0.3);
+  gtSweep(ctx, out, t, "sine", 85, 30, 0.25, 1.1 * k, 0.45, 4);
+  gtNoise(ctx, out, t, "lowpass", 150, 0.8, 0.8 * k, 0.35);
+}
+function playTossLand() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var t = ctx.currentTime, out = ctx.createGain();
+    out.gain.value = TOSS_LAND_GAIN; out.connect(strikeOut(ctx));
+    tossThud(ctx, out, t, 1);
+    gtSweep(ctx, out, t, "sine", 70, 22, 0.6, 0.6, 1.0, 3);               // thunder under it
+    var f = gtNoise(ctx, out, t, "lowpass", 400, 0.8, 0.5, 1.2, 0.02);
+    f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(70, t + 1.2);
+    var land = t + (reduceMotion ? 0 : 0.1);                               // after the hit-stop
+    tossThud(ctx, out, land + TOSS_BOUNCE / 2, 0.5);
+    tossThud(ctx, out, land + TOSS_BOUNCE * 0.95, 0.28);
+    crowdReact(0.6);
+  } catch (e) { /* never let audio break the game */ }
+}

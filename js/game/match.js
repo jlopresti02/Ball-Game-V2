@@ -76,7 +76,7 @@ function startMatchSeeded(ch0, ch1) {
   projectiles = []; floaters = []; particles = []; shake = 0; over = false; started = false;
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
   resetDoBronx();
-  resetDeathFx(); resetIntroMsg();
+  resetDeathFx(); resetIntroMsg(); resetToss();
   resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
   resetAllAmerican();
@@ -203,6 +203,7 @@ function beginGrapple(attacker, target) {
     endX: endX, endY: endY, t: 0, dur: finisher ? Math.max(gr.speed, 0.5) : gr.speed,
     nx: nx, ny: ny, dealt: false, finisher: finisher, phase: "carry"
   };
+  setupToss(attacker, target, attacker.grapple, gr); // the ragdoll throw (toss.js)
   attacker.grappleCd = gr.cooldown;
   target.grappled = true;
   target.vx = 0; target.vy = 0;

@@ -92,6 +92,7 @@ function draw() {
   drawItGhosts(); // Charles's afterimage where he teleported from (instant-transmission.js)
   drawRapierLungeUnder(); // Ilia's lunge: the red line he's about to lunge down (rapier.js)
   drawTopRopeUnder();  // Top Rope Body Slam: the red circle (cut off at the cage), his shadow (hokit-toprope.js)
+  drawTossUnder();      // the shadow under a fighter thrown in the air (toss.js)
   drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
   drawEagleStrikeUnder(); // Eagle Strike: the red path and the eagle's shadow (gaethje-eagle.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
@@ -187,6 +188,7 @@ function draw() {
     applyArmbarPose(b); // pulled over in an armbar
     applySuplexPose(b); // arching back into (or flipped over by) a suplex
     applyKamePose(b);   // crouched and tilted for the Kamehameha (kamehameha.js)
+    applyTossPose(b);   // spun through the air by a takedown, then bouncing (toss.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -398,6 +400,7 @@ function draw() {
   drawGoatGoatGoBanner(); // and Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawTapWaterBanner(); // and Charles's Tap Water ad (tapwater-ad.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
+  drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)
   drawDeathFx(); // the loser's death animation (death.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   floaters.forEach(function (f) {
@@ -420,6 +423,7 @@ function draw() {
   drawRingBearSky(s, ox, oy); // Khabib's thrown bear flying off the screen (khabib-bear.js)
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
   swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
+  tossScreenZoom(ox, oy, s); // the camera punching in on a takedown landing (toss.js)
   deathScreenZoom(ox, oy, s); // the camera riding in on a K.O. flight (death.js)
   drawIntroMsg(s, ox, oy); // the instruction to the viewer at the start (intro-msg.js)
 }
