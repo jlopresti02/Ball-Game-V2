@@ -27,14 +27,14 @@ var LADDER_CARRY_SPEED = 620;  // running it to the middle
 var LADDER_SET_TIME = 0.5;     // standing it up
 var LADDER_CLIMB_TIME = 1.0;   // up the steps
 var LADDER_LEAP_TIME = 0.6;    // the dive
-var LADDER_LAND_AT = 3.6;      // seconds into the clip that the slam lands (just after the third "watch out")
+var LADDER_LAND_AT = 2.6;      // seconds into the clip that the slam lands (just as it ends)
 var LADDER_DOWN_TIME = 0.8;    // flat on them, then back up
 var LADDER_FOLD_TIME = 0.35;   // folding it up and lifting it
 var LADDER_WINDUP_TIME = 0.4;  // cocked over his head
 var LADDER_THROW_SPEED = 950;
 var LADDER_ARC = 150;          // how high the dive goes
 // "Watch out!" calls in the clip, in seconds from its start.
-var LADDER_CALLS = [0.15, 1.6, 2.9];
+var LADDER_CALLS = [0.1, 0.6, 1.55];
 var ladderStand = null;        // the ladder standing in the ring { x, y, t, open }
 var ladderDebris = [];         // the thrown ladder, tumbling and clattering away
 
