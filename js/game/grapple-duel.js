@@ -166,6 +166,9 @@ function attemptGrab(attacker, target) {
   if (bearOn(attacker) || bearOn(target) || attacker.bearHeld || target.bearHeld) return false; // or in the bear's dust cloud (khabib-bear.js)
   if (tornadoOn(attacker) || tornadoOn(target) || attacker.torHeld || target.torHeld) return false; // or Ilia's Rose Tornado (ilia-tornado.js)
   if (target.slamSafe > 0) return false;
+  // Hokit's Chair Shot blocks everything once it's started, takedowns too, right
+  // through his celebration lap, even after their stars wear off (Joe, 2026-11-11).
+  if (target.igbb && target.igbb.move === "chairshot" && specialGuarding(target)) return false;
   if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;
