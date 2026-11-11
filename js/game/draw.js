@@ -419,7 +419,7 @@ function draw() {
   ctx.globalAlpha = 1;
 
   if (stadium) drawJumbotron(px);
-  drawLadderSky(s, ox, oy); // Hokit up the ladder, diving off it and vaulting the cage (hokit-ladder.js)
+  drawLadderSky(s, ox, oy); // Hokit up the ladder and diving off it (hokit-ladder.js)
   drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
   drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)

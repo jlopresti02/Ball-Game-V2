@@ -13,13 +13,11 @@
 //   celebrate  his lap of the ring (chairshot.js), fists pumping
 //   fetch2   runs back to the ladder and folds it up
 //   windup   ladder cocked over his head, aimed at them
-//   thrown   hurls it at them: ladder.throwDamage, then it clatters away
-//   exit     runs to the nearest side of the cage
-//   hopOut   vaults over it into the stands
-//   away     gone into the crowd for a moment (they come round)
-//   hopIn    vaults back in, and the fight carries on
+//   thrown   hurls it at them: ladder.throwDamage, then it clatters away,
+//            they come round and the fight carries on (he stays in the
+//            ring: Joe, 2026-11-11)
 // It's all on his `igbb` (move "chairshot"), so he blocks everything and
-// can't be grabbed (grapple-duel.js) until he's back in. The "watch out"
+// can't be grabbed (grapple-duel.js) until the ladder's thrown. The "watch out"
 // clip is timed so the slam lands on it (LADDER_LAND_AT).
 "use strict";
 
@@ -29,13 +27,11 @@ var LADDER_CARRY_SPEED = 620;  // running it to the middle
 var LADDER_SET_TIME = 0.5;     // standing it up
 var LADDER_CLIMB_TIME = 1.0;   // up the steps
 var LADDER_LEAP_TIME = 0.6;    // the dive
-var LADDER_LAND_AT = 3.75;     // seconds into the clip that the slam lands
+var LADDER_LAND_AT = 3.6;      // seconds into the clip that the slam lands (just after the third "watch out")
 var LADDER_DOWN_TIME = 0.8;    // flat on them, then back up
 var LADDER_FOLD_TIME = 0.35;   // folding it up and lifting it
 var LADDER_WINDUP_TIME = 0.4;  // cocked over his head
 var LADDER_THROW_SPEED = 950;
-var LADDER_HOP_TIME = 0.5;     // over the cage (each way)
-var LADDER_AWAY_TIME = 1.3;    // out in the crowd
 var LADDER_ARC = 150;          // how high the dive goes
 // "Watch out!" calls in the clip, in seconds from its start.
 var LADDER_CALLS = [0.15, 1.6, 2.9];
@@ -44,12 +40,12 @@ var ladderDebris = [];         // the thrown ladder, tumbling and clattering awa
 
 function resetLadder() { ladderStand = null; ladderDebris = []; }
 function ladderOn(b) { return !!(b && b.igbb && b.igbb.move === "chairshot" && b.igbb.ladder); }
-// Up off the mat (climbing, up top, diving, over the cage or out in the
-// crowd): drawn on his own by drawLadderSky, not with the other fighters.
+// Up off the mat (climbing, up top or diving): drawn on his own by
+// drawLadderSky, not with the other fighters.
 function ladderDrawnApart(b) {
   if (!ladderOn(b)) return false;
   var p = b.igbb.phase;
-  return p === "climb" || p === "top" || p === "leap" || p === "hopOut" || p === "away" || p === "hopIn";
+  return p === "climb" || p === "top" || p === "leap";
 }
 function ladderHeight(b) { return b.r * 2.5; }
 function ladderBase() { return { x: W / 2, y: H / 2 }; }
@@ -81,8 +77,7 @@ function ladderRunTo(self, tx, ty, speed, dt) {
 function updateLadder(self, other, m, sp, dt) {
   var L = sp.ladder, base = ladderBase(), lh = ladderHeight(self);
   self.vx = 0; self.vy = 0;
-  var gone = m.phase === "hopOut" || m.phase === "away" || m.phase === "hopIn";
-  if (other.alive && !gone) { other.dazed = true; other.vx = 0; other.vy = 0; } // seeing stars until he's gone
+  if (other.alive) { other.dazed = true; other.vx = 0; other.vy = 0; } // seeing stars until he's gone
   if (m.phase === "toEdge") {
     if (ladderRunTo(self, m.gx, m.gy, LADDER_EDGE_SPEED, dt)) { m.phase = "pull"; m.t = 0; playWhoosh(); floater(self.x, self.y - self.r - 30, "A LADDER?!", "crit"); crowdReact(1); }
     return true;
@@ -183,41 +178,10 @@ function updateLadder(self, other, m, sp, dt) {
     return true;
   }
   if (m.phase === "thrown") {
-    // Waits for it to hit them.
+    // Waits for it to hit them, then the fight carries on.
     if (ladderDebris.some(function (l) { return l.flying; }) && m.t < 1.5) return true;
-    if (!other.alive) { endChairShot(self, other); return false; }
-    m.phase = "exit"; m.t = 0;
-    var el = self.x, er = W - self.x;
-    m.ex = el < er ? -1 : 1; m.ey = 0; // out through a side, into the stands
-    m.gx = m.ex < 0 ? self.r : W - self.r; m.gy = self.y;
-    floater(self.x, self.y - self.r - 30, "SEE YA!", "note");
-    return true;
-  }
-  if (m.phase === "exit") {
-    if (ladderRunTo(self, m.gx, m.gy, LADDER_EDGE_SPEED, dt)) { m.phase = "hopOut"; m.t = 0; m.hx = self.x; m.hy = self.y; playWhoosh(); }
-    return true;
-  }
-  if (m.phase === "hopOut" || m.phase === "hopIn") {
-    var hk = Math.min(1, m.t / LADDER_HOP_TIME), out = self.r * 3.2;
-    var from = m.phase === "hopOut" ? 0 : 1, to = 1 - from, p = from + (to - from) * hk;
-    self.x = m.hx + m.ex * out * p; self.y = m.hy;
-    m.z = Math.sin(Math.PI * hk) * self.r * 1.6;
-    if (hk < 1) return true;
-    m.z = 0;
-    if (m.phase === "hopOut") {
-      m.phase = "away"; m.t = 0;
-      // Out of sight: they come round.
-      if (other.alive) { other.dazed = false; setSpeed(other, (other.baseSpeed || SPEED) * 0.6); }
-      crowdReact(1);
-      return true;
-    }
-    self.x = m.hx; self.y = m.hy;
     endChairShot(self, other);
     return false;
-  }
-  if (m.phase === "away") {
-    if (m.t >= LADDER_AWAY_TIME) { m.phase = "hopIn"; m.t = 0; playWhoosh(); floater(m.hx, m.hy - self.r - 30, "HE'S BACK!", "note"); }
-    return true;
   }
   return false;
 }
@@ -417,7 +381,7 @@ function drawLadderUnder() {
       ctx.beginPath(); ctx.arc(0, 0, m.R, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
-    if (ladderDrawnApart(b) && m.phase !== "away") {
+    if (ladderDrawnApart(b)) {
       var z = m.z || 0, s = Math.max(0.35, 1 - z / 300);
       ctx.save();
       ctx.fillStyle = "rgba(0,0,0," + (0.3 * s) + ")";
@@ -448,7 +412,7 @@ function drawLadderCarry(b) {
   if (!ladderOn(b)) return false;
   if (m.phase === "celebrate") return false; // fists up (drawChairShot)
   if (m.phase !== "pull" && m.phase !== "carry" && m.phase !== "fetch2" && m.phase !== "windup") {
-    if (m.phase === "set" || m.phase === "toEdge" || m.phase === "down" || m.phase === "exit" || m.phase === "thrown") drawLadderArms(b, m);
+    if (m.phase === "set" || m.phase === "toEdge" || m.phase === "down" || m.phase === "thrown") drawLadderArms(b, m);
     return true;
   }
   var h = ladderHeld(b, m), size = b.char.punch.size || 13;
@@ -481,11 +445,11 @@ function drawLadderDebris() {
   ladderDebris.forEach(function (l) { drawFoldedLadder(l.x, l.y, ladderHeight({ r: l.size }) * 1.05, l.a, l.alpha); });
 }
 
-// Him up the ladder, diving off it, and vaulting the cage: drawn after the
+// Him up the ladder and diving off it: drawn after the
 // stands and jumbotron so he's never hidden behind them. From draw().
 function drawLadderSky(scl, ox, oy) {
   balls.forEach(function (b) {
-    if (!ladderDrawnApart(b) || !b.alive || b.igbb.phase === "away") return;
+    if (!ladderDrawnApart(b) || !b.alive) return;
     var m = b.igbb, ch = b.char, r = b.r, z = m.z || 0;
     var bx = b.x, by = b.y - z, sc = 1 + z / 520;
     ctx.save();
@@ -503,7 +467,6 @@ function drawLadderSky(scl, ox, oy) {
       if (m.phase === "climb") { hx = bx + sd * r * 0.55; hy = by - r * (0.9 + 0.35 * Math.max(0, Math.sin(m.t * 14 + (sd > 0 ? Math.PI : 0)))); }
       else if (m.phase === "top") { var up = sd > 0 ? Math.max(0, pump) : Math.max(0, -pump); hx = bx + sd * r * 1.05; hy = by - r * (0.7 + 0.6 * up); }
       else if (m.phase === "leap") { var sp = ease(Math.min(1, lk / 0.5)); hx = bx + sd * r * (0.9 + 0.7 * sp); hy = by - r * (0.9 - 0.9 * sp); }
-      else { hx = bx + sd * r * 0.9; hy = by - r * 1.1; } // over the cage, arms up
       strokeLimb(arm, armColor(ch), function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
       drawGloveAt(hx, hy, gr, ch);
     });
