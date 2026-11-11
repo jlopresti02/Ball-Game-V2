@@ -34,7 +34,7 @@ var LADDER_WINDUP_TIME = 0.4;  // cocked over his head
 var LADDER_THROW_SPEED = 950;
 var LADDER_ARC = 150;          // how high the dive goes
 // "Watch out!" calls in the clip, in seconds from its start.
-var LADDER_CALLS = [0.1, 0.6, 1.55];
+var LADDER_CALLS = [0.05, 0.6, 1.9];
 var ladderStand = null;        // the ladder standing in the ring { x, y, t, open }
 var ladderDebris = [];         // the thrown ladder, tumbling and clattering away
 
