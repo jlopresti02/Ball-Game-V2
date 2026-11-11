@@ -56,7 +56,7 @@ var SPECIAL_INFO = {
   igbb: function (sp) { return "Grabs them one-handed and throws them into a corner, then unloads a flurry of " + sp.punches + " fast " + sp.damage + "-damage punches while they shell up. If they survive he backs off with his guard up."; },
   fathersplan: function (sp) { return "Hurls them off " + sp.walls + " walls (" + sp.wallDamage + " each), slams them to the floor (" + sp.slamDamage + "), then kneels over them for " + sp.punches + " telegraphed ground-and-pound punches (" + sp.damage + " each). \"I'm gonna smash your boy.\""; },
   dobronx: function (sp) { return "Double-biceps pose that blasts them away, \"Charrrles... Do... BRONX!\", every camera flashes and the arena turns Brazil themed for " + sp.duration + " seconds: " + (sp.damageMult || 2) + "x damage, takedowns every time, and every takedown goes into a submission."; },
-  chairshot: function (sp) { return "Pulls a folding chair from under the ring, charges them down and swings it over their head for " + sp.damage + " (can't be weaved or blocked), leaving them dazed for " + sp.dazeTime + "s. Then hurls the chair into the stands and runs a lap celebrating."; },
+  chairshot: function (sp) { return "Pulls a folding chair from under the ring, charges them down and swings it over their head for " + sp.damage + " (can't be weaved or blocked), leaving them dazed for " + sp.dazeTime + "s. Then hurls the chair into the stands" + (sp.ladder ? ", pulls a ladder out from under the ring, stands it up in the middle, climbs it and dives off it in a body slam for " + sp.ladder.slamDamage + " as \"watch out!\" plays, runs a lap celebrating (bowling anyone in his way aside), throws the ladder at them for " + sp.ladder.throwDamage + "." : " and runs a lap celebrating, bowling anyone in his way aside."); },
   herbdean: function (sp) { return "The ref falls asleep and blind Herb Dean barges in through the crowd with his cane. Gane beats them with a bat (" + sp.batDamage + " a swing), Herb whacks them with the cane (" + sp.caneDamage + "), and a last bat swing does " + sp.finisher + "."; },
   goatstampede: function (sp) { return "Floats up into the air, his tattoo flickering gold and red, and summons " + sp.goats + " goats. Each runs in through the crowd, leaps the fence and charges straight across the cage through center stage, down a lane shown in red first (" + sp.goatDamage + " if it rams them, then they pinball off " + sp.ramWalls + " walls for " + sp.ramWallDamage + " each). The lanes are random, so they can be dodged by being somewhere else."; },
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }
@@ -261,6 +261,9 @@ function galleryAssets() {
   list.push({ name: "Folding chair", info: "Josh Hokit's Chair Shot.", w: 220, h: 220, draw: function (c, w, h) {
     withCtx(c, function () { drawFoldingChair(w / 2, h / 2, w * 0.6, 0, false, 1); });
   } });
+  list.push({ name: "Stepladder", info: "Josh Hokit's Chair Shot finish: he climbs it, dives off it and throws it.", w: 220, h: 220, draw: function (c, w, h) {
+    withCtx(c, function () { drawStepLadder(w * 0.44, h * 0.9, h * 0.8, 1, 1); });
+  } });
   list.push({ name: "Bat", info: "Ciryl Gane's Cheater mode and Herb Dean special.", w: 220, h: 220, draw: function (c, w, h) {
     withCtx(c, function () { drawBat(w * 0.16, h * 0.78, -Math.PI / 4, w * 0.82); });
   } });
@@ -317,6 +320,7 @@ function gallerySounds() {
     ] },
     { title: "Special move sounds", items: [
       clip("chairShot", "Chair shot clang", "Josh Hokit's Chair Shot."),
+      clip("ladderWatchOut", "Watch out!", "Josh Hokit climbing the ladder in his Chair Shot."),
       clip("freeBird", "Free Bird solo", "Justin Gaethje's All American."),
       clip("eagleScreech", "Eagle screech", "Each eagle dive in All American, and the warning for Gaethje's Eagle Strike."),
       clip("eagleSwoop", "Eagle swoop", "The eagle swooping through in Gaethje's Eagle Strike."),

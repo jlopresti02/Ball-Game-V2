@@ -29,6 +29,8 @@ var CHAIR_FOLLOW_TIME = 0.18;  // arms follow through after the throw
 var CHAIR_LAP_SPEED = 620;     // running laps of the ring celebrating
 var CHAIR_CROWD_TIME = 0.45;   // the chair's flight into the stands (thrown as hard as he can)
 
+var CHAIR_BUMP_SPEED = 950;   // how hard he bowls them out of the way on his lap
+var CHAIR_BUMP_TIME = 0.4;     // how long they slide off it
 var chairDebris = []; // thrown-away chairs, tumbling off and fading
 // The crowd losing it after a chair shot. The whole crowd goes together:
 // `level` climbs to 1 over CHAIR_FRENZY_RISE seconds from the hit, stays
@@ -40,7 +42,7 @@ var CHAIR_FRENZY_RISE = 0.5;
 var CHAIR_FRENZY_FADE = 2;
 var CHAIR_FRENZY_PACE = 0.2; // how much quicker they bounce at full frenzy (1.2x at most)
 
-function resetChairShot() { chairDebris = []; chairFrenzy = { level: 0, on: false, beat: 0 }; }
+function resetChairShot() { resetLadder(); chairDebris = []; chairFrenzy = { level: 0, on: false, beat: 0 }; }
 
 function startChairFrenzy() {
   chairFrenzy.on = true;
@@ -97,6 +99,7 @@ function updateChairShot(self, other, dt) {
   }
 
   self.vx = 0; self.vy = 0;
+  if (m.ladder && m.phase !== "celebrate") return updateLadder(self, other, m, sp, dt); // hokit-ladder.js
   if (m.phase === "swing") {
     if (m.t < CHAIR_SWING_TIME) return true;
     landChairShot(self, other, m);
@@ -131,6 +134,7 @@ function updateChairShot(self, other, dt) {
   if (m.phase === "follow") {
     if (m.t < CHAIR_FOLLOW_TIME) return true;
     if (!other.alive) { endChairShot(self, other); return false; }
+    if (sp.ladder) { startLadder(self, other, m); return true; } // the ladder finish (hokit-ladder.js)
     m.phase = "celebrate"; m.t = 0;
     m.lapA = Math.atan2(self.y - H / 2, self.x - W / 2); // where on the lap he joins it
     m.lapDir = Math.random() < 0.5 ? -1 : 1;
@@ -138,19 +142,71 @@ function updateChairShot(self, other, dt) {
   }
   if (m.phase === "celebrate") {
     // Arms up, running a lap round the ring while they're still seeing stars.
-    if (other.dazed && m.t >= sp.dazeTime) { other.dazed = false; setSpeed(other, (other.baseSpeed || SPEED) * 0.6); }
+    if (m.ladder) { if (other.alive) other.dazed = true; } // still seeing stars until he's gone (hokit-ladder.js)
+    else if (other.dazed && m.t >= sp.dazeTime) { other.dazed = false; setSpeed(other, (other.baseSpeed || SPEED) * 0.6); }
     var R = Math.min(W, H) / 2 - self.r - 10;
     m.lapA += m.lapDir * CHAIR_LAP_SPEED / R * dt;
     var tx = W / 2 + Math.cos(m.lapA) * R, ty = H / 2 + Math.sin(m.lapA) * R;
     var lx = tx - self.x, ly = ty - self.y, ld = Math.sqrt(lx * lx + ly * ly);
     var step = CHAIR_LAP_SPEED * 1.4 * dt; // catches up onto the lap first
     if (ld <= step) { self.x = tx; self.y = ty; } else { self.x += lx / ld * step; self.y += ly / ld * step; }
+    chairLapBump(self, other, m, dt); // anyone in his way gets bowled aside
     if (!reduceMotion) particles.push({ x: self.x, y: self.y, vx: 0, vy: 0, life: 0.22, max: 0.22, size: self.r * 0.45, color: self.char.color });
     if (m.t < sp.celebrateTime) return true;
+    if (m.ladder) { m.phase = "fetch2"; m.t = 0; m.fold = null; return true; } // back for the ladder
     endChairShot(self, other);
     return false;
   }
   return false;
+}
+
+// His celebration lap is solid (Joe, 2026-11-10): whoever's in the way gets
+// bumped aside, out of his path, and he keeps running. It does no damage.
+// They're often still dazed (frozen in place), so the bump slides them
+// itself, bouncing off the cage, instead of relying on their own movement.
+function chairLapBump(self, other, m, dt) {
+  var bp = other.chairBump;
+  if (bp) {
+    bp.t += dt;
+    var f = Math.max(0, 1 - bp.t / CHAIR_BUMP_TIME);
+    if (other.dazed) { // a dazed fighter isn't moved by step(), so slide them here
+      other.x += bp.vx * f * dt; other.y += bp.vy * f * dt;
+      if (other.x < other.r) { other.x = other.r; bp.vx = Math.abs(bp.vx); }
+      else if (other.x > W - other.r) { other.x = W - other.r; bp.vx = -Math.abs(bp.vx); }
+      if (other.y < other.r) { other.y = other.r; bp.vy = Math.abs(bp.vy); }
+      else if (other.y > H - other.r) { other.y = H - other.r; bp.vy = -Math.abs(bp.vy); }
+    }
+    if (bp.t >= CHAIR_BUMP_TIME) other.chairBump = null;
+  }
+  if (!other.alive || other.grappled || other.slam) return;
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy), min = self.r + other.r;
+  if (d >= min) return;
+  // Shoved off to the side of his path (the side they're already on), with
+  // a bit of his forward run in it.
+  var fx = -Math.sin(m.lapA) * m.lapDir, fy = Math.cos(m.lapA) * m.lapDir; // the way he's running
+  if (d < 1) { dx = -fy; dy = fx; d = 1; }
+  var nx = dx / d, ny = dy / d;
+  var side = nx * -fy + ny * fx >= 0 ? 1 : -1, sx = -fy * side, sy = fx * side;
+  var px = sx * 0.75 + fx * 0.45 + nx * 0.4, py = sy * 0.75 + fy * 0.45 + ny * 0.4, pl = Math.sqrt(px * px + py * py) || 1;
+  px /= pl; py /= pl;
+  other.x = self.x + nx * min; other.y = self.y + ny * min;
+  other.x = Math.min(W - other.r, Math.max(other.r, other.x));
+  other.y = Math.min(H - other.r, Math.max(other.r, other.y));
+  // Pinned on the cage and still in his way: squeezed out along it instead.
+  var ox = other.x - self.x, oy = other.y - self.y;
+  if (ox * ox + oy * oy < (min - 1) * (min - 1)) {
+    other.x = Math.min(W - other.r, Math.max(other.r, self.x + sx * min));
+    other.y = Math.min(H - other.r, Math.max(other.r, self.y + sy * min));
+  }
+  if (bp && bp.t < 0.15) return; // already flying off the last bump
+  other.chairBump = { t: 0, vx: px * CHAIR_BUMP_SPEED, vy: py * CHAIR_BUMP_SPEED };
+  if (!other.dazed) { other.vx = px * CHAIR_BUMP_SPEED; other.vy = py * CHAIR_BUMP_SPEED; other.knockFly = Math.max(other.knockFly || 0, 0.2); }
+  other.squash = { t: 0.18, max: 0.18, nx: nx, ny: ny };
+  playBounce();
+  if (!reduceMotion) shake = Math.max(shake, 7);
+  impacts.push({ x: self.x + nx * self.r, y: self.y + ny * self.r, nx: nx, ny: ny, life: 0.3, max: 0.3, color: "#ffffff" });
+  if (!m.bumped) floater(other.x, other.y - other.r - 30, "OUTTA THE WAY!", "note");
+  m.bumped = true;
 }
 
 function landChairShot(self, other, m) {
@@ -183,9 +239,11 @@ function endChairShot(self, other) {
   endChairFrenzy();
   self.igbb = null;
   self.specialT = 0;
+  ladderStand = null; // (hokit-ladder.js)
   other.dazed = false;
+  other.chairBump = null;
   // Off the lap at full speed, the way he was running.
-  if (m && m.lapA != null) { self.vx = -Math.sin(m.lapA) * m.lapDir; self.vy = Math.cos(m.lapA) * m.lapDir; }
+  if (m && m.lapA != null && !m.ladder) { self.vx = -Math.sin(m.lapA) * m.lapDir; self.vy = Math.cos(m.lapA) * m.lapDir; }
   setSpeed(self, self.baseSpeed || SPEED);
   if (other.alive) setSpeed(other, (other.baseSpeed || SPEED) * 0.6);
   // Straight into a thumbs down at them (hokit.js).
@@ -323,6 +381,7 @@ function drawFoldingChair(x, y, s, a, dent, alpha) {
 function drawChairShot(b) {
   var m = b.igbb;
   if (!m || m.move !== "chairshot" || !b.alive) return;
+  if (drawLadderCarry(b)) return; // the ladder finish (hokit-ladder.js)
   if (m.phase === "celebrate") { drawArmsUp(b, m.t); return; }
   if (m.phase === "follow") { drawFollowThrough(b, m); return; }
   var h = chairHold(b, m), s = b.r * 2;

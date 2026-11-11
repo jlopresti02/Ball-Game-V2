@@ -91,6 +91,7 @@ function draw() {
   drawHelmetChargeUnder(); // Helmet Charge: the red path he's about to run (hokit-helmet.js)
   drawItGhosts(); // Charles's afterimage where he teleported from (instant-transmission.js)
   drawRapierLungeUnder(); // Ilia's lunge: the red line he's about to lunge down (rapier.js)
+  drawLadderUnder();   // Hokit's ladder standing in the ring, the red circle, his shadow (hokit-ladder.js)
   drawTopRopeUnder();  // Top Rope Body Slam: the red circle (cut off at the cage), his shadow (hokit-toprope.js)
   drawTossUnder();      // the shadow under a fighter thrown in the air (toss.js)
   drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
@@ -105,7 +106,7 @@ function draw() {
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
   // A bat swing goes over whoever it's hitting.
   (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
-    if (!b.alive || duckDrawnApart(b) || golfDrawnApart(b) || topRopeDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
+    if (!b.alive || duckDrawnApart(b) || golfDrawnApart(b) || topRopeDrawnApart(b) || ladderDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
     var other = balls[1 - b.id];
 
     // Weaving slips the whole fighter sideways for a moment, and a taunting
@@ -355,6 +356,7 @@ function draw() {
   drawRncs();
   drawArmbars();
   drawChairDebris();
+  drawLadderDebris(); // the ladder he threw (hokit-ladder.js)
   drawCheaterObjects();
   drawHerb();
   drawRoadActors(); // eagles and the truck (allamerican.js)
@@ -417,6 +419,7 @@ function draw() {
   ctx.globalAlpha = 1;
 
   if (stadium) drawJumbotron(px);
+  drawLadderSky(s, ox, oy); // Hokit up the ladder and diving off it (hokit-ladder.js)
   drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
   drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)
