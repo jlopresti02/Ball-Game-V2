@@ -195,7 +195,7 @@ function ladderSlam(self, other, L, m) {
     var a = i / 34 * Math.PI * 2, s = 260 + Math.random() * 220;
     particles.push({ x: m.cx + Math.cos(a) * self.r, y: m.cy + Math.sin(a) * self.r * 0.6, vx: Math.cos(a) * s, vy: Math.sin(a) * s * 0.6, life: 0.6, max: 0.6, size: 3 + Math.random() * 4, color: i % 3 ? "#d8cdb5" : "#ffffff" });
   }
-  playDuckLand(); playSlam();
+  playLadderSlam(); // louder than a normal slam (Joe, 2026-11-11)
   startChairFrenzy(); // the crowd goes wild again
   if (!other.alive) return;
   hurt(other, L.slamDamage, "igbb", self.id); // can't be slipped or blocked
@@ -477,4 +477,12 @@ function drawLadderSky(scl, ox, oy) {
     ctx.restore();
     ctx.restore();
   });
+}
+
+// The body slam off the ladder: the Duck Drop crash with the GOAT Stampede's
+// thunder ram and the ragdoll throw's landing stacked on it, so it booms.
+function playLadderSlam() {
+  playDuckLand();
+  playGoatRam();
+  playTossLand();
 }
