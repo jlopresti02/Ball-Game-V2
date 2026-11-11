@@ -23,6 +23,7 @@ function update(dt) {
   tickCommentary(dt); // random commentary in Gaethje's fights (audio.js)
   tickDoBronxFx(dt); // camera flashes keep going through freeze-frames
   tickChairDebris(dt);
+  tickLadder(dt); // the ladder Hokit stands up and throws (hokit-ladder.js)
   tickToss(dt); // the ragdoll throw's dust, bounces and camera (toss.js)
   if (hitStop > 0) {
     // Frozen for a split second after a wall slam; only the camera shake

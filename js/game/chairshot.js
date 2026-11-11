@@ -42,7 +42,7 @@ var CHAIR_FRENZY_RISE = 0.5;
 var CHAIR_FRENZY_FADE = 2;
 var CHAIR_FRENZY_PACE = 0.2; // how much quicker they bounce at full frenzy (1.2x at most)
 
-function resetChairShot() { chairDebris = []; chairFrenzy = { level: 0, on: false, beat: 0 }; }
+function resetChairShot() { resetLadder(); chairDebris = []; chairFrenzy = { level: 0, on: false, beat: 0 }; }
 
 function startChairFrenzy() {
   chairFrenzy.on = true;
@@ -99,6 +99,7 @@ function updateChairShot(self, other, dt) {
   }
 
   self.vx = 0; self.vy = 0;
+  if (m.ladder && m.phase !== "celebrate") return updateLadder(self, other, m, sp, dt); // hokit-ladder.js
   if (m.phase === "swing") {
     if (m.t < CHAIR_SWING_TIME) return true;
     landChairShot(self, other, m);
@@ -133,6 +134,7 @@ function updateChairShot(self, other, dt) {
   if (m.phase === "follow") {
     if (m.t < CHAIR_FOLLOW_TIME) return true;
     if (!other.alive) { endChairShot(self, other); return false; }
+    if (sp.ladder) { startLadder(self, other, m); return true; } // the ladder finish (hokit-ladder.js)
     m.phase = "celebrate"; m.t = 0;
     m.lapA = Math.atan2(self.y - H / 2, self.x - W / 2); // where on the lap he joins it
     m.lapDir = Math.random() < 0.5 ? -1 : 1;
@@ -140,7 +142,8 @@ function updateChairShot(self, other, dt) {
   }
   if (m.phase === "celebrate") {
     // Arms up, running a lap round the ring while they're still seeing stars.
-    if (other.dazed && m.t >= sp.dazeTime) { other.dazed = false; setSpeed(other, (other.baseSpeed || SPEED) * 0.6); }
+    if (m.ladder) { if (other.alive) other.dazed = true; } // still seeing stars until he's gone (hokit-ladder.js)
+    else if (other.dazed && m.t >= sp.dazeTime) { other.dazed = false; setSpeed(other, (other.baseSpeed || SPEED) * 0.6); }
     var R = Math.min(W, H) / 2 - self.r - 10;
     m.lapA += m.lapDir * CHAIR_LAP_SPEED / R * dt;
     var tx = W / 2 + Math.cos(m.lapA) * R, ty = H / 2 + Math.sin(m.lapA) * R;
@@ -150,6 +153,7 @@ function updateChairShot(self, other, dt) {
     chairLapBump(self, other, m, dt); // anyone in his way gets bowled aside
     if (!reduceMotion) particles.push({ x: self.x, y: self.y, vx: 0, vy: 0, life: 0.22, max: 0.22, size: self.r * 0.45, color: self.char.color });
     if (m.t < sp.celebrateTime) return true;
+    if (m.ladder) { m.phase = "fetch2"; m.t = 0; m.fold = null; return true; } // back for the ladder
     endChairShot(self, other);
     return false;
   }
@@ -235,10 +239,11 @@ function endChairShot(self, other) {
   endChairFrenzy();
   self.igbb = null;
   self.specialT = 0;
+  ladderStand = null; // (hokit-ladder.js)
   other.dazed = false;
   other.chairBump = null;
   // Off the lap at full speed, the way he was running.
-  if (m && m.lapA != null) { self.vx = -Math.sin(m.lapA) * m.lapDir; self.vy = Math.cos(m.lapA) * m.lapDir; }
+  if (m && m.lapA != null && !m.ladder) { self.vx = -Math.sin(m.lapA) * m.lapDir; self.vy = Math.cos(m.lapA) * m.lapDir; }
   setSpeed(self, self.baseSpeed || SPEED);
   if (other.alive) setSpeed(other, (other.baseSpeed || SPEED) * 0.6);
   // Straight into a thumbs down at them (hokit.js).
@@ -376,6 +381,7 @@ function drawFoldingChair(x, y, s, a, dent, alpha) {
 function drawChairShot(b) {
   var m = b.igbb;
   if (!m || m.move !== "chairshot" || !b.alive) return;
+  if (drawLadderCarry(b)) return; // the ladder finish (hokit-ladder.js)
   if (m.phase === "celebrate") { drawArmsUp(b, m.t); return; }
   if (m.phase === "follow") { drawFollowThrough(b, m); return; }
   var h = chairHold(b, m), s = b.r * 2;
