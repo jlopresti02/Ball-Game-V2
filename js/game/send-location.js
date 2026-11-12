@@ -56,7 +56,7 @@ function sendLocTimeScale() { return sl && sl.phase === "space" ? 0 : 1; }
 // From startMatchSeeded.
 function resetSendLocation() {
   sl = null; slFx = []; slCrater = null; slClock = 0;
-  stopSendLocationCharge();
+  stopSendLocationCharge(); stopDsMusic();
 }
 // From makeBall.
 function initSendLocation(b) {
@@ -91,7 +91,7 @@ function startSendLocation(self, other, ds) {
   self.invincible = true;
   SL = ds ? SL_DS : SL_KH; SL_FIRE_AT = SL.fire; SL_ATMO_AT = SL.atmo;
   sl = { id: self.id, oid: other.id, t: 0, u: 0, phase: "pull", def: null, dodge: null, prevAtk: false, ds: !!ds };
-  if (ds) floater(self.x, self.y - self.r - 30, "DEATH STAR", "crit");
+  if (ds) { floater(self.x, self.y - self.r - 30, "DEATH STAR", "crit"); playSendLocation("music"); }
   playSendLocation("pull");
 }
 function slNext(p) {
@@ -103,6 +103,7 @@ function endSendLocation(self, other) {
   self.igbb = null; self.invincible = false; self.immuneCd = 0;
   self.vx = 0; self.vy = 0;
   stopSendLocationCharge();
+  if (over && sl && sl.ds) stopDsMusic(1.0); // the fight's over: the knockout call takes it
   if (sl) { sl.phase = "over"; sl.held = false; }
 }
 
@@ -759,7 +760,7 @@ function slDrawSithCall(d, shR, shL, t) {
     });
     drawGloveAt(hx, hy, size * 0.85, ch, -Math.PI / 2);
   }
-  if (sl.phase === "talk") slBubble(d.x - r * 0.2, d.y - r - 40, t < 0.45 ? "FIRE" : t < 0.8 ? "FIRE WHEN" : "FIRE WHEN READY.", Math.min(1, t / 0.12), false);
+  if (sl.phase === "talk") slBubble(d.x - r * 0.2, d.y - r - 40, t < 0.7 ? "DON'T TALK TO ME." : "DON'T LOOK AT ME.", Math.min(1, t / 0.12), false); // his line (Joe's clip)
 }
 
 // The Death Star over the planet: a grey battle station, its trench round the

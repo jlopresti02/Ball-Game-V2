@@ -328,6 +328,10 @@ function gallerySounds() {
     { title: "Special move sounds", items: [
       clip("chairShot", "Chair shot clang", "Josh Hokit's Chair Shot."),
       clip("ladderWatchOut", "Watch out!", "Josh Hokit climbing the ladder in his Chair Shot."),
+      clip("hokitDontTalk", "Don't talk to me", "Josh Hokit calling in the Death Star in his Dark Side."),
+      clip("dsCharge", "Death Star charge", "The superlaser powering up and firing."),
+      clip("dsImpact", "Death Star impact", "The beam landing in the ring."),
+      clip("dsMusic", "Death Star battle music", "Plays over Josh Hokit's Death Star strike."),
       clip("freeBird", "Free Bird solo", "Justin Gaethje's All American."),
       clip("eagleScreech", "Eagle screech", "Each eagle dive in All American, and the warning for Gaethje's Eagle Strike."),
       clip("eagleSwoop", "Eagle swoop", "The eagle swooping through in Gaethje's Eagle Strike."),
