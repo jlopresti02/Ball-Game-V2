@@ -1,6 +1,6 @@
 {
   "id": "c-josh-hokit",
-  "rev": 13,
+  "rev": 14,
   "builtin": false,
   "weightClass": "heavyweight",
   "name": "Josh Hokit",
@@ -54,7 +54,7 @@
   "darkSide": { "first": [20, 34], "duration": 18, "linger": 3, "cooldown": 8,
     "look": { "robe": true, "sleeves": "#1d1d22", "gloves": "#1b1b1f" },
     "saber": { "damage": 14, "cooldown": 0.55, "windup": 0.22, "swing": 0.15, "follow": 0.2, "reach": 70, "knockback": 480 },
-    "clash": { "chance": 55, "knockback": 520, "recover": 0.5, "lockAfter": 3, "win": 40, "hurt": 30, "disarm": 30, "winDamage": 30, "winKnockback": 1300, "hurtMult": 1.5 },
+    "clash": { "chance": 85, "knockback": 520, "recover": 0.5, "lockAfter": 2, "win": 40, "hurt": 30, "disarm": 30, "winDamage": 30, "winKnockback": 1300, "hurtMult": 1.5 },
     "push": { "knockback": 1700 },
     "deathStar": { "first": [3, 7], "max": 1, "dmg": 100, "waveDmg": 40 } },
   "special": { "move": "chairshot", "chargeTime": 82, "hitCut": 3, "punchCut": 1, "damage": 80, "dazeTime": 1.5, "celebrateTime": 2, "ladder": { "slamDamage": 25, "throwDamage": 15 } },

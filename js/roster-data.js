@@ -234,12 +234,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 14,
+    "rev": 15,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
     "base": "Brawler",
-    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage. If you pull a bat on him, he pulls out a diamond sword and parries 4 of every 5 swings. Every third parry locks you into a sword duel that ends with him disarming you or cutting straight through. Once a fight he chugs a bottle of hot sauce (dodging or blocking anything you throw while he does), turns red with steam pouring out, and runs around the ring breathing fire in a panic: get caught in it and you burn.",
+    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage. If you pull a bat on him, he pulls out a diamond sword and parries 9 of every 10 swings. Every third parry locks you into a sword duel that ends with him disarming you or cutting straight through. Once a fight he chugs a bottle of hot sauce (dodging or blocking anything you throw while he does), turns red with steam pouring out, and runs around the ring breathing fire in a panic: get caught in it and you burn.",
     "color": "#1e3a8a",
     "look": {
       "skin": "#d9a07a",
@@ -329,7 +329,7 @@ var SAVED_ROSTER = [
         "weapons": [
           "bat"
         ],
-        "parryChance": 80,
+        "parryChance": 92,
         "knockback": 420,
         "recover": 0.6,
         "duel": {
@@ -358,12 +358,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 7,
+    "rev": 8,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
     "base": "Brawler",
-    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He starts patient: single light punches, thrown rarely. The more he's hurt, the more often he throws and the longer his combos get, from 1 punch at full health up to 5 by three-quarter health. After that the combos keep coming faster and every punch hits harder. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 4 of 5 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm.",
+    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He starts patient: single light punches, thrown rarely. The more he's hurt, the more often he throws and the longer his combos get, from 1 punch at full health up to 5 by three-quarter health. After that the combos keep coming faster and every punch hits harder. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm.",
     "color": "#b3121b",
     "label": "",
     "imgData": null,
@@ -457,7 +457,7 @@ var SAVED_ROSTER = [
       "weapons": [
         "bat"
       ],
-      "parryChance": 80,
+      "parryChance": 92,
       "knockback": 420,
       "recover": 0.6,
       "drawText": "RAPIER",
@@ -743,7 +743,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-josh-hokit",
-    "rev": 13,
+    "rev": 14,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Josh Hokit",
@@ -888,10 +888,10 @@ var SAVED_ROSTER = [
         "knockback": 480
       },
       "clash": {
-        "chance": 55,
+        "chance": 85,
         "knockback": 520,
         "recover": 0.5,
-        "lockAfter": 3,
+        "lockAfter": 2,
         "win": 40,
         "hurt": 30,
         "disarm": 30,
