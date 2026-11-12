@@ -1,11 +1,11 @@
 {
   "id": "c-khabib-nurmagomedov",
-  "rev": 6,
+  "rev": 7,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Khabib Nurmagomedov",
   "base": "Grappler",
-  "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Every so often a bear climbs into the cage and wanders round: bump into it and you get mauled in a cartoon dust cloud, unless you're Khabib, who knocks it out and throws it at you. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
+  "bio": "\"The Eagle\". Built on the Grappler base: grabs on contact and slams into the wall, plus quick 5-damage punches that charge his special move extra fast. Grab someone from behind and 60% of the time he suplexes them over his head instead. Every so often a bear climbs into the cage and wanders round: bump into it and you get mauled in a cartoon dust cloud, unless you're Khabib, who knocks it out and throws it at you. Once a fight he pulls out a military phone and says \"send me location\": he blocks or slips anything you throw while he's on the call, then the view cuts up to a Russian space station that fires an orbital laser into the middle of the ring. Get caught in the circle and you take 100 and get thrown into the cage; the blast wave still catches you for 40. Special move: Father's Plan. Future look ideas: a papakha and a cauliflower-ear mockup.",
   "color": "#8b1a1a",
   "label": "",
   "imgData": null,
@@ -104,5 +104,6 @@
     "knockback": 1100,
     "wallSlams": 1,
     "slamDamage": 4
-  }
+  },
+  "sendLocation": { "first": [14, 26], "max": 1, "dmg": 100, "waveDmg": 40 }
 }

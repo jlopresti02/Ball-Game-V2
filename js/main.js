@@ -16,7 +16,8 @@ function frame(t) {
   var dt = Math.min((t - last) / 1000, 1 / 30);
   last = t;
   if (!screens.game.hidden) {
-    var ts = deathTimeScale(); // slow motion or a freeze while the loser dies (death.js)
+    var ts = deathTimeScale() * sendLocTimeScale(); // slow motion or a freeze while the loser dies (death.js); held while Khabib's strike is up in orbit (send-location.js)
+    if (started && !gamePaused) advanceSendLocSpace(dt); // the space cut plays out in real time
     if (started && !gamePaused && ts > 0) runTicks(dt * ts); // a gallery demo can be paused (gallery.js)
     updateHud(false);
     draw();

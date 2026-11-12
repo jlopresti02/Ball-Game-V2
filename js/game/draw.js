@@ -46,6 +46,7 @@ function draw() {
   }
 
   drawSitSpots();
+  drawSendLocCrater(); // the scorch the orbital strike leaves on the mat, under the fighters (send-location.js)
 
   particles.forEach(function (p) {
     ctx.globalAlpha = Math.max(0, p.life / p.max);
@@ -425,10 +426,12 @@ function draw() {
   drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
   drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)
+  drawSendLocation(s, ox, oy); // Khabib's phone call, the target circle and the beam (send-location.js)
   drawRingBearSky(s, ox, oy); // Khabib's thrown bear flying off the screen (khabib-bear.js)
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
   swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
   tossScreenZoom(ox, oy, s); // the camera punching in on a takedown landing (toss.js)
   deathScreenZoom(ox, oy, s); // the camera riding in on a K.O. flight (death.js)
   drawIntroMsg(s, ox, oy); // the instruction to the viewer at the start (intro-msg.js)
+  drawSendLocSpace(); // cut up to the space station while the fight holds (send-location.js)
 }

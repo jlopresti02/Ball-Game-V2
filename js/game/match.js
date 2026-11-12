@@ -50,6 +50,7 @@ function makeBall(id, ch) {
   initDiamond(b); // Dustin's Diamond Guard (diamond.js)
   initTopRope(b); // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
   initHotSauce(b); // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
+  initSendLocation(b); // Khabib's Send Me Location (send-location.js)
   initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
   initKamehameha(b); // and Charles's Kamehameha (kamehameha.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
@@ -86,6 +87,7 @@ function startMatchSeeded(ch0, ch1) {
   resetDuckDrop();
   resetTopRope();
   resetHotSauce(); // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
+  resetSendLocation(); // Khabib's Send Me Location (send-location.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
   resetCheater();

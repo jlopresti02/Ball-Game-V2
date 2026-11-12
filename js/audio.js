@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["hotSauceSteam", "hotSauceFlame", "itTeleport", "itShot", "kameCharge", "kameFire", "saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ladderWatchOut", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["sendMeLocation", "slCharge", "slImpact", "hotSauceSteam", "hotSauceFlame", "itTeleport", "itShot", "kameCharge", "kameFire", "saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ladderWatchOut", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -2028,6 +2028,52 @@ function stopHotSauceFlame() {
     hsFlameSrc.stop(t + 0.4);
   } catch (e) {}
   hsFlameSrc = null; hsFlameGain = null;
+}
+
+// Khabib's Send Me Location (send-location.js, Joe 2026-11-12).
+//   voice    Joe's "send me location" clip (cuts in on the talk channel)
+//   charge   Joe's laser charge + shot, through the cut up to the station
+//   impact   the hit from Joe's laser blast, as the beam lands in the ring
+//   (and little synth bits: pull whoosh, GPS beep, SEND click, target beeps)
+var slChargeSrc = null;
+function playSendLocation(moment) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (moment === "voice") { withClip("sendMeLocation", function () { cutInTalk("sendMeLocation", 1.0); }); return; }
+    if (moment === "charge") {
+      stopSendLocationCharge();
+      withClip("slCharge", function () { slChargeSrc = playClip("slCharge", 0.9); });
+      var c = crowd; // the arena goes quiet while we're up in orbit
+      if (c && c.gain) { c.duckUntil = now + 4.0; c.gain.gain.cancelScheduledValues(now); c.gain.gain.setTargetAtTime(0.0001, now, 0.08); }
+      synthWhoosh(ctx, ctx.destination, now);
+      return;
+    }
+    if (moment === "back") { stopSendLocationCharge(); synthWhoosh(ctx, ctx.destination, now); return; }
+    if (moment === "impact") { withClip("slImpact", function () { playClip("slImpact", 0.75); }); crowdReact(1); return; }
+    if (moment === "pull") { synthWhoosh(ctx, ctx.destination, now); return; }
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    if (moment === "lock") { // two quick GPS beeps
+      o.type = "sine"; o.frequency.setValueAtTime(1760, now);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.setValueAtTime(0.28, now + 0.005); g.gain.setValueAtTime(0.0001, now + 0.08);
+      g.gain.setValueAtTime(0.28, now + 0.125); g.gain.setValueAtTime(0.0001, now + 0.2);
+    } else if (moment === "send") { // the SEND key clicking
+      o.type = "square"; o.frequency.setValueAtTime(2400, now); o.frequency.exponentialRampToValueAtTime(800, now + 0.025);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.2, now + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+    } else if (moment === "target") { // the target circle locking on
+      o.type = "sine"; o.frequency.setValueAtTime(1400, now);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.25, now + 0.005); g.gain.setValueAtTime(0.25, now + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+    } else return;
+    o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.25);
+  } catch (e) { /* never let audio break the game */ }
+}
+function stopSendLocationCharge() {
+  if (!slChargeSrc) return;
+  try { slChargeSrc.stop(audioCtx.currentTime + 0.05); } catch (e) {}
+  slChargeSrc = null;
 }
 
 // Dustin's diamond sword (sword clash, diamond.js). Pulling it out: a bright
