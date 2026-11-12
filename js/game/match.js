@@ -49,6 +49,7 @@ function makeBall(id, ch) {
   initJon(b);
   initDiamond(b); // Dustin's Diamond Guard (diamond.js)
   initTopRope(b); // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
+  initHotSauce(b); // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
   initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
   initKamehameha(b); // and Charles's Kamehameha (kamehameha.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
@@ -84,6 +85,7 @@ function startMatchSeeded(ch0, ch1) {
   resetJonGoats();
   resetDuckDrop();
   resetTopRope();
+  resetHotSauce(); // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
   resetCheater();

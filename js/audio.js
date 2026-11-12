@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["itTeleport", "itShot", "kameCharge", "kameFire", "saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ladderWatchOut", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["hotSauceSteam", "hotSauceFlame", "itTeleport", "itShot", "kameCharge", "kameFire", "saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ladderWatchOut", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -1970,6 +1970,64 @@ function playDiamondHit() {
       o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.2);
     });
   } catch (e) { /* never let audio break the game */ }
+}
+
+// Dustin's Hot Sauce Fire Breath (hot-sauce.js). Joe's clips: the steam hiss
+// (heat-up, and softer while he pants at the end) and the flamethrower, which
+// plays once straight through the panic run and dips in the cough gaps.
+// The little sounds (cap pop, gulps, coughs, slips, blocks) are made in code.
+var hsFlameSrc = null, hsFlameGain = null;
+function playHotSauce(moment) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    if (moment === "steam") { withClip("hotSauceSteam", function () { playClip("hotSauceSteam", 0.9); }); return; }
+    if (moment === "steamSoft") { withClip("hotSauceSteam", function () { playClip("hotSauceSteam", 0.4, ctx.currentTime + 0.1); }); return; }
+    if (moment === "dodge" || moment === "pull") { synthWhoosh(ctx, ctx.destination, now); return; }
+    if (moment === "ignite") { crowdReact(0.8); return; }
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    if (moment === "cap") { // a cork-y pop
+      o.type = "sine"; o.frequency.setValueAtTime(900, now); o.frequency.exponentialRampToValueAtTime(320, now + 0.07);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.35, now + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    } else if (moment === "gulp") { // a low rising glug
+      o.type = "sine"; o.frequency.setValueAtTime(140, now); o.frequency.exponentialRampToValueAtTime(420, now + 0.14);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.4, now + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    } else if (moment === "block") { // a glove thud
+      o.type = "sine"; o.frequency.setValueAtTime(160, now); o.frequency.exponentialRampToValueAtTime(70, now + 0.1);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.5, now + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+    } else if (moment === "cough") { // a rough little hack
+      o.type = "sawtooth"; o.frequency.setValueAtTime(190, now); o.frequency.exponentialRampToValueAtTime(110, now + 0.12);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12, now + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+    } else return;
+    o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.2);
+  } catch (e) { /* never let audio break the game */ }
+}
+function startHotSauceFlame() {
+  stopHotSauceFlame();
+  withClip("hotSauceFlame", function () {
+    var ctx = audioCtx, buf = clipBuffers.hotSauceFlame;
+    if (!ctx || !buf) return;
+    hsFlameSrc = ctx.createBufferSource(); hsFlameSrc.buffer = buf;
+    hsFlameGain = ctx.createGain(); hsFlameGain.gain.value = 1;
+    hsFlameSrc.connect(hsFlameGain); hsFlameGain.connect(ctx.destination);
+    hsFlameSrc.start();
+  });
+}
+// 1 while he's breathing fire, lower in the cough gaps.
+function setHotSauceFlame(level) {
+  if (!hsFlameGain || !audioCtx) return;
+  hsFlameGain.gain.setTargetAtTime(level, audioCtx.currentTime, 0.03);
+}
+function stopHotSauceFlame() {
+  if (!hsFlameSrc) return;
+  try {
+    var t = audioCtx.currentTime;
+    hsFlameGain.gain.setTargetAtTime(0, t, 0.08);
+    hsFlameSrc.stop(t + 0.4);
+  } catch (e) {}
+  hsFlameSrc = null; hsFlameGain = null;
 }
 
 // Dustin's diamond sword (sword clash, diamond.js). Pulling it out: a bright

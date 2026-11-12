@@ -234,12 +234,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 13,
+    "rev": 14,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
     "base": "Brawler",
-    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage. If you pull a bat on him, he pulls out a diamond sword and parries 4 of every 5 swings. Every third parry locks you into a sword duel that ends with him disarming you or cutting straight through.",
+    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage. If you pull a bat on him, he pulls out a diamond sword and parries 4 of every 5 swings. Every third parry locks you into a sword duel that ends with him disarming you or cutting straight through. Once a fight he chugs a bottle of hot sauce (dodging or blocking anything you throw while he does), turns red with steam pouring out, and runs around the ring breathing fire in a panic: get caught in it and you burn.",
     "color": "#1e3a8a",
     "look": {
       "skin": "#d9a07a",
@@ -342,6 +342,18 @@ var SAVED_ROSTER = [
         }
       },
       "blockBonus": 5
+    },
+    "hotSauce": {
+      "first": [
+        14,
+        24
+      ],
+      "max": 1,
+      "len": 270,
+      "half": 0.34,
+      "tickDmg": 2,
+      "burn": 2.2,
+      "burnDmg": 1
     }
   },
   {
