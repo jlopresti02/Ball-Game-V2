@@ -180,6 +180,7 @@ function updateAbilities(dt) {
     if (updateKamehameha(self, other, dt)) continue; // Charles's Kamehameha (kamehameha.js)
     if (updateInstantTransmission(self, other, dt)) continue; // and his Instant Transmission hard shot (instant-transmission.js)
     if (updateHotSauce(self, other, dt)) continue; // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
+    if (updateSendLocation(self, other, dt)) continue; // Khabib's Send Me Location (send-location.js)
     if (updateTopRope(self, other, dt)) continue; // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
     if (updateEagleCarry(self, other, dt)) continue; // Gaethje snatched up by his own eagle (gaethje-golf.js)
     if (updateSpecial(self, other, dt)) continue; // a created character's special move

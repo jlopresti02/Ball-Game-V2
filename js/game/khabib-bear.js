@@ -171,6 +171,7 @@ function bearLetGo(B) {
 
 // Someone walked into it.
 function bearBumps(B) {
+  if (balls.some(sendLocOn)) return; // not while Khabib's orbital strike is coming in (send-location.js)
   for (var i = 0; i < balls.length; i++) {
     var f = balls[i];
     if (!f.alive || f.invincible || specialBusy(f) || f.dazed || swordDuelLocked(f)) continue;
