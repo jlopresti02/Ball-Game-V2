@@ -743,12 +743,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-josh-hokit",
-    "rev": 12,
+    "rev": 13,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Josh Hokit",
     "base": "BMF",
-    "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Now and then he straps on his football helmet, gets down in a three-point stance and charges a red path across the ring, running over whoever is still in it, while the jumbotron plays an ad for the San Francisco 67'ers. When his opponent pulls out a weapon, or once at random, he turns to the Dark Side: a black hooded robe and a red lightsaber, no wrestling moves. His saber clashes with bats, clubs and swords, and if anyone knocks it out of his hand he pulls it straight back with the Force and Force pushes them across the ring. Special move: Chair Shot, then a ladder: he stands one up in the middle of the ring, climbs it and dives off it in a body slam and throws the ladder at them.",
+    "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Now and then he straps on his football helmet, gets down in a three-point stance and charges a red path across the ring, running over whoever is still in it, while the jumbotron plays an ad for the San Francisco 67'ers. When his opponent pulls out a weapon, or once at random, he turns to the Dark Side: a black hooded robe and a red lightsaber, no wrestling moves. His saber clashes with bats, clubs and swords, and if anyone knocks it out of his hand he pulls it straight back with the Force and Force pushes them across the ring. Once in the form he can call in the Death Star, whose green superlaser blasts the middle of the ring. Special move: Chair Shot, then a ladder: he stands one up in the middle of the ring, climbs it and dives off it in a body slam and throws the ladder at them.",
     "color": "#c8202c",
     "label": "",
     "imgData": null,
@@ -901,6 +901,15 @@ var SAVED_ROSTER = [
       },
       "push": {
         "knockback": 1700
+      },
+      "deathStar": {
+        "first": [
+          3,
+          7
+        ],
+        "max": 1,
+        "dmg": 100,
+        "waveDmg": 40
       }
     },
     "special": {

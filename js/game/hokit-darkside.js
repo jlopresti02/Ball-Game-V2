@@ -89,6 +89,9 @@ function startDarkSide(self, why) {
   clearActions(self); self.chAct = null;
   self.vx = 0; self.vy = 0;
   self.sith = { phase: "rise", t: 0, why: why, left: self.char.darkSide.duration, ignite: 0, suited: false };
+  // His Death Star strike, once a form (send-location.js runs it).
+  var dsc = self.char.darkSide.deathStar;
+  self.dsStrikeT = dsc && (self.sendLocN || 0) < dsc.max ? dsRand(dsc.first) : null;
   floater(self.x, self.y - self.r - 30, "DARK SIDE", "crit");
   crowdReact(0.7);
   playDarkSideRise();

@@ -51,7 +51,7 @@ function tickRefNap(dt) {
   if (rf.stop || over) { if (rf.asleep) wakeRef(rf); return; }
   // Out cold for the whole of Gane's special (herbdean.js wakes him after).
   if (herbDeanActive()) { rf.asleep = true; rf.napT = 0; return; }
-  if (swordDuelActive()) return; // stays asleep through a sword duel (sword.js)
+  if (swordDuelActive() || saberLock) return; // stays asleep through a sword duel (sword.js) or a saber lock (hokit-darkside.js)
   rf.napT = (rf.napT || 0) + dt;
   if (!rf.asleep && rf.napT >= ch.awake) {
     rf.asleep = true; rf.napT = 0;
@@ -417,6 +417,7 @@ function drawCheater(b) {
     drawGloveAt(hx3, hy3, gr, ch);
     return;
   }
+  if (b.cheater && b.cheater.saber && sendLocHandsBusy(b)) return; // calling in the Death Star (send-location.js draws him)
   if (b.cheater && b.cheater.saber && drawSithArms(b)) return; // Hokit's Force pull and push (hokit-darkside.js)
   if (b.cheater && b.cheater.mode === "bat" && saberLockHeld(b)) { drawBatIdle(b, "lock"); return; } // blade on bat
   if (b.cheater && b.cheater.mode === "bat" && !swordDuelLocked(b)) { // (sword.js draws it in a sword duel)

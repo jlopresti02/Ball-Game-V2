@@ -104,7 +104,7 @@ function galleryMoves(ch) {
   }
   if (ch.darkSide) {
     var ds = ch.darkSide, dc = ds.clash;
-    add("🔴", "Dark Side", "When they pull out a weapon (or once at a random time) he throws on a black hooded robe and ignites a red lightsaber for " + secs(ds.duration) + ", with his wrestling moves off. Saber swings for " + ds.saber.damage + ". " + dc.chance + "% of swings with a bat or club clash, and every " + dc.lockAfter + " clashes lock up; swords parry and duel him. Either way he wins (" + dc.winDamage + " slash), gets hit, or gets disarmed, and then he pulls the saber back with the Force and Force pushes them across the ring (no damage).");
+    add("🔴", "Dark Side", "When they pull out a weapon (or once at a random time) he throws on a black hooded robe and ignites a red lightsaber for " + secs(ds.duration) + ", with his wrestling moves off. Saber swings for " + ds.saber.damage + ". " + dc.chance + "% of swings with a bat or club clash, and every " + dc.lockAfter + " clashes lock up; swords parry and duel him. Either way he wins (" + dc.winDamage + " slash), gets hit, or gets disarmed, and then he pulls the saber back with the Force and Force pushes them across the ring (no damage). Once a form he raises a hand to the sky and calls in the Death Star: the view cuts up to its superlaser charging, and the green beam lands in the middle of the ring for " + ds.deathStar.dmg + " (" + ds.deathStar.waveDmg + " from the blast wave).");
   }
   if (ch.hasThumbsDown) add("👎", "Thumbs down", "Every " + secs(ch.thumbsDown.cooldown) + " he mocks them. They see red for " + secs(ch.thumbsDown.anger) + " and storm straight at him.");
   if (ch.hasSwing) {

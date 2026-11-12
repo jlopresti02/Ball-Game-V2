@@ -610,7 +610,7 @@ function withClip(name, cb) {
     if (p && p.catch) p.catch(fail);
   } catch (e) { clipLoading[name] = false; }
 }
-function loadSoundClips() { ["sendMeLocation", "slCharge", "slImpact", "hotSauceSteam", "hotSauceFlame", "itTeleport", "itShot", "kameCharge", "kameFire", "saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ladderWatchOut", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
+function loadSoundClips() { ["sendMeLocation", "slCharge", "slImpact", "dsCharge", "dsImpact", "hotSauceSteam", "hotSauceFlame", "itTeleport", "itShot", "kameCharge", "kameFire", "saiyanLoop", "saiyanUp", "saiyanDown", "tornadoSpin", "cologneAd", "telekineticGrab", "hereWeGo", "crowd", "knockout", "doBronx", "cameraFlash", "igbb", "smashYourBoy", "chairShot", "ladderWatchOut", "ganeBatCall", "ganePokeCall", "ganeHerbDean", "eagleScreech", "eagleSwoop", "truckHorn", "freeBird", "usaChant", "gaethjeCommentary", "refWhistle", "charlesTakedown", "auraFarm", "bullThrown", "bullCharge", "batCrack", "impactPunch1", "impactPunch2", "goatBaa1", "goatBaa2", "jonBaa", "dustinDiamond", "truckeesAd", "rapierSlice", "deathBoom"].concat(BEAR_CLIPS).concat(HOKIT_TAUNTS, GOLF_IMPACTS).forEach(function (n) { withClip(n); }); }
 
 // "Here we go!": the announcer call that opens every fight.
 // The referee's whistle as the fight starts (with "Here we go!").
@@ -2042,17 +2042,19 @@ function playSendLocation(moment) {
     if (!ctx) return;
     if (ctx.state === "suspended") ctx.resume();
     var now = ctx.currentTime;
-    if (moment === "voice") { withClip("sendMeLocation", function () { cutInTalk("sendMeLocation", 1.0); }); return; }
+    var ds = typeof sl !== "undefined" && sl && sl.ds; // Hokit's Death Star strike: pieces of Joe's Death Star recording
+    if (moment === "voice") { if (!ds) withClip("sendMeLocation", function () { cutInTalk("sendMeLocation", 1.0); }); return; }
     if (moment === "charge") {
       stopSendLocationCharge();
-      withClip("slCharge", function () { slChargeSrc = playClip("slCharge", 0.9); });
+      var cn = ds ? "dsCharge" : "slCharge";
+      withClip(cn, function () { slChargeSrc = playClip(cn, ds ? 1.0 : 0.9); });
       var c = crowd; // the arena goes quiet while we're up in orbit
-      if (c && c.gain) { c.duckUntil = now + 4.0; c.gain.gain.cancelScheduledValues(now); c.gain.gain.setTargetAtTime(0.0001, now, 0.08); }
+      if (c && c.gain) { c.duckUntil = now + (ds ? 6.3 : 4.0); c.gain.gain.cancelScheduledValues(now); c.gain.gain.setTargetAtTime(0.0001, now, 0.08); }
       synthWhoosh(ctx, ctx.destination, now);
       return;
     }
     if (moment === "back") { stopSendLocationCharge(); synthWhoosh(ctx, ctx.destination, now); return; }
-    if (moment === "impact") { withClip("slImpact", function () { playClip("slImpact", 0.75); }); crowdReact(1); return; }
+    if (moment === "impact") { var inm = ds ? "dsImpact" : "slImpact"; withClip(inm, function () { playClip(inm, ds ? 0.9 : 0.75); }); crowdReact(1); return; }
     if (moment === "pull") { synthWhoosh(ctx, ctx.destination, now); return; }
     var o = ctx.createOscillator(), g = ctx.createGain();
     if (moment === "lock") { // two quick GPS beeps
