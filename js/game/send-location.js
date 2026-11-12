@@ -660,11 +660,7 @@ function slDrawSpace(u) { // u = seconds into the space cut
     var eg = ctx.createLinearGradient(0, -er, 0, -er * 0.55); eg.addColorStop(0, "#3a86d8"); eg.addColorStop(1, "#0f2a52");
     ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(0, 0, er, 0, 6.28); ctx.fill();
     ctx.save(); ctx.beginPath(); ctx.arc(0, 0, er, 0, 6.28); ctx.clip();
-    ctx.rotate(u * 0.02);
-    ctx.fillStyle = "rgba(78,140,70,0.9)";
-    for (var i = 0; i < 9; i++) { var an = -Math.PI / 2 + (i - 4) * 0.13; ctx.beginPath(); ctx.ellipse(Math.cos(an) * er * 0.97, Math.sin(an) * er * 0.97, 120 * k, 40 * k, an + Math.PI / 2, 0, 6.28); ctx.fill(); }
-    ctx.fillStyle = "rgba(255,255,255,0.6)";
-    for (var c = 0; c < 14; c++) { var an2 = -Math.PI / 2 + (c - 7) * 0.075; ctx.beginPath(); ctx.ellipse(Math.cos(an2) * er * 0.985, Math.sin(an2) * er * 0.985, 70 * k, 12 * k, an2 + Math.PI / 2, 0, 6.28); ctx.fill(); }
+    slDrawLand(er, u);
     ctx.restore();
     // night side shadow
     var ns = ctx.createLinearGradient(-er, 0, er, 0); ns.addColorStop(0, "rgba(0,0,10,0.65)"); ns.addColorStop(0.45, "rgba(0,0,10,0)");
@@ -848,4 +844,80 @@ function slDrawDeathStar(u, cw, chh, k, jx, jy, push, zoom) {
     ctx.beginPath(); ctx.ellipse(fx, fyy, 50 + 320 * mk, 18 + 90 * mk, Math.atan2(ny, nx) + Math.PI / 2, 0, 6.28); ctx.stroke();
   }
   ctx.restore();
+}
+
+// ------------- the planet's surface (both space cuts, Joe: "realistic land masses")
+// Continents and cloud bands laid out in longitude/latitude and projected
+// onto the globe (orthographic), so they squash toward the horizon like the
+// real thing. Built once from a fixed seed (drawing only).
+var slLand = null;
+function slBuildLand() {
+  var seed = 1234567, rnd = function () { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  var D = Math.PI / 180, conts = [], clouds = [];
+  // [lon, lat, size (deg), stretch, tilt]: a big continent across the middle,
+  // two smaller ones and a scatter of islands, all in the band we can see.
+  [[-8, 38, 15, 1.7, 0.35], [30, 56, 9, 1.4, -0.4], [-42, 62, 8, 1.3, 0.8], [26, 24, 6, 1.6, -0.2], [-36, 26, 4, 1.4, 0.5],
+   [8, 74, 6, 2.2, 0.1], [50, 36, 4, 1.3, 0.3], [-12, 58, 2.5, 1.5, 0], [-58, 44, 3, 1.2, -0.6]].forEach(function (c) {
+    var n = 64, ph = [rnd() * 6.28, rnd() * 6.28, rnd() * 6.28, rnd() * 6.28], pts = [];
+    for (var i = 0; i < n; i++) {
+      var a = i / n * 6.28;
+      // a ragged coastline: a few layers of wobble, from big bays down to small inlets
+      var rr = 1 + 0.28 * Math.sin(a * 2 + ph[0]) + 0.18 * Math.sin(a * 3 + ph[1]) + 0.1 * Math.sin(a * 7 + ph[2]) + 0.05 * Math.sin(a * 13 + ph[3]) + 0.03 * (rnd() - 0.5);
+      var x = Math.cos(a) * rr * c[3], y = Math.sin(a) * rr;
+      var ct = Math.cos(c[4]), st = Math.sin(c[4]);
+      pts.push([(c[0] + (x * ct - y * st) * c[2]) * D, (c[1] + (x * st + y * ct) * c[2] * 0.7) * D]);
+    }
+    // inland patches: forest, desert, mountains
+    var patches = [];
+    for (var j = 0; j < 5; j++) patches.push([(c[0] + (rnd() - 0.5) * c[2] * c[3] * 1.1) * D, (c[1] + (rnd() - 0.5) * c[2] * 0.7) * D, c[2] * (0.2 + rnd() * 0.25) * D, j % 3]);
+    conts.push({ pts: pts, patches: patches });
+  });
+  for (var q = 0; q < 26; q++) clouds.push([(-55 + rnd() * 110) * D, (18 + rnd() * 62) * D, (4 + rnd() * 10) * D, 0.25 + rnd() * 0.45, rnd() * 6.28]);
+  slLand = { conts: conts, clouds: clouds };
+}
+// (lon, lat) on the globe -> local x, y, or null when it's round the back.
+var SL_TILT = 0.0;
+function slProj(lon, lat, er, rot) {
+  var cl = Math.cos(lat), x = cl * Math.sin(lon + rot), y = Math.sin(lat), z = cl * Math.cos(lon + rot);
+  return { x: x * er, y: -y * er, z: z };
+}
+function slDrawLand(er, u) {
+  if (!slLand) slBuildLand();
+  var rot = u * 0.012;
+  var path = function (pts) {
+    ctx.beginPath();
+    pts.forEach(function (p, i) { var q = slProj(p[0], p[1], er, rot); if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); });
+    ctx.closePath();
+  };
+  // shallow water round every coast first, so the land covers the inner half
+  slLand.conts.forEach(function (c) {
+    path(c.pts); ctx.strokeStyle = "rgba(110,200,225,0.3)"; ctx.lineWidth = er * 0.014; ctx.lineJoin = "round"; ctx.stroke();
+  });
+  slLand.conts.forEach(function (c) {
+    // the land, greener up north, drier toward the south
+    var g = ctx.createLinearGradient(0, -er, 0, -er * 0.4);
+    g.addColorStop(0, "#4f7d3e"); g.addColorStop(0.55, "#5f8a45"); g.addColorStop(1, "#a28f5c");
+    ctx.fillStyle = g; path(c.pts); ctx.fill();
+    ctx.save(); path(c.pts); ctx.clip();
+    c.patches.forEach(function (pt) {
+      var q = slProj(pt[0], pt[1], er, rot), r = pt[2] * er, sq = Math.max(0.15, -q.y / er < 1 ? Math.sqrt(1 - Math.pow(-q.y / er, 2)) : 0.15);
+      var col = pt[3] === 0 ? "rgba(38,82,40,0.55)" : pt[3] === 1 ? "rgba(196,170,110,0.55)" : "rgba(120,104,84,0.5)";
+      var pg = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, r);
+      pg.addColorStop(0, col); pg.addColorStop(1, col.replace(/[\d.]+\)$/, "0)"));
+      ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(q.x, q.y, r, r * sq + 1, 0, 0, 6.28); ctx.fill();
+    });
+    ctx.restore();
+  });
+  // clouds: soft white streaks drifting a little faster than the ground
+  slLand.clouds.forEach(function (cd) {
+    var q = slProj(cd[0], cd[1], er, rot * 1.6), r = cd[2] * er;
+    var sq = Math.max(0.12, Math.sqrt(Math.max(0, 1 - Math.pow(-q.y / er, 2))));
+    var cg = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, r);
+    cg.addColorStop(0, "rgba(255,255,255," + cd[3] + ")"); cg.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = cg; ctx.beginPath(); ctx.ellipse(q.x, q.y, r * 1.8, r * sq * 0.9, Math.sin(cd[4]) * 0.3, 0, 6.28); ctx.fill();
+  });
+  // haze near the horizon
+  var hz = ctx.createRadialGradient(0, 0, er * 0.9, 0, 0, er);
+  hz.addColorStop(0, "rgba(150,200,255,0)"); hz.addColorStop(1, "rgba(170,215,255,0.55)");
+  ctx.fillStyle = hz; ctx.beginPath(); ctx.arc(0, 0, er, 0, 6.28); ctx.fill();
 }
