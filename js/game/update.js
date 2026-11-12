@@ -50,6 +50,7 @@ function update(dt) {
   tickHelmetCharge(dt); // the 67'ers ad's clock (hokit-helmet.js)
   tickRingBear(dt); // Khabib's bear wandering the ring (khabib-bear.js)
   tickIliaTornado(dt); // roses from Ilia's Rose Tornado (ilia-tornado.js)
+  tickHotSauce(dt); // Dustin's Hot Sauce Fire Breath: flames, steam, whoever's burning (hot-sauce.js)
   tickTopRope(dt); // the dented mat after Hokit's Top Rope Body Slam (hokit-toprope.js)
   tickDuckDrop(dt); // smoke, feathers and the cracked mat from his Duck Drop (jon-duck.js)
   tickJumboAds(dt); // ads on the jumbotron, one at a time (truckees-ad.js)

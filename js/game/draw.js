@@ -190,6 +190,7 @@ function draw() {
     applySuplexPose(b); // arching back into (or flipped over by) a suplex
     applyKamePose(b);   // crouched and tilted for the Kamehameha (kamehameha.js)
     applyTossPose(b);   // spun through the air by a takedown, then bouncing (toss.js)
+    applyHotSaucePose(b); // Dustin swelling up, gulping and flailing in Hot Sauce Fire Breath (hot-sauce.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -420,6 +421,7 @@ function draw() {
 
   if (stadium) drawJumbotron(px);
   drawLadderSky(s, ox, oy); // Hokit up the ladder and diving off it (hokit-ladder.js)
+  drawHotSauce(s, ox, oy); // Dustin's bottle, gloves, steam and fire breath (hot-sauce.js)
   drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
   drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)

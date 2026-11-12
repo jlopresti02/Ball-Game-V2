@@ -116,6 +116,7 @@ function drawHands(b, other) {
   if (diamondHandsBusy(b)) return; // holding his diamond sword (drawDiamondSword, sword.js)
   if (b.igbb && b.igbb.move === "chairshot") return; // both hands on the chair (drawChairShot)
   if (b.igbb && b.igbb.move === "herbdean") return; // swinging the bat (drawHerbDeanSpecial)
+  if (hotSauceHandsBusy(b)) return; // the bottle, his head, fanning his mouth (drawHotSauce, hot-sauce.js)
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)
