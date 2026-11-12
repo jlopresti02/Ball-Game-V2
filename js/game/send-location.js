@@ -772,11 +772,14 @@ function slDrawDeathStar(u, cw, chh, k, jx, jy, push, zoom) {
     slDsPanels = [];
     for (var i = 0; i < 160; i++) slDsPanels.push([Math.random() * 2 - 1, Math.random() * 2 - 1, 0.04 + Math.random() * 0.16, 0.012 + Math.random() * 0.03, Math.random()]);
   }
-  var R = 270, dishX = -0.42 * R, dishY = -0.36 * R, dishR = 0.27 * R;
+  // The dish faces down and to the left, at the planet: the beam fires out
+  // along the dish's own direction, never across the station (Joe).
+  var R = 250, dishX = -0.3 * R, dishY = 0.42 * R, dishR = 0.27 * R;
+  var dn = Math.sqrt(dishX * dishX + dishY * dishY), nx = dishX / dn, ny = dishY / dn;
   var drift = 1 - slEase3(u / 1.2), recoil = u > SL_FIRE_AT ? Math.sin(Math.min(1, (u - SL_FIRE_AT) / 0.35) * Math.PI) * 30 : 0;
   var fy = chh * 0.27;
   ctx.save();
-  ctx.translate(cw / 2 + jx + drift * 120 * k, fy + jy - recoil * k);
+  ctx.translate(cw * 0.66 + jx + drift * 120 * k - recoil * k * nx, fy + jy - recoil * k * ny); // kicked back off the shot
   // push in on the dish while it charges
   ctx.scale(k * zoom, k * zoom);
   ctx.translate(-dishX * (zoom - 1) / zoom, -dishY * (zoom - 1) / zoom);
@@ -812,7 +815,7 @@ function slDrawDeathStar(u, cw, chh, k, jx, jy, push, zoom) {
   ctx.strokeStyle = "#cfd3d8"; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(dishX, dishY, dishR, 0, 6.28); ctx.stroke();
   ctx.fillStyle = "#1c1e22"; ctx.beginPath(); ctx.arc(dishX, dishY, dishR * 0.13, 0, 6.28); ctx.fill();
   // the focal point, out in front of the dish
-  var fx = dishX, fyy = dishY + dishR * 0.15;
+  var fx = dishX + nx * dishR * 0.55, fyy = dishY + ny * dishR * 0.55; // the focal point, out in front of the dish
   if (u > 0.9 && u < SL_FIRE_AT + 0.05) {
     // eight beams light one by one round the rim and reach in to meet
     for (var b = 0; b < 8; b++) {
@@ -831,10 +834,17 @@ function slDrawDeathStar(u, cw, chh, k, jx, jy, push, zoom) {
   }
   if (u >= SL_FIRE_AT) {
     var fk = Math.min(1, (u - SL_FIRE_AT) / 0.1), bw = 60 * fk * (1 + 0.08 * Math.sin(u * 70));
-    slBeam(fx, fyy, fx, 4000, bw, u);
+    // it stops where it meets the planet, with a flare there
+    var hitY = (chh * 0.7 - fy) / (k * zoom) + dishY * (zoom - 1) / zoom, L = Math.max(200, (hitY - fyy) / ny);
+    ctx.save(); ctx.translate(fx, fyy); ctx.rotate(Math.atan2(ny, nx) - Math.PI / 2);
+    slBeam(0, 0, 0, L, bw, u);
+    var hf = ctx.createRadialGradient(0, L, 0, 0, L, bw * 4);
+    hf.addColorStop(0, "rgba(240,255,240,1)"); hf.addColorStop(0.35, "rgba(110,255,130,0.8)"); hf.addColorStop(1, "rgba(40,255,90,0)");
+    ctx.fillStyle = hf; ctx.beginPath(); ctx.arc(0, L, bw * 4 * (1 + 0.1 * Math.sin(u * 60)), 0, 6.28); ctx.fill();
+    ctx.restore();
     var mk = Math.min(1, (u - SL_FIRE_AT) / 0.5);
     ctx.strokeStyle = "rgba(210,255,210," + (1 - mk) + ")"; ctx.lineWidth = 14 * (1 - mk) + 2;
-    ctx.beginPath(); ctx.ellipse(fx, fyy, 50 + 320 * mk, 18 + 90 * mk, 0, 0, 6.28); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(fx, fyy, 50 + 320 * mk, 18 + 90 * mk, Math.atan2(ny, nx) + Math.PI / 2, 0, 6.28); ctx.stroke();
   }
   ctx.restore();
 }
