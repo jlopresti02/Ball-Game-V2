@@ -39,7 +39,7 @@ function tryWeave(b, attackerId, mult, noCounter) {
 
   b.weaveAnim = { t: 0, dur: 0.26, sign: Math.random() < 0.5 ? -1 : 1 };
   var atk = attackerId != null ? balls[attackerId] : null;
-  var canCrit = !noCounter && atk && atk.alive && !atk.invincible && !b.combo && !b.grapple;
+  var canCrit = !noCounter && atk && atk.alive && !atk.invincible && !b.combo && !b.grapple && !(b.cheater && b.cheater.mode === "bat"); // (weapon out: only weapon attacks)
   if (canCrit && Math.random() < wv.critChance / 100) {
     if (atk.combo && atk.combo.targetId === b.id) {
       // Weaver vs weaver (e.g. BMF vs BMF): a critical weave in the middle of

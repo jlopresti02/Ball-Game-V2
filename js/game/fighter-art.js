@@ -20,6 +20,7 @@ function defaultLook() {
 // lone punching arm leaves it out. tattoos.armInkSide limits the ink to one arm.
 function armColor(ch, side) {
   if (!ch.look) return ch.color;
+  if (ch.look.sleeves) return ch.look.sleeves; // robe sleeves (Hokit's Dark Side)
   var tat = ch.look.tattoos || {};
   // A traced sleeve only shows on a punching arm, drawn by drawTracedArm
   if (!tat.armInk || tat.armDecal) return ch.look.skin;
@@ -75,9 +76,57 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   if (contained && look.hairPuff) drawHairPuff(c, r, look, ink);
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
+  if (contained && look.robe) drawSithRobe(c, r, look, ink);
   if (contained && look.headwear === "trucker") drawTruckerHat(c, r, look, ink);
   if (contained && look.headwear === "football") drawFootballHelmet(c, r, look, ink);
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
+  c.restore();
+}
+
+// Josh Hokit's Dark Side robe (hokit-darkside.js): a black hooded robe over
+// the whole ball, open down the middle. The hood frames his face (the
+// bandana's front edge, shades and beard showing), and the chest is bare
+// down to the shorts, lion tattoo and all.
+function drawSithRobe(c, r, look, ink) {
+  var lw = function (k) { return Math.max(1, r * k); };
+  var hole = function () {
+    c.moveTo(-r * 0.2, r * 1.05);
+    c.lineTo(-r * 0.3, r * 0.5);
+    c.lineTo(-r * 0.4, -r * 0.16);
+    c.bezierCurveTo(-r * 0.62, -r * 0.42, -r * 0.6, -r * 0.84, 0, -r * 0.86);
+    c.bezierCurveTo(r * 0.6, -r * 0.84, r * 0.62, -r * 0.42, r * 0.4, -r * 0.16);
+    c.lineTo(r * 0.3, r * 0.5);
+    c.lineTo(r * 0.2, r * 1.05);
+    c.closePath();
+  };
+  c.save();
+  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.clip();
+  // Shadow the hood casts in on the face and chest.
+  c.save();
+  c.beginPath(); hole(); c.clip();
+  var sg = c.createRadialGradient(0, -r * 0.35, r * 0.35, 0, -r * 0.35, r * 0.75);
+  sg.addColorStop(0, "rgba(0,0,0,0)"); sg.addColorStop(1, "rgba(0,0,0,0.45)");
+  c.fillStyle = sg; c.fillRect(-r, -r, r * 2, r * 2);
+  c.restore();
+  // The robe itself.
+  var g = c.createRadialGradient(-r * 0.4, -r * 0.5, r * 0.1, 0, 0, r * 1.1);
+  g.addColorStop(0, "#34343c"); g.addColorStop(0.55, "#17171b"); g.addColorStop(1, "#060608");
+  c.fillStyle = g;
+  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); hole(); c.fill("evenodd");
+  // Folds: the hood's rolled edge, the lapels, creases down the sides.
+  c.strokeStyle = "#3d3d46"; c.lineWidth = lw(0.05); c.lineJoin = "round"; c.lineCap = "round";
+  c.beginPath(); hole(); c.stroke();
+  c.strokeStyle = "rgba(0,0,0,0.7)"; c.lineWidth = lw(0.03);
+  [-1, 1].forEach(function (s) {
+    c.beginPath(); c.moveTo(s * r * 0.5, -r * 0.82); c.quadraticCurveTo(s * r * 0.82, -r * 0.45, s * r * 0.62, -r * 0.05); c.stroke(); // hood fold
+    c.beginPath(); c.moveTo(s * r * 0.55, r * 0.05); c.quadraticCurveTo(s * r * 0.62, r * 0.45, s * r * 0.48, r * 0.9); c.stroke();
+    c.beginPath(); c.moveTo(s * r * 0.8, r * 0.1); c.quadraticCurveTo(s * r * 0.86, r * 0.4, s * r * 0.78, r * 0.62); c.stroke();
+  });
+  c.strokeStyle = "rgba(255,255,255,0.08)"; c.lineWidth = lw(0.025);
+  c.beginPath(); c.moveTo(-r * 0.15, -r * 0.95); c.quadraticCurveTo(-r * 0.5, -r * 0.9, -r * 0.72, -r * 0.55); c.stroke(); // sheen on the hood
+  // The hood's peak.
+  c.fillStyle = "#0b0b0e";
+  c.beginPath(); c.moveTo(-r * 0.12, -r); c.quadraticCurveTo(0, -r * 0.9, r * 0.12, -r); c.closePath(); c.fill();
   c.restore();
 }
 

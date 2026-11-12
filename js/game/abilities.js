@@ -172,18 +172,20 @@ function updateAbilities(dt) {
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
     if (self.shocked || self.koOut || self.shelled || self.dazed || self.dizzy) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
+    if (updateDarkSide(self, other, dt)) continue; // Josh Hokit's Dark Side form change (hokit-darkside.js)
+    if (saberLockHeld(self)) continue; // locked up blade on bat with him
     if (updateDuckDrop(self, other, dt)) continue; // Jon Jones's Duck Drop (jon-duck.js)
     if (bearOn(self)) continue; // Khabib fighting, lifting or throwing the bear (khabib-bear.js)
     if (updateRapierLunge(self, other, dt)) continue; // Ilia's rapier lunge (rapier.js)
     if (updateIliaTornado(self, other, dt)) continue; // Ilia's Rose Tornado (ilia-tornado.js)
-    if (updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
+    if (!darkSideBlocks(self) && updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
     if (updateKamehameha(self, other, dt)) continue; // Charles's Kamehameha (kamehameha.js)
     if (updateInstantTransmission(self, other, dt)) continue; // and his Instant Transmission hard shot (instant-transmission.js)
     if (updateHotSauce(self, other, dt)) continue; // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
     if (updateSendLocation(self, other, dt)) continue; // Khabib's Send Me Location (send-location.js)
-    if (updateTopRope(self, other, dt)) continue; // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
+    if (!darkSideBlocks(self) && updateTopRope(self, other, dt)) continue; // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
     if (updateEagleCarry(self, other, dt)) continue; // Gaethje snatched up by his own eagle (gaethje-golf.js)
-    if (updateSpecial(self, other, dt)) continue; // a created character's special move
+    if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.guard) { updateGuard(self, other, dt); continue; }

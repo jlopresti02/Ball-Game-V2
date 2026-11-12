@@ -52,6 +52,7 @@ function makeBall(id, ch) {
   initHotSauce(b); // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
   initSendLocation(b); // Khabib's Send Me Location (send-location.js)
   initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
+  initDarkSide(b); // and his Dark Side form change (hokit-darkside.js)
   initKamehameha(b); // and Charles's Kamehameha (kamehameha.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
   initRingBear(b); // Khabib's ring bear (khabib-bear.js)
@@ -91,6 +92,7 @@ function startMatchSeeded(ch0, ch1) {
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
   resetCheater();
+  resetDarkSide(); // hokit-darkside.js
   resetHerbDean();
 
   document.getElementById("name0").textContent = ch0.name;

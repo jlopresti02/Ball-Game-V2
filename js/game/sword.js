@@ -355,12 +355,21 @@ function startSwordDuel(d, o, force) {
   swordDuel = {
     dId: d.id, oId: o.id, t: 0, mx: mx, my: my, gap: gap, phi0: o.x >= d.x ? 0 : Math.PI,
     fromD: { x: d.x, y: d.y }, fromO: { x: o.x, y: o.y }, fired: {}, spin: 0, lift: 0,
-    outcome: force || (Math.random() * 100 < sc.disarmChance ? "disarm" : "slash"), done: false, endT: -1, let: false
+    outcome: force || sithDuelOutcome(o) || (Math.random() * 100 < sc.disarmChance ? "disarm" : "slash"), done: false, endT: -1, let: false
   };
   floater(mx, my - d.r - 50, "SWORD CLASH!", "crit");
   crowdReact(1);
   playSwordClash(1.4);
   if (!reduceMotion) shake = Math.max(shake, 14);
+}
+
+// Against Josh Hokit's lightsaber (hokit-darkside.js) the duel can go three
+// ways, from his clash odds: he's slashed, he wins and slashes them back
+// ("oslash"), or he's disarmed (and pulls it back with the Force).
+function sithDuelOutcome(o) {
+  if (!o || !o.sith || !o.char.darkSide || !(o.cheater && o.cheater.saber)) return null;
+  var w = sithOutcome(o);
+  return w === "win" ? "oslash" : w === "hurt" ? "slash" : "disarm";
 }
 
 function duelBeat(t) {
@@ -456,7 +465,7 @@ function tickSwordDuel(dt) {
     sd.fired[key] = true;
     var c = duelContact(sd, S, SWINGS[B.bt.sw[j]].cy), big = B.i === DUEL_LEAP ? 3.5 : B.bt.k === "spin" ? 2 : B.bt.k === "combo" ? 1.1 : 1.4;
     clashFx(c.x, c.y, -S.ux, -S.uy, big, bladeColors(d));
-    playSwordClash(big > 3 ? 2.2 : big);
+    if (o.cheater && o.cheater.saber) playSaberClash(big > 3 ? 2 : big * 0.8); else playSwordClash(big > 3 ? 2.2 : big);
     d.squash = { t: 0.12, max: 0.12, nx: S.ux, ny: S.uy }; o.squash = { t: 0.12, max: 0.12, nx: -S.ux, ny: -S.uy };
     crowdReact(big > 3 ? 1 : 0.35);
     if (big > 3) { // the leaping strike landing: everything goes white
@@ -472,7 +481,7 @@ function tickSwordDuel(dt) {
   // The finish.
   if (sd.t >= DUEL_BEATS.total + 0.08) {
     sd.done = true; sd.endT = sd.t; sd.spin = 0; sd.lift = 0;
-    if (sd.outcome === "disarm") duelDisarm(d, o, sd, S); else duelDash(d, o, sd, S);
+    if (sd.outcome === "disarm") duelDisarm(d, o, sd, S); else if (sd.outcome === "oslash") duelOppDash(d, o, sd, S); else duelDash(d, o, sd, S);
   }
 }
 
@@ -497,11 +506,49 @@ function duelDash(d, o, sd, S) {
   playSwordDraw(); playWhoosh();
 }
 
+// Hokit winning it: he dashes through them with the saber (hokit-darkside.js).
+function duelOppDash(d, o, sd, S) {
+  sd.ux = S.ux; sd.uy = S.uy;
+  var run = sd.gap + o.r * 1.2;
+  sd.dashFrom = { x: o.x, y: o.y };
+  sd.dashTo = { x: Math.min(W - o.r, Math.max(o.r, o.x - S.ux * run)), y: Math.min(H - o.r, Math.max(o.r, o.y - S.uy * run)) };
+  saberCuts.push({ x0: o.x, y0: o.y - o.r * 0.2, x1: sd.dashTo.x, y1: sd.dashTo.y - o.r * 0.2, t: 0, r: o.r });
+  playSaberSwing(); playWhoosh();
+}
+
 function tickDuelFinish(d, o, sd, dt) {
   sd.t += dt;
   var f = sd.t - sd.endT, cfg = bladeCfg(d).duel, C = bladeColors(d);
   d.vx = d.vy = 0;
-  if (sd.outcome === "disarm") {
+  if (sd.outcome === "disarm" && o.sith && o.cheater && o.cheater.saber) {
+    if (f >= 0.38 && !sd.flung) { // knocked out of Hokit's hand: he pulls it back with the Force (hokit-darkside.js)
+      sd.flung = true; sd.let = true;
+      clashFx(o.x - sd.ux * o.r, o.y - o.r * 0.3, sd.ux, sd.uy, 2, C);
+      startForce(o, d, sd.ux, sd.uy);
+      if (!reduceMotion) shake = Math.max(shake, 20);
+    }
+  } else if (sd.outcome === "oslash") {
+    var ko = easeOut(Math.min(1, f / 0.14));
+    if (sd.dashTo) { o.x = sd.dashFrom.x + (sd.dashTo.x - sd.dashFrom.x) * ko; o.y = sd.dashFrom.y + (sd.dashTo.y - sd.dashFrom.y) * ko; }
+    o.vx = o.vy = 0;
+    if (f >= 0.45 && !sd.cut) {
+      sd.cut = true;
+      var won = hurt(d, o.char.darkSide.clash.winDamage, "igbb", o.id);
+      floater(d.x, d.y - d.r - 34, "SABER SLASH!", "crit");
+      d.flash = 0.16; duelFlash = 0.6;
+      for (var j = 0; j < 24 && !reduceMotion; j++) {
+        var ja = Math.atan2(-sd.uy, -sd.ux) + (Math.random() - 0.5) * 2.2, js = 200 + Math.random() * 400;
+        particles.push({ x: d.x, y: d.y, vx: Math.cos(ja) * js, vy: Math.sin(ja) * js, life: 0.5, max: 0.5, size: 2 + Math.random() * 3, color: j % 2 ? "#ff3030" : "#ffe1e1" });
+      }
+      if (!reduceMotion) { shake = Math.max(shake, 26); hitStop = Math.max(hitStop, 0.12); }
+      crowdReact(1);
+      playSaberHit(true);
+      endSwordDuel(d, o, sd);
+      if (won > 0 && d.alive) beginWallSlam(d, -sd.ux, -sd.uy, { knockback: o.char.darkSide.clash.winKnockback, wallSlams: 1, slamDamage: 4 });
+      checkEnd();
+      return;
+    }
+  } else if (sd.outcome === "disarm") {
     if (f >= 0.38 && !sd.flung) { // ripped away: the bat goes flying into the crowd
       sd.flung = true; sd.let = true;
       var up = -1;
@@ -700,6 +747,8 @@ function duelSwordPose(b, sd) {
     if (sd.outcome === "disarm") {
       al = SWINGS.fin.s + ease(f / 0.38) * Math.PI * 2; // a full circle round the bat to rip it out
       if (f > 0.45) al += wrapA(-al) * ease((f - 0.45) / 0.3); // then points it at them
+    } else if (sd.outcome === "oslash") {
+      al = SWINGS.fin.s + (DUEL_GUARD - SWINGS.fin.s) * ease(f / 0.3); // cut through by Hokit: back up on guard, too late
     } else {
       al = SWINGS.fin.s + easeOut(Math.min(1, f / 0.16)) * 4.0; // one huge cut on the way through
       if (f > 0.5) al += (DUEL_GUARD - al) * ease((f - 0.5) / 0.4); // and back up on guard
@@ -772,7 +821,8 @@ function drawDuelBat(o, sd) {
   var r = o.r, S = sd.done ? { ux: sd.ux, uy: sd.uy } : duelState(sd, sd.t);
   var side = -S.ux >= 0 ? 1 : -1;
   var al = duelAlpha(sd.done ? sd.endT : sd.t, true);
-  if (sd.done) al = SWINGS.fin.s - ease((sd.t - sd.endT) / 0.38) * Math.PI * 2; // wrenched round by the sword
+  if (sd.done && sd.outcome === "oslash") al = SWINGS.fin.s + easeOut(Math.min(1, (sd.t - sd.endT) / 0.16)) * 4.0; // Hokit's cut through them
+  else if (sd.done) al = SWINGS.fin.s - ease((sd.t - sd.endT) / 0.38) * Math.PI * 2; // wrenched round by the sword
   var pz = duelArmPose(o.x, o.y, r, side, al, 0, 0.58), len = weaponLen(o), ang = pz.ang, hand = pz.hand;
   var h2 = { x: hand.x - Math.cos(ang) * len * 0.12, y: hand.y - Math.sin(ang) * len * 0.12 };
   drawBentArm(o, pz.fsh, h2, -side);

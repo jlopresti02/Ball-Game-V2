@@ -442,9 +442,12 @@ function drawGolfShot(b, a) {
 
 // ---------------------------------------------------------------- drawing
 
-function weaponLen(b) { return golfing(b) ? b.r * GOLF_CLUB_LEN : b.r * 1.6; }
+function weaponLen(b) { return b.cheater && b.cheater.saber ? b.r * SABER_LEN : golfing(b) ? b.r * GOLF_CLUB_LEN : b.r * 1.6; }
 // The bat, or the club when it's Gaethje's.
-function drawWeapon(b, x, y, a, len) { if (golfing(b)) drawClub(x, y, a, len); else drawBat(x, y, a, len); }
+function drawWeapon(b, x, y, a, len) {
+  if (b.cheater && b.cheater.saber) drawSaber(x, y, a, len, saberIgnite(b)); // Hokit's lightsaber (hokit-darkside.js)
+  else if (golfing(b)) drawClub(x, y, a, len); else drawBat(x, y, a, len);
+}
 
 // Joe's driver, held at the grip at (x, y) and pointing along `a`.
 function drawClub(x, y, a, len) {
