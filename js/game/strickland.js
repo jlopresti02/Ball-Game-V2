@@ -184,7 +184,7 @@ function skTurn(a, want, maxStep) {
 function skDemo() { return typeof galleryDemo !== "undefined" && galleryDemo && galleryDemo.kind === "special"; }
 
 // From startMatchSeeded.
-function resetStrickland() { skClock = 0; amShow = null; amEagle = null; amWreck = null; amTrail = []; }
+function resetStrickland() { skClock = 0; amShow = null; amEagle = null; amWreck = null; amTrail = []; resetChuckNorris(); } // (and Chuck Norris, chuck-norris.js)
 // From makeBall (after its weight class is applied).
 function initStrickland(b) {
   b.sk = null; b.skRoll = 0; b.skTwo = null;
@@ -206,6 +206,7 @@ function initStrickland(b) {
 function tickStrickland(dt) {
   skClock += dt;
   tickAmericaShow(dt);
+  tickChuckNorris(dt); // Chuck Norris in America (chuck-norris.js)
   if (!balls) return;
   balls.forEach(function (b) {
     var s = b.sk;
@@ -553,6 +554,7 @@ function updateAmerica(self, other, dt) {
     if (m.phase === "eagle" && m.t >= sp.eagle) {
       m.phase = "flags"; m.t = 0;
       startAmericaShow(self);
+      chuckNorrisArrives(self, other); // Chuck Norris rappels in (chuck-norris.js)
       floater(self.x, self.y - self.r - 30, "AMERICA!", "crit");
       var lc = skCfg(self) && skCfg(self).lines;
       if (lc) skSay(self, self.sk && self.sk.rival === "pereira" ? "pereiraAmerica" : "america", lc.america, true);
@@ -669,7 +671,7 @@ function overhandsAmerica(self, other, m, sp, dt) {
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, gap = d - self.r - other.r;
   var ux = dx / d, uy = dy / d;
   if (o.state === "chase") {
-    if (o.n >= sp.overhands || m.ohT > sp.time) { skFinish(self, m); return true; }
+    if (o.n >= sp.overhands - chuckNorrisOverhandCut(self) || m.ohT > sp.time) { skFinish(self, m); return true; } // (Chuck Norris's roundhouse takes the place of some, chuck-norris.js)
     var step = (other.slam ? sp.chase * 0.6 : sp.chase) * dt;
     if (gap > SK_OH_REACH) skRollBack(self, ux, uy, Math.min(step, gap - SK_OH_REACH + 2));
     if (gap <= SK_OH_REACH + 4 && !other.slam) {
@@ -867,6 +869,7 @@ function stricklandHandsBusy(b) {
 // under him, the wreck and the exhaust.
 function drawStricklandUnder() {
   if (amShow && amShow.k > 0) drawSkMatFlag(amShow.k);
+  drawChuckNorrisUnder(); // the flag Chuck Norris planted (chuck-norris.js)
   amTrail.forEach(function (p) {
     var k = p.t / p.dur;
     ctx.save(); ctx.globalAlpha = 0.35 * (1 - k); ctx.fillStyle = "#8d8d8d";
@@ -1204,6 +1207,7 @@ function drawTraumaBar(b, other) {
 // Over the fighters: the eagle and the fireworks over the test arena.
 function drawStricklandOver() {
   if (amShow && !stadiumOn()) drawSkFireworks(amShow);
+  drawChuckNorris(); // Chuck Norris, the roundhouse and the explosion (chuck-norris.js)
   var e = amEagle;
   if (!e) return;
   var b = balls && balls[e.owner], other = b && balls[1 - b.id];
@@ -1281,7 +1285,7 @@ function stricklandSpecialInfo(sp) {
     "% health, limping, tired or dizzy. A bald eagle swoops in to his side, the cameras flash and it gets very America: the U-S-A chant, flags all over the stands and the mat, fireworks. " +
     "He gets on a motorcycle and revs it while a red lane shows where he'll ride, then rides down it: " + sp.bikeDamage + " if he runs them over (can't be slipped or blocked) and a knockback into the cage (" +
     sp.walls + " wall slams of " + sp.wallDamage + "), or he crashes it into the cage. Then he hops off and chases them with up to " + sp.overhands + " overhand rights (" + sp.overhandDamage +
-    " each), each one knocking them toward a corner; caught in a corner it's " + sp.cornerBonus + "x.";
+    " each), each one knocking them toward a corner; caught in a corner it's " + sp.cornerBonus + "x." + chuckNorrisSpecialInfo(sp); // (chuck-norris.js)
 }
 
 function teepGalleryInfo(tc) {
@@ -1297,6 +1301,7 @@ function stricklandGalleryMoves(ch, add) {
   if (ch.tdd) add("🧱", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots (\"STUFFED\") and jabs straight back.");
   if (cc) add("🫁", "Cardio", "Every " + secs(cc.every) + " (up to " + cc.max + " times) his pace goes up: " + Math.round(cc.speed * 100) + "% faster, attacks " + Math.round(cc.rate * 100) + "% faster, rolls " + cc.shell + "% more. From the " + cc.tiredAt + "th step they're tired and sweating, slower each time.");
   if (tr) add("🧠", "Trauma", "The bar under his health fills as he gets hurt and whenever they taunt him (\"TRIGGERED\": any of their lines, a thumbs down, a celebration). The fuller it is, the faster his special charges, up to " + (1 + tr.boost).toFixed(1) + "x. America takes it back down.");
+  chuckNorrisGalleryMove(ch, add); // Chuck Norris in America (chuck-norris.js)
   if (rv.pereira) add("🦅", "UFC 276", "Against Alex Pereira, who knocked him out with a left hook: his trauma starts at " + rv.pereira.trauma + "%, he can't roll the CHAMA combo, and the CHAMA hook gets an extra " + rv.pereira.hookKo + "% knockout chance.");
 }
 
@@ -1304,6 +1309,7 @@ function stricklandGalleryAssets(list) {
   list.push({ name: "Motorcycle", info: "Sean Strickland rides it into them in America.", w: 300, h: 200, draw: function (c, w, h) {
     withCtx(c, function () { var was = skClock; skClock = 0.4; drawSkBike(w * 0.52, h * 0.5, 0, 52, 0.6, 1, true); skClock = was; });
   } });
+  chuckNorrisGalleryAssets(list); // (chuck-norris.js)
 }
 
 function stricklandGallerySounds(groups, synth) {
@@ -1318,6 +1324,7 @@ function stricklandGallerySounds(groups, synth) {
     synth("Bike crash", "The bike hitting the cage.", function () { playSkCrash(); }),
     synth("Overhand wind-up", "Cocking an overhand right.", function () { playSkWindup(); })
   ] });
+  chuckNorrisGallerySounds(groups, synth); // (chuck-norris.js)
 }
 
 // ---------------------------------------------------------------- sound

@@ -3,7 +3,7 @@
 // Combinations (combos.js) throw them too.
 //
 //   "knee": { "damage": 10, "cooldown": 2.6, "speed": 0.3, "reach": 12,
-//             "critChance": 0, "critMult": 2, "knockback": 200,
+//             "critChance": 30, "critMult": 2, "knockback": 200,
 //             "clinch": { ... }, "flying": { ... } }
 //
 // damage      what a knee does ("KNEE!"). `critChance`% of them are critical
@@ -52,7 +52,7 @@ GUARD_SOURCES.knee = true; // a knee can knock a guard player onto its back (gua
 GSP_SH_MELEE.knee = true;  // and GSP's shield blocks one like any strike (gsp-shield.js)
 
 var KNEE_HIT = 0.5;     // share of the knee's time when it lands
-var KNEE_DEF = { damage: 10, cooldown: 2.6, speed: 0.3, reach: 12, critChance: 0, critMult: 2, knockback: 200 };
+var KNEE_DEF = { damage: 10, cooldown: 2.6, speed: 0.3, reach: 12, critChance: 30, critMult: 2, knockback: 200 }; // knees crit often (Christian, 2026-11-13)
 var PLUM_DEF = { first: [4, 7], every: [7, 11], range: 14, knees: [2, 4], damage: 8, gap: 0.4, escape: 15, grapplerEscape: 10, knockback: 380 };
 var FKNEE_DEF = { first: [6, 10], every: [11, 16], minGap: 70, maxGap: 210, load: 0.4, speed: 950, damage: 22, knockback: 560,
   koBase: 3, koLow: 15, readChance: 15, open: 0.8 };
