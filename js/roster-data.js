@@ -2717,7 +2717,11 @@ var SAVED_ROSTER = [
       },
       "lines": {
         "start": 70,
-        "answer": 70
+        "answer": 70,
+        "trash": [
+          7,
+          11
+        ]
       },
       "iconic": {
         "buffer": true,
