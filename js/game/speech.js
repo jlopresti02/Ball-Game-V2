@@ -15,7 +15,9 @@
 //                drawn: pass { clip: "name" } to say(), or list the line in
 //                SPEECH_CLIPS (exact text -> SOUND_CLIPS name, filled in by
 //                voice-clips.js) so no fighter code changes. The clip has its
-//                own bleeps. SPEECH_TEXT_WITH_CLIP shows the text as well.
+//                own bleeps. SPEECH_TEXT_WITH_CLIP shows the text as well. A line with
+//                no clip yet is silent and not drawn (SPEECH_TEXT_WITHOUT_CLIP
+//                false); it still takes its turn, so the fight plays the same.
 // canSay(b)      false while a bubble is up or for `SPEECH_GAP` seconds after,
 //                so a talker doesn't bury the fight in text.
 // pickLine(b, lines, key)  a random line from `lines`, never the same one
@@ -39,6 +41,7 @@ var SPEECH_FONT = "800 " + SPEECH_SIZE + "px \"Barlow Condensed\", \"Arial Narro
 var SPEECH_LINE_H = 27;
 var SPEECH_CLIPS = {};   // "exact line text": "soundClipName" (voice-clips.js)
 var SPEECH_TEXT_WITH_CLIP = false; // true: draw the bubble/caption even when the line is heard
+var SPEECH_TEXT_WITHOUT_CLIP = false; // false: a line with no clip yet is not shown at all (every line is heard, never read)
 var speech = [];         // by fighter id: { words, t, dur, said, quietT, clip }
 
 var announcer = null;     // { words, t, dur, who, clip }
@@ -53,7 +56,7 @@ function say(b, text, opts) {
   s.words = words; s.t = 0; s.said = 0;
   s.dur = words.length * SPEECH_WORD + SPEECH_READ + words.length * 0.12 + ((opts && opts.hold) || 0);
   s.clip = (opts && opts.clip) || SPEECH_CLIPS[text] || null;
-  s.hidden = !!s.clip && !SPEECH_TEXT_WITH_CLIP;
+  s.hidden = s.clip ? !SPEECH_TEXT_WITH_CLIP : !SPEECH_TEXT_WITHOUT_CLIP;
   if (s.clip) playSpeechClip(s.clip);
 }
 
@@ -85,7 +88,7 @@ function tickSpeech(dt) {
   if (announcer) {
     announcer.t += dt;
     var an = Math.min(announcer.words.length, Math.floor(announcer.t / SPEECH_WORD) + 1);
-    while (announcer.said < an) { if (announcer.words[announcer.said].bleep && !announcer.clip) playBleep(); announcer.said++; }
+    while (announcer.said < an) { if (announcer.words[announcer.said].bleep && !announcer.clip && !announcer.hidden) playBleep(); announcer.said++; }
     if (announcer.t >= announcer.dur) announcer = null;
   }
   for (var i = 0; i < speech.length; i++) {
@@ -96,7 +99,7 @@ function tickSpeech(dt) {
     if (!b || !b.alive) { s.words = null; continue; }
     s.t += dt;
     var n = Math.min(s.words.length, Math.floor(s.t / SPEECH_WORD) + 1);
-    while (s.said < n) { if (s.words[s.said].bleep && !s.clip) playBleep(); s.said++; }
+    while (s.said < n) { if (s.words[s.said].bleep && !s.clip && !s.hidden) playBleep(); s.said++; }
     if (s.t >= s.dur) { s.words = null; s.quietT = SPEECH_GAP; }
   }
 }
@@ -163,7 +166,7 @@ function announce(text, opts) {
   announcer = { words: words, t: 0, said: 0, who: ((opts && opts.who) || "COMMENTARY").toUpperCase(),
     dur: words.length * SPEECH_WORD + SPEECH_READ + 0.6 + words.length * 0.12 + ((opts && opts.hold) || 0),
     clip: (opts && opts.clip) || SPEECH_CLIPS[text] || null };
-  announcer.hidden = !!announcer.clip && !SPEECH_TEXT_WITH_CLIP;
+  announcer.hidden = announcer.clip ? !SPEECH_TEXT_WITH_CLIP : !SPEECH_TEXT_WITHOUT_CLIP;
   if (announcer.clip) playSpeechClip(announcer.clip);
 }
 

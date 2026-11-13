@@ -96,6 +96,8 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "presser") return updatePresser(self, other, dt); // conor.js
   if (sp.move === "snow") return updateSnowDay(self, other, dt); // liddell.js
   if (sp.move === "smash") return updateSmash(self, other, dt); // ngannou.js
+  if (sp.move === "kangaroo") return updateKangaroo(self, other, dt); // volkanovski.js
+  if (sp.move === "middle") return updateMiddle(self, other, dt); // Max Holloway (holloway.js)
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };
@@ -285,6 +287,7 @@ function igbbLocked(b) {
 function specialGuarding(b) {
   if (b.igbb && b.igbb.move === "toprope" && b.igbb.phase === "down") return false; // Hokit flat on the mat can be hit (hokit-toprope.js)
   if (b.igbb && b.igbb.move === "duckdrop") return false; // Jon's Duck Drop landing can be hit (jon-duck.js)
+  if (middleTrading(b)) return false; // Max Holloway trading in the middle can be hit (holloway.js)
   return b.igbb && b.igbb.phase !== "close";
 }
 

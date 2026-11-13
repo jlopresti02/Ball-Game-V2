@@ -66,7 +66,8 @@ var CM_LINES = {
     "He makes gang signs with his right hand and animal balloons with his left.",
     "He's in a [BLEEP] tracksuit. He can't even afford a suit anymore.",
     "He will be unconscious inside four rounds.",
-    "I'd like to take this chance to apologize... to absolutely nobody."
+    "I'd like to take this chance to apologize... to absolutely nobody.",
+    "You ring your wife: Baby, we done it. We're rich, baby. Conor McGregor made us rich. Break out the red panties!"
   ],
   slip: ["He throws an overhand right, looks at the floor, and hopes for the best."],
   presser: [
@@ -330,6 +331,7 @@ function endTaunt(self) {
 // It gets to them: the same anger as Josh Hokit's thumbs down (hokit.js).
 function angerThem(self, other, dur, furious) {
   if (!other || !other.alive || other.koOut || !(dur > 0)) return;
+  if (hollowayShrugs(other, self, furious)) return; // Max Holloway doesn't take the bait: "Keep talking." (holloway.js)
   other.angry = { t: 0, dur: dur, atId: self.id };
   floater(other.x, other.y - other.r - 26, furious ? "FURIOUS!" : "ANGRY", "note");
   playTauntOoh();

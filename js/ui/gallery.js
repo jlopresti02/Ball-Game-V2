@@ -67,7 +67,9 @@ var SPECIAL_INFO = {
   bow: function (sp) { return "Draws a big red bow while the path it'll fly lights up red, bouncing off the cage, then fires a big red arrow that bings off the cage up to " + sp.bounces + " times. It hits them up to " + sp.hits + " times (" + sp.damage + ", then " + sp.secondHit + "), can't be slipped or blocked, then thunks into the cage."; },
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }
 };
+SPECIAL_INFO.kangaroo = function (sp) { return volkKangarooInfo(sp); }; // Alexander Volkanovski (volkanovski.js)
 SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
+SPECIAL_INFO.middle = function (sp) { return hollowaySpecialInfo(sp); }; // Max Holloway (holloway.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
 function galleryMoves(ch) {
@@ -146,6 +148,8 @@ function galleryMoves(ch) {
     if (scr) add("😴", "Sugar crash", "After " + scr.after + " sweets he crashes: " + Math.round(scr.slow * 100) + "% speed, slower hands and no crane kicks for " + secs(scr.time) + ".");
   }
   if (ch.gsp) gspGalleryMoves(ch, add); // Georges St-Pierre (gsp.js)
+  if (ch.volk) volkGalleryMoves(ch, add); // Alexander Volkanovski (volkanovski.js)
+  if (ch.holloway) hollowayGalleryMoves(ch, add); // Max Holloway (holloway.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;
@@ -349,6 +353,7 @@ function galleryAssets() {
     withCtx(c, function () { drawBrazilFlag(w * 0.5, h * 0.55, w * 0.55, 0, 0); });
   } });
   gspGalleryAssets(list); // GSP's Montreal stadium and the Quebec and Canada flags (gsp.js)
+  volkGalleryAssets(list); // Volkanovski's kangaroo and the Australian flag (volkanovski.js)
   return list;
 }
 
@@ -427,6 +432,8 @@ function gallerySounds() {
     ] }
   ];
   gspGallerySounds(groups, synth); // GSP's sounds (gsp.js)
+  volkGallerySounds(groups, synth); // Volkanovski's sounds (volkanovski.js)
+  hollowayGallerySounds(groups, synth); // Max Holloway's sounds (holloway.js)
   // Anything new in SOUND_CLIPS that isn't listed above still shows up.
   var listed = {};
   groups.forEach(function (g) { g.items.forEach(function (it) { if (it.clip) listed[it.clip] = true; }); });

@@ -128,6 +128,183 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-alexander-volkanovski",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "featherweight",
+    "name": "Alexander Volkanovski",
+    "base": "Brawler",
+    "bio": "\"The Great\". The Australian Featherweight, built on the Brawler base with kicks and wrestling: the most well-rounded fighter in the game, and tough to hurt. A couple of seconds in he reads your numbers onto a FIGHT IQ card. If you're the submission threat he kicks you from outside and stays off the mat; if you're the striker he wrestles you; and if it isn't working he adapts. He never stands still: he circles you, switching between clockwise and counter-clockwise. Special move: Kangaroo. An Aussie tune starts, the whole arena goes green and gold, a big red kangaroo bounds in over the cage, he hops into its pouch, and it kicks you into the cage while he punches you out of the pouch.",
+    "color": "#00843d",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#e0b394",
+      "build": "stocky",
+      "bodyHair": "none",
+      "hair": "short",
+      "hairColor": "#2a1e17",
+      "beard": "short",
+      "beardColor": "#2a1e17",
+      "ears": "cauliflower",
+      "tattoos": {
+        "tribalShoulder": true
+      },
+      "shorts": "#0b5d3b",
+      "trim": "#c9a44c",
+      "shortsStyle": "meander",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 14,
+      "cooldown": 0.75,
+      "speed": 0.2,
+      "size": 13,
+      "knockback": 110,
+      "reach": 34,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 24,
+      "cooldown": 2.2,
+      "speed": 0.36,
+      "size": 13,
+      "knockback": 240,
+      "reach": 66,
+      "checkChance": 30
+    },
+    "hasGrapple": true,
+    "grapple": {
+      "damage": 36,
+      "cooldown": 1.5,
+      "speed": 0.42,
+      "reach": 8,
+      "counterChance": 20,
+      "finSlamDamage": 20,
+      "finPunches": 3,
+      "finPunchDamage": 10,
+      "sprawlChance": 55,
+      "reattackChance": 55,
+      "vsGrapplerChance": 100,
+      "shotChance": 25,
+      "shotName": "DOUBLE LEG"
+    },
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 15,
+    "volk": {
+      "durability": {
+        "damageTaken": 0.88
+      },
+      "gamePlan": {
+        "readAt": 2.5,
+        "card": 2.8,
+        "mixedWithin": 12,
+        "plans": {
+          "kicks": {
+            "kickCooldown": 0.55,
+            "kickDamage": 1.1,
+            "shotChance": 0,
+            "sprawlBonus": 20,
+            "gap": 50
+          },
+          "wrestle": {
+            "kickCooldown": 1.6,
+            "shotChance": 50,
+            "reachBonus": 6,
+            "grappleCooldown": 0.8,
+            "gap": 12
+          },
+          "mixed": {
+            "kickCooldown": 1,
+            "shotChance": 25,
+            "gap": 30
+          }
+        },
+        "adapt": {
+          "max": 2,
+          "after": 8,
+          "stuffed": 2,
+          "takenDown": 2,
+          "checked": 3,
+          "damageLead": 80
+        }
+      },
+      "circle": {
+        "after": 0.6,
+        "switchEvery": [
+          1.0,
+          2.2
+        ],
+        "turn": 9,
+        "sway": 15,
+        "swayEvery": 1.7,
+        "pivot": 0.7,
+        "range": 330
+      },
+      "rivals": {
+        "ilia": {
+          "damageTaken": 1.3
+        },
+        "max": {
+          "damage": 1.1
+        }
+      },
+      "walkout": {
+        "keep": 1.6
+      },
+      "lines": {
+        "start": true,
+        "plan": 70,
+        "adapt": true,
+        "rival": true,
+        "nail": 30,
+        "win": true,
+        "gap": 8
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "kangaroo",
+      "chargeTime": 55,
+      "hitCut": 3,
+      "punchCut": 1.5,
+      "rounds": 2,
+      "hops": 4,
+      "pouchPunches": [
+        6,
+        4
+      ],
+      "pouchDamage": 7,
+      "kickDamage": [
+        30,
+        40
+      ],
+      "walls": [
+        2,
+        3
+      ],
+      "wallDamage": 6,
+      "knockback": 1100,
+      "readChance": 20,
+      "tune": true
+    }
+  },
+  {
     "id": "c-charles-oliveira",
     "rev": 15,
     "builtin": false,
@@ -2118,6 +2295,192 @@ var SAVED_ROSTER = [
       "max": 1,
       "dmg": 100,
       "waveDmg": 40
+    }
+  },
+  {
+    "id": "c-max-holloway",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "featherweight",
+    "name": "Max Holloway",
+    "base": "Brawler",
+    "bio": "\"Blessed\". Built on the Brawler base, with the most strikes in the game: combos of quick punches off both hands instead of single shots, and no opening KO Rush. He gets better the longer it goes: his Blessed meter fills with fight time and every punch he lands, and his combos get longer, faster and heavier with it. Sprawls 70% of takedown shots and won't follow anyone down into the guard. Against a striker he's beating he turns to the commentators (\"Count it up!\", \"I'm the best boxer in the UFC, baby!\") and slips what they throw. Once a fight he has a flashback to playing an old fighting game and comes back button mashing. Special move The Middle (\"MEET ME IN THE MIDDLE\"): his real point down, from the Ricardo Lamas fight to the last-second knockout of Justin Gaethje at UFC 300. Featherweight.",
+    "color": "#0f9b8e",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#b47a54",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "mohawk",
+      "hairColor": "#17110d",
+      "waianae": true,
+      "beard": "short",
+      "beardColor": "#1b140f",
+      "ears": "normal",
+      "tattoos": {
+        "polynesian": true,
+        "armInk": true,
+        "armInkSide": "left"
+      },
+      "shorts": "#f4f2ec",
+      "trim": "#c8102e",
+      "shortsStyle": "hibiscus",
+      "flowers": [
+        "#c8102e",
+        "#123b8c"
+      ],
+      "legPatch": false,
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 7,
+      "cooldown": 0.8,
+      "speed": 0.13,
+      "size": 13,
+      "knockback": 150,
+      "reach": 38,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 12,
+    "tdd": {
+      "sprawlChance": 70
+    },
+    "holloway": {
+      "volume": {
+        "combo": [
+          3,
+          6
+        ],
+        "damage": [
+          6,
+          9
+        ],
+        "cooldown": [
+          0.75,
+          0.4
+        ],
+        "comboKnockback": 30,
+        "chase": 260,
+        "slack": 14
+      },
+      "blessed": {
+        "timeFill": 0.018,
+        "hitFill": 0.006,
+        "announce": [
+          0.5,
+          1
+        ]
+      },
+      "guardRespect": {
+        "chance": 85,
+        "margin": 22
+      },
+      "chin": {
+        "over": 15,
+        "mult": 0.8,
+        "sources": [
+          "punch",
+          "kick",
+          "kickback",
+          "swing",
+          "power",
+          "combo",
+          "flow"
+        ]
+      },
+      "unbothered": {
+        "chance": 75
+      },
+      "booth": {
+        "after": 14,
+        "lead": 50,
+        "minMeter": 0.3,
+        "range": 170,
+        "every": 14,
+        "max": 2,
+        "count": 1.1,
+        "boxer": 1.7,
+        "slip": 70,
+        "counter": 9
+      },
+      "flashback": {
+        "first": [
+          13,
+          22
+        ],
+        "zone": 0.45,
+        "tv": 2.8,
+        "back": 0.25
+      },
+      "mash": {
+        "time": 6,
+        "combo": [
+          4,
+          7
+        ],
+        "damage": 1.15,
+        "backfist": 18,
+        "chase": 300,
+        "gap": 0.3
+      },
+      "gaethje": {
+        "koBonus": 45,
+        "belt": true
+      },
+      "ilia": {
+        "hurt": 1.6
+      },
+      "lines": {
+        "booth": true,
+        "middle": true,
+        "zone": true,
+        "win": true,
+        "matador": true,
+        "conor": true,
+        "rogan": true
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "middle",
+      "chargeTime": 42,
+      "hitCut": 1,
+      "punchCut": 0.3,
+      "onlyWhenWinning": true,
+      "acceptChance": 85,
+      "point": 1.2,
+      "walk": 1.1,
+      "gap": 18,
+      "fury": 2.6,
+      "punchEvery": 0.09,
+      "damage": 5,
+      "answerEvery": 0.5,
+      "answerScale": 0.6,
+      "answerMax": 18,
+      "finalWindup": 0.32,
+      "finalDamage": 40,
+      "koBase": 15,
+      "koLow": 55,
+      "koMeter": 15,
+      "declineRefund": 0.5
     }
   },
   {

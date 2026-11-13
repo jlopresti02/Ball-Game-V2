@@ -2336,6 +2336,7 @@ var AURA_VOL = 0.55;
 function playClipOnce(name, vol, at) {
   var ctx = getAudioCtx(), buf = clipBuffers[name];
   if (!ctx || !buf) { withClip(name); return; }
+  if (ctx.state === "suspended") ctx.resume();
   var src = ctx.createBufferSource(); src.buffer = buf;
   var g = ctx.createGain(); g.gain.value = vol;
   src.connect(g); g.connect(ctx.destination); src.start(at || ctx.currentTime);
