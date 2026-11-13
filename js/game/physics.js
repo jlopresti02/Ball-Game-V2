@@ -17,6 +17,11 @@ function inOrdinaryMovement(b) {
   if (b.koRush || b.shocked || b.koOut || b.koDuel || b.igbb || b.shelled || b.dazed) return false;
   if (b.checkStun > 0 || b.checkAnim || (b.kick && b.kick.counter && !b.kick.hit)) return false;
   if (b.powerState || b.rageState || b.mock || cheaterHolding(b)) return false;
+  if (pereiraBusy(b)) return false; // planted for CHAMA or lunging behind it (pereira.js)
+  if (omalleyBusy(b)) return false; // up on one leg for the crane kick, leaping into it, or walking off a KO (omalley.js)
+  if (gspBusy(b)) return false; // GSP's Superman punch, his taunt, dazed after a missed dive (gsp.js)
+  if (conorBusy(b)) return false; // strutting, or planted for the counter left (conor.js)
+  if (ngannouBusy(b)) return false; // Francis Ngannou's rage punch, or off to rip up Dana's contract (ngannou.js)
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
   return true;
@@ -40,7 +45,7 @@ function regulateSpeed(b, dt) {
   if (tickSpeedEase(b, dt)) return;
   if (!inOrdinaryMovement(b) || b.dizzy) return; // (dizzy fighters stagger at their own pace, gaethje.js)
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-  var normal = b.baseSpeed || SPEED; // lighter fighters roll faster (weight.js)
+  var normal = (b.baseSpeed || SPEED) * slowMult(b); // lighter fighters roll faster (weight.js); a limp slows them (slowdown.js)
   var target;
   if (s < normal - 0.5) {
     // Too slow: pick up momentum, starting from at least a steady crawl.

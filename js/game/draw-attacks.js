@@ -20,17 +20,23 @@ function drawFist(self, other) {
   var armX = self.x + qnx * (self.r - 2) + perpx * gap, armY = self.y + qny * (self.r - 2) + perpy * gap;
   ctx.save();
   ctx.lineCap = "round";
+  if (hasArmMuscle(self.char)) {
+    drawArmMuscle(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6, theme.wall);
+  } else {
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = pu.size * 0.9 + 6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
   ctx.strokeStyle = armColor(self.char);
   ctx.lineWidth = pu.size * 0.6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
+  }
   if ((self.punch.side || 1) === 1) drawTracedArm(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6); // sleeve on one arm only
   ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fistX, fistY, pu.size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  stoneFistOver(self.char, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // Alex Pereira's stone fists (fighter-art.js)
+  frostFistOver(self, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // ice from punching Chuck Liddell (liddell.js)
   ctx.restore();
 }
 
@@ -118,6 +124,12 @@ function drawHands(b, other) {
   if (b.igbb && b.igbb.move === "herbdean") return; // swinging the bat (drawHerbDeanSpecial)
   if (sendLocHandsBusy(b)) return; // the phone call and pointing at the sky (drawSendLocation, send-location.js)
   if (hotSauceHandsBusy(b)) return; // the bottle, his head, fanning his mouth (drawHotSauce, hot-sauce.js)
+  if (pereiraHandsBusy(b)) return; // CHAMA fists up, or the bow (drawPereira, pereira.js)
+  if (omalleyHandsBusy(b)) return; // crane wings, the leap, or arms up for Sugar Rush (drawOmalley, omalley.js)
+  if (gspHandsBusy(b)) return; // Superman punch and dive, hands down (drawGsp, gsp.js)
+  if (conorHandsBusy(b)) return; // the strut, the counter stance, the podium (drawConor, conor.js)
+  if (liddellHandsBusy(b)) return; // scooping and packing the snow (drawLiddell, liddell.js)
+  if (ngannouHandsBusy(b)) return; // the rage punch, the Smash, the contract (drawNgannou, ngannou.js)
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)
@@ -135,10 +147,13 @@ function drawHands(b, other) {
       var pump = Math.max(0, Math.sin(tt * 11 + i * Math.PI)) * b.r * 0.4;
       var hx = b.x + sgn * b.r * 0.85, hy = b.y - b.r * 1.05 - pump;
       var sx = b.x + sgn * b.r * 0.62, sy = b.y - b.r * 0.55;
+      if (hasArmMuscle(b.char)) drawArmMuscle(ctx, b.char, sx, sy, hx, hy, b.r * 0.2, theme.wall);
+      else {
       ctx.strokeStyle = theme.wall; ctx.lineWidth = b.r * 0.34;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
       ctx.strokeStyle = armColor(b.char, sgn); ctx.lineWidth = b.r * 0.2;
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+      }
       ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(hx, hy, b.r * 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     });

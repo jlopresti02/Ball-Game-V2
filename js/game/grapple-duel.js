@@ -162,6 +162,7 @@ function grabEscaped(attacker, target) {
 }
 
 function attemptGrab(attacker, target) {
+  if (attacker.grappled || attacker.sprawled) return false; // counter-grabbed earlier this turn: grabbing back would lock both up for good
   if (duckDropOn(attacker) || duckDropOn(target)) return false; // no grappling mid Duck Drop (jon-duck.js)
   if (bearOn(attacker) || bearOn(target) || attacker.bearHeld || target.bearHeld) return false; // or in the bear's dust cloud (khabib-bear.js)
   if (tornadoOn(attacker) || tornadoOn(target) || attacker.torHeld || target.torHeld) return false; // or Ilia's Rose Tornado (ilia-tornado.js)
@@ -183,6 +184,7 @@ function attemptGrab(attacker, target) {
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;
   }
+  if (gspDoubleLeg(attacker, target)) return true; // GSP's elite double leg goes straight through (gsp.js)
   if (grabEscaped(attacker, target)) return false;
   if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
   if (cheaterFenceGrab(attacker, target)) return false; // cheating: grabs the cage (cheater.js); suplexes still land
@@ -195,6 +197,7 @@ function attemptGrab(attacker, target) {
   }
   if (tryTddSprawl(attacker, target)) return false; // takedown defense without grappling (ilia.js)
   if (tryJonTakedown(attacker, target)) return true; // GOAT Jon Jones: to the back, or ground and pound (jon.js)
+  if (tryKhabibOnConor(attacker, target)) return true; // Khabib vs Conor McGregor: to the back, or ground and pound (conor.js)
   beginGrapple(attacker, target);
   return true;
 }
