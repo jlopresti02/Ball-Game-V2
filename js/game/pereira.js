@@ -4,7 +4,8 @@
 //            that dips his level (applyPoatanStep). Stone fists
 //            (look.stoneFists, fighter-art.js): "Poatan" means "stone hands".
 // CHAMA      every few seconds when he's close (poatan.chama): he plants and
-//            shouts "CHAMA!", and the crowd shouts it back. The shout is the
+//            shouts "CHAMA!" (his real screamed takes, poChamaShout), and the
+//            crowd shouts it back; he screams it again on a knockout. The shout is the
 //            tell: some opponents read it and back off (readChance, more for
 //            a weaver). Then he steps in behind left-right-left, the last one
 //            the left hook. A clean hook is a knockout koBase% of the time at
@@ -126,6 +127,7 @@ function startChama(self, other, cc) {
   poEcho = { t: -cc.echo, spots: chamaEchoSpots() };
   crowdReact(0.5);
   playChamaStomp();
+  poChamaShout(); // he really shouts it
   if (!reduceMotion) shake = Math.max(shake, 6);
 }
 
@@ -204,6 +206,22 @@ function beginChamaKo(self, other, m) {
   self.vx = 0; self.vy = 0;
   floater(self.x, self.y - self.r - 30, "POATAN!", "crit");
   crowdReact(1);
+  poChamaShout(); // and screams it over them
+}
+
+// His real "CHAMA!" (voice-clips.js): one of his screamed walkout takes,
+// never the same one twice in a row; the calm one only if there's no scream.
+var PO_CHAMA_CLIPS = ["pereiraChamaScream1", "pereiraChamaScream2", "pereiraChamaScream3", "pereiraChamaScream4"];
+var poLastChama = null;
+function poChamaShout() {
+  if (typeof SOUND_CLIPS === "undefined") return;
+  var have = PO_CHAMA_CLIPS.filter(function (n) { return SOUND_CLIPS[n]; });
+  if (!have.length && SOUND_CLIPS.pereiraChama) have = ["pereiraChama"];
+  if (!have.length) return;
+  var i = Math.floor(Math.random() * have.length);
+  if (have.length > 1 && have[i] === poLastChama) i = (i + 1) % have.length;
+  poLastChama = have[i];
+  playSpeechClip(have[i]);
 }
 function chamaKo(self, other, m, dt) {
   self.vx = 0; self.vy = 0;

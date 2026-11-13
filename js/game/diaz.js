@@ -89,7 +89,8 @@ var ND_LINES = {
     "I'll be here in forty years fighting, still killing.",                  // UFC 241 post-fight press conference, 2019
     "Now we're fighting for the baddest [BLEEP] in the game belt. And that's mine." // same presser
   ],
-  win: "I'm not surprised, [BLEEP]."                                         // UFC 196 octagon interview, 2016
+  win: "I'm not surprised, [BLEEP].",                                        // UFC 196 octagon interview, 2016
+  trash: []                                                                  // more real trash talk, no names (filled in as clips are cut)
 };
 var NICK_LINE = "Don't be scared, homie."; // Nick Diaz to K.J. Noons, EliteXC: Return of the King, 2008
 // The commentators' calls on the real UFC 196 finish (diaz.iconic).
@@ -279,10 +280,29 @@ function ndChain196(b, other, m, cfg) {
   playWhoosh();
 }
 
+// "Stockton!" as the slap lands (his real takes, voice-clips.js), unless
+// he's in the middle of a line.
+var ND_STOCKTON_CLIPS = ["diazStockton", "diazStockton2", "diazStockton3"];
+function ndStocktonShout(b) {
+  if (typeof SOUND_CLIPS === "undefined" || speaking(b)) return;
+  var have = ND_STOCKTON_CLIPS.filter(function (n) { return SOUND_CLIPS[n]; });
+  if (have.length) playSpeechClip(have[Math.floor(Math.random() * have.length)]);
+}
+
 // The opener, answering Conor, the win line and the iconic call.
 function ndLines(b, other, m, cfg, dt) {
   var ln = cfg.lines || {};
   var vsConor = ndVsConor(b, other);
+  // He never stops talking: a line of trash talk every `trash` seconds
+  // (lines.trash), from ND_LINES.trash plus the opener and the surge lines.
+  if (ln.trash && started && !over && b.alive && other.alive && m.opened) {
+    if (m.trashT == null) m.trashT = ndRand(ln.trash);
+    m.trashT -= dt;
+    if (m.trashT <= 0 && canSay(b) && !diazBusy(b)) {
+      say(b, pickLine(b, ND_LINES.trash.concat(ND_LINES.start, ND_LINES.surge), "trash"));
+      m.trashT = ndRand(ln.trash);
+    }
+  }
   if (started && !over && b.alive && !m.opened && m.t > 0.5 && canSay(b)) {
     m.opened = true;
     if (vsConor) say(b, pickLine(b, ND_LINES.vsConorStart, "start"));
@@ -421,7 +441,7 @@ function ndRunSlap(self, other, m, cfg, dt) {
     else {
       var st = cfg.stockton;
       var dealt = hurt(other, s.power ? st.slapDamage : sc.damage, s.power ? "igbb" : "punch", self.id); // the surge's slap can't be slipped or blocked
-      if (dealt > 0) { s.landed = true; slapLanded(self, other, s.power ? st.slapDizzy : sc.dizzy, s.power, sc.knockback, s.side); }
+      if (dealt > 0) { s.landed = true; slapLanded(self, other, s.power ? st.slapDizzy : sc.dizzy, s.power, sc.knockback, s.side); ndStocktonShout(self); }
       checkEnd();
     }
   }

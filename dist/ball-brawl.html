@@ -7628,7 +7628,11 @@ var SAVED_ROSTER = [
       },
       "lines": {
         "start": 70,
-        "answer": 70
+        "answer": 70,
+        "trash": [
+          7,
+          11
+        ]
       },
       "iconic": {
         "buffer": true,
@@ -15003,7 +15007,8 @@ function playBleep() {
 //            that dips his level (applyPoatanStep). Stone fists
 //            (look.stoneFists, fighter-art.js): "Poatan" means "stone hands".
 // CHAMA      every few seconds when he's close (poatan.chama): he plants and
-//            shouts "CHAMA!", and the crowd shouts it back. The shout is the
+//            shouts "CHAMA!" (his real screamed takes, poChamaShout), and the
+//            crowd shouts it back; he screams it again on a knockout. The shout is the
 //            tell: some opponents read it and back off (readChance, more for
 //            a weaver). Then he steps in behind left-right-left, the last one
 //            the left hook. A clean hook is a knockout koBase% of the time at
@@ -15125,6 +15130,7 @@ function startChama(self, other, cc) {
   poEcho = { t: -cc.echo, spots: chamaEchoSpots() };
   crowdReact(0.5);
   playChamaStomp();
+  poChamaShout(); // he really shouts it
   if (!reduceMotion) shake = Math.max(shake, 6);
 }
 
@@ -15203,6 +15209,22 @@ function beginChamaKo(self, other, m) {
   self.vx = 0; self.vy = 0;
   floater(self.x, self.y - self.r - 30, "POATAN!", "crit");
   crowdReact(1);
+  poChamaShout(); // and screams it over them
+}
+
+// His real "CHAMA!" (voice-clips.js): one of his screamed walkout takes,
+// never the same one twice in a row; the calm one only if there's no scream.
+var PO_CHAMA_CLIPS = ["pereiraChamaScream1", "pereiraChamaScream2", "pereiraChamaScream3", "pereiraChamaScream4"];
+var poLastChama = null;
+function poChamaShout() {
+  if (typeof SOUND_CLIPS === "undefined") return;
+  var have = PO_CHAMA_CLIPS.filter(function (n) { return SOUND_CLIPS[n]; });
+  if (!have.length && SOUND_CLIPS.pereiraChama) have = ["pereiraChama"];
+  if (!have.length) return;
+  var i = Math.floor(Math.random() * have.length);
+  if (have.length > 1 && have[i] === poLastChama) i = (i + 1) % have.length;
+  poLastChama = have[i];
+  playSpeechClip(have[i]);
 }
 function chamaKo(self, other, m, dt) {
   self.vx = 0; self.vy = 0;
@@ -35532,7 +35554,8 @@ var ND_LINES = {
     "I'll be here in forty years fighting, still killing.",                  // UFC 241 post-fight press conference, 2019
     "Now we're fighting for the baddest [BLEEP] in the game belt. And that's mine." // same presser
   ],
-  win: "I'm not surprised, [BLEEP]."                                         // UFC 196 octagon interview, 2016
+  win: "I'm not surprised, [BLEEP].",                                        // UFC 196 octagon interview, 2016
+  trash: []                                                                  // more real trash talk, no names (filled in as clips are cut)
 };
 var NICK_LINE = "Don't be scared, homie."; // Nick Diaz to K.J. Noons, EliteXC: Return of the King, 2008
 // The commentators' calls on the real UFC 196 finish (diaz.iconic).
@@ -35722,10 +35745,29 @@ function ndChain196(b, other, m, cfg) {
   playWhoosh();
 }
 
+// "Stockton!" as the slap lands (his real takes, voice-clips.js), unless
+// he's in the middle of a line.
+var ND_STOCKTON_CLIPS = ["diazStockton", "diazStockton2", "diazStockton3"];
+function ndStocktonShout(b) {
+  if (typeof SOUND_CLIPS === "undefined" || speaking(b)) return;
+  var have = ND_STOCKTON_CLIPS.filter(function (n) { return SOUND_CLIPS[n]; });
+  if (have.length) playSpeechClip(have[Math.floor(Math.random() * have.length)]);
+}
+
 // The opener, answering Conor, the win line and the iconic call.
 function ndLines(b, other, m, cfg, dt) {
   var ln = cfg.lines || {};
   var vsConor = ndVsConor(b, other);
+  // He never stops talking: a line of trash talk every `trash` seconds
+  // (lines.trash), from ND_LINES.trash plus the opener and the surge lines.
+  if (ln.trash && started && !over && b.alive && other.alive && m.opened) {
+    if (m.trashT == null) m.trashT = ndRand(ln.trash);
+    m.trashT -= dt;
+    if (m.trashT <= 0 && canSay(b) && !diazBusy(b)) {
+      say(b, pickLine(b, ND_LINES.trash.concat(ND_LINES.start, ND_LINES.surge), "trash"));
+      m.trashT = ndRand(ln.trash);
+    }
+  }
   if (started && !over && b.alive && !m.opened && m.t > 0.5 && canSay(b)) {
     m.opened = true;
     if (vsConor) say(b, pickLine(b, ND_LINES.vsConorStart, "start"));
@@ -35864,7 +35906,7 @@ function ndRunSlap(self, other, m, cfg, dt) {
     else {
       var st = cfg.stockton;
       var dealt = hurt(other, s.power ? st.slapDamage : sc.damage, s.power ? "igbb" : "punch", self.id); // the surge's slap can't be slipped or blocked
-      if (dealt > 0) { s.landed = true; slapLanded(self, other, s.power ? st.slapDizzy : sc.dizzy, s.power, sc.knockback, s.side); }
+      if (dealt > 0) { s.landed = true; slapLanded(self, other, s.power ? st.slapDizzy : sc.dizzy, s.power, sc.knockback, s.side); ndStocktonShout(self); }
       checkEnd();
     }
   }
@@ -53226,15 +53268,15 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261113081317"></script>
-<script src="js/game/update.js?v=20261113081317"></script>
-<script src="js/game/fighter-art.js?v=20261113081317"></script>
-<script src="js/game/draw-attacks.js?v=20261113081317"></script>
-<script src="js/game/wwit-badge.js?v=20261113081317"></script>
-<script src="js/game/stadium.js?v=20261113081317"></script>
-<script src="js/game/draw.js?v=20261113081317"></script>
-<script src="js/ui/gallery.js?v=20261113081317"></script>
-<script src="js/ui/saved-fights.js?v=20261113081317"></script>
-<script src="js/main.js?v=20261113081317"></script>
+  <script src="js/game/intro-msg.js?v=20261113031503"></script>
+<script src="js/game/update.js?v=20261113031503"></script>
+<script src="js/game/fighter-art.js?v=20261113031503"></script>
+<script src="js/game/draw-attacks.js?v=20261113031503"></script>
+<script src="js/game/wwit-badge.js?v=20261113031503"></script>
+<script src="js/game/stadium.js?v=20261113031503"></script>
+<script src="js/game/draw.js?v=20261113031503"></script>
+<script src="js/ui/gallery.js?v=20261113031503"></script>
+<script src="js/ui/saved-fights.js?v=20261113031503"></script>
+<script src="js/main.js?v=20261113031503"></script>
 </body>
 </html>
