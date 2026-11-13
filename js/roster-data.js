@@ -3627,6 +3627,14 @@ var SAVED_ROSTER = [
           "knockback": 950,
           "wallSlams": 1,
           "slamDamage": 5
+        },
+        "beamSurf": {
+          "chance": 60,
+          "speed": 560,
+          "damage": 30,
+          "knockback": 950,
+          "wallSlams": 1,
+          "slamDamage": 5
         }
       },
       "bellAd": true,

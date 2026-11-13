@@ -21,6 +21,13 @@
 //               anyway at `at` seconds in, he teleports behind them, pulls
 //               into his turtle shell and rams it into their back
 //               (`damage`, into the cage). They never saw it coming.
+//   Beam surf   (beamSurf) any time, when Charles's Kamehameha or Conor's
+//               rainbow beam is about to hit him (`chance`%, always at x10),
+//               he hops up onto it upside down and rides it all the way back
+//               to whoever fired it (Goku on Kefla's blast in the Tournament
+//               of Power), then hits them for `damage`, into the cage, and
+//               their beam cuts out.
+// Nothing hurts him inside the shell (Joe): the shell strike, like his shell.
 // "KAIOKEN" is Goku's power-up and the ki barrage a Dragon Ball move, not
 // quotes of his. Burrito Bell is the parody restaurant from his ad
 // (burrito-bell-ad.js). Synth sounds for now, plus Joe's teleport clip.
@@ -38,6 +45,7 @@ function tfMasOn(b) { return !!(b && b.tfMas); }
 // From resetFerguson / initFerguson (ferguson.js).
 function resetTfBurrito() { tfKi = []; tfKiPops = []; tfFoil = []; }
 function initTfBurrito(b, cfg) {
+  b.tfSurf = null;
   b.tfBur = null; b.tfMas = null; b.tfMasMove = null; b.tfBurDone = false;
   b.tfBurT = cfg.burrito ? tfRand(cfg.burrito.first) : Infinity;
 }
@@ -118,6 +126,13 @@ function tfBurritoDodge(b, source, attackerId) {
   if (attackerId == null || attackerId === b.id) return false;
   var atk = balls[attackerId], bc = tfBurCfg(b);
   if (!bc || !atk) return false;
+  if (b.tfSurf) { b.justDodged = true; return true; } // up on the beam: nothing touches him
+  if (b.tfMasMove && b.tfMasMove.kind === "shell") { // in the shell: it clanks off
+    b.justDodged = true;
+    if (source !== "laser" && b.immuneCd <= 0) { floater(b.x, b.y - b.r - 8, "SHELL", "dodge"); b.immuneCd = 0.3; playShellClank(false); }
+    return true;
+  }
+  if (tfTrySurf(b, atk, bc)) return true;
   var hard = source === "laser" || source === "slam" || source === "grapple" || source === "finisher" || source === "flow" || source === "kofinal" || source === "slugfest";
   if (b.tfBur) {
     if (hard || source === "igbb") return false;
@@ -212,7 +227,7 @@ function startTfBarrage(self, other, cfg) {
   }
   self.tfMasMove = { kind: "barrage", phase: "plant", t: 0, shot: 0, next: 0, hand: 1, recoil: [0, 0], ang: Math.atan2(other.y - self.y, other.x - self.x) };
   floater(self.x, self.y - self.r - 30, "KI BARRAGE!", "crit"); // (a Dragon Ball move, not a quote of his)
-  playTfKiCharge();
+  withClip("kiCharge", function () { playClip("kiCharge", 0.8); }); // from Joe's ki barrage reference
 }
 
 function startTfShellStrike(self, other, cfg) {
@@ -248,7 +263,7 @@ function runTfMasMove(self, other, cfg, dt) {
     var ta = Math.atan2(other.y - self.y, other.x - self.x), da = Math.atan2(Math.sin(ta - mv.ang), Math.cos(ta - mv.ang));
     mv.ang += da * Math.min(1, dt * 6); // keeps turning after them, a little behind
     mv.recoil[0] = Math.max(0, mv.recoil[0] - dt * 9); mv.recoil[1] = Math.max(0, mv.recoil[1] - dt * 9);
-    if (mv.phase === "plant") { if (mv.t >= BUR_PLANT) { mv.phase = "fire"; mv.t = 0; } return true; }
+    if (mv.phase === "plant") { if (mv.t >= BUR_PLANT) { mv.phase = "fire"; mv.t = 0; withClip("kiBarrage", function () { playClip("kiBarrage", 0.9); }); } return true; } // Joe's barrage sound, one play through the volley
     if (mv.phase === "fire") {
       mv.next -= dt;
       while (mv.next <= 0 && mv.t < bb.time) {
@@ -300,7 +315,127 @@ function tfMasMoveEnd(b) { b.tfMasMove = null; setSpeed(b, b.baseSpeed || SPEED)
 function tfBurritoCancel(b) {
   if (b.tfBur) { b.tfBur = null; b.tfBurDone = false; b.tfBurT = 3; } // the burrito waits for the next quiet moment
   b.tfMasMove = null;
+  b.tfSurf = null;
 }
+
+// ---------------------------------------------------------------- beam surf
+
+var SURF_HOP = 0.3, SURF_HIT = 0.35;
+// From tfBurritoDodge: a beam (hurtProjectile from the Kamehameha or the
+// rainbow) about to hit him. True if he hops on it instead.
+function tfTrySurf(b, atk, bc) {
+  var sc = bc.beamSurf;
+  if (!sc || !itProjHit || !atk.igbb || !(atk.igbb.move === "kamehameha" || atk.igbb.move === "rainbow")) return false;
+  if (b.tfBur || b.grappled || b.grapple || b.slam || b.koOut || subLocked(b) || katanaOn(b)) return false;
+  if (!b.tfMas && Math.random() * 100 >= sc.chance) return false;
+  var dx = itProjHit.dx || (b.x - atk.x), dy = itProjHit.dy || (b.y - atk.y), d = Math.sqrt(dx * dx + dy * dy) || 1;
+  clearActions(b);
+  b.tfMasMove = null; b.tfShell = null; b.tfSlide = null; b.tfShot = null;
+  b.vx = 0; b.vy = 0;
+  b.tfSurf = { phase: "hop", t: 0, owner: atk.id, dx: dx / d, dy: dy / d, trail: 0 };
+  b.justDodged = true;
+  floater(b.x, b.y - b.r - 30, "BEAM SURF!", "crit"); // (Goku riding Kefla's blast, Dragon Ball Super)
+  crowdReact(0.9);
+  playTfSurfHop();
+  return true;
+}
+// From updateFerguson.
+function runTfSurf(self, other, cfg, dt) {
+  var s = self.tfSurf, sc = cfg.burrito.beamSurf, own = balls[s.owner];
+  s.t += dt;
+  self.vx = 0; self.vy = 0;
+  if (over || !own || !own.alive) { tfSurfEnd(self); return false; }
+  if (s.phase === "hop") {
+    // up onto the beam, flipping upside down: onto the line it's firing along
+    var along = (self.x - own.x) * s.dx + (self.y - own.y) * s.dy, k = Math.min(1, dt * 14);
+    self.x = tfClamp(self.x + (own.x + s.dx * along - self.x) * k, self.r, W - self.r);
+    self.y = tfClamp(self.y + (own.y + s.dy * along - self.y) * k, self.r, H - self.r);
+    if (s.t >= SURF_HOP) { s.phase = "ride"; s.t = 0; playTfSurfRide(); }
+    return true;
+  }
+  if (s.phase === "ride") {
+    // Down the beam toward them, riding the top of it.
+    var ox = own.x - self.x, oy = own.y - self.y, od = Math.sqrt(ox * ox + oy * oy) || 1;
+    var step = Math.min(od, sc.speed * dt);
+    self.x = tfClamp(self.x + ox / od * step, self.r, W - self.r); self.y = tfClamp(self.y + oy / od * step, self.r, H - self.r);
+    s.trail -= dt;
+    if (s.trail <= 0 && !reduceMotion) {
+      s.trail = 0.03;
+      tfGhosts.push({ x: self.x, y: self.y, r: self.r, t: 0, max: 0.25, color: "#ff3b2b" });
+      for (var i = 0; i < 3; i++) {
+        var a = Math.atan2(-oy, -ox) + (Math.random() - 0.5) * 1.4, v = 120 + Math.random() * 200;
+        particles.push({ x: self.x, y: self.y + self.r * 0.6, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.35, max: 0.35, size: 2 + Math.random() * 3, color: i % 2 ? "#ffffff" : "#ffe680" });
+      }
+    }
+    od = Math.sqrt((own.x - self.x) * (own.x - self.x) + (own.y - self.y) * (own.y - self.y)) || 1;
+    if (od < self.r + own.r + 8 || s.t > 1.6) {
+      s.phase = "hit"; s.t = 0;
+      var ux = ox / Math.sqrt(ox * ox + oy * oy || 1), uy = oy / Math.sqrt(ox * ox + oy * oy || 1);
+      // Their beam cuts out (beam-clash.js knows how to end each one).
+      var kind = own.igbb && BEAMS[own.igbb.move] ? own.igbb.move : null;
+      if (kind) BEAMS[kind].end(own);
+      var dealt = hurt(own, sc.damage * (self.tfMas ? cfg.burrito.damage : 1), "igbb", self.id);
+      if (dealt > 0) {
+        floater(own.x, own.y - own.r - 30, "SURF'S UP!", "crit");
+        own.flash = 0.25;
+        if (!reduceMotion) { shake = Math.max(shake, 22); hitStop = Math.max(hitStop, 0.12); }
+        impacts.push({ x: own.x, y: own.y, nx: ux, ny: uy, life: 0.6, max: 0.6, color: "#ffd21f" });
+        crowdReact(1);
+        playTfKiHit(true);
+        if (own.alive && !own.grappled && !own.grapple && !own.koOut) beginWallSlam(own, ux, uy, { knockback: sc.knockback, wallSlams: sc.wallSlams, slamDamage: sc.slamDamage });
+        checkEnd();
+      }
+    }
+    return true;
+  }
+  // flipping back over onto his feet
+  if (s.t >= SURF_HIT) { tfSurfEnd(self); return false; }
+  return true;
+}
+function tfSurfEnd(b) { b.tfSurf = null; setSpeed(b, b.baseSpeed || SPEED); }
+function tfSurfK(s) { return s.phase === "hop" ? easeOut(s.t / SURF_HOP) : s.phase === "ride" ? 1 : 1 - easeOut(s.t / SURF_HIT); }
+function tfSurfLift(s, r) { var k = tfSurfK(s); return (s.phase === "hop" ? Math.sin(Math.min(1, s.t / SURF_HOP) * Math.PI) * 0.6 + k * 0.25 : k * 0.25) * r; }
+
+// From applyFergusonPose: upside down on the beam.
+function applyTfSurfPose(b) {
+  var s = b.tfSurf;
+  if (!s || !b.alive) return false;
+  ctx.translate(b.x, b.y - tfSurfLift(s, b.r)); ctx.rotate(Math.PI * tfSurfK(s)); ctx.translate(-b.x, -b.y);
+  return true;
+}
+// From drawFerguson: the blast glowing under him like a board, and his own
+// two arms flung out wide for balance (upside down, so his shoulders are
+// below his middle).
+function drawTfSurf(b, over) {
+  var s = b.tfSurf;
+  if (!s) return false;
+  if (!over) return true; // drawn over the beam instead (drawTfKi)
+  var r = b.r, size = (b.char.punch && b.char.punch.size) || 14, wob = Math.sin(performance.now() / 70) * 0.15;
+  var k = tfSurfK(s), cy = b.y - tfSurfLift(s, r), flip = Math.cos(Math.PI * k);
+  if (s.phase === "ride") {
+    ctx.save();
+    var g = ctx.createRadialGradient(b.x, b.y + r * 0.35, 0, b.x, b.y + r * 0.35, r * 1.4);
+    g.addColorStop(0, "rgba(255,255,230,0.9)"); g.addColorStop(0.5, "rgba(255,200,80,0.5)"); g.addColorStop(1, "rgba(255,80,40,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(b.x, b.y + r * 0.35, r * 1.4, r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  // on top of the beam: him again, upside down, over it
+  ctx.save();
+  applyTfSurfPose(b);
+  drawFighterArt(ctx, b.x, b.y, b.r, b.char.look, theme.wall, { layout: "contained", name: b.char.name });
+  ctx.restore();
+  [-1, 1].forEach(function (sd) {
+    var sx = b.x + sd * r * 0.6, sy = cy - r * 0.05 * flip;
+    var a = (sd > 0 ? 0 : Math.PI) + sd * (0.35 + wob) * flip;
+    var len = r * (0.55 + 0.45 * k);
+    var hx = sx + Math.cos(a) * len, hy = sy + Math.sin(a) * len;
+    strokeLimb(size * 0.6, armColor(b.char, sd), function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
+    drawGloveAt(hx, hy, size * 0.75, b.char);
+  });
+  return true;
+}
+function playTfSurfHop() { tfAudio(function (ac, t) { caneTone(ac, t, "triangle", 300, 900, 0.2, 0.25); caneBurst(ac, t, 1800, 1.5, 0.25, 0.2); }); }
+function playTfSurfRide() { tfAudio(function (ac, t) { caneBurst(ac, t, 1200, 0.7, 0.35, 1.0); caneTone(ac, t, "sawtooth", 140, 260, 0.12, 1.0); }); }
 
 // One ki blast out of a palm (or the big one out of both).
 function tfFireKi(self, mv, bb, big) {
@@ -311,7 +446,7 @@ function tfFireKi(self, mv, bb, big) {
   tfKi.push({ x: hx, y: hy, vx: Math.cos(a) * bb.speed * (big ? 1.1 : 1), vy: Math.sin(a) * bb.speed * (big ? 1.1 : 1), owner: self.id, t: 0,
     r: big ? 18 : 8.5, dmg: big ? bb.bigDamage : bb.damage, big: big, trail: [] });
   mv.flash = big ? 1 : 0.6;
-  playTfKi(big);
+  if (big) playTfKi(true); // (the small ones are in the barrage clip)
 }
 
 // Every frame (tickFerguson): blasts flying, hitting, popping on the cage.
@@ -456,6 +591,7 @@ function drawTfBurrito(b, other, ang) {
 
 // Over the fighters (drawFergusonOver): ki blasts, their pops, the foil.
 function drawTfKi() {
+  balls.forEach(function (b) { if (b.tfSurf && b.alive) drawTfSurf(b, true); }); // Tony riding a beam, on top of it
   tfFoil.forEach(function (f) {
     ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.rot);
     ctx.fillStyle = "#c9d0d6"; ctx.strokeStyle = "#6f7a83"; ctx.lineWidth = 1.5;
@@ -493,12 +629,11 @@ function fergusonBurritoInfo(f) {
   var bc = f.burrito;
   return "Once a fight, after his first Kaioken burns out (or when he's badly hurt), he eats a Burrito Bell burrito: strikes at him while he eats are blocked or slipped. Then KAIOKEN x" + (bc.x || 10) + " for " + secs(bc.time) + ": " +
     Math.round((bc.damage - 1) * 100) + "% harder and " + Math.round((bc.speed - 1) * 100) + "% faster, teleporting round the ring and out of the way of " + bc.teleport.chance + "% of strikes and " + bc.teleport.projChance + "% of projectiles. " +
-    "He fires a ki barrage (" + bc.barrage.damage + " a blast, then a big one for " + bc.barrage.bigDamage + " into the cage), and teleports behind them to ram his turtle shell into their back (" + bc.shellStrike.damage + ", into the cage).";
+    "He fires a ki barrage (" + bc.barrage.damage + " a blast, then a big one for " + bc.barrage.bigDamage + " into the cage), and teleports behind them to ram his turtle shell into their back (" + bc.shellStrike.damage + ", into the cage), and nothing hurts him inside the shell." + (bc.beamSurf ? " Any time a Kamehameha or a rainbow beam comes at him (" + bc.beamSurf.chance + "%, always at x10) he hops on it upside down, surfs it back to whoever fired it and hits them for " + bc.beamSurf.damage + ", into the cage." : "");
 }
 
 function playTfFoil() { tfAudio(function (ac, t) { for (var i = 0; i < 5; i++) caneBurst(ac, t + i * 0.03, 5200 - i * 400, 2.5, 0.12, 0.04); }); }
 function playTfBlock() { tfAudio(function (ac, t) { caneTone(ac, t, "sine", 140, 70, 0.4, 0.1); caneBurst(ac, t, 900, 1.2, 0.3, 0.06); }); }
-function playTfKiCharge() { tfAudio(function (ac, t) { caneTone(ac, t, "sawtooth", 180, 520, 0.08, 0.32); caneBurst(ac, t, 1400, 2, 0.12, 0.3); }); }
 function playTfKi(big) {
   tfAudio(function (ac, t) {
     if (big) { caneTone(ac, t, "sawtooth", 320, 60, 0.22, 0.5); caneBurst(ac, t, 700, 0.8, 0.5, 0.4); return; }

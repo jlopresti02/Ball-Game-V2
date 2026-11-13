@@ -26,7 +26,8 @@
 // Shell      (shell) the ninja turtle: when he's taking a beating (`burst`
 //            damage in `window` seconds), or every so often up close, he pulls
 //            into a green turtle shell for `time` seconds. Strikes and anything
-//            thrown CLANK off it; a special move cracks it. Then (spin) he
+//            thrown CLANK off it, special moves too (Joe: nothing hurts him in
+//            the shell). Then (spin) he
 //            often comes out of it spinning like a shell across the mat into
 //            them. "This is a rat race. But I'm no rat..."
 // Kaioken    (kaioken) up to `max` times a fight (first after `first`
@@ -81,7 +82,7 @@ function tfIs(b, id) { return !!(b && b.char && String(b.char.id || "").indexOf(
 function katanaOn(b) { return !!(b && b.igbb && b.igbb.move === "katana"); }
 function tfShellUp(b) { return !!(b && b.tfShell && b.tfShell.phase !== "out"); }
 // Busy with one of his own moves: the speed regulator leaves him alone (physics.js).
-function fergusonBusy(b) { return !!(b && (b.tfSlide || b.tfShot || b.tfTd || b.tfSub || b.tfShell || b.tfPower || b.tfBur || b.tfMasMove)); }
+function fergusonBusy(b) { return !!(b && (b.tfSlide || b.tfShot || b.tfTd || b.tfSub || b.tfShell || b.tfPower || b.tfBur || b.tfMasMove || b.tfSurf)); }
 // His hands are drawn by drawFerguson (drawHands skips them, draw-attacks.js).
 function fergusonHandsBusy(b) { return fergusonBusy(b) || katanaOn(b); }
 function tfClamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -134,7 +135,7 @@ function tickFerguson(dt) {
 // Anything that takes hold of him (a grab, a slam, a guard, a special) ends
 // whatever move of his own was running.
 function tfInterrupt(b) {
-  if (!b.tfSlide && !b.tfShot && !b.tfShell && !b.tfPower && !b.tfTd && !b.tfSub && !b.tfBur && !b.tfMasMove) return;
+  if (!b.tfSlide && !b.tfShot && !b.tfShell && !b.tfPower && !b.tfTd && !b.tfSub && !b.tfBur && !b.tfMasMove && !b.tfSurf) return;
   var gone = !b.alive || b.grappled || b.grapple || b.slam || b.sprawl || b.sprawled || b.choked || b.guard || b.guillo || b.rnc || b.armbar || b.suplex ||
     b.koOut || b.shocked || b.dazed || b.dizzy || b.shelled || b.checkStun > 0 || (b.igbb && !katanaOn(b));
   if (!gone) return;
@@ -167,6 +168,7 @@ function updateFerguson(self, other, dt) {
   if (self.tfPower) return runKaiokenPower(self, other, cfg, dt);
   if (self.tfBur) return runTfBurrito(self, other, cfg, dt);
   if (self.tfMasMove) return runTfMasMove(self, other, cfg, dt);
+  if (self.tfSurf) return runTfSurf(self, other, cfg, dt);
   if (self.tfShot) return runTfShot(self, other, cfg, dt);
   if (self.tfShell) return runTfShell(self, other, cfg, dt);
   if (self.tfSlide) return runTfSlide(self, other, cfg, dt);
@@ -251,12 +253,6 @@ function fergusonDodge(b, source, attackerId) {
   if (!cfg || !b.alive || attackerId == null || attackerId === b.id) return false;
   if (tfBurritoDodge(b, source, attackerId)) return true; // blocking or slipping while he eats, teleporting away at x10 (ferguson-burrito.js)
   if (tfShellUp(b)) {
-    if (source === "igbb") { // a special move cracks it
-      b.tfShell = null;
-      floater(b.x, b.y - b.r - 30, "SHELL CRACKED!", "crit");
-      playShellClank(true);
-      return false;
-    }
     b.justDodged = true;
     if (source !== "laser" && b.immuneCd <= 0) { floater(b.x, b.y - b.r - 8, "SHELL", "dodge"); b.immuneCd = 0.3; playShellClank(false); }
     b.flash = Math.max(b.flash, 0.06);
@@ -833,6 +829,7 @@ function drawFergusonBehind(b) {
 // leaning into the slide, crouched for the shot; and whoever he's got.
 function applyFergusonPose(b) {
   var m = b.tfSub, s;
+  if (applyTfSurfPose(b)) return; // upside down riding a beam (ferguson-burrito.js)
   if (katanaOn(b)) { applyKatanaPose(b); return; } // twisting into a slash, the cyclone spin, the crouch before a flash-step (ferguson-katanas.js)
   if (m && (m.kind === "buggy" || m.kind === "guardElbows")) {
     ctx.translate(b.x, b.y); ctx.rotate(m.kind === "guardElbows" ? Math.PI : -m.side * Math.PI / 2); ctx.translate(-b.x, -b.y);
@@ -874,7 +871,7 @@ function drawFerguson(b, other) {
     ctx.fillStyle = "#ff1a1a"; ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
-  if (drawTfBurrito(b, other, ang)) return; // eating, the ki barrage, the shell strike (ferguson-burrito.js)
+  if (drawTfSurf(b) || drawTfBurrito(b, other, ang)) return; // eating, the ki barrage, the shell strike (ferguson-burrito.js)
   if (b.tfShell) { drawTfShell(b); return; }
   if (katanaOn(b)) { drawTfKatanas(b, other, ang); return; }
   if (b.tfPower) {
@@ -1197,7 +1194,7 @@ function fergusonGalleryMoves(ch, add) {
   }
   if (f.shell) {
     var sh = f.shell;
-    add("🐢", "Turtle shell", "Up to " + sh.max + " times a fight, when he's taking a beating (" + sh.burst + " damage in " + secs(sh.window) + ") or up close, he pulls into a turtle shell for " + secs(sh.time) + ": every strike and anything thrown clanks off it, but a special move cracks it." + (sh.spin ? " Then " + sh.spin.chance + "% of the time he spins out of it across the mat into them (" + sh.spin.damage + ", into the cage)." : ""));
+    add("🐢", "Turtle shell", "Up to " + sh.max + " times a fight, when he's taking a beating (" + sh.burst + " damage in " + secs(sh.window) + ") or up close, he pulls into a turtle shell for " + secs(sh.time) + ": every strike, anything thrown and even special moves clank off it." + (sh.spin ? " Then " + sh.spin.chance + "% of the time he spins out of it across the mat into them (" + sh.spin.damage + ", into the cage)." : ""));
   }
   if (f.kaioken) {
     var kc = f.kaioken;
