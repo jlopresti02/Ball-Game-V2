@@ -127,6 +127,7 @@ function updateCheaterAct(self, other, dt) {
         checkEnd();
         return;
       }
+      if (other.grapple) { self.chAct = null; return; } // they counter-grabbed him off it: dazing them now would lock both up for good
       floater(other.x, other.y - other.r - 30, "EYE POKE", "crit");
       playPunch(10);
       // The first eye poke of the match (and only that one): the

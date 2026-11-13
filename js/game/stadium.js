@@ -242,7 +242,7 @@ function makeLayer(w, h) {
   return cv;
 }
 
-function stadiumKey() { return canvas.width + ":" + (wwitBadge.complete ? 1 : 0) + (brazilOn() ? ":br" : ""); }
+function stadiumKey() { return canvas.width + ":" + (wwitBadge.complete ? 1 : 0) + (brazilOn() ? ":br" : "") + (montrealOn() ? ":mtl" : ""); } // (GSP's Montreal crowd, gsp.js)
 
 function buildStadiumCache(px) {
   var c = stadiumCache;
@@ -259,7 +259,7 @@ function buildStadiumCache(px) {
     f.sprite = makeLayer(size, size);
     var fg = f.sprite.getContext("2d");
     fg.translate(size / 2, size / 2); fg.scale(px, px);
-    drawFanBall(fg, f.r, brazilOn() ? f.br : f);
+    drawFanBall(fg, f.r, brazilOn() ? f.br : montrealOn() ? f.mtl : f); // (GSP's Montreal crowd, gsp.js)
   });
   // The branded mat, in arena units (W x H)
   var ap = px * ST.A / W;
@@ -307,6 +307,7 @@ function drawStandsLayer(g) {
     }
     g.globalAlpha = 1;
   });
+  if (montrealOn() && !br) drawMontrealWalkway(g); // GSP's Montreal crowd: a blue walkway with GSP on it (gsp.js)
   // Corner pads: red top left, blue bottom right
   g.fillStyle = br ? BR.yellow : "#c62828"; g.fillRect(AX - CAGE - 12, AY - CAGE - 12, 40, 40);
   g.fillStyle = br ? BR.blue : "#1e46a8"; g.fillRect(AX + A + CAGE - 28, AY + A + CAGE - 28, 40, 40);
@@ -335,6 +336,7 @@ function drawStandsLayer(g) {
 // faded badge in the middle, a maroon octagon line and corner wordmarks.
 function drawMatLayer(g) {
   if (brazilOn()) { drawBrazilMat(g); return; }
+  if (montrealOn()) { drawMontrealMat(g); return; } // GSP's Montreal crowd (gsp.js)
   g.fillStyle = WWIT.mat; g.fillRect(0, 0, W, H);
   g.strokeStyle = "rgba(0,0,0,0.035)"; g.lineWidth = 0.6;
   g.beginPath();
@@ -449,15 +451,15 @@ function drawStadium(px) {
   ctx.setTransform(px, 0, 0, px, 0, 0);
   // The crowd's on its feet when the fight's exciting.
   // In Brazil mode everyone's on their feet the whole time.
-  var br = brazilOn();
-  var roar = br ? 1 : crowdExcitement(); // builds up and dies down (audio.js)
+  var br = brazilOn(), mtl = !br && montrealOn(); // (and the same for GSP's Montreal crowd, gsp.js)
+  var roar = br || mtl ? 1 : crowdExcitement(); // builds up and dies down (audio.js)
   var fdt = fanClockLast === null ? 0 : Math.min(0.1, Math.max(0, now - fanClockLast));
   fanClockLast = now;
   fanClock += fdt * (1 + (FAN_PACE_MAX - 1) * roar);
   var wild = chairFrenzyLevel(); // the whole crowd going nuts over a chair shot (chairshot.js)
   for (var i = 0; i < stadiumFans.length; i++) {
     if (refClearsFan(stadiumFans[i])) continue; // the ref works ringside there (referee.js)
-    var fan = br ? stadiumFans[i].br : stadiumFans[i];
+    var fan = br ? stadiumFans[i].br : mtl ? stadiumFans[i].mtl : stadiumFans[i];
     herbShove(stadiumFans[i], fdt); // Herb Dean barging through (herbdean.js)
     var sx = stadiumFans[i].shx, sy = stadiumFans[i].shy;
     fan.x += sx; fan.y += sy;
@@ -465,12 +467,13 @@ function drawStadium(px) {
     fan.x -= sx; fan.y -= sy;
   }
   for (var j = 0; j < stadiumFans.length; j++) {
-    var f = br ? stadiumFans[j].br : stadiumFans[j];
+    var f = br ? stadiumFans[j].br : mtl ? stadiumFans[j].mtl : stadiumFans[j];
     if (refClearsFan(stadiumFans[j])) continue;
     var ox = stadiumFans[j].shx, oy = stadiumFans[j].shy;
     f.x += ox; f.y += oy;
     if (f.sign) drawFanSign(f, now);
     else if (f.flag) drawBrazilFlag(f.x + f.r * 0.3, f.y - f.r * 1.55, f.r * 1.3, now, f.phase);
+    else if (f.mtlFlag) drawMontrealFlag(f, now); // Quebec and Canada flags (gsp.js)
     f.x -= ox; f.y -= oy;
   }
   drawCameraFlashes(now);
@@ -625,7 +628,9 @@ function drawJumbotron(px) {
   drawCologneJumbo(sx, sy, sw, jt.h - 28); // Ilia's Who's Joe & Arman T? cologne ad (cologne-ad.js)
   drawGoatGoatGoJumbo(sx, sy, sw, jt.h - 28); // Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawTapWaterJumbo(sx, sy, sw, jt.h - 28); // Charles's Tap Water ad (tapwater-ad.js)
+  drawNgannouJumbo(sx, sy, sw, jt.h - 28); // Ngannou's rage meter, Dana White, the punch-power reading (ngannou.js)
   drawBearWarnJumbo(sx, sy, sw, jt.h - 28); // WARNING: BEAR IN ARENA, over everything (bear-warning.js)
+  drawConorJumbo(sx, sy, sw, jt.h - 28); // Conor McGregor's 13 SECONDS (conor.js)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.jtFront, jt.x * px, jt.y * px);

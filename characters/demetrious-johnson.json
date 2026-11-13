@@ -1,0 +1,61 @@
+{
+  "id": "c-demetrious-johnson",
+  "rev": 1,
+  "builtin": false,
+  "weightClass": "flyweight",
+  "name": "Demetrious Johnson",
+  "base": "Grappler",
+  "bio": "\"Mighty Mouse\". The smallest fighter in the game, a giant mouse head on a shredded Flyweight body, built on the Grappler base. For the first 10 seconds he studies game film: a SCOUTING notepad fills up while he keeps his distance. Then he reads your numbers and goes after your worst defence: takedowns if you can't sprawl, kicks from outside if you're a Grappler, punches if your block is weak. A moment later he copies your normal attacks. His cardio never quits: every 15 seconds he gets faster while you slow down and sweat. Once you're hurt, his next takedown is the suplex he turns into an armbar in mid-air, his finish on Ray Borg. Special move: Mimic, your own special at half power (IGBB, Father's Plan or Chair Shot); against anyone else, a shot straight into the suplex and the mid-air armbar.",
+  "color": "#7b3fc4",
+  "label": "",
+  "imgData": null,
+  "look": {
+    "skin": "#6b4430",
+    "build": "lean",
+    "bodyHair": "none",
+    "hair": "buzz",
+    "hairColor": "#121010",
+    "beard": "stubble",
+    "ears": "normal",
+    "tattoos": {
+      "leftArm": "bands",
+      "back": "夢"
+    },
+    "shorts": "#141414",
+    "trim": "#d4af37",
+    "shortsStyle": "stripe",
+    "gloves": "#151515",
+    "headwear": "mouse",
+    "mouseFur": "#8e8a94",
+    "mouseEar": "#f2a2b5"
+  },
+  "hasProjectile": false,
+  "proj": { "size": 7, "speed": 460, "damage": 10, "cooldown": 1.6, "imgData": null },
+  "hasPunch": true,
+  "punch": { "damage": 12, "cooldown": 0.55, "speed": 0.2, "size": 12, "knockback": 90, "reach": 32, "koChance": 0 },
+  "hasKick": false,
+  "hasGrapple": true,
+  "grapple": { "damage": 62, "cooldown": 1.5, "speed": 0.4, "reach": 8, "counterChance": 30, "finSlamDamage": 20, "finPunches": 3, "finPunchDamage": 10, "sprawlChance": 45, "reattackChance": 60, "vsGrapplerChance": 100 },
+  "hasPowerPunch": false,
+  "hasRage": false,
+  "hasWatcher": false,
+  "hasWeave": true,
+  "weave": { "dodgeChance": 20, "critChance": 0, "comboHits": 5, "comboDamage": 3, "finalDamage": 8, "finalKnockback": 950, "tauntDur": 2, "tauntVuln": 2, "flowChance": 25, "flowDamage": 15 },
+  "hasSwing": false,
+  "hasForget": false,
+  "blockChance": 15,
+  "mightyMouse": {
+    "gameFilm": {
+      "time": 10,
+      "takedowns": { "reach": 6, "cooldown": 0.85 },
+      "strikes": { "cooldown": 0.7, "damage": 1.5, "shotChance": 30 },
+      "kicks": { "sprawl": 35, "kick": { "damage": 32, "cooldown": 1.3, "speed": 0.38, "size": 13, "knockback": 260, "reach": 62, "checkChance": 25 } }
+    },
+    "copycat": { "delay": 1.5, "scale": 0.8 },
+    "cardio": { "every": 15, "max": 6, "speed": 0.06, "rate": 0.12, "tire": 0.05, "tireAttack": 0.06, "tireMin": 0.7 },
+    "finisher": { "at": 0.4, "slamDamage": 30, "tapBase": 70, "tapLowHp": 30, "cooldown": 6 },
+    "lines": { "start": true, "dodge": 45, "miss": 45, "borg": 15, "finisher": true, "win": true, "gap": 7 }
+  },
+  "hasSpecial": true,
+  "special": { "move": "mimic", "chargeTime": 42, "hitCut": 3, "punchCut": 1, "power": 0.5, "copies": ["igbb", "fathersplan", "chairshot"], "tapBase": 25, "tapLowHp": 60, "slamDamage": 40 }
+}

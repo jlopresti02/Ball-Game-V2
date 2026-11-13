@@ -459,6 +459,7 @@ function drawKoPunch(b) {
   }
   ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fx, fy, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  stoneFistOver(b.char, fx, fy, size, Math.atan2(ny, nx)); // Alex Pereira's stone fists (fighter-art.js)
   if (kp.kind === "big" || kp.kind === "ko" || !kp.kind) {
     // A charged glow around the knockout fist.
     ctx.globalAlpha = 0.35 + 0.25 * Math.sin(performance.now() / 60);
@@ -582,6 +583,7 @@ function drawQuickHook(b, kp) {
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(fist.x, fist.y); ctx.stroke();
   ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fist.x, fist.y, size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  stoneFistOver(b.char, fist.x, fist.y, size, ang); // Alex Pereira's stone fists (fighter-art.js)
   ctx.restore();
 }
 

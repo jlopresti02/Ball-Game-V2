@@ -56,6 +56,13 @@ function makeBall(id, ch) {
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
   initRingBear(b); // Khabib's ring bear (khabib-bear.js)
   initIliaTornado(b); // Ilia's Rose Tornado (ilia-tornado.js)
+  initPereira(b); // Alex Pereira's CHAMA combo and step (pereira.js)
+  initOmalley(b); // Sean O'Malley's sugar, hair and crane kick (omalley.js)
+  initGsp(b); // GSP's walkout gi, Superman punch and crowd meter (gsp.js)
+  initMightyMouse(b); // Mighty Mouse's game film, copycat, cardio (mighty-mouse.js)
+  initConor(b); // Conor McGregor's trash talk, counter left and gas tank (conor.js)
+  initLiddell(b); // Chuck Liddell's frost, snow and wind-up (liddell.js)
+  initNgannou(b); // Francis Ngannou's rage meter, and his own copy to turn green (ngannou.js)
   return b;
 }
 
@@ -88,6 +95,14 @@ function startMatchSeeded(ch0, ch1) {
   resetTopRope();
   resetHotSauce(); // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
   resetSendLocation(); // Khabib's Send Me Location (send-location.js)
+  resetPereira(); // Alex Pereira's arrow, the crowd's CHAMA (pereira.js)
+  resetOmalley(); // the sweets in the ring (omalley.js)
+  resetGsp(); // GSP's Montreal crowd and its chant (gsp.js)
+  resetMightyMouse(); // Mighty Mouse's sweat drops (mighty-mouse.js)
+  resetConor(); // Conor McGregor's podium and 13 SECONDS (conor.js)
+  resetLiddell(); // Chuck Liddell's snow (liddell.js)
+  resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
+  resetSpeech(); // voice-line speech bubbles (speech.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
   resetCheater();
@@ -178,6 +193,7 @@ function burst(b) {
 
 // Grabs `target`, drags it to whichever wall is closest, and slams it there.
 function beginGrapple(attacker, target) {
+  if (mouseTakedown(attacker, target)) return; // Mighty Mouse: the suplex into the mid-air armbar (mighty-mouse.js)
   target.slam = null; // a grab ends any wall slam in progress
   target.swing = null;
   target.flow = null;
@@ -251,6 +267,7 @@ function hurt(b, amount, source, attackerId) {
   }
   // Charles teleporting out of the way (instant-transmission.js).
   if (itDodge(b, source, attackerId)) return 0;
+  if (gspDodge(b, source, attackerId)) return 0; // GSP slipping it (gsp.js)
   // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
   if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.
@@ -311,11 +328,15 @@ function hurt(b, amount, source, attackerId) {
   if (source !== "laser") amount *= doBronxMult(attackerId);
   // Heavier hits harder, lighter hits softer (weight.js).
   amount *= weightDamageMult(b, attackerId);
+  amount *= conorDamageMult(b, source, attackerId); // Conor McGregor's gas tank, open after a whiff, calf kicks on him (conor.js)
+  amount *= icemanDamageMult(b, attackerId, source); // frosted gloves hit softer, Chuck Liddell hits harder (liddell.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
   recordHit(b, hpBefore - b.hp, source, attackerId); // jumbotron stats
+  icemanHit(b, hpBefore - b.hp, source, attackerId); // punches on Chuck Liddell frost their gloves (liddell.js)
+  ngannouHurt(b, hpBefore - b.hp, source, attackerId); // Francis Ngannou's rage meter and punch-power reading (ngannou.js)
   crowdReact((hpBefore - b.hp) / MAX_HP * 4); // a 50 HP shot lifts the crowd 40%
   // A clean hit charges the attacker's special move.
   if (amount > 0 && attackerId != null && attackerId !== b.id && source !== "laser" && source !== "igbb") addSpecialCharge(balls[attackerId], source);

@@ -43,6 +43,7 @@ function draw() {
     ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
     ctx.beginPath(); ctx.arc(W / 2, H / 2, W * 0.15, 0, Math.PI * 2); ctx.stroke();
     if (brazilMode) drawBrazilFloor();
+    drawGspFloor(); // a faded Canada flag while the crowd chants GSP (gsp.js)
   }
 
   drawSitSpots();
@@ -97,6 +98,11 @@ function draw() {
   drawTossUnder();      // the shadow under a fighter thrown in the air (toss.js)
   drawDuckUnder();      // Duck Drop: the red circle, his shadow coming down, the crater (jon-duck.js)
   drawEagleStrikeUnder(); // Eagle Strike: the red path and the eagle's shadow (gaethje-eagle.js)
+  drawPereiraUnder(); // Bow and Arrow: the red ricochet path (pereira.js)
+  drawOmalleyUnder(); // sweets on the mat, the race lines, the crane kick's path (omalley.js)
+  drawGspUnder(); // GSP's shadow in the air and the Superman Dive's red lane (gsp.js)
+  drawLiddellUnder(); // snow on the mat, Chuck Liddell's ice flames (liddell.js)
+  drawNgannouUnder(); // Ngannou's rage punch line, the Smash circle and crater, Dana at the cage (ngannou.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -129,9 +135,11 @@ function draw() {
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
     var kmo = kameOffset(b); wox += kmo.x; woy += kmo.y; // leaning back to charge, lunging into the Kamehameha (kamehameha.js)
+    var ngo = ngannouOffset(b); wox += ngo.x; woy += ngo.y; // up in the air for Ngannou's Smash (ngannou.js)
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
     drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
+    drawGspBehind(b); // GSP's red cape, behind him (gsp.js)
     drawKameArmsBehind(b); // his arms reaching up behind his head for a Kamehameha fired upward (kamehameha.js)
 
     // While charging a power punch or rage attack, the ball jitters with
@@ -192,6 +200,11 @@ function draw() {
     applyKamePose(b);   // crouched and tilted for the Kamehameha (kamehameha.js)
     applyTossPose(b);   // spun through the air by a takedown, then bouncing (toss.js)
     applyHotSaucePose(b); // Dustin swelling up, gulping and flailing in Hot Sauce Fire Breath (hot-sauce.js)
+    applyPoatanStep(b); // Alex Pereira dipping his level on his 1-2 step (pereira.js)
+    applyOmalleyPose(b); // Sean O'Malley up on one leg, leaping, buzzing or crashed (omalley.js)
+    applyGspPose(b); // GSP crouching to load, up in the air for the leap and the dive (gsp.js)
+    applyConorPose(b); // Conor McGregor rocking on his strut, planted, or gassed (conor.js)
+    applyNgannouPose(b); // Ngannou crouching and leaping for the Smash, or knocked flat by it (ngannou.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -327,6 +340,13 @@ function draw() {
     drawJab(b);
     drawDiamondSword(b, other); // Dustin's diamond sword, under his guard glove (diamond.js)
     drawHands(b, other);
+    drawPereira(b); // Alex Pereira's CHAMA fists and bow, and a calf-kick limp (pereira.js)
+    drawOmalley(b); // Sean O'Malley's crane kick, sugar boost, pips and crash (omalley.js)
+    drawGsp(b); // GSP's Superman fists, hands down for "not impressed" (gsp.js)
+    drawMightyMouse(b); // Mighty Mouse's mimic aura and crouch (mighty-mouse.js)
+    drawConor(b); // Conor McGregor's strut, counter stance, podium and gas tank, Dustin's calf kick (conor.js)
+    drawLiddell(b); // Chuck Liddell packing the snow, his blue overhand (liddell.js)
+    drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -373,6 +393,11 @@ function draw() {
   drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)
   drawEagleStrikeOver();  // the eagle swooping through, and its claw marks (gaethje-eagle.js)
   drawSuplexes();
+  drawPereiraOver(); // his arrow flying, stuck in the cage, or up into the sky (pereira.js)
+  drawOmalleyOver(); // Sugar Rush sweets falling in (omalley.js)
+  drawGspOver(); // GSP's gi and headband flying off (gsp.js)
+  drawMightyMouseOver(); // Mighty Mouse's SCOUTING notepad, sweat off a tired opponent (mighty-mouse.js)
+  drawNgannouOver(); // Ngannou's mat chunks, contract scraps, punch-power banner in the test arena (ngannou.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
@@ -403,6 +428,7 @@ function draw() {
   drawCologneBanner(); // and Ilia's cologne ad (cologne-ad.js)
   drawGoatGoatGoBanner(); // and Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawTapWaterBanner(); // and Charles's Tap Water ad (tapwater-ad.js)
+  drawConorBanner(); // and Conor McGregor's 13 SECONDS (conor.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)
   drawDeathFx(); // the loser's death animation (death.js)
@@ -419,10 +445,14 @@ function draw() {
     ctx.fillStyle = f.kind === "note" ? theme.ink : ((f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit); ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
+  drawSpeech(); // voice-line speech bubbles (speech.js)
 
   if (stadium) drawJumbotron(px);
   drawLadderSky(s, ox, oy); // Hokit up the ladder and diving off it (hokit-ladder.js)
   drawHotSauce(s, ox, oy); // Dustin's bottle, gloves, steam and fire breath (hot-sauce.js)
+  drawChamaCrowd(s, ox, oy); // the crowd shouting CHAMA back (pereira.js)
+  drawGspCrowd(s, ox, oy); // the Montreal crowd chanting "GSP! GSP!" (gsp.js)
+  drawLiddellSky(s, ox, oy); // snow falling over the whole arena (liddell.js)
   drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
   drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)

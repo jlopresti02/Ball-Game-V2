@@ -1,0 +1,64 @@
+{
+  "id": "c-chuck-liddell",
+  "rev": 1,
+  "builtin": false,
+  "weightClass": "lightheavyweight",
+  "name": "Chuck Liddell",
+  "base": "CTE",
+  "bio": "\"The Iceman\". Built on the CTE base: big looping hooks he telegraphs from a mile away. He's slow, and early in the fight he's easy to hit and usually behind. That's the trap. Every punch that lands on him frosts the puncher's gloves: they ice over, and the more frost there is the slower they move and the softer they hit, while he hits harder. A few times a fight it snows in the arena, and in the snow he speeds up. As he gets hurt, blue ice flames come up round him. Special move: Snow Day. The snow falls, he scoops up a double handful off the mat, packs it like a snowball (\"I'm gonna knock his head off.\") and it turns into a blue flare on his gloves. Then he goes all out, hunting them down with looping overhand rights.",
+  "color": "#3f8fd2",
+  "label": "",
+  "imgData": null,
+  "speedMult": 0.82,
+  "look": {
+    "skin": "#edc0a0",
+    "build": "stocky",
+    "bodyHair": "light",
+    "hair": "mohawk",
+    "hairColor": "#6b4e37",
+    "beard": "none",
+    "beardColor": "#7a5a40",
+    "ears": "normal",
+    "tattoos": {
+      "leftArm": true
+    },
+    "shorts": "#5b9bd5",
+    "trim": "#eef6fc",
+    "shortsStyle": "icicles",
+    "gloves": "#141414",
+    "icehawk": true,
+    "goatee": true,
+    "scalpInk": "koeikan"
+  },
+  "hasProjectile": false,
+  "proj": { "size": 7, "speed": 460, "damage": 10, "cooldown": 1.6, "imgData": null },
+  "hasPunch": false,
+  "punch": { "damage": 25, "cooldown": 1.2, "speed": 0.32, "size": 15, "knockback": 300, "reach": 40, "koChance": 0 },
+  "hasKick": false,
+  "hasGrapple": false,
+  "hasPowerPunch": false,
+  "hasRage": false,
+  "hasWatcher": false,
+  "hasWeave": false,
+  "hasSwing": true,
+  "swing": { "damage": 28, "windup": 0.5, "extend": 0.42, "recover": 0.22, "reach": 55, "vicinity": 90, "aimError": 16, "blockMult": 2, "weaveMult": 1.15 },
+  "hasForget": false,
+  "blockChance": 0,
+  "tdd": { "sprawlChance": 65 },
+  "iceman": {
+    "warmup": { "windup": 0.78, "damage": 0.72, "at": 0.7 },
+    "frost": {
+      "perHit": 0.04, "perDamage": 0.004, "hold": 2, "thaw": 0.015,
+      "soften": 0.15, "slow": 0.25, "atkSlow": 0.15, "stiff": 0.3, "chargeSlow": 0.15, "hitChargeSlow": 0.4, "power": 0.7,
+      "sources": ["punch", "jab", "combo", "flow", "swing", "kopunch", "kofinal", "slugfest", "power", "finisher", "poke", "kick", "kickback", "grapple"]
+    },
+    "snow": { "first": [10, 15], "every": [14, 20], "time": 7, "speed": 1.35, "windup": 0.8 },
+    "flames": { "below": 0.6 },
+    "taunt": { "behind": 40, "every": [25, 40] }
+  },
+  "hasSpecial": true,
+  "special": {
+    "move": "snow", "chargeTime": 60, "hitCut": 2, "punchCut": 2, "hurtCut": 2.5, "readChance": 35,
+    "rampage": { "time": 6, "speed": 1.6, "windup": 0.26, "extend": 0.18, "recover": 0.12, "vicinity": 150, "aimError": 10, "blockMult": 1, "weaveMult": 1, "damage": 1.25 }
+  }
+}

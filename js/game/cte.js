@@ -50,7 +50,7 @@ function updateSwing(self, other, dt) {
     // it has one), alternating left and right.
     if (sw.cooldown) {
       self.swingCd = Math.max(0, (self.swingCd == null ? sw.cooldown * 0.5 : self.swingCd) - dt * self.atkRate);
-      if (self.swingCd > 0 || self.punch || self.grapple || self.grabHold) return;
+      if (self.swingCd > 0 || self.punch || self.grapple || self.grabHold || self.powerState) return; // (not mid power punch)
     }
     if (other.alive && !other.invincible && d - self.r - other.r < sw.vicinity) {
       self.hookSide = -(self.hookSide || -1);
@@ -98,8 +98,8 @@ function updateSwing(self, other, dt) {
             var rx = Math.cos(f.a), ry = Math.sin(f.a);
             var tx = -ry * st.side, ty = rx * st.side;
             var kx = rx * 0.6 + tx, ky = ry * 0.6 + ty, kl = Math.sqrt(kx * kx + ky * ky) || 1;
-            other.vx += kx / kl * SWING_KNOCKBACK;
-            other.vy += ky / kl * SWING_KNOCKBACK;
+            other.vx += kx / kl * (sw.knockback || SWING_KNOCKBACK);
+            other.vy += ky / kl * (sw.knockback || SWING_KNOCKBACK);
           }
           if (!reduceMotion) shake = Math.max(shake, 10);
           violentHit(self, other, 1);

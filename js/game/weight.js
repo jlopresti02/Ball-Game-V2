@@ -43,7 +43,7 @@ function applyWeight(b) {
   var wc = weightIndex(b.char), size = Math.sqrt(WEIGHT_CLASSES[wc].lb / WEIGHT_BASE_LB);
   b.wc = wc;
   b.r = Math.round(RADIUS * size);
-  b.baseSpeed = SPEED / size;
+  b.baseSpeed = SPEED / size * (b.char.speedMult || 1); // speedMult: a fighter who moves slower or faster than his class
   b.atkRate = 1 / Math.pow(size, 0.25);
   b.blockBonus = wc; // +0% Strawweight up to +8% Heavyweight
 }

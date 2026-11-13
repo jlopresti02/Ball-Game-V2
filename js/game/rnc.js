@@ -18,6 +18,7 @@ function beginRnc(self, vic) {
   var rc = self.char.rnc || defaultRnc();
   var hurtFrac = 1 - Math.max(0, Math.min(1, vic.hp / MAX_HP));
   var tapChance = Math.min(95, rc.tapBase + rc.tapLowHp * hurtFrac);
+  tapChance = conorTapChance(vic, tapChance, rc); // Conor McGregor taps easier, more once he's gassed (conor.js)
   // Climbs on from whichever side it came in on.
   var side = self.x >= vic.x ? 1 : -1;
   self.rnc = {

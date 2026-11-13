@@ -5,6 +5,129 @@
 
 var SAVED_ROSTER = [
   {
+    "id": "c-alex-pereira",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "lightheavyweight",
+    "name": "Alex Pereira",
+    "base": "Brawler",
+    "bio": "\"Poatan\" (stone hands). Built on the Brawler base, with fists of stone and red war paint. He stalks slowly on a bouncing 1-2, 1-2 step, but his hands are fast. Every few seconds up close he plants and shouts \"CHAMA!\", the crowd shouts it back, and he throws left-right-left, ending in the left hook. The shout is the tell: back off and it whiffs. Let the hook land clean and it's often a knockout, and he shoots an arrow into the sky. His kicks go for the calf: you limp for a few seconds. Against Jon Jones, he shoots Jon's duck out of the sky. Special move: Bow and Arrow, a big red arrow that bings off the cage and hits whoever's in its path.",
+    "color": "#c8102e",
+    "label": "",
+    "imgData": null,
+    "speedMult": 0.85,
+    "look": {
+      "skin": "#a86b4c",
+      "build": "muscular",
+      "bodyHair": "none",
+      "hair": "bald",
+      "hairColor": "#1c1612",
+      "beard": "none",
+      "ears": "normal",
+      "tattoos": {
+        "chest": true,
+        "leftArm": true,
+        "rightArm": true,
+        "script": true
+      },
+      "shorts": "#c8102e",
+      "trim": "#161616",
+      "shortsStyle": "slash",
+      "gloves": "#918b81",
+      "stoneFists": true,
+      "warPaint": {
+        "color": "#c8102e"
+      }
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 25,
+      "cooldown": 1.0,
+      "speed": 0.3,
+      "size": 15,
+      "knockback": 260,
+      "reach": 42,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 16,
+      "cooldown": 3.4,
+      "speed": 0.42,
+      "size": 15,
+      "knockback": 140,
+      "reach": 60,
+      "checkChance": 25
+    },
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 15,
+    "poatan": {
+      "step": {
+        "rate": 1.15,
+        "dip": 0.07
+      },
+      "chama": {
+        "first": [
+          6,
+          9
+        ],
+        "every": [
+          6,
+          9
+        ],
+        "range": 120,
+        "reach": 48,
+        "call": 0.7,
+        "echo": 0.25,
+        "readChance": 30,
+        "readWeave": 25,
+        "lunge": 430,
+        "jab": 12,
+        "cross": 16,
+        "hook": 32,
+        "hookKnockback": 560,
+        "koBase": 15,
+        "koLow": 48
+      },
+      "calfKick": {
+        "slow": 0.6,
+        "time": 3
+      },
+      "duckHunt": {
+        "chance": 75,
+        "damage": 25
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "bow",
+      "chargeTime": 78,
+      "hitCut": 4,
+      "punchCut": 3,
+      "damage": 35,
+      "secondHit": 25,
+      "hits": 2,
+      "bounces": 5,
+      "speed": 900,
+      "flight": 3.2,
+      "knockback": 900
+    }
+  },
+  {
     "id": "c-charles-oliveira",
     "rev": 15,
     "builtin": false,
@@ -127,6 +250,160 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-chuck-liddell",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "lightheavyweight",
+    "name": "Chuck Liddell",
+    "base": "CTE",
+    "bio": "\"The Iceman\". Built on the CTE base: big looping hooks he telegraphs from a mile away. He's slow, and early in the fight he's easy to hit and usually behind. That's the trap. Every punch that lands on him frosts the puncher's gloves: they ice over, and the more frost there is the slower they move and the softer they hit, while he hits harder. A few times a fight it snows in the arena, and in the snow he speeds up. As he gets hurt, blue ice flames come up round him. Special move: Snow Day. The snow falls, he scoops up a double handful off the mat, packs it like a snowball (\"I'm gonna knock his head off.\") and it turns into a blue flare on his gloves. Then he goes all out, hunting them down with looping overhand rights.",
+    "color": "#3f8fd2",
+    "label": "",
+    "imgData": null,
+    "speedMult": 0.82,
+    "look": {
+      "skin": "#edc0a0",
+      "build": "stocky",
+      "bodyHair": "light",
+      "hair": "mohawk",
+      "hairColor": "#6b4e37",
+      "beard": "none",
+      "beardColor": "#7a5a40",
+      "ears": "normal",
+      "tattoos": {
+        "leftArm": true
+      },
+      "shorts": "#5b9bd5",
+      "trim": "#eef6fc",
+      "shortsStyle": "icicles",
+      "gloves": "#141414",
+      "icehawk": true,
+      "goatee": true,
+      "scalpInk": "koeikan"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": false,
+    "punch": {
+      "damage": 25,
+      "cooldown": 1.2,
+      "speed": 0.32,
+      "size": 15,
+      "knockback": 300,
+      "reach": 40,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": true,
+    "swing": {
+      "damage": 28,
+      "windup": 0.5,
+      "extend": 0.42,
+      "recover": 0.22,
+      "reach": 55,
+      "vicinity": 90,
+      "aimError": 16,
+      "blockMult": 2,
+      "weaveMult": 1.15
+    },
+    "hasForget": false,
+    "blockChance": 0,
+    "tdd": {
+      "sprawlChance": 65
+    },
+    "iceman": {
+      "warmup": {
+        "windup": 0.78,
+        "damage": 0.72,
+        "at": 0.7
+      },
+      "frost": {
+        "perHit": 0.04,
+        "perDamage": 0.004,
+        "hold": 2,
+        "thaw": 0.015,
+        "soften": 0.15,
+        "slow": 0.25,
+        "atkSlow": 0.15,
+        "stiff": 0.3,
+        "chargeSlow": 0.15,
+        "hitChargeSlow": 0.4,
+        "power": 0.7,
+        "sources": [
+          "punch",
+          "jab",
+          "combo",
+          "flow",
+          "swing",
+          "kopunch",
+          "kofinal",
+          "slugfest",
+          "power",
+          "finisher",
+          "poke",
+          "kick",
+          "kickback",
+          "grapple"
+        ]
+      },
+      "snow": {
+        "first": [
+          10,
+          15
+        ],
+        "every": [
+          14,
+          20
+        ],
+        "time": 7,
+        "speed": 1.35,
+        "windup": 0.8
+      },
+      "flames": {
+        "below": 0.6
+      },
+      "taunt": {
+        "behind": 40,
+        "every": [
+          25,
+          40
+        ]
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "snow",
+      "chargeTime": 60,
+      "hitCut": 2,
+      "punchCut": 2,
+      "hurtCut": 2.5,
+      "readChance": 35,
+      "rampage": {
+        "time": 6,
+        "speed": 1.6,
+        "windup": 0.26,
+        "extend": 0.18,
+        "recover": 0.12,
+        "vicinity": 150,
+        "aimError": 10,
+        "blockMult": 1,
+        "weaveMult": 1,
+        "damage": 1.25
+      }
+    }
+  },
+  {
     "id": "c-ciryl-gane",
     "rev": 6,
     "builtin": false,
@@ -230,6 +507,329 @@ var SAVED_ROSTER = [
       "batGap": 0.42,
       "finisher": 40,
       "caneDamage": 8
+    }
+  },
+  {
+    "id": "c-conor-mcgregor",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "lightweight",
+    "name": "Conor McGregor",
+    "base": "Brawler",
+    "bio": "\"The Notorious\". A counter-puncher built on the Brawler base, in green shorts, with a slicked-back ginger undercut, a thick beard and the gorilla and tiger tattoos. He never stops talking: every few seconds he does the billionaire strut and says one of his real lines, and every line is a taunt. They see red and storm straight at him, and he plants and fires the left hand as they come in. It can whiff and leave him wide open, but when it lands clean it's often a knockout. For the first 20 seconds he's the fastest, hardest-hitting fighter in the game; then his gas tank runs dry and he gets slower, softer and easier to submit. Knock someone out inside 13 seconds and the jumbotron shows the time. Against Khabib, Khabib wrestles him harder, takes his back and says \"Let's talk now.\" Against Dustin, the calf kicks come out. Special move: Press Conference, a podium, a mic, a line, water bottles, then the left hand with extra knockout power.",
+    "color": "#169b62",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#f1c9a8",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "slick",
+      "hairColor": "#8b4a2b",
+      "beard": "full",
+      "beardColor": "#a0522d",
+      "ears": "normal",
+      "tattoos": {
+        "gorilla": true,
+        "tiger": true,
+        "leftArm": true
+      },
+      "shorts": "#169b62",
+      "trim": "#f2f2f2",
+      "shortsStyle": "stripe",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 22,
+      "cooldown": 1.0,
+      "speed": 0.28,
+      "size": 15,
+      "knockback": 260,
+      "reach": 42,
+      "koChance": 5
+    },
+    "hasKick": false,
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 10,
+    "tdd": {
+      "sprawlChance": 25
+    },
+    "notorious": {
+      "trashTalk": {
+        "first": [
+          0.4,
+          0.9
+        ],
+        "every": [
+          2.5,
+          4.5
+        ],
+        "gap": 70,
+        "strut": 1.3,
+        "strutSpeed": 0.5,
+        "angerAt": 0.45,
+        "anger": 3,
+        "slipLine": 60
+      },
+      "counter": {
+        "plantRange": 160,
+        "reach": 46,
+        "maxPlant": 0.7,
+        "step": 260,
+        "whiff": 35,
+        "angryCantSlip": true,
+        "damage": 30,
+        "knockback": 520,
+        "koBase": 0,
+        "koLow": 55,
+        "koAfter": 6,
+        "cooldown": 1.0,
+        "openTime": 0.6,
+        "openVuln": 1.25
+      },
+      "gasTank": {
+        "fresh": 20,
+        "fade": 25,
+        "floor": 0.6,
+        "speed": [
+          1.22,
+          0.85
+        ],
+        "damage": [
+          1.3,
+          0.8
+        ],
+        "attack": [
+          1.3,
+          0.85
+        ],
+        "koMult": [
+          1,
+          0.55
+        ],
+        "tapExtra": [
+          8,
+          30
+        ],
+        "gassedAt": 0.35
+      },
+      "calfKicksHurt": 1.4,
+      "thirteen": {
+        "within": 13,
+        "show": 4
+      },
+      "rivals": {
+        "khabib": {
+          "grappleBoost": 1.8,
+          "rncChance": 15,
+          "gnpChance": 25,
+          "sendLocFirst": [
+            6,
+            11
+          ]
+        },
+        "dustin": {
+          "calfKicks": {
+            "first": [
+              2,
+              4
+            ],
+            "every": [
+              3.5,
+              6
+            ],
+            "range": 40,
+            "damage": 12,
+            "slow": 0.6,
+            "time": 3
+          }
+        }
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "presser",
+      "chargeTime": 36,
+      "hitCut": 3,
+      "punchCut": 2,
+      "room": 140,
+      "talk": 1.5,
+      "anger": 5,
+      "bottles": 3,
+      "bottleDamage": 6,
+      "bottleSpeed": 560,
+      "wait": 2.5,
+      "koBonus": 20
+    }
+  },
+  {
+    "id": "c-demetrious-johnson",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "flyweight",
+    "name": "Demetrious Johnson",
+    "base": "Grappler",
+    "bio": "\"Mighty Mouse\". The smallest fighter in the game, a giant mouse head on a shredded Flyweight body, built on the Grappler base. For the first 10 seconds he studies game film: a SCOUTING notepad fills up while he keeps his distance. Then he reads your numbers and goes after your worst defence: takedowns if you can't sprawl, kicks from outside if you're a Grappler, punches if your block is weak. A moment later he copies your normal attacks. His cardio never quits: every 15 seconds he gets faster while you slow down and sweat. Once you're hurt, his next takedown is the suplex he turns into an armbar in mid-air, his finish on Ray Borg. Special move: Mimic, your own special at half power (IGBB, Father's Plan or Chair Shot); against anyone else, a shot straight into the suplex and the mid-air armbar.",
+    "color": "#7b3fc4",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#6b4430",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "buzz",
+      "hairColor": "#121010",
+      "beard": "stubble",
+      "ears": "normal",
+      "tattoos": {
+        "leftArm": "bands",
+        "back": "\u5922"
+      },
+      "shorts": "#141414",
+      "trim": "#d4af37",
+      "shortsStyle": "stripe",
+      "gloves": "#151515",
+      "headwear": "mouse",
+      "mouseFur": "#8e8a94",
+      "mouseEar": "#f2a2b5"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 12,
+      "cooldown": 0.55,
+      "speed": 0.2,
+      "size": 12,
+      "knockback": 90,
+      "reach": 32,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": true,
+    "grapple": {
+      "damage": 62,
+      "cooldown": 1.5,
+      "speed": 0.4,
+      "reach": 8,
+      "counterChance": 30,
+      "finSlamDamage": 20,
+      "finPunches": 3,
+      "finPunchDamage": 10,
+      "sprawlChance": 45,
+      "reattackChance": 60,
+      "vsGrapplerChance": 100
+    },
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": true,
+    "weave": {
+      "dodgeChance": 20,
+      "critChance": 0,
+      "comboHits": 5,
+      "comboDamage": 3,
+      "finalDamage": 8,
+      "finalKnockback": 950,
+      "tauntDur": 2,
+      "tauntVuln": 2,
+      "flowChance": 25,
+      "flowDamage": 15
+    },
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 15,
+    "mightyMouse": {
+      "gameFilm": {
+        "time": 10,
+        "takedowns": {
+          "reach": 6,
+          "cooldown": 0.85
+        },
+        "strikes": {
+          "cooldown": 0.7,
+          "damage": 1.5,
+          "shotChance": 30
+        },
+        "kicks": {
+          "sprawl": 35,
+          "kick": {
+            "damage": 32,
+            "cooldown": 1.3,
+            "speed": 0.38,
+            "size": 13,
+            "knockback": 260,
+            "reach": 62,
+            "checkChance": 25
+          }
+        }
+      },
+      "copycat": {
+        "delay": 1.5,
+        "scale": 0.8
+      },
+      "cardio": {
+        "every": 15,
+        "max": 6,
+        "speed": 0.06,
+        "rate": 0.12,
+        "tire": 0.05,
+        "tireAttack": 0.06,
+        "tireMin": 0.7
+      },
+      "finisher": {
+        "at": 0.4,
+        "slamDamage": 30,
+        "tapBase": 70,
+        "tapLowHp": 30,
+        "cooldown": 6
+      },
+      "lines": {
+        "start": true,
+        "dodge": 45,
+        "miss": 45,
+        "borg": 15,
+        "finisher": true,
+        "win": true,
+        "gap": 7
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "mimic",
+      "chargeTime": 42,
+      "hitCut": 3,
+      "punchCut": 1,
+      "power": 0.5,
+      "copies": [
+        "igbb",
+        "fathersplan",
+        "chairshot"
+      ],
+      "tapBase": 25,
+      "tapLowHp": 60,
+      "slamDamage": 40
     }
   },
   {
@@ -354,6 +954,302 @@ var SAVED_ROSTER = [
       "tickDmg": 2,
       "burn": 2.2,
       "burnDmg": 1
+    }
+  },
+  {
+    "id": "c-francis-ngannou",
+    "rev": 3,
+    "builtin": false,
+    "weightClass": "heavyweight",
+    "name": "Francis Ngannou",
+    "base": "Power Puncher",
+    "bio": "\"The Predator\". A heavyweight: big, slow on his feet, and every class lighter than him takes extra damage. Built on the Power Puncher base: he plants, charges up and unloads a spinning haymaker that pinballs them off the walls. In between, every few seconds he loads up a CTE-style hook at anyone close, and if it lands it knocks them flying back across the ring. Getting hit fills his rage meter, and so does being frustrated: when it's full he turns green, grows and throws the knockout punch. He winds it up with a green line showing where it's going, so it can be dodged, and it can miss. Special move: Smash, a leap that cracks the mat and knocks them down. He's the slowest fighter in the game, and he hates Dana White.",
+    "color": "#4b5563",
+    "label": "",
+    "imgData": null,
+    "speedMult": 0.85,
+    "look": {
+      "skin": "#4e3022",
+      "build": "muscular",
+      "bodyHair": "none",
+      "hair": "coils",
+      "hairColor": "#100b09",
+      "beard": "stubble",
+      "beardColor": "#0a0706",
+      "ears": "normal",
+      "tattoos": {},
+      "shorts": "#b4b7ba",
+      "trim": "#151515",
+      "shortsStyle": "marble",
+      "waistText": "UFC",
+      "gloves": "#151515",
+      "gloveStrap": "#2f63d6",
+      "legPatch": false,
+      "hairHigh": 0.1,
+      "beardAlpha": 0.22,
+      "beardGrain": 0.5,
+      "armMuscle": 1
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": false,
+    "punch": {
+      "damage": 5,
+      "cooldown": 0.7,
+      "speed": 0.2,
+      "size": 12,
+      "knockback": 0,
+      "reach": 20,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": false,
+    "hasPowerPunch": true,
+    "powerPunch": {
+      "damageMin": 40,
+      "damageMax": 50,
+      "cooldown": 2,
+      "chargeDur": 2.2,
+      "spinDur": 0.9,
+      "knockback": 1300,
+      "wallSlams": 4,
+      "slamDamage": 5
+    },
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": true,
+    "swing": {
+      "damage": 35,
+      "windup": 0.55,
+      "extend": 0.45,
+      "recover": 0.25,
+      "reach": 55,
+      "vicinity": 90,
+      "aimError": 18,
+      "blockMult": 2,
+      "weaveMult": 1.15,
+      "cooldown": 3.5,
+      "knockback": 900
+    },
+    "hasForget": false,
+    "blockChance": 10,
+    "ngannou": {
+      "rage": {
+        "hitFill": 8,
+        "dmgFill": 0.18,
+        "missFill": 16,
+        "first": 8,
+        "grow": 1.22,
+        "stalk": 3,
+        "stalkSpeed": 1.3,
+        "range": 120,
+        "windup": 1.0,
+        "lock": 0.35,
+        "readChance": 30,
+        "readWeave": 20,
+        "lunge": 1250,
+        "lungeDist": 280,
+        "damage": 75,
+        "knockback": 1100,
+        "wallSlams": 3,
+        "slamDamage": 8,
+        "koBase": 45,
+        "koLow": 50,
+        "gasSlow": 0.55,
+        "gasTime": 1.6,
+        "keep": 0
+      },
+      "dana": {
+        "first": [
+          14,
+          26
+        ],
+        "every": [
+          45,
+          60
+        ],
+        "max": 1,
+        "fill": 30
+      },
+      "koReading": {
+        "units": 129161
+      },
+      "lines": {
+        "tauntChance": 35,
+        "tauntEvery": [
+          14,
+          22
+        ]
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "smash",
+      "chargeTime": 35,
+      "hitCut": 4,
+      "punchCut": 4,
+      "radius": 140,
+      "damage": 70,
+      "downTime": 1.3,
+      "crouch": 0.5,
+      "air": 0.75,
+      "pose": 0.7,
+      "lead": 0.5
+    }
+  },
+  {
+    "id": "c-georges-st-pierre",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "welterweight",
+    "name": "Georges St-Pierre",
+    "base": "Grappler",
+    "bio": "\"GSP\". Built on the Grappler base, with a stiff jab and the best double leg in the game: nearly half his shots go straight through, no sprawl. He walks out in his karate gi and a white headband with a red sun, and throws them off when the fight starts. Very hard to hit: he slips a lot of what comes at him, and after a good run of slips he drops his hands and tells you \"I'm not impressed by your performance.\" Every few seconds he leaps in with a Superman punch, a red cape appearing mid-air. His special bar is the crowd: slips, Superman punches and takedowns get them going, and past halfway it turns into a Montreal crowd waving Quebec and Canada flags and chanting \"GSP! GSP!\". While they chant he hits harder and moves faster. When it fills he goes into the Superman Dive: he rises up, flies down a red lane with both arms out, pins you and drives you round the cage.",
+    "color": "#1f4fa3",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#e9bf9c",
+      "build": "muscular",
+      "bodyHair": "none",
+      "hair": "buzz",
+      "hairColor": "#3b2a20",
+      "beard": "none",
+      "ears": "normal",
+      "tattoos": {
+        "kanji": true
+      },
+      "shorts": "#161616",
+      "trim": "#e8e8e8",
+      "shortsStyle": "plain",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 7,
+      "cooldown": 0.6,
+      "speed": 0.22,
+      "size": 13,
+      "knockback": 100,
+      "reach": 34,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": true,
+    "grapple": {
+      "damage": 36,
+      "cooldown": 1.6,
+      "speed": 0.45,
+      "reach": 6,
+      "counterChance": 15,
+      "finSlamDamage": 20,
+      "finPunches": 3,
+      "finPunchDamage": 10,
+      "sprawlChance": 55,
+      "reattackChance": 55,
+      "vsGrapplerChance": 100,
+      "shotChance": 35,
+      "shotName": "DOUBLE LEG"
+    },
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 15,
+    "gsp": {
+      "walkout": {
+        "keep": 1.8,
+        "gi": "#f6f4ee",
+        "belt": "#161616",
+        "headband": "#f6f4ee",
+        "sun": "#c8102e"
+      },
+      "dodge": {
+        "chance": 32,
+        "projChance": 24
+      },
+      "notImpressed": {
+        "after": 3,
+        "window": 10,
+        "hitCost": 0,
+        "cooldown": 12,
+        "max": 3,
+        "handsDown": 1.0
+      },
+      "superman": {
+        "first": [
+          3,
+          5
+        ],
+        "every": [
+          4,
+          7
+        ],
+        "chantEvery": [
+          2.5,
+          4.5
+        ],
+        "minGap": 25,
+        "maxGap": 190,
+        "load": 0.34,
+        "speed": 950,
+        "turn": 2.5,
+        "reach": 30,
+        "damage": 18,
+        "chantDamage": 30,
+        "knockback": 380,
+        "chantKnockback": 620
+      },
+      "doubleLeg": {
+        "through": 45
+      },
+      "crowd": {
+        "chantAt": 0.5,
+        "dodge": 2,
+        "taunt": 5,
+        "superman": 5,
+        "takedown": 3,
+        "beat": 1.7,
+        "hold": 2.5
+      },
+      "chant": {
+        "damage": 1.35,
+        "speed": 1.15,
+        "attack": 1.25
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "supermandive",
+      "chargeTime": 60,
+      "hitCut": 3,
+      "punchCut": 1,
+      "rise": 0.55,
+      "aim": 0.65,
+      "lock": 0.3,
+      "speed": 1500,
+      "damage": 30,
+      "walls": 4,
+      "wallDamage": 12,
+      "pinSpeed": 1150,
+      "crashTime": 1.0
     }
   },
   {
@@ -1162,6 +2058,242 @@ var SAVED_ROSTER = [
       "max": 1,
       "dmg": 100,
       "waveDmg": 40
+    }
+  },
+  {
+    "id": "c-sean-omalley",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "bantamweight",
+    "name": "Sean O'Malley",
+    "base": "Kicker",
+    "bio": "\"Suga\". Built on the Kicker base: long kicks from range, plus quick punches up close that land as critical hits for double damage 30% of the time. Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Sweets pop up in the ring and both fighters race for them: he eats them, the opponent stomps them. A lollipop doubles his crit chance, a gummy bear doubles his crit damage, and a rare golden donut does both, for a few seconds. Every sweet changes his braids to another of his real fight-night hair colours. After three he hits a sugar crash and slows right down. Special move: Sugar Rush, a shower of sweets raining into the ring.",
+    "color": "#e75480",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#f3d0b5",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "braids",
+      "hairColor": "#8a3ffc",
+      "hairColors": [
+        "#8a3ffc",
+        "#2d7ff9"
+      ],
+      "beard": "none",
+      "ears": "normal",
+      "faceInk": true,
+      "tattoos": {
+        "owl": true,
+        "script": true,
+        "leftArm": true,
+        "rightArm": true,
+        "color": true
+      },
+      "shorts": "#e75480",
+      "trim": "#d4af37",
+      "shortsStyle": "stripe",
+      "gloves": "#161616"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 22,
+      "cooldown": 0.8,
+      "speed": 0.26,
+      "size": 13,
+      "knockback": 120,
+      "reach": 38,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 32,
+      "cooldown": 2.6,
+      "speed": 0.45,
+      "size": 15,
+      "knockback": 450,
+      "reach": 76,
+      "checkChance": 25
+    },
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 12,
+    "tdd": {
+      "sprawlChance": 50
+    },
+    "suga": {
+      "crit": {
+        "chance": 50,
+        "mult": 2
+      },
+      "critKo": {
+        "base": 20,
+        "low": 50,
+        "after": 14
+      },
+      "craneKick": {
+        "first": [
+          4,
+          7
+        ],
+        "every": [
+          6,
+          9
+        ],
+        "range": 100,
+        "pose": 0.6,
+        "leap": 0.22,
+        "lunge": 760,
+        "reach": 34,
+        "damage": 45,
+        "knockback": 900,
+        "wallSlams": 1,
+        "slamDamage": 6,
+        "readChance": 25
+      },
+      "sweets": {
+        "first": [
+          3,
+          5
+        ],
+        "every": [
+          4,
+          7
+        ],
+        "life": 9,
+        "contested": 60,
+        "turn": 5,
+        "sprint": 1.15,
+        "odds": {
+          "lollipop": 45,
+          "gummy": 45,
+          "donut": 10
+        },
+        "kinds": {
+          "lollipop": {
+            "boosts": [
+              "chance"
+            ]
+          },
+          "gummy": {
+            "boosts": [
+              "mult"
+            ]
+          },
+          "donut": {
+            "boosts": [
+              "chance",
+              "mult"
+            ]
+          }
+        },
+        "boost": {
+          "time": 4,
+          "chance": 2,
+          "mult": 2
+        }
+      },
+      "crash": {
+        "after": 3,
+        "slow": 0.6,
+        "attackSlow": 0.75,
+        "time": 3.5
+      },
+      "hair": [
+        {
+          "event": "UFC 250",
+          "colors": [
+            "#e53935",
+            "#fb8c00",
+            "#fdd835",
+            "#43a047",
+            "#1e88e5",
+            "#8e24aa"
+          ]
+        },
+        {
+          "event": "UFC 252",
+          "colors": [
+            "#ffdd00",
+            "#ffdd00",
+            "#034ea2",
+            "#ed1c24"
+          ]
+        },
+        {
+          "event": "UFC 264",
+          "colors": [
+            "#ff4fa3",
+            "#8e3fd6"
+          ]
+        },
+        {
+          "event": "UFC 276",
+          "colors": [
+            "#ff1f8e"
+          ]
+        },
+        {
+          "event": "UFC 280",
+          "colors": [
+            "#e0202b"
+          ]
+        },
+        {
+          "event": "UFC 292",
+          "colors": [
+            "#ff5fa8",
+            "#ffe03a",
+            "#39d353"
+          ]
+        },
+        {
+          "event": "UFC 299",
+          "colors": [
+            "#8a3ffc",
+            "#2d7ff9"
+          ]
+        },
+        {
+          "event": "UFC 306",
+          "colors": [
+            "#ff5fa8",
+            "#3ddc84",
+            "#2f8fff"
+          ]
+        }
+      ],
+      "hairStart": 6,
+      "hairTag": true,
+      "voice": {
+        "start": 100,
+        "win": true
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "sugarrush",
+      "chargeTime": 40,
+      "hitCut": 3,
+      "punchCut": 2,
+      "call": 1.0,
+      "sweets": 5,
+      "donuts": 1,
+      "fall": 0.7
     }
   }
 ];

@@ -174,6 +174,7 @@ function duckLand(self, other, cfg, m) {
   }
   playDuckLand();
   crowdReact(1);
+  if (m.shotDown) { duckShotDownLand(self, other, m); return; } // Alex Pereira shot the duck down: Jon gets hurt instead (pereira.js)
   var dx = other.x - m.cx, dy = other.y - m.cy, d = Math.sqrt(dx * dx + dy * dy);
   if (other.alive && d <= m.R) {
     if (d < 1) { var ra = Math.random() * Math.PI * 2; dx = Math.cos(ra); dy = Math.sin(ra); d = 1; }

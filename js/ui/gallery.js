@@ -59,8 +59,15 @@ var SPECIAL_INFO = {
   chairshot: function (sp) { return "Pulls a folding chair from under the ring, charges them down and swings it over their head for " + sp.damage + " (can't be weaved or blocked), leaving them dazed for " + sp.dazeTime + "s. Then hurls the chair into the stands" + (sp.ladder ? ", pulls a ladder out from under the ring, stands it up in the middle, climbs it and dives off it in a body slam for " + sp.ladder.slamDamage + " as \"watch out!\" plays, runs a lap celebrating (bowling anyone in his way aside), throws the ladder at them for " + sp.ladder.throwDamage + "." : " and runs a lap celebrating, bowling anyone in his way aside."); },
   herbdean: function (sp) { return "The ref falls asleep and blind Herb Dean barges in through the crowd with his cane. Gane beats them with a bat (" + sp.batDamage + " a swing), Herb whacks them with the cane (" + sp.caneDamage + "), and a last bat swing does " + sp.finisher + "."; },
   goatstampede: function (sp) { return "Floats up into the air, his tattoo flickering gold and red, and summons " + sp.goats + " goats. Each runs in through the crowd, leaps the fence and charges straight across the cage through center stage, down a lane shown in red first (" + sp.goatDamage + " if it rams them, then they pinball off " + sp.ramWalls + " walls for " + sp.ramWallDamage + " each). The lanes are random, so they can be dodged by being somewhere else."; },
+  sugarrush: function (sp) { return "Throws both arms up, \"Welcome to the Suga Show.\", and " + sp.sweets + " sweets rain down into the ring" + (sp.donuts ? ", " + sp.donuts + " of them a golden donut" : "") + ". He races to eat them and the opponent races to stomp them, and three of them means a sugar crash."; },
+  supermandive: function (sp) { return "Goes off by itself when the crowd meter fills. He rises up off the mat while a red lane shows where he'll fly (it follows them, then locks), then flies down it with both arms out and a red cape. Catch them and it's " + sp.damage + " (can't be slipped or blocked): he pins them and drives them round the cage, " + sp.walls + " wall slams of " + sp.wallDamage + ". Miss and he crashes into the cage, dazed for " + secs(sp.crashTime) + "."; },
+  mimic: function (sp) { return "Copies their special at " + Math.round((sp.power != null ? sp.power : 0.5) * 100) + "% of its damage, in his colours: " + (sp.copies || ["igbb", "fathersplan", "chairshot"]).map(function (k) { return SPECIAL_MOVES[k] || k; }).join(", ") + ". Against any other special he does his own: crouches for the level change (the tell), shoots across the cage, and if the shot gets through it's the suplex into the mid-air armbar (" + sp.slamDamage + " on landing; they tap " + sp.tapBase + "%, up to " + (sp.tapBase + sp.tapLowHp) + "% when hurt)."; }, // Mighty Mouse (mighty-mouse.js)
+  snow: function (sp) { var rp = sp.rampage; return "Charges as he gets hurt. Snow starts falling, he scoops a double handful off the mat and packs it like a snowball (\"I'm gonna knock his head off.\"), blue ice flames come up round him and the snow turns into a blue flare on his gloves. Then " + rp.time + " seconds all out: he hunts them down " + rp.speed + "x as fast, throwing nothing but looping overhand rights that hit " + Math.round((rp.damage - 1) * 100) + "% harder."; },
+  smash: function (sp) { return "\"In this fight, I'm just looking to smash.\" Crouches and leaps while a red circle shows where he'll come down (where they're heading), then smashes into the mat: shockwave rings and cracks in the floor. Anyone inside takes " + sp.damage + " (can't be slipped or blocked) and is knocked down for " + secs(sp.downTime) + "."; },
+  bow: function (sp) { return "Draws a big red bow while the path it'll fly lights up red, bouncing off the cage, then fires a big red arrow that bings off the cage up to " + sp.bounces + " times. It hits them up to " + sp.hits + " times (" + sp.damage + ", then " + sp.secondHit + "), can't be slipped or blocked, then thunks into the cage."; },
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }
 };
+SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
 function galleryMoves(ch) {
@@ -116,6 +123,60 @@ function galleryMoves(ch) {
     var c = ch.cheater;
     var objs = (typeof CHEATER_OBJECTS !== "undefined" ? CHEATER_OBJECTS : []).map(function (o) { return o.name.toLowerCase() + " " + o.damage; }).join(", ");
     add("😴", "Cheater mode", "The ref sleeps " + secs(c.asleep) + " after every " + secs(c.awake) + " awake. He picks one trick per nap: eye pokes into a combo, throwing objects (" + objs + "), or a bat (" + c.bat.damage + " a swing). Takedowns on him fail: he grabs the cage and stands up.");
+  }
+  if (ch.poatan) {
+    // Alex Pereira (pereira.js).
+    var pc = ch.poatan.chama, pk2 = ch.poatan.calfKick;
+    if (pc) add("📣", "CHAMA", "Every " + pc.every[0] + "-" + pc.every[1] + "s up close he plants and shouts \"CHAMA!\", and the crowd shouts it back. That's the tell: they back off " + pc.readChance + "% of the time. Then left-right-left (" + pc.jab + ", " + pc.cross + ", then a " + pc.hook + "-damage left hook). A clean hook knocks them out " + pc.koBase + "% of the time at full health, up to " + (pc.koBase + pc.koLow) + "% the more hurt they are, and he shoots an arrow into the sky.");
+    if (pk2) add("🦵", "Calf kicks", "His kicks land low: they limp at " + Math.round(pk2.slow * 100) + "% speed for " + secs(pk2.time) + ".");
+    if (ch.poatan.duckHunt) add("🦆", "Duck season", "Against Jon Jones: when Jon turns into a duck and flies off, " + ch.poatan.duckHunt.chance + "% of the time he shoots it out of the sky. Jon still drops in, but he's the one who gets hurt (" + ch.poatan.duckHunt.damage + ").");
+  }
+  if (ch.suga) {
+    // Sean O'Malley (omalley.js).
+    var sg = ch.suga, ssw = sg.sweets, scr = sg.crash, sck = sg.craneKick;
+    if (sg.crit) add("✨", "Critical hits", sg.crit.chance + "% of his punches are critical hits for " + sg.crit.mult + "x damage.");
+    if (sg.critKo) add("💤", "Suga KO", "With a sweet in him, a critical hit knocks them out cold " + sg.critKo.base + "% of the time at full health, up to " + (sg.critKo.base + sg.critKo.low) + "% the more hurt they are (not in the first " + secs(sg.critKo.after || 0) + "). He walks off with his arms up.");
+    if (ch.tdd) add("🤼", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots (\"STUFFED\") and punches straight back.");
+    if (sck) add("🦩", "Crane kick", "Every " + sck.every[0] + "-" + sck.every[1] + "s up close he goes up on one leg, arms out like wings, while a pink path shows where he'll kick. That's the tell: they back off " + sck.readChance + "% of the time. Then he leaps in with a front kick for " + sck.damage + " that knocks them into the cage.");
+    if (ssw) add("🍭", "Sweets", "A sweet pops up in the ring every " + ssw.every[0] + "-" + ssw.every[1] + "s and both of them race for it: he eats it, the opponent stomps it. Lollipop: " + ssw.boost.chance + "x crit chance. Gummy bear: " + ssw.boost.mult + "x crit damage. Golden donut (rare): both. Each boost lasts " + secs(ssw.boost.time) + ", and every sweet changes his braids to another of his real fight-night hair colours.");
+    if (scr) add("😴", "Sugar crash", "After " + scr.after + " sweets he crashes: " + Math.round(scr.slow * 100) + "% speed, slower hands and no crane kicks for " + secs(scr.time) + ".");
+  }
+  if (ch.gsp) gspGalleryMoves(ch, add); // Georges St-Pierre (gsp.js)
+  if (ch.mightyMouse) {
+    // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
+    var mm = ch.mightyMouse;
+    if (mm.gameFilm) add("📝", "Game film", "For the first " + secs(mm.gameFilm.time) + " he studies them (a SCOUTING notepad fills) and keeps his distance. Then he goes after their worst defence: takedowns every time he's close if they can't sprawl, kicks from outside against a Grappler, faster, harder punches against a weak block.");
+    if (mm.copycat) add("🐭", "Copycat", "Then he copies their normal attacks (punch, kick, haymaker) at " + Math.round(mm.copycat.scale * 100) + "% of their damage.");
+    if (mm.cardio) add("🫀", "Cardio", "Every " + secs(mm.cardio.every) + " he's " + Math.round(mm.cardio.speed * 100) + "% faster and attacks " + Math.round(mm.cardio.rate * 100) + "% faster, while they tire (" + Math.round(mm.cardio.tire * 100) + "% slower each time) and sweat.");
+    if (mm.finisher) add("🦾", "Suplex to armbar", "Once they're under " + Math.round(mm.finisher.at * 100) + "% health, his next takedown is a back suplex he turns into an armbar in mid-air (" + mm.finisher.slamDamage + " on landing). They tap " + mm.finisher.tapBase + "%, up to " + (mm.finisher.tapBase + mm.finisher.tapLowHp) + "% the more hurt they are. \"Throw you like a bag of potatoes and break your arm.\"");
+  }
+  if (ch.notorious) {
+    // Conor McGregor (conor.js).
+    var cn = ch.notorious, ct = cn.trashTalk, cc = cn.counter, cg = cn.gasTank, cr = cn.rivals || {};
+    if (ct) add("🗣️", "Trash talk", "He never stops talking: every few seconds he does the billionaire strut and says one of his real lines. Every line is a taunt: they see red for " + secs(ct.anger) + " and storm straight at him.");
+    if (cc) add("🥊", "Counter left", "When they come at him angry he plants (the left hand glows) and fires it as they arrive" + (cc.angryCantSlip ? ": they run onto it, so it can't be slipped or blocked" : "") + ". It whiffs " + cc.whiff + "% of the time and leaves him open for " + secs(cc.openTime) + ". If it lands: " + cc.damage + " damage, or a knockout: " + (cc.koBase > 0 ? cc.koBase + "% of the time at full health, " : "never at full health, ") + "up to " + (cc.koBase + cc.koLow) + "% the more hurt they are" + (cc.koAfter ? ", and never in the first " + cc.koAfter + "s" : "") + ".");
+    if (cg) add("⛽", "Gas tank", "The fastest, hardest-hitting fighter in the game for " + secs(cg.fresh) + " (x" + cg.speed[0] + " speed, x" + cg.damage[0] + " damage). Then over " + secs(cg.fade) + " it runs dry: x" + cg.speed[1] + " speed, x" + cg.damage[1] + " damage, and up to " + cg.tapExtra[1] + "% more likely to tap to a submission.");
+    if (ch.tdd) add("🧱", "Takedown defense", "Stuffs " + ch.tdd.sprawlChance + "% of takedown shots and punches straight back.");
+    if (cn.thirteen) add("⏱️", "13 seconds", "Knock someone out inside " + cn.thirteen.within + " seconds and the jumbotron shows the time, like his knockout of José Aldo.");
+    if (cr.khabib) add("🦅", "vs Khabib", "Khabib's grabs come round " + cr.khabib.grappleBoost + "x as fast, " + cr.khabib.rncChance + "% of his takedowns take the back for a choke and " + cr.khabib.gnpChance + "% go to ground and pound (\"Let's talk now.\"), and Send Me Location comes early.");
+    if (cr.dustin && cr.dustin.calfKicks) add("🦵", "vs Dustin", "Dustin throws calf kicks at him (" + cr.dustin.calfKicks.damage + ", and a limp). Calf kicks do x" + (cn.calfKicksHurt || 1) + " damage to him.");
+  }
+  if (ch.iceman) {
+    // Chuck Liddell (liddell.js).
+    var ic = ch.iceman, fr = ic.frost, sn = ic.snow, pct = function (x) { return Math.round(x * 100) + "%"; };
+    if (ic.warmup) add("🐢", "Slow start", "Rolls slowly, and his hooks start slow (" + secs(ic.warmup.windup) + " wind-up" + (ic.warmup.damage != null ? ", " + pct(ic.warmup.damage) + " damage" : "") + "), warming up to full as their gloves frost over. Early on he's easy to hit.");
+    if (fr) add("🧊", "Frost", "Every punch that lands on him frosts their gloves. At full frost they hit " + pct(fr.soften) + " softer, move " + pct(fr.slow) + " slower and attack " + pct(fr.atkSlow) + " slower, and he hits " + pct(fr.power) + " harder. It melts slowly if they stop hitting him.");
+    if (sn) add("❄️", "Snowfall", "Every " + sn.every[0] + "-" + sn.every[1] + "s it snows in the arena for " + secs(sn.time) + ": he rolls " + sn.speed + "x faster and winds up quicker.");
+    if (ic.flames) add("🔥", "Ice flames", "Below " + pct(ic.flames.below) + " health, blue ice flames come up round him.");
+    if (ch.tdd) add("🤼", "Sprawl and brawl", "Sprawls " + ch.tdd.sprawlChance + "% of takedown shots and stuffs them.");
+  }
+  if (ch.ngannou) {
+    // Francis Ngannou (ngannou.js).
+    var nr = ch.ngannou.rage, nd = ch.ngannou.dana;
+    if (nr) add("😤", "Rage meter", "Fills every time he's hit (" + nr.hitFill + "% a hit, plus " + nr.dmgFill + "% a point of damage) and when he's frustrated (" + nr.missFill + "% when a hook or a spin comes up empty). When it's full he turns green, grows and throws the knockout punch: he cocks it back while a green line shows where it's going, and they back off " + nr.readChance + "% of the time. It can miss. If it lands it's " + nr.damage + " and a pinball off the walls, and a knockout " + nr.koBase + "% of the time at full health, up to " + (nr.koBase + nr.koLow) + "% the more hurt they are.");
+    if (nd) add("📝", "Dana White", "Once a fight Dana White waves a contract at him from the jumbotron (cage-side in the test arena). He rips it up, or punches the screen, and it fills his rage meter " + nd.fill + "%.");
+    if (ch.ngannou.koReading) add("📈", "Punch power", "His knockouts put his punch-power reading on the jumbotron: " + ch.ngannou.koReading.units.toLocaleString("en-US") + " units.");
+    if (ch.speedMult && ch.speedMult < 1) add("🐢", "Slow", "The slowest fighter in the game: " + Math.round(ch.speedMult * 100) + "% of a heavyweight's speed.");
   }
   if (ch.blockChance > 0) add("🛡️", "Block", "Blocks " + ch.blockChance + "% of strikes.");
   if (ch.jon) {
@@ -280,6 +341,7 @@ function galleryAssets() {
   list.push({ name: "Brazil flag", info: "Waved by the crowd during Do Bronx.", w: 220, h: 220, draw: function (c, w, h) {
     withCtx(c, function () { drawBrazilFlag(w * 0.5, h * 0.55, w * 0.55, 0, 0); });
   } });
+  gspGalleryAssets(list); // GSP's Montreal stadium and the Quebec and Canada flags (gsp.js)
   return list;
 }
 
@@ -348,6 +410,7 @@ function gallerySounds() {
       synth("CTE Rejuvenation", "The CTE base forgetting damage.", function () { playForget(); })
     ] }
   ];
+  gspGallerySounds(groups, synth); // GSP's sounds (gsp.js)
   // Anything new in SOUND_CLIPS that isn't listed above still shows up.
   var listed = {};
   groups.forEach(function (g) { g.items.forEach(function (it) { if (it.clip) listed[it.clip] = true; }); });

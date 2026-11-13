@@ -183,6 +183,13 @@ function updateAbilities(dt) {
     if (updateSendLocation(self, other, dt)) continue; // Khabib's Send Me Location (send-location.js)
     if (updateTopRope(self, other, dt)) continue; // Josh Hokit's Top Rope Body Slam (hokit-toprope.js)
     if (updateEagleCarry(self, other, dt)) continue; // Gaethje snatched up by his own eagle (gaethje-golf.js)
+    if (updateDuckHunt(self, other, dt)) continue; // Alex Pereira shooting Jon's duck down (pereira.js)
+    if (updateChama(self, other, dt)) continue; // and his CHAMA combo (pereira.js)
+    if (updateCraneKick(self, other, dt)) continue; // Sean O'Malley's crane kick (omalley.js)
+    if (updateGsp(self, other, dt)) continue; // GSP's Superman punch and "not impressed" (gsp.js)
+    if (updateMightyMouse(self, other, dt)) continue; // Mighty Mouse's suplex into the mid-air armbar (mighty-mouse.js)
+    if (updateConor(self, other, dt)) continue; // Conor McGregor's trash talk and counter left, Dustin's calf kicks on him (conor.js)
+    if (updateNgannou(self, other, dt)) continue; // Francis Ngannou's rage punch and Dana White (ngannou.js)
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
@@ -253,7 +260,8 @@ function updateAbilities(dt) {
         if (!self.punch.hit && self.punch.t >= windup) {
           self.punch.hit = true;
           if (other.alive) {
-            var punchDealt = hurt(other, pu.damage, "punch", self.id);
+            var punchDealt = hurt(other, pu.damage * sugaCritRoll(self), "punch", self.id); // (Sean O'Malley's critical hits, omalley.js)
+            if (punchDealt > 0) sugaCritLanded(self, other); // CRIT! (omalley.js)
             if (punchDealt > 0) { if (bmfJabs(self.char)) playBmfJab(); else playPunch(punchDealt); violentHit(self, other, 0.5); }
             if (pu.knockback > 0 && !other.justDodged) {
               var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
@@ -289,6 +297,7 @@ function updateAbilities(dt) {
           } else if (other.alive) {
             var kickDealt = hurt(other, ki.damage, self.kick.counter ? "kickback" : "kick", self.id);
             if (kickDealt > 0) playKick();
+            if (kickDealt > 0) calfKickLanded(self, other); // Alex Pereira's calf kicks: a limp (pereira.js)
             if (ki.knockback > 0 && !other.justDodged) {
               var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;
               other.vx += kkx / kkd * ki.knockback;
@@ -406,7 +415,8 @@ function updateAbilities(dt) {
       var pp = self.char.powerPunch;
       if (!self.powerState) {
         self.powerCd -= dt;
-        if (self.powerCd <= 0) {
+        if (self.powerCd <= 0 && self.swing) self.powerCd = 0; // waits for a CTE hook to finish (Ngannou)
+        else if (self.powerCd <= 0) {
           self.powerCd += pp.cooldown;
           var spd0 = Math.sqrt(self.vx * self.vx + self.vy * self.vy);
           self.powerState = {

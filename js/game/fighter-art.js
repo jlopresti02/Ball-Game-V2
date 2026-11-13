@@ -26,7 +26,7 @@ function armColor(ch, side) {
   if (side && tat.armInkSide && side !== (tat.armInkSide === "left" ? -1 : 1)) return ch.look.skin;
   return sleevePattern(ch.look);
 }
-function gloveColor(ch) { return ch.look ? ch.look.gloves : ch.color; }
+function gloveColor(ch) { return icedGloveColor(ch) || (ch.look ? ch.look.gloves : ch.color); } // frosted by Chuck Liddell, or his blue flare (liddell.js)
 
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
 // Blend hex colour a toward b by t (0..1)
@@ -72,11 +72,15 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   c.save();
   c.translate(x, y);
   var contained = opts.layout === "contained";
+  if (contained && look.backView) { drawArtBack(c, r, look, ink, opts.name || ""); c.restore(); return; } // seen from behind (mighty-mouse-art.js)
   if (contained && look.hairPuff) drawHairPuff(c, r, look, ink);
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
+  if (contained && look.hair === "coils" && look.hairHigh) drawCoilTop(c, r, look, ink);
   if (contained && look.headwear === "trucker") drawTruckerHat(c, r, look, ink);
   if (contained && look.headwear === "football") drawFootballHelmet(c, r, look, ink);
+  if (contained && look.headwear === "mouse") drawMouseHead(c, r, look, ink); // Mighty Mouse's mouse head (mighty-mouse-art.js)
+  if (contained && look.icehawk) drawIcehawk(c, r, look, ink); // Chuck Liddell's Icehawk mohawk (liddell.js)
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
   c.restore();
 }
@@ -108,6 +112,41 @@ function drawCane(c, r, ink, swing) {
 
 // Big hair as a second circle sitting behind the top of the ball: a lumpy
 // cloud of twists, outlined as one shape (all the lumps stroked, then filled)
+// A short high top of tight coils that rises above the ball, for hair
+// "coils" with look.hairHigh (0.1 to 0.2 ball radii). Drawn over the ball so
+// its outline doesn't cut through the hair.
+function drawCoilTop(c, r, look, ink) {
+  var hc = look.hairColor, h = r * look.hairHigh;
+  var hairEdge = function () {
+    c.moveTo(-r * 0.72, -r * 0.64);
+    c.quadraticCurveTo(-r * 0.68, -r * 0.75, -r * 0.52, -r * 0.73);
+    c.quadraticCurveTo(0, -r * 0.77, r * 0.52, -r * 0.73);
+    c.quadraticCurveTo(r * 0.68, -r * 0.75, r * 0.72, -r * 0.64);
+  };
+  var top = function () {
+    c.moveTo(r * 0.72, -r * 0.64);
+    c.bezierCurveTo(r * 0.8, -r * 0.86, r * 0.72, -r - h, 0, -r - h);
+    c.bezierCurveTo(-r * 0.72, -r - h, -r * 0.8, -r * 0.86, -r * 0.72, -r * 0.64);
+  };
+  var shape = function () { c.beginPath(); hairEdge(); top(); c.closePath(); };
+  c.save();
+  c.fillStyle = hc; shape(); c.fill();
+  c.save(); shape(); c.clip();
+  var co = artRand(41);
+  for (var i = 0; i < 520; i++) {
+    var x = (co() * 2 - 1) * r * 0.8, y = -r * 0.62 - co() * (r * 0.4 + h), z = r * (0.014 + co() * 0.012);
+    c.fillStyle = i % 3 ? shadeHex(hc, 0.16) : shadeHex(hc, -0.4); c.globalAlpha = 0.38;
+    c.beginPath(); c.arc(x, y, z, 0, Math.PI * 2); c.fill();
+  }
+  c.restore();
+  c.lineJoin = "round";
+  c.strokeStyle = ink; c.lineWidth = Math.max(2, r * 0.06);
+  c.beginPath(); top(); c.stroke();
+  c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = Math.max(1, r * 0.016);
+  c.beginPath(); hairEdge(); c.stroke();
+  c.restore();
+}
+
 function drawHairPuff(c, r, look, ink) {
   var hc = look.hairColor, py = -r * 0.8, pr = r * 0.62;
   var lumps = [[0, 0, 1]];
@@ -333,6 +372,43 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.fillRect(cgx, cgy, r * 0.016, r * 0.016);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "slick") {
+    drawSlickHair(c, r, look, lw, hairline); c.fillStyle = hc;  // Conor McGregor's slicked-back undercut
+  } else if (look.hair === "coils") {
+    // Tight curly hair: faded sides, and a short rounded top of small coils
+    // sitting high on the head with a squared-off hairline
+    c.save(); c.beginPath(); c.rect(-r, -r, r * 0.22, r); c.rect(r * 0.78, -r, r * 0.22, r); c.clip();
+    c.fillStyle = mixHex(look.skin, hc, 0.55); hairline(); c.fill();
+    c.restore();
+    var coilTop = function () {
+      c.beginPath();
+      c.moveTo(-r * 0.8, -r);
+      c.lineTo(-r * 0.8, -r * 0.66);
+      c.quadraticCurveTo(-r * 0.74, -r * 0.74, -r * 0.56, -r * 0.73);
+      c.quadraticCurveTo(0, -r * 0.77, r * 0.56, -r * 0.73);
+      c.quadraticCurveTo(r * 0.74, -r * 0.74, r * 0.8, -r * 0.66);
+      c.lineTo(r * 0.8, -r);
+      c.closePath();
+    };
+    c.fillStyle = hc; coilTop(); c.fill();
+    c.save(); coilTop(); c.clip();
+    var co = artRand(23);
+    for (var ci = 0; ci < 420; ci++) {
+      var cx2 = (co() * 2 - 1) * r * 0.84, cy2 = -r * (0.7 + co() * 0.32), cz = r * (0.014 + co() * 0.012);
+      c.fillStyle = ci % 3 ? shadeHex(hc, 0.22) : shadeHex(hc, -0.4);
+      c.globalAlpha = 0.45;
+      c.beginPath(); c.arc(cx2, cy2, cz, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+    c.restore();
+    c.strokeStyle = shadeHex(hc, -0.4); c.lineWidth = lw(0.016); coilTop(); c.stroke();
+    // Fade grain on the sides
+    var cfr = artRand(31); c.fillStyle = shadeHex(hc, -0.2); c.globalAlpha = 0.5;
+    for (var cf = 0; cf < 60; cf++) {
+      var cfx = (cfr() < 0.5 ? -1 : 1) * r * (0.8 + cfr() * 0.16), cfy = -r * (0.5 + cfr() * 0.25);
+      c.fillRect(cfx, cfy, r * 0.016, r * 0.016);
+    }
+    c.globalAlpha = 1; c.fillStyle = hc;
   } else if (look.hair === "buzz" || look.hair === "stubble") {
     // A stubble scalp is a see-through shadow, as light as the short beard
     c.globalAlpha = look.hair === "stubble" ? 0.32 : 0.88; hairline(); c.fill();
@@ -391,15 +467,21 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   } else if (look.hair === "mohawk") {
     c.globalAlpha = 0.3; hairline(); c.fill(); c.globalAlpha = 1;
     c.beginPath(); c.ellipse(0, -r * 0.9, r * 0.13, r * 0.2, 0, 0, Math.PI * 2); c.fill();
+  } else if (look.hair === "braids") {
+    drawBraids(c, r, look, hairline, lw);  // cornrows, dyed in look.hairColors (Sean O'Malley)
   } else {
     // Bald: a shine on the scalp
     c.fillStyle = "rgba(255,255,255,0.35)";
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
-  if (look.hair !== "bald" && look.hair !== "crop") {  // the crop outlines its own shape
+  if (look.hair !== "bald" && look.hair !== "crop" && look.hair !== "coils") {  // these outline their own shape
     c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
+
+  if (look.warPaint) drawWarPaint(c, r, look.warPaint, lw, look.skin);  // Alex Pereira's war paint
+  if (look.faceInk) drawFaceInk(c, r, lw);  // Sean O'Malley's face tattoos
+  if (look.goatee || look.scalpInk) drawIcemanHead(c, r, look, lw);  // Chuck Liddell's goatee and scalp tattoo (liddell.js)
 
   // Chinstrap: a narrow band from the sideburns along the jaw to the chin
   if (look.beard === "chinstrap") {
@@ -498,8 +580,9 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   }
   // Beard: sideburns down around the jaw to a full chin
   if (look.beard !== "none" && look.beard !== "chinstrap" && look.beard !== "boxed") {
-    c.globalAlpha = look.beard === "stubble" ? 0.28 : look.beard === "short" ? 0.55 : 1;
+    c.globalAlpha = look.beard === "stubble" ? (look.beardAlpha || 0.28) : look.beard === "short" ? 0.55 : 1;
     c.fillStyle = look.beardColor || hc;
+    var beardShape = function () {
     c.beginPath();
     c.moveTo(-r * 0.74, -r * 0.66);
     c.quadraticCurveTo(-r * 0.62, -r * 0.44, -r * 0.32, -r * 0.5);
@@ -508,7 +591,17 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.quadraticCurveTo(r * 0.8, -r * 0.3, r * 0.3, jaw + r * 0.02);
     c.quadraticCurveTo(0, jaw + r * (look.beard === "full" ? 0.2 : 0.12), -r * 0.3, jaw + r * 0.02);
     c.quadraticCurveTo(-r * 0.8, -r * 0.3, -r * 0.74, -r * 0.66);
-    c.closePath(); c.fill();
+    c.closePath();
+    };
+    beardShape(); c.fill();
+    if (look.beard === "stubble" && look.beardGrain) {
+      // Dense grain of short hairs over the shadow, so stubble reads on dark skin
+      c.save(); beardShape(); c.clip();
+      var gd = look.beardGrain === true ? 1 : look.beardGrain;  // a number thins it out
+      var sg2 = artRand(53); c.fillStyle = look.beardColor || hc; c.globalAlpha = 0.6 * Math.min(1, gd + 0.3);
+      for (var sb = 0; sb < 420 * gd; sb++) c.fillRect((sg2() * 2 - 1) * r * 0.82, -r * 0.68 + sg2() * r * 0.5, r * 0.014, r * 0.014);
+      c.restore();
+    }
     if (look.beard === "full") {
       c.globalAlpha = 0.5; c.strokeStyle = shadeHex(hc, 0.3); c.lineWidth = lw(0.022);
       for (var k = -3; k <= 3; k++) {
@@ -520,6 +613,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
 
   if (look.tattoos && look.tattoos.lionCrown) drawLionChest(c, r, look, name, lw, true);
   if (look.headwear === "bandana") drawBandana(c, r, line, lw);
+  if (look.hachimaki) drawGspHachimaki(c, r, look.hachimaki, line, lw); // GSP's walkout headband (gsp.js)
   if (look.glasses === "shades") drawShades(c, r, lw);
 }
 
@@ -989,6 +1083,8 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.beginPath(); c.arc(0, -r * 0.46, r * 0.07, 0, Math.PI * 2); c.fill();
   }
   if (tat.lionCrown && !contained) drawLionChest(c, r, look, name, lw, false);
+  if (tat.owl) { drawOwlChest(c, r, lw, contained); c.strokeStyle = inkCol; c.fillStyle = inkCol; }  // Sean O'Malley's owl
+  if (tat.kanji) drawGspKanji(c, r, lw, contained); // GSP's small Japanese characters, left chest (gsp.js)
   if (tat.medallion) {
     // A round sun medallion on the sternum: rays round a ringed disc
     var mt = contained ? 0.86 / 0.59 : 1, mr = r * 0.085;
@@ -1012,6 +1108,8 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.restore();
     c.strokeStyle = inkCol; c.fillStyle = inkCol;
   }
+  if (tat.gorilla) drawGorillaChest(c, r, look, contained);  // Conor McGregor's crowned gorilla
+  if (tat.tiger) drawTigerStomach(c, r, look, lw, contained);  // and the tiger on his stomach
   if (tat.portraits) {
     // Black-and-grey family portraits filling the upper chest: a woman with
     // long hair, an older man with grey hair (lowest) and a girl with dark
@@ -1091,6 +1189,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
       c.restore();
       return;
     }
+    if (style === "bands") { drawArmBands(c, r, s, inkCol, lw); c.restore(); return; } // a four-line armband (mighty-mouse-art.js)
     if (style === "dense" || style === "lion" || style === "sun") {
       drawNamedSleeve(c, r, s, style, inkCol, lw, artSeed(name + p[0]), contained ? 0.86 / 0.59 : 1);
       c.restore();
@@ -1295,6 +1394,17 @@ function drawArtBody(c, r, look, ink, name, contained) {
     }
     c.globalAlpha = 1;
   }
+  if (look.shortsStyle === "marble") {
+    // Grey marbled fight shorts: soft lighter and darker blotches
+    var mr = artRand(artSeed(name + "marble"));
+    for (var mb = 0; mb < 90; mb++) {
+      var mbx = (mr() * 2 - 1) * r, mby = sTop + band + mr() * (r - sTop), mbz = r * (0.03 + mr() * 0.09);
+      c.fillStyle = mb % 2 ? shadeHex(look.shorts, 0.35) : shadeHex(look.shorts, -0.22);
+      c.globalAlpha = 0.18 + mr() * 0.2;
+      c.beginPath(); c.ellipse(mbx, mby, mbz * 1.4, mbz * (0.25 + mr() * 0.35), mr() * Math.PI, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+  }
   if (look.shortsStyle === "slash") {
     // Jagged streaks raking across the legs, in the trim colour
     var slr = artRand(artSeed(name + "slash"));
@@ -1363,6 +1473,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     }
     c.restore();
   }
+  if (look.shortsStyle === "icicles") drawIcicleShorts(c, r, look, sTop, band, name); // Chuck Liddell's Iceman trunks (liddell.js)
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {
@@ -1386,6 +1497,13 @@ function drawArtBody(c, r, look, ink, name, contained) {
     }
     c.closePath(); c.fill();
   }
+  if (look.waistText) {
+    // Lettering on the front of the waistband
+    c.fillStyle = look.waistTextColor || "#f2f2f2";
+    c.font = "900 " + (band * 0.78) + "px Arial, Helvetica, sans-serif";
+    c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(look.waistText, r * 0.3, sTop + band * 0.52);
+  }
   if (look.shortsStyle === "print") {
     // Logo patch on the front of the waistband
     c.fillStyle = "#111111"; c.fillRect(r * 0.08, sTop, r * 0.4, band + r * 0.12);
@@ -1395,12 +1513,13 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.fillStyle = ink;
   c.beginPath(); c.moveTo(-r * 0.07, r); c.lineTo(0, r * 0.8); c.lineTo(r * 0.07, r); c.closePath(); c.fill();
   c.fillStyle = look.shortsStyle === "split" ? look.shorts : look.trim;
-  c.globalAlpha = look.shortsStyle === "print" ? 0 : 0.85;
+  c.globalAlpha = look.shortsStyle === "print" || look.legPatch === false ? 0 : 0.85;
   c.fillRect(-r * 0.42, sTop + band + r * 0.1, r * 0.18, r * 0.09);
   c.globalAlpha = 1;
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
   c.beginPath(); c.moveTo(-r, sTop); c.lineTo(r, sTop); c.stroke();
 
+  if (contained && look.gi) drawGspGi(c, r, look, ink, lw); // GSP's walkout karate gi (gsp.js)
   if (contained) drawArtHeadLayer(c, r, look, line, lw, name);
 
   // Overall roundness: rim shadow
@@ -1503,6 +1622,64 @@ var sleevePatterns = {};
 // The traced sleeve laid along an extended arm from (x0, y0) to (x1, y1),
 // as one image rather than a repeating pattern. Returns false when there is
 // no traced sleeve (or it hasn't loaded) so the caller keeps its plain arm.
+// Jacked arms (look.armMuscle, about 1): the whole arm drawn as one muscled
+// shape from the shoulder (x0, y0) to the wrist (x1, y1), base width w:
+// rounded delt, peaked bicep, tricep underneath, narrow elbow, thick forearm
+// tapering to the wrist, with shading for definition. edge is the outline
+// colour. Callers skip their plain arm stroke when hasArmMuscle(ch).
+function hasArmMuscle(ch) { return !!(ch && ch.look && ch.look.armMuscle); }
+function drawArmMuscle(c, ch, x0, y0, x1, y1, w, edge) {
+  if (!hasArmMuscle(ch)) return;
+  var k = ch.look.armMuscle, col = armColor(ch), skin = ch.look.skin;
+  var dx = x1 - x0, dy = y1 - y0, L = Math.sqrt(dx * dx + dy * dy);
+  if (L < w * 0.5) return;
+  w *= 1 + 0.3 * k;  // jacked arms are thicker than the plain stroke
+  var line = shadeHex(skin, -0.42), hi = shadeHex(skin, 0.18);
+  var hw = w * 0.5, sh = hw * (1.08 + 0.08 * k), wr = hw * 0.62;
+  // Smooth outline: thick at the shoulder, one gentle swell over the bicep,
+  // tapering to the wrist, rounded at both ends
+  var bump = 1 + 0.25 * k;
+  var outline = function () {
+    c.beginPath();
+    c.moveTo(0, -sh);
+    // Bicep: one big rounded hump, then the forearm swell down to the wrist
+    c.bezierCurveTo(L * 0.18, -hw * 1.5 * bump, L * 0.44, -hw * 1.42 * bump, L * 0.56, -hw * 0.8);
+    c.bezierCurveTo(L * 0.64, -hw * 1.12 * bump, L * 0.84, -hw * 0.92, L, -wr);
+    c.quadraticCurveTo(L + wr * 0.8, 0, L, wr);
+    // Forearm underside, then the tricep curving back to the shoulder
+    c.bezierCurveTo(L * 0.84, hw * 0.74, L * 0.68, hw * 0.94, L * 0.58, hw * 0.82);
+    c.bezierCurveTo(L * 0.44, hw * 1.32 * bump, L * 0.18, hw * 1.34 * bump, 0, sh);
+    c.quadraticCurveTo(-sh * 0.8, 0, 0, -sh);
+    c.closePath();
+  };
+  c.save();
+  c.translate(x0, y0); c.rotate(Math.atan2(dy, dx));
+  c.lineJoin = "round"; c.lineCap = "round";
+  c.strokeStyle = edge || "#16211f"; c.lineWidth = Math.max(2, w * 0.16); outline(); c.stroke();
+  c.fillStyle = col; outline(); c.fill();
+  c.save(); outline(); c.clip();
+  // Round form: light on top, shadow underneath
+  var g = c.createLinearGradient(0, -sh, 0, sh);
+  g.addColorStop(0, "rgba(255,255,255,0.14)"); g.addColorStop(0.45, "rgba(255,255,255,0)");
+  g.addColorStop(0.6, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,0.32)");
+  c.fillStyle = g; c.fillRect(-sh, -sh * 1.3, L + sh * 2, sh * 2.6);
+  // Definition: the line under the bicep, the elbow crease, the forearm ridge
+  c.strokeStyle = line; c.globalAlpha = 0.6; c.lineWidth = Math.max(1, w * 0.055);
+  c.beginPath(); c.moveTo(L * 0.08, hw * 0.05); c.quadraticCurveTo(L * 0.32, hw * 0.32, L * 0.55, -hw * 0.25); c.stroke();
+  c.beginPath(); c.moveTo(L * 0.56, -hw * 0.8); c.quadraticCurveTo(L * 0.6, -hw * 0.3, L * 0.57, hw * 0.1); c.stroke();
+  c.globalAlpha = 0.45; c.lineWidth = Math.max(1, w * 0.045);
+  c.beginPath(); c.moveTo(L * 0.62, -hw * 0.2); c.quadraticCurveTo(L * 0.78, -hw * 0.05, L * 0.95, -wr * 0.35); c.stroke();
+  c.globalAlpha = 1;
+  // Highlights on the bicep peak and forearm
+  [[0.3, -0.7, 0.15, 0.24], [0.74, -0.55, 0.1, 0.16]].forEach(function (h) {
+    var hg = c.createRadialGradient(h[0] * L, h[1] * hw, 0, h[0] * L, h[1] * hw, h[2] * L);
+    hg.addColorStop(0, "rgba(255,255,255," + h[3] + ")"); hg.addColorStop(1, "rgba(255,255,255,0)");
+    c.fillStyle = hg; c.beginPath(); c.ellipse(h[0] * L, h[1] * hw, h[2] * L, hw * 0.5, 0, 0, Math.PI * 2); c.fill();
+  });
+  c.restore();
+  c.restore();
+}
+
 function drawTracedArm(c, ch, x0, y0, x1, y1, w) {
   var tat = ch.look && ch.look.tattoos;
   if (!tat || !tat.armInk || !tat.armDecal) return false;
@@ -1580,6 +1757,7 @@ function drawGlove(c, x, y, gr, look, ink, ang) {
   // Wrist and forearm stub in skin
   c.fillStyle = look.skin; c.strokeStyle = ink; c.lineWidth = Math.max(1.5, gr * 0.2);
   c.beginPath(); c.ellipse(-gr * 0.95, 0, gr * 0.45, gr * 0.42, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  if (look.stoneFists) { drawStoneFist(c, 0, 0, gr, 0, ink); frostGloveOver(c, look, gr); c.restore(); return; }  // fists of stone (Alex Pereira)
   // Padding
   var g = c.createRadialGradient(gr * 0.2, -gr * 0.35, gr * 0.1, 0, 0, gr * 1.1);
   g.addColorStop(0, shadeHex(col, 0.35)); g.addColorStop(1, shadeHex(col, -0.2));
@@ -1593,6 +1771,7 @@ function drawGlove(c, x, y, gr, look, ink, ang) {
   // Wrist strap
   c.fillStyle = look.gloveStrap || shadeHex(col, 0.75); c.lineWidth = Math.max(1.2, gr * 0.14);
   c.beginPath(); c.rect(-gr * 0.72, -gr * 0.62, gr * 0.3, gr * 1.24); c.fill(); c.stroke();
+  frostGloveOver(c, look, gr); // ice from punching Chuck Liddell, or his blue flare (liddell.js)
   c.restore();
 }
 
@@ -1608,4 +1787,345 @@ function fighterArtUrl(ch) {
     artUrlCache[key] = cv.toDataURL();
   }
   return artUrlCache[key];
+}
+
+// War paint across the face (no face is drawn, so it sits where the eyes
+// and cheeks would be): `paint.color` band across the eyes and three stripes
+// down each cheek. Alex Pereira wears red face paint at his face-offs.
+function drawWarPaint(c, r, paint, lw, skin) {
+  var col = paint.color || "#c8102e";
+  c.save();
+  c.beginPath(); c.arc(0, 0, r * 0.985, 0, Math.PI * 2); c.clip();
+  c.fillStyle = col; c.globalAlpha = 0.9;
+  // the band, following the curve of the ball, with brushed ragged ends
+  c.beginPath();
+  c.moveTo(-r * 0.7, -r * 0.63);
+  c.quadraticCurveTo(0, -r * 0.69, r * 0.7, -r * 0.63);
+  c.lineTo(r * 0.74, -r * 0.6); c.lineTo(r * 0.69, -r * 0.565); c.lineTo(r * 0.73, -r * 0.53);
+  c.quadraticCurveTo(0, -r * 0.58, -r * 0.73, -r * 0.53);
+  c.lineTo(-r * 0.69, -r * 0.565); c.lineTo(-r * 0.74, -r * 0.6);
+  c.closePath(); c.fill();
+  // bare skin round the eyes, so it reads as face paint, not a headband
+  c.globalAlpha = 1; c.fillStyle = skin || "#a86b4c";
+  [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(s * r * 0.25, -r * 0.593, r * 0.115, r * 0.028, 0, 0, Math.PI * 2); c.fill(); });
+  c.fillStyle = col; c.globalAlpha = 0.9;
+  // stripes down the cheeks
+  c.strokeStyle = col; c.lineCap = "round"; c.lineWidth = lw(0.035);
+  [-1, 1].forEach(function (s) {
+    for (var i = 0; i < 3; i++) {
+      var x = s * r * (0.32 + i * 0.09);
+      c.beginPath(); c.moveTo(x, -r * 0.5); c.lineTo(x + s * r * 0.02, -r * 0.39 + (i === 1 ? r * 0.02 : 0)); c.stroke();
+    }
+  });
+  c.restore();
+}
+
+// Fists of stone (Alex Pereira: "Poatan" means "stone hands"): a lumpy grey
+// rock with four stone knuckles across the front, cracks and a few light
+// chips. (x, y) is the fist's centre and `ang` the way the knuckles face.
+var STONE_LUMPS = [1, 0.9, 1.04, 0.94, 1.03, 0.88, 1.05, 0.95, 0.99, 0.92];
+function drawStoneFist(c, x, y, gr, ang, ink) {
+  c.save();
+  c.translate(x, y); c.rotate(ang || 0);
+  c.lineJoin = "round"; c.lineCap = "round";
+  c.beginPath();
+  for (var i = 0; i < STONE_LUMPS.length; i++) {
+    var a = i / STONE_LUMPS.length * Math.PI * 2, rr = gr * STONE_LUMPS[i];
+    if (i) c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else c.moveTo(rr, 0);
+  }
+  c.closePath();
+  var g = c.createRadialGradient(-gr * 0.3, -gr * 0.35, gr * 0.1, 0, 0, gr * 1.1);
+  g.addColorStop(0, "#cfc9be"); g.addColorStop(0.6, "#918b81"); g.addColorStop(1, "#5d5850");
+  c.fillStyle = g; c.fill();
+  c.strokeStyle = ink; c.lineWidth = Math.max(1.5, gr * 0.16); c.stroke();
+  c.lineWidth = Math.max(1, gr * 0.09);
+  for (var k = -1.5; k <= 1.5; k++) {
+    c.fillStyle = "#aaa49a";
+    c.beginPath(); c.arc(gr * 0.74, k * gr * 0.27, gr * 0.17, 0, Math.PI * 2); c.fill(); c.stroke();
+  }
+  c.strokeStyle = "rgba(40,36,32,0.75)"; c.lineWidth = Math.max(1, gr * 0.08);
+  c.beginPath(); c.moveTo(-gr * 0.6, -gr * 0.45); c.lineTo(-gr * 0.18, -gr * 0.18); c.lineTo(-gr * 0.28, gr * 0.18); c.lineTo(gr * 0.08, gr * 0.42); c.stroke();
+  c.beginPath(); c.moveTo(-gr * 0.18, -gr * 0.18); c.lineTo(gr * 0.22, -gr * 0.38); c.stroke();
+  c.fillStyle = "rgba(255,255,255,0.4)";
+  [[-0.42, 0.05], [0.12, 0.08], [-0.05, -0.6], [-0.3, 0.55]].forEach(function (q) {
+    c.beginPath(); c.arc(gr * q[0], gr * q[1], gr * 0.07, 0, Math.PI * 2); c.fill();
+  });
+  c.restore();
+}
+// Over a plain round fist in the game (punches, hooks): stone, if he has it.
+function stoneFistOver(ch, x, y, gr, ang) {
+  if (ch && ch.look && ch.look.stoneFists) drawStoneFist(ctx, x, y, gr, ang, theme.wall);
+}
+
+
+// Cornrow braids (hair "braids"), contained layout: rows running back from
+// the hairline over the top of the head, each one a plait of tilted knots.
+// `look.hairColors` dyes them row by row (Sean O'Malley's event colours);
+// without it every row is look.hairColor. `hairline` is the head layer's
+// hairline path.
+function drawBraids(c, r, look, hairline, lw) {
+  var cols = look.hairColors && look.hairColors.length ? look.hairColors : [look.hairColor];
+  c.save();
+  hairline(); c.clip();
+  c.fillStyle = shadeHex(cols[0], -0.62); hairline(); c.fill();  // scalp between the rows
+  var n = 10, bw = r * 0.15;
+  c.lineCap = "round"; c.lineJoin = "round";
+  for (var i = 0; i < n; i++) {
+    var u = (i + 0.5) / n * 2 - 1, col = cols[i % cols.length];
+    var x0 = u * r * 1.02, y0 = -r * 0.78 + r * 0.28 * u * u + r * 0.06;  // just under the hairline
+    var x1 = u * r * 0.56, y1 = -r * 1.04, cx = u * r * 0.98, cy = (y0 + y1) / 2 - r * 0.04;
+    var path = function () { c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(cx, cy, x1, y1); };
+    c.strokeStyle = shadeHex(col, -0.5); c.lineWidth = bw + lw(0.03); path(); c.stroke();
+    c.strokeStyle = col; c.lineWidth = bw; path(); c.stroke();
+    c.strokeStyle = shadeHex(col, 0.4); c.lineWidth = bw * 0.28; c.globalAlpha = 0.5; path(); c.stroke(); c.globalAlpha = 1;
+    // The plait: little V's stacked up the row, pointing back over the head
+    c.strokeStyle = shadeHex(col, -0.42); c.lineWidth = lw(0.016);
+    for (var k = 0; k < 9; k++) {
+      var t = (k + 0.5) / 9, it = 1 - t;
+      var px = it * it * x0 + 2 * it * t * cx + t * t * x1, py = it * it * y0 + 2 * it * t * cy + t * t * y1;
+      var ang = Math.atan2(2 * it * (cy - y0) + 2 * t * (y1 - cy), 2 * it * (cx - x0) + 2 * t * (x1 - cx));
+      var ax = Math.cos(ang), ay = Math.sin(ang), qx = -ay * bw * 0.48, qy = ax * bw * 0.48, back = bw * 0.32;
+      c.beginPath();
+      c.moveTo(px + qx - ax * back, py + qy - ay * back); c.lineTo(px, py); c.lineTo(px - qx - ax * back, py - qy - ay * back);
+      c.stroke();
+    }
+  }
+  c.restore();
+  c.fillStyle = look.hairColor;
+}
+
+// Sean O'Malley's face tattoos, the parts that read with no face drawn: the
+// red heart high on his right forehead (screen left) with "SUGA" over the
+// brow under it, a line of backwards script on his left forehead, and the
+// star under his left eye.
+function drawFaceInk(c, r, lw) {
+  var ink = "rgba(28,30,44,0.8)";
+  c.save();
+  c.lineJoin = "round"; c.lineCap = "round";
+  // Heart
+  var hx = -r * 0.3, hy = -r * 0.705, hs = r * 0.085;
+  c.fillStyle = "#e0202b"; c.strokeStyle = "rgba(60,8,12,0.85)"; c.lineWidth = lw(0.014);
+  c.beginPath();
+  c.moveTo(hx, hy + hs * 0.75);
+  c.bezierCurveTo(hx - hs * 1.25, hy - hs * 0.05, hx - hs * 0.55, hy - hs * 0.95, hx, hy - hs * 0.32);
+  c.bezierCurveTo(hx + hs * 0.55, hy - hs * 0.95, hx + hs * 1.25, hy - hs * 0.05, hx, hy + hs * 0.75);
+  c.closePath(); c.fill(); c.stroke();
+  // "SUGA" over the brow
+  c.fillStyle = ink;
+  c.font = "900 " + (r * 0.075).toFixed(2) + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
+  c.textAlign = "center"; c.textBaseline = "middle";
+  c.fillText("SUGA", -r * 0.25, -r * 0.625);
+  // Backwards script on the other side of the forehead
+  c.strokeStyle = ink; c.lineWidth = lw(0.014);
+  c.beginPath();
+  for (var s = 0; s <= 14; s++) {
+    var sx = r * (0.14 + s * 0.017), sy = -r * 0.67 + Math.sin(s * 1.9) * r * 0.014 - (s % 5 === 0 ? r * 0.022 : 0);
+    if (s === 0) c.moveTo(sx, sy); else c.lineTo(sx, sy);
+  }
+  c.stroke();
+  // Star under the left eye
+  var stx = r * 0.28, sty = -r * 0.5, so = r * 0.06, si = so * 0.42;
+  c.beginPath();
+  for (var p = 0; p < 10; p++) {
+    var a = -Math.PI / 2 + p * Math.PI / 5, rr = p % 2 ? si : so;
+    if (p === 0) c.moveTo(stx + Math.cos(a) * rr, sty + Math.sin(a) * rr); else c.lineTo(stx + Math.cos(a) * rr, sty + Math.sin(a) * rr);
+  }
+  c.closePath(); c.lineWidth = lw(0.016); c.stroke();
+  c.restore();
+}
+
+// An owl with its wings spread across the chest (Sean O'Malley's chest
+// piece), in colour: brown wings with an orange and teal band, a lighter
+// body, ear tufts and big yellow eyes. Drawn in torso space; in the
+// contained layout it's stretched back out so it stays round.
+function drawOwlChest(c, r, lw, contained) {
+  var q = contained ? 0.86 / 0.59 : 1, out = "rgba(40,24,14,0.85)";
+  c.save();
+  c.translate(0, contained ? -r * 0.27 : -r * 0.36); c.scale(1, q);
+  c.lineJoin = "round"; c.lineCap = "round"; c.lineWidth = lw(0.016);
+  [-1, 1].forEach(function (s) {
+    // Wing: up and out to a tip, then a scalloped trailing edge back in
+    var wing = function () {
+      c.beginPath();
+      c.moveTo(s * r * 0.06, -r * 0.07);
+      c.quadraticCurveTo(s * r * 0.3, -r * 0.2, s * r * 0.62, -r * 0.13);
+      for (var f = 0; f < 5; f++) {
+        var fx = s * r * (0.62 - f * 0.11), fy = -r * 0.13 + f * r * 0.045;
+        c.quadraticCurveTo(s * r * (0.6 - f * 0.11), fy + r * 0.07, s * r * (0.56 - f * 0.11), fy + r * 0.035);
+      }
+      c.quadraticCurveTo(s * r * 0.12, r * 0.1, s * r * 0.06, r * 0.04);
+      c.closePath();
+    };
+    c.fillStyle = "rgba(150,96,52,0.78)"; wing(); c.fill();
+    c.save(); wing(); c.clip();
+    c.fillStyle = "rgba(240,134,46,0.85)";  // orange band
+    c.beginPath(); c.ellipse(s * r * 0.3, -r * 0.1, r * 0.26, r * 0.045, s * -0.12, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "rgba(38,170,180,0.8)";   // teal band
+    c.beginPath(); c.ellipse(s * r * 0.36, -r * 0.03, r * 0.26, r * 0.035, s * -0.05, 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.strokeStyle = out; wing(); c.stroke();
+    for (var fl = 0; fl < 4; fl++) {  // feather lines
+      c.beginPath(); c.moveTo(s * r * 0.1, -r * 0.02 + fl * r * 0.012); c.lineTo(s * r * (0.56 - fl * 0.11), -r * 0.06 + fl * r * 0.045); c.stroke();
+    }
+  });
+  // Body and head
+  c.fillStyle = "rgba(176,112,58,0.92)"; c.strokeStyle = out;
+  c.beginPath(); c.ellipse(0, r * 0.02, r * 0.095, r * 0.12, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.beginPath();
+  c.moveTo(-r * 0.1, -r * 0.08);
+  c.lineTo(-r * 0.115, -r * 0.175); c.lineTo(-r * 0.05, -r * 0.135);  // ear tufts
+  c.quadraticCurveTo(0, -r * 0.15, r * 0.05, -r * 0.135);
+  c.lineTo(r * 0.115, -r * 0.175); c.lineTo(r * 0.1, -r * 0.08);
+  c.quadraticCurveTo(r * 0.1, -r * 0.03, 0, -r * 0.03);
+  c.quadraticCurveTo(-r * 0.1, -r * 0.03, -r * 0.1, -r * 0.08);
+  c.closePath(); c.fill(); c.stroke();
+  // Breast feathers
+  c.strokeStyle = "rgba(60,34,18,0.55)";
+  for (var b = 0; b < 3; b++) {
+    c.beginPath(); c.arc(0, r * (0.02 + b * 0.035), r * 0.045, Math.PI * 0.15, Math.PI * 0.85); c.stroke();
+  }
+  // Eyes and beak
+  [-1, 1].forEach(function (s) {
+    c.fillStyle = "#ffc93a"; c.strokeStyle = out;
+    c.beginPath(); c.arc(s * r * 0.045, -r * 0.09, r * 0.036, 0, Math.PI * 2); c.fill(); c.stroke();
+    c.fillStyle = "#151515";
+    c.beginPath(); c.arc(s * r * 0.045, -r * 0.09, r * 0.016, 0, Math.PI * 2); c.fill();
+  });
+  c.fillStyle = "#e8962c";
+  c.beginPath(); c.moveTo(-r * 0.018, -r * 0.065); c.lineTo(r * 0.018, -r * 0.065); c.lineTo(0, -r * 0.035); c.closePath(); c.fill();
+  c.restore();
+}
+// Slicked-back undercut (Conor McGregor): the sides buzzed short with skin
+// showing through, a hard line where the longer top starts, and the top
+// combed straight back off a side part, with a pomade shine.
+function drawSlickHair(c, r, look, lw, hairline) {
+  var hc = look.hairColor;
+  c.save(); hairline(); c.clip();
+  c.fillStyle = mixHex(look.skin, hc, 0.45); c.fillRect(-r, -r, r * 2, r);
+  var gr = artRand(13); c.fillStyle = shadeHex(hc, -0.25); c.globalAlpha = 0.45;
+  for (var i = 0; i < 70; i++) c.fillRect((gr() * 2 - 1) * r * 0.98, -r * (0.5 + gr() * 0.5), r * 0.016, r * 0.016);
+  c.globalAlpha = 1;
+  var top = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.66, -r);
+    c.lineTo(-r * 0.66, -r * 0.7);
+    c.quadraticCurveTo(-r * 0.56, -r * 0.8, -r * 0.34, -r * 0.8);
+    c.quadraticCurveTo(-r * 0.05, -r * 0.88, r * 0.3, -r * 0.83);
+    c.quadraticCurveTo(r * 0.56, -r * 0.8, r * 0.66, -r * 0.7);
+    c.lineTo(r * 0.66, -r);
+    c.closePath();
+  };
+  var tg = c.createLinearGradient(0, -r, 0, -r * 0.74);
+  tg.addColorStop(0, shadeHex(hc, -0.22)); tg.addColorStop(1, shadeHex(hc, 0.12));
+  c.fillStyle = tg; top(); c.fill();
+  c.strokeStyle = shadeHex(hc, -0.5); c.lineWidth = lw(0.022); c.stroke();
+  // Combed back: long strands up and over from the hairline
+  c.save(); top(); c.clip(); c.lineCap = "round";
+  for (var k = -8; k <= 8; k++) {
+    var x0 = k * r * 0.08, y0 = -r * (0.84 - 0.05 * Math.abs(k) / 8);
+    c.strokeStyle = k % 2 ? shadeHex(hc, -0.35) : shadeHex(hc, 0.4);
+    c.globalAlpha = 0.5; c.lineWidth = lw(0.014);
+    c.beginPath(); c.moveTo(x0, y0 + r * 0.05); c.quadraticCurveTo(x0 + r * 0.03, y0 - r * 0.08, x0 * 1.2 + r * 0.04, -r * 1.02); c.stroke();
+  }
+  c.globalAlpha = 0.4; c.fillStyle = "#ffffff"; // pomade shine
+  c.beginPath(); c.ellipse(r * 0.08, -r * 0.9, r * 0.3, r * 0.03, -0.06, 0, Math.PI * 2); c.fill();
+  c.globalAlpha = 1;
+  c.strokeStyle = mixHex(look.skin, hc, 0.3); c.lineWidth = lw(0.018); // the side part
+  c.beginPath(); c.moveTo(-r * 0.36, -r * 0.8); c.quadraticCurveTo(-r * 0.38, -r * 0.9, -r * 0.4, -r * 1.02); c.stroke();
+  c.restore();
+  c.restore();
+}
+
+// A crowned gorilla's head across the middle of the chest, with a red heart
+// in its jaws (Conor McGregor). Ink, black and grey, the heart in red.
+function drawGorillaChest(c, r, look, contained) {
+  var ink = "rgba(28,34,52,", u = r * (contained ? 0.115 : 0.17);  // (contained: tucked in under the beard)
+  c.save();
+  c.translate(0, -r * (contained ? 0.136 : 0.36)); c.scale(1, contained ? 0.86 / 0.59 : 1);
+  // the head: a high crest, wide cheeks, heavy jowls
+  c.fillStyle = ink + "0.66)";
+  c.beginPath();
+  c.moveTo(0, -u * 1.0);
+  c.bezierCurveTo(u * 0.7, -u * 1.05, u * 1.1, -u * 0.5, u * 1.12, u * 0.05);
+  c.bezierCurveTo(u * 1.14, u * 0.6, u * 0.8, u * 0.95, 0, u * 1.0);
+  c.bezierCurveTo(-u * 0.8, u * 0.95, -u * 1.14, u * 0.6, -u * 1.12, u * 0.05);
+  c.bezierCurveTo(-u * 1.1, -u * 0.5, -u * 0.7, -u * 1.05, 0, -u * 1.0);
+  c.closePath(); c.fill();
+  // the crown sitting on top: a band and five points with balls on them
+  c.fillStyle = ink + "0.85)";
+  c.beginPath();
+  c.moveTo(-u * 0.62, -u * 0.86);
+  [[-0.72, -1.48], [-0.38, -1.1], [-0.2, -1.6], [0, -1.16], [0.2, -1.6], [0.38, -1.1], [0.72, -1.48]].forEach(function (q, i) {
+    c.lineTo(q[0] * u, q[1] * u);
+  });
+  c.lineTo(u * 0.62, -u * 0.86); c.closePath(); c.fill();
+  [[-0.72, -1.48], [-0.2, -1.6], [0.2, -1.6], [0.72, -1.48]].forEach(function (q) { c.beginPath(); c.arc(q[0] * u, q[1] * u, u * 0.1, 0, Math.PI * 2); c.fill(); });
+  c.fillStyle = shadeHex(look.skin, 0.1);
+  c.fillRect(-u * 0.55, -u * 0.98, u * 1.1, u * 0.06);
+  // the brow ridge, in an M, and eyes glinting under it
+  c.fillStyle = ink + "0.95)";
+  c.beginPath();
+  c.moveTo(-u * 0.9, -u * 0.2); c.quadraticCurveTo(-u * 0.5, -u * 0.55, -u * 0.05, -u * 0.28);
+  c.lineTo(u * 0.05, -u * 0.28); c.quadraticCurveTo(u * 0.5, -u * 0.55, u * 0.9, -u * 0.2);
+  c.lineTo(u * 0.8, -u * 0.08); c.quadraticCurveTo(u * 0.45, -u * 0.28, 0, -u * 0.1); c.quadraticCurveTo(-u * 0.45, -u * 0.28, -u * 0.8, -u * 0.08);
+  c.closePath(); c.fill();
+  c.fillStyle = shadeHex(look.skin, 0.15);
+  [-1, 1].forEach(function (s) { c.beginPath(); c.arc(s * u * 0.38, -u * 0.02, u * 0.08, 0, Math.PI * 2); c.fill(); });
+  // the muzzle, paler, with a broad nose and flared nostrils
+  c.globalAlpha = 0.8; c.fillStyle = shadeHex(look.skin, -0.06);
+  c.beginPath(); c.ellipse(0, u * 0.42, u * 0.62, u * 0.42, 0, 0, Math.PI * 2); c.fill();
+  c.globalAlpha = 1; c.fillStyle = ink + "0.9)";
+  c.beginPath(); c.ellipse(0, u * 0.12, u * 0.3, u * 0.13, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = shadeHex(look.skin, -0.06);
+  [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(s * u * 0.12, u * 0.15, u * 0.06, u * 0.04, s * 0.5, 0, Math.PI * 2); c.fill(); });
+  // the heart, clamped in its teeth
+  var hy = u * 0.6, hs = u * 0.3;
+  c.fillStyle = "rgba(200,28,44,0.95)";
+  c.beginPath();
+  c.moveTo(0, hy + hs * 0.95);
+  c.bezierCurveTo(-hs * 1.35, hy + hs * 0.1, -hs * 0.85, hy - hs * 0.95, 0, hy - hs * 0.3);
+  c.bezierCurveTo(hs * 0.85, hy - hs * 0.95, hs * 1.35, hy + hs * 0.1, 0, hy + hs * 0.95);
+  c.closePath(); c.fill();
+  c.fillStyle = "#f4f1e8";
+  [-1, 1].forEach(function (s) { c.beginPath(); c.moveTo(s * u * 0.32, hy - hs * 0.55); c.lineTo(s * u * 0.18, hy - hs * 0.55); c.lineTo(s * u * 0.25, hy - hs * 0.15); c.closePath(); c.fill(); });
+  c.restore();
+}
+
+// A tiger's head on the stomach (Conor McGregor), in black and grey ink:
+// pointed ears, bold stripes, a pale muzzle and whiskers.
+function drawTigerStomach(c, r, look, lw, contained) {
+  var ink = "rgba(28,34,52,", u = r * (contained ? 0.09 : 0.13);
+  c.save();
+  c.translate(0, r * (contained ? 0.22 : 0.18)); c.scale(1, contained ? 0.86 / 0.59 : 1);
+  c.fillStyle = ink + "0.55)";
+  [-1, 1].forEach(function (s) {
+    c.beginPath(); c.moveTo(s * u * 0.35, -u * 0.7); c.lineTo(s * u * 0.95, -u * 1.15); c.lineTo(s * u * 0.92, -u * 0.35); c.closePath(); c.fill();
+  });
+  c.beginPath();
+  c.moveTo(0, -u * 0.85);
+  c.bezierCurveTo(u * 0.8, -u * 0.85, u * 1.15, -u * 0.3, u * 1.1, u * 0.2);
+  c.bezierCurveTo(u * 1.0, u * 0.75, u * 0.5, u * 0.9, 0, u * 0.9);
+  c.bezierCurveTo(-u * 0.5, u * 0.9, -u * 1.0, u * 0.75, -u * 1.1, u * 0.2);
+  c.bezierCurveTo(-u * 1.15, -u * 0.3, -u * 0.8, -u * 0.85, 0, -u * 0.85);
+  c.closePath(); c.fill();
+  // the stripes: down the brow and in from the cheeks
+  c.fillStyle = ink + "0.95)";
+  var stripe = function (x0, y0, x1, y1, w) {
+    var dx = x1 - x0, dy = y1 - y0, l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l * w, ny = dx / l * w;
+    c.beginPath(); c.moveTo(x0 * u + nx * u, y0 * u + ny * u); c.lineTo(x1 * u, y1 * u); c.lineTo(x0 * u - nx * u, y0 * u - ny * u); c.closePath(); c.fill();
+  };
+  stripe(0, -0.85, 0, -0.38, 0.1); stripe(-0.3, -0.8, -0.18, -0.42, 0.08); stripe(0.3, -0.8, 0.18, -0.42, 0.08);
+  [-1, 1].forEach(function (s) {
+    stripe(s * 1.1, -0.15, s * 0.62, -0.05, 0.1); stripe(s * 1.08, 0.2, s * 0.6, 0.18, 0.1); stripe(s * 0.95, 0.55, s * 0.55, 0.42, 0.08);
+  });
+  // eyes, and the pale muzzle with its nose
+  c.fillStyle = shadeHex(look.skin, 0.15);
+  [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(s * u * 0.36, -u * 0.18, u * 0.16, u * 0.08, s * 0.4, 0, Math.PI * 2); c.fill(); });
+  c.globalAlpha = 0.85; c.fillStyle = shadeHex(look.skin, -0.02);
+  c.beginPath(); c.ellipse(-u * 0.2, u * 0.42, u * 0.28, u * 0.24, 0, 0, Math.PI * 2); c.ellipse(u * 0.2, u * 0.42, u * 0.28, u * 0.24, 0, 0, Math.PI * 2); c.fill();
+  c.globalAlpha = 1; c.fillStyle = ink + "0.95)";
+  c.beginPath(); c.moveTo(-u * 0.17, u * 0.12); c.lineTo(u * 0.17, u * 0.12); c.lineTo(0, u * 0.3); c.closePath(); c.fill();
+  c.strokeStyle = ink + "0.7)"; c.lineWidth = lw(0.008);
+  [-1, 1].forEach(function (s) { for (var k = 0; k < 2; k++) { c.beginPath(); c.moveTo(s * u * 0.35, u * (0.42 + k * 0.1)); c.lineTo(s * u * 0.85, u * (0.36 + k * 0.18)); c.stroke(); } });
+  c.restore();
 }

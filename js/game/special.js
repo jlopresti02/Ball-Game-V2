@@ -17,7 +17,8 @@
 // same during Father's Plan.
 "use strict";
 
-var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan", dobronx: "Do Bronx", chairshot: "Chair Shot", herbdean: "Herb Dean", allamerican: "All American", aurafarm: "Aura Farm", goatstampede: "GOAT Stampede" };
+var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan", dobronx: "Do Bronx", chairshot: "Chair Shot", herbdean: "Herb Dean", allamerican: "All American", aurafarm: "Aura Farm", goatstampede: "GOAT Stampede", bow: "Bow and Arrow", sugarrush: "Sugar Rush", snow: "Snow Day", smash: "Smash" };
+SPECIAL_MOVES.presser = "Press Conference"; // Conor McGregor (conor.js)
 
 var IGBB_CLOSE_SPEED = 820;   // dash in to grab
 var IGBB_CLOSE_GIVEUP = 3;
@@ -47,7 +48,7 @@ function tickSpecialCharge(b, dt) {
 // Busy with something that shouldn't be interrupted.
 function specialBusy(b) {
   return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.combo || b.taunt || b.flow ||
-    b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled || b.dazed;
+    b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled || b.dazed || chamaOn(b) || ngannouBusy(b); // (Alex Pereira's CHAMA combo, pereira.js; Francis Ngannou's rage punch, ngannou.js)
 }
 function canStartIgbb(self, other) {
   if (!other.alive || other.invincible || specialBusy(self) || specialBusy(other)) return false;
@@ -88,6 +89,13 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "allamerican") return updateAllAmerican(self, other, dt); // allamerican.js
   if (sp.move === "aurafarm") return updateAuraFarm(self, other, dt); // aurafarm.js
   if (sp.move === "goatstampede") return updateGoatStampede(self, other, dt); // jon.js
+  if (sp.move === "bow") return updatePoatanBow(self, other, dt); // pereira.js
+  if (sp.move === "sugarrush") return updateSugarRush(self, other, dt); // omalley.js
+  if (sp.move === "supermandive") return updateSupermanDive(self, other, dt); // gsp.js
+  if (sp.move === "mimic") return updateMimicSpecial(self, other, dt); // Mighty Mouse (mighty-mouse.js)
+  if (sp.move === "presser") return updatePresser(self, other, dt); // conor.js
+  if (sp.move === "snow") return updateSnowDay(self, other, dt); // liddell.js
+  if (sp.move === "smash") return updateSmash(self, other, dt); // ngannou.js
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };

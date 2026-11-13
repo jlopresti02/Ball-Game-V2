@@ -20,6 +20,7 @@ function beginArmbar(self, vic) {
   var ab = self.char.armbar || defaultArmbar();
   var hurtFrac = 1 - Math.max(0, Math.min(1, vic.hp / MAX_HP));
   var tapChance = Math.min(95, ab.tapBase + ab.tapLowHp * hurtFrac);
+  tapChance = conorTapChance(vic, tapChance, ab); // Conor McGregor taps easier, more once he's gassed (conor.js)
   var side = vic.x >= self.x ? 1 : -1;
   // Room on that side to pull them in, or it turns to the other side.
   var gap = (self.r + vic.r) * ARMBAR_GAP;
