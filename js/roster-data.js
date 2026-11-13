@@ -3675,6 +3675,24 @@ var SAVED_ROSTER = [
       "critMult": 3.5,
       "finisher": 16,
       "readChance": 25,
+      "cycloneChance": 15,
+      "cycloneTime": 0.65,
+      "cycloneHits": 2,
+      "flashChance": 15,
+      "flashRange": 150,
+      "clash": {
+        "parry": {
+          "blade": 55,
+          "saber": 50,
+          "bat": 40
+        },
+        "lockAfter": 2,
+        "win": 40,
+        "hurt": 30,
+        "disarm": 30,
+        "winDamage": 26,
+        "hurtDamage": 18
+      },
       "cut": {
         "chance": 60,
         "time": 4,

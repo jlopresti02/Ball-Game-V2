@@ -83,10 +83,10 @@ var duelCam = { z: 1, x: 0, y: 0 };
 function resetSwordClash() { swordDuel = null; flyingBats = []; clashFlashes = []; duelFlash = 0; duelCam = { z: 1, x: 0, y: 0 }; }
 function swordDuelActive() { return !!swordDuel; }
 // (Once it's decided, whoever lost it is let go: knocked flying or disarmed.)
-function swordDuelLocked(b) { return !!(swordDuel && b && (b.id === swordDuel.dId || (b.id === swordDuel.oId && !swordDuel.let))); }
+function swordDuelLocked(b) { return !!(swordDuel && b && (b.id === swordDuel.dId || (b.id === swordDuel.oId && !swordDuel.let))) || katanaLockHeld(b); } // (or a katana lock, ferguson-katanas.js)
 
 function swordWeaponOut(o) {
-  return !!(o && o.alive && o.cheater && o.cheater.mode === "bat") ? "bat" : null;
+  return !!(o && o.alive && o.cheater && o.cheater.mode === "bat") ? "bat" : katanaWeaponOut(o); // (Tony's katanas count as a bat, ferguson-katanas.js)
 }
 function ease(u) { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }
 function easeOut(u) { u = Math.max(0, Math.min(1, u)); return 1 - (1 - u) * (1 - u); }
@@ -554,7 +554,7 @@ function tickDuelFinish(d, o, sd, dt) {
       var up = -1;
       var oh = bladeHost(o), blade = oh && oh.sword ? (o.rapier ? "rapier" : "longsword") : null;
       flyingBats.push({ x: o.x + sd.ux * o.r * 0.5, y: o.y - o.r * 0.4, vx: sd.ux * 380, vy: -820, rot: 0, spin: 19, t: 0, len: blade ? o.r * bladeLen(o) : weaponLen(o), trail: [], club: !!(o.cheater && o.cheater.club), blade: blade });
-      if (o.cheater) o.cheater = null; // empty handed: back to fighting fair
+      if (o.cheater) { if (!o.cheater.saber) o.weaponLost = true; o.cheater = null; } // empty handed: back to fighting fair, and the bat or club is gone for the fight
       if (blade) { oh.sword = null; oh.disarmed = true; } // a sword fighter loses theirs for the fight
       o.vx = sd.ux * 380; o.vy = sd.uy * 380;
       o.squash = { t: 0.16, max: 0.16, nx: -sd.ux, ny: -sd.uy };

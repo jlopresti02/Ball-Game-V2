@@ -61,6 +61,7 @@ function dsOppWeapon(o) {
   if (!o || !o.alive) return false;
   if (o.cheater && o.cheater.mode === "bat" && !o.cheater.saber) return true;
   if (o.cheater && o.cheater.saber && o.sith && o.sith.phase === "on") return true; // Hokit vs Hokit
+  if (katanaOn(o)) return true; // Tony Ferguson's katanas (ferguson-katanas.js)
   var h = bladeHost(o);
   return !!(h && h.sword && h.sword.out);
 }
@@ -109,7 +110,7 @@ function updateDarkSide(self, other, dt) {
     if (!started || over || !other.alive) return false;
     if (!self.sithRandUsed) self.sithRandT -= dt;
     var why = dsOppWeapon(other) ? "weapon" : (!self.sithRandUsed && self.sithRandT <= 0 ? "random" : null);
-    if (!why || self.sithCd > 0 || self.igbb || self.doBronx || self.hokitShot || self.mock || self.fenceGrab || swordDuelActive() || !canStartIgbb(self, other)) return false;
+    if (!why || self.sithCd > 0 || self.igbb || self.doBronx || self.hokitShot || self.mock || self.fenceGrab || swordDuelActive() || !(canStartIgbb(self, other) || canSuitUpVsKatanas(self, other))) return false; // (he can suit up mid katana special, ferguson-katanas.js)
     if (why === "random") self.sithRandUsed = true;
     startDarkSide(self, why);
     s = self.sith;
