@@ -69,6 +69,7 @@ var SPECIAL_INFO = {
 };
 SPECIAL_INFO.kangaroo = function (sp) { return volkKangarooInfo(sp); }; // Alexander Volkanovski (volkanovski.js)
 SPECIAL_INFO.nickdiaz = function (sp) { return nickDiazSpecialInfo(sp); }; // Nate Diaz (diaz.js)
+SPECIAL_INFO.katana = function (sp) { return fergusonKatanaInfo(sp); }; SUB_NAMES.buggy = "buggy choke"; SUB_NAMES.darce = "D'Arce choke"; SUB_NAMES.elbows = "elbows from the bottom"; // Tony Ferguson (ferguson.js)
 SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
 SPECIAL_INFO.middle = function (sp) { return hollowaySpecialInfo(sp); }; // Max Holloway (holloway.js)
 SPECIAL_INFO.buscrew = function (sp) { return busCrewInfo(sp); }; // Conor McGregor (conor.js)
@@ -156,6 +157,8 @@ function galleryMoves(ch) {
   if (ch.strickland) stricklandGalleryMoves(ch, add); // Sean Strickland (strickland.js)
   if (ch.hasTeep) add("🦶", "Teep", teepGalleryInfo(ch.teep)); // the front push kick (teep.js)
   if (ch.diaz) diazGalleryMoves(ch, add); // Nate Diaz (diaz.js)
+  if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
+  if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;

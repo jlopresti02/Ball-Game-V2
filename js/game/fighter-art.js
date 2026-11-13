@@ -664,6 +664,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.tattoos && look.tattoos.lionCrown) drawLionChest(c, r, look, name, lw, true);
   if (look.headwear === "bandana") drawBandana(c, r, line, lw);
   if (look.hachimaki) drawGspHachimaki(c, r, look.hachimaki, line, lw); // GSP's walkout headband (gsp.js)
+  if (look.cucuy) drawCucuyHead(c, r, look, line, lw); // Tony Ferguson's moustache and headband (ferguson.js)
   if (look.glasses === "shades") drawShades(c, r, lw);
 }
 

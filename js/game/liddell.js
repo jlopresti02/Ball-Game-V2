@@ -43,10 +43,12 @@
 //             rights, wound up in `windup`, doing `damage`x.
 // Voice       "I'm gonna knock his head off." at the Snow Day wind-up; a big
 //             breath of cold air and "Oh yeah, baby!" (only with a real clip) as
-//             the snow flares up. "I just
-//             want to prove I do it better." when he comes back from at least
-//             iceman.taunt.behind health down to take the lead, and now and
-//             then as a taunt (every `every` seconds) (speech.js).
+//             the snow flares up. He opens every fight with the head-off line
+//             (`taunt.first` seconds in). "I like fighting as a sport. I like
+//             trying to show you I'm better than you." when he comes back from
+//             at least iceman.taunt.behind health down to take the lead, and
+//             now and then as a taunt, mixed with the head-off line (every
+//             `every` seconds) (speech.js).
 // The wind-up runs on b.igbb (move "snow"), like the other specials: he can't
 // be hurt or grabbed while he's packing the snow, but he stays solid (nobody
 // walks through him: they're eased out of his space, no bounce) and anything
@@ -60,7 +62,7 @@ var IC_DIP = 0.45, IC_SCOOP = 0.4, IC_PACK = 0.65, IC_FLARE = 0.3; // the Snow D
 var IC_OVERHAND = 1;          // the hand his overhands come from (cte.js hookSide)
 var IC_LINES = {
   windup: "I'm gonna knock his head off.",
-  taunt: "I just want to prove I do it better.",
+  taunt: "I like fighting as a sport. I like trying to show you I'm better than you.",
   snowDone: "Oh yeah, baby!" // as the snow flares up; only said when a real clip of it exists (voice-clips.js)
 };
 // What a frosted glove looks like, in fractions of the glove's radius:
@@ -92,7 +94,8 @@ function initLiddell(b) {
   b.icSwing = Object.assign({}, b.char.swing);
   b.icSpeed = b.baseSpeed;
   b.snowT = ic.snow ? icRand(ic.snow.first) : Infinity;
-  b.tauntT = ic.taunt ? icRand(ic.taunt.every) : Infinity;
+  b.tauntT = ic.taunt ? icRand(ic.taunt.first || ic.taunt.every) : Infinity; // his opener comes `first` seconds in
+  b.icOpened = false;
   b.icBehind = false; b.icComeback = false;
 }
 
@@ -390,7 +393,9 @@ function tickIceman(b, other, ic, dt) {
   b.tauntT -= dt;
   var dx = other.x - b.x, dy = other.y - b.y;
   if (b.tauntT <= 0 && dx * dx + dy * dy > 170 * 170 && canSay(b) && !b.igbb) {
-    say(b, IC_LINES.taunt);
+    // He opens every fight with the head-off line, then mixes in the other.
+    say(b, b.icOpened ? pickLine(b, [IC_LINES.taunt, IC_LINES.windup], "taunt") : IC_LINES.windup);
+    b.icOpened = true;
     b.tauntT = icRand(ic.taunt.every);
   }
 }
