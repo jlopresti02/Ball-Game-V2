@@ -29,6 +29,7 @@ function draw() {
   ctx.fillStyle = theme.floor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (stadium) drawStadium(px);
+  drawAussieStands(px); // the crowd in green and gold for Volkanovski's Kangaroo (volkanovski.js)
 
   ctx.setTransform(s, 0, 0, s, ox, oy);
   shakeScreen(s * canvas.getBoundingClientRect().width / canvas.width);
@@ -45,6 +46,7 @@ function draw() {
     if (brazilMode) drawBrazilFloor();
     drawGspFloor(); // a faded Canada flag while the crowd chants GSP (gsp.js)
   }
+  drawAussieMat(); // the green and gold mat with the kangaroo sign (volkanovski.js)
 
   drawSitSpots();
   drawSendLocCrater(); // the scorch the orbital strike leaves on the mat, under the fighters (send-location.js)
@@ -103,6 +105,7 @@ function draw() {
   drawGspUnder(); // GSP's shadow in the air and the Superman Dive's red lane (gsp.js)
   drawLiddellUnder(); // snow on the mat, Chuck Liddell's ice flames (liddell.js)
   drawNgannouUnder(); // Ngannou's rage punch line, the Smash circle and crater, Dana at the cage (ngannou.js)
+  drawVolkUnder(); // Volkanovski's circling arrow, his flag, the kangaroo behind him (volkanovski.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -208,6 +211,7 @@ function draw() {
     applyGspPose(b); // GSP crouching to load, up in the air for the leap and the dive (gsp.js)
     applyConorPose(b); // Conor McGregor rocking on his strut, planted, or gassed (conor.js)
     applyNgannouPose(b); // Ngannou crouching and leaping for the Smash, or knocked flat by it (ngannou.js)
+    applyVolkPose(b); // Volkanovski leaning into his circling, small in the pouch (volkanovski.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -350,6 +354,7 @@ function draw() {
     drawConor(b); // Conor McGregor's strut, counter stance, podium and gas tank, Dustin's calf kick (conor.js)
     drawLiddell(b); // Chuck Liddell packing the snow, his blue overhand (liddell.js)
     drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
+    drawVolk(b); // Volkanovski's arms up, punching out of the pouch (volkanovski.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -405,6 +410,7 @@ function draw() {
   drawGspOver(); // GSP's gi and headband flying off (gsp.js)
   drawMightyMouseOver(); // Mighty Mouse's SCOUTING notepad, sweat off a tired opponent (mighty-mouse.js)
   drawNgannouOver(); // Ngannou's mat chunks, contract scraps, punch-power banner in the test arena (ngannou.js)
+  drawVolkOver(); // the kangaroo's pouch, arms and kick, the FIGHT IQ card (volkanovski.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
@@ -460,6 +466,7 @@ function draw() {
   drawChamaCrowd(s, ox, oy); // the crowd shouting CHAMA back (pereira.js)
   drawGspCrowd(s, ox, oy); // the Montreal crowd chanting "GSP! GSP!" (gsp.js)
   drawLiddellSky(s, ox, oy); // snow falling over the whole arena (liddell.js)
+  drawVolkSky(s, ox, oy); // AUSSIE AUSSIE AUSSIE, OI OI OI, and the streamers (volkanovski.js)
   drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
   drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)

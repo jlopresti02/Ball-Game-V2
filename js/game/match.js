@@ -65,6 +65,7 @@ function makeBall(id, ch) {
   initConor(b); // Conor McGregor's trash talk, counter left and gas tank (conor.js)
   initLiddell(b); // Chuck Liddell's frost, snow and wind-up (liddell.js)
   initNgannou(b); // Francis Ngannou's rage meter, and his own copy to turn green (ngannou.js)
+  initVolk(b); // Alexander Volkanovski's fight IQ, circling and walkout flag (volkanovski.js)
   return b;
 }
 
@@ -105,6 +106,7 @@ function startMatchSeeded(ch0, ch1) {
   resetRainbow(); resetBeamClash(); // the Pot o' Gold's coins, and a beam clash (rainbow-beam.js, beam-clash.js)
   resetLiddell(); // Chuck Liddell's snow (liddell.js)
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
+  resetVolk(); // the kangaroo and the green and gold arena (volkanovski.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
@@ -334,6 +336,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= weightDamageMult(b, attackerId);
   amount *= conorDamageMult(b, source, attackerId); // Conor McGregor's gas tank, open after a whiff, calf kicks on him (conor.js)
   amount *= icemanDamageMult(b, attackerId, source); // frosted gloves hit softer, Chuck Liddell hits harder (liddell.js)
+  amount *= volkDamageMult(b, source, attackerId); // Alexander Volkanovski's durability, Ilia and Max (volkanovski.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

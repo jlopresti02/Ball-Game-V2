@@ -1134,6 +1134,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   if (tat.lionCrown && !contained) drawLionChest(c, r, look, name, lw, false);
   if (tat.owl) { drawOwlChest(c, r, lw, contained); c.strokeStyle = inkCol; c.fillStyle = inkCol; }  // Sean O'Malley's owl
   if (tat.kanji) drawGspKanji(c, r, lw, contained); // GSP's small Japanese characters, left chest (gsp.js)
+  if (tat.tribalShoulder) drawVolkTribal(c, r, lw, contained); // Volkanovski's tribal right shoulder (volkanovski.js)
   if (tat.medallion) {
     // A round sun medallion on the sternum: rays round a ringed disc
     var mt = contained ? 0.86 / 0.59 : 1, mr = r * 0.085;
@@ -1523,6 +1524,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.restore();
   }
   if (look.shortsStyle === "icicles") drawIcicleShorts(c, r, look, sTop, band, name); // Chuck Liddell's Iceman trunks (liddell.js)
+  if (look.shortsStyle === "meander") drawMeanderShorts(c, r, look, sTop, band); // Volkanovski's Greek key trunks (volkanovski.js)
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {
