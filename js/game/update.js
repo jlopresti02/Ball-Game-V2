@@ -59,6 +59,7 @@ function update(dt) {
   tickConor(dt); // Conor McGregor's gas tank, his lines, 13 SECONDS (conor.js)
   tickLiddell(dt); // frost melting, the snow, Chuck Liddell's all-out attack (liddell.js)
   tickNgannou(dt); // Francis Ngannou's rage meter, knockdowns, Dana White (ngannou.js)
+  tickVolk(dt); // Alexander Volkanovski's fight IQ, circling, the green and gold arena (volkanovski.js)
   tickSlows(dt); // limps wearing off (slowdown.js)
   tickSpeech(dt); // voice-line speech bubbles (speech.js)
   tickTopRope(dt); // the dented mat after Hokit's Top Rope Body Slam (hokit-toprope.js)
