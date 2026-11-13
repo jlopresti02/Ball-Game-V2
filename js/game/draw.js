@@ -138,6 +138,7 @@ function draw() {
     var ngo = ngannouOffset(b); wox += ngo.x; woy += ngo.y; // up in the air for Ngannou's Smash (ngannou.js)
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
+    drawDarkSideRise(b); // dark smoke swirling round Hokit as he suits up (hokit-darkside.js)
     drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
     drawGspBehind(b); // GSP's red cape, behind him (gsp.js)
     drawKameArmsBehind(b); // his arms reaching up behind his head for a Kamehameha fired upward (kamehameha.js)
@@ -372,6 +373,7 @@ function draw() {
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawDiamondSwordsTop(); // Dustin's sword slashing into a bat, over both fighters (sword.js)
+  drawDarkSideTop(); // Hokit's saber flying loose, the Force push, a saber lock (hokit-darkside.js)
   drawDuelVignette(); // the duel's dark edges and impact flash (sword.js)
   drawSprawls();
   drawGuillotines();

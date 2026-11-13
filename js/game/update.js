@@ -46,6 +46,7 @@ function update(dt) {
   updateReferee(dt);
   tickRefNap(dt);   // the ref nodding off in Gane's fights (cheater.js)
   tickCheater(dt);
+  tickDarkSide(dt); // Hokit's Dark Side: the Force push, the saber's hum (hokit-darkside.js)
   tickJon(dt);      // Jon Jones swapping between GOAT and EVIL mode (jon.js)
   tickHelmetCharge(dt); // the 67'ers ad's clock (hokit-helmet.js)
   tickRingBear(dt); // Khabib's bear wandering the ring (khabib-bear.js)

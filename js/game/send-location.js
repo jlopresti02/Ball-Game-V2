@@ -22,8 +22,22 @@
 // move. Only ever his own two arms and gloves. Runs on b.igbb (move "sendloc").
 "use strict";
 
-var SL = { pull: 0.7, talk: 3.1, space: 4.2, target: 0.9, beam: 1.4, after: 1.4, R: 120 };
-var SL_FIRE_AT = 2.6, SL_ATMO_AT = 3.3, SL_CR_LIFE = 9;
+var SL_KH = { pull: 0.7, talk: 3.1, space: 4.2, target: 0.9, beam: 1.4, after: 1.4, R: 120, fire: 2.6, atmo: 3.3 };
+// Josh Hokit's Death Star strike (Joe, 2026-11-12) runs on the same move
+// (sl.ds): in his Dark Side form he raises a hand to the sky ("FIRE WHEN
+// READY"), the view cuts up to the Death Star, its superlaser charges (eight
+// green beams meeting in front of the dish) and fires down into the ring.
+// The space cut is timed to Joe's recording: the shot lands 4.7s in.
+var SL_DS = { pull: 0.5, talk: 1.5, space: 6.3, target: 0.9, beam: 1.4, after: 1.4, R: 120, fire: 4.7, atmo: 5.45 };
+var SL = SL_KH, SL_FIRE_AT = SL.fire, SL_ATMO_AT = SL.atmo, SL_CR_LIFE = 9;
+// Beam colours: Khabib's orange-gold, the Death Star's green.
+var SL_PAL = {
+  kh: { outer: "rgba(255,110,30,0.35)", mid: "rgba(255,190,80,0.85)", core: "rgba(255,255,240,1)", edge: "rgba(255,150,50,0)", wrap: "rgba(255,240,200,0.8)",
+    gOuter: "rgba(255,120,40,0.35)", gMid: "rgba(255,200,90,0.75)", glowMid: "rgba(255,170,60,0.6)", glowEdge: "rgba(255,120,40,0)", flash: "#fff8e0" },
+  ds: { outer: "rgba(40,255,90,0.35)", mid: "rgba(110,255,120,0.85)", core: "rgba(240,255,240,1)", edge: "rgba(60,255,100,0)", wrap: "rgba(210,255,210,0.8)",
+    gOuter: "rgba(40,255,90,0.35)", gMid: "rgba(120,255,130,0.75)", glowMid: "rgba(80,255,110,0.6)", glowEdge: "rgba(40,255,90,0)", flash: "#eaffea" }
+};
+function slPal() { return sl && sl.ds ? SL_PAL.ds : SL_PAL.kh; }
 var sl = null, slFx = [], slCrater = null, slClock = 0;
 // Background for the space cut (drawing only, never touches the fight's numbers).
 var slStars = [], slClouds = [];
@@ -42,7 +56,7 @@ function sendLocTimeScale() { return sl && sl.phase === "space" ? 0 : 1; }
 // From startMatchSeeded.
 function resetSendLocation() {
   sl = null; slFx = []; slCrater = null; slClock = 0;
-  stopSendLocationCharge();
+  stopSendLocationCharge(); stopDsMusic();
 }
 // From makeBall.
 function initSendLocation(b) {
@@ -53,25 +67,31 @@ function initSendLocation(b) {
 
 // From the abilities loop, before the special. True while it's running.
 function updateSendLocation(self, other, dt) {
-  var cfg = self.char.sendLocation;
+  var cfg = self.char.sendLocation, ds = false;
+  // Hokit's Death Star strike: only in his Dark Side form, saber lit (hokit-darkside.js).
+  if (!cfg && self.char.darkSide && self.char.darkSide.deathStar) { cfg = self.char.darkSide.deathStar; ds = true; }
   if (!cfg) return false;
   if (!sendLocOn(self)) {
     if (self.igbb || !started || over || self.sendLocN >= cfg.max) return false;
-    self.sendLocT -= dt;
-    if (self.sendLocT > 0 || !canStartIgbb(self, other) || swordDuelActive() || ringBear) return false; // (never with the bear in the ring)
-    startSendLocation(self, other);
+    if (ds && (!sithArmed(self) || saberLock || self.dsStrikeT == null)) return false;
+    if (ds) self.dsStrikeT -= dt; else self.sendLocT -= dt;
+    if ((ds ? self.dsStrikeT : self.sendLocT) > 0 || !canStartIgbb(self, other) || swordDuelActive() || ringBear || (sl && sl.phase !== "over")) return false; // (never with the bear in the ring)
+    if (ds) self.dsStrikeT = null; // once a form
+    startSendLocation(self, other, ds);
   }
   if (over) { endSendLocation(self, other); return false; }
   runSendLocation(self, other, cfg, dt);
   return sendLocOn(self);
 }
 
-function startSendLocation(self, other) {
+function startSendLocation(self, other, ds) {
   clearActions(self);
   self.sendLocN++;
   self.igbb = { move: "sendloc", phase: "pull", t: 0 };
   self.invincible = true;
-  sl = { id: self.id, oid: other.id, t: 0, u: 0, phase: "pull", def: null, dodge: null, prevAtk: false };
+  SL = ds ? SL_DS : SL_KH; SL_FIRE_AT = SL.fire; SL_ATMO_AT = SL.atmo;
+  sl = { id: self.id, oid: other.id, t: 0, u: 0, phase: "pull", def: null, dodge: null, prevAtk: false, ds: !!ds };
+  if (ds) { floater(self.x, self.y - self.r - 30, "DEATH STAR", "crit"); playSendLocation("music"); }
   playSendLocation("pull");
 }
 function slNext(p) {
@@ -83,6 +103,7 @@ function endSendLocation(self, other) {
   self.igbb = null; self.invincible = false; self.immuneCd = 0;
   self.vx = 0; self.vy = 0;
   stopSendLocationCharge();
+  if (over && sl && sl.ds) stopDsMusic(1.0); // the fight's over: the knockout call takes it
   if (sl) { sl.phase = "over"; sl.held = false; }
 }
 
@@ -224,7 +245,7 @@ function slFire(self, other, cfg) {
   if (other.alive && d <= SL.R + other.r * 0.5) {
     var got = hurt(other, cfg.dmg, "igbb", self.id);
     if (got > 0) {
-      floater(other.x, other.y - other.r - 34, "ORBITAL STRIKE!", "crit"); sl.hit = true;
+      floater(other.x, other.y - other.r - 34, sl.ds ? "DEATH STAR!" : "ORBITAL STRIKE!", "crit"); sl.hit = true;
       other.flash = 0.2;
       if (other.alive) beginWallSlam(other, dx / d, dy / d, { knockback: 1400, wallSlams: 2, slamDamage: 10 });
       checkEnd();
@@ -440,7 +461,9 @@ function drawSendLocation(scl, ox, oy) {
   if (sl && sl.phase !== "over") {
     var d = balls[sl.id], r = d.r, t = sl.t;
     var shR = [d.x + r * 0.62, d.y - r * 0.3], shL = [d.x - r * 0.62, d.y - r * 0.3];
-    if (sl.phase === "pull" || sl.phase === "talk") {
+    if (sl.ds && sl.phase !== "after") {
+      slDrawSithCall(d, shR, shL, t);
+    } else if (sl.phase === "pull" || sl.phase === "talk") {
       var P = SL.pull, talk = sl.phase === "talk", tp = talk ? P + t : t;
       var sm = function (k) { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
       var lerp = function (p0, p1, k) { return [p0[0] + (p1[0] - p0[0]) * k, p0[1] + (p1[1] - p0[1]) * k]; };
@@ -505,19 +528,20 @@ function drawSendLocation(scl, ox, oy) {
     var cxp = ox + scl * W / 2, cyp = oy + scl * H / 2;
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (sl.phase === "target") { // thin aiming laser
-      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(slClock * 30); ctx.strokeStyle = "#ff3b2f"; ctx.lineWidth = 3 * scl;
+      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(slClock * 30); ctx.strokeStyle = sl.ds ? "#3dff6a" : "#ff3b2f"; ctx.lineWidth = 3 * scl;
       ctx.beginPath(); ctx.moveTo(cxp, 0); ctx.lineTo(cxp, cyp); ctx.stroke();
     } else {
       var bk = sl.t / SL.beam, wid = scl * SL.R * 0.9 * (bk < 0.1 ? bk / 0.1 : (bk > 0.75 ? Math.max(0, (1 - bk) / 0.25) : 1)) * (1 + 0.06 * Math.sin(slClock * 60));
-      [[1.6, "rgba(255,120,40,0.35)"], [1.0, "rgba(255,200,90,0.75)"], [0.45, "rgba(255,255,240,1)"]].forEach(function (L) {
+      var PL = slPal();
+      [[1.6, PL.gOuter], [1.0, PL.gMid], [0.45, PL.core]].forEach(function (L) {
         var g = ctx.createLinearGradient(cxp - wid * L[0], 0, cxp + wid * L[0], 0);
-        g.addColorStop(0, "rgba(255,160,60,0)"); g.addColorStop(0.5, L[1]); g.addColorStop(1, "rgba(255,160,60,0)");
+        g.addColorStop(0, PL.edge); g.addColorStop(0.5, L[1]); g.addColorStop(1, PL.edge);
         ctx.fillStyle = g; ctx.fillRect(cxp - wid * L[0], 0, wid * L[0] * 2, cyp);
       });
       var gl2 = ctx.createRadialGradient(cxp, cyp, 0, cxp, cyp, wid * 2.2);
-      gl2.addColorStop(0, "rgba(255,255,240,0.95)"); gl2.addColorStop(0.5, "rgba(255,170,60,0.6)"); gl2.addColorStop(1, "rgba(255,120,40,0)");
+      gl2.addColorStop(0, PL.core); gl2.addColorStop(0.5, PL.glowMid); gl2.addColorStop(1, PL.glowEdge);
       ctx.fillStyle = gl2; ctx.beginPath(); ctx.ellipse(cxp, cyp, wid * 2.2, wid * 1.6, 0, 0, 6.28); ctx.fill();
-      if (sl.t < 0.15) { ctx.globalAlpha = 0.8 * (1 - sl.t / 0.15); ctx.fillStyle = "#fff8e0"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+      if (sl.t < 0.15) { ctx.globalAlpha = 0.8 * (1 - sl.t / 0.15); ctx.fillStyle = PL.flash; ctx.fillRect(0, 0, canvas.width, canvas.height); }
     }
     ctx.restore();
   }
@@ -600,12 +624,13 @@ function slDrawStation(u, charge, deploy) {
   return 48 + 40 * dep + bl2 + 26; // muzzle y
 }
 function slBeam(x0, y0, x1, y1, w, t) { // a beam with a spiralling energy wrap
-  [[1.8, "rgba(255,110,30,0.35)"], [1.0, "rgba(255,190,80,0.85)"], [0.42, "rgba(255,255,240,1)"]].forEach(function (L) {
+  var PL = slPal();
+  [[1.8, PL.outer], [1.0, PL.mid], [0.42, PL.core]].forEach(function (L) {
     var g = ctx.createLinearGradient(x0 - w * L[0], 0, x0 + w * L[0], 0);
-    g.addColorStop(0, "rgba(255,150,50,0)"); g.addColorStop(0.5, L[1]); g.addColorStop(1, "rgba(255,150,50,0)");
+    g.addColorStop(0, PL.edge); g.addColorStop(0.5, L[1]); g.addColorStop(1, PL.edge);
     ctx.fillStyle = g; ctx.fillRect(x0 - w * L[0], y0, w * L[0] * 2, y1 - y0);
   });
-  ctx.strokeStyle = "rgba(255,240,200,0.8)"; ctx.lineWidth = Math.max(2, w * 0.08);
+  ctx.strokeStyle = PL.wrap; ctx.lineWidth = Math.max(2, w * 0.08);
   for (var s = 0; s < 2; s++) {
     ctx.beginPath();
     for (var y = y0; y <= y1; y += 8) { var ph = (y - y0) / (w * 2.2) - t * 18 + s * Math.PI; var xx = x0 + Math.sin(ph) * w * 0.9; if (y === y0) ctx.moveTo(xx, y); else ctx.lineTo(xx, y); }
@@ -635,16 +660,14 @@ function slDrawSpace(u) { // u = seconds into the space cut
     var eg = ctx.createLinearGradient(0, -er, 0, -er * 0.55); eg.addColorStop(0, "#3a86d8"); eg.addColorStop(1, "#0f2a52");
     ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(0, 0, er, 0, 6.28); ctx.fill();
     ctx.save(); ctx.beginPath(); ctx.arc(0, 0, er, 0, 6.28); ctx.clip();
-    ctx.rotate(u * 0.02);
-    ctx.fillStyle = "rgba(78,140,70,0.9)";
-    for (var i = 0; i < 9; i++) { var an = -Math.PI / 2 + (i - 4) * 0.13; ctx.beginPath(); ctx.ellipse(Math.cos(an) * er * 0.97, Math.sin(an) * er * 0.97, 120 * k, 40 * k, an + Math.PI / 2, 0, 6.28); ctx.fill(); }
-    ctx.fillStyle = "rgba(255,255,255,0.6)";
-    for (var c = 0; c < 14; c++) { var an2 = -Math.PI / 2 + (c - 7) * 0.075; ctx.beginPath(); ctx.ellipse(Math.cos(an2) * er * 0.985, Math.sin(an2) * er * 0.985, 70 * k, 12 * k, an2 + Math.PI / 2, 0, 6.28); ctx.fill(); }
+    slDrawLand(er, u);
     ctx.restore();
     // night side shadow
     var ns = ctx.createLinearGradient(-er, 0, er, 0); ns.addColorStop(0, "rgba(0,0,10,0.65)"); ns.addColorStop(0.45, "rgba(0,0,10,0)");
     ctx.fillStyle = ns; ctx.beginPath(); ctx.arc(0, 0, er, 0, 6.28); ctx.fill();
     ctx.restore();
+    if (sl.ds) slDrawDeathStar(u, cw, chh, k, jx, jy, push, zoom);
+    else {
     // the station (it swings round into place, then the cannon deploys)
     var swing = 1 - slEase3(u / 0.9), recoil = u > SL_FIRE_AT ? Math.sin(Math.min(1, (u - SL_FIRE_AT) / 0.35) * Math.PI) * 40 : 0;
     var stx = cw / 2 + jx, sty = chh * 0.3 + jy - recoil * k;
@@ -674,7 +697,8 @@ function slDrawSpace(u) { // u = seconds into the space cut
       ctx.beginPath(); ctx.ellipse(0, my, 60 + 380 * mk, 20 + 110 * mk, 0, 0, 6.28); ctx.stroke();
     }
     ctx.restore();
-    if (u >= SL_FIRE_AT && u - SL_FIRE_AT < 0.18) { ctx.globalAlpha = 0.85 * (1 - (u - SL_FIRE_AT) / 0.18); ctx.fillStyle = "#fff8e0"; ctx.fillRect(0, 0, cw, chh); ctx.globalAlpha = 1; }
+    }
+    if (u >= SL_FIRE_AT && u - SL_FIRE_AT < 0.18) { ctx.globalAlpha = 0.85 * (1 - (u - SL_FIRE_AT) / 0.18); ctx.fillStyle = slPal().flash; ctx.fillRect(0, 0, cw, chh); ctx.globalAlpha = 1; }
   } else {
     // through the atmosphere: blue sky, the beam punching down through the clouds
     var v = (u - SL_ATMO_AT) / (SL.space - SL_ATMO_AT);
@@ -694,8 +718,8 @@ function slDrawSpace(u) { // u = seconds into the space cut
   // caption
   ctx.font = "900 " + (58 * k) + 'px "Barlow Condensed", "Arial Narrow", sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.lineWidth = 11 * k; ctx.strokeStyle = "#000";
-  var cap = u < 1.0 ? "LOCATION RECEIVED" : (u < SL_FIRE_AT ? "CHARGING..." : (u < SL_ATMO_AT ? "FIRE!" : "INCOMING!"));
-  ctx.fillStyle = u < SL_FIRE_AT ? "#9dff7a" : "#ffcf5a";
+  var cap = u < 1.0 ? (sl.ds ? "TARGET ACQUIRED" : "LOCATION RECEIVED") : (u < SL_FIRE_AT ? (sl.ds ? "PRIMARY IGNITION..." : "CHARGING...") : (u < SL_ATMO_AT ? "FIRE!" : "INCOMING!"));
+  ctx.fillStyle = u < SL_FIRE_AT ? "#9dff7a" : (sl.ds ? "#7dff8f" : "#ffcf5a");
   ctx.strokeText(cap, cw / 2, chh * 0.13); ctx.fillText(cap, cw / 2, chh * 0.13);
   if (u >= 1.0 && u < SL_FIRE_AT) { // charge bar
     var bk = (u - 1.0) / (SL_FIRE_AT - 1.0);
@@ -706,4 +730,194 @@ function slDrawSpace(u) { // u = seconds into the space cut
   var inK = Math.max(0, 1 - u / 0.15), outK = Math.max(0, (u - (SL.space - 0.15)) / 0.15);
   if (inK > 0 || outK > 0) { ctx.globalAlpha = Math.max(inK, outK); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cw, chh); }
   ctx.restore();
+}
+
+// ------------- Josh Hokit's Death Star strike (sl.ds)
+
+// Hokit calling it in: saber held low in his right hand, his left raised
+// open-handed to the sky. Only his own two arms (Joe's rule).
+function slDrawSithCall(d, shR, shL, t) {
+  var r = d.r, ch = d.char, size = ch.punch.size || 13;
+  var tp = sl.phase === "pull" ? t : SL.pull + (sl.phase === "talk" ? t : SL.talk);
+  var k = Math.min(1, tp / SL.pull); k = k * k * (3 - 2 * k);
+  // saber hand at his side, blade angled down and out
+  var sh = { x: d.x + r * 0.95, y: d.y + r * 0.15 };
+  drawBentArm(d, { x: shR[0], y: shR[1] }, sh, 1);
+  drawSaber(sh.x, sh.y, 1.15, r * SABER_LEN, 1);
+  drawGloveAt(sh.x, sh.y, r * 0.22, ch);
+  // free hand: guard -> straight up over his head, fingers spread
+  if (!slLeftGloveBlock(d, shL)) {
+    var g0 = { x: d.x - r * 0.85, y: d.y - r * 0.6 }, g1 = { x: d.x - r * 0.62, y: d.y - r * 1.45 };
+    var wob = sl.phase === "talk" ? Math.sin(t * 9) * 1.5 : 0;
+    var hx = g0.x + (g1.x - g0.x) * k + wob, hy = g0.y + (g1.y - g0.y) * k;
+    strokeLimb(size * 0.75, armColor(ch), function () { ctx.moveTo(shL[0], shL[1]); ctx.lineTo(hx, hy); });
+    if (k > 0.6) strokeLimb(r * 0.07, armColor(ch), function () {
+      for (var i = -2; i <= 2; i++) { var fa = -Math.PI / 2 + i * 0.3; ctx.moveTo(hx, hy); ctx.lineTo(hx + Math.cos(fa) * r * 0.3, hy + Math.sin(fa) * r * 0.3); }
+    });
+    drawGloveAt(hx, hy, size * 0.85, ch, -Math.PI / 2);
+  }
+  if (sl.phase === "talk") slBubble(d.x - r * 0.2, d.y - r - 40, t < 0.7 ? "DON'T TALK TO ME." : "DON'T LOOK AT ME.", Math.min(1, t / 0.12), false); // his line (Joe's clip)
+}
+
+// The Death Star over the planet: a grey battle station, its trench round the
+// middle, panels, and the superlaser dish up and to the left. Eight green
+// beams light round the dish and meet in front of it, then one beam fires
+// down at the planet (the ring).
+var slDsPanels = null;
+function slDrawDeathStar(u, cw, chh, k, jx, jy, push, zoom) {
+  if (!slDsPanels) {
+    slDsPanels = [];
+    for (var i = 0; i < 160; i++) slDsPanels.push([Math.random() * 2 - 1, Math.random() * 2 - 1, 0.04 + Math.random() * 0.16, 0.012 + Math.random() * 0.03, Math.random()]);
+  }
+  // The dish faces down and to the left, at the planet: the beam fires out
+  // along the dish's own direction, never across the station (Joe).
+  var R = 250, dishX = -0.3 * R, dishY = 0.42 * R, dishR = 0.27 * R;
+  var dn = Math.sqrt(dishX * dishX + dishY * dishY), nx = dishX / dn, ny = dishY / dn;
+  var drift = 1 - slEase3(u / 1.2), recoil = u > SL_FIRE_AT ? Math.sin(Math.min(1, (u - SL_FIRE_AT) / 0.35) * Math.PI) * 30 : 0;
+  var fy = chh * 0.27;
+  ctx.save();
+  ctx.translate(cw * 0.66 + jx + drift * 120 * k - recoil * k * nx, fy + jy - recoil * k * ny); // kicked back off the shot
+  // push in on the dish while it charges
+  ctx.scale(k * zoom, k * zoom);
+  ctx.translate(-dishX * (zoom - 1) / zoom, -dishY * (zoom - 1) / zoom);
+  // the sphere
+  var g = ctx.createRadialGradient(-R * 0.35, -R * 0.4, R * 0.1, 0, 0, R);
+  g.addColorStop(0, "#b9bec6"); g.addColorStop(0.6, "#7c828c"); g.addColorStop(1, "#33363c");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.28); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.28); ctx.clip();
+  // panels: little light and dark plates, squashed toward the edges
+  slDsPanels.forEach(function (p) {
+    var x = p[0] * R, y = p[1] * R, edge = Math.sqrt(Math.max(0, 1 - (p[0] * p[0] + p[1] * p[1])));
+    ctx.fillStyle = p[4] < 0.5 ? "rgba(40,44,52,0.35)" : "rgba(220,225,232,0.22)";
+    ctx.fillRect(x, y, p[2] * R * (0.4 + 0.6 * edge), p[3] * R);
+  });
+  // latitude lines
+  ctx.strokeStyle = "rgba(30,33,38,0.4)"; ctx.lineWidth = 2;
+  for (var l = -4; l <= 4; l++) { if (!l) continue; var ly = l * R * 0.2; ctx.beginPath(); ctx.ellipse(0, ly, Math.sqrt(R * R - ly * ly), R * 0.06, 0, 0, Math.PI); ctx.stroke(); }
+  // the equatorial trench
+  ctx.fillStyle = "#24272c"; ctx.beginPath(); ctx.ellipse(0, R * 0.04, R, R * 0.045, 0, 0, 6.28); ctx.fill();
+  ctx.strokeStyle = "rgba(230,235,240,0.55)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(0, R * 0.0, R, R * 0.04, 0, 0, Math.PI); ctx.stroke();
+  // shadow on the far side
+  var sh = ctx.createLinearGradient(-R, -R, R, R); sh.addColorStop(0.45, "rgba(0,0,0,0)"); sh.addColorStop(1, "rgba(0,0,0,0.6)");
+  ctx.fillStyle = sh; ctx.fillRect(-R, -R, R * 2, R * 2);
+  ctx.restore();
+  // the superlaser dish: a concave bowl with ribs and a raised rim
+  var charge = Math.max(0, Math.min(1, (u - 0.9) / (SL_FIRE_AT - 0.9)));
+  var dg = ctx.createRadialGradient(dishX + dishR * 0.3, dishY + dishR * 0.3, dishR * 0.1, dishX, dishY, dishR);
+  dg.addColorStop(0, "#3b3f46"); dg.addColorStop(0.7, "#5f646d"); dg.addColorStop(1, "#9aa0a8");
+  ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(dishX, dishY, dishR, 0, 6.28); ctx.fill();
+  ctx.strokeStyle = "rgba(25,27,31,0.7)"; ctx.lineWidth = 2;
+  for (var rb = 0; rb < 24; rb++) { var ra = rb / 24 * 6.28; ctx.beginPath(); ctx.moveTo(dishX + Math.cos(ra) * dishR * 0.15, dishY + Math.sin(ra) * dishR * 0.15); ctx.lineTo(dishX + Math.cos(ra) * dishR * 0.95, dishY + Math.sin(ra) * dishR * 0.95); ctx.stroke(); }
+  ctx.strokeStyle = "#cfd3d8"; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(dishX, dishY, dishR, 0, 6.28); ctx.stroke();
+  ctx.fillStyle = "#1c1e22"; ctx.beginPath(); ctx.arc(dishX, dishY, dishR * 0.13, 0, 6.28); ctx.fill();
+  // the focal point, out in front of the dish
+  var fx = dishX + nx * dishR * 0.55, fyy = dishY + ny * dishR * 0.55; // the focal point, out in front of the dish
+  if (u > 0.9 && u < SL_FIRE_AT + 0.05) {
+    // eight beams light one by one round the rim and reach in to meet
+    for (var b = 0; b < 8; b++) {
+      var on = Math.max(0, Math.min(1, (charge - b * 0.07) / 0.3));
+      if (on <= 0) continue;
+      var ba = b / 8 * 6.28 + 0.2, sx = dishX + Math.cos(ba) * dishR * 0.82, sy = dishY + Math.sin(ba) * dishR * 0.82;
+      var ex = sx + (fx - sx) * on, ey = sy + (fyy - sy) * on;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "rgba(60,255,100,0.35)"; ctx.lineWidth = 14; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.strokeStyle = "rgba(225,255,225,0.95)"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    }
+    var orb = 6 + 46 * charge + 4 * Math.sin(u * 45);
+    var og = ctx.createRadialGradient(fx, fyy, 0, fx, fyy, orb * 2.4);
+    og.addColorStop(0, "rgba(240,255,240,1)"); og.addColorStop(0.3, "rgba(120,255,130,0.95)"); og.addColorStop(1, "rgba(40,255,90,0)");
+    ctx.fillStyle = og; ctx.beginPath(); ctx.arc(fx, fyy, orb * 2.4, 0, 6.28); ctx.fill();
+  }
+  if (u >= SL_FIRE_AT) {
+    var fk = Math.min(1, (u - SL_FIRE_AT) / 0.1), bw = 60 * fk * (1 + 0.08 * Math.sin(u * 70));
+    // it stops where it meets the planet, with a flare there
+    var hitY = (chh * 0.7 - fy) / (k * zoom) + dishY * (zoom - 1) / zoom, L = Math.max(200, (hitY - fyy) / ny);
+    ctx.save(); ctx.translate(fx, fyy); ctx.rotate(Math.atan2(ny, nx) - Math.PI / 2);
+    slBeam(0, 0, 0, L, bw, u);
+    var hf = ctx.createRadialGradient(0, L, 0, 0, L, bw * 4);
+    hf.addColorStop(0, "rgba(240,255,240,1)"); hf.addColorStop(0.35, "rgba(110,255,130,0.8)"); hf.addColorStop(1, "rgba(40,255,90,0)");
+    ctx.fillStyle = hf; ctx.beginPath(); ctx.arc(0, L, bw * 4 * (1 + 0.1 * Math.sin(u * 60)), 0, 6.28); ctx.fill();
+    ctx.restore();
+    var mk = Math.min(1, (u - SL_FIRE_AT) / 0.5);
+    ctx.strokeStyle = "rgba(210,255,210," + (1 - mk) + ")"; ctx.lineWidth = 14 * (1 - mk) + 2;
+    ctx.beginPath(); ctx.ellipse(fx, fyy, 50 + 320 * mk, 18 + 90 * mk, Math.atan2(ny, nx) + Math.PI / 2, 0, 6.28); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ------------- the planet's surface (both space cuts, Joe: "realistic land masses")
+// Continents and cloud bands laid out in longitude/latitude and projected
+// onto the globe (orthographic), so they squash toward the horizon like the
+// real thing. Built once from a fixed seed (drawing only).
+var slLand = null;
+function slBuildLand() {
+  var seed = 1234567, rnd = function () { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  var D = Math.PI / 180, conts = [], clouds = [];
+  // [lon, lat, size (deg), stretch, tilt]: a big continent across the middle,
+  // two smaller ones and a scatter of islands, all in the band we can see.
+  [[-8, 38, 15, 1.7, 0.35], [30, 56, 9, 1.4, -0.4], [-42, 62, 8, 1.3, 0.8], [26, 24, 6, 1.6, -0.2], [-36, 26, 4, 1.4, 0.5],
+   [8, 74, 6, 2.2, 0.1], [50, 36, 4, 1.3, 0.3], [-12, 58, 2.5, 1.5, 0], [-58, 44, 3, 1.2, -0.6]].forEach(function (c) {
+    var n = 64, ph = [rnd() * 6.28, rnd() * 6.28, rnd() * 6.28, rnd() * 6.28], pts = [];
+    for (var i = 0; i < n; i++) {
+      var a = i / n * 6.28;
+      // a ragged coastline: a few layers of wobble, from big bays down to small inlets
+      var rr = 1 + 0.28 * Math.sin(a * 2 + ph[0]) + 0.18 * Math.sin(a * 3 + ph[1]) + 0.1 * Math.sin(a * 7 + ph[2]) + 0.05 * Math.sin(a * 13 + ph[3]) + 0.03 * (rnd() - 0.5);
+      var x = Math.cos(a) * rr * c[3], y = Math.sin(a) * rr;
+      var ct = Math.cos(c[4]), st = Math.sin(c[4]);
+      pts.push([(c[0] + (x * ct - y * st) * c[2]) * D, (c[1] + (x * st + y * ct) * c[2] * 0.7) * D]);
+    }
+    // inland patches: forest, desert, mountains
+    var patches = [];
+    for (var j = 0; j < 5; j++) patches.push([(c[0] + (rnd() - 0.5) * c[2] * c[3] * 1.1) * D, (c[1] + (rnd() - 0.5) * c[2] * 0.7) * D, c[2] * (0.2 + rnd() * 0.25) * D, j % 3]);
+    conts.push({ pts: pts, patches: patches });
+  });
+  for (var q = 0; q < 26; q++) clouds.push([(-55 + rnd() * 110) * D, (18 + rnd() * 62) * D, (4 + rnd() * 10) * D, 0.25 + rnd() * 0.45, rnd() * 6.28]);
+  slLand = { conts: conts, clouds: clouds };
+}
+// (lon, lat) on the globe -> local x, y, or null when it's round the back.
+var SL_TILT = 0.0;
+function slProj(lon, lat, er, rot) {
+  var cl = Math.cos(lat), x = cl * Math.sin(lon + rot), y = Math.sin(lat), z = cl * Math.cos(lon + rot);
+  return { x: x * er, y: -y * er, z: z };
+}
+function slDrawLand(er, u) {
+  if (!slLand) slBuildLand();
+  var rot = u * 0.012;
+  var path = function (pts) {
+    ctx.beginPath();
+    pts.forEach(function (p, i) { var q = slProj(p[0], p[1], er, rot); if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); });
+    ctx.closePath();
+  };
+  // shallow water round every coast first, so the land covers the inner half
+  slLand.conts.forEach(function (c) {
+    path(c.pts); ctx.strokeStyle = "rgba(110,200,225,0.3)"; ctx.lineWidth = er * 0.014; ctx.lineJoin = "round"; ctx.stroke();
+  });
+  slLand.conts.forEach(function (c) {
+    // the land, greener up north, drier toward the south
+    var g = ctx.createLinearGradient(0, -er, 0, -er * 0.4);
+    g.addColorStop(0, "#4f7d3e"); g.addColorStop(0.55, "#5f8a45"); g.addColorStop(1, "#a28f5c");
+    ctx.fillStyle = g; path(c.pts); ctx.fill();
+    ctx.save(); path(c.pts); ctx.clip();
+    c.patches.forEach(function (pt) {
+      var q = slProj(pt[0], pt[1], er, rot), r = pt[2] * er, sq = Math.max(0.15, -q.y / er < 1 ? Math.sqrt(1 - Math.pow(-q.y / er, 2)) : 0.15);
+      var col = pt[3] === 0 ? "rgba(38,82,40,0.55)" : pt[3] === 1 ? "rgba(196,170,110,0.55)" : "rgba(120,104,84,0.5)";
+      var pg = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, r);
+      pg.addColorStop(0, col); pg.addColorStop(1, col.replace(/[\d.]+\)$/, "0)"));
+      ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(q.x, q.y, r, r * sq + 1, 0, 0, 6.28); ctx.fill();
+    });
+    ctx.restore();
+  });
+  // clouds: soft white streaks drifting a little faster than the ground
+  slLand.clouds.forEach(function (cd) {
+    var q = slProj(cd[0], cd[1], er, rot * 1.6), r = cd[2] * er;
+    var sq = Math.max(0.12, Math.sqrt(Math.max(0, 1 - Math.pow(-q.y / er, 2))));
+    var cg = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, r);
+    cg.addColorStop(0, "rgba(255,255,255," + cd[3] + ")"); cg.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = cg; ctx.beginPath(); ctx.ellipse(q.x, q.y, r * 1.8, r * sq * 0.9, Math.sin(cd[4]) * 0.3, 0, 6.28); ctx.fill();
+  });
+  // haze near the horizon
+  var hz = ctx.createRadialGradient(0, 0, er * 0.9, 0, 0, er);
+  hz.addColorStop(0, "rgba(150,200,255,0)"); hz.addColorStop(1, "rgba(170,215,255,0.55)");
+  ctx.fillStyle = hz; ctx.beginPath(); ctx.arc(0, 0, er, 0, 6.28); ctx.fill();
 }

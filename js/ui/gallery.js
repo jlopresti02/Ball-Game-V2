@@ -109,6 +109,10 @@ function galleryMoves(ch) {
     var lets = ch.armbar && !ch.armbar.tapBase && !ch.armbar.tapLowHp;
     add("🦵", "Armbar shot", ch.armbarShot.chance + "% a second while touching: a double leg that always lands, straight into an armbar" + (lets ? ", and he always lets them go." : "."));
   }
+  if (ch.darkSide) {
+    var ds = ch.darkSide, dc = ds.clash;
+    add("🔴", "Dark Side", "When they pull out a weapon (or once at a random time) he throws on a black hooded robe and ignites a red lightsaber for " + secs(ds.duration) + ", with his wrestling moves off. Saber swings for " + ds.saber.damage + ". " + dc.chance + "% of swings with a bat or club clash, and every " + dc.lockAfter + " clashes lock up; swords parry and duel him. Either way he wins (" + dc.winDamage + " slash), gets hit, or gets disarmed, and then he pulls the saber back with the Force and Force pushes them across the ring (no damage). Once a form he raises a hand to the sky and calls in the Death Star: the view cuts up to its superlaser charging, and the green beam lands in the middle of the ring for " + ds.deathStar.dmg + " (" + ds.deathStar.waveDmg + " from the blast wave).");
+  }
   if (ch.hasThumbsDown) add("👎", "Thumbs down", "Every " + secs(ch.thumbsDown.cooldown) + " he mocks them. They see red for " + secs(ch.thumbsDown.anger) + " and storm straight at him.");
   if (ch.hasSwing) {
     var s = ch.swing;
@@ -325,6 +329,9 @@ function galleryAssets() {
   list.push({ name: "Stepladder", info: "Josh Hokit's Chair Shot finish: he climbs it, dives off it and throws it.", w: 220, h: 220, draw: function (c, w, h) {
     withCtx(c, function () { drawStepLadder(w * 0.44, h * 0.9, h * 0.8, 1, 1); });
   } });
+  list.push({ name: "Red lightsaber", info: "Josh Hokit's Dark Side.", w: 220, h: 220, draw: function (c, w, h) {
+    withCtx(c, function () { drawSaber(w * 0.24, h * 0.76, -Math.PI / 4, w * 0.6, 1); });
+  } });
   list.push({ name: "Bat", info: "Ciryl Gane's Cheater mode and Herb Dean special.", w: 220, h: 220, draw: function (c, w, h) {
     withCtx(c, function () { drawBat(w * 0.16, h * 0.78, -Math.PI / 4, w * 0.82); });
   } });
@@ -383,6 +390,10 @@ function gallerySounds() {
     { title: "Special move sounds", items: [
       clip("chairShot", "Chair shot clang", "Josh Hokit's Chair Shot."),
       clip("ladderWatchOut", "Watch out!", "Josh Hokit climbing the ladder in his Chair Shot."),
+      clip("hokitDontTalk", "Don't talk to me", "Josh Hokit calling in the Death Star in his Dark Side."),
+      clip("dsCharge", "Death Star charge", "The superlaser powering up and firing."),
+      clip("dsImpact", "Death Star impact", "The beam landing in the ring."),
+      clip("dsMusic", "Death Star battle music", "Plays over Josh Hokit's Death Star strike."),
       clip("freeBird", "Free Bird solo", "Justin Gaethje's All American."),
       clip("eagleScreech", "Eagle screech", "Each eagle dive in All American, and the warning for Gaethje's Eagle Strike."),
       clip("eagleSwoop", "Eagle swoop", "The eagle swooping through in Gaethje's Eagle Strike."),
@@ -404,6 +415,11 @@ function gallerySounds() {
       synth("Wall slam", "Grapples and slams.", function () { playSlam(); }),
       synth("Whoosh", "Big moves starting up.", function () { playWhoosh(); }),
       synth("Bat hit", "Gane's bat landing.", function () { playBatHit(true); }),
+      synth("Saber ignite", "Josh Hokit's lightsaber coming on in his Dark Side.", function () { playSaberIgnite(); }),
+      synth("Saber swing", "His saber swinging.", function () { playSaberSwing(); }),
+      synth("Saber clash", "His saber meeting a bat, club or sword.", function () { lastPunchSound = 0; playSaberClash(1.2); }),
+      synth("Force pull", "Pulling his saber back after a disarm.", function () { playForcePull(); }),
+      synth("Force push", "Throwing them across the ring.", function () { playForcePush(); }),
       synth("Cane swish", "Herb Dean swinging his cane.", function () { playCaneSwish(); }),
       synth("Cane whack", "Herb Dean's cane landing.", function () { playCaneWhack(); }),
       synth("Bounce", "Fighters bouncing off the walls.", function () { lastBounceSound = 0; playBounce(); }),

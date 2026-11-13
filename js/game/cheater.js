@@ -51,7 +51,7 @@ function tickRefNap(dt) {
   if (rf.stop || over) { if (rf.asleep) wakeRef(rf); return; }
   // Out cold for the whole of Gane's special (herbdean.js wakes him after).
   if (herbDeanActive()) { rf.asleep = true; rf.napT = 0; return; }
-  if (swordDuelActive()) return; // stays asleep through a sword duel (sword.js)
+  if (swordDuelActive() || saberLock) return; // stays asleep through a sword duel (sword.js) or a saber lock (hokit-darkside.js)
   rf.napT = (rf.napT || 0) + dt;
   if (!rf.asleep && rf.napT >= ch.awake) {
     rf.asleep = true; rf.napT = 0;
@@ -65,7 +65,7 @@ function wakeRef(rf) {
   rf.wakeT = REF_WAKE; rf.gest = null; // the startled jolt (referee.js)
   floater(rf.x, refTop(rf), "!?", "note");
   balls.forEach(function (b) {
-    if (!b.cheater || b.cheater.club) return; // (Gaethje's golf club isn't cheating)
+    if (!b.cheater || b.cheater.club || b.cheater.saber) return; // (Gaethje's golf club and Hokit's saber aren't cheating)
     b.cheater = null;
     if (b.alive) floater(b.x, b.y - b.r - 30, "FIGHTER MODE", "note");
   });
@@ -113,6 +113,7 @@ function updateCheater(self, other, dt, d) {
 
 function updateCheaterAct(self, other, dt) {
   var a = self.chAct, cfg = cheaterCfg(self);
+  if (!cfg) { self.chAct = null; return; } // the weapon's gone (Hokit's saber put away)
   a.t += dt;
   var dx = other.x - self.x, dy = other.y - self.y, dd = Math.sqrt(dx * dx + dy * dy) || 1;
   a.nx = dx / dd; a.ny = dy / dd;
@@ -194,26 +195,29 @@ function updateCheaterAct(self, other, dt) {
       var chase = a.t < wind ? 230 : 460;
       self.vx = a.nx * chase; self.vy = a.ny * chase;
     } else if (a.t < wind + swing) { self.vx *= 0.5; self.vy *= 0.5; }
+    if (!a.whoosh && a.t >= wind && self.cheater && self.cheater.saber) { a.whoosh = true; playSaberSwing(); }
     if (!a.hit && a.t >= wind + swing * 0.55) {
       a.hit = true;
       var dist = Math.sqrt((other.x - self.x) * (other.x - self.x) + (other.y - self.y) * (other.y - self.y));
       // Sword clash (diamond.js): Diamond Guard Dustin can parry it with his diamond sword.
-      if (other.alive && dist < self.r + other.r + cfg.bat.reach + 6 && !diamondSwordClash(other, self, "bat")) {
+      // Saber clash (hokit-darkside.js): Josh Hokit's lightsaber meeting a bat or club, either way round.
+      if (other.alive && dist < self.r + other.r + cfg.bat.reach + 6 && !sithClash(other, self) && !diamondSwordClash(other, self, "bat")) {
+        var saber = !!(self.cheater && self.cheater.saber);
         var dealt = hurt(other, cfg.bat.damage, "bat", self.id);
         if (!other.justDodged) {
           other.vx += a.nx * cfg.bat.knockback; other.vy += a.ny * cfg.bat.knockback;
-          if (self.cheater && self.cheater.club) playClubHit(); else playBatHit(false);
+          if (saber) playSaberHit(false); else if (self.cheater && self.cheater.club) playClubHit(); else playBatHit(false);
           crowdReact(0.5);
-          impacts.push({ x: other.x - a.nx * other.r, y: other.y - a.ny * other.r, nx: a.nx, ny: a.ny, life: 0.35, max: 0.35, color: "#c98a4b" });
+          impacts.push({ x: other.x - a.nx * other.r, y: other.y - a.ny * other.r, nx: a.nx, ny: a.ny, life: 0.35, max: 0.35, color: saber ? "#ff2b2b" : "#c98a4b" });
           // Lands like a home run: freeze, big shake, splinters, and them
           // crushed flat by it.
           if (!reduceMotion) { shake = Math.max(shake, 20); hitStop = Math.max(hitStop, 0.08); }
           other.squash = { t: 0.2, max: 0.2, nx: a.nx, ny: a.ny }; other.flash = 0.16;
           for (var sp = 0; sp < 10 && !reduceMotion; sp++) {
             var pa = Math.atan2(a.ny, a.nx) + (Math.random() - 0.5) * 1.8, pv = 200 + Math.random() * 260;
-            particles.push({ x: other.x - a.nx * other.r * 0.6, y: other.y - a.ny * other.r * 0.6, vx: Math.cos(pa) * pv, vy: Math.sin(pa) * pv, life: 0.4, max: 0.4, size: 3 + Math.random() * 3, color: sp % 3 ? "#c98a4b" : "#ffffff" });
+            particles.push({ x: other.x - a.nx * other.r * 0.6, y: other.y - a.ny * other.r * 0.6, vx: Math.cos(pa) * pv, vy: Math.sin(pa) * pv, life: 0.4, max: 0.4, size: 3 + Math.random() * 3, color: sp % 3 ? (saber ? "#ff3030" : "#c98a4b") : "#ffffff" });
           }
-          if (dealt > 0) floater(other.x, other.y - other.r - 30, self.cheater && self.cheater.club ? "WHACK!" : "CRACK!", "crit");
+          if (dealt > 0) floater(other.x, other.y - other.r - 30, saber ? "SLASH!" : self.cheater && self.cheater.club ? "WHACK!" : "CRACK!", "crit");
           // The first bat shot of the match (and only that one): the
           // commentators lose it. If someone else is talking and the line
           // gets skipped, it waits for the next bat shot that lands.
@@ -233,7 +237,7 @@ function endPokeStun(b) { if (b.dazed === "poke") b.dazed = false; }
 // and gets away with no damage. Called before any takedown on `target`
 // lands (attemptGrab, Hokit's double leg). True when it stopped it.
 function cheaterFenceGrab(attacker, target) {
-  if (!target.cheater || target.cheater.club || target.fenceGrab || !target.alive) return false;
+  if (!target.cheater || target.cheater.club || target.cheater.saber || target.fenceGrab || !target.alive) return false;
   clearActions(target); target.chAct = null;
   clearActions(attacker);
   // Driven straight back the way he's being pushed, to where that meets the cage.
@@ -414,6 +418,9 @@ function drawCheater(b) {
     drawGloveAt(hx3, hy3, gr, ch);
     return;
   }
+  if (b.cheater && b.cheater.saber && sendLocHandsBusy(b)) return; // calling in the Death Star (send-location.js draws him)
+  if (b.cheater && b.cheater.saber && drawSithArms(b)) return; // Hokit's Force pull and push (hokit-darkside.js)
+  if (b.cheater && b.cheater.mode === "bat" && saberLockHeld(b)) { drawBatIdle(b, "lock"); return; } // blade on bat
   if (b.cheater && b.cheater.mode === "bat" && !swordDuelLocked(b)) { // (sword.js draws it in a sword duel)
     // The bat: held and played with between swings, or swung two-handed
     // across at them (one set of poses, so it flows between the two).
@@ -444,7 +451,17 @@ function drawBatIdle(b, swing) {
   var bSh = Q(0.66, -0.3), fSh = Q(-0.66, -0.3);
   var bH, fH, batA, bEl = null, fEl = null, key;
   var COCK_A = -Math.PI / 2 + 1.35; // barrel back and down behind him (s = 1)
-  if (swing != null && swing < 0) {
+  var saber = !!(b.cheater && b.cheater.saber);
+  if (swing === "lock") {
+    // Locked up blade on bat (hokit-darkside.js): both hands out in front
+    // toward them, the weapon angled up so the two cross over the middle,
+    // shaking with the strain.
+    key = "lock";
+    var jt = !reduceMotion ? Math.sin(t * 47) * 0.05 : 0;
+    bH = Q(-0.62, -0.12);
+    batA = A(Math.PI + 0.98 + jt);
+    fH = { x: bH.x + Math.cos(batA) * len * 0.16, y: bH.y + Math.sin(batA) * len * 0.16 };
+  } else if (swing != null && swing < 0) {
     // The tell: both hands drag the bat back behind his shoulder, the
     // barrel dropping low, and it shakes there for a beat before he goes.
     key = "windup";
@@ -477,7 +494,7 @@ function drawBatIdle(b, swing) {
       ctx.save();
       for (var i = 0; i < 7; i++) {
         var a0 = A(COCK_A + (endA - COCK_A) * Math.max(0, e - i * 0.07)), a1 = A(COCK_A + (endA - COCK_A) * Math.max(0, e - (i + 1) * 0.07));
-        ctx.fillStyle = "rgba(255,255,255," + (0.65 * fade * (1 - i / 7)) + ")";
+        ctx.fillStyle = (saber ? "rgba(255,50,50," : "rgba(255,255,255,") + (0.65 * fade * (1 - i / 7)) + ")";
         ctx.beginPath();
         ctx.moveTo(bH.x + Math.cos(a0) * len * 0.4, bH.y + Math.sin(a0) * len * 0.4);
         ctx.lineTo(bH.x + Math.cos(a0) * len * 1.02, bH.y + Math.sin(a0) * len * 1.02);
@@ -499,7 +516,8 @@ function drawBatIdle(b, swing) {
     if (b.batIdleT0 == null) b.batIdleT0 = t;
     var c = (t - b.batIdleT0) % BAT_IDLE_LOOP;
     key = c < 1.8 ? "stance" : c < 3.9 ? "tap" : "twirl";
-    if (c < 1.8) {
+    if (saber && key === "tap") key = "stance"; // (no smacking a lightsaber into his palm)
+    if (key === "stance") {
       // Batter's stance: hands stacked on the handle by his shoulder, the
       // barrel up and leaning back, waggling.
       // Bat hand at the knob, elbow tucked down at his side; the free hand
@@ -508,7 +526,7 @@ function drawBatIdle(b, swing) {
       batA = A(-Math.PI / 2 + 0.45 + Math.sin(t * 6) * 0.25);
       fH = { x: bH.x + Math.cos(batA) * len * 0.18, y: bH.y + Math.sin(batA) * len * 0.18 };
       bEl = Q(0.85, 0.2); fEl = Q(-0.05, 0.02);
-    } else if (c < 3.9) {
+    } else if (key === "tap") {
       // Three smacks into his open palm in front of his belly.
       var k = (c - 1.8) / 2.1 * 3, f = k % 1;
       var tap = f < 0.55 ? Math.pow(f / 0.55, 2) : 1 - (f - 0.55) / 0.45;
