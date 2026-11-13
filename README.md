@@ -19,6 +19,8 @@ The buttons under the arena hide once a fight starts, so a screen recording only
 
 The **Arena** button under the fight switches between two arenas, and the game remembers the choice on each device:
 
+Voice lines never overlap. Every fighter, commentator and announcer clip plays on the talk channel in `js/audio.js` (`playTalk`, or `cutInTalk` for the big moments), so only one person talks at a time; a line that comes up while someone else is talking waits if they are nearly done, otherwise it is skipped. Speech-bubble clips (`js/game/speech.js`) use it too. See `CLAUDE.md` for the rules when adding a new voice line.
+
 The crowd (its sound, and the fans in the WWIT stadium) has a mood: big moments raise it, it takes about a second to build up to fully excited, stays up for 3 seconds after the last big moment (a hit of 12.5 damage or more, or a slam), then takes about 4 seconds to die back down. Little jabs only nudge it. The settings are `CROWD_RISE`, `CROWD_KEEP`, `CROWD_FADE` and `CROWD_BIG` in `js/audio.js`.
 
 - **Test**: the plain square arena with the health bars above it.
