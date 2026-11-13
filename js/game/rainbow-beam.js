@@ -58,6 +58,13 @@ function updateRainbow(self, other, dt) {
   m.t += dt; m.callT = (m.callT || 0) + dt;
   self.vx = 0; self.vy = 0;
   if (over) { endRainbow(self); return false; }
+  // Joe (2026-11-13): while he brings the pot up and charges, swing at him
+  // and he slips it or blocks it with his shoulder (gloves stay on the pot),
+  // like Chuck's Snow Day (icDefend, liddell.js).
+  if (m.phase === "summon" || m.phase === "charge") {
+    self.immuneCd = 1; // no BLOCK popping up from the special guard: he slips or blocks instead
+    icDefend(self, other, m, dt);
+  }
 
   if (m.phase === "summon") {
     if (other.alive) rbAim(self, other);
@@ -130,7 +137,7 @@ function startRainbow(self, other, paired, charge) {
 function rainbowFire(self) {
   var m = self.igbb;
   if (!rainbowOn(self) || m.phase === "fire") return;
-  m.phase = "fire"; m.t = 0; m.callT = 0;
+  m.phase = "fire"; m.t = 0; m.callT = 0; m.def = null; m.dodge = null; self.immuneCd = 0;
   m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
   m.ext = 0;
   self.squash = { t: 0.2, max: 0.2, nx: -m.dx, ny: -m.dy };
@@ -192,6 +199,7 @@ function rbAim(self, other) {
 
 function endRainbow(self) {
   self.igbb = null;
+  self.immuneCd = 0;
   setSpeed(self, SPEED);
 }
 
@@ -313,7 +321,17 @@ function drawRainbowPot(b) {
 // His arms reach to the handles, the pot goes over his arms, and his gloves
 // grip the handles on top.
 function rbDrawPotAndArms(b, arms) {
-  var p = rbPotPose(b);
+  var p = rbPotPose(b), m = b.igbb;
+  // Blocking: a flash off his shoulder on the side they came from.
+  if (m.def) {
+    var k = 1 - m.def.t / 0.35, sx = b.x + m.def.x * b.r * 0.95, sy = b.y + m.def.y * b.r * 0.95;
+    ctx.save(); ctx.globalAlpha = Math.max(0, k);
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 5; ctx.lineCap = "round";
+    var a0 = Math.atan2(m.def.y, m.def.x);
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 1.08, a0 - 0.6, a0 + 0.6); ctx.stroke();
+    ctx.fillStyle = "rgba(255,240,170,0.8)"; ctx.beginPath(); ctx.arc(sx, sy, b.r * 0.3 * (1.3 - k * 0.3), 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
   if (arms) rbDrawArms(b, p, "limbs");
   rbDrawPot(b);
   if (arms) rbDrawArms(b, p, "gloves");
@@ -323,6 +341,7 @@ function rbDrawPotAndArms(b, arms) {
 function rainbowOffset(b) {
   if (!rainbowOn(b) || !b.alive) return { x: 0, y: 0 };
   var m = b.igbb, r = b.r, t = performance.now() / 1000;
+  if (m.def) { var dk = Math.sin(Math.min(1, m.def.t / 0.35) * Math.PI); return { x: m.def.x * r * 0.14 * dk, y: m.def.y * r * 0.14 * dk }; } // shoulder turned into the shot
   var ck = m.phase === "charge" ? m.t / m.charge : m.phase === "fire" ? 1 : 0;
   var lean = m.phase === "summon" ? rbEase(m.t / RB_SUMMON) * 0.08 : m.phase === "charge" ? 0.08 : m.phase === "fire" ? 0.08 + 0.1 * rbEase(m.t / RB_TIP) : 0.18 * (1 - rbEase(m.t / RB_END));
   var trem = reduceMotion || m.phase !== "charge" ? 0 : r * 0.03 * ck;
