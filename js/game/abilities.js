@@ -190,6 +190,7 @@ function updateAbilities(dt) {
     if (updateMightyMouse(self, other, dt)) continue; // Mighty Mouse's suplex into the mid-air armbar (mighty-mouse.js)
     if (updateConor(self, other, dt)) continue; // Conor McGregor's trash talk and counter left, Dustin's calf kicks on him (conor.js)
     if (updateNgannou(self, other, dt)) continue; // Francis Ngannou's rage punch and Dana White (ngannou.js)
+    if (updateHolloway(self, other, dt)) continue; // Max Holloway at the booth, his flashback, staying out of the guard (holloway.js)
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
@@ -212,6 +213,7 @@ function updateAbilities(dt) {
     if ((self.char.hasCheater || self.chAct || self.cheater) && updateCheater(self, other, dt, d)) continue; // (and EVIL Jon Jones's eye poke, jon.js)
     // Josh Hokit's armbar shot and thumbs down (hokit.js).
     if ((self.char.hasArmbarShot || self.char.hasThumbsDown) && updateHokit(self, other, dt, d)) continue;
+    if (updateHollowayHands(self, other, dt, d)) continue; // Max Holloway's volume combos and Button Mash, in place of the punch (holloway.js)
 
     if (self.throwAnim) {
       var ta = self.throwAnim;

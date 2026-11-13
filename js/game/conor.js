@@ -330,6 +330,7 @@ function endTaunt(self) {
 // It gets to them: the same anger as Josh Hokit's thumbs down (hokit.js).
 function angerThem(self, other, dur, furious) {
   if (!other || !other.alive || other.koOut || !(dur > 0)) return;
+  if (hollowayShrugs(other, self, furious)) return; // Max Holloway doesn't take the bait: "Keep talking." (holloway.js)
   other.angry = { t: 0, dur: dur, atId: self.id };
   floater(other.x, other.y - other.r - 26, furious ? "FURIOUS!" : "ANGRY", "note");
   playTauntOoh();

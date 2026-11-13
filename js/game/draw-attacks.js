@@ -130,6 +130,7 @@ function drawHands(b, other) {
   if (conorHandsBusy(b)) return; // the strut, the counter stance, the podium (drawConor, conor.js)
   if (liddellHandsBusy(b)) return; // scooping and packing the snow (drawLiddell, liddell.js)
   if (ngannouHandsBusy(b)) return; // the rage punch, the Smash, the contract (drawNgannou, ngannou.js)
+  if (hollowayHandsBusy(b)) return; // pointing at the booth or the middle, the flashback, the celebration (drawHolloway, holloway.js)
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)
