@@ -3357,7 +3357,28 @@ var SAVED_ROSTER = [
       "overhandKnock": 420,
       "cornerBonus": 1.6,
       "chase": 560,
-      "time": 4.5
+      "time": 4.5,
+      "norris": {
+        "on": true,
+        "chance": 100,
+        "rappel": 0.9,
+        "flag": true,
+        "speed": 560,
+        "reach": 30,
+        "windup": 0.3,
+        "roundhouseDamage": 40,
+        "unblockable": true,
+        "roundhouseKnock": 700,
+        "overhandsCut": 1,
+        "time": 4.5,
+        "boom": true,
+        "kickLine": 50,
+        "lines": {
+          "arrive": [],
+          "roundhouse": [],
+          "leave": []
+        }
+      }
     }
   },
   {

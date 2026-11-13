@@ -55,6 +55,12 @@
     "notBefore": 12, "weakHp": 0.8, "weakWait": 4,
     "eagle": 1.0, "flags": 1.1, "rev": 0.9, "lock": 0.3, "runUp": 140,
     "speed": 1250, "turn": 1.0, "bikeDamage": 48, "knockback": 900, "walls": 2, "wallDamage": 6,
-    "overhands": 6, "overhandDamage": 17, "overhandKnock": 420, "cornerBonus": 1.6, "chase": 560, "time": 4.5
+    "overhands": 6, "overhandDamage": 17, "overhandKnock": 420, "cornerBonus": 1.6, "chase": 560, "time": 4.5,
+    "norris": {
+      "on": true, "chance": 100, "rappel": 0.9, "flag": true,
+      "speed": 560, "reach": 30, "windup": 0.3, "roundhouseDamage": 40, "unblockable": true, "roundhouseKnock": 700, "overhandsCut": 1, "time": 4.5,
+      "boom": true, "kickLine": 50,
+      "lines": { "arrive": [], "roundhouse": [], "leave": [] }
+    }
   }
 }
