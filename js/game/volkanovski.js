@@ -34,9 +34,9 @@
 //             shoulders and throws it off into the crowd `keep` seconds in.
 // Voice lines (lines) speech bubbles (speech.js), his real lines (sources
 //             next to each one below).
-// Kangaroo    his special (special.move "kangaroo"): an Aussie tune starts (an
-//             original synth tune, a didgeridoo drone under clapsticks and a
-//             tin whistle), the cameras flash and the whole arena goes green
+// Kangaroo    his special (special.move "kangaroo"): "Down Under" by Men at Work
+//             starts (volkanovski-song.js; an original synth tune if it's
+//             missing), the cameras flash and the whole arena goes green
 //             and gold (the crowd, flags, the walkway, the mat, the jumbotron),
 //             the crowd chants AUSSIE AUSSIE AUSSIE, OI OI OI. A big red
 //             kangaroo bounds in through the crowd and over the cage, he hops
@@ -147,6 +147,7 @@ function resetVolk() {
 function initVolk(b) {
   b.vk = null;
   var cfg = vkCfg(b);
+  if (b.char.special && b.char.special.move === "kangaroo") withClip("downUnder"); // decode the song early
   if (!cfg && !(b.char.special && b.char.special.move === "kangaroo")) return;
   // His own copy of himself: the game plan changes it mid-fight.
   b.char = vkClone(b.char);
@@ -1439,11 +1440,11 @@ function volkGalleryMoves(ch, add) {
   if (v.walkout) add("🇦🇺", "Walkout", "Comes out with an Australian flag round his shoulders and throws it into the crowd " + secs(v.walkout.keep) + " in.");
 }
 function volkKangarooInfo(sp) {
-  return "An Aussie tune starts, the cameras flash and the whole arena goes green and gold (the crowd chants AUSSIE AUSSIE AUSSIE, OI OI OI). A big red kangaroo bounds in over the cage, he hops into its pouch and it bounds after them. When it catches them it holds them while he punches out of the pouch (" + sp.pouchPunches.join(", then ") + " punches of " + sp.pouchDamage + "), then rears back on its tail (the tell: " + sp.readChance + "% of the time they duck out) and kicks them with both feet (" + sp.kickDamage.join(", then ") + ") into the cage (" + sp.walls.join(", then ") + " wall slams of " + sp.wallDamage + "). " + sp.rounds + " rounds, then he hops out and it bounds off. Can't be slipped or blocked.";
+  return "\"Down Under\" starts, the cameras flash and the whole arena goes green and gold (the crowd chants AUSSIE AUSSIE AUSSIE, OI OI OI). A big red kangaroo bounds in over the cage, he hops into its pouch and it bounds after them. When it catches them it holds them while he punches out of the pouch (" + sp.pouchPunches.join(", then ") + " punches of " + sp.pouchDamage + "), then rears back on its tail (the tell: " + sp.readChance + "% of the time they duck out) and kicks them with both feet (" + sp.kickDamage.join(", then ") + ") into the cage (" + sp.walls.join(", then ") + " wall slams of " + sp.wallDamage + "). " + sp.rounds + " rounds, then he hops out and it bounds off. Can't be slipped or blocked.";
 }
 function volkGallerySounds(groups, synth) {
   groups.push({ title: "Alexander Volkanovski", items: [
-    synth("Aussie tune", "His Kangaroo special: an original synth tune (didgeridoo drone, clapsticks, tin whistle). Plays 8 seconds here.", function () { playVolkTune(); setTimeout(function () { stopVolkTune(1); }, 8000); }),
+    synth("Down Under", "His Kangaroo special: Men at Work's \"Down Under\". Plays 8 seconds here.", function () { playVolkTune(); setTimeout(function () { stopVolkTune(1); }, 8000); }),
     synth("AUSSIE AUSSIE AUSSIE, OI OI OI", "The crowd while the arena's green and gold.", function () { playAussieChant(); }),
     synth("Kangaroo bound", "The kangaroo landing a bound.", function () { playRooBoing(1); }),
     synth("Roo kick", "Both feet into them.", function () { lastPunchSound = 0; playRooKick(40); }),
@@ -1502,6 +1503,16 @@ function playVolkTune() {
     out.connect(ac.destination);
     vkTune = { gain: out, srcs: [] };
     try { holdMusicOff(now); } catch (e) { /* (music.js) */ }
+    // "Down Under" (volkanovski-song.js), once it's decoded; the synth tune
+    // below only plays if the song isn't in the build.
+    if (typeof SOUND_CLIPS !== "undefined" && SOUND_CLIPS.downUnder) {
+      var tu = vkTune;
+      withClip("downUnder", function (buf) {
+        if (vkTune !== tu) return; // the special ended before it decoded
+        var s = ac.createBufferSource(); s.buffer = buf; s.connect(out); s.start(); tu.srcs.push(s);
+      });
+      return;
+    }
     var t0 = now + 0.05, bars = 8, len = bars * 8 * VK_BEAT, srcs = vkTune.srcs;
     // The didgeridoo: a buzzing low drone on D through a moving vowel filter.
     var dr = ac.createOscillator(), dr2 = ac.createOscillator(), dg = ac.createGain(), bp = ac.createBiquadFilter(), lp = ac.createBiquadFilter();
