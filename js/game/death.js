@@ -35,6 +35,7 @@ function updateDeathButtons() {
 
 // From burst(): the fighter just died.
 function startDeathFx(b) {
+  if (fergusonDeathFx(b)) return true; // Tony Ferguson trips over a TV cable instead (ferguson.js)
   if (deathStyle === "classic" || deathFx || !lastArenaXf) return false;
   var win = balls[1 - b.id], dx = b.x - win.x, dy = b.y - win.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   deathFx = {
@@ -102,6 +103,7 @@ function drawDeathFx() {
   var len = DEATH_LEN[f.style];
   if (f.t >= len && f.after) { var fn = f.after; f.after = null; fn(); }
   if (f.t > len + 0.5) return;
+  if (f.style === "cabletrip") { drawCableTrip(f, dt); return; } // Tony Ferguson's cable trip (ferguson.js)
   ({ instant: drawExplode, explode: drawExplode, arcade: drawArcade, shatter: drawShatter, koflight: drawKoFlight, pixel: drawPixel })[f.style](f, dt);
 }
 

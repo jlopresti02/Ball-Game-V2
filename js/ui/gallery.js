@@ -67,6 +67,7 @@ var SPECIAL_INFO = {
   bow: function (sp) { return "Draws a big red bow while the path it'll fly lights up red, bouncing off the cage, then fires a big red arrow that bings off the cage up to " + sp.bounces + " times. It hits them up to " + sp.hits + " times (" + sp.damage + ", then " + sp.secondHit + "), can't be slipped or blocked, then thunks into the cage."; },
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }
 };
+SPECIAL_INFO.katana = function (sp) { return fergusonKatanaInfo(sp); }; SUB_NAMES.buggy = "buggy choke"; SUB_NAMES.darce = "D'Arce choke"; SUB_NAMES.elbows = "elbows from the bottom"; // Tony Ferguson (ferguson.js)
 SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
@@ -142,6 +143,8 @@ function galleryMoves(ch) {
     if (scr) add("😴", "Sugar crash", "After " + scr.after + " sweets he crashes: " + Math.round(scr.slow * 100) + "% speed, slower hands and no crane kicks for " + secs(scr.time) + ".");
   }
   if (ch.gsp) gspGalleryMoves(ch, add); // Georges St-Pierre (gsp.js)
+  if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
+  if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;

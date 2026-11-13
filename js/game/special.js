@@ -96,6 +96,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "presser") return updatePresser(self, other, dt); // conor.js
   if (sp.move === "snow") return updateSnowDay(self, other, dt); // liddell.js
   if (sp.move === "smash") return updateSmash(self, other, dt); // ngannou.js
+  if (sp.move === "katana") return updateKatanas(self, other, dt); // Tony Ferguson (ferguson.js)
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };

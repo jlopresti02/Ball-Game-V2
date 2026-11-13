@@ -103,6 +103,7 @@ function draw() {
   drawGspUnder(); // GSP's shadow in the air and the Superman Dive's red lane (gsp.js)
   drawLiddellUnder(); // snow on the mat, Chuck Liddell's ice flames (liddell.js)
   drawNgannouUnder(); // Ngannou's rage punch line, the Smash circle and crater, Dana at the cage (ngannou.js)
+  drawFergusonUnder(); // Tony Ferguson's slide afterimages (ferguson.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -139,6 +140,7 @@ function draw() {
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
     drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
+    drawFergusonBehind(b); // Tony Ferguson's red Kaioken aura (ferguson.js)
     drawGspBehind(b); // GSP's red cape, behind him (gsp.js)
     drawKameArmsBehind(b); // his arms reaching up behind his head for a Kamehameha fired upward (kamehameha.js)
 
@@ -205,6 +207,7 @@ function draw() {
     applyGspPose(b); // GSP crouching to load, up in the air for the leap and the dive (gsp.js)
     applyConorPose(b); // Conor McGregor rocking on his strut, planted, or gassed (conor.js)
     applyNgannouPose(b); // Ngannou crouching and leaping for the Smash, or knocked flat by it (ngannou.js)
+    applyFergusonPose(b); // Tony Ferguson on his back in a hold, leaning into his slide, and whoever he's got (ferguson.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -347,6 +350,8 @@ function draw() {
     drawConor(b); // Conor McGregor's strut, counter stance, podium and gas tank, Dustin's calf kick (conor.js)
     drawLiddell(b); // Chuck Liddell packing the snow, his blue overhand (liddell.js)
     drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
+    drawElbow(b, other); // an elbow being thrown, and a cut bleeding (elbows.js)
+    drawFerguson(b, other); // Tony Ferguson's slide, shot, shell, Kaioken glow and katanas (ferguson.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -398,6 +403,7 @@ function draw() {
   drawGspOver(); // GSP's gi and headband flying off (gsp.js)
   drawMightyMouseOver(); // Mighty Mouse's SCOUTING notepad, sweat off a tired opponent (mighty-mouse.js)
   drawNgannouOver(); // Ngannou's mat chunks, contract scraps, punch-power banner in the test arena (ngannou.js)
+  drawFergusonOver(); // Tony Ferguson's holds and tug-of-war bar, the Kaioken flash, the CANCELLED stamps (ferguson.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
@@ -428,6 +434,7 @@ function draw() {
   drawCologneBanner(); // and Ilia's cologne ad (cologne-ad.js)
   drawGoatGoatGoBanner(); // and Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawTapWaterBanner(); // and Charles's Tap Water ad (tapwater-ad.js)
+  drawBurritoBellBanner(); // and Tony Ferguson's Burrito Bell ad (burrito-bell-ad.js)
   drawConorBanner(); // and Conor McGregor's 13 SECONDS (conor.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)

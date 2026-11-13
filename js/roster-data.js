@@ -2295,5 +2295,304 @@ var SAVED_ROSTER = [
       "donuts": 1,
       "fall": 0.7
     }
+  },
+  {
+    "id": "c-tony-ferguson",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "lightweight",
+    "name": "Tony Ferguson",
+    "base": "Brawler",
+    "bio": "\"El Cucuy\" (the boogeyman). A lean Lightweight in a red karate headband with a thick moustache. Low base damage, but his elbows are sharp: lots of them are critical hits, and a crit can open a cut that bleeds. He's a hard man to hurt, and when a choke or an armbar is about to finish him, he often just won't tap. Knock him down and he's at home on his back: step into his guard and he catches you in a buggy choke, his D'Arce or elbows from the bottom. His walkout shuffle is a weapon: he slides side to side, slipping strikes, then shoots for the takedown. Under fire he pulls into a ninja turtle shell, and up to twice a fight he goes Kaioken: red aura, harder and faster. Special move: Katanas, blades out of both elbows. When he loses he trips over a TV cable before he blows up.",
+    "color": "#e86a10",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#c99272",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "short",
+      "hairColor": "#16110d",
+      "beard": "stubble",
+      "beardAlpha": 0.32,
+      "beardColor": "#16110d",
+      "ears": "normal",
+      "tattoos": {
+        "leftArm": true,
+        "armInk": true,
+        "armInkSide": "left"
+      },
+      "shorts": "#151515",
+      "trim": "#e86a10",
+      "shortsStyle": "stripe",
+      "gloves": "#141414",
+      "cucuy": {
+        "moustache": true,
+        "headband": {
+          "color": "#c41e1e"
+        }
+      }
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 9,
+      "cooldown": 0.8,
+      "speed": 0.26,
+      "size": 14,
+      "knockback": 160,
+      "reach": 38,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 12,
+      "cooldown": 3.4,
+      "speed": 0.4,
+      "size": 14,
+      "knockback": 160,
+      "reach": 58,
+      "checkChance": 20
+    },
+    "hasGrapple": false,
+    "tdd": {
+      "sprawlChance": 40
+    },
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "hasGuard": true,
+    "guard": {
+      "chance": 22,
+      "time": 4.5,
+      "radius": 130,
+      "passChance": 25,
+      "passPunches": 4,
+      "passDamage": 10,
+      "subs": [
+        "buggy",
+        "darce",
+        "elbows"
+      ],
+      "cooldown": 4
+    },
+    "blockChance": 10,
+    "elbow": {
+      "damage": 6,
+      "cooldown": 1.15,
+      "speed": 0.26,
+      "reach": 14,
+      "critChance": 40,
+      "critMult": 3,
+      "knockback": 150,
+      "cut": {
+        "chance": 45,
+        "time": 4,
+        "dps": 2
+      }
+    },
+    "ferguson": {
+      "durability": {
+        "damageTaken": 0.82
+      },
+      "wontTap": {
+        "chances": [
+          65,
+          40
+        ],
+        "cost": 18,
+        "vsCharlesArmbar": true
+      },
+      "slide": {
+        "first": [
+          3,
+          5
+        ],
+        "every": [
+          4.5,
+          7
+        ],
+        "minGap": 20,
+        "maxGap": 200,
+        "hops": 3,
+        "hopTime": 0.24,
+        "speed": 560,
+        "dodge": 70,
+        "react": 60,
+        "shoot": 65,
+        "shootRange": 90,
+        "level": 0.16,
+        "shotSpeed": 980,
+        "shotMax": 0.45
+      },
+      "takedown": {
+        "damage": 14,
+        "finish": {
+          "buggy": 35,
+          "darce": 35,
+          "elbows": 30
+        }
+      },
+      "buggy": {
+        "tapBase": 15,
+        "tapLowHp": 55
+      },
+      "darce": {
+        "tapBase": 20,
+        "tapLowHp": 55
+      },
+      "groundElbows": {
+        "count": 4,
+        "gap": 0.32,
+        "damage": 6,
+        "critChance": 50,
+        "critMult": 3
+      },
+      "shell": {
+        "first": [
+          8,
+          14
+        ],
+        "every": [
+          14,
+          20
+        ],
+        "max": 3,
+        "burst": 45,
+        "window": 2.5,
+        "cooldown": 8,
+        "time": 2.2,
+        "spin": {
+          "chance": 70,
+          "speed": 860,
+          "time": 1.0,
+          "damage": 18,
+          "knockback": 900,
+          "wallSlams": 1,
+          "slamDamage": 4
+        }
+      },
+      "kaioken": {
+        "first": [
+          14,
+          22
+        ],
+        "every": [
+          16,
+          24
+        ],
+        "lowHp": 0.45,
+        "max": 2,
+        "time": 7,
+        "damage": 1.2,
+        "speed": 1.22,
+        "attack": 1.2,
+        "x": [
+          2,
+          3
+        ]
+      },
+      "bellAd": true,
+      "death": {
+        "cable": true
+      },
+      "rivals": {
+        "khabib": {
+          "stamps": [
+            "DEC 2015: RIBS",
+            "APR 2016: LUNGS",
+            "MAR 2017: WEIGHT CUT",
+            "APR 2018: KNEE",
+            "APR 2020: COVID"
+          ],
+          "final": "FIGHT!"
+        },
+        "gaethje": {
+          "label": "UFC 249",
+          "kaioken": [
+            5,
+            8
+          ]
+        },
+        "charles": {
+          "label": "UFC 256",
+          "kaioken": [
+            5,
+            8
+          ]
+        }
+      },
+      "lines": {
+        "shell": [
+          "This is a rat race. But I'm no rat. I'm a [BLEEP] turtle, ninja turtle.",
+          "So which one is your favorite? I like Michelangelo."
+        ],
+        "wontTap": "The one thing they didn't take was my smile.",
+        "subCaught": "This is chess, and you're in check.",
+        "late": {
+          "after": 40,
+          "text": "I'm gonna take you in deep waters. I'm gonna leave you out there with no [BLEEP] snorkel."
+        },
+        "bell": {
+          "on": true,
+          "text": "Occasionally I'll eat at the Bell. I like to live m\u00e1s."
+        },
+        "tauntEvery": [
+          12,
+          18
+        ],
+        "vs": {
+          "c-khabib-nurmagomedov": {
+            "start": "You're gonna face the boogeyman.",
+            "taunts": [
+              "I'm going to make you taste nickels and dimes, son.",
+              "What are you doing, Khabib, [BLEEP] stuffing your face full of tiramisu? It's not even Tuesday, dog.",
+              "He's a cake eater."
+            ],
+            "win": "I've got the belt.",
+            "bear": "You wrestle bear cubs. I'm a [BLEEP] wolverine."
+          },
+          "c-conor-mcgregor": {
+            "start": "Where you at, McNuggets?",
+            "taunts": [
+              "Defend or vacate."
+            ]
+          }
+        }
+      },
+      "calls": {}
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "katana",
+      "chargeTime": 55,
+      "hitCut": 3,
+      "punchCut": 2,
+      "draw": 0.8,
+      "time": 4.5,
+      "speed": 1.35,
+      "gap": 0.42,
+      "reach": 16,
+      "damage": 6,
+      "critChance": 55,
+      "critMult": 3.5,
+      "finisher": 16,
+      "readChance": 25,
+      "cut": {
+        "chance": 60,
+        "time": 4,
+        "dps": 2.5
+      }
+    }
   }
 ];

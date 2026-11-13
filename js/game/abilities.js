@@ -190,6 +190,7 @@ function updateAbilities(dt) {
     if (updateMightyMouse(self, other, dt)) continue; // Mighty Mouse's suplex into the mid-air armbar (mighty-mouse.js)
     if (updateConor(self, other, dt)) continue; // Conor McGregor's trash talk and counter left, Dustin's calf kicks on him (conor.js)
     if (updateNgannou(self, other, dt)) continue; // Francis Ngannou's rage punch and Dana White (ngannou.js)
+    if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
@@ -278,6 +279,7 @@ function updateAbilities(dt) {
     }
 
     if (self.char.hasSwing) updateSwing(self, other, dt);
+    if (self.char.elbow) updateElbows(self, other, dt, d); // elbows (elbows.js)
 
     if (self.char.hasKick) {
       self.kickCd = Math.max(0, self.kickCd - dt * self.atkRate);
