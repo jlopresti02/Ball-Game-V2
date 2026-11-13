@@ -89,7 +89,7 @@ function updateRainbow(self, other, dt) {
   }
   if (m.phase === "fire") {
     if (bcHolds(self)) return true; // locked in a beam clash (beam-clash.js)
-    m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
+    m.len = gspBeamStop(self, m, kmRayToWall(self.x, self.y, m.dx, m.dy)); // (stopped at GSP's shield, gsp-shield.js)
     m.ext = Math.min(m.len, (m.ext0 || 0) + m.t * RB_SPEED);
     if (!reduceMotion) shake = Math.max(shake, 6);
     rbBeamFx(self, m, cfg);

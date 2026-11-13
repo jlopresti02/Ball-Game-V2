@@ -81,7 +81,7 @@ function montrealOn() { return !!montrealMode; }
 function gspDiveOn(b) { return !!(b && b.igbb && b.igbb.move === "supermandive"); }
 function gspPunchOn(b) { return !!(b && b.gspSp); }
 // Busy with one of his own moves: the speed regulator leaves him alone (physics.js).
-function gspBusy(b) { return !!(b && (b.gspSp || b.gspTaunt || b.gspStun > 0 || b.gspThrow)); }
+function gspBusy(b) { return !!(b && (b.gspSp || b.gspTaunt || b.gspStun > 0 || b.gspThrow || b.gspBrace)); }
 // His hands are drawn by drawGsp (drawHands skips them, draw-attacks.js).
 function gspHandsBusy(b) { return gspBusy(b) || gspDiveOn(b) || gspShieldHandsBusy(b); } // (the Maple Shield, gsp-shield.js)
 function gspTurn(a, want, maxStep) {
@@ -352,6 +352,7 @@ function drawGspFloor() {
 // From hurt (match.js): slipping a strike. True if it's slipped.
 function gspDodge(b, source, attackerId) {
   var cfg = gspCfg(b), dc = cfg && cfg.dodge;
+  if (gspShieldSpecial(b, source, attackerId)) return true; // weapon swings blocked, beams deflected (gsp-shield.js)
   if (!dc || !b.alive || attackerId == null || attackerId === b.id || GSP_NO_SLIP[source]) return false;
   if (b.grappled || b.grapple || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.igbb || b.koOut || b.shocked || b.dazed ||
       b.dizzy || b.shelled || b.gspStun > 0 || b.gspTaunt || (b.gspSp && b.gspSp.phase === "leap")) return false;
@@ -419,6 +420,7 @@ function updateGsp(self, other, dt) {
     if (self.gspStun <= 0 || gspInterrupted(self)) { self.gspStun = 0; if (self.alive) setSpeed(self, self.baseSpeed || SPEED); return false; }
     return true;
   }
+  if (self.gspBrace) return runGspBrace(self, other, dt); // deflecting a beam (gsp-shield.js)
   if (self.gspSp) {
     if (gspInterrupted(self) || other.igbb || over) { endSupermanPunch(self); return false; }
     return runSupermanPunch(self, other, cfg.superman, dt);
