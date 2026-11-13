@@ -40,7 +40,7 @@ function makeBall(id, ch) {
     rageCd: ch.rage.cooldown * stagger(), rageState: null, jabAnim: null,
     watcherCd: ch.watcher.restDur * stagger(), watcherState: null, invincible: false, immuneCd: 0,
     slam: null, holdAtOne: false, flow: null, grabHold: false, initiativeReason: null, iowaSafe: null, sprawl: null, sprawled: false, checkAnim: null, checkStun: 0, swing: null, swingCd: null, dizzy: null, forgetT: 0, healGlow: 0,
-    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, shelled: false,
+    combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, beamPin: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
     guillo: null, choked: false, guilloCd: 0, rnc: null, suplex: null, suplexCd: 0, guard: null, guardCd: 0, doBronx: null, dazed: false, cheater: null, chAct: null, fenceGrab: null,
     hokitShot: null, shotRollCd: 0, mock: null, mockCd: (ch.thumbsDown ? ch.thumbsDown.cooldown : 8) * stagger(), angry: null
@@ -54,6 +54,7 @@ function makeBall(id, ch) {
   initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
   initDarkSide(b); // and his Dark Side form change (hokit-darkside.js)
   initKamehameha(b); // and Charles's Kamehameha (kamehameha.js)
+  initRainbow(b); // Conor's Pot o' Gold rainbow beam (rainbow-beam.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
   initRingBear(b); // Khabib's ring bear (khabib-bear.js)
   initIliaTornado(b); // Ilia's Rose Tornado (ilia-tornado.js)
@@ -101,6 +102,7 @@ function startMatchSeeded(ch0, ch1) {
   resetGsp(); // GSP's Montreal crowd and its chant (gsp.js)
   resetMightyMouse(); // Mighty Mouse's sweat drops (mighty-mouse.js)
   resetConor(); // Conor McGregor's podium and 13 SECONDS (conor.js)
+  resetRainbow(); resetBeamClash(); // the Pot o' Gold's coins, and a beam clash (rainbow-beam.js, beam-clash.js)
   resetLiddell(); // Chuck Liddell's snow (liddell.js)
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)

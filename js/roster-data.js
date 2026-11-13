@@ -511,12 +511,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-conor-mcgregor",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Conor McGregor",
     "base": "Brawler",
-    "bio": "\"The Notorious\". A counter-puncher built on the Brawler base, in green shorts, with a slicked-back ginger undercut, a thick beard and the gorilla and tiger tattoos. He never stops talking: every few seconds he does the billionaire strut and says one of his real lines, and every line is a taunt. They see red and storm straight at him, and he plants and fires the left hand as they come in. It can whiff and leave him wide open, but when it lands clean it's often a knockout. For the first 20 seconds he's the fastest, hardest-hitting fighter in the game; then his gas tank runs dry and he gets slower, softer and easier to submit. Knock someone out inside 13 seconds and the jumbotron shows the time. Against Khabib, Khabib wrestles him harder, takes his back and says \"Let's talk now.\" Against Dustin, the calf kicks come out. Special move: Press Conference, a podium, a mic, a line, water bottles, then the left hand with extra knockout power.",
+    "bio": "\"The Notorious\". A counter-puncher built on the Brawler base, in green shorts, with a slicked-back ginger undercut, a thick beard and the gorilla and tiger tattoos. He never stops talking: every few seconds he does the billionaire strut and says one of his real lines, and every line is a taunt. They see red and storm straight at him, and he plants and fires the left hand as they come in. It can whiff and leave him wide open, but when it lands clean it's often a knockout. For the first 20 seconds he's the fastest, hardest-hitting fighter in the game; then his gas tank runs dry and he gets slower, softer and easier to submit. Knock someone out inside 13 seconds and the jumbotron shows the time. Against Khabib, Khabib wrestles him harder, takes his back and says \"Let's talk now.\" Against Dustin, the calf kicks come out. Once a fight he pulls a pot of gold up out of the mat, grabs it by the handles and tips it over at them: a huge rainbow beam pours out across the ring (Pot o' Gold, his Kamehameha). Against Charles, whoever fires first gets the other one charging too, and the beams meet in a beam clash. Special move: Press Conference, a podium, a mic, a line, water bottles, then the left hand with extra knockout power.",
     "color": "#169b62",
     "label": "",
     "imgData": null,
@@ -660,6 +660,19 @@ var SAVED_ROSTER = [
           }
         }
       }
+    },
+    "potOfGold": {
+      "first": [
+        10,
+        25
+      ],
+      "charge": 3.0,
+      "beamTime": 1.5,
+      "width": 60,
+      "damage": 35,
+      "knockback": 1500,
+      "wallSlams": 2,
+      "slamDamage": 6
     },
     "hasSpecial": true,
     "special": {

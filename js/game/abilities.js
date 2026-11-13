@@ -171,6 +171,7 @@ function updateAbilities(dt) {
     var i = order[oi];
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
+    if (self.beamPin) continue; // pinned to the cage by a beam (beam-clash.js)
     if (self.shocked || self.koOut || self.shelled || self.dazed || self.dizzy) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
     if (updateDarkSide(self, other, dt)) continue; // Josh Hokit's Dark Side form change (hokit-darkside.js)
     if (saberLockHeld(self)) continue; // locked up blade on bat with him
@@ -180,6 +181,7 @@ function updateAbilities(dt) {
     if (updateIliaTornado(self, other, dt)) continue; // Ilia's Rose Tornado (ilia-tornado.js)
     if (!darkSideBlocks(self) && updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
     if (updateKamehameha(self, other, dt)) continue; // Charles's Kamehameha (kamehameha.js)
+    if (updateRainbow(self, other, dt)) continue; // Conor's Pot o' Gold rainbow beam (rainbow-beam.js)
     if (updateInstantTransmission(self, other, dt)) continue; // and his Instant Transmission hard shot (instant-transmission.js)
     if (updateHotSauce(self, other, dt)) continue; // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
     if (updateSendLocation(self, other, dt)) continue; // Khabib's Send Me Location (send-location.js)
