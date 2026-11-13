@@ -35,6 +35,10 @@
 //            seconds he hits `damage` times harder, rolls `speed` times faster
 //            and attacks `attack` times faster. The first time it burns out,
 //            the Burrito Bell ad runs (burrito-bell-ad.js).
+// Burrito    (burrito, ferguson-burrito.js) once a fight, after his first
+//            Kaioken, he eats a Burrito Bell burrito and goes KAIOKEN x10: a
+//            ki blast barrage, teleport dodges, and a teleport behind them
+//            into a turtle shell strike.
 // Katanas    his special (special.move "katana", ferguson-katanas.js):
 //            steel blades slide out of both elbows (the tell: some opponents
 //            back off), then for `time` seconds he hunts them down with
@@ -77,16 +81,16 @@ function tfIs(b, id) { return !!(b && b.char && String(b.char.id || "").indexOf(
 function katanaOn(b) { return !!(b && b.igbb && b.igbb.move === "katana"); }
 function tfShellUp(b) { return !!(b && b.tfShell && b.tfShell.phase !== "out"); }
 // Busy with one of his own moves: the speed regulator leaves him alone (physics.js).
-function fergusonBusy(b) { return !!(b && (b.tfSlide || b.tfShot || b.tfTd || b.tfSub || b.tfShell || b.tfPower)); }
+function fergusonBusy(b) { return !!(b && (b.tfSlide || b.tfShot || b.tfTd || b.tfSub || b.tfShell || b.tfPower || b.tfBur || b.tfMasMove)); }
 // His hands are drawn by drawFerguson (drawHands skips them, draw-attacks.js).
 function fergusonHandsBusy(b) { return fergusonBusy(b) || katanaOn(b); }
 function tfClamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
 // From startMatchSeeded.
-function resetFerguson() { tfClock = 0; tfGhosts = []; tfStamps = []; tfFlash = 0; resetBurritoBell(); }
+function resetFerguson() { tfClock = 0; tfGhosts = []; tfStamps = []; tfFlash = 0; resetBurritoBell(); resetTfBurrito(); }
 // From makeBall (after its weight class is applied).
 function initFerguson(b) {
-  b.tfSlide = null; b.tfShot = null; b.tfTd = null; b.tfSub = null; b.tfShell = null; b.tfPower = null; b.tfKaio = null; b.tfWontTap = null;
+  b.tfSlide = null; b.tfShot = null; b.tfTd = null; b.tfSub = null; b.tfShell = null; b.tfPower = null; b.tfKaio = null; b.tfWontTap = null; b.tfBur = null; b.tfMas = null; b.tfMasMove = null;
   var cfg = tfCfg(b);
   if (!cfg) return;
   b.tfBase = { speed: b.baseSpeed, atk: b.atkRate };
@@ -95,6 +99,7 @@ function initFerguson(b) {
   b.tfKaioT = cfg.kaioken ? tfRand(cfg.kaioken.first) : Infinity; b.tfKaioN = 0;
   b.tfRefusals = 0; b.tfStarted = false; b.tfSays = []; b.tfTauntT = cfg.lines && cfg.lines.tauntEvery ? tfRand(cfg.lines.tauntEvery) : Infinity;
   b.tfLateSaid = false; b.tfBearSaid = false; b.tfWinSaid = false; b.tfAdDone = false; b.tfShellLines = 0;
+  initTfBurrito(b, cfg); // the burrito and KAIOKEN x10 (ferguson-burrito.js)
 }
 
 // ---------------------------------------------------------------- every frame
@@ -111,6 +116,7 @@ function tickFerguson(dt) {
     tfHurtTrack(b, cfg);
     tfWatchSubs(b, cfg);
     tickKaioken(b, cfg, dt);
+    tickTfMas(b, cfg, dt);
     tfLines(b, cfg, dt);
     if (b.tfWontTap) { b.tfWontTap.t += dt; if (b.tfWontTap.t > 1.6) b.tfWontTap = null; }
   });
@@ -122,16 +128,18 @@ function tickFerguson(dt) {
   });
   tfStamps = tfStamps.filter(function (s) { return s.t < s.max; });
   tickBurritoBell(dt);
+  tickTfKi(dt);
 }
 
 // Anything that takes hold of him (a grab, a slam, a guard, a special) ends
 // whatever move of his own was running.
 function tfInterrupt(b) {
-  if (!b.tfSlide && !b.tfShot && !b.tfShell && !b.tfPower && !b.tfTd && !b.tfSub) return;
+  if (!b.tfSlide && !b.tfShot && !b.tfShell && !b.tfPower && !b.tfTd && !b.tfSub && !b.tfBur && !b.tfMasMove) return;
   var gone = !b.alive || b.grappled || b.grapple || b.slam || b.sprawl || b.sprawled || b.choked || b.guard || b.guillo || b.rnc || b.armbar || b.suplex ||
     b.koOut || b.shocked || b.dazed || b.dizzy || b.shelled || b.checkStun > 0 || (b.igbb && !katanaOn(b));
   if (!gone) return;
   b.tfSlide = null; b.tfShot = null; b.tfPower = null;
+  tfBurritoCancel(b);
   if (b.tfShell) b.tfShell = null;
   if (b.tfTd) { var v = balls[b.tfTd.vicId]; if (v) v.choked = false; b.tfTd = null; }
   if (b.tfSub) endTfSub(b);
@@ -157,6 +165,8 @@ function updateFerguson(self, other, dt) {
   if (self.tfSub) return runTfSub(self, other, cfg, dt);
   if (self.tfTd) return runTfTakedown(self, other, cfg, dt);
   if (self.tfPower) return runKaiokenPower(self, other, cfg, dt);
+  if (self.tfBur) return runTfBurrito(self, other, cfg, dt);
+  if (self.tfMasMove) return runTfMasMove(self, other, cfg, dt);
   if (self.tfShot) return runTfShot(self, other, cfg, dt);
   if (self.tfShell) return runTfShell(self, other, cfg, dt);
   if (self.tfSlide) return runTfSlide(self, other, cfg, dt);
@@ -165,11 +175,14 @@ function updateFerguson(self, other, dt) {
   if (self.tfShellCd > 0) self.tfShellCd -= dt;
   if (self.tfReactCd > 0) self.tfReactCd -= dt;
   if (!self.tfKaio && self.tfKaioT > 0) self.tfKaioT -= dt;
+  if (!self.tfKaio && self.tfBurT > 0) self.tfBurT -= dt;
   if (!started || over || !other.alive || self.igbb || self.koRush || self.elbowAnim) return false;
   if (subLocked(self) || self.sprawl || self.slam || self.checkStun > 0 || swordDuelLocked(self)) return false; // (down in guard, in a hold, ...)
   if (self.punch || self.kick || self.swing || self.throwAnim || self.combo || self.taunt) return false; // lets his own strike finish
   if (other.choked || other.grappled || subLocked(other) || other.invincible || other.koOut || swordDuelActive()) return false;
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, gap = d - self.r - other.r;
+  if (tfWantBurrito(self, cfg)) { startTfBurrito(self); return true; }
+  if (tfMasAct(self, other, cfg, dt)) return true;
   if (tfWantKaioken(self, cfg)) { startKaiokenPower(self, cfg); return true; }
   if (tfWantShell(self, other, cfg, gap)) { startTfShell(self, other, cfg); return true; }
   var react = tfTelegraphing(other) && gap < 240;
@@ -236,6 +249,7 @@ function runTfSlide(self, other, cfg, dt) {
 function fergusonDodge(b, source, attackerId) {
   var cfg = tfCfg(b);
   if (!cfg || !b.alive || attackerId == null || attackerId === b.id) return false;
+  if (tfBurritoDodge(b, source, attackerId)) return true; // blocking or slipping while he eats, teleporting away at x10 (ferguson-burrito.js)
   if (tfShellUp(b)) {
     if (source === "igbb") { // a special move cracks it
       b.tfShell = null;
@@ -263,6 +277,7 @@ function fergusonDamageMult(b, source, attackerId) {
   var m = 1, atk = attackerId != null ? balls[attackerId] : null, cfg = tfCfg(b);
   if (cfg && cfg.durability) m *= cfg.durability.damageTaken;
   if (atk && atk !== b && atk.tfKaio && tfCfg(atk) && tfCfg(atk).kaioken) m *= tfCfg(atk).kaioken.damage * (atk.tfKaio.x > 2 ? 1.08 : 1);
+  if (atk && atk !== b && atk.tfMas && tfBurCfg(atk)) m *= tfBurCfg(atk).damage; // KAIOKEN x10 (ferguson-burrito.js)
   return m;
 }
 
@@ -557,7 +572,7 @@ function runTfShell(self, other, cfg, dt) {
 
 function tfWantKaioken(self, cfg) {
   var kc = cfg.kaioken;
-  if (!kc || self.tfKaio || self.tfKaioN >= kc.max) return false;
+  if (!kc || self.tfKaio || self.tfMas || self.tfKaioN >= kc.max) return false;
   return self.tfKaioT <= 0 || (self.tfKaioN === 0 && self.hp < MAX_HP * kc.lowHp);
 }
 function startKaiokenPower(self, cfg) {
@@ -604,6 +619,7 @@ function tickKaioken(b, cfg, dt) {
     if (bl && bl.on && bl.text) say(b, bl.text);
     if (cfg.bellAd) startBurritoBellAd(b);
   }
+  tfBurritoAfterKaioken(b, cfg); // then the burrito (ferguson-burrito.js)
 }
 
 // Katanas (his special): updateKatanas lives in ferguson-katanas.js.
@@ -783,9 +799,9 @@ function drawFergusonUnder() {
 
 // Behind him: the Kaioken's red aura. From draw().
 function drawFergusonBehind(b) {
-  if (!b.alive || !(b.tfKaio || b.tfPower)) return;
-  var r = b.r, t = performance.now() / 1000, burst = b.tfPower ? Math.min(1, b.tfPower.t / TF_POWER) : 1;
-  var fade = b.tfKaio ? Math.min(1, b.tfKaio.t / 0.5) : burst, sc = b.tfPower ? 0.7 + 0.5 * easeOut(burst) : 1;
+  if (!b.alive || !(b.tfKaio || b.tfPower || b.tfMas)) return;
+  var r = b.r * tfMasAuraScale(b), t = performance.now() / 1000, burst = b.tfPower ? Math.min(1, b.tfPower.t / TF_POWER) : 1; // (bigger at x10, ferguson-burrito.js)
+  var fade = b.tfKaio ? Math.min(1, b.tfKaio.t / 0.5) : b.tfMas ? Math.min(1, b.tfMas.t / 0.5) : burst, sc = b.tfPower ? 0.7 + 0.5 * easeOut(burst) : 1;
   var pulse = 0.5 + 0.5 * Math.sin(t * 15);
   ctx.save();
   ctx.globalAlpha = fade;
@@ -810,6 +826,7 @@ function drawFergusonBehind(b) {
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - r * 0.4); ctx.stroke();
   }
   ctx.restore();
+  drawTfMasSparks(b); // gold sparks at x10 (ferguson-burrito.js)
 }
 
 // From draw(), with the other body poses: flat on his back in his holds,
@@ -850,13 +867,14 @@ function drawFerguson(b, other) {
   var cfg = tfCfg(b);
   if (!cfg && !katanaOn(b)) return;
   var ang = Math.atan2(other.y - b.y, other.x - b.x), r = b.r, size = (b.char.punch && b.char.punch.size) || 14;
-  if (b.tfKaio || b.tfPower) {
+  if (b.tfKaio || b.tfPower || b.tfMas) {
     // Red all over, throbbing.
     ctx.save();
     ctx.globalAlpha = 0.18 + 0.1 * Math.sin(performance.now() / 70);
     ctx.fillStyle = "#ff1a1a"; ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
+  if (drawTfBurrito(b, other, ang)) return; // eating, the ki barrage, the shell strike (ferguson-burrito.js)
   if (b.tfShell) { drawTfShell(b); return; }
   if (katanaOn(b)) { drawTfKatanas(b, other, ang); return; }
   if (b.tfPower) {
@@ -903,8 +921,8 @@ function drawFerguson(b, other) {
 
 // The turtle shell: a green domed shell over him, scutes and a pale rim, his
 // headband's tails sticking out the back. Spinning, it whirls round.
-function drawTfShell(b) {
-  var s = b.tfShell, r = b.r, k = s.phase === "in" ? Math.min(1, s.t / 0.18) : s.phase === "out" ? Math.max(0, 1 - s.t / 0.22) : 1;
+function drawTfShell(b, shell) {
+  var s = shell || b.tfShell, r = b.r, k = s.phase === "in" ? Math.min(1, s.t / 0.18) : s.phase === "out" ? Math.max(0, 1 - s.t / 0.22) : 1;
   var spin = s.phase === "spin" ? performance.now() / 40 : 0;
   ctx.save();
   ctx.translate(b.x, b.y); ctx.rotate(spin); ctx.scale(0.6 + 0.4 * k, 0.6 + 0.4 * k);
@@ -959,6 +977,7 @@ function drawFergusonOver() {
     ctx.save(); ctx.globalAlpha = tfFlash / 0.35 * 0.35; ctx.fillStyle = "#ff1a1a"; ctx.fillRect(0, 0, W, H); ctx.restore();
   }
   drawTfStamps();
+  drawTfKi(); // ki blasts and the burrito foil (ferguson-burrito.js)
   drawKatanaFx(); // the cut lines and the X on whoever his katanas caught (ferguson-katanas.js)
 }
 
@@ -1184,6 +1203,7 @@ function fergusonGalleryMoves(ch, add) {
     var kc = f.kaioken;
     add("🔴", "Kaioken", "Up to " + kc.max + " times a fight a red aura bursts on: " + secs(kc.time) + " of hitting " + Math.round((kc.damage - 1) * 100) + "% harder, rolling " + Math.round((kc.speed - 1) * 100) + "% faster and attacking " + Math.round((kc.attack - 1) * 100) + "% faster." + (f.bellAd ? " The first time it burns out, the Burrito Bell ad runs." : ""));
   }
+  if (f.burrito) add("🌯", "Burrito Bell: KAIOKEN x10", fergusonBurritoInfo(f));
   if (f.death) add("🎥", "Cable trip", "When he loses he doesn't blow up on the spot: he wanders dizzy to the middle of the cage, trips over a TV cable, falls flat and then blows up (his real cable trip before UFC 223, 2018).");
   if (f.rivals) add("🗂️", "Rivals", "Khabib: five CANCELLED stamps before the fight (it fell through five times). Gaethje and Charles: a REMATCH, and his first Kaioken comes early.");
 }

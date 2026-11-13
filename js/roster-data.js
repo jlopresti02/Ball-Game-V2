@@ -3580,6 +3580,55 @@ var SAVED_ROSTER = [
           3
         ]
       },
+      "burrito": {
+        "first": [
+          42,
+          52
+        ],
+        "after": [
+          2.5,
+          4
+        ],
+        "lowHp": 0.3,
+        "time": 9,
+        "x": 10,
+        "damage": 1.25,
+        "speed": 1.25,
+        "attack": 1.2,
+        "teleport": {
+          "every": [
+            1.6,
+            2.6
+          ],
+          "chance": 45,
+          "projChance": 65,
+          "cd": 0.8,
+          "projCd": 0.3
+        },
+        "barrage": {
+          "at": 0.5,
+          "max": 1,
+          "range": 250,
+          "time": 2.2,
+          "every": 0.06,
+          "spread": 0.16,
+          "speed": 900,
+          "damage": 1,
+          "bigDamage": 14,
+          "bigKnockback": 800,
+          "bigSlamDamage": 4
+        },
+        "shellStrike": {
+          "comboAt": 3,
+          "at": 3.5,
+          "max": 2,
+          "speed": 900,
+          "damage": 22,
+          "knockback": 950,
+          "wallSlams": 1,
+          "slamDamage": 5
+        }
+      },
       "bellAd": true,
       "death": {
         "cable": true
