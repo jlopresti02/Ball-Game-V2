@@ -67,14 +67,16 @@ var HW_LINES = {
   count: "Count it up!",
   boxer: "I'm the best boxer in the UFC, baby!",
   // The point down's "official rules", UFC video (Yahoo Sports, Mar 5 2026)
-  rules: "If you winning the fight, you're the person who can cause the 10 seconds.",
-  noShoot: "When you cause a 10 seconds you cannot step back or shoot or clinch.",
+  rules: "The guy who's winning is the one that needs to give you that blessing.",
+  noShoot: "If you do call it, please do not step back, guys, or do not shoot or clinch.",
   // How it started, the Ricardo Lamas fight, on the Freestyle Bender podcast (Yahoo Sports / Sherdog, Feb 28 2026)
-  bro: "Ten seconds bro, if you want to be about it, let's see if you are about it.",
+  bro: "Ten seconds, bro. If you want to be about it, let's see if you about it.",
   // Post-fight news conference after Kattar (ESPN, Jan 16 2021)
   zone: "I was in the zone.",
   // UFC 300 octagon interview, Apr 13 2024 (ESPN; CBS Sports)
   him: "I'm him! I'm him, guys!",
+  // His sign-off (YouTube interview, voice-clips manifest hollowayBestIsBlessed)
+  blessed: "The best is blessed.",
   // Same interview, about Ilia Topuria (ESPN; Bleacher Report)
   matador: "There's 'El Matador.' He's running away from the bull!",
   // On Conor McGregor's trash talk before UFC 329, MMA Junkie video (Middle Easy, Jul 2026), trimmed
@@ -158,6 +160,7 @@ function hwFill(b, amt) {
       floater(b.x, b.y - b.r - 34, i === marks.length - 1 ? "MAX VOLUME!" : "BLESSED!", "crit");
       crowdReact(0.5);
       playHwBlessed(i);
+      if (i === 0 && hwLine(b, "blessed") && canSay(b)) say(b, HW_LINES.blessed); // the first BLESSED! mark
     }
   });
 }
@@ -797,6 +800,8 @@ function hwLines(b) {
   }
   if (hwLine(b, "matador") && !b.hwSaid.matador && hwIs(o.char, HW_ILIA) && b.hwT > 1.2 && canSay(b)) {
     b.hwSaid.matador = true; say(b, HW_LINES.matador);
+  } else if (hwLine(b, "blessed") && !b.hwSaid.open && !hwIs(o.char, HW_ILIA) && b.hwT > 1.2 && canSay(b)) {
+    b.hwSaid.open = true; say(b, HW_LINES.blessed); // his opener
   }
 }
 

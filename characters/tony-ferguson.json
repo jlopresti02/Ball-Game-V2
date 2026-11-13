@@ -69,7 +69,7 @@
       "charles": { "label": "UFC 256", "kaioken": [5, 8] }
     },
     "lines": {
-      "shell": ["This is a rat race. But I'm no rat. I'm a [BLEEP] turtle, ninja turtle.", "So which one is your favorite? I like Michelangelo."],
+      "shell": ["This is a rat race. But I'm no rat. I'm a [BLEEP] turtle, ninja turtle.", "So which one's your favorite? I like Michelangelo."],
       "wontTap": "The one thing they didn't take was my smile.",
       "subCaught": "This is chess, and you're in check.",
       "late": { "after": 40, "text": "I'm gonna take you in deep waters. I'm gonna leave you out there with no [BLEEP] snorkel." },

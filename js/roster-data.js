@@ -2554,6 +2554,7 @@ var SAVED_ROSTER = [
       },
       "lines": {
         "booth": true,
+        "blessed": true,
         "middle": true,
         "zone": true,
         "win": true,
@@ -3432,7 +3433,7 @@ var SAVED_ROSTER = [
       "lines": {
         "shell": [
           "This is a rat race. But I'm no rat. I'm a [BLEEP] turtle, ninja turtle.",
-          "So which one is your favorite? I like Michelangelo."
+          "So which one's your favorite? I like Michelangelo."
         ],
         "wontTap": "The one thing they didn't take was my smile.",
         "subCaught": "This is chess, and you're in check.",

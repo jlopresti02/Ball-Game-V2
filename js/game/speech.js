@@ -292,6 +292,8 @@ function speechTextOn(hex) {
 function playSpeechClip(name) {
   try {
     if (typeof SOUND_CLIPS === "undefined" || !SOUND_CLIPS[name]) return;
+    var ac = getAudioCtx();
+    if (ac && ac.state === "suspended") ac.resume(); // wake the browser's audio if it fell asleep
     withClip(name, function () { playTalk(name, 1); });
   } catch (e) { /* never let audio break the game */ }
 }

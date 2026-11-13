@@ -151,6 +151,7 @@
     },
     "lines": {
       "booth": true,
+      "blessed": true,
       "middle": true,
       "zone": true,
       "win": true,
