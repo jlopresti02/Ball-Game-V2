@@ -51,7 +51,10 @@ var CHATTER = {
   },
   // Mighty Mouse breaking it down, from his own channel's VOID breakdowns.
   "c-demetrious-johnson": {
-    taunt: ["Change the angles, then different things come available.", "You got to use every part.", "He's way more intelligent. So you don't have to put on the size."],
+    start: ["Let's break down the void, boys.", "We have a banger void breakdown for you."],
+    taunt: ["Change the angles, then different things come available.", "You got to use every part.", "He's way more intelligent. So you don't have to put on the size.",
+      "Watch his feet, look at his feet.", "Watch how he moves his feet closer and closer to get to his opponent right here.",
+      "He has to lift this shoulder above his head like this, it's a term we use in wrestling."],
     calls: ["He's the best. I'm telling you, that kid is the best.", "Who's better? Who's better? Who's better? Nobody!"],
     subCalls: ["It's all over! Unbelievable! All over! Johnson by submission!"]
   },
