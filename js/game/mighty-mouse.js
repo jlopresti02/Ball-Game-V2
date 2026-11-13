@@ -58,7 +58,7 @@ var MM_LINES = {
   start: "Nobody has been able to do what I've been able to do.",
   dodge: "I'm not in the business of taking hits and concussions. That [BLEEP] is overrated.",
   miss: "What the [BLEEP] is this? Is this amateur hour?",
-  borg: "Ray Borg was running his mouth, saying my scrambling game was garbage.",
+  borg: "Ray Borg was running his mouth, saying my scrambling game was garbage.", // names Borg, who isn't in the game: never said (isRayBorg)
   fin1: "I'm here to make a fool of you.",
   fin2: "Throw you like a bag of potatoes and break your arm.",
   win: "It was like trying to fight a muskrat."
@@ -571,7 +571,7 @@ function tickMouseLines(b, other, cfg, dt) {
   }
   // Sprawling their shot: they missed. Winning the scramble after it: rarely Ray Borg.
   if (b.sprawl && !m.wasSprawl) ev = "miss";
-  if (!b.sprawl && m.wasSprawl && b.grapple && L.borg && m.lineGap <= 0 && canSay(b) && Math.random() * 100 < L.borg) { say(b, MM_LINES.borg); m.lineGap = L.gap; }
+  if (!b.sprawl && m.wasSprawl && b.grapple && L.borg && isRayBorg(other) && m.lineGap <= 0 && canSay(b) && Math.random() * 100 < L.borg) { say(b, MM_LINES.borg); m.lineGap = L.gap; }
   m.wasSprawl = !!b.sprawl;
   m.hpPrev = b.hp;
   if (ev && m.lineGap <= 0 && canSay(b) && Math.random() * 100 < (L[ev] || 0)) { say(b, MM_LINES[ev]); m.lineGap = L.gap; }
@@ -785,3 +785,7 @@ function playArmbarSnap() {
     caneTone(ac, t, "sine", 180, 90, 0.4, 0.12);
   });
 }
+
+// A line that names a real opponent only plays against that fighter. Ray Borg
+// isn't on the roster, so his line stays quiet until he is.
+function isRayBorg(o) { return !!(o && o.char && /ray borg/i.test(o.char.name || "")); }

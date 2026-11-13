@@ -514,7 +514,7 @@ function tickDana(dt) {
   D.t += dt;
   if (!D.said && D.t >= 0.45) {
     D.said = true;
-    if (owner.alive && cfg.lines) say(owner, NG_LINES.dana);
+    if (owner.alive && cfg.lines && isJon(balls[1 - D.owner])) say(owner, NG_LINES.dana); // it names Jon: only when he's the one in there
     addRage(owner, cfg.dana.fill * 0.5);
   }
   D.want = !D.torn && !D.acting && D.t >= 2.4 && D.t < (stadiumOn() ? 5.6 : 4.8) && owner.alive; // (in the test arena he has to walk over first)

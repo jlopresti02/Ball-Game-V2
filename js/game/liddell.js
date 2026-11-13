@@ -41,7 +41,9 @@
 //             all-out attack (special.rampage) for `time` seconds: he hunts
 //             them down `speed`x as fast throwing nothing but looping overhand
 //             rights, wound up in `windup`, doing `damage`x.
-// Voice       "I'm gonna knock his head off." at the Snow Day wind-up. "I just
+// Voice       "I'm gonna knock his head off." at the Snow Day wind-up; a big
+//             breath of cold air and "Oh yeah, baby!" (only with a real clip) as
+//             the snow flares up. "I just
 //             want to prove I do it better." when he comes back from at least
 //             iceman.taunt.behind health down to take the lead, and now and
 //             then as a taunt (every `every` seconds) (speech.js).
@@ -58,7 +60,8 @@ var IC_DIP = 0.45, IC_SCOOP = 0.4, IC_PACK = 0.65, IC_FLARE = 0.3; // the Snow D
 var IC_OVERHAND = 1;          // the hand his overhands come from (cte.js hookSide)
 var IC_LINES = {
   windup: "I'm gonna knock his head off.",
-  taunt: "I just want to prove I do it better."
+  taunt: "I just want to prove I do it better.",
+  snowDone: "Oh yeah, baby!" // as the snow flares up; only said when a real clip of it exists (voice-clips.js)
 };
 // What a frosted glove looks like, in fractions of the glove's radius:
 // where the ice crystals stick out round the rim, and how far.
@@ -211,7 +214,11 @@ function updateSnowDay(self, other, dt) {
   else if (m.phase === "pack") {
     var n = Math.floor(m.t / (IC_PACK / 3)); // three pats packing it down
     if (n > m.packs && n <= 3) { m.packs = n; playSnowCrunch(0.6); icSnowPuff(self, 0, self.r * 0.3, 6); }
-    if (m.t >= IC_PACK) { m.phase = "flare"; m.t = 0; playIceFlare(); }
+    if (m.t >= IC_PACK) {
+      m.phase = "flare"; m.t = 0; playIceFlare();
+      playColdBreath(); // a big satisfied breath of cold air as the snow flares up
+      if (SPEECH_CLIPS[IC_LINES.snowDone]) say(self, IC_LINES.snowDone);
+    }
   } else if (m.phase === "flare" && m.t >= IC_FLARE) {
     startRampage(self, other, sp);
     return false;
@@ -859,6 +866,22 @@ function playSnowWind() {
 function playSnowCrunch(k) {
   icAudio(function (ac, t) {
     for (var i = 0; i < 4; i++) caneBurst(ac, t + i * 0.025, 1300 + i * 380, 1.6, 0.3 * (k || 1), 0.05);
+  });
+}
+// A deep, satisfied breath in through the mouth (cold winter air, not a sniff):
+// breathy noise swelling up through a mouth-shaped band, then a short "ahh".
+function playColdBreath() {
+  icAudio(function (ac, t) {
+    var s = ac.createBufferSource();
+    s.buffer = caneNoise(ac); s.loop = true;
+    var f = ac.createBiquadFilter();
+    f.type = "bandpass"; f.Q.value = 1.3;
+    f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(1500, t + 0.55);
+    var g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.68);
+    s.connect(f); f.connect(g); g.connect(strikeOut(ac));
+    s.start(t); s.stop(t + 0.7);
+    caneTone(ac, t + 0.7, "sawtooth", 150, 120, 0.05, 0.35); // the "ahh"
   });
 }
 // The snow turning into a blue flare: a rising icy whoosh.
