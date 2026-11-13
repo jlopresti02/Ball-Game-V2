@@ -433,6 +433,7 @@ function draw() {
   drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)
   drawDeathFx(); // the loser's death animation (death.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  drawSpeech(); // voice-line speech bubbles (speech.js), under the hit numbers and move names
   floaters.forEach(function (f) {
     var t = f.life / f.max;
     ctx.globalAlpha = Math.min(1, t * 2);
@@ -445,7 +446,6 @@ function draw() {
     ctx.fillStyle = f.kind === "note" ? theme.ink : ((f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit); ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
-  drawSpeech(); // voice-line speech bubbles (speech.js)
 
   if (stadium) drawJumbotron(px);
   drawLadderSky(s, ox, oy); // Hokit up the ladder and diving off it (hokit-ladder.js)
