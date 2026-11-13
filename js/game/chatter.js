@@ -17,7 +17,8 @@
 //   };                         // `vs` lines only play against that fighter
 //
 // Fighters whose own file already calls their finishes (Conor, Strickland,
-// Tony, Nate, Max) get no calls here, so a finish never gets two.
+// Tony, Nate) get no calls here, so a finish never gets two; Max's own call
+// is only for a knockout in The Middle, the call here is for the rest.
 //
 // Each line is heard once a fight before any line repeats. Every line here is
 // something the fighter really said: the source is in the voice-clips
@@ -53,6 +54,13 @@ var CHATTER = {
     taunt: ["Change the angles, then different things come available.", "You got to use every part.", "He's way more intelligent. So you don't have to put on the size."],
     calls: ["He's the best. I'm telling you, that kid is the best.", "Who's better? Who's better? Who's better? Nobody!"],
     subCalls: ["It's all over! Unbelievable! All over! Johnson by submission!"]
+  },
+  // Max Holloway: hype on top of his own lines (holloway.js); UFC's own uploads.
+  "c-max-holloway": {
+    start: ["What's up, UFC? Hawaii!", "Let's get it!"],
+    taunt: ["Let's get it!", "Take me home, Dana, it's about time, let's go!"],
+    win: ["The only thing on my mind is Lahaina, Maui. This one is for you guys."],
+    koCalls: ["Oh my God. All night long. Look at this right hand that ends it."]
   },
   "c-alexander-volkanovski": {
     calls: ["Championship mettle from Volkanovski.", "Huge ground strikes from Volkanovski, one of the best title rounds."],

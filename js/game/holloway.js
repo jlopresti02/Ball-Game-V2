@@ -83,7 +83,9 @@ var HW_LINES = {
   conor: "I support it 100 percent. Keep talking."
 };
 // Joe Rogan on the UFC 300 broadcast (MMA Junkie, on Yahoo Sports, Apr 16 2024).
-var HW_ROGAN = "That's the greatest knockout of all time.";
+var HW_ROGAN = "I say it's the greatest knockout of all time.";
+// The booth on his record night against Calvin Kattar (UFC Fight Island 7, ESPN full fight): goes up at MAX VOLUME!
+var HW_VOLUME_CALL = "No fighter in UFC history, guys, in any fight has attempted as many strikes as Max Holloway has tonight.";
 
 var HW_GAETHJE = "c-justin-gaethje", HW_ILIA = "c-ilia-topuria", HW_CONOR = "c-conor-mcgregor";
 // Things nobody slips (the same list the weave leaves alone, match.js).
@@ -161,6 +163,7 @@ function hwFill(b, amt) {
       crowdReact(0.5);
       playHwBlessed(i);
       if (i === 0 && hwLine(b, "blessed") && canSay(b)) say(b, HW_LINES.blessed); // the first BLESSED! mark
+      if (i === marks.length - 1 && hwLine(b, "rogan") && !announcer) announce(HW_VOLUME_CALL, { who: "UFC BROADCAST" }); // MAX VOLUME!
     }
   });
 }
