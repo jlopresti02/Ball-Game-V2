@@ -13,8 +13,19 @@
 //     koCalls: ["..."],        //   any way, by knockout,
 //     subCalls: ["..."],       //   or by submission (announce, the TV
 //                              //   lower-third), before his own win line
-//     vs: { "c-max-holloway": { start: [...], taunt: [...], win: [...], calls: [...] } }
-//   };                         // `vs` lines only play against that fighter
+//     vs: { "c-max-holloway": { start: [...], taunt: [...], win: [...], calls: [...] } },
+//                              // `vs` lines only play against that fighter
+//     moments: { evilMode: { lines: ["..."], chance: 100, gap: 0 } }
+//   };                         // a line the moment something happens (below)
+//
+// Moments are watched from here, so the fighter's own file isn't touched:
+// goatMode / evilMode (Jon Jones swapping modes, jon.js), eyePoke (his eye
+// poke, or Gane's), kick (he throws a kick or one comes at him). A moment's
+// line plays `chance`% of the times it happens (100), at most one every `gap`
+// seconds (0). If he's talking when it happens, it waits up to `wait` seconds
+// (CHATTER_WAIT; 0 = only if he's quiet right then) for him to finish, and
+// nothing else of his starts while it waits. His taunts hold off while a mode
+// swap is coming (CHATTER_DUE), so they don't talk over the swap's line.
 //
 // Fighters whose own file already calls their finishes (Conor, Strickland,
 // Tony, Nate) get no calls here, so a finish never gets two; Max's own call
@@ -78,6 +89,20 @@ var CHATTER = {
     win: ["That's how it should be done.", "That's the champion I want to be."],
     calls: ["Championship mettle from Volkanovski.", "Huge ground strikes from Volkanovski, one of the best title rounds."],
     koCalls: ["Volkanovski's teeing off on him.", "That is picture perfect. And he just sits him down."]
+  },
+  // Jon Jones (Joe's fighter, chatter only): the Fox hot mic and FOX Sports Live
+  // before UFC 178 (2014), VICE Fight School on the oblique kick, ESPN before UFC 285.
+  "c-jon-jones": {
+    start: ["You know I would absolutely kill you if you ever did something like that, right?"],
+    taunt: ["I believe in my fight experience, I put that up against any fighter on this planet.",
+      "You know I would absolutely kill you if you ever did something like that, right?"],
+    every: [14, 22],
+    moments: {
+      evilMode: { lines: ["Stop me from coming at you round after round with the most malicious techniques I know."] },
+      goatMode: { lines: ["I just feel it in my whole being that I'm the best fighter on the planet."] },
+      eyePoke: { lines: ["It's a great technique. It keeps my opponents at bay."] },
+      kick: { lines: ["If he keeps his body back, there's no way I can reach him with a punch."], chance: 25, gap: 20, wait: 1 }
+    }
   }
 };
 var CHATTER_EVERY = [9, 14];
@@ -86,11 +111,60 @@ function chatterCfg(b) { return b && b.char && CHATTER[b.char.id]; }
 
 // From initBall (match.js).
 function initChatter(b) {
-  b.chat = chatterCfg(b) ? { t: 0, start: 1 + Math.random() * 2, next: 0, opened: false, won: false, used: {} } : null;
+  b.chat = chatterCfg(b) ? { t: 0, start: 1 + Math.random() * 2, next: 0, opened: false, won: false, used: {}, seen: {}, gaps: {}, dt: 0 } : null;
   if (b.chat) b.chat.next = b.chat.start + chatterRand(chatterCfg(b).every || CHATTER_EVERY);
 }
 
 function chatterRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
+
+var CHATTER_WAIT = 2.5;
+var CHATTER_DUE_T = 6; // a taunt is up to ~5 seconds long
+
+// True on the frame `v` changes (never on the first look).
+function chatterSeen(c, key, v) {
+  var had = key in c.seen, was = c.seen[key];
+  c.seen[key] = v;
+  return had && v !== was;
+}
+var CHATTER_MOMENTS = {
+  goatMode: function (b, o, c) { return chatterSeen(c, "goat", b.jonMode) && b.jonMode === "goat"; },
+  evilMode: function (b, o, c) { return chatterSeen(c, "evil", b.jonMode) && b.jonMode === "evil"; },
+  eyePoke: function (b, o, c) { return chatterSeen(c, "poke", b.chAct) && !!b.chAct && b.chAct.kind === "poke"; },
+  kick: function (b, o, c) {
+    var mine = chatterSeen(c, "kick", b.kick) && !!b.kick, theirs = chatterSeen(c, "okick", o && o.kick) && !!(o && o.kick);
+    return mine || theirs;
+  }
+};
+
+// Moments that are about to happen (a mode swap within CHATTER_DUE_T seconds).
+var CHATTER_DUE = {
+  goatMode: function (b) { return b.jonMode === "evil" && !!b.char.jon && b.char.jon.swapEvery - b.jonT < CHATTER_DUE_T; },
+  evilMode: function (b) { return b.jonMode === "goat" && !!b.char.jon && b.char.jon.swapEvery - b.jonT < CHATTER_DUE_T; }
+};
+function chatterDue(b, cfg) {
+  for (var k in cfg.moments) if (CHATTER_DUE[k] && CHATTER_DUE[k](b)) return true;
+  return false;
+}
+
+// Every frame in the fight: a moment that happens and passes its chance and
+// gap is owed its line (the newest one wins), heard as soon as he's quiet,
+// within its wait. Every detector looks every frame, so none fires late.
+function chatterMoment(b, o, c, cfg) {
+  if (c.owed && (c.owed.t -= c.dt) < 0) c.owed = null;
+  for (var k in cfg.moments) {
+    var mo = cfg.moments[k], det = CHATTER_MOMENTS[k];
+    if (c.gaps[k] > 0) c.gaps[k] -= c.dt;
+    if (!det || !det(b, o, c) || c.gaps[k] > 0) continue;
+    if (Math.random() * 100 >= (mo.chance != null ? mo.chance : 100)) continue;
+    var have = (mo.lines || []).filter(function (t) { return SPEECH_CLIPS[t]; });
+    if (have.length) c.owed = { key: k, line: have[Math.floor(Math.random() * have.length)], t: mo.wait != null ? mo.wait : CHATTER_WAIT };
+  }
+  if (!c.owed || !canSay(b)) return null;
+  var line = c.owed.line;
+  c.gaps[c.owed.key] = cfg.moments[c.owed.key].gap || 0;
+  c.owed = null;
+  return line;
+}
 
 // The lines of one kind for b against o, with clips, not heard yet this fight
 // (all of them again once every one has been heard).
@@ -123,9 +197,14 @@ function tickChatter(dt) {
       }
       if (!c.won && o && !o.alive && !announcer && canSay(b)) { c.won = true; line = chatterPick(b, o, "win"); }
     } else {
-      c.t += dt;
-      if (!c.opened && c.t >= c.start && canSay(b)) { c.opened = true; line = chatterPick(b, o, "start"); }
-      else if (c.opened && c.t >= c.next && canSay(b)) { c.next = c.t + chatterRand(cfg.every || CHATTER_EVERY); line = chatterPick(b, o, "taunt"); }
+      c.t += dt; c.dt = dt;
+      if (cfg.moments) line = chatterMoment(b, o, c, cfg);
+      var free = !line && !c.owed && canSay(b); // a moment's line comes first
+      if (free && !c.opened && c.t >= c.start) { c.opened = true; line = chatterPick(b, o, "start"); }
+      else if (free && c.opened && c.t >= c.next) {
+        if (cfg.moments && chatterDue(b, cfg)) c.next = c.t + CHATTER_DUE_T + 2; // after the swap's line
+        else { c.next = c.t + chatterRand(cfg.every || CHATTER_EVERY); line = chatterPick(b, o, "taunt"); }
+      }
     }
     if (line) say(b, line);
   }

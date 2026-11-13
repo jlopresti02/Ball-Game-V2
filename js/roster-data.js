@@ -2929,7 +2929,8 @@ var SAVED_ROSTER = [
         "trash": [
           7,
           11
-        ]
+        ],
+        "slapped": 25
       },
       "iconic": {
         "buffer": true,

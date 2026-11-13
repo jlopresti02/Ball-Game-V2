@@ -7,6 +7,8 @@ Two people build Ball Brawl now:
 
 Every change from Christian comes in as a pull request with Joe tagged as reviewer. Nothing reaches `main` until Joe merges it.
 
+**Update 2026-11-13:** Christian asked his Claude to push his work straight to `main` instead. It only ever fast-forwards (never a force-push, never rewriting your commits), pulls `main` first, and runs headless test fights for every fighter it touched before each push (zero errors or it doesn't push). Joe: if you want pull requests back, change this paragraph and Christian's Claude will go back to them.
+
 ## Before you start any work
 
 1. Pull `main`.
@@ -15,20 +17,13 @@ Every change from Christian comes in as a pull request with Joe tagged as review
 
 ## In progress
 
-Christian is adding these fighters, one pull request each, in this order:
+Christian's fighters are all on `main` now (2026-11-13): Alex Pereira, Conor McGregor, Sean O'Malley, Chuck Liddell, Georges St-Pierre, Demetrious "Mighty Mouse" Johnson, Alexander Volkanovski, Max Holloway, Nate Diaz, Sean Strickland and Tony Ferguson. Christian's Claude has also added real voice lines to some of yours (chatter.js, below). Francis Ngannou is Joe's (pull request #70); Christian's rage extras went on top of it.
 
-| Fighter | Branch | Status |
+| Fighter or move | Who | Status |
 |---|---|---|
-| Alex Pereira | `christian/alex-pereira` | building |
-| Conor McGregor | | next |
-| Sean O'Malley | | queued |
-| Chuck Liddell | | queued |
-| Georges St-Pierre | | queued |
-| Demetrious "Mighty Mouse" Johnson | | queued |
+| (nothing in progress) | | |
 
-Joe is building Francis Ngannou (pull request #70). Christian's Claude won't touch him.
-
-Christian's Claude updates this table in each of its pull requests. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
+Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
 
 ## Working in the same files
 
@@ -36,6 +31,14 @@ Christian's Claude updates this table in each of its pull requests. Joe's Claude
 - `index.html` version stamps (`tools/bump_version.py`) change on almost every pull request and will conflict. Re-run the script after merging instead of resolving them by hand.
 - Same for `js/roster-data.js`: re-run `python3 tools/build_roster.py` after merging.
 - If you change something one of Christian's open pull requests depends on, say so in your pull request so Christian's Claude sees it when it pulls.
+
+## What Christian's Claude added that touches everyone
+
+- **Voice clips** (`js/game/voice-clips.js`, `SPEECH_CLIPS`): every line is the real person's real voice, cut from real footage by Christian's clip tool (it lives outside this repo and writes this file; don't edit it by hand). A clip is keyed by the line's **exact text**, so if you change a line's wording in the code it goes silent until the clip is re-keyed. A line with no clip is silent: no bubble. Swears are bleeped in the audio.
+- **Chatter** (`js/game/chatter.js`): extra real lines for any fighter by id, yours included. Jon Jones's lines live here so `jon.js` stays yours. Its `moments` read fighter state to know when something happens: `b.jonMode` (GOAT/EVIL swaps), `b.chAct.kind === "poke"` (eye pokes) and `b.kick`. If you rename those in your code, Jon's moment lines go quiet: update `CHATTER_MOMENTS` in chatter.js too.
+- **Never name an absent opponent**: a line or commentator call that names a real fighter only plays when that fighter is the one in the cage (`vs` lines). Everything else names only the speaker or nobody.
+- **Strikes any fighter can have**: `teep.js`, `knees.js` (knee, clinch knees, flying knee), `combos.js`, `elbows.js`. Elbows crit 35% of the time unless a fighter's `elbow` block sets `critChance`; knees crit 30%. Jon Jones throws elbows and knees.
+- **Chuck Norris** (`js/game/chuck-norris.js`) is a guest in Sean Strickland's America (`special.norris` in Strickland's file), not a fighter.
 
 ## Voice lines never overlap (Joe's rule)
 

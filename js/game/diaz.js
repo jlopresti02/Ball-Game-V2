@@ -89,14 +89,19 @@ var ND_LINES = {
     "I'll be here in forty years fighting, still killing.",                  // UFC 241 post-fight press conference, 2019
     "Now we're fighting for the baddest [BLEEP] in the game belt. And that's mine." // same presser
   ],
-  win: "I'm not surprised, [BLEEP].",                                        // UFC 196 octagon interview, 2016
+  win: [
+    "I'm not surprised, [BLEEP].",                                          // UFC 196 octagon interview, 2016
+    "Going to the hospital, I think, and then I'm going to an after party." // UFC 202 post-fight, 2016
+  ],
+  slapped: "I already slapped him in his face. I already told you guys that.", // after a Stockton Slap now and then (lines.slapped)
   trash: [                                                                   // more real trash talk, no names
     "I got one talent, I can baptize people, but I'm not God or nothing like that.", // UFC 244 press conference, 2019
     "I mean, honestly, I don't care about the belt.",                        // interview (voice-clips manifest diazDontCareBelt)
     "The belt is just a credential for all these guys.",                     // same interview
     "I don't need to fight. I beat the best guy at the moment.",             // ESPN interview
     "I sneeze loud and everybody hears about it.",                           // same
-    "I want to fight the best guys. I want to win the best."                 // same
+    "I want to fight the best guys. I want to win the best.",                // same
+    "I got a 145 pound homeboy out here, will beat your [BLEEP] too."        // interview (voice-clips manifest diazCand6)
   ]
 };
 var NICK_LINE = "Don't be scared, homie."; // Nick Diaz to K.J. Noons, EliteXC: Return of the King, 2008
@@ -288,9 +293,19 @@ function ndChain196(b, other, m, cfg) {
 }
 
 // "Stockton!" as the slap lands (his real takes, voice-clips.js), unless
-// he's in the middle of a line.
+// he's in the middle of a line. Now and then (`lines.slapped`% of landed
+// slaps, at most one every ND_SLAPPED_GAP seconds) it's his real "I already
+// slapped him in his face" instead: right away, or as soon as he finishes
+// what he's saying (within ND_SLAPPED_WAIT seconds; ndLines).
 var ND_STOCKTON_CLIPS = ["diazStockton", "diazStockton2", "diazStockton3"];
-function ndStocktonShout(b) {
+var ND_SLAPPED_GAP = 15, ND_SLAPPED_WAIT = 4;
+function ndStocktonShout(b, cfg) {
+  var m = b.nd, ln = (cfg && cfg.lines) || {};
+  if (m && !(m.slappedGap > 0) && Math.random() * 100 < (ln.slapped || 0)) {
+    m.slappedGap = ND_SLAPPED_GAP;
+    m.slappedOwed = ND_SLAPPED_WAIT;
+    return;
+  }
   if (typeof SOUND_CLIPS === "undefined" || speaking(b)) return;
   var have = ND_STOCKTON_CLIPS.filter(function (n) { return SOUND_CLIPS[n]; });
   if (have.length) playSpeechClip(have[Math.floor(Math.random() * have.length)]);
@@ -299,10 +314,15 @@ function ndStocktonShout(b) {
 // The opener, answering Conor, the win line and the iconic call.
 function ndLines(b, other, m, cfg, dt) {
   var ln = cfg.lines || {};
+  if (m.slappedGap > 0) m.slappedGap -= dt;
+  if (m.slappedOwed > 0) {
+    m.slappedOwed -= dt;
+    if (canSay(b) && !over) { m.slappedOwed = 0; say(b, ND_LINES.slapped); }
+  }
   var vsConor = ndVsConor(b, other);
   // He never stops talking: a line of trash talk every `trash` seconds
   // (lines.trash), from ND_LINES.trash plus the opener and the surge lines.
-  if (ln.trash && started && !over && b.alive && other.alive && m.opened) {
+  if (ln.trash && started && !over && b.alive && other.alive && m.opened && !(m.slappedOwed > 0)) {
     if (m.trashT == null) m.trashT = ndRand(ln.trash);
     m.trashT -= dt;
     if (m.trashT <= 0 && canSay(b) && !diazBusy(b)) {
@@ -346,7 +366,7 @@ function ndLines(b, other, m, cfg, dt) {
     if (iq.t > 1.2 && !announcer) { announce(ND_ROGAN, { who: "ROGAN" }); iq.rogan = false; iq.asked = true; iq.t = 0; }
     return;
   }
-  if (m.winLine && b.alive && !speaking(b) && (!iq || !iq.asked || iq.t > 1.3)) { m.winLine = false; say(b, ND_LINES.win); }
+  if (m.winLine && b.alive && !speaking(b) && (!iq || !iq.asked || iq.t > 1.3)) { m.winLine = false; say(b, pickLine(b, ND_LINES.win, "win")); }
 }
 
 // UFC 202 presser: Conor's water bottles come at him, he throws them back.
@@ -448,7 +468,7 @@ function ndRunSlap(self, other, m, cfg, dt) {
     else {
       var st = cfg.stockton;
       var dealt = hurt(other, s.power ? st.slapDamage : sc.damage, s.power ? "igbb" : "punch", self.id); // the surge's slap can't be slipped or blocked
-      if (dealt > 0) { s.landed = true; slapLanded(self, other, s.power ? st.slapDizzy : sc.dizzy, s.power, sc.knockback, s.side); ndStocktonShout(self); }
+      if (dealt > 0) { s.landed = true; slapLanded(self, other, s.power ? st.slapDizzy : sc.dizzy, s.power, sc.knockback, s.side); ndStocktonShout(self, cfg); }
       checkEnd();
     }
   }
