@@ -210,10 +210,11 @@ function sithOutcome(h) {
 
 function startSaberLock(h, o) {
   clearActions(h); clearActions(o); h.chAct = null; o.chAct = null;
-  var nx = o.x - h.x, ny = o.y - h.y, nd = Math.sqrt(nx * nx + ny * ny) || 1;
-  nx /= nd; ny /= nd;
+  // Always side by side: the lock pose angles both weapons up and in toward
+  // each other across the screen, so lined up top to bottom they'd miss.
+  var nx = o.x >= h.x ? 1 : -1, ny = 0;
   var gap = h.r + o.r + 36, mx = (h.x + o.x) / 2, my = (h.y + o.y) / 2;
-  mx = Math.min(W - gap / 2 - h.r - 10, Math.max(gap / 2 + h.r + 10, mx));
+  mx = Math.min(W - gap / 2 - h.r - 10, Math.max(gap / 2 + h.r + 10, mx)); // (wall to wall room for both)
   my = Math.min(H - gap / 2 - h.r - 10, Math.max(gap / 2 + h.r + 10, my));
   saberLock = { hId: h.id, oId: o.id, t: 0, nx: nx, ny: ny, mx: mx, my: my, gap: gap,
     fromH: { x: h.x, y: h.y }, fromO: { x: o.x, y: o.y }, outcome: sithOutcome(h), sparkT: 0, done: false };
@@ -228,7 +229,7 @@ function saberLockHeld(b) { return !!(saberLock && b && (b.id === saberLock.oId 
 // Where their blades cross.
 function saberLockPoint() {
   var L = saberLock, h = balls[L.hId], o = balls[L.oId];
-  return { x: (h.x + o.x) / 2, y: (h.y + o.y) / 2 - h.r * 0.95 };
+  return { x: (h.x + o.x) / 2, y: (h.y + o.y) / 2 - h.r * 1.1 }; // (both lock poses rise into each other over the middle)
 }
 
 function updateSaberLock(h, dt) {
