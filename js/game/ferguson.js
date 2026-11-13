@@ -35,11 +35,11 @@
 //            seconds he hits `damage` times harder, rolls `speed` times faster
 //            and attacks `attack` times faster. The first time it burns out,
 //            the Burrito Bell ad runs (burrito-bell-ad.js).
-// Katanas    his special (special.move "katana"): crosses his arms and steel
-//            blades slide out of both elbows (the tell: some opponents back
-//            off), then for `time` seconds he hunts them down slashing with
-//            blade elbows: low damage, but `critChance`% are crits for
-//            `critMult`x that can cut. It ends with an X-slash (`finisher`).
+// Katanas    his special (special.move "katana", ferguson-katanas.js):
+//            steel blades slide out of both elbows (the tell: some opponents
+//            back off), then for `time` seconds he hunts them down with
+//            sweeping blade slashes, now and then a quick cyclone spin or a
+//            flash-step cut, ending with an X-slash (`finisher`).
 // Death      (death) no blast on the spot: he gets dizzy, wanders to the middle
 //            of the cage, trips over a TV cable, falls flat and then blows up
 //            (his real cable trip before UFC 223, 2018).
@@ -606,76 +606,7 @@ function tickKaioken(b, cfg, dt) {
   }
 }
 
-// ---------------------------------------------------------------- Katanas (his special)
-
-// From updateSpecial (special.js) for special.move "katana".
-function updateKatanas(self, other, dt) {
-  var sp = self.char.special;
-  if (!self.igbb) {
-    if (self.specialT < sp.chargeTime || !canStartIgbb(self, other) || fergusonBusy(self) || self.elbowAnim || swordDuelActive()) return false;
-    clearActions(self);
-    self.igbb = { move: "katana", phase: "draw", t: 0, n: 0, next: 0, side: 1, crits: 0,
-      read: Math.random() * 100 < sp.readChance + (other.char.hasWeave ? 15 : 0) };
-    self.specialT = 0;
-    floater(self.x, self.y - self.r - 30, "KATANAS!", "crit");
-    if (self.igbb.read) floater(other.x, other.y - other.r - 30, "!", "crit");
-    playKatanaDraw();
-    crowdReact(0.8);
-  }
-  var m = self.igbb;
-  if (m.move !== "katana") return false;
-  m.t += dt;
-  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d, gap = d - self.r - other.r;
-  if (over && m.phase !== "sheathe") { m.phase = "sheathe"; m.t = 0; }
-  if (m.phase === "draw") {
-    // Arms crossed, the blades sliding out of his elbows: the tell.
-    self.vx = 0; self.vy = 0;
-    if (m.read && other.alive && inOrdinaryMovement(other)) { var bs = Math.max(Math.sqrt(other.vx * other.vx + other.vy * other.vy), 220); other.vx = ux * bs; other.vy = uy * bs; }
-    if (m.t >= sp.draw) { m.phase = "close"; m.t = 0; }
-    return true;
-  }
-  if (m.phase === "close") {
-    // Hunting them down, slashing with the elbows (he can be hit).
-    var spd = (self.baseSpeed || SPEED) * sp.speed * (gap < 6 ? 0.25 : 1);
-    if (other.alive) { self.vx = ux * spd; self.vy = uy * spd; }
-    tickElbowAnim(self, other, dt);
-    m.next -= dt;
-    if (m.next <= 0 && !self.elbowAnim && other.alive && gap < sp.reach + 16) {
-      m.side = -m.side; m.n++;
-      m.next = sp.gap;
-      throwElbow(self, other, { damage: sp.damage, critChance: sp.critChance, critMult: sp.critMult, blade: true, side: m.side, ownDraw: true,
-        knockback: 110, cut: sp.cut, speed: 0.22, reach: sp.reach + 10, quietCrit: m.crits > 0, // (only the first crit gets its call-out, so the flurry stays readable)
-        onLand: function (dealt, crit) { if (crit) m.crits++; } });
-    }
-    if (m.t >= sp.time || !other.alive) { m.phase = "x"; m.t = 0; if (other.alive) floater(self.x, self.y - self.r - 30, "X SLASH!", "crit"); playKatanaDraw(); }
-    return true;
-  }
-  if (m.phase === "x") {
-    // Both blades up crossed, then slashed down through them.
-    self.vx = ux * 120; self.vy = uy * 120;
-    if (!m.xHit && m.t >= 0.36) {
-      m.xHit = true;
-      if (other.alive && gap < sp.reach + 24) {
-        var crit = Math.random() * 100 < sp.critChance, dealt = hurt(other, sp.finisher * (crit ? sp.critMult : 1), "elbow", self.id);
-        if (dealt > 0) {
-          if (crit) floater(other.x, other.y - other.r - 44, "CRIT SLASH!", "crit");
-          if (sp.cut) openCut(other, Math.atan2(-uy, -ux), sp.cut, self.id);
-          elbowSpark(self, other, ux, uy, true, true);
-          playElbowHit(dealt, true, true);
-          if (!other.justDodged && !other.grappled && !other.slam && !other.koOut) beginWallSlam(other, ux, uy, { knockback: 1100, wallSlams: 1, slamDamage: 4 });
-          hitStop = Math.max(hitStop, 0.1);
-          if (!reduceMotion) shake = Math.max(shake, 16);
-        }
-        checkEnd();
-      } else if (other.alive) floater(other.x, other.y - other.r - 8, "WHIFF", "dodge");
-    }
-    if (m.t >= 0.62) { m.phase = "sheathe"; m.t = 0; }
-    return true;
-  }
-  self.vx = 0; self.vy = 0;
-  if (m.t >= 0.45) { self.igbb = null; self.elbowAnim = null; if (self.alive) setSpeed(self, self.baseSpeed || SPEED); return false; }
-  return true;
-}
+// Katanas (his special): updateKatanas lives in ferguson-katanas.js.
 
 // ---------------------------------------------------------------- rivals and lines
 
@@ -885,6 +816,7 @@ function drawFergusonBehind(b) {
 // leaning into the slide, crouched for the shot; and whoever he's got.
 function applyFergusonPose(b) {
   var m = b.tfSub, s;
+  if (katanaOn(b)) { applyKatanaPose(b); return; } // twisting into a slash, the cyclone spin, the crouch before a flash-step (ferguson-katanas.js)
   if (m && (m.kind === "buggy" || m.kind === "guardElbows")) {
     ctx.translate(b.x, b.y); ctx.rotate(m.kind === "guardElbows" ? Math.PI : -m.side * Math.PI / 2); ctx.translate(-b.x, -b.y);
     return;
@@ -1010,31 +942,6 @@ function drawTfShell(b) {
   }
 }
 
-// Both elbows with a katana coming out of each: crossed on the draw, then in
-// guard with one slashing, then crossed high for the X-slash.
-function drawTfKatanas(b, other, ang) {
-  var m = b.igbb, len = m.phase === "draw" ? easeOut(m.t / b.char.special.draw) * 1.15 : m.phase === "sheathe" ? Math.max(0, 1 - m.t / 0.4) * 1.15 : 1.15;
-  if (m.phase === "draw" || m.phase === "x") {
-    // Arms crossed in front of his face, elbows out, blades out to the sides.
-    var lift = m.phase === "x" ? (m.t < 0.36 ? -0.4 * easeOut(m.t / 0.36) : -0.4 + 1.1 * Math.min(1, (m.t - 0.36) / 0.12)) : 0;
-    [-1, 1].forEach(function (s) { drawElbowArm(b, ang + lift * s, s, -1, true, m.phase === "x" && m.t < 0.36 ? 0.5 + 0.5 * Math.sin(performance.now() / 40) : 0, len); });
-    if (m.phase === "draw" && m.t < 0.5) { // the glint as they slide out
-      ctx.save(); ctx.globalAlpha = 1 - m.t / 0.5; ctx.fillStyle = "#ffffff";
-      [-1, 1].forEach(function (s) { var p = elbowPose(b, ang, s, -1); ctx.beginPath(); ctx.arc(p.el.x, p.el.y, 7 + m.t * 20, 0, Math.PI * 2); ctx.fill(); });
-      ctx.restore();
-    }
-    return;
-  }
-  var e = b.elbowAnim, slashing = e && e.ownDraw ? e : null;
-  [-1, 1].forEach(function (s) {
-    if (slashing && slashing.side === s) {
-      var p = Math.min(1, slashing.t / slashing.dur);
-      drawElbowTrail(b, ang, s, p, true);
-      drawElbowArm(b, ang, s, p, true, slashing.hit && slashing.crit ? Math.max(0, 1 - (slashing.t - slashing.dur * ELBOW_HIT) / 0.15) : 0, len);
-    } else drawElbowArm(b, ang, s, -1, true, 0, len);
-  });
-}
-
 // Over both fighters: his holds (arms, legs, the tug-of-war bar), and the
 // stamps at the start. From draw().
 function drawFergusonOver() {
@@ -1052,6 +959,7 @@ function drawFergusonOver() {
     ctx.save(); ctx.globalAlpha = tfFlash / 0.35 * 0.35; ctx.fillStyle = "#ff1a1a"; ctx.fillRect(0, 0, W, H); ctx.restore();
   }
   drawTfStamps();
+  drawKatanaFx(); // the cut lines and the X on whoever his katanas caught (ferguson-katanas.js)
 }
 
 function tfSkin(b) { return b.char.look ? b.char.look.skin : b.char.color; } // plain skin for his holds (no sleeve texture)
@@ -1280,7 +1188,7 @@ function fergusonGalleryMoves(ch, add) {
   if (f.rivals) add("🗂️", "Rivals", "Khabib: five CANCELLED stamps before the fight (it fell through five times). Gaethje and Charles: a REMATCH, and his first Kaioken comes early.");
 }
 function fergusonKatanaInfo(sp) {
-  return "Crosses his arms and steel blades slide out of both elbows (the tell: some back off). Then for " + secs(sp.time) + " he hunts them down slashing with blade elbows, " + sp.damage + " a slash but " + sp.critChance + "% are crits for " + sp.critMult + "x" + (sp.cut ? " that can open a cut" : "") + ". It ends with an X-slash (" + sp.finisher + ", " + Math.round(sp.finisher * sp.critMult) + " on a crit) into the cage.";
+  return "Steel blades slide out of both elbows (the tell: some back off). Then for " + secs(sp.time) + " he hunts them down with sweeping blade slashes, " + sp.damage + " a cut but " + sp.critChance + "% are crits for " + sp.critMult + "x" + (sp.cut ? " that can open a cut" : "") + ". Now and then (" + sp.cycloneChance + "%) a quick blade cyclone, or (" + sp.flashChance + "%) a flash-step cut right past them. It ends with an X-slash for " + sp.finisher + " that slams them into the cage.";
 }
 
 // ---------------------------------------------------------------- sound

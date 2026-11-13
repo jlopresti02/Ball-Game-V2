@@ -102,7 +102,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "middle") return updateMiddle(self, other, dt); // Max Holloway (holloway.js)
   if (sp.move === "america") return updateAmerica(self, other, dt); // Sean Strickland (strickland.js)
   if (sp.move === "nickdiaz") return updateNickDiaz(self, other, dt); // diaz.js
-  if (sp.move === "katana") return updateKatanas(self, other, dt); // Tony Ferguson (ferguson.js)
+  if (sp.move === "katana") return updateKatanas(self, other, dt); // Tony Ferguson (ferguson-katanas.js)
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };
