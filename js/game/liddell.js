@@ -46,7 +46,11 @@
 //             iceman.taunt.behind health down to take the lead, and now and
 //             then as a taunt (every `every` seconds) (speech.js).
 // The wind-up runs on b.igbb (move "snow"), like the other specials: he can't
-// be hit while he's packing the snow. The all-out attack runs on b.iceRage and
+// be hurt or grabbed while he's packing the snow, but he stays solid (nobody
+// walks through him: they're eased out of his space, no bounce) and anything
+// thrown at him is slipped (a step to the side and back) or blocked on the
+// shoulder, his gloves still round the snow (the attacker is knocked back a
+// step) (Joe, 2026-11-13; like Dustin's hot sauce, icDefend). The all-out attack runs on b.iceRage and
 // uses his normal swing, so he can be hit the whole time.
 "use strict";
 
@@ -196,9 +200,11 @@ function updateSnowDay(self, other, dt) {
   }
   var m = self.igbb;
   if (m.move !== "snow") return false;
-  if (over) { self.igbb = null; return false; }
+  if (over) { self.igbb = null; self.immuneCd = 0; return false; }
   m.t += dt;
   self.vx = 0; self.vy = 0;
+  self.immuneCd = 1; // no IMMUNE popping up: he slips or blocks instead
+  icDefend(self, other, m, dt);
   if (m.read) icBackOff(self, other);
   if (m.phase === "dip" && m.t >= IC_DIP) { m.phase = "scoop"; m.t = 0; playSnowCrunch(1); icSnowPuff(self, 0, self.r * 1.1, 10); }
   else if (m.phase === "scoop" && m.t >= IC_SCOOP) { m.phase = "pack"; m.t = 0; m.packs = 0; }
@@ -212,6 +218,52 @@ function updateSnowDay(self, other, dt) {
   }
   return true;
 }
+// Slipping or blocking while he packs the snow. Both gloves are busy with it,
+// so a block is the shoulder: he turns it into the shot (drawSnowDay).
+function icAttacking(o) { return !!(o.punch || o.kick || o.swing || o.jabAnim || o.throwAnim || o.combo || o.flow || o.grapple); }
+function icDefend(self, other, m, dt) {
+  if (m.def) { m.def.t += dt; if (m.def.t > 0.35) m.def = null; }
+  if (m.dodge) {
+    var dg = m.dodge; dg.t += dt;
+    var k = Math.min(1, dg.t / 0.4), cur = Math.sin(k * Math.PI), step = (cur - dg.done) * 55; // slips out, then sways back
+    dg.done = cur;
+    self.x = Math.min(W - self.r, Math.max(self.r, self.x + dg.x * step));
+    self.y = Math.min(H - self.r, Math.max(self.r, self.y + dg.y * step));
+    if (dg.t > 0.4) m.dodge = null;
+  }
+  var atk = icAttacking(other);
+  if (!other.alive) { m.prevAtk = atk; return; }
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+  if (d < self.r + other.r + 4) { // they just walk into him: eased out of his space, no bounce
+    var push = self.r + other.r + 4 - d;
+    other.x = Math.min(W - other.r, Math.max(other.r, other.x + ux * push));
+    other.y = Math.min(H - other.r, Math.max(other.r, other.y + uy * push));
+  }
+  if (atk && !m.prevAtk && d < self.r + other.r + 70 && !m.dodge && !m.def) {
+    if (Math.random() < 0.5) {
+      m.def = { t: 0, x: ux, y: uy };
+      other.punch = null; other.kick = null; other.swing = null; other.jabAnim = null; other.combo = null; other.flow = null;
+      other.vx = ux * 380; other.vy = uy * 380;
+      floater(self.x + ux * self.r, self.y - self.r - 30, "BLOCKED!", "dodge");
+      playHotSauce("block");
+      for (var i = 0; i < 10 && !reduceMotion; i++) {
+        var a = Math.atan2(uy, ux) + (Math.random() - 0.5) * 1.8, v = 160 + Math.random() * 160;
+        particles.push({ x: self.x + ux * self.r * 1.05, y: self.y + uy * self.r * 1.05, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.25, max: 0.25, size: 2 + Math.random() * 2, color: i % 2 ? "#ffffff" : "#bfe9ff" });
+      }
+    } else {
+      // a slip out to the side, away from the cage if he's up against it
+      var sd = Math.random() < 0.5 ? 1 : -1, px = -uy * sd, py = ux * sd;
+      if (self.x + px * 70 < self.r || self.x + px * 70 > W - self.r || self.y + py * 70 < self.r || self.y + py * 70 > H - self.r) { px = -px; py = -py; }
+      px -= ux * 0.4; py -= uy * 0.4;
+      var pl = Math.sqrt(px * px + py * py) || 1;
+      m.dodge = { t: 0, done: 0, x: px / pl, y: py / pl };
+      floater(self.x, self.y - self.r - 30, "DODGED!", "dodge");
+      playHotSauce("dodge");
+    }
+  }
+  m.prevAtk = atk;
+}
+
 // They saw it coming and back off (only while they're rolling about on their
 // own, like reading Pereira's CHAMA).
 function icBackOff(self, other) {
@@ -229,6 +281,7 @@ function icSnowPuff(b, ox, oy, n) {
 
 function startRampage(self, other, sp) {
   self.igbb = null;
+  self.immuneCd = 0;
   self.specialT = 0;
   self.iceRage = { t: 0, landed: 0 };
   self.hookSide = -IC_OVERHAND; // (the swing flips it before each hook: always his right)
@@ -566,6 +619,12 @@ function drawSnowDay(b, m) {
     angL = -0.4; angR = Math.PI + 0.4;
   }
   ctx.save();
+  if (m.def) {
+    // the block: his gloves (and the snow) turn away so the shoulder takes it
+    var turn = Math.sin(Math.min(1, m.def.t / 0.35) * Math.PI) * 0.45;
+    var side = m.def.x >= 0 ? 1 : -1; // the gloves sit below him: swing them away from the shot
+    ctx.translate(b.x, b.y); ctx.rotate(side * turn); ctx.translate(-b.x, -b.y);
+  }
   var L = { x: b.x - gx, y: gy }, R = { x: b.x + gx, y: gy };
   if (m.phase === "scoop") drawSnowDrift(b.x, matY, r, pile); // left behind on the mat as he lifts the snow
   strokeLimb(size * 0.7, armColor(b.char), function () { ctx.moveTo(shL.x, shL.y); ctx.lineTo(L.x, L.y); });
