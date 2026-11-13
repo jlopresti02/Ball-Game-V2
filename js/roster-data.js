@@ -2467,8 +2467,8 @@ var SAVED_ROSTER = [
         "margin": 22
       },
       "chin": {
-        "over": 15,
-        "mult": 0.8,
+        "over": 12,
+        "mult": 0.7,
         "sources": [
           "punch",
           "kick",
