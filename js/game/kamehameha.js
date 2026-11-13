@@ -92,7 +92,7 @@ function updateKamehameha(self, other, dt) {
       self.x = Math.min(W - self.r, Math.max(self.r, self.x - m.dx * 40 * dt));
       self.y = Math.min(H - self.r, Math.max(self.r, self.y - m.dy * 40 * dt));
     }
-    m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
+    m.len = gspBeamStop(self, m, kmRayToWall(self.x, self.y, m.dx, m.dy)); // (stopped at GSP's shield, gsp-shield.js)
     m.ext = Math.min(m.len, (m.ext0 || 0) + m.t * KM_SPEED);
     if (!reduceMotion) shake = Math.max(shake, 6);
     // Sparks and dust thrown off the sides of the beam, and the cage taking it.

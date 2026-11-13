@@ -6371,12 +6371,39 @@ var SAVED_ROSTER = [
       "doubleLeg": {
         "through": 45
       },
+      "shield": {
+        "first": [
+          4,
+          7
+        ],
+        "every": [
+          8,
+          12
+        ],
+        "chantEvery": [
+          6,
+          9
+        ],
+        "minGap": 110,
+        "maxGap": 600,
+        "wind": 0.32,
+        "speed": 820,
+        "size": 0.62,
+        "damage": 14,
+        "chantDamage": 20,
+        "knockback": 420,
+        "hits": 2,
+        "bounces": 4,
+        "block": 25,
+        "blockKnockback": 380
+      },
       "crowd": {
         "chantAt": 0.5,
         "dodge": 2,
         "taunt": 5,
         "superman": 5,
         "takedown": 3,
+        "shield": 3,
         "beat": 1.7,
         "hold": 2.5
       },
@@ -32224,7 +32251,7 @@ function updateKamehameha(self, other, dt) {
       self.x = Math.min(W - self.r, Math.max(self.r, self.x - m.dx * 40 * dt));
       self.y = Math.min(H - self.r, Math.max(self.r, self.y - m.dy * 40 * dt));
     }
-    m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
+    m.len = gspBeamStop(self, m, kmRayToWall(self.x, self.y, m.dx, m.dy)); // (stopped at GSP's shield, gsp-shield.js)
     m.ext = Math.min(m.len, (m.ext0 || 0) + m.t * KM_SPEED);
     if (!reduceMotion) shake = Math.max(shake, 6);
     // Sparks and dust thrown off the sides of the beam, and the cage taking it.
@@ -33048,7 +33075,7 @@ function updateRainbow(self, other, dt) {
   }
   if (m.phase === "fire") {
     if (bcHolds(self)) return true; // locked in a beam clash (beam-clash.js)
-    m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
+    m.len = gspBeamStop(self, m, kmRayToWall(self.x, self.y, m.dx, m.dy)); // (stopped at GSP's shield, gsp-shield.js)
     m.ext = Math.min(m.len, (m.ext0 || 0) + m.t * RB_SPEED);
     if (!reduceMotion) shake = Math.max(shake, 6);
     rbBeamFx(self, m, cfg);
@@ -33922,9 +33949,9 @@ function montrealOn() { return !!montrealMode; }
 function gspDiveOn(b) { return !!(b && b.igbb && b.igbb.move === "supermandive"); }
 function gspPunchOn(b) { return !!(b && b.gspSp); }
 // Busy with one of his own moves: the speed regulator leaves him alone (physics.js).
-function gspBusy(b) { return !!(b && (b.gspSp || b.gspTaunt || b.gspStun > 0)); }
+function gspBusy(b) { return !!(b && (b.gspSp || b.gspTaunt || b.gspStun > 0 || b.gspThrow || b.gspBrace)); }
 // His hands are drawn by drawGsp (drawHands skips them, draw-attacks.js).
-function gspHandsBusy(b) { return gspBusy(b) || gspDiveOn(b); }
+function gspHandsBusy(b) { return gspBusy(b) || gspDiveOn(b) || gspShieldHandsBusy(b); } // (the Maple Shield, gsp-shield.js)
 function gspTurn(a, want, maxStep) {
   var diff = Math.atan2(Math.sin(want - a), Math.cos(want - a));
   return a + Math.max(-maxStep, Math.min(maxStep, diff));
@@ -33938,6 +33965,7 @@ function resetGsp() {
 function initGsp(b) {
   var cfg = gspCfg(b);
   b.gspSp = null; b.gspTaunt = null; b.gspStun = 0; b.gspChant = false;
+  initGspShield(b); // the Maple Shield (gsp-shield.js)
   if (!cfg) return;
   b.gspBase = { char: b.char, speed: b.baseSpeed, atk: b.atkRate };
   b.gspGi = !!cfg.walkout; b.gspGiT = 0;
@@ -34192,11 +34220,12 @@ function drawGspFloor() {
 // From hurt (match.js): slipping a strike. True if it's slipped.
 function gspDodge(b, source, attackerId) {
   var cfg = gspCfg(b), dc = cfg && cfg.dodge;
+  if (gspShieldSpecial(b, source, attackerId)) return true; // weapon swings blocked, beams deflected (gsp-shield.js)
   if (!dc || !b.alive || attackerId == null || attackerId === b.id || GSP_NO_SLIP[source]) return false;
   if (b.grappled || b.grapple || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.igbb || b.koOut || b.shocked || b.dazed ||
       b.dizzy || b.shelled || b.gspStun > 0 || b.gspTaunt || (b.gspSp && b.gspSp.phase === "leap")) return false;
   var proj = !!PROJECTILE_SOURCES[source];
-  if (Math.random() * 100 >= (proj ? dc.projChance : dc.chance)) return false;
+  if (Math.random() * 100 >= (proj ? dc.projChance : dc.chance)) return gspShieldBlock(b, source, attackerId); // not slipped: the shield might take it (gsp-shield.js)
   b.weaveAnim = { t: 0, dur: 0.26, sign: Math.random() < 0.5 ? -1 : 1 };
   floater(b.x, b.y - b.r - 8, "SLIP", "dodge");
   b.justDodged = true;
@@ -34259,6 +34288,7 @@ function updateGsp(self, other, dt) {
     if (self.gspStun <= 0 || gspInterrupted(self)) { self.gspStun = 0; if (self.alive) setSpeed(self, self.baseSpeed || SPEED); return false; }
     return true;
   }
+  if (self.gspBrace) return runGspBrace(self, other, dt); // deflecting a beam (gsp-shield.js)
   if (self.gspSp) {
     if (gspInterrupted(self) || other.igbb || over) { endSupermanPunch(self); return false; }
     return runSupermanPunch(self, other, cfg.superman, dt);
@@ -34267,10 +34297,12 @@ function updateGsp(self, other, dt) {
     if (gspInterrupted(self) || over) { self.gspTaunt = null; return false; }
     return runNotImpressed(self, dt);
   }
+  if (self.gspThrow) return updateGspShield(self, other, cfg, dt, false); // mid-throw (gsp-shield.js)
   if (!started || over || self.igbb || !other.alive) return false;
   var sp = self.char.special, full = self.char.hasSpecial && sp.move === "supermandive" && self.specialT >= sp.chargeTime;
   if (self.gspTauntWant && cfg.notImpressed && self.gspRun < cfg.notImpressed.after) self.gspTauntWant = false; // got hit since
   if (self.gspTauntWant && !full && canStartIgbb(self, other) && canSay(self)) { startNotImpressed(self, cfg); return true; }
+  if (updateGspShield(self, other, cfg, dt, full)) return true; // throwing the Maple Shield (gsp-shield.js)
   var sc = cfg.superman;
   if (!sc) return false;
   self.gspSpT -= dt;
@@ -34491,6 +34523,7 @@ function tickGsp(dt) {
   balls.forEach(function (b) {
     var cfg = gspCfg(b);
     if (!cfg) return;
+    tickGspShield(b, dt); // the Maple Shield in the air, the block (gsp-shield.js)
     if (b.gspGi && started) { b.gspGiT += dt; if (b.gspGiT >= cfg.walkout.keep || over) gspGiOff(b); }
     var ni = cfg.notImpressed;
     if (ni && ni.hitCost && b.hp < b.gspHp - 0.01) b.gspRun = Math.max(0, b.gspRun - ni.hitCost); // a hit can break up the run
@@ -34590,6 +34623,7 @@ function drawGspUnder() {
 // he came, while he's in the air.
 function drawGspBehind(b) {
   if (!b.alive || !gspCfg(b)) return;
+  drawGspShieldBack(b); // the Maple Shield on his back (gsp-shield.js)
   var m = b.gspSp, d = b.igbb, k = 0, ang = 0, flap = 1;
   if (m && (m.phase === "leap" || m.phase === "land")) {
     k = m.phase === "leap" ? Math.min(1, Math.max(0, (m.t / m.dur - 0.12) / 0.35)) : Math.max(0, 1 - m.t / GSP_LAND);
@@ -34643,6 +34677,7 @@ function drawGsp(b) {
   var size = b.char.punch.size || 14, o = balls[1 - b.id];
   var m = b.gspSp, d = b.igbb, l = gspLift(b), cx = b.x, cy = b.y + l.dy, r = b.r * l.s;
   ctx.save();
+  drawGspShieldArms(b); // throwing the Maple Shield, or blocking with it (gsp-shield.js)
   if (m) {
     var ux = Math.cos(m.aim), uy = Math.sin(m.aim), px = -uy, py = ux;
     if (m.phase === "load") {
@@ -34697,6 +34732,7 @@ function gspArm(b, sx, sy, hx, hy, size, ang) {
 
 // Over everything in the ring: the gi and headband flying off.
 function drawGspOver() {
+  drawGspShields(); // the Maple Shield flying round the cage (gsp-shield.js)
   gspCloth.forEach(function (p) {
     var k = p.t / p.dur, r = p.r;
     ctx.save();
@@ -34881,6 +34917,7 @@ function gspGalleryMoves(ch, add) {
   if (sc) add("🦸", "Superman punch", "Every " + sc.every[0] + "-" + sc.every[1] + "s (" + sc.chantEvery[0] + "-" + sc.chantEvery[1] + "s while they chant), when they're a step or two away, he loads up and leaps at them with one fist out, a red cape appearing mid-air: " + sc.damage + " damage (" + sc.chantDamage + " while they chant). The load-up is the tell.");
   if (g.dodge) add("🌀", "Slips", "Slips " + g.dodge.chance + "% of strikes and " + g.dodge.projChance + "% of anything thrown at him.");
   if (ni) add("🗯️", "Not impressed", "After " + ni.after + " slips, each within " + secs(ni.window) + " of the last, he drops his hands for " + secs(ni.handsDown) + " and says \"I'm not impressed by your performance.\" (to Matt Hughes, UFC 63). Up to " + ni.max + " times a fight.");
+  if (g.shield) gspShieldGalleryMove(g.shield, add); // the Maple Shield (gsp-shield.js)
   if (g.doubleLeg) add("🤼", "Elite double leg", g.doubleLeg.through + "% of his shots go straight through: no slip, block, sprawl or guillotine. The best takedown in the game.");
   if (g.walkout) add("🥋", "Walkout", "Comes out in his karate gi and a white hachimaki headband with a red sun, and throws them off " + secs(g.walkout.keep) + " into the fight.");
 }
@@ -34888,6 +34925,7 @@ function gspGalleryMoves(ch, add) {
 // The Montreal stadium and the flags, for the Assets tab.
 function gspGalleryAssets(list) {
   list.push({ name: "Montreal stadium", info: "Georges St-Pierre's crowd meter turns the stadium into a Montreal crowd chanting GSP.", w: 270, h: 480, draw: gspStadiumPreview });
+  list.push({ name: "Maple Shield", info: "Georges St-Pierre's shield: thrown off the cage walls, and blocks strikes.", w: 200, h: 200, draw: function (c, w, h) { drawMapleShield(c, w / 2, h / 2, w * 0.4, 0); } });
   list.push({ name: "Quebec and Canada flags", info: "Waved by the Montreal crowd.", w: 220, h: 220, draw: function (c, w, h) {
     withCtx(c, function () { drawQuebecFlag(w * 0.32, h * 0.38, w * 0.42, 0, 0); drawCanadaFlag(w * 0.7, h * 0.62, w * 0.45, 0, 1); });
   } });
@@ -34926,6 +34964,11 @@ function gspGallerySounds(groups, synth) {
     synth("Superman Dive pin", "Catching them and pinning them.", function () { lastPunchSound = 0; playDivePin(30); }),
     synth("Cage crash", "Missing the dive and hitting the cage.", function () { playDiveCrash(); }),
     synth("Slip", "Slipping a strike.", function () { playSlip(); }),
+    synth("Maple Shield throw", "Throwing the Maple Shield.", function () { playShieldWind(); playShieldSpin(); }),
+    synth("Maple Shield off the cage", "The shield ringing off the cage wall.", function () { playShieldPing(); }),
+    synth("Maple Shield hit", "The shield hitting them.", function () { lastPunchSound = 0; playShieldHit(14); }),
+    synth("Maple Shield block", "Blocking a strike with the shield.", function () { playShieldBlock(); }),
+    synth("Maple Shield catch", "Catching it when it comes back.", function () { playShieldCatch(); }),
     synth("Gi toss", "Throwing his gi off at the walkout.", function () { playGiToss(); })
   ] });
 }
@@ -35024,6 +35067,575 @@ function playSlip() {
 function playGiToss() {
   playWhoosh();
   gspAudio(function (ac, t) { for (var i = 0; i < 3; i++) caneBurst(ac, t + i * 0.07, 900 + i * 260, 1.2, 0.2, 0.06); });
+}
+
+// GSP's Maple Shield (Joe, 2026-11-13). A round steel shield in Canada's
+// colours (red bands either side of a white middle, the red maple leaf, a
+// steel rim with rivets), slung on his back. Set in his character file under
+// "gsp.shield"; leave it out and he has no shield.
+//
+// Toss    every `every` seconds (`chantEvery` while the crowd chants), when
+//         they're `minGap`..`maxGap` away, he pulls it off his back and throws
+//         it backhand ("MAPLE SHIELD!"). The first throw is a bank shot: aimed
+//         at a cage wall so it comes off the wall into them. Every wall it
+//         hits it turns back at them, up to `hits` hits and `bounces` walls,
+//         then it flies back to him and he catches it. `damage` a hit
+//         (`chantDamage` while the crowd chants) and `knockback`. It can be
+//         slipped or blocked like anything thrown (source "shield"). While
+//         it's out his back is empty: no shield blocks.
+// Block   with it on his back he can swing it round onto his lead arm and
+//         block `block`% of the strikes he doesn't slip (punches, kicks,
+//         elbows, swings, bats): no damage, "BLOCKED!", and the attacker is
+//         knocked back `blockKnockback` (like Chuck's Snow Day block).
+// Weapons  every swing of a weapon (Hokit's lightsaber, Tony Ferguson's
+//         katanas, Gane's bat, Gaethje's club) is blocked while the shield's on
+//         him, and he keeps it on him (no throws) while one's out.
+// Beams   a Kamehameha or Pot o' Gold rainbow that reaches him is deflected:
+//         he braces behind the shield ("DEFLECTED!"), the beam stops at it and
+//         glances off into the cage wall at an angle (never back into the
+//         shooter), and he slides back a little until it's done. No damage.
+//         He doesn't throw while one's charging. (Hooked in kamehameha.js and
+//         rainbow-beam.js with gspBeamStop.)
+// The throw runs on b.gspThrow, the shield in the air on b.gspDisc, the block
+// pose on b.gspBlock. Only his own two arms and gloves are drawn.
+"use strict";
+
+PROJECTILE_SOURCES.shield = true; // (match.js) it flies at you: slipped or blocked, never countered
+
+var GSP_SH_RELEASE = 0.14; // the backhand sweep
+var GSP_SH_FOLLOW = 0.2;   // arm out after it's gone
+var GSP_SH_BLOCK = 0.38;   // shield up on the lead arm after a block
+// Strikes the shield can block.
+var GSP_SH_MELEE = { punch: true, kick: true, elbow: true, teep: true, swing: true, jab: true, combo: true, bat: true, poke: true };
+
+function gspShCfg(b) { var g = gspCfg(b); return g && g.shield; }
+function gspShieldHome(b) { return !!(gspShCfg(b) && !b.gspDisc && !b.gspThrow); } // on his back
+function gspShieldR(b) { return b.r * (gspShCfg(b).size || 0.62); }
+var GSP_SH_DEFLECT = 0.6; // how far off the beam's line the shield is angled (radians); it glances off at twice this
+// A weapon out on them (a lightsaber, a bat or a club in Cheater mode, or Tony Ferguson's katanas).
+function gspWeaponOut(o) { return !!(o && ((o.cheater && o.cheater.mode === "bat") || (typeof katanaOn === "function" && katanaOn(o)))); }
+function gspWeaponHit(a, source) { return !!(a && ((source === "bat" && a.cheater) || (source === "elbow" && typeof katanaOn === "function" && katanaOn(a)))); }
+function gspBeamOn(o) { return !!(o && o.igbb && (o.igbb.move === "kamehameha" || o.igbb.move === "rainbow")); }
+// Hands free to get the shield up: not pinned, slammed, flying or mid-throw.
+function gspShieldUp(b) {
+  return gspShieldHome(b) && b.alive && !b.koOut && !b.grappled && !b.grapple && !b.slam && !subLocked(b) &&
+    !gspDiveOn(b) && !(b.gspSp && b.gspSp.phase === "leap");
+}
+
+// From gspDodge, before anything else: a weapon swing (always blocked) or a
+// beam (deflected). True if the shield takes it.
+function gspShieldSpecial(b, source, attackerId) {
+  if (!gspShCfg(b) || attackerId == null || attackerId === b.id) return false;
+  var a = balls[attackerId];
+  if (source === "igbb" && typeof itProjHit !== "undefined" && itProjHit && gspBeamOn(a) && a.igbb.phase === "fire") return gspDeflect(b, a);
+  if (gspWeaponHit(a, source) && gspShieldUp(b)) { gspShieldTake(b, a); return true; }
+  return false;
+}
+
+// From initGsp.
+function initGspShield(b) {
+  b.gspThrow = null; b.gspDisc = null; b.gspBlock = null; b.gspBlockHit = null; b.gspBrace = null;
+  b.gspBackSide = b.id === 0 ? -1 : 1;
+  var sh = gspShCfg(b);
+  b.gspShT = sh ? gspRand(sh.first) : Infinity;
+}
+
+// ---------------------------------------------------------------- the block
+
+// From gspDodge, when a strike isn't slipped. True if the shield takes it.
+function gspShieldBlock(b, source, attackerId) {
+  var sh = gspShCfg(b);
+  if (!sh || !sh.block || !GSP_SH_MELEE[source] || !gspShieldHome(b) || b.gspSp || gspDiveOn(b) || b.gspTaunt || b.gspStun > 0) return false;
+  if (Math.random() * 100 >= sh.block) return false;
+  gspShieldTake(b, balls[attackerId]);
+  return true;
+}
+// The block itself: shield round onto his lead arm, the attacker bounced off.
+function gspShieldTake(b, a) {
+  var attackerId = a.id;
+  if (b.gspSp) endSupermanPunch(b);
+  b.gspTaunt = null;
+  var dx = a.x - b.x, dy = a.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+  b.gspBlock = { t: 0, ux: ux, uy: uy };
+  b.gspBlockHit = attackerId; // knocked back next frame, once their swing's done (tickGspShield)
+  b.justDodged = true;
+  floater(b.x + ux * b.r, b.y - b.r - 30, "BLOCKED!", "dodge");
+  var cx = b.x + ux * b.r * 1.05, cy = b.y + uy * b.r * 1.05;
+  impacts.push({ x: cx, y: cy, nx: ux, ny: uy, life: 0.3, max: 0.3, color: "#ffffff" });
+  for (var i = 0; i < 12 && !reduceMotion; i++) {
+    var ang = Math.atan2(uy, ux) + (Math.random() - 0.5) * 1.9, v = 160 + Math.random() * 200;
+    particles.push({ x: cx, y: cy, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v, life: 0.25, max: 0.25, size: 2 + Math.random() * 2, color: i % 3 ? "#ffffff" : MTL.red });
+  }
+  hitStop = Math.max(hitStop, 0.04);
+  playShieldBlock();
+}
+
+// ---------------------------------------------------------------- beams
+
+// A beam reaching him: shield up, angled so it glances off into the cage.
+function gspDeflect(b, a) {
+  if (!gspShieldUp(b)) return false;
+  var m = a.igbb, dx = m.dx, dy = m.dy, best = null;
+  if (b.gspSp) endSupermanPunch(b);
+  b.gspTaunt = null; b.gspBlock = null;
+  clearActions(b);
+  [-1, 1].forEach(function (sg) { // whichever way sends it furthest from the shooter
+    var t = Math.PI + sg * 2 * GSP_SH_DEFLECT, c = Math.cos(t), s2 = Math.sin(t);
+    var rx = dx * c - dy * s2, ry = dx * s2 + dy * c;
+    var ox = a.x - b.x, oy = a.y - b.y, along = ox * rx + oy * ry, across = Math.abs(-ry * ox + rx * oy);
+    var score = along < 0 ? 1e4 : across;
+    if (!best || score > best.score) best = { rx: rx, ry: ry, sg: sg, score: score };
+  });
+  b.gspBrace = { owner: a.id, kind: m.move, t: 0, dx: dx, dy: dy, sg: best.sg, rx: best.rx, ry: best.ry, nx: -dx, ny: -dy, ext: 0 };
+  b.justDodged = true;
+  b.vx = 0; b.vy = 0;
+  floater(b.x, b.y - b.r - 30, "DEFLECTED!", "crit");
+  if (!reduceMotion) shake = Math.max(shake, 14); // (no hit-stop: the beam would freeze passing through him)
+  playShieldBlock(); playShieldPing();
+  crowdReact(0.8);
+  var cr = gspCfg(b).crowd;
+  gspCrowd(b, cr && cr.shield);
+  return true;
+}
+function gspBraceFace(b) { var br = b.gspBrace, d = b.r * 0.95; return { x: b.x + br.nx * d, y: b.y + br.ny * d }; }
+// Where along the beam the shield stops it: GSP's front edge on its line.
+function gspShieldAlong(shooter, g, m) { return (g.x - shooter.x) * m.dx + (g.y - shooter.y) * m.dy - g.r * 0.95; }
+// From the beam's fire phase (kamehameha.js, rainbow-beam.js): how far the
+// beam gets, stopped at a shield that's deflecting it.
+function gspBeamStop(shooter, m, len) {
+  var g = balls && balls[1 - shooter.id];
+  if (!g || !g.alive) return len;
+  var braced = g.gspBrace && g.gspBrace.owner === shooter.id;
+  if (!braced) {
+    // about to reach him with the shield up: stopped at it this frame too (the deflect lands in the same frame)
+    if (!gspShCfg(g) || m.hit || !gspShieldUp(g)) return len;
+    var cfg = shooter.igbb.move === "rainbow" ? shooter.char.potOfGold : shooter.char.kamehameha;
+    var ox = g.x - shooter.x, oy = g.y - shooter.y, al = ox * m.dx + oy * m.dy, ac = Math.abs(-m.dy * ox + m.dx * oy);
+    if (!(al > 0 && ac < cfg.width / 2 + g.r * 0.85 && (m.ext0 || 0) + m.t * 3000 > al - g.r)) return len;
+    return Math.max(shooter.r * 2, Math.min(len, al - g.r + 2)); // just touching his edge, so the hit (and the deflect) lands this frame
+  }
+  // (the beam's round head reaches a little past its length: tucked under the shield)
+  return Math.max(shooter.r * 2, Math.min(len, gspShieldAlong(shooter, g, m) - (shooter.igbb.move === "rainbow" ? 4 : 10)));
+}
+// From updateGsp: braced behind the shield until the beam's done.
+function runGspBrace(self, other, dt) {
+  var br = self.gspBrace, a = balls[br.owner];
+  br.t += dt;
+  if (!self.alive || !a || !a.alive || !gspBeamOn(a) || a.igbb.phase !== "fire" || br.t > 6 || self.grappled || self.slam) {
+    self.gspBrace = null;
+    if (self.alive && inOrdinaryMovement(self)) setSpeed(self, self.baseSpeed || SPEED);
+    return false;
+  }
+  // lined up square behind the shield on the beam's line, pushed back a little by it
+  var bm = a.igbb;
+  br.dx = bm.dx; br.dy = bm.dy; br.nx = -bm.dx; br.ny = -bm.dy;
+  var t2 = Math.PI + br.sg * 2 * GSP_SH_DEFLECT, c2 = Math.cos(t2), s3 = Math.sin(t2);
+  br.rx = br.dx * c2 - br.dy * s3; br.ry = br.dx * s3 + br.dy * c2;
+  var cx0 = self.x - a.x, cy0 = self.y - a.y, acr = -br.dy * cx0 + br.dx * cy0, k = Math.min(1, dt * 18);
+  self.x += br.dy * acr * k; self.y -= br.dx * acr * k;
+  var push = br.t < 0.25 ? 140 : 45;
+  self.x = Math.min(W - self.r, Math.max(self.r, self.x + br.dx * push * dt));
+  self.y = Math.min(H - self.r, Math.max(self.r, self.y + br.dy * push * dt));
+  self.vx = 0; self.vy = 0;
+  var f = gspBraceFace(self);
+  br.len = kmRayToWall(f.x, f.y, br.rx, br.ry);
+  br.ext = Math.min(br.len, br.ext + dt * 2200);
+  if (!reduceMotion) {
+    shake = Math.max(shake, 7);
+    var col = br.kind === "rainbow" ? RB_COLORS[Math.floor(Math.random() * 7)] : (Math.random() < 0.5 ? "#9fd6ff" : "#ffffff");
+    var sa = Math.atan2(br.ny, br.nx) + (Math.random() - 0.5) * 2.4, sv = 160 + Math.random() * 260;
+    particles.push({ x: f.x, y: f.y, vx: Math.cos(sa) * sv, vy: Math.sin(sa) * sv, life: 0.35, max: 0.35, size: 2 + Math.random() * 3, color: col });
+    if (br.ext >= br.len - 1 && Math.random() < 0.7) {
+      var ex = f.x + br.rx * br.len, ey = f.y + br.ry * br.len, ea = Math.atan2(-br.ry, -br.rx) + (Math.random() - 0.5) * 2.4, ev = 200 + Math.random() * 260;
+      particles.push({ x: ex, y: ey, vx: Math.cos(ea) * ev, vy: Math.sin(ea) * ev, life: 0.5, max: 0.5, size: 3 + Math.random() * 4, color: col });
+    }
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------- the throw
+
+// From updateGsp, before the Superman punch. True while he's throwing.
+function updateGspShield(self, other, cfg, dt, full) {
+  var sh = cfg.shield;
+  if (!sh) return false;
+  var m = self.gspThrow;
+  if (m) {
+    if (gspInterrupted(self) || over) { self.gspThrow = null; return false; } // (if it hadn't left his hand, it's back on his back)
+    return runShieldThrow(self, other, sh, m, dt);
+  }
+  if (self.gspDisc || !started || over || self.igbb || !other.alive || gspWeaponOut(other) || gspBeamOn(other)) return false; // (keeps it on him for those)
+  self.gspShT -= dt;
+  if (self.gspShT > 0 || full || !canStartIgbb(self, other) || swordDuelActive()) return false;
+  var dx = other.x - self.x, dy = other.y - self.y, gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;
+  if (gap < sh.minGap || gap > sh.maxGap) return false;
+  clearActions(self);
+  gspGiOff(self);
+  self.vx = 0; self.vy = 0;
+  self.gspBlock = null;
+  self.gspThrow = { phase: "wind", t: 0, aim: Math.atan2(dy, dx), thrown: false };
+  floater(self.x, self.y - self.r - 30, "MAPLE SHIELD!", "crit");
+  playShieldWind();
+  return true;
+}
+
+function runShieldThrow(self, other, sh, m, dt) {
+  m.t += dt;
+  var damp = Math.exp(-14 * dt); self.vx *= damp; self.vy *= damp;
+  if (m.phase === "wind") {
+    m.aim = gspTurn(m.aim, Math.atan2(other.y - self.y, other.x - self.x), dt * 8);
+    if (m.t >= sh.wind) { m.phase = "release"; m.t = 0; }
+    return true;
+  }
+  if (m.phase === "release") {
+    if (!m.thrown && m.t >= GSP_SH_RELEASE * 0.55) { m.thrown = true; launchShield(self, other, sh, m); }
+    if (m.t >= GSP_SH_RELEASE) { m.phase = "follow"; m.t = 0; }
+    return true;
+  }
+  if (m.t >= GSP_SH_FOLLOW) {
+    self.gspThrow = null;
+    if (self.alive && inOrdinaryMovement(self)) setSpeed(self, self.baseSpeed || SPEED);
+    return false;
+  }
+  return true;
+}
+
+// Off his hand: a bank shot off the cage into them if there's a clean one,
+// straight at them if not.
+function launchShield(self, other, sh, m) {
+  var sr = gspShieldR(self), u = gspShieldHand(self, m, 1), x = u.x, y = u.y;
+  var aim = gspBankShot(x, y, other, sr);
+  if (aim == null) aim = Math.atan2(other.y - y, other.x - x);
+  self.gspDisc = { x: x, y: y, vx: Math.cos(aim) * sh.speed, vy: Math.sin(aim) * sh.speed, rot: m.aim, spin: (Math.random() < 0.5 ? -1 : 1) * 26,
+    phase: "out", t: 0, hits: 0, walls: 0, skip: 0, chant: !!self.gspChant, trail: [], fade: 0 };
+  playWhoosh();
+  playShieldSpin();
+}
+function gspBankShot(x, y, o, sr) {
+  var best = [], clear = o.r + sr + 8;
+  [[0, sr], [0, W - sr], [1, sr], [1, H - sr]].forEach(function (w) {
+    var mx = w[0] === 0 ? 2 * w[1] - o.x : o.x, my = w[0] === 1 ? 2 * w[1] - o.y : o.y; // them, mirrored in that wall
+    var dx = mx - x, dy = my - y, L = Math.sqrt(dx * dx + dy * dy);
+    if (L < 1) return;
+    var k = w[0] === 0 ? (w[1] - x) / dx : (w[1] - y) / dy; // where it meets the wall
+    if (!(k > 0 && k < 1)) return;
+    var wx = x + dx * k, wy = y + dy * k, firstLeg = L * k;
+    if (firstLeg < 50) return; // (too close to that wall to see the bounce)
+    // The way to the wall mustn't run through them.
+    var ex = wx - x, ey = wy - y, s = Math.max(0, Math.min(1, ((o.x - x) * ex + (o.y - y) * ey) / (ex * ex + ey * ey)));
+    var cx = x + ex * s - o.x, cy = y + ey * s - o.y;
+    if (cx * cx + cy * cy < clear * clear) return;
+    best.push({ a: Math.atan2(dy, dx), L: L });
+  });
+  if (!best.length) return null;
+  best.sort(function (p, q) { return p.L - q.L; });
+  return best[Math.random() < 0.7 || best.length < 2 ? 0 : 1].a; // the shortest bank, now and then the next one
+}
+
+// Where his throwing glove (and the shield in it) is, `k` 0..1 through the backhand.
+function gspShieldHand(b, m, k) {
+  var ux = Math.cos(m.aim), uy = Math.sin(m.aim), px = -uy, py = ux, r = b.r;
+  // across his chest on the off side -> swept out front on his throwing side
+  var a0 = { u: 0.35, p: -0.55 }, a1 = { u: 1.2, p: 0.5 };
+  var e = easeOut(k), arc = Math.sin(Math.PI * k) * 0.35;
+  var fu = a0.u + (a1.u - a0.u) * e + arc, fp = a0.p + (a1.p - a0.p) * e;
+  return { x: b.x + ux * r * fu + px * r * fp, y: b.y + uy * r * fu + py * r * fp };
+}
+
+// ---------------------------------------------------------------- in the air
+
+// From tickGsp, every frame, whatever he's doing.
+function tickGspShield(b, dt) {
+  if (b.gspBlock) { b.gspBlock.t += dt; if (b.gspBlock.t >= GSP_SH_BLOCK) b.gspBlock = null; }
+  if (b.gspBlockHit != null) { // the blocked attacker, bounced off the shield
+    var a = balls[b.gspBlockHit], sh = gspShCfg(b);
+    b.gspBlockHit = null;
+    if (a && a.alive && !a.grappled && !a.grapple && !a.slam && !a.sprawl && !a.sprawled && !subLocked(a) && !a.igbb) {
+      var dx = a.x - b.x, dy = a.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+      a.punch = null; a.kick = null; a.swing = null; a.jabAnim = null; a.combo = null; a.flow = null;
+      a.vx = dx / d * sh.blockKnockback; a.vy = dy / d * sh.blockKnockback; a.knockFly = 0.25;
+    }
+  }
+  var s = b.gspDisc;
+  if (!s) return;
+  var sh2 = gspShCfg(b), sr = gspShieldR(b), o = balls[1 - b.id];
+  s.t += dt; s.rot += s.spin * dt;
+  s.trail.unshift({ x: s.x, y: s.y }); if (s.trail.length > 6) s.trail.pop();
+  if (s.phase === "drop") { // he's down: it clatters to a stop and fades
+    s.vx *= Math.exp(-5 * dt); s.vy *= Math.exp(-5 * dt); s.spin *= Math.exp(-3 * dt);
+    s.x = Math.max(sr, Math.min(W - sr, s.x + s.vx * dt)); s.y = Math.max(sr, Math.min(H - sr, s.y + s.vy * dt));
+    s.fade += dt; if (s.fade > 1.2) b.gspDisc = null;
+    return;
+  }
+  if (!b.alive) { s.phase = "drop"; return; }
+  if (s.phase === "out" && s.t > 4) s.phase = "back"; // (never flies forever)
+  if (s.phase === "back") {
+    var hx = b.x - s.x, hy = b.y - s.y, hd = Math.sqrt(hx * hx + hy * hy) || 1;
+    var sp = Math.max(sh2.speed, Math.sqrt(b.vx * b.vx + b.vy * b.vy) + 200);
+    s.vx = hx / hd * sp; s.vy = hy / hd * sp;
+    if (hd < b.r + sr * 0.4 || s.t > 7) { catchShield(b); return; }
+  }
+  s.skip = Math.max(0, s.skip - dt);
+  var dist = Math.sqrt(s.vx * s.vx + s.vy * s.vy) * dt, n = Math.max(1, Math.ceil(dist / 6));
+  for (var i = 0; i < n; i++) {
+    s.x += s.vx * dt / n; s.y += s.vy * dt / n;
+    var nx = 0, ny = 0;
+    if (s.x < sr) { s.x = sr; nx = 1; } else if (s.x > W - sr) { s.x = W - sr; nx = -1; }
+    if (s.y < sr) { s.y = sr; ny = 1; } else if (s.y > H - sr) { s.y = H - sr; ny = -1; }
+    if (nx || ny) { shieldWall(b, s, sh2, o, nx, ny); }
+    if (s.phase === "out" && s.skip <= 0 && o && o.alive && !o.koOut && !o.grappled && !o.grapple && !o.slam && !subLocked(o)) {
+      var ox = s.x - o.x, oy = s.y - o.y, od = Math.sqrt(ox * ox + oy * oy);
+      if (od < o.r + sr * 0.85) { shieldHit(b, s, sh2, o, ox / (od || 1), oy / (od || 1)); break; }
+    }
+  }
+}
+
+// Off the cage: a ping, and it turns back at them (or home, once it's done).
+function shieldWall(b, s, sh, o, nx, ny) {
+  if (nx) s.vx = Math.abs(s.vx) * nx;
+  if (ny) s.vy = Math.abs(s.vy) * ny;
+  if (s.phase !== "out") return;
+  s.walls++;
+  var cx = s.x - nx * gspShieldR(b), cy = s.y - ny * gspShieldR(b);
+  impacts.push({ x: cx, y: cy, nx: nx, ny: ny, life: 0.3, max: 0.3, color: theme.wall });
+  igbbSparks(cx, cy, nx, ny, "#ffe08a", 8, 300);
+  if (!reduceMotion) shake = Math.max(shake, 5);
+  playShieldPing();
+  if (s.hits >= sh.hits || s.walls > sh.bounces || !o || !o.alive) { s.phase = "back"; return; }
+  // straight back at them, off the wall
+  var sp = Math.sqrt(s.vx * s.vx + s.vy * s.vy), dx = o.x - s.x, dy = o.y - s.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  if (dx * nx + dy * ny > 0) { s.vx = dx / d * sp; s.vy = dy / d * sp; }
+}
+
+function shieldHit(b, s, sh, o, nx, ny) {
+  var ux = s.vx, uy = s.vy, ul = Math.sqrt(ux * ux + uy * uy) || 1;
+  ux /= ul; uy /= ul;
+  var dealt = hurt(o, s.chant ? sh.chantDamage : sh.damage, "shield", b.id);
+  if (o.justDodged) { s.skip = 0.35; return; } // slipped: it flies on past
+  s.hits++;
+  // it glances off them, out the far side of the hit
+  var dot = ux * nx + uy * ny;
+  s.vx = (ux - 2 * dot * nx) * ul; s.vy = (uy - 2 * dot * ny) * ul;
+  s.x = o.x + nx * (o.r + gspShieldR(b) * 0.9); s.y = o.y + ny * (o.r + gspShieldR(b) * 0.9);
+  s.skip = 0.3;
+  var cx = o.x + nx * o.r, cy = o.y + ny * o.r;
+  if (dealt > 0) {
+    if (o.alive && !o.igbb) { o.vx += ux * sh.knockback; o.vy += uy * sh.knockback; o.knockFly = 0.3; }
+    o.squash = { t: 0.16, max: 0.16, nx: -ux, ny: -uy };
+    o.flash = 0.12;
+    impacts.push({ x: cx, y: cy, nx: nx, ny: ny, life: 0.45, max: 0.45, color: MTL.red });
+    igbbSparks(cx, cy, nx, ny, MTL.red, 14, 420);
+    hitStop = Math.max(hitStop, 0.07);
+    if (!reduceMotion) shake = Math.max(shake, 12);
+    playShieldHit(dealt);
+    crowdReact(0.6);
+    var cr = gspCfg(b).crowd;
+    gspCrowd(b, cr && cr.shield);
+  } else playShieldBlock(); // blocked: clangs off
+  if (s.hits >= sh.hits) s.phase = "back";
+  checkEnd();
+}
+
+function catchShield(b) {
+  b.gspDisc = null;
+  b.gspShT = gspRand(b.gspChant && gspShCfg(b).chantEvery ? gspShCfg(b).chantEvery : gspShCfg(b).every);
+  playShieldCatch();
+}
+
+// ---------------------------------------------------------------- drawing
+
+// The shield itself: a steel rim with rivets round a Canada flag (red bands,
+// white middle, the maple leaf), turned `rot`.
+function drawMapleShield(c, x, y, R, rot, alpha) {
+  c.save();
+  c.globalAlpha *= alpha == null ? 1 : alpha;
+  c.translate(x, y); c.rotate(rot || 0);
+  c.beginPath(); c.arc(0, 0, R, 0, Math.PI * 2);
+  var steel = c.createRadialGradient(-R * 0.35, -R * 0.35, R * 0.1, 0, 0, R);
+  steel.addColorStop(0, "#f1f3f5"); steel.addColorStop(0.6, "#b9c0c7"); steel.addColorStop(1, "#7d868f");
+  c.fillStyle = steel; c.fill();
+  var f = R * 0.82;
+  c.save();
+  c.beginPath(); c.arc(0, 0, f, 0, Math.PI * 2); c.clip();
+  c.fillStyle = MTL.white; c.fillRect(-f, -f, f * 2, f * 2);
+  c.fillStyle = MTL.red; c.fillRect(-f, -f, f * 0.52, f * 2); c.fillRect(f * 0.48, -f, f * 0.52, f * 2);
+  drawMapleLeaf(c, 0, 0, f * 0.42, MTL.red);
+  // a shine across the face
+  var sh = c.createLinearGradient(-f, -f, f, f);
+  sh.addColorStop(0, "rgba(255,255,255,0.35)"); sh.addColorStop(0.45, "rgba(255,255,255,0)"); sh.addColorStop(1, "rgba(0,0,0,0.18)");
+  c.fillStyle = sh; c.fillRect(-f, -f, f * 2, f * 2);
+  c.restore();
+  c.lineWidth = Math.max(1.2, R * 0.06); c.strokeStyle = "#5c646c";
+  c.beginPath(); c.arc(0, 0, f, 0, Math.PI * 2); c.stroke();
+  c.fillStyle = "#e6e9ec"; c.strokeStyle = "#5c646c"; c.lineWidth = Math.max(0.8, R * 0.03);
+  for (var i = 0; i < 8; i++) { // rivets round the rim
+    var a = i * Math.PI / 4 + Math.PI / 8;
+    c.beginPath(); c.arc(Math.cos(a) * R * 0.91, Math.sin(a) * R * 0.91, R * 0.045, 0, Math.PI * 2); c.fill(); c.stroke();
+  }
+  c.lineWidth = 2.5; c.strokeStyle = theme.wall;
+  c.beginPath(); c.arc(0, 0, R, 0, Math.PI * 2); c.stroke();
+  c.restore();
+}
+
+// Behind his body (drawGspBehind): slung on his back, peeking out over the
+// shoulder away from them.
+function drawGspShieldBack(b) {
+  if (!gspShCfg(b) || !gspShieldHome(b) || b.gspBlock || b.gspBrace || gspDiveOn(b) || b.gspSp) return;
+  var o = balls[1 - b.id], want = o && o.x > b.x ? -1 : 1;
+  b.gspBackSide += (want - b.gspBackSide) * 0.08;
+  var l = gspLift(b), r = b.r * l.s, side = b.gspBackSide;
+  drawMapleShield(ctx, b.x + side * r * 0.62, b.y + l.dy - r * 0.55, gspShieldR(b) * l.s * 1.05, side * 0.35);
+}
+
+// Over his body (drawGsp): his arms throwing it, or holding it up to block.
+function drawGspShieldArms(b) {
+  var size = b.char.punch.size || 14, r = b.r, m = b.gspThrow;
+  if (m) {
+    var ux = Math.cos(m.aim), uy = Math.sin(m.aim), px = -uy, py = ux;
+    var k = m.phase === "wind" ? 0 : m.phase === "release" ? Math.min(1, m.t / GSP_SH_RELEASE) : 1;
+    var wob = m.phase === "wind" ? Math.sin(Math.min(1, m.t / 0.12) * Math.PI / 2) : 1; // bringing it round off his back
+    var h = gspShieldHand(b, m, k);
+    // off hand tucked in guard on the far side
+    gspArm(b, b.x - px * r * 0.45, b.y - py * r * 0.45, b.x + ux * r * 0.55 - px * r * 0.75, b.y + uy * r * 0.55 - py * r * 0.75, size, m.aim);
+    if (m.phase === "wind" && wob < 1) { // reaching back over the shoulder for it
+      var bx = b.x + b.gspBackSide * r * 0.62, by = b.y - r * 0.55;
+      h = { x: bx + (h.x - bx) * wob, y: by + (h.y - by) * wob };
+    }
+    gspArm(b, b.x + px * r * 0.45, b.y + py * r * 0.45, h.x, h.y, size, m.aim);
+    if (!m.thrown) drawMapleShield(ctx, h.x, h.y, gspShieldR(b), m.aim + k * 2.5);
+    return;
+  }
+  var br = b.gspBrace;
+  if (br) { // braced: both gloves behind the shield, shield angled into the beam
+    var f = gspBraceFace(b), na = Math.atan2(br.ny, br.nx), qx = -br.ny, qy = br.nx, jit = Math.sin(gspClock * 60) * b.r * 0.03;
+    [-1, 1].forEach(function (sd) {
+      gspArm(b, b.x + qx * sd * r * 0.45, b.y + qy * sd * r * 0.45, f.x - br.nx * r * 0.25 + qx * sd * r * 0.3 + jit, f.y - br.ny * r * 0.25 + qy * sd * r * 0.3, size, na);
+    });
+    drawMapleShield(ctx, f.x + jit, f.y, gspShieldR(b) * 1.15, 0);
+    var fl = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, gspShieldR(b) * 1.5), fc = br.kind === "rainbow" ? "255,240,180" : "190,230,255";
+    fl.addColorStop(0, "rgba(255,255,255,0.75)"); fl.addColorStop(0.5, "rgba(" + fc + ",0.35)"); fl.addColorStop(1, "rgba(" + fc + ",0)");
+    ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(f.x, f.y, gspShieldR(b) * 1.5, 0, Math.PI * 2); ctx.fill(); // the beam splashing on its face
+    return;
+  }
+  var bl = b.gspBlock;
+  if (bl) {
+    var t = bl.t, inK = Math.min(1, t / 0.06), outK = Math.max(0, (t - (GSP_SH_BLOCK - 0.12)) / 0.12), k2 = inK * (1 - outK);
+    var bux = bl.ux, buy = bl.uy, bpx = -buy, bpy = bux, jolt = t < 0.1 ? -Math.sin(t / 0.1 * Math.PI) * r * 0.12 : 0;
+    var hx = b.x + bux * (r * (0.35 + 0.65 * k2) + jolt), hy = b.y + buy * (r * (0.35 + 0.65 * k2) + jolt);
+    gspArm(b, b.x - bpx * r * 0.45, b.y - bpy * r * 0.45, b.x + bux * r * 0.6 - bpx * r * 0.7, b.y + buy * r * 0.6 - bpy * r * 0.7, size, Math.atan2(buy, bux));
+    gspArm(b, b.x + bpx * r * 0.45, b.y + bpy * r * 0.45, hx, hy, size, Math.atan2(buy, bux));
+    drawMapleShield(ctx, hx, hy, gspShieldR(b) * (1 + 0.12 * k2), 0);
+  }
+}
+// For the gallery (gspGalleryMoves).
+function gspShieldGalleryMove(sh, add) {
+  add("🛡️", "Maple Shield", "A steel shield in Canada's colours on his back. Every " + sh.every[0] + "-" + sh.every[1] + "s (" + sh.chantEvery[0] + "-" + sh.chantEvery[1] + "s while they chant) he throws it backhand, banked off the cage into them; it turns back at them off every wall it hits, up to " + sh.hits + " hits, then flies back to him. " + sh.damage + " damage a hit (" + sh.chantDamage + " while they chant). With it on his back he blocks " + sh.block + "% of the strikes he doesn't slip, knocking the attacker back.");
+}
+function gspShieldHandsBusy(b) { return !!(b && (b.gspThrow || b.gspBlock || b.gspBrace)); }
+
+// Over the ring (drawGspOver): the shield flying, with a red and white blur.
+function drawGspShields() {
+  if (!balls) return;
+  balls.forEach(function (b) {
+    if (!b.gspBrace || !b.alive) return;
+    if (b.gspBrace.ext > 0) drawDeflectedBeam(b);
+    ctx.save(); drawGspShieldArms(b); ctx.restore(); // his gloves and the shield again, over both beams (same pose, drawn on top)
+  });
+  balls.forEach(function (b) {
+    var s = b.gspDisc;
+    if (!s) return;
+    var R = gspShieldR(b), a = s.phase === "drop" ? Math.max(0, 1 - s.fade / 1.2) : 1;
+    ctx.save();
+    if (!reduceMotion && s.phase !== "drop") {
+      s.trail.forEach(function (p, i) {
+        ctx.globalAlpha = 0.22 * (1 - i / s.trail.length);
+        ctx.fillStyle = i % 2 ? MTL.white : MTL.red;
+        ctx.beginPath(); ctx.arc(p.x, p.y, R * (0.95 - i * 0.08), 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+    drawMapleShield(ctx, s.x, s.y, R, s.rot, a);
+    ctx.restore();
+  });
+}
+
+// The beam glancing off the shield into the cage, in its own colours.
+function drawDeflectedBeam(b) {
+  var br = b.gspBrace, a = balls[br.owner], f = gspBraceFace(b), t = performance.now() / 1000;
+  var cfg = br.kind === "rainbow" ? a.char.potOfGold : a.char.kamehameha, w = cfg.width * 0.85, len = br.ext, x0 = 0;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+  ctx.translate(f.x, f.y); ctx.rotate(Math.atan2(br.ry, br.rx));
+  if (br.kind === "rainbow") rbDrawBand(x0, len, w, t, br.ext < br.len - 1, br.ext >= br.len - 1);
+  else {
+    [[2.0, "rgba(40,120,255,0.28)"], [1.35, "rgba(80,170,255,0.6)"], [0.9, "rgba(150,215,255,0.95)"], [0.42, "rgba(255,255,255,1)"]].forEach(function (L) {
+      var hw = w * L[0] / 2;
+      ctx.fillStyle = L[1];
+      ctx.beginPath(); ctx.moveTo(x0, -hw * 0.6);
+      for (var x = x0; x <= len; x += 12) ctx.lineTo(x, -hw * (0.85 + 0.15 * Math.sin(x * 0.08 - t * 60)));
+      ctx.lineTo(len, -hw); ctx.arc(len, 0, hw, -Math.PI / 2, Math.PI / 2);
+      for (var x2 = len; x2 >= x0; x2 -= 12) ctx.lineTo(x2, hw * (0.85 + 0.15 * Math.sin(x2 * 0.08 + t * 60)));
+      ctx.closePath(); ctx.fill();
+    });
+    if (br.ext >= br.len - 1) {
+      ctx.fillStyle = "rgba(200,235,255," + (0.6 + 0.3 * Math.sin(t * 45)) + ")";
+      for (var i = 0; i < 6; i++) {
+        var sa = (i / 6) * Math.PI + Math.PI / 2 + Math.sin(t * 20 + i) * 0.2;
+        ctx.beginPath(); ctx.arc(len + Math.cos(sa) * w * 0.6, Math.sin(sa) * w * 0.9, w * 0.22, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+  // a flare where it hits the shield
+  var fg = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 1.1);
+  fg.addColorStop(0, "rgba(255,255,255,0.95)"); fg.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(0, 0, w * 1.1, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------- sound
+// Synth stand-ins until Joe picks real ones.
+
+// A struck piece of metal: a few out-of-tune partials ringing down.
+function gspRing(ac, t, f, peak, dur) {
+  [[1, 1], [2.76, 0.5], [5.4, 0.25], [8.9, 0.12]].forEach(function (p) {
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine"; o.frequency.value = f * p[0];
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak * p[1], t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur / Math.sqrt(p[0]));
+    o.connect(g); g.connect(strikeOut(ac));
+    o.start(t); o.stop(t + dur + 0.05);
+  });
+}
+function playShieldWind() {
+  gspAudio(function (ac, t) { caneBurst(ac, t, 1500, 1.4, 0.18, 0.1); gspRing(ac, t + 0.02, 1320, 0.05, 0.25); });
+}
+// Spinning away: a rising whirr.
+function playShieldSpin() {
+  gspAudio(function (ac, t) {
+    var o = ac.createOscillator(), g = ac.createGain(), am = ac.createOscillator(), amg = ac.createGain();
+    o.type = "triangle"; o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(520, t + 0.5);
+    am.frequency.value = 26; amg.gain.value = 0.05; am.connect(amg); amg.connect(g.gain);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.07, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    o.connect(g); g.connect(strikeOut(ac));
+    o.start(t); am.start(t); o.stop(t + 0.65); am.stop(t + 0.65);
+  });
+}
+// Off the cage: a bright ping and the chain-link rattling.
+function playShieldPing() {
+  gspAudio(function (ac, t) {
+    gspRing(ac, t, 1180 + Math.random() * 160, 0.16, 0.45);
+    for (var i = 0; i < 3; i++) caneBurst(ac, t + 0.02 + i * 0.04, 3600 + i * 400, 6, 0.08, 0.05);
+  });
+}
+function playShieldHit(dealt) {
+  playPunch(dealt * 1.4);
+  gspAudio(function (ac, t) { gspRing(ac, t, 560, 0.22, 0.6); caneTone(ac, t, "sine", 120, 50, 0.5, 0.22); });
+}
+function playShieldBlock() {
+  gspAudio(function (ac, t) { gspRing(ac, t, 760, 0.2, 0.5); caneBurst(ac, t, 2200, 2, 0.2, 0.06); });
+}
+function playShieldCatch() {
+  gspAudio(function (ac, t) { caneTone(ac, t, "sine", 220, 140, 0.25, 0.09); gspRing(ac, t + 0.01, 980, 0.07, 0.3); });
 }
 
 // Nate Diaz (Christian, 2026-11-13). Welterweight, on the Brawler base:
@@ -52831,15 +53443,15 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261113083415"></script>
-<script src="js/game/update.js?v=20261113083415"></script>
-<script src="js/game/fighter-art.js?v=20261113083415"></script>
-<script src="js/game/draw-attacks.js?v=20261113083415"></script>
-<script src="js/game/wwit-badge.js?v=20261113083415"></script>
-<script src="js/game/stadium.js?v=20261113083415"></script>
-<script src="js/game/draw.js?v=20261113083415"></script>
-<script src="js/ui/gallery.js?v=20261113083415"></script>
-<script src="js/ui/saved-fights.js?v=20261113083415"></script>
-<script src="js/main.js?v=20261113083415"></script>
+  <script src="js/game/intro-msg.js?v=20261113083503"></script>
+<script src="js/game/update.js?v=20261113083503"></script>
+<script src="js/game/fighter-art.js?v=20261113083503"></script>
+<script src="js/game/draw-attacks.js?v=20261113083503"></script>
+<script src="js/game/wwit-badge.js?v=20261113083503"></script>
+<script src="js/game/stadium.js?v=20261113083503"></script>
+<script src="js/game/draw.js?v=20261113083503"></script>
+<script src="js/ui/gallery.js?v=20261113083503"></script>
+<script src="js/ui/saved-fights.js?v=20261113083503"></script>
+<script src="js/main.js?v=20261113083503"></script>
 </body>
 </html>

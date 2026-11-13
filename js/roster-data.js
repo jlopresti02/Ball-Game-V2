@@ -1487,12 +1487,39 @@ var SAVED_ROSTER = [
       "doubleLeg": {
         "through": 45
       },
+      "shield": {
+        "first": [
+          4,
+          7
+        ],
+        "every": [
+          8,
+          12
+        ],
+        "chantEvery": [
+          6,
+          9
+        ],
+        "minGap": 110,
+        "maxGap": 600,
+        "wind": 0.32,
+        "speed": 820,
+        "size": 0.62,
+        "damage": 14,
+        "chantDamage": 20,
+        "knockback": 420,
+        "hits": 2,
+        "bounces": 4,
+        "block": 25,
+        "blockKnockback": 380
+      },
       "crowd": {
         "chantAt": 0.5,
         "dodge": 2,
         "taunt": 5,
         "superman": 5,
         "takedown": 3,
+        "shield": 3,
         "beat": 1.7,
         "hold": 2.5
       },
