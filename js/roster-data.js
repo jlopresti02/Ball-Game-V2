@@ -2977,7 +2977,7 @@ var SAVED_ROSTER = [
     "weightClass": "bantamweight",
     "name": "Sean O'Malley",
     "base": "Kicker",
-    "bio": "\"Suga\". Built on the Kicker base: long kicks from range, plus quick punches up close that land as critical hits for double damage 30% of the time. Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Sweets pop up in the ring and both fighters race for them: he eats them, the opponent stomps them. A lollipop doubles his crit chance, a gummy bear doubles his crit damage, and a rare golden donut does both, for a few seconds. Every sweet changes his braids to another of his real fight-night hair colours. After three he hits a sugar crash and slows right down. Special move: Sugar Rush, a shower of sweets raining into the ring.",
+    "bio": "\"Suga\". Built on the Kicker base: long kicks from range, plus quick punches up close, a lot of them critical hits for double damage. Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Candy rains into the ring all fight long and only he goes for it: between exchanges he drifts toward the nearest one, and anything he touches is his. Every candy is more sugar (SUGAR x4 by his health bar), and every sugar is a bigger chance to crit. A golden donut is worth three, and every candy changes his braids to another of his real fight-night hair colours. At ten he is on a sugar high, then he crashes: slow and drowsy for a moment, and most of the sugar is gone. Cotton candy is pure sugar: straight to the high, then the crash. Special move: Sugar Rush, a shower of extra candy he hunts down.",
     "color": "#e75480",
     "label": "",
     "imgData": null,
@@ -3047,13 +3047,14 @@ var SAVED_ROSTER = [
     },
     "suga": {
       "crit": {
-        "chance": 50,
+        "chance": 40,
         "mult": 2
       },
       "critKo": {
         "base": 20,
         "low": 50,
-        "after": 14
+        "after": 14,
+        "sugar": 6
       },
       "craneKick": {
         "first": [
@@ -3075,53 +3076,81 @@ var SAVED_ROSTER = [
         "slamDamage": 6,
         "readChance": 25
       },
-      "sweets": {
+      "candy": {
         "first": [
-          3,
-          5
+          1,
+          2
         ],
         "every": [
-          4,
-          7
+          1,
+          1.8
         ],
-        "life": 9,
-        "contested": 60,
-        "turn": 5,
-        "sprint": 1.15,
-        "odds": {
-          "lollipop": 45,
-          "gummy": 45,
-          "donut": 10
-        },
+        "max": 6,
+        "life": 12,
+        "fall": 0.55,
+        "gap": 70,
+        "reach": 3,
+        "magnet": 30,
         "kinds": {
           "lollipop": {
-            "boosts": [
-              "chance"
-            ]
+            "odds": 18,
+            "sugar": 1
           },
           "gummy": {
-            "boosts": [
-              "mult"
-            ]
+            "odds": 18,
+            "sugar": 1
+          },
+          "wrapped": {
+            "odds": 16,
+            "sugar": 1
+          },
+          "gumball": {
+            "odds": 16,
+            "sugar": 1
+          },
+          "candyCane": {
+            "odds": 14,
+            "sugar": 1
+          },
+          "cottonCandy": {
+            "odds": 9,
+            "sugar": 0,
+            "crash": true
           },
           "donut": {
-            "boosts": [
-              "chance",
-              "mult"
-            ]
+            "odds": 6,
+            "sugar": 3
           }
-        },
-        "boost": {
-          "time": 4,
-          "chance": 2,
-          "mult": 2
         }
       },
+      "drift": {
+        "every": [
+          1.5,
+          3
+        ],
+        "time": [
+          1.2,
+          2
+        ],
+        "range": 240,
+        "turn": 2.4,
+        "speed": 1.08,
+        "notWithin": 40
+      },
+      "sugar": {
+        "crit": 4,
+        "cap": 10,
+        "drain": 7,
+        "maxChance": 90,
+        "floater": true
+      },
       "crash": {
-        "after": 3,
+        "atCap": true,
+        "high": 3.5,
+        "time": 2.5,
         "slow": 0.6,
         "attackSlow": 0.75,
-        "time": 3.5
+        "keep": 0.25
       },
       "hair": [
         {
@@ -3189,9 +3218,18 @@ var SAVED_ROSTER = [
       ],
       "hairStart": 6,
       "hairTag": true,
+      "hairTagGap": 8,
       "voice": {
         "start": 100,
-        "win": true
+        "win": true,
+        "candy": 30
+      },
+      "lines": {
+        "candy": [],
+        "donut": [],
+        "sugarHigh": [],
+        "crash": [],
+        "wakeUp": []
       }
     },
     "hasSpecial": true,
@@ -3203,7 +3241,10 @@ var SAVED_ROSTER = [
       "call": 1.0,
       "sweets": 5,
       "donuts": 1,
-      "fall": 0.7
+      "fall": 0.7,
+      "hunt": 4,
+      "huntSprint": 1.25,
+      "huntTurn": 7
     }
   },
   {

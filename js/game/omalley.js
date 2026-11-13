@@ -1,12 +1,44 @@
-// Sean O'Malley, "Suga" (Christian, 2026-11-12). Bantamweight.
+// Sean O'Malley, "Suga" (Christian, 2026-11-12; the candy rain 2026-11-13).
+// Bantamweight.
 //
-// Crits       his punches are critical hits `suga.crit.chance`% of the time,
-//             for `crit.mult` times the damage ("CRIT!", a pink and gold
-//             star burst and a ding). Hooked into the punch in abilities.js
-//             (sugaCritRoll, sugaCritLanded).
-// Suga KO    (suga.critKo) a boosted crit, with a sweet in him, knocks them
-//             out cold `base`% of the time at full health, up to base + low%
-//             the more hurt they are (never in the first `after` seconds). He walks off with his arms up while
+// Crits       his punches are critical hits for `suga.crit.mult` times the
+//             damage ("CRIT!", a pink and gold star burst and a ding),
+//             `crit.chance`% of the time plus `sugar.crit`% for every sugar
+//             he's carrying (below), never more than `sugar.maxChance`%.
+//             Hooked into the punch in abilities.js (sugaCritRoll,
+//             sugaCritLanded).
+// Candy rain  (suga.candy) candies drop into the ring all fight long, one
+//             every `every` seconds while fewer than `max` are on the mat,
+//             their shadows showing where they'll land: lollipops, gummy
+//             bears, wrapped candies, gumballs, candy canes, cotton candy and
+//             now and then a golden donut (`kinds`, each with its `odds`).
+//             They melt after `life` seconds. Only he goes for them: the
+//             opponent never does, and they don't touch the opponent at all.
+// Sweet tooth (suga.drift) every `every` seconds, between exchanges (not with
+//             them within `notWithin` of him), he leans toward the nearest
+//             candy within `range` for `time` seconds: a curve at `turn`, not
+//             a beeline, and he still fights all the way. A candy he touches
+//             is his (`candy.reach`), and one within `candy.magnet` of him
+//             slides into him, so nothing can knock him off it.
+// Sugar       (suga.sugar) each candy adds its `sugar` (a golden donut 3) to a
+//             stack shown beside his health bar ("SUGAR x4"), up to `cap`,
+//             each one `crit`% more crit chance. He loses one every `drain`
+//             seconds he goes without. Every candy also switches his braids to
+//             the next of his real fight-night hair colours (suga.hair), with
+//             the event shown under him now and then (`hairTag`, at most once
+//             every `hairTagGap` seconds).
+// Sugar high  (suga.crash) at the cap he's on a SUGAR HIGH for `high` seconds:
+// and crash   buzzing, a gold ring draining round him, crits at the cap. Cotton
+//             candy (`crash: true` in its kind) is pure sugar: it fills him to
+//             the cap on the spot. Then the crash: for `time` seconds he's
+//             greyed out with Z's, rolling at `slow` of his speed
+//             (slowdown.js) and throwing at `attackSlow` of his rate, too
+//             drowsy to eat, go after candy or crane kick, and his stack is
+//             cut to `keep` of what it was.
+// Suga KO    (suga.critKo) a crit with `sugar` or more in him (or on the high)
+//             is a SUGA CRIT: it knocks them out cold `base`% of the time at
+//             full health, up to base + low% the more hurt they are (never in
+//             the first `after` seconds). He walks off with his arms up while
 //             they slump, then it's called.
 // Crane kick  every few seconds when he's close (suga.craneKick): he goes up
 //             on one leg with both arms out like wings (the Karate Kid crane)
@@ -14,45 +46,38 @@
 //             some opponents read it and back off (readChance). Then he leaps
 //             in with a front kick for `damage` that knocks them into the
 //             cage (`wallSlams`). It whiffs if they got out of range.
-// Sweets      sweets pop up in the ring (suga.sweets), one at a time: a
-//             lollipop (doubles his crit chance), a gummy bear (doubles his
-//             crit damage) or, rarely, a golden donut (both). Both fighters
-//             race for it, dashed lines showing who's heading where: if he
-//             gets there first he eats it, if the opponent does they stomp it
-//             flat. The boost is momentary (`boost.time`), with a ring round
-//             him that drains as it runs out. Every sweet he eats changes his
-//             braids to the next of his real fight-night hair colours
-//             (suga.hair, look.hairColors), with the event shown under him
-//             (`hairTag`).
-// Sugar crash after `crash.after` sweets (pips beside his health bar count
-//             them) he's on a sugar high until the last boost runs out, then
-//             he crashes: he rolls at `crash.slow` speed (slowdown.js), his
-//             hands slow to `crash.attackSlow` and he can't crane kick or go
-//             after sweets for `crash.time` seconds.
-// Sugar Rush  his special (special.move "sugarrush"), Claude's call since the
-//             spec didn't say what the special is: he throws both arms up,
-//             says "Welcome to the Suga Show." and `sweets` sweets rain down
-//             into the ring, `donuts` of them golden donuts. The race is on,
-//             and three of them means a crash.
+// Sugar Rush  his special (special.move "sugarrush"): he throws both arms up,
+//             says "Welcome to the Suga Show." and `sweets` more candies rain
+//             down on top of the rain (over the `max`), `donuts` of them golden
+//             donuts and none of them cotton candy. Then for `hunt` seconds he
+//             goes after them for real, straight at each one (`huntTurn`) at
+//             `huntSprint` times his speed with the magnet twice as strong,
+//             until he's on the sugar high.
 // Voice lines "Welcome to the Suga Show." at the start of the fight
 //             (`voice.start`% of fights) and on Sugar Rush, and "Is this
-//             real?" when he wins (speech.js).
-// The crane kick runs on b.crane, the sweets on sgSweets; Sugar Rush runs on
-// b.igbb (move "sugarrush") for its call only.
+//             real?" when he wins (speech.js). Empty slots for the real lines
+//             still being found (suga.lines, read through say()): `candy`
+//             (`voice.candy`% of the candies he eats), `donut`, `sugarHigh`,
+//             `crash` and `wakeUp` (the crash wearing off).
+// The crane kick runs on b.crane, the candies on sgSweets, the lean on
+// b.sgDrift; Sugar Rush runs on b.igbb (move "sugarrush") for its call only.
 "use strict";
 
-var SG_R = 15;            // a sweet's size
-var SG_FALL_H = 430;      // how high the Sugar Rush sweets fall from
+var SG_R = 15;            // a candy's size
+var SG_FALL_H = 430;      // how high the Sugar Rush candies fall from
+var SG_DROP_H = 240;      // how high the rain falls from
 var SG_LAND = 0.18;       // the crane kick's landing
 var SG_TAG = 1.6;         // how long the hair-colour event tag stays up
+var SG_POP = 0.3;         // the SUGAR pill swelling when it goes up
+var SG_PULL = 480;        // how fast a candy slides into him (the magnet)
 var SG_WIN_BEAT = 0.7;    // "Is this real?" this long after the win
 var SG_KO_HOLD = 1.5;     // the walk-off after a Suga KO, before it's called
 var SG_GUMMY = ["#ff3b3b", "#35c64a", "#ff9f1c", "#ffcf1f"];
-var sgSweets = [];        // sweets in the ring (and falling into it)
-var sgSplats = [];        // stomped sweets on the mat
+var SG_BRIGHT = ["#ff5fa8", "#2d7ff9", "#35c64a", "#ffcf1f", "#8a3ffc", "#ff9f1c"]; // wrappers and gumballs
+var sgSweets = [];        // candies in the ring (and falling into it)
 var sgClock = 0, sgFightT = 0, sgSpawnT = 0, sgNextId = 1, sgWinT = 0;
 
-function sgRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
+function sgRand(r) { return typeof r === "number" ? r : r[0] + Math.random() * (r[1] - r[0]); }
 function sgCfg(b) { return b && b.char && b.char.suga; }
 function craneOn(b) { return !!(b && b.crane); }
 function sugarRushCalling(b) { return !!(b && b.igbb && b.igbb.move === "sugarrush"); }
@@ -63,26 +88,33 @@ function sugaHigh(b) { return !!(b && b.sugar && b.sugar.highT > 0); }
 function omalleyBusy(b) { return (craneOn(b) && b.crane.phase !== "land") || !!(b && b.sgKo); }
 // His arms are drawn by drawOmalley (drawHands skips them, draw-attacks.js).
 function omalleyHandsBusy(b) { return omalleyBusy(b) || sugarRushCalling(b); }
+function sgDist(a, b) { var dx = b.x - a.x, dy = b.y - a.y; return Math.sqrt(dx * dx + dy * dy) || 1; }
+// One of his empty voice-line slots (suga.lines), if it's been filled.
+function sgSay(b, key) {
+  var ln = sgCfg(b).lines, line = ln ? pickLine(b, ln[key], key) : null;
+  if (line && canSay(b)) say(b, line);
+}
 
 // From startMatchSeeded.
 function resetOmalley() {
-  sgSweets = []; sgSplats = []; sgClock = 0; sgFightT = 0; sgNextId = 1; sgWinT = 0;
+  sgSweets = []; sgClock = 0; sgFightT = 0; sgNextId = 1; sgWinT = 0;
   sgSpawnT = Infinity;
   if (balls) balls.forEach(function (b) {
-    var sw = sgCfg(b) && sgCfg(b).sweets;
-    if (sw) sgSpawnT = Math.min(sgSpawnT, sgRand(sw.first));
+    var cc = sgCfg(b) && sgCfg(b).candy;
+    if (cc) sgSpawnT = Math.min(sgSpawnT, sgRand(cc.first));
   });
 }
 // From makeBall.
 function initOmalley(b) {
-  b.crane = null; b.sugaCrit = null; b.sgRace = null; b.sgSaid = null; b.sgSeen = null; b.sgWon = false; b.sgKo = null;
+  b.crane = null; b.sugaCrit = null; b.sgDrift = null; b.sgHuntT = 0; b.sgSaid = null; b.sgWon = false; b.sgKo = null;
   var cfg = sgCfg(b);
   if (!cfg) return;
   // His own copy of the fighter, so his hair can change colour mid-fight
   // without touching the roster (or the other one, in a mirror match).
   b.char = JSON.parse(JSON.stringify(b.char));
   b.craneT = cfg.craneKick ? sgRand(cfg.craneKick.first) : Infinity;
-  b.sugar = { n: 0, chanceT: 0, multT: 0, highT: 0, crashT: 0, hair: cfg.hairStart || 0, flash: 0, tagT: 0 };
+  b.sgDriftT = cfg.drift ? sgRand(cfg.drift.every) : Infinity;
+  b.sugar = { n: 0, highT: 0, highMax: 0, crashT: 0, drainT: 0, pop: 0, floatT: 0, hair: cfg.hairStart || 0, flash: 0, tagT: 0, tagCd: 0 };
   b.sgAtkRate = b.atkRate;
   sugaHair(b, b.sugar.hair);
 }
@@ -97,17 +129,25 @@ function sugaHair(b, ix) {
 
 // ---------------------------------------------------------------- crits
 
+// His crit chance right now: the base plus every sugar in him (all of them
+// on the sugar high).
+function sugaCritChance(b) {
+  var cfg = sgCfg(b), sg = cfg.sugar || {}, n = sugaHigh(b) ? (sg.cap || 0) : b.sugar.n;
+  return Math.min(sg.maxChance || 95, cfg.crit.chance + (sg.crit || 0) * n);
+}
+// A SUGA CRIT: on the high, or with critKo.sugar or more in him.
+function sugaBoosted(b) {
+  var ko = sgCfg(b).critKo;
+  return sugaHigh(b) || !!(ko && ko.sugar != null && b.sugar.n >= ko.sugar);
+}
 // From the punch in abilities.js: how many times its damage this punch does.
 function sugaCritRoll(b) {
   var cfg = sgCfg(b);
   b.sugaCrit = null;
   if (!cfg || !cfg.crit) return 1;
-  var su = b.sugar, bo = (cfg.sweets && cfg.sweets.boost) || {};
-  var chance = cfg.crit.chance * (su.chanceT > 0 ? (bo.chance || 2) : 1);
-  if (Math.random() * 100 >= chance) return 1;
-  var mult = cfg.crit.mult * (su.multT > 0 ? (bo.mult || 2) : 1);
-  b.sugaCrit = { mult: mult, boosted: su.chanceT > 0 || su.multT > 0 };
-  return mult;
+  if (Math.random() * 100 >= sugaCritChance(b)) return 1;
+  b.sugaCrit = { mult: cfg.crit.mult, boosted: sugaBoosted(b) };
+  return cfg.crit.mult;
 }
 // From the punch in abilities.js, when it landed.
 function sugaCritLanded(self, other) {
@@ -262,6 +302,7 @@ function updateSugarRush(self, other, dt) {
     clearActions(self);
     self.igbb = { move: "sugarrush", phase: "call", t: 0 };
     self.vx = 0; self.vy = 0;
+    self.sgDrift = null;
     floater(self.x, self.y - self.r - 84, "SUGAR RUSH!", "crit"); // (over the speech bubble)
     if (canSay(self)) say(self, "Welcome to the Suga Show.");
     playSugarRush();
@@ -272,7 +313,8 @@ function updateSugarRush(self, other, dt) {
   m.t += dt;
   self.vx = 0; self.vy = 0;
   if (m.t >= (sp.call || 1)) {
-    rainSweets(self, sp);
+    var landed = rainSweets(self, sp);
+    self.sgHuntT = landed + (sp.hunt || 0); // then he goes after them
     self.igbb = null;
     self.specialT = 0;
     if (self.alive) setSpeed(self, self.baseSpeed || SPEED);
@@ -281,21 +323,26 @@ function updateSugarRush(self, other, dt) {
   return true;
 }
 
-// The shower: sweets falling in from high over the cage, a little apart.
+// The shower: candies falling in from high over the cage, a little apart, on
+// top of the ones already down. Returns when the last one lands.
 function rainSweets(self, sp) {
-  var n = sp.sweets || 5, donuts = Math.min(n, sp.donuts || 0), spots = [];
+  var cc = sgCfg(self).candy || {}, n = sp.sweets || 5, donuts = Math.min(n, sp.donuts || 0), spots = sgSweets.slice(), last = 0;
   for (var i = 0; i < n; i++) {
-    var kind = i < donuts ? "donut" : (Math.random() < 0.5 ? "lollipop" : "gummy");
-    var spot = pickSweetSpot(spots, 0, 55);
+    var kind = i < donuts ? "donut" : pickSweetKind(cc.kinds, true);
+    var spot = pickSweetSpot(spots, cc.gap || 55);
     spots.push(spot);
-    addSweet(kind, spot.x, spot.y, { fall: (sp.fall || 0.7) + i * 0.13, life: (sgCfg(self).sweets || {}).life, quiet: kind !== "donut" });
+    last = (sp.fall || 0.7) + i * 0.13;
+    addSweet(kind, spot.x, spot.y, { fall: last, high: SG_FALL_H, life: cc.life, rush: true });
   }
+  return last;
 }
 
-// ---------------------------------------------------------------- sweets
+// ---------------------------------------------------------------- candies
 
 function addSweet(kind, x, y, o) {
-  var s = { id: sgNextId++, kind: kind, x: x, y: y, t: 0, life: (o && o.life) || 9, fall: (o && o.fall) || 0, color: SG_GUMMY[Math.floor(Math.random() * SG_GUMMY.length)], spin: Math.random() * 6, quiet: !!(o && o.quiet) };
+  var pal = kind === "gummy" ? SG_GUMMY : SG_BRIGHT;
+  var s = { id: sgNextId++, kind: kind, x: x, y: y, t: 0, life: o.life || 11, fall: o.fall || 0, high: o.high || SG_DROP_H, rush: !!o.rush,
+    color: pal[Math.floor(Math.random() * pal.length)], spin: Math.random() * 6 };
   s.fallMax = s.fall;
   sgSweets.push(s);
   if (!s.fall) sweetLanded(s);
@@ -303,49 +350,66 @@ function addSweet(kind, x, y, o) {
 }
 function sweetLanded(s) {
   s.t = 0;
-  if (!s.quiet) floater(s.x, s.y - SG_R - 14, s.kind === "donut" ? "GOLDEN DONUT!" : (s.kind === "gummy" ? "GUMMY BEAR" : "LOLLIPOP"), s.kind === "donut" ? "crit" : "note");
-  for (var i = 0; i < 10 && !reduceMotion; i++) {
-    var a = i / 10 * Math.PI * 2, sp = 90 + nativeRandom() * 90;
-    particles.push({ x: s.x, y: s.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.3, max: 0.3, size: 2 + nativeRandom() * 1.5, color: i % 2 ? "#ffffff" : sweetColor(s) });
+  if (s.kind === "donut" && !s.rush) floater(s.x, s.y - SG_R - 14, "GOLDEN DONUT!", "crit"); // (Sugar Rush has had its call)
+  for (var i = 0; i < 8 && !reduceMotion; i++) {
+    var a = i / 8 * Math.PI * 2, sp = 80 + nativeRandom() * 80;
+    particles.push({ x: s.x, y: s.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.28, max: 0.28, size: 2 + nativeRandom() * 1.5, color: i % 2 ? "#ffffff" : sweetColor(s) });
   }
-  playSweetPop(s.kind);
+  playSweetPop(s.kind, !s.rush && s.kind !== "donut");
   if (s.kind === "donut") crowdReact(0.4);
 }
-function sweetColor(s) { return s.kind === "donut" ? "#ffd34d" : (s.kind === "gummy" ? s.color : "#ff5fa8"); }
-
-// A spot for a new sweet: away from the walls, the fighters and other
-// sweets. With `contested`% it's the spot of several tried that's the most
-// even race between the two of them.
-function pickSweetSpot(others, contested, gap) {
-  var best = null, bestScore = Infinity, first = null;
-  for (var i = 0; i < 14; i++) {
-    var x = 45 + Math.random() * (W - 90), y = 45 + Math.random() * (H - 90), ok = true;
-    others.forEach(function (o) { if ((o.x - x) * (o.x - x) + (o.y - y) * (o.y - y) < gap * gap) ok = false; });
-    var ds = balls.map(function (b) { return Math.sqrt((b.x - x) * (b.x - x) + (b.y - y) * (b.y - y)); });
-    if (balls.some(function (b, k) { return b.alive && ds[k] < b.r + 45; })) ok = false;
-    if (!ok) continue;
-    if (!first) first = { x: x, y: y };
-    var score = Math.abs(ds[0] - ds[1]);
-    if (score < bestScore) { bestScore = score; best = { x: x, y: y }; }
-  }
-  if (!first) return { x: W / 2 + (Math.random() - 0.5) * 200, y: H / 2 + (Math.random() - 0.5) * 200 };
-  return Math.random() * 100 < contested ? best : first;
+function sweetColor(s) {
+  if (s.kind === "donut") return "#ffd34d";
+  if (s.kind === "lollipop") return "#ff5fa8";
+  if (s.kind === "candyCane") return "#e8263b";
+  if (s.kind === "cottonCandy") return "#ff8fcb";
+  return s.color;
 }
-function pickSweetKind(odds) {
+function sweetById(id) {
+  for (var i = 0; i < sgSweets.length; i++) if (sgSweets[i].id === id) return sgSweets[i];
+  return null;
+}
+
+// A spot for a new candy: away from the cage, the fighters and the other
+// candies (`gap`).
+function pickSweetSpot(others, gap) {
+  for (var i = 0; i < 16; i++) {
+    var x = 40 + Math.random() * (W - 80), y = 40 + Math.random() * (H - 80), ok = true;
+    others.forEach(function (o) { if ((o.x - x) * (o.x - x) + (o.y - y) * (o.y - y) < gap * gap) ok = false; });
+    balls.forEach(function (b) { if (b.alive && (b.x - x) * (b.x - x) + (b.y - y) * (b.y - y) < (b.r + 40) * (b.r + 40)) ok = false; });
+    if (ok) return { x: x, y: y };
+  }
+  return { x: 40 + Math.random() * (W - 80), y: 40 + Math.random() * (H - 80) };
+}
+// A kind by its odds (the Sugar Rush shower leaves out the ones that crash him).
+function pickSweetKind(kinds, noCrash) {
   var total = 0, k;
-  for (k in odds) total += odds[k];
+  kinds = kinds || { lollipop: { odds: 1 } };
+  for (k in kinds) if (!(noCrash && kinds[k].crash)) total += kinds[k].odds || 0;
   var roll = Math.random() * total;
-  for (k in odds) { roll -= odds[k]; if (roll < 0) return k; }
+  for (k in kinds) {
+    if (noCrash && kinds[k].crash) continue;
+    roll -= kinds[k].odds || 0;
+    if (roll < 0) return k;
+  }
   return "lollipop";
 }
-
-// Someone who can head for a sweet right now: rolling about freely.
-function canRace(b) {
-  return b.alive && started && !over && inOrdinaryMovement(b) && !b.angry && !b.dizzy && !b.koOut &&
-    !(sgCfg(b) && (sugaCrashed(b) || sugaHigh(b)));
+// One more candy dropping in (the rain).
+function dropCandy(cc) {
+  var spot = pickSweetSpot(sgSweets, cc.gap || 55);
+  addSweet(pickSweetKind(cc.kinds), spot.x, spot.y, { fall: cc.fall || 0.55, life: cc.life });
 }
-function nearestSweet(b) {
-  var best = null, bd = Infinity;
+
+// ---------------------------------------------------------------- his sweet tooth
+
+// Free to go after candy: rolling about on his own, awake, nobody's special
+// going on (and not on the high: he's busy fighting).
+function canDrift(b, scene) {
+  return b.alive && started && !over && !scene && inOrdinaryMovement(b) && !b.angry && !b.dizzy && !b.koOut &&
+    !sugaCrashed(b) && !sugaHigh(b);
+}
+function nearestSweet(b, range) {
+  var best = null, bd = range * range;
   sgSweets.forEach(function (s) {
     if (s.fall > 0 || s.gone) return;
     var d = (s.x - b.x) * (s.x - b.x) + (s.y - b.y) * (s.y - b.y);
@@ -353,72 +417,126 @@ function nearestSweet(b) {
   });
   return best;
 }
-// Turns toward the sweet at a sprint (the speed regulator then holds it).
-function steerToSweet(b, s, sw, dt) {
+// Turns toward the candy at `turn` (the speed regulator then holds the speed).
+function steerToSweet(b, s, turnRate, speedMult, dt) {
   var sp0 = Math.sqrt(b.vx * b.vx + b.vy * b.vy) || 1;
   var cur = Math.atan2(b.vy, b.vx), want = Math.atan2(s.y - b.y, s.x - b.x);
   var diff = Math.atan2(Math.sin(want - cur), Math.cos(want - cur));
-  var turn = Math.max(-sw.turn * dt, Math.min(sw.turn * dt, diff));
-  var sp = Math.max(sp0, (b.baseSpeed || SPEED) * slowMult(b) * (sw.sprint || 1));
+  var turn = Math.max(-turnRate * dt, Math.min(turnRate * dt, diff));
+  var sp = Math.max(sp0, (b.baseSpeed || SPEED) * slowMult(b) * (speedMult || 1));
   b.vx = Math.cos(cur + turn) * sp; b.vy = Math.sin(cur + turn) * sp;
 }
+function endDrift(b) {
+  var dr = sgCfg(b).drift;
+  b.sgDrift = null;
+  b.sgDriftT = dr ? sgRand(dr.every) : Infinity;
+}
+// Every frame: leaning toward a candy now and then (suga.drift), or hunting
+// them down after Sugar Rush.
+function updateSweetTooth(b, dt, scene) {
+  var cfg = sgCfg(b), dr = cfg.drift, sp = b.char.special || {}, hunting = b.sgHuntT > 0;
+  var free = canDrift(b, scene);
+  if (b.sgDrift) {
+    // (Knocked about on the way, he keeps his eye on it: he just can't steer
+    // until he's rolling free again.)
+    var m = b.sgDrift, s = sweetById(m.id);
+    m.t += dt;
+    if (!s || !canEat(b, scene) || sugaHigh(b) || (m.hunt ? !hunting : m.t >= m.dur)) endDrift(b);
+    else {
+      if (free) {
+        if (m.hunt) steerToSweet(b, s, sp.huntTurn || 7, sp.huntSprint || 1.25, dt);
+        else steerToSweet(b, s, dr.turn, dr.speed, dt);
+      }
+      return;
+    }
+  }
+  if (!free) return;
+  if (hunting) {
+    var h = nearestSweet(b, Infinity);
+    if (h) b.sgDrift = { id: h.id, t: 0, hunt: true };
+    return;
+  }
+  if (!dr) return;
+  b.sgDriftT -= dt;
+  if (b.sgDriftT > 0) return;
+  var o = balls[1 - b.id];
+  if (o && o.alive && sgDist(b, o) - b.r - o.r < (dr.notWithin || 0)) { b.sgDriftT = 0.3; return; } // trading shots: keep fighting
+  var c = nearestSweet(b, dr.range || 240);
+  if (!c) { b.sgDriftT = 0.3; return; }
+  b.sgDrift = { id: c.id, t: 0, dur: sgRand(dr.time) };
+}
+
+// ---------------------------------------------------------------- sugar
+
+function canEat(b, scene) { return b.alive && !b.koOut && started && !over && !scene && !sugaCrashed(b); }
 
 function eatSweet(b, s) {
-  var cfg = sgCfg(b), sw = cfg.sweets || {}, su = b.sugar, kind = (sw.kinds && sw.kinds[s.kind]) || {}, bt = (sw.boost && sw.boost.time) || 4;
+  var cfg = sgCfg(b), cc = cfg.candy || {}, kind = (cc.kinds && cc.kinds[s.kind]) || {}, sg = cfg.sugar || {}, su = b.sugar;
+  var cap = sg.cap || 0, before = su.n, high = sugaHigh(b);
   s.gone = true;
-  su.n++;
-  var boosts = kind.boosts || [];
-  if (boosts.indexOf("chance") >= 0) su.chanceT = bt;
-  if (boosts.indexOf("mult") >= 0) su.multT = bt;
+  if (b.sgDrift && b.sgDrift.id === s.id) endDrift(b);
+  su.n = kind.crash && cfg.crash ? cap : Math.min(cap, su.n + (kind.sugar != null ? kind.sugar : 1));
+  su.drainT = 0;
+  if (su.n !== before) su.pop = SG_POP;
   su.hair++; sugaHair(b, su.hair);
-  su.flash = 0.5; su.tagT = cfg.hairTag ? SG_TAG : 0;
-  var label = s.kind === "donut" ? "2x CRIT CHANCE + DAMAGE" : (s.kind === "gummy" ? "2x CRIT DAMAGE" : "2x CRIT CHANCE");
-  floater(b.x, b.y - b.r - 30, label, "note");
-  if (cfg.crash && su.n >= cfg.crash.after) {
-    su.highT = Math.max(su.chanceT, su.multT, 0.6); // a sugar high until the boost runs out, then the crash
-    floater(b.x, b.y - b.r - 56, "SUGAR HIGH", "crit");
+  su.flash = 0.5;
+  if (cfg.hairTag && su.tagCd <= 0) { su.tagT = SG_TAG; su.tagCd = cfg.hairTagGap || 0; }
+  var gain = su.n - before, goHigh = !high && cfg.crash && (kind.crash || (cfg.crash.atCap && cap && su.n >= cap));
+  // What it did, over his head (not when it tips him onto the high: that
+  // gets its own call; and not twice in a blink, so a full mat stays readable).
+  if (kind.crash && !high) floater(b.x, b.y - b.r - 30, "COTTON CANDY!", "crit");
+  else if (gain > 0 && !goHigh && sg.floater && (s.kind === "donut" || su.floatT <= 0)) {
+    floater(b.x, b.y - b.r - 30, "+" + gain * (sg.crit || 0) + "% CRIT", s.kind === "donut" ? "crit" : "note");
+    su.floatT = 0.7;
   }
-  for (var i = 0; i < 16 && !reduceMotion; i++) {
+  if (goHigh) startSugarHigh(b);
+  else {
+    var v = cfg.voice || {};
+    if (s.kind === "donut") sgSay(b, "donut");
+    else if (v.candy && Math.random() * 100 < v.candy) sgSay(b, "candy");
+  }
+  for (var i = 0; i < 14 && !reduceMotion; i++) {
     var a = nativeRandom() * Math.PI * 2, sp = 80 + nativeRandom() * 200;
     particles.push({ x: b.x, y: b.y - b.r * 0.7, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60, life: 0.5, max: 0.5, size: 2 + nativeRandom() * 2.5, color: b.char.look ? b.char.look.hairColors[i % b.char.look.hairColors.length] : sweetColor(s) });
   }
   playSweetEat(s.kind);
-  crowdReact(s.kind === "donut" ? 0.6 : 0.3);
+  crowdReact(s.kind === "donut" || kind.crash ? 0.5 : 0.2);
 }
 
-function stompSweet(b, s) {
-  s.gone = true;
-  floater(s.x, s.y - SG_R - 14, "STOMPED!", "crit");
-  sgSplats.push({ x: s.x, y: s.y, t: 0, color: sweetColor(s), kind: s.kind, rot: Math.random() * 6 });
-  b.squash = { t: 0.12, max: 0.12, nx: 0, ny: -1 };
-  for (var i = 0; i < 14 && !reduceMotion; i++) {
-    var a = nativeRandom() * Math.PI * 2, sp = 100 + nativeRandom() * 220;
-    particles.push({ x: s.x, y: s.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.4, max: 0.4, size: 2 + nativeRandom() * 3, color: i % 3 ? sweetColor(s) : "#ffffff" });
-  }
-  if (!reduceMotion) shake = Math.max(shake, 5);
-  playSweetStomp();
-  crowdReact(0.25);
+function startSugarHigh(b) {
+  var cr = sgCfg(b).crash, su = b.sugar;
+  su.highT = su.highMax = cr.high || 3;
+  b.sgDrift = null; b.sgHuntT = 0;
+  floater(b.x, b.y - b.r - 56, "SUGAR HIGH!", "crit");
+  sgSay(b, "sugarHigh");
+  playSugarHigh();
+  crowdReact(0.5);
 }
-
 function startSugarCrash(b) {
   var cr = sgCfg(b).crash, su = b.sugar;
-  su.highT = 0; su.chanceT = 0; su.multT = 0;
+  su.highT = 0;
+  su.n = Math.floor(su.n * (cr.keep || 0));
+  su.drainT = 0;
   su.crashT = cr.time;
+  b.sgDrift = null; b.sgHuntT = 0;
   addSlow(b, cr.slow, cr.time, "sugarcrash");
   if (cr.attackSlow) b.atkRate = b.sgAtkRate * cr.attackSlow;
   floater(b.x, b.y - b.r - 30, "SUGAR CRASH", "crit");
+  sgSay(b, "crash");
   playSugarCrash();
   crowdReact(0.3);
 }
 function endSugarCrash(b) {
-  b.sugar.crashT = 0; b.sugar.n = 0;
+  b.sugar.crashT = 0;
   b.atkRate = b.sgAtkRate;
+  endDrift(b);
+  sgSay(b, "wakeUp");
 }
 
 // ---------------------------------------------------------------- every frame
 
-// From update(): the sweets (spawning, falling, the race, eating and
-// stomping), his boosts, sugar highs and crashes, and his voice lines.
+// From update(): the candy rain (dropping, melting), his lean toward them,
+// eating them, his sugar, highs and crashes, and his voice lines.
 function tickOmalley(dt) {
   sgClock += dt;
   var sugas = balls.filter(function (b) { return !!sgCfg(b); });
@@ -427,15 +545,21 @@ function tickOmalley(dt) {
   var frozen = (typeof allAmericanOn === "function" && allAmericanOn()) || (typeof auraFarmOn === "function" && auraFarmOn());
 
   sugas.forEach(function (b) {
-    var su = b.sugar, cfg = sgCfg(b);
+    var su = b.sugar, cfg = sgCfg(b), sg = cfg.sugar || {};
     if (b.sgKo) tickSugaKo(b, dt);
     su.flash = Math.max(0, su.flash - dt);
     su.tagT = Math.max(0, su.tagT - dt);
+    su.tagCd = Math.max(0, su.tagCd - dt);
+    su.pop = Math.max(0, su.pop - dt);
+    su.floatT = Math.max(0, su.floatT - dt);
     if (!b.alive) return;
-    su.chanceT = Math.max(0, su.chanceT - dt);
-    su.multT = Math.max(0, su.multT - dt);
     if (su.highT > 0) { su.highT -= dt; if (su.highT <= 0) startSugarCrash(b); }
     else if (su.crashT > 0) { su.crashT -= dt; if (su.crashT <= 0) endSugarCrash(b); }
+    else if (su.n > 0 && sg.drain && started && !over && !frozen) {
+      su.drainT += dt;
+      if (su.drainT >= sg.drain) { su.drainT = 0; su.n--; } // going without
+    }
+    if (b.sgHuntT > 0) b.sgHuntT = Math.max(0, b.sgHuntT - dt);
     // "Welcome to the Suga Show." as the fight gets going.
     var v = cfg.voice || {};
     if (!b.sgSaid && started && sgFightT > 0.6) {
@@ -452,27 +576,20 @@ function tickOmalley(dt) {
       if (v.win && b.alive && !balls[1 - b.id].alive && !b.sgWon && sgWinT >= SG_WIN_BEAT) { b.sgWon = true; say(b, "Is this real?"); }
     });
   }
-
-  sgSplats.forEach(function (p) { p.t += dt; });
-  sgSplats = sgSplats.filter(function (p) { return p.t < 2.6; });
   if (frozen) return;
 
-  // A new sweet once the last one's gone (not while he's on a sugar high
-  // or crashed, or anyone's in the middle of a special).
-  var sw0 = sgCfg(sugas[0]).sweets;
-  if (sw0 && started && !over && !sgSweets.length) {
-    var anyUp = sugas.some(function (b) { return b.alive && !sugaCrashed(b) && !sugaHigh(b); });
-    if (anyUp && !jumboHold(null)) {
-      sgSpawnT -= dt;
-      if (sgSpawnT <= 0) {
-        var spot = pickSweetSpot([], sw0.contested || 0, 0);
-        addSweet(pickSweetKind(sw0.odds || { lollipop: 1 }), spot.x, spot.y, { life: sw0.life });
-        sgSpawnT = sgRand(sw0.every);
-      }
+  // The rain: one more every `every` seconds while there's room on the mat
+  // (held while anyone's special is going on).
+  var cc = sgCfg(sugas[0]).candy, scene = jumboHold(null);
+  if (cc && started && !over && !scene) {
+    sgSpawnT -= dt;
+    if (sgSpawnT <= 0) {
+      if (sgSweets.length < (cc.max || 5)) { dropCandy(cc); sgSpawnT = sgRand(cc.every); }
+      else sgSpawnT = 0.4; // full: the next one as soon as there's room
     }
   }
 
-  // Falling in from the Sugar Rush, then sitting there bobbing until it melts.
+  // Dropping in, then sitting there bobbing until it melts.
   sgSweets.forEach(function (s) {
     if (s.fall > 0) {
       s.fall -= dt;
@@ -482,32 +599,27 @@ function tickOmalley(dt) {
     s.t += dt;
     if (s.t >= s.life) s.gone = true;
   });
+  sgSweets = sgSweets.filter(function (s) { return !s.gone; });
 
-  // The race: both of them head for the nearest sweet.
-  balls.forEach(function (b) {
-    var was = b.sgRace;
-    b.sgRace = null;
-    if (!canRace(b)) return;
-    var s = nearestSweet(b);
-    if (!s) return;
-    if (was == null && !sgCfg(b) && sgClock - (b.sgSeen || -9) > 2) {
-      b.sgSeen = sgClock;
-      floater(b.x, b.y - b.r - 30, "!", "crit"); // the opponent spots it and goes for it
-    }
-    b.sgRace = s.id;
-    steerToSweet(b, s, sw0 || { turn: 5, sprint: 1 }, dt);
-  });
+  // His lean toward them, or the hunt after Sugar Rush.
+  sugas.forEach(function (b) { updateSweetTooth(b, dt, scene); });
 
-  // Getting there: he eats it, anyone else stomps it.
+  // Getting there: a candy he touches is his, and the one he's going after
+  // slides into him once he's close, so nothing knocks him off it. Nobody
+  // else touches them.
   sgSweets.forEach(function (s) {
+    s.pull = null;
     if (s.fall > 0 || s.gone) return;
-    balls.forEach(function (b) {
-      if (s.gone || !b.alive || b.koOut) return;
-      var dx = s.x - b.x, dy = s.y - b.y, reach = b.r + SG_R * 0.6;
-      if (dx * dx + dy * dy > reach * reach) return;
-      if (sgCfg(b)) {
-        if (!sugaCrashed(b) && !sugaHigh(b) && !b.grappled && !b.slam && !b.igbb) eatSweet(b, s);
-      } else if (!b.grappled && !b.igbb) stompSweet(b, s);
+    sugas.forEach(function (b) {
+      if (s.gone || !canEat(b, scene)) return;
+      var dx = b.x - s.x, dy = b.y - s.y, d = Math.sqrt(dx * dx + dy * dy) || 1, reach = b.r + SG_R * 0.6 + ((cc && cc.reach) || 0);
+      if (d <= reach) { eatSweet(b, s); return; }
+      if (!b.sgDrift || b.sgDrift.id !== s.id) return;
+      var mag = ((cc && cc.magnet) || 0) * (b.sgHuntT > 0 ? 2 : 1);
+      if (d > reach + mag) return;
+      var step = Math.min(d - reach + 0.5, SG_PULL * dt);
+      s.x += dx / d * step; s.y += dy / d * step; s.pull = b.id;
+      if (d - step <= reach) eatSweet(b, s);
     });
   });
   sgSweets = sgSweets.filter(function (s) { return !s.gone; });
@@ -540,12 +652,11 @@ function applyOmalleyPose(b) {
   if (sugaCrashed(b)) { ctx.translate(b.x, ay); ctx.scale(1.05, 0.93); ctx.translate(-b.x, -ay); }
 }
 
-// Under the fighters: stomped sweets, the crane kick's path, the race lines
-// and the sweets on the mat. From draw().
+// Under the fighters: the crane kick's path and the candies on the mat (and
+// the shadows of the ones dropping in). From draw().
 function drawOmalleyUnder() {
   if (!balls.some(function (b) { return !!sgCfg(b); })) return;
   if (typeof allAmericanOn === "function" && allAmericanOn()) return; // out on the highway
-  sgSplats.forEach(drawSplat);
   balls.forEach(function (b) {
     var m = b.crane;
     if (!b.alive || !m || m.phase !== "pose") return;
@@ -569,55 +680,42 @@ function drawOmalleyUnder() {
     }
     ctx.restore();
   });
-  // Who's racing for which sweet: a dashed line from each of them to it.
-  balls.forEach(function (b) {
-    if (!b.alive || b.sgRace == null) return;
-    var s = sgSweets.filter(function (q) { return q.id === b.sgRace; })[0];
-    if (!s) return;
-    var dx = s.x - b.x, dy = s.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
-    if (d < b.r + SG_R + 6) return;
-    var x0 = b.x + ux * (b.r + 4), y0 = b.y + uy * (b.r + 4), x1 = s.x - ux * (SG_R + 8), y1 = s.y - uy * (SG_R + 8);
-    ctx.save();
-    ctx.globalAlpha = 0.75; ctx.lineCap = "round";
-    ctx.strokeStyle = theme.wall; ctx.lineWidth = 6; ctx.setLineDash([9, 8]); ctx.lineDashOffset = -sgClock * 60;
-    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-    ctx.strokeStyle = b.char.color; ctx.lineWidth = 3.5;
-    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = b.char.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x1 + ux * 6, y1 + uy * 6); ctx.lineTo(x1 - ux * 6 - uy * 7, y1 - uy * 6 + ux * 7); ctx.lineTo(x1 - ux * 6 + uy * 7, y1 - uy * 6 - ux * 7); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.restore();
-  });
   sgSweets.forEach(function (s) {
     if (s.fall > 0) { drawSweetShadow(s); return; }
     var melt = Math.max(0, Math.min(1, (s.life - s.t) / 0.8)), pop = Math.min(1, s.t / 0.25);
     var size = SG_R * (pop < 1 ? easeOut(pop) * 1.25 - 0.25 * pop * pop : 1) * (0.4 + 0.6 * melt);
     var blink = s.life - s.t < 2 ? 0.55 + 0.45 * Math.abs(Math.cos(s.t * 9)) : 1;
+    // The one he's going after gets a ring in his colour; a golden donut
+    // always has a gold one. The rest sit quiet so a full mat stays readable.
+    var after = null;
+    balls.forEach(function (b) { if (b.alive && b.sgDrift && b.sgDrift.id === s.id) after = b; });
     ctx.save();
-    ctx.globalAlpha = melt * blink;
-    // A ring pulsing out from it so it can't be missed.
-    var pr = (sgClock * 1.4 + s.id * 0.3) % 1;
-    ctx.globalAlpha = melt * (1 - pr) * 0.7;
-    ctx.strokeStyle = sweetColor(s); ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(s.x, s.y, SG_R * (1.2 + pr * 1.6), 0, Math.PI * 2); ctx.stroke();
+    if (after || s.kind === "donut") {
+      var pr = (sgClock * 1.6 + s.id * 0.3) % 1;
+      ctx.globalAlpha = melt * (1 - pr) * 0.8;
+      ctx.strokeStyle = after ? after.char.color : "#ffd34d"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(s.x, s.y, SG_R * (1.2 + pr * 1.4), 0, Math.PI * 2); ctx.stroke();
+    }
     ctx.globalAlpha = melt * blink;
     ctx.fillStyle = "rgba(0,0,0,0.18)";
     ctx.beginPath(); ctx.ellipse(s.x, s.y + SG_R * 0.85, size * 0.85, size * 0.28, 0, 0, Math.PI * 2); ctx.fill();
-    drawSweet(s, s.x, s.y + Math.sin(sgClock * 4 + s.id) * 1.6 - 2, size);
+    var wob = s.pull != null ? Math.sin(sgClock * 40) * 0.25 : 0; // being pulled in
+    drawSweet(s, s.x, s.y + Math.sin(sgClock * 4 + s.id) * 1.6 - 2, size, wob);
     ctx.restore();
   });
 }
 
-// Over the fighters: Sugar Rush sweets falling in. From draw().
+// Over the fighters: candies dropping in (the rain, and the Sugar Rush
+// shower from higher up). From draw().
 function drawOmalleyOver() {
   if (!sgSweets.length || (typeof allAmericanOn === "function" && allAmericanOn())) return;
   sgSweets.forEach(function (s) {
     if (!(s.fall > 0)) return;
-    var k = s.fall / s.fallMax, h = k * k * SG_FALL_H;
+    var k = s.fall / s.fallMax, h = k * k * s.high;
     ctx.save();
     ctx.globalAlpha = Math.min(1, (1 - k) * 4) * 0.6;
     ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 4; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(s.x, s.y - h - SG_R * 1.4); ctx.lineTo(s.x, s.y - h - SG_R * 1.4 - 30 - 60 * k); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(s.x, s.y - h - SG_R * 1.4); ctx.lineTo(s.x, s.y - h - SG_R * 1.4 - 24 - 50 * k); ctx.stroke();
     ctx.globalAlpha = Math.min(1, (1 - k) * 4);
     drawSweet(s, s.x, s.y - h, SG_R * (1 + k * 0.35), sgClock * 5 + s.spin);
     ctx.restore();
@@ -635,6 +733,10 @@ function drawSweetShadow(s) {
 function drawSweet(s, x, y, size, rot) {
   if (s.kind === "donut") drawDonut(x, y, size, rot || 0);
   else if (s.kind === "gummy") drawGummy(x, y, size, s.color, rot || 0);
+  else if (s.kind === "wrapped") drawWrappedCandy(x, y, size, s.color, rot || 0);
+  else if (s.kind === "gumball") drawGumball(x, y, size, s.color);
+  else if (s.kind === "candyCane") drawCandyCane(x, y, size, rot || 0);
+  else if (s.kind === "cottonCandy") drawCottonCandy(x, y, size, rot || 0);
   else drawLollipop(x, y, size, rot || 0);
 }
 // A pink and white swirl lollipop on a stick.
@@ -735,26 +837,85 @@ function sparkle(x, y, s) {
   ctx.quadraticCurveTo(x, y, x - s, y); ctx.quadraticCurveTo(x, y, x, y - s);
   ctx.fill();
 }
-// A stomped sweet flattened on the mat, fading away.
-function drawSplat(p) {
-  var k = Math.max(0, 1 - p.t / 2.6);
+// A hard candy in a twisted wrapper, striped.
+function drawWrappedCandy(x, y, R, col, rot) {
   ctx.save();
-  ctx.globalAlpha = 0.8 * Math.min(1, k * 2);
-  ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, 0.62);
-  ctx.fillStyle = p.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2;
-  ctx.beginPath();
-  for (var i = 0; i <= 12; i++) {
-    var a = i / 12 * Math.PI * 2, rr = SG_R * (i % 2 ? 1.25 : 0.85) * (1 + 0.15 * Math.sin(i * 3.1));
-    if (!i) ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); else ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
-  }
-  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.translate(x, y); ctx.rotate(rot - 0.35);
+  ctx.lineJoin = "round"; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5; ctx.fillStyle = col;
+  [-1, 1].forEach(function (k) { // the twists
+    ctx.beginPath();
+    ctx.moveTo(k * R * 0.45, 0); ctx.lineTo(k * R * 1.18, -R * 0.52);
+    ctx.quadraticCurveTo(k * R * 1.0, 0, k * R * 1.18, R * 0.52);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  });
+  ctx.beginPath(); ctx.ellipse(0, 0, R * 0.68, R * 0.54, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.lineWidth = R * 0.17;
+  for (var i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(i * R * 0.36 - R * 0.35, -R * 0.6); ctx.lineTo(i * R * 0.36 + R * 0.35, R * 0.6); ctx.stroke(); }
+  ctx.restore();
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.ellipse(0, 0, R * 0.68, R * 0.54, 0, 0, Math.PI * 2); ctx.stroke();
   ctx.fillStyle = "rgba(255,255,255,0.6)";
-  [[0.7, -0.9], [-1.4, 0.4], [1.5, 0.8], [-0.3, 1.5]].forEach(function (q) { ctx.beginPath(); ctx.arc(q[0] * SG_R, q[1] * SG_R, 2.2, 0, Math.PI * 2); ctx.fill(); });
+  ctx.beginPath(); ctx.ellipse(-R * 0.25, -R * 0.24, R * 0.2, R * 0.09, -0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+// A shiny gumball.
+function drawGumball(x, y, R, col) {
+  var d = R * 0.74;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = col; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(0, 0, d, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.fillStyle = "rgba(0,0,0,0.16)";
+  ctx.beginPath(); ctx.arc(d * 0.3, d * 0.35, d, 0, Math.PI * 2); ctx.arc(0, 0, d * 1.4, 0, Math.PI * 2, true); ctx.fill();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(0, 0, d, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,0.75)";
+  ctx.beginPath(); ctx.ellipse(-d * 0.34, -d * 0.38, d * 0.3, d * 0.17, -0.6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(d * 0.1, -d * 0.6, d * 0.08, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+// A red and white candy cane.
+function drawCandyCane(x, y, R, rot) {
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(rot + 0.3);
+  var path = function () {
+    ctx.beginPath();
+    ctx.moveTo(R * 0.28, R * 1.0); ctx.lineTo(R * 0.28, -R * 0.32);
+    ctx.arc(-R * 0.14, -R * 0.32, R * 0.42, 0, Math.PI, true);
+    ctx.lineTo(-R * 0.56, -R * 0.08);
+  };
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = R * 0.56; path(); ctx.stroke();
+  ctx.strokeStyle = "#ffffff"; ctx.lineWidth = R * 0.36; path(); ctx.stroke();
+  ctx.lineCap = "butt"; ctx.strokeStyle = "#e8263b"; ctx.setLineDash([R * 0.2, R * 0.2]); path(); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+// Cotton candy on a paper cone, pink and blue: pure sugar, the one that
+// crashes him.
+function drawCottonCandy(x, y, R, rot) {
+  var puffs = [[0, -0.42, 0.42], [-0.44, -0.2, 0.33], [0.44, -0.2, 0.33], [-0.2, 0.02, 0.32], [0.22, 0.02, 0.32], [0, -0.8, 0.28], [-0.32, -0.62, 0.24], [0.33, -0.6, 0.24]];
+  ctx.save();
+  ctx.translate(x, y + R * 0.1); ctx.rotate(rot * 0.5);
+  // the cone
+  ctx.fillStyle = "#f6f2ea"; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2.5; ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.moveTo(-R * 0.3, R * 0.15); ctx.lineTo(R * 0.3, R * 0.15); ctx.lineTo(0, R * 1.08); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = "#2d7ff9"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-R * 0.16, R * 0.42); ctx.lineTo(R * 0.12, R * 0.62); ctx.stroke();
+  // the fluff: an outline, then the puffs
+  ctx.fillStyle = theme.wall;
+  puffs.forEach(function (p) { ctx.beginPath(); ctx.arc(p[0] * R, p[1] * R, p[2] * R + 2.4, 0, Math.PI * 2); ctx.fill(); });
+  puffs.forEach(function (p, i) { ctx.fillStyle = i % 3 === 1 ? "#9fd8ff" : "#ff9fd2"; ctx.beginPath(); ctx.arc(p[0] * R, p[1] * R, p[2] * R, 0, Math.PI * 2); ctx.fill(); });
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.beginPath(); ctx.arc(-R * 0.14, -R * 0.56, R * 0.12, 0, Math.PI * 2); ctx.arc(R * 0.28, -R * 0.3, R * 0.08, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
 
 // From draw(), per fighter, after its hands: the crane kick and Sugar Rush
-// arms and legs, the boost ring, the sugar pips, the crash and the hair tag.
+// arms and legs, the sugar high's ring, the crash, the SUGAR pill and the
+// hair tag.
 function drawOmalley(b) {
   var cfg = sgCfg(b);
   if (!cfg || !b.alive) return;
@@ -763,17 +924,14 @@ function drawOmalley(b) {
   else if (b.crane && b.crane.phase === "leap") drawCraneLeap(b, lift);
   else if (sugarRushCalling(b) || b.sgKo) drawSugarRushArms(b);
 
-  // The boost: a ring draining as it runs out, pink for crit chance, orange
-  // for crit damage, gold for both.
-  var bt = Math.max(su.chanceT, su.multT), bmax = (cfg.sweets && cfg.sweets.boost && cfg.sweets.boost.time) || 4;
-  if (bt > 0) {
-    var col = su.chanceT > 0 && su.multT > 0 ? "#ffd34d" : (su.chanceT > 0 ? "#ff5fa8" : "#ff9f1c");
+  // On the sugar high: a gold ring draining as it runs out, sparkles round it.
+  if (sugaHigh(b)) {
     ctx.save();
     ctx.lineCap = "round";
-    ctx.globalAlpha = 0.35; ctx.strokeStyle = col; ctx.lineWidth = 9;
+    ctx.globalAlpha = 0.35; ctx.strokeStyle = "#ffd34d"; ctx.lineWidth = 9;
     ctx.beginPath(); ctx.arc(b.x, b.y - lift, b.r + 7, 0, Math.PI * 2); ctx.stroke();
     ctx.globalAlpha = 0.95; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.arc(b.x, b.y - lift, b.r + 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, bt / bmax)); ctx.stroke();
+    ctx.beginPath(); ctx.arc(b.x, b.y - lift, b.r + 7, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, su.highT / (su.highMax || 1))); ctx.stroke();
     ctx.fillStyle = "#ffffff";
     for (var i = 0; i < 4; i++) {
       var a = sgClock * 3 + i * Math.PI / 2;
@@ -796,32 +954,19 @@ function drawOmalley(b) {
     ctx.globalAlpha = 0.28 * ck2; ctx.fillStyle = "#5b6475";
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = ck2;
-    ctx.font = '900 18px "Barlow Condensed", "Arial Narrow", sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.lineWidth = 4; ctx.lineJoin = "round"; ctx.strokeStyle = theme.floor; ctx.fillStyle = "#4a6fd1";
     for (var z = 0; z < 3; z++) {
       var zk = (sgClock * 0.6 + z / 3) % 1;
       ctx.globalAlpha = ck2 * Math.sin(zk * Math.PI);
-      var zx = b.x + b.r * 0.6 + zk * 16, zy = b.y - b.r * 0.9 - zk * 34;
+      var zx = b.x - b.r * 0.75 - zk * 14, zy = b.y - b.r * 0.4 - zk * 30;
       ctx.font = '900 ' + Math.round(12 + zk * 10) + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
       ctx.strokeText("Z", zx, zy); ctx.fillText("Z", zx, zy);
     }
     ctx.restore();
   }
-  // Sugar pips beside his health bar: one per sweet toward the crash.
-  var after = cfg.crash ? cfg.crash.after : 0;
-  if (after && cfg.sweets && (su.n > 0 || sgSweets.length)) {
-    var by = b.y - b.r - 18;
-    if (by < 4) by = b.y + b.r + 10;
-    ctx.save();
-    for (var p = 0; p < after; p++) {
-      var px = b.x + 32 + 8 + p * 11, py = by + 4, full = p < su.n;
-      var hot = sugaHigh(b) ? 1 + 0.25 * Math.sin(sgClock * 20) : 1;
-      ctx.fillStyle = sugaCrashed(b) ? "#8a8f9a" : (full ? "#ff5fa8" : "rgba(255,255,255,0.75)");
-      ctx.strokeStyle = theme.wall; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(px, py, 4.2 * (full ? hot : 1), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    }
-    ctx.restore();
-  }
+  // How much sugar is in him, beside his health bar.
+  if (cfg.sugar && (su.n > 0 || sugaHigh(b) || sugaCrashed(b))) drawSugarPill(b, cfg.sugar);
   // Which fight's hair he's in now (his real event colours).
   if (su.tagT > 0 && su.event) {
     var tk = Math.min(1, su.tagT / 0.3, (SG_TAG - su.tagT) / 0.15 + 0.2);
@@ -835,6 +980,31 @@ function drawOmalley(b) {
     ctx.fillStyle = cols[0]; ctx.fillText(su.event + " HAIR", tx, ty + 1);
     ctx.restore();
   }
+}
+// "SUGAR x4" beside his health bar, filling up toward the cap: gold and
+// "SUGAR HIGH" on the high, grey in a crash. It swells as it goes up.
+function drawSugarPill(b, sg) {
+  var su = b.sugar, high = sugaHigh(b), crashed = sugaCrashed(b);
+  var label = high ? "SUGAR HIGH" : "SUGAR x" + su.n;
+  var by = b.y - b.r - 18;
+  if (by < 4) by = b.y + b.r + 10; // (where the health bar goes when he's up against the top)
+  ctx.save();
+  ctx.font = '900 14px "Barlow Condensed", "Arial Narrow", sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  var w = ctx.measureText(label).width + 14, h = 17, onRight = b.x + 37 + w <= W - 2, cy = by + 4; // (to the right of his health bar, or the left by the cage)
+  var sc = 1 + 0.35 * (su.pop / SG_POP) + (high ? 0.06 * Math.sin(sgClock * 18) : 0);
+  ctx.translate(onRight ? b.x + 37 : b.x - 37, cy); ctx.scale(sc, sc); // (it swells away from the health bar)
+  var x0 = onRight ? 0 : -w, y0 = -h / 2;
+  ctx.fillStyle = crashed ? "#d3d7dd" : "#ffffff";
+  ctx.beginPath(); ctx.roundRect(x0, y0, w, h, h / 2); ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.fillStyle = crashed ? "#9aa0ab" : (high ? "#ffd34d" : "#ff8fc6");
+  ctx.fillRect(x0, y0, w * (high ? 1 : Math.min(1, su.n / (sg.cap || 1))), h);
+  ctx.restore();
+  ctx.lineWidth = 2; ctx.strokeStyle = "#16211f";
+  ctx.beginPath(); ctx.roundRect(x0, y0, w, h, h / 2); ctx.stroke();
+  ctx.fillStyle = crashed ? "#4b5160" : "#16211f";
+  ctx.fillText(label, x0 + w / 2, 1);
+  ctx.restore();
 }
 
 // Up on one leg for the crane kick: the kicking knee raised toward them,
@@ -933,11 +1103,12 @@ function playCraneCall() {
 function playCraneSnap() {
   sgAudio(function (ac, t) { caneBurst(ac, t, 4200, 1.6, 0.55, 0.05); caneTone(ac, t, "triangle", 900, 300, 0.25, 0.1); });
 }
-// A sweet popping up (a shimmer for the golden donut).
-function playSweetPop(kind) {
+// A candy landing (a soft plip for the steady rain, a shimmer for the golden donut).
+function playSweetPop(kind, soft) {
+  var g = soft ? 0.45 : 1;
   sgAudio(function (ac, t) {
-    caneBurst(ac, t, 1900, 2, 0.35, 0.04);
-    caneTone(ac, t, "sine", 520, 1250, 0.25, 0.09);
+    caneBurst(ac, t, 1900, 2, 0.35 * g, 0.04);
+    caneTone(ac, t, "sine", 520, 1250, 0.25 * g, 0.09);
     if (kind === "donut") [1320, 1660, 1980, 2640].forEach(function (f, i) { caneTone(ac, t + 0.06 + i * 0.06, "sine", f, f, 0.16, 0.2); });
   });
 }
@@ -950,12 +1121,11 @@ function playSweetEat(kind) {
     notes.forEach(function (f, i) { caneTone(ac, t + 0.16 + i * 0.07, "triangle", f, f, 0.22, 0.18); });
   });
 }
-// Stomped: a thud and a crunch.
-function playSweetStomp() {
+// The sugar high: a fast buzzing trill up the scale.
+function playSugarHigh() {
   sgAudio(function (ac, t) {
-    caneTone(ac, t, "sine", 150, 55, 0.6, 0.14);
-    caneBurst(ac, t, 650, 0.8, 0.55, 0.08);
-    for (var i = 0; i < 3; i++) caneBurst(ac, t + 0.02 + i * 0.025, 2600 + i * 500, 1.2, 0.3, 0.03);
+    [784, 988, 1175, 1568, 1976, 2349].forEach(function (f, i) { caneTone(ac, t + i * 0.05, "square", f, f * 1.02, 0.08, 0.09); });
+    caneTone(ac, t + 0.3, "sawtooth", 1568, 2093, 0.08, 0.3);
   });
 }
 // The crash: a sad trombone slide, wah-wahhh.
