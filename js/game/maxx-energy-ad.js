@@ -1,7 +1,8 @@
 // Maxx Energy (Joe, 2026-11-13): an energy-drink parody for Max Holloway,
 // the man with the most strikes in the game. It runs on the jumbotron (a
-// banner in the test arena) as his Button Mash kicks in after the Flashback
-// (holloway.js), so once a fight at most.
+// banner in the test arena) the first time his special, The Middle, ends
+// in a fight (endMiddle, holloway.js), as long as the fight's still on.
+// Joe's music plays under it.
 //   - A black can with his teal, a red-and-blue hibiscus wrap (Waianae,
 //     Hawaii) and the MAXX logo, slammed down, cracked open: PSSHT.
 //   - Max grabs it, chugs it (GLUG GLUG GLUG), smashes the empty can on his
@@ -10,8 +11,9 @@
 //     445 (his real UFC record for significant strikes in one fight,
 //     against Calvin Kattar in 2021).
 //   - MAXX ENERGY. MAX VOLUME. "Zero sugar. Zero breaks."
-//   - Sound: the can cracking, fizz, a bass hit, gulps, the crunch, a
-//     whoosh and a far-off clang, a riser and the counter ticking.
+//   - Sound: Joe's music (maxxMusic, sound-clips.js) under the can
+//     cracking, fizz, a bass hit, gulps, the crunch, a whoosh and a far-off
+//     clang, the counter ticking and a hit on MAX VOLUME.
 // It goes through queueJumboAd like every ad, so it never overlaps another.
 // Plus a silent still for the random rotation (drawMaxxStill), and
 // drawMaxxCan for anywhere else a can is wanted.
@@ -19,12 +21,14 @@
 
 var MAXX_SHOW = 10.0;
 var MAXX_TEAL = "#16c2b0", MAXX_RED = "#e3173d", MAXX_BLUE = "#1a4fd6";
-var maxxShow = 0, maxxId = 0, maxxDone = false, maxxOut = null;
+var maxxShow = 0, maxxId = 0, maxxDone = false, maxxOut = null, maxxMusicSrc = null;
 
 function resetMaxxAd() { maxxShow = 0; maxxDone = false; stopMaxxSound(); }
-// From startMash (holloway.js): his Button Mash, right after the Flashback.
-function maxxOnMash(b) {
+// From endMiddle (holloway.js): his special just ended. Not when it
+// finished the fight.
+function maxxOnMiddle(b, other) {
   if (maxxDone || (typeof galleryDemo !== "undefined" && galleryDemo)) return;
+  if (!b.alive || !other || !other.alive || other.koOut) return;
   maxxDone = true;
   queueJumboAd(MAXX_SHOW, function () { maxxShow = MAXX_SHOW; maxxId = b.id; playMaxxSound(); }, b);
 }
@@ -454,10 +458,10 @@ function drawMaxxStill(x, y, w, h, k, ch) {
   ctx.strokeStyle = MAXX_TEAL; ctx.lineWidth = 3 * k; ctx.strokeRect(x + 2 * k, y + 2 * k, w - 4 * k, h - 4 * k);
 }
 
-// Synth sound: the can slamming down, cracking open (PSSHT) and fizzing, a
-// deep bass hit with the logo, gulps, the CRUNCH, the throw and a far-off
-// clang, a power-chord stab on the flex, the counter ticking up through
-// the flurry on a rising riser, and a big hit on MAX VOLUME.
+// Joe's music, with synth effects on top: the can slamming down, cracking
+// open (PSSHT) and fizzing, a deep bass hit with the logo, gulps, the
+// CRUNCH, the throw and a far-off clang, a thump on the flex, the counter
+// ticking up through the flurry, and a big hit on MAX VOLUME.
 function playMaxxSound() {
   try {
     var ac = getAudioCtx();
@@ -467,6 +471,7 @@ function playMaxxSound() {
     var out = maxxOut = ac.createGain(), now = ac.currentTime + 0.03;
     out.gain.value = 0.7; out.connect(ac.destination);
     if (typeof duckMusic === "function") duckMusic(now, now + MAXX_SHOW);
+    withClip("maxxMusic", function () { if (maxxShow > 0 && maxxOut) maxxMusicSrc = playClip("maxxMusic", 0.55); });
     var nb = ac.createBuffer(1, Math.floor(ac.sampleRate * 1.5), ac.sampleRate), nd = nb.getChannelData(0);
     for (var i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
     function noise(at, len, f, q, vol, type, f2) {
@@ -506,31 +511,20 @@ function playMaxxSound() {
     [1480, 2210, 3170].forEach(function (f, i) { var co = ac.createOscillator(), cg = ac.createGain(), at2 = now + MX_THROW + 0.55;
       co.type = "triangle"; co.frequency.value = f; cg.gain.setValueAtTime(0.0001, at2); cg.gain.exponentialRampToValueAtTime(0.06 / (i + 1), at2 + 0.005);
       cg.gain.exponentialRampToValueAtTime(0.0001, at2 + 0.4); co.connect(cg); cg.connect(out); co.start(at2); co.stop(at2 + 0.45); });
-    // The flex: a power-chord stab.
+    // The flex: a thump.
     boom(now + MX_FLEX, 80, 0.6, 0.6);
-    [110, 165, 220].forEach(function (f) { var fo = ac.createOscillator(), fg = ac.createGain(), fl2 = ac.createBiquadFilter();
-      fo.type = "sawtooth"; fo.frequency.value = f; fl2.type = "lowpass"; fl2.frequency.value = 1400;
-      fg.gain.setValueAtTime(0.0001, now + MX_FLEX); fg.gain.exponentialRampToValueAtTime(0.06, now + MX_FLEX + 0.01); fg.gain.exponentialRampToValueAtTime(0.0001, now + MX_FLEX + 0.8);
-      fo.connect(fl2); fl2.connect(fg); fg.connect(out); fo.start(now + MX_FLEX); fo.stop(now + MX_FLEX + 0.85); });
-    // Riser through the flurry, with the counter ticking.
+    // The counter ticking through the flurry.
     var f0 = now + MX_FLURRY, f1 = now + MX_VOLUME, fd = MX_VOLUME - MX_FLURRY;
-    var o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter();
-    o.type = "sawtooth"; o.frequency.setValueAtTime(110, f0); o.frequency.exponentialRampToValueAtTime(880, f1 - 0.1);
-    lp.type = "lowpass"; lp.frequency.setValueAtTime(400, f0); lp.frequency.exponentialRampToValueAtTime(5000, f1 - 0.1);
-    g.gain.setValueAtTime(0.0001, f0); g.gain.exponentialRampToValueAtTime(0.07, f1 - 0.5); g.gain.exponentialRampToValueAtTime(0.0001, f1);
-    o.connect(lp); lp.connect(g); g.connect(out); o.start(f0); o.stop(f1 + 0.1);
     for (var tk = 0; tk < 40; tk++) {
       var at = f0 + fd * Math.sqrt(tk / 40);
       noise(at, 0.03, 1800 + tk * 40, 3, 0.18);
     }
     // MAX VOLUME: a big hit.
     boom(f1, 90, 0.9, 0.75); noise(f1, 0.5, 1200, 0.5, 0.35);
-    [523.25, 659.25, 783.99].forEach(function (f) { var oo = ac.createOscillator(), gg = ac.createGain(); oo.type = "square"; oo.frequency.value = f;
-      gg.gain.setValueAtTime(0.0001, f1); gg.gain.exponentialRampToValueAtTime(0.04, f1 + 0.01); gg.gain.exponentialRampToValueAtTime(0.0001, f1 + 0.9);
-      oo.connect(gg); gg.connect(out); oo.start(f1); oo.stop(f1 + 1.0); });
   } catch (e) { /* never let audio break the game */ }
 }
 function stopMaxxSound() {
+  if (maxxMusicSrc) { try { maxxMusicSrc.stop(); } catch (e) { /* already stopped */ } maxxMusicSrc = null; }
   if (!maxxOut) return;
   try { maxxOut.disconnect(); } catch (e) { /* already gone */ }
   maxxOut = null;

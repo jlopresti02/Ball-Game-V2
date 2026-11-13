@@ -400,7 +400,6 @@ function runFlashback(self, other, a, cfg, dt) {
 function startMash(self) {
   self.hwMash = { t: 0, left: 0, n: 0, hits: 0, gap: 0, chase: 0, side: 1, spun: false };
   floater(self.x, self.y - self.r - 34, "BUTTON MASH!", "crit");
-  maxxOnMash(self); // his Maxx Energy ad on the jumbotron (maxx-energy-ad.js)
   crowdReact(0.7);
   if (hwLine(self, "zone")) say(self, HW_LINES.zone);
 }
@@ -725,6 +724,7 @@ function endMiddle(self, other) {
   if (hwClockFx && hwClockFx.id === self.id && !hwClockFx.out) hwClockFx.out = 0.001;
   if (self.alive) setSpeed(self, self.baseSpeed || SPEED);
   if (other && other.alive && !other.koOut && inOrdinaryMovement(other) && Math.abs(other.vx) + Math.abs(other.vy) < 1) setSpeed(other, other.baseSpeed || SPEED);
+  maxxOnMiddle(self, other); // his Maxx Energy ad on the jumbotron, first time only (maxx-energy-ad.js)
 }
 
 // From conor.js when one of Conor's lines would make him angry: `chance`% of
