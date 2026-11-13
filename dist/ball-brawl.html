@@ -42335,6 +42335,7 @@ function drawFergusonUnder() {
 
 // Behind him: the Kaioken's red aura. From draw().
 function drawFergusonBehind(b) {
+  drawTfSurfBehind(b); // arms behind him in his Kamehameha stance (ferguson-burrito.js)
   if (!b.alive || !(b.tfKaio || b.tfPower || b.tfMas)) return;
   var r = b.r * tfMasAuraScale(b), t = performance.now() / 1000, burst = b.tfPower ? Math.min(1, b.tfPower.t / TF_POWER) : 1; // (bigger at x10, ferguson-burrito.js)
   var fade = b.tfKaio ? Math.min(1, b.tfKaio.t / 0.5) : b.tfMas ? Math.min(1, b.tfMas.t / 0.5) : burst, sc = b.tfPower ? 0.7 + 0.5 * easeOut(burst) : 1;
@@ -43706,7 +43707,7 @@ function tfBurritoCancel(b) {
 // ball of ki, rolling up the beam; leap: off the ball, flipping back over and
 // away from them (the ball rolls on and pops); charge: "KA-ME-HA-ME", hands
 // cupped at his hip; fire: "HA!"; end.
-var SURF_HOP = 0.3, SURF_LEAP = 0.4, SURF_CHARGE = 0.8, SURF_FIRE = 0.55, SURF_END = 0.3;
+var SURF_HOP = 0.3, SURF_LEAP = 0.4, SURF_CHARGE = 1.3, SURF_FIRE = 0.55, SURF_END = 0.3;
 var tfSurfBalls = []; // the ki ball rolling on after he leaps off it
 // From tfBurritoDodge: a beam (hurtProjectile from the Kamehameha or the
 // rainbow) about to hit him. True if he hops on it instead.
@@ -43771,7 +43772,7 @@ function runTfSurf(self, other, cfg, dt) {
     var lk = easeOut(Math.min(1, s.t / SURF_LEAP));
     self.x = tfClamp(s.lx + s.bx * sc.leapBack * lk, self.r, W - self.r); self.y = tfClamp(s.ly + s.by * sc.leapBack * lk, self.r, H - self.r);
     s.ang = Math.atan2(oy, ox);
-    if (s.t >= SURF_LEAP) { s.phase = "charge"; s.t = 0; floater(self.x, self.y - self.r - 30, "KAMEHAMEHA!", "crit"); playKameCharge(SURF_CHARGE); } // (Goku's move, Joe's clips as on Charles's, kamehameha.js)
+    if (s.t >= SURF_LEAP) { s.phase = "charge"; s.t = 0; s.kside = Math.cos(s.ang) > 0 ? -1 : 1; floater(self.x, self.y - self.r - 30, "KAMEHAMEHA!", "crit"); playKameCharge(SURF_CHARGE); } // (Goku's move, Joe's clips as on Charles's, kamehameha.js)
     return true;
   }
   if (s.phase === "charge") {
@@ -43834,6 +43835,7 @@ function tfSurfLift(s, r) {
 function applyTfSurfPose(b) {
   var s = b.tfSurf;
   if (!s || !b.alive) return false;
+  if (s.phase === "charge" || s.phase === "fire" || s.phase === "end") { withTfKame(b, function () { applyKamePose(b); }); return true; } // Charles's stance (kamehameha.js)
   ctx.translate(b.x, b.y - tfSurfLift(s, b.r)); ctx.rotate(Math.PI * tfSurfK(s)); ctx.translate(-b.x, -b.y);
   return true;
 }
@@ -43883,19 +43885,8 @@ function drawTfSurf(b, over) {
     ctx.restore();
     return true;
   }
-  // The Kamehameha: hands cupped back at his hip, the blue ball growing in
-  // them, then thrust out with the beam.
-  var ca = Math.cos(s.ang), sa = Math.sin(s.ang), px = -sa, py = ca, side = 1;
-  var cup, glow;
-  if (s.phase === "charge") {
-    var ck = Math.min(1, s.t / SURF_CHARGE);
-    cup = { x: b.x - ca * r * 0.55 + px * side * r * 0.95, y: b.y - sa * r * 0.55 + py * side * r * 0.95 };
-    glow = 0.3 + 0.7 * ck;
-  } else {
-    var ext = s.phase === "fire" ? 1 : 1 - Math.min(1, s.t / SURF_END) * 0.6;
-    cup = { x: b.x + ca * r * (0.9 + 0.55 * ext), y: b.y + sa * r * (0.9 + 0.55 * ext) };
-    glow = s.phase === "fire" ? 1 : Math.max(0, 1 - s.t / 0.2);
-  }
+  // The Kamehameha: his beam, then Charles's stance, arms and hands (Joe
+  // approved that one, kamehameha.js) on a stand-in for his move.
   if (s.phase === "fire" || (s.phase === "end" && s.t < 0.2)) {
     var fade = s.phase === "end" ? 1 - s.t / 0.2 : Math.min(1, s.t / 0.05), wdt = b.char.ferguson.burrito.beamSurf.width * fade, t = performance.now() / 1000;
     var len = s.phase === "fire" ? s.ext : s.len, x0 = r * 1.45;
@@ -43908,19 +43899,29 @@ function drawTfSurf(b, over) {
     });
     ctx.restore();
   }
-  [-1, 1].forEach(function (sd) {
-    var sx = b.x + px * sd * r * 0.55, sy = b.y + py * sd * r * 0.55;
-    var hx = cup.x + px * sd * size * 0.45, hy = cup.y + py * sd * size * 0.45;
-    strokeLimb(size * 0.6, armColor(b.char, sd), function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
-    drawGloveAt(hx, hy, size * 0.75, b.char, s.ang);
+  withTfKame(b, function () {
+    var h = kmHandPose(b);
+    if (!h.cup) kmDrawArms(b, h, "front");
+    drawKameHands(b); // (cupped: the arms and the ball; out: the ball)
   });
-  if (glow > 0) {
-    var gr = size * (0.6 + 1.1 * glow), gx = cup.x + (s.phase === "charge" ? 0 : ca * size * 0.8), gy = cup.y + (s.phase === "charge" ? 0 : sa * size * 0.8);
-    var g = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
-    g.addColorStop(0, "rgba(255,255,255," + glow + ")"); g.addColorStop(0.45, "rgba(140,210,255," + (0.85 * glow) + ")"); g.addColorStop(1, "rgba(60,140,255,0)");
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, gr, 0, Math.PI * 2); ctx.fill();
-  }
   return true;
+}
+// Before his body (drawFergusonBehind): arms that go behind it in the stance.
+function drawTfSurfBehind(b) {
+  var s = b.tfSurf;
+  if (!s || !b.alive || !(s.phase === "fire" || s.phase === "end")) return;
+  withTfKame(b, function () { drawKameArmsBehind(b); });
+}
+// Charles's Kamehameha drawing reads b.igbb: a stand-in for Tony's, just
+// while it draws.
+function withTfKame(b, fn) {
+  var s = b.tfSurf, keep = b.igbb, P = SURF_CHARGE - 0.8, m;
+  if (s.phase === "charge") m = s.t < P ? { phase: "power", t: s.t / P * KM_POWER } : { phase: "charge", t: s.t - P };
+  else if (s.phase === "fire") m = { phase: "fire", t: s.t };
+  else m = { phase: "end", t: s.t / SURF_END * KM_END };
+  m.move = "kamehameha"; m.charge = 0.8; m.dx = Math.cos(s.ang); m.dy = Math.sin(s.ang); m.side = s.kside || -1; m.pulse = 0;
+  b.igbb = m;
+  try { fn(); } finally { b.igbb = keep; }
 }
 function playTfSurfHop() { tfAudio(function (ac, t) { caneTone(ac, t, "triangle", 300, 900, 0.2, 0.25); caneBurst(ac, t, 1800, 1.5, 0.25, 0.2); }); }
 function playTfSurfRide() { tfAudio(function (ac, t) { caneBurst(ac, t, 1200, 0.7, 0.35, 1.0); caneTone(ac, t, "sawtooth", 140, 260, 0.12, 1.0); }); }
@@ -56413,15 +56414,15 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261113201222"></script>
-<script src="js/game/update.js?v=20261113201222"></script>
-<script src="js/game/fighter-art.js?v=20261113201222"></script>
-<script src="js/game/draw-attacks.js?v=20261113201222"></script>
-<script src="js/game/wwit-badge.js?v=20261113201222"></script>
-<script src="js/game/stadium.js?v=20261113201222"></script>
-<script src="js/game/draw.js?v=20261113201222"></script>
-<script src="js/ui/gallery.js?v=20261113201222"></script>
-<script src="js/ui/saved-fights.js?v=20261113201222"></script>
-<script src="js/main.js?v=20261113201222"></script>
+  <script src="js/game/intro-msg.js?v=20261113205151"></script>
+<script src="js/game/update.js?v=20261113205151"></script>
+<script src="js/game/fighter-art.js?v=20261113205151"></script>
+<script src="js/game/draw-attacks.js?v=20261113205151"></script>
+<script src="js/game/wwit-badge.js?v=20261113205151"></script>
+<script src="js/game/stadium.js?v=20261113205151"></script>
+<script src="js/game/draw.js?v=20261113205151"></script>
+<script src="js/ui/gallery.js?v=20261113205151"></script>
+<script src="js/ui/saved-fights.js?v=20261113205151"></script>
+<script src="js/main.js?v=20261113205151"></script>
 </body>
 </html>

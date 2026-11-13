@@ -795,6 +795,7 @@ function drawFergusonUnder() {
 
 // Behind him: the Kaioken's red aura. From draw().
 function drawFergusonBehind(b) {
+  drawTfSurfBehind(b); // arms behind him in his Kamehameha stance (ferguson-burrito.js)
   if (!b.alive || !(b.tfKaio || b.tfPower || b.tfMas)) return;
   var r = b.r * tfMasAuraScale(b), t = performance.now() / 1000, burst = b.tfPower ? Math.min(1, b.tfPower.t / TF_POWER) : 1; // (bigger at x10, ferguson-burrito.js)
   var fade = b.tfKaio ? Math.min(1, b.tfKaio.t / 0.5) : b.tfMas ? Math.min(1, b.tfMas.t / 0.5) : burst, sc = b.tfPower ? 0.7 + 0.5 * easeOut(burst) : 1;
