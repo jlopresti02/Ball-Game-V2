@@ -1,6 +1,6 @@
 {
   "id": "c-conor-mcgregor",
-  "rev": 2,
+  "rev": 3,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Conor McGregor",
@@ -66,7 +66,8 @@
     },
     "pressConference": { "on": true, "chance": 40, "at": [7, 14], "room": 140, "talk": 1.5, "anger": 5, "bottles": 3, "bottleDamage": 6, "bottleSpeed": 560, "wait": 2.5, "koBonus": 20 }
   },
-  "potOfGold": { "first": [10, 25], "charge": 3.0, "beamTime": 1.5, "width": 60, "damage": 35, "knockback": 1500, "wallSlams": 2, "slamDamage": 6 },
+  "potOfGold": { "first": [10, 25], "charge": 3.0, "beamTime": 1.5, "width": 60, "damage": 35, "knockback": 1500, "wallSlams": 2, "slamDamage": 6,
+    "endPot": { "on": true, "damage": 15, "radius": 64, "hold": 1.1, "size": 2.0, "label": "JACKPOT!" } },
   "hasSpecial": true,
   "special": { "move": "buscrew", "chargeTime": 30, "hitCut": 3, "punchCut": 2, "call": 0.9, "crew": 4, "crewSpeed": 330, "chase": 3.2, "scene": 9, "brawlTime": 1.0, "pileOn": 0.35, "hitGap": 0.2, "hitDamage": 4, "laneBump": 8, "windup": 0.75, "holdMax": 1.5, "dollyDamage": 24, "dollySpeed": 640, "dollyKnockback": 420 }
 }
