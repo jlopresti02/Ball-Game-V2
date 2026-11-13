@@ -1833,7 +1833,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 7,
+    "rev": 8,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
@@ -1940,6 +1940,20 @@ var SAVED_ROSTER = [
       }
     },
     "blockChance": 10,
+    "elbow": {
+      "damage": 6,
+      "cooldown": 1.6,
+      "speed": 0.26,
+      "reach": 18,
+      "critChance": 45,
+      "critMult": 2.5,
+      "knockback": 170,
+      "cut": {
+        "chance": 35,
+        "time": 4,
+        "dps": 2
+      }
+    },
     "combos": {
       "first": [
         6,
@@ -3362,7 +3376,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
@@ -3456,7 +3470,7 @@ var SAVED_ROSTER = [
       "cooldown": 1.15,
       "speed": 0.26,
       "reach": 14,
-      "critChance": 40,
+      "critChance": 55,
       "critMult": 3,
       "knockback": 150,
       "cut": {

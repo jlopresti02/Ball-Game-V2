@@ -1,6 +1,6 @@
 {
  "id": "c-jon-jones",
- "rev": 7,
+ "rev": 8,
  "builtin": false,
  "weightClass": "lightheavyweight",
  "name": "Jon Jones",
@@ -107,6 +107,7 @@
   }
  },
  "blockChance": 10,
+ "elbow": { "damage": 6, "cooldown": 1.6, "speed": 0.26, "reach": 18, "critChance": 45, "critMult": 2.5, "knockback": 170, "cut": { "chance": 35, "time": 4, "dps": 2 } },
  "combos": { "first": [6, 9], "every": [9, 13], "list": { "jab-spin-elbow": 3, "jab-cross-elbow": 1 } },
  "jon": {
   "swapEvery": 12,

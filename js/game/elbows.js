@@ -33,6 +33,7 @@
 GUARD_SOURCES.elbow = true; // an elbow can knock a guard player onto its back (guard.js)
 
 var ELBOW_HIT = 0.45; // share of the elbow's time when it lands
+var ELBOW_CRIT = 35;  // crit chance (%) when the fighter's elbow block doesn't set one: elbows are sharp (Christian, 2026-11-13)
 
 function elbowCfg(b) { return b && b.char && b.char.elbow; }
 function elbowOn(b) { return !!(b && b.elbowAnim); }
@@ -91,7 +92,7 @@ function landElbow(self, other, e) {
     floater(other.x, other.y - other.r - 8, "WHIFF", "dodge");
     return 0;
   }
-  var critChance = o.critChance != null ? o.critChance : (cfg.critChance || 0);
+  var critChance = o.critChance != null ? o.critChance : (cfg.critChance != null ? cfg.critChance : ELBOW_CRIT);
   var crit = Math.random() * 100 < critChance;
   var base = o.damage != null ? o.damage : (cfg.damage || 6);
   var mult = crit ? (o.critMult != null ? o.critMult : (cfg.critMult || 2)) : 1;
