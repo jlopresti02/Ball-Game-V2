@@ -68,6 +68,7 @@ var SPECIAL_INFO = {
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }
 };
 SPECIAL_INFO.kangaroo = function (sp) { return volkKangarooInfo(sp); }; // Alexander Volkanovski (volkanovski.js)
+SPECIAL_INFO.nickdiaz = function (sp) { return nickDiazSpecialInfo(sp); }; // Nate Diaz (diaz.js)
 SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
 SPECIAL_INFO.middle = function (sp) { return hollowaySpecialInfo(sp); }; // Max Holloway (holloway.js)
 SPECIAL_INFO.buscrew = function (sp) { return busCrewInfo(sp); }; // Conor McGregor (conor.js)
@@ -154,6 +155,7 @@ function galleryMoves(ch) {
   if (ch.holloway) hollowayGalleryMoves(ch, add); // Max Holloway (holloway.js)
   if (ch.strickland) stricklandGalleryMoves(ch, add); // Sean Strickland (strickland.js)
   if (ch.hasTeep) add("🦶", "Teep", teepGalleryInfo(ch.teep)); // the front push kick (teep.js)
+  if (ch.diaz) diazGalleryMoves(ch, add); // Nate Diaz (diaz.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;
@@ -430,6 +432,7 @@ function gallerySounds() {
   volkGallerySounds(groups, synth); // Volkanovski's sounds (volkanovski.js)
   hollowayGallerySounds(groups, synth); // Max Holloway's sounds (holloway.js)
   stricklandGallerySounds(groups, synth); // Sean Strickland's and the teep's sounds (strickland.js)
+  diazGallerySounds(groups, synth); // Nate Diaz's sounds (diaz.js)
   // Anything new in SOUND_CLIPS that isn't listed above still shows up.
   var listed = {};
   groups.forEach(function (g) { g.items.forEach(function (it) { if (it.clip) listed[it.clip] = true; }); });

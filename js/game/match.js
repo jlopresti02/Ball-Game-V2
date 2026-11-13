@@ -68,6 +68,7 @@ function makeBall(id, ch) {
   initVolk(b); // Alexander Volkanovski's fight IQ, circling and walkout flag (volkanovski.js)
   initHolloway(b); // Max Holloway's Blessed meter, the booth, his flashback (holloway.js)
   initStrickland(b); // Sean Strickland's range, shell, pace and trauma meter (strickland.js)
+  initDiaz(b); // Nate Diaz's slap, sub hunt, chin and Stockton surge (diaz.js)
   return b;
 }
 
@@ -111,6 +112,7 @@ function startMatchSeeded(ch0, ch1) {
   resetVolk(); // the kangaroo and the green and gold arena (volkanovski.js)
   resetHolloway(); // Max Holloway's ring in the middle, the clock, the flashback TV (holloway.js)
   resetStrickland(); // the America show, the eagle and the bike (strickland.js)
+  resetDiaz(); // Nick Diaz and his banner (diaz.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
@@ -322,6 +324,7 @@ function hurt(b, amount, source, attackerId) {
     b.flash = 0.1;
     return 0;
   }
+  if (diazIronChin(b, amount, source, attackerId)) return 0; // Nate Diaz's chin eats a knockout shot (diaz.js)
   // Sees Red is wide open mid wind-up: anything that lands while it's
   // charging (not the dash itself) does extra damage.
   if (b.rageState && b.rageState.phase === "charge") {
@@ -344,6 +347,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= icemanDamageMult(b, attackerId, source); // frosted gloves hit softer, Chuck Liddell hits harder (liddell.js)
   amount *= volkDamageMult(b, source, attackerId); // Alexander Volkanovski's durability, Ilia and Max (volkanovski.js)
   amount *= hollowayChin(b, amount, source, attackerId); // Max Holloway's chin, and Ilia's edge on him (holloway.js)
+  amount *= diazDamageMult(b, source, attackerId); // Nate Diaz's durability, and his Stockton surge (diaz.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

@@ -133,6 +133,7 @@ function drawHands(b, other) {
   if (ngannouHandsBusy(b)) return; // the rage punch, the Smash, the contract (drawNgannou, ngannou.js)
   if (volkHandsBusy(b)) return; // arms up, or punching out of the kangaroo's pouch (drawVolk, volkanovski.js)
   if (hollowayHandsBusy(b)) return; // pointing at the booth or the middle, the flashback, the celebration (drawHolloway, holloway.js)
+  if (diazHandsBusy(b)) return; // the slap, the lunge, arms out, a bottle (drawDiaz, diaz.js)
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)

@@ -216,6 +216,7 @@ function draw() {
     applyNgannouPose(b); // Ngannou crouching and leaping for the Smash, or knocked flat by it (ngannou.js)
     applyVolkPose(b); // Volkanovski leaning into his circling, small in the pouch (volkanovski.js)
     applyHollowayPose(b); // Max Holloway's spinning back fist, bouncing at the booth (holloway.js)
+    applyDiazPose(b); // Nate Diaz leaning into the slap, the level change, the taunt (diaz.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -362,6 +363,7 @@ function draw() {
     drawVolk(b); // Volkanovski's arms up, punching out of the pouch (volkanovski.js)
     drawHolloway(b); // Max Holloway's Blessed meter, pointing, the flashback pose, the BMF belt (holloway.js)
     drawStrickland(b, other); // Sean Strickland's Philly shell, the bike, his overhands, the trauma meter (strickland.js)
+    drawDiaz(b); // Nate Diaz's slap, arms out, the 209 surge, a handprint on whoever he slapped (diaz.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -420,6 +422,7 @@ function draw() {
   drawVolkOver(); // the kangaroo's pouch, arms and kick, the FIGHT IQ card (volkanovski.js)
   drawConorOver(); // Conor McGregor's bus, the lads and their brawl cloud, the dolly (conor.js)
   drawStricklandOver(); // the bald eagle at Strickland's side, fireworks over the test arena (strickland.js)
+  drawDiazOver(); // Nick Diaz, his bubble, the NICK DIAZ banner in the test arena (diaz.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

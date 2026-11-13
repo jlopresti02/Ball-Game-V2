@@ -24,6 +24,7 @@ function inOrdinaryMovement(b) {
   if (ngannouBusy(b)) return false; // Francis Ngannou's rage punch, or off to rip up Dana's contract (ngannou.js)
   if (hollowayBusy(b)) return false; // Max Holloway at the booth or in his flashback (holloway.js)
   if (teepBusy(b) || stricklandBusy(b)) return false; // planted for a teep (teep.js), or Sean Strickland's one-two (strickland.js)
+  if (diazBusy(b)) return false; // Nate Diaz slapping, diving for the neck, or arms out (diaz.js)
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
   return true;

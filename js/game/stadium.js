@@ -633,6 +633,7 @@ function drawJumbotron(px) {
   drawBearWarnJumbo(sx, sy, sw, jt.h - 28); // WARNING: BEAR IN ARENA, over everything (bear-warning.js)
   drawConorJumbo(sx, sy, sw, jt.h - 28); // Conor McGregor's 13 SECONDS (conor.js)
   drawVolkJumbo(sx, sy, sw, jt.h - 28); // AUSSIE AUSSIE AUSSIE, OI OI OI for Volkanovski's Kangaroo (volkanovski.js)
+  drawNickJumbo(sx, sy, sw, jt.h - 28); // NOW ENTERING THE CAGE: NICK DIAZ (diaz.js)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.jtFront, jt.x * px, jt.y * px);
