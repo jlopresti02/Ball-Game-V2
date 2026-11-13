@@ -314,7 +314,47 @@ Everything is in his character file under `diaz` (leave a block out and that par
 
 ### Elbows
 
-A fighter with an `elbow` block in its character file throws elbows up close (`js/game/elbows.js`), as well as whatever else it throws. The arm comes up folded and the point of the elbow sweeps round in front of him, landing `speed` x 45% of the way through. It's an up-close weapon: `reach` is the gap between the two balls (shorter than a punch). An elbow does `damage`, but `critChance`% of them are critical hits for `critMult` times as much ("CRIT!", a white slash), and a crit opens a `cut` `chance`% of the time: a red gash where it landed, and they bleed `dps` a second for `time` seconds (unblockable ticks, like the Watcher's lasers). Elbows go on their own `cooldown` and hold the next punch back, so it's one arm at a time. They can be slipped, blocked and countered like any strike, and they can knock a guard player onto its back. A fighter's own moves can throw elbows with their own numbers (`throwElbow`), with a katana on the elbow if they like. Tony Ferguson has them; knees and real combinations will come the same way.
+A fighter with an `elbow` block in its character file throws elbows up close (`js/game/elbows.js`), as well as whatever else it throws. The arm comes up folded and the point of the elbow sweeps round in front of him, landing `speed` x 45% of the way through. It's an up-close weapon: `reach` is the gap between the two balls (shorter than a punch). An elbow does `damage`, but `critChance`% of them are critical hits for `critMult` times as much ("CRIT!", a white slash), and a crit opens a `cut` `chance`% of the time: a red gash where it landed, and they bleed `dps` a second for `time` seconds (unblockable ticks, like the Watcher's lasers). Elbows go on their own `cooldown` and hold the next punch back, so it's one arm at a time. They can be slipped, blocked and countered like any strike, and they can knock a guard player onto its back. A fighter's own moves can throw elbows with their own numbers (`throwElbow`), with a katana on the elbow if they like. Tony Ferguson has them, and combinations (below) throw them too, with plain numbers for a fighter without the block.
+
+### Knees
+
+A fighter with a `knee` block in its character file throws knees up close (`js/game/knees.js`), the same way as elbows. The knee comes up from under him and drives in with a white swoosh behind the kneecap, landing halfway through `speed`, and a white star bursts where it lands ("KNEE!"). It does `damage` (`critChance`% are critical hits for `critMult` times as much, "CRIT KNEE!") and a shove of `knockback`, inside `reach` (the gap between the two balls: an up-close weapon, like the elbow). Knees go on their own `cooldown` and hold the next punch and kick back, so it's one limb at a time. Leave `damage` out and he doesn't throw knees on their own, only in the clinch, the flying knee or a combination. They hurt as the source `"knee"`: they can be slipped, blocked and countered like any strike, GSP's shield blocks them, and they can knock a guard player onto its back. Two more parts, each its own block inside `knee` (leave one out and that part is off):
+
+- **Clinch knees** (`clinch`): the Muay Thai plum. Every `every` seconds (the first after `first`) when they're within `range`, he reaches up with both hands ("CLINCH!", the tell: for that moment they can still get away, and it's a "WHIFF"), clasps the back of their head and pulls it down into `knees` knees (a range, rolled each time), one every `gap` seconds, `damage` each. They're held while it lasts, bent over and jolted up by every knee, and can't slip or block a knee in there, but after each one they break free `escape`% of the time, `grapplerEscape`% more for a Grappler, who knows the clinch ("BROKE FREE!"). The last knee shoves them off (`knockback`).
+- **Flying knee** (`flying`): every `every` seconds (the first after `first`) when they're between `minGap` and `maxGap` away, he crouches for `load` seconds while a red dashed line shows where he's going (the tell: they back off `readChance`% of the time, more for a weaver), then leaps in knee first at `speed` ("FLYING KNEE!"), bigger in the air with speed lines behind him. A clean one does `damage` and sends them flying (`knockback`), and `koBase`% of the time at full health, up to `koBase` + `koLow`% the more hurt they are, it's a knockout instead: it goes through every defence like the KO Rush, and he stands over them before it's called. If they're gone when he gets there he lands off balance ("WHIFF") and he's wide open, wobbling, for `open` seconds.
+
+A fighter's own moves can throw a knee with their own numbers (`startKnee`) or put him in the clinch (`startPlum`). Combinations do both.
+
+### Combinations
+
+A fighter with a `combos` block strings strikes together (`js/game/combos.js`). Every `every` seconds (the first after `first`; lighter classes a little quicker), he throws one of the combinations in `list` (relative odds) the next time he's close enough for its first strike, and steps in behind it:
+
+| Combination | Strikes |
+|---|---|
+| `jab-cross-elbow` | jab, cross, elbow |
+| `cross-hook-knee` | cross, hook, knee |
+| `elbow-elbow-knee` | elbow, elbow, knee |
+| `jab-cross-hook` | jab, cross, hook |
+| `jab-cross-knee` | jab, cross, knee |
+| `one-two-kick` | jab, cross, kick |
+| `jab-spin-elbow` | jab, then a spinning back elbow |
+| `punch-clinch` | jab, cross, into the clinch knees |
+| `double-collar` | straight into the double-collar tie and the clinch knees |
+
+Every strike is the real thing with his own numbers. The jab and the cross are his normal punch off each hand and the kick is his normal kick (thrown through the normal punch and kick, so anything that changes those changes these), the hook is his punch swung round, the elbows are his `elbow` block's (`throwElbow`) and the knees his `knee` block's (`startKnee`), with plain defaults for a fighter without the block. The spinning back elbow turns his back first (the tell) and comes round 1.8 times as hard as his elbow, with a big shove ("SPINNING BACK ELBOW!"). Each strike lands or misses on its own and can be slipped, blocked or checked like any other. He steps in behind it: a combination's elbows and knees reach 12 further than his own, and only the last strike shoves them off, so the ones before it keep them in range. If they get out of range before a punch or a kick, the rest of the combination is off; an elbow or a knee goes anyway and whiffs, unless they're long gone. Land every strike, the clinch knees included, and it's an "N-HIT COMBO!" over his head with a little rising chime. A combination takes the place of his next punch (his punch cooldown starts over when it ends), so it adds variety more than damage. A combination is dropped the moment something else takes him over (a grab, a special, a slam), and a fighter who doesn't kick never throws one with a kick in it.
+
+### Who throws knees and combinations
+
+- **Tony Ferguson** (`combos`): his elbows already come from everywhere; now they come off the jab and cross, and stacked up elbow, elbow, knee.
+- **Jon Jones** (`combos`): elbows are a Jon Jones weapon (the spinning back elbow that turned the Alexander Gustafsson fight at UFC 165, 2013). His only come in combinations (he has no `elbow` block of his own, so they keep the plain numbers): mostly the jab into the spinning back elbow, sometimes jab, cross, elbow.
+- **Charles Oliveira** (`knee` with `clinch`): his Muay Thai. He grabs the plum and knees up the middle, the striking side of a fighter known for his jiu-jitsu.
+- **Alex Pereira** (`knee` with `flying`): the flying knee, how he knocked out Israel Adesanya in kickboxing (Glory of Heroes 7, 2017) and Andreas Michailidis in his UFC debut (UFC 268, 2021). Plus straight knees up close.
+- **Demetrious Johnson** (`knee` with `clinch` and `flying`): the clinch knees that stopped Henry Cejudo at UFC 197 (2016), and the flying knee that knocked out Adriano Moraes for the ONE flyweight title (2022).
+- **Alexander Volkanovski** (`combos`): combinations finished with the leg kick (the leg kicks that took Max Holloway's title at UFC 245, 2019), three-punch combinations, and now and then a cross and hook into a knee.
+- **Khabib Nurmagomedov** (`knee` with only `clinch`): knees from the clinch now and then, mixed in with his wrestling. Low numbers and no knees on their own: he still mostly takes you down.
+- **Ciryl Gane** (`combos`): he came to MMA from Muay Thai, so his one-two finishes on a knee or a kick.
+
+Max Holloway's volume already throws real punch combinations of its own (`holloway.volume`), so he's left as he is.
 
 ### Tony Ferguson
 
@@ -414,6 +454,8 @@ js/game/holloway.js     Max Holloway: volume combos, the Blessed meter, the boot
 js/game/conor.js        Conor McGregor: trash talk, counter left, kicks, gas tank, the drink, press conference, Bus Crew, 13 SECONDS, commentator calls, Khabib and Dustin rivalries
 js/game/proper12-ad.js  Conor's Proper No. 12 Irish root beer jumbotron ad and its still
 js/game/elbows.js       Elbows any fighter can switch on: crits, cuts that bleed, blades on the elbows
+js/game/knees.js        Knees any fighter can switch on: the clinch knees (the plum) and the flying knee
+js/game/combos.js       Combinations of punches, elbows, knees and kicks, the spinning back elbow, the N-HIT COMBO count
 js/game/ferguson.js     Tony Ferguson: chin, won't tap, guard finishes, the slide, takedowns into the buggy choke and D'Arce, turtle shell, Kaioken, Katanas, the cable trip, his look
 js/game/burrito-bell-ad.js Tony Ferguson's Burrito Bell jumbotron ad and its menu-board still
 js/game/special.js      Special moves for created characters (IGBB)

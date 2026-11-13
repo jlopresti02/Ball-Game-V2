@@ -1,6 +1,6 @@
 {
   "id": "c-khabib-nurmagomedov",
-  "rev": 7,
+  "rev": 8,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Khabib Nurmagomedov",
@@ -81,6 +81,7 @@
     "shellTime": 5
   },
   "blockChance": 10,
+  "knee": { "clinch": { "first": [8, 12], "every": [14, 20], "range": 16, "knees": [2, 3], "damage": 6, "gap": 0.42, "escape": 20, "grapplerEscape": 8, "knockback": 340 } },
   "bear": {
     "first": [
       14,

@@ -1,6 +1,6 @@
 // Elbows (Christian, 2026-11-13): a strike any fighter can switch on with an
-// `elbow` block in its character file. Built for Tony Ferguson first; knees
-// and real combinations will come the same way.
+// `elbow` block in its character file. Built for Tony Ferguson first. Knees
+// work the same way (knees.js), and combinations throw both (combos.js).
 //
 //   "elbow": { "damage": 6, "cooldown": 1.15, "speed": 0.26, "reach": 14,
 //              "critChance": 40, "critMult": 3, "knockback": 150,
@@ -46,7 +46,7 @@ function updateElbows(self, other, dt, d) {
   if (!cfg) return;
   if (self.elbowCd == null) self.elbowCd = cfg.cooldown * stagger();
   self.elbowCd = Math.max(0, self.elbowCd - dt * (self.atkRate || 1));
-  var busy = self.punch || self.kick || self.swing || self.throwAnim || self.combo || self.taunt || self.koPunch || self.elbowAnim;
+  var busy = self.punch || self.kick || self.swing || self.throwAnim || self.combo || self.taunt || self.koPunch || self.elbowAnim || self.kneeAnim || self.cmb; // (a knee or a combination, knees.js, combos.js)
   if (!busy && self.elbowCd === 0 && other.alive && d < self.r + other.r + cfg.reach) {
     self.elbowCd = cfg.cooldown;
     startElbow(self, other, {});

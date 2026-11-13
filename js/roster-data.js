@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
@@ -75,6 +75,33 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "blockChance": 15,
+    "knee": {
+      "damage": 14,
+      "cooldown": 3.6,
+      "speed": 0.32,
+      "reach": 12,
+      "knockback": 240,
+      "flying": {
+        "first": [
+          6,
+          10
+        ],
+        "every": [
+          12,
+          17
+        ],
+        "minGap": 70,
+        "maxGap": 220,
+        "load": 0.4,
+        "speed": 950,
+        "damage": 24,
+        "knockback": 600,
+        "koBase": 4,
+        "koLow": 16,
+        "readChance": 20,
+        "open": 0.8
+      }
+    },
     "poatan": {
       "step": {
         "rate": 1.15,
@@ -129,7 +156,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-alexander-volkanovski",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Alexander Volkanovski",
@@ -206,6 +233,21 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "blockChance": 15,
+    "combos": {
+      "first": [
+        4,
+        7
+      ],
+      "every": [
+        7,
+        11
+      ],
+      "list": {
+        "one-two-kick": 3,
+        "jab-cross-hook": 2,
+        "cross-hook-knee": 1
+      }
+    },
     "volk": {
       "durability": {
         "damageTaken": 0.88
@@ -306,7 +348,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 15,
+    "rev": 16,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -397,6 +439,33 @@ var SAVED_ROSTER = [
       "hairColor": "#f4edd2"
     },
     "blockChance": 10,
+    "knee": {
+      "damage": 9,
+      "cooldown": 3.4,
+      "speed": 0.3,
+      "reach": 12,
+      "knockback": 180,
+      "clinch": {
+        "first": [
+          4,
+          7
+        ],
+        "every": [
+          8,
+          12
+        ],
+        "range": 16,
+        "knees": [
+          2,
+          4
+        ],
+        "damage": 8,
+        "gap": 0.4,
+        "escape": 15,
+        "grapplerEscape": 10,
+        "knockback": 380
+      }
+    },
     "kamehameha": {
       "first": [
         10,
@@ -586,7 +655,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ciryl-gane",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
@@ -647,6 +716,20 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "blockChance": 0,
+    "combos": {
+      "first": [
+        4,
+        7
+      ],
+      "every": [
+        6,
+        9
+      ],
+      "list": {
+        "jab-cross-knee": 2,
+        "one-two-kick": 2
+      }
+    },
     "hasCheater": true,
     "cheater": {
       "awake": 10,
@@ -946,7 +1029,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-demetrious-johnson",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "flyweight",
     "name": "Demetrious Johnson",
@@ -1027,6 +1110,53 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "blockChance": 15,
+    "knee": {
+      "damage": 9,
+      "cooldown": 3.2,
+      "speed": 0.26,
+      "reach": 12,
+      "knockback": 160,
+      "clinch": {
+        "first": [
+          5,
+          8
+        ],
+        "every": [
+          9,
+          13
+        ],
+        "range": 16,
+        "knees": [
+          2,
+          4
+        ],
+        "damage": 7,
+        "gap": 0.36,
+        "escape": 15,
+        "grapplerEscape": 10,
+        "knockback": 360
+      },
+      "flying": {
+        "first": [
+          9,
+          13
+        ],
+        "every": [
+          14,
+          20
+        ],
+        "minGap": 60,
+        "maxGap": 200,
+        "load": 0.34,
+        "speed": 1050,
+        "damage": 20,
+        "knockback": 520,
+        "koBase": 3,
+        "koLow": 14,
+        "readChance": 15,
+        "open": 0.7
+      }
+    },
     "mightyMouse": {
       "gameFilm": {
         "time": 10,
@@ -1703,7 +1833,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
@@ -1810,6 +1940,20 @@ var SAVED_ROSTER = [
       }
     },
     "blockChance": 10,
+    "combos": {
+      "first": [
+        6,
+        9
+      ],
+      "every": [
+        9,
+        13
+      ],
+      "list": {
+        "jab-spin-elbow": 3,
+        "jab-cross-elbow": 1
+      }
+    },
     "jon": {
       "swapEvery": 12,
       "rncChance": 5,
@@ -2286,7 +2430,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 7,
+    "rev": 8,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
@@ -2367,6 +2511,28 @@ var SAVED_ROSTER = [
       "shellTime": 5
     },
     "blockChance": 10,
+    "knee": {
+      "clinch": {
+        "first": [
+          8,
+          12
+        ],
+        "every": [
+          14,
+          20
+        ],
+        "range": 16,
+        "knees": [
+          2,
+          3
+        ],
+        "damage": 6,
+        "gap": 0.42,
+        "escape": 20,
+        "grapplerEscape": 8,
+        "knockback": 340
+      }
+    },
     "bear": {
       "first": [
         14,
@@ -3196,7 +3362,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
@@ -3297,6 +3463,20 @@ var SAVED_ROSTER = [
         "chance": 45,
         "time": 4,
         "dps": 2
+      }
+    },
+    "combos": {
+      "first": [
+        4,
+        6
+      ],
+      "every": [
+        7,
+        10
+      ],
+      "list": {
+        "jab-cross-elbow": 3,
+        "elbow-elbow-knee": 2
       }
     },
     "ferguson": {

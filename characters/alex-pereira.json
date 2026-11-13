@@ -1,6 +1,6 @@
 {
   "id": "c-alex-pereira",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "lightheavyweight",
   "name": "Alex Pereira",
@@ -45,6 +45,8 @@
   "hasSwing": false,
   "hasForget": false,
   "blockChance": 15,
+  "knee": { "damage": 14, "cooldown": 3.6, "speed": 0.32, "reach": 12, "knockback": 240,
+    "flying": { "first": [6, 10], "every": [12, 17], "minGap": 70, "maxGap": 220, "load": 0.4, "speed": 950, "damage": 24, "knockback": 600, "koBase": 4, "koLow": 16, "readChance": 20, "open": 0.8 } },
   "poatan": {
     "step": { "rate": 1.15, "dip": 0.07 },
     "chama": { "first": [6, 9], "every": [6, 9], "range": 120, "reach": 48, "call": 0.7, "echo": 0.25, "readChance": 30, "readWeave": 25, "lunge": 430, "jab": 12, "cross": 16, "hook": 32, "hookKnockback": 560, "koBase": 15, "koLow": 48 },

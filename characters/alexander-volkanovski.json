@@ -1,6 +1,6 @@
 {
   "id": "c-alexander-volkanovski",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "featherweight",
   "name": "Alexander Volkanovski",
@@ -39,6 +39,7 @@
   "hasSwing": false,
   "hasForget": false,
   "blockChance": 15,
+  "combos": { "first": [4, 7], "every": [7, 11], "list": { "one-two-kick": 3, "jab-cross-hook": 2, "cross-hook-knee": 1 } },
   "volk": {
     "durability": { "damageTaken": 0.88 },
     "gamePlan": {

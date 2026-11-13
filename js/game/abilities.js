@@ -199,6 +199,7 @@ function updateAbilities(dt) {
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)
     if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
+    if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
     if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
@@ -289,6 +290,8 @@ function updateAbilities(dt) {
 
     if (self.char.hasSwing) updateSwing(self, other, dt);
     if (self.char.elbow) updateElbows(self, other, dt, d); // elbows (elbows.js)
+    if (self.char.knee) updateKnees(self, other, dt, d); // knees (knees.js)
+    if (self.char.combos) updateCombos(self, other, dt, d); // combinations of punches, elbows, knees and kicks (combos.js)
 
     if (self.char.hasKick) {
       self.kickCd = Math.max(0, self.kickCd - dt * self.atkRate);

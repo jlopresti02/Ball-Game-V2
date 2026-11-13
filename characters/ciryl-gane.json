@@ -1,6 +1,6 @@
 {
   "id": "c-ciryl-gane",
-  "rev": 6,
+  "rev": 7,
   "builtin": false,
   "weightClass": "heavyweight",
   "name": "Ciryl Gane",
@@ -61,6 +61,7 @@
   "hasSwing": false,
   "hasForget": false,
   "blockChance": 0,
+  "combos": { "first": [4, 7], "every": [6, 9], "list": { "jab-cross-knee": 2, "one-two-kick": 2 } },
   "hasCheater": true,
   "cheater": {
     "awake": 10,
