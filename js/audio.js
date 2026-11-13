@@ -2552,6 +2552,20 @@ function playBeamClash(dur) {
     }
   } catch (e) { /* never let audio break the game */ }
 }
+// A quick tick for each chip of damage while someone's pinned by a beam.
+function playBeamTick() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, f = 1500 + rbNoise() * 150;
+    var o = ctx.createOscillator(); o.type = "square";
+    o.frequency.setValueAtTime(f, now); o.frequency.exponentialRampToValueAtTime(f * 0.6, now + 0.03);
+    var hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 700;
+    var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.16, now + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+    o.connect(hp); hp.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + 0.045);
+  } catch (e) { /* never let audio break the game */ }
+}
 // The clash blowing up in the middle.
 function playClashBoom() {
   try {

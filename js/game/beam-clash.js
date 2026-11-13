@@ -174,7 +174,7 @@ function tickBeamPins(dt) {
       var chip = p.left / p.ticks;
       p.ticks--; p.left -= chip;
       var got = hurt(b, chip, "laser", p.owner); // (chip hits: never blocked or slipped, no floater of their own)
-      if (got > 0) { floater(b.x + (Math.random() - 0.5) * b.r, b.y - b.r - 8, "-" + Math.max(1, Math.round(got)), "tick"); b.flash = Math.max(b.flash, 0.1); }
+      if (got > 0) { playBeamTick(); floater(b.x + (Math.random() - 0.5) * b.r, b.y - b.r - 8, "-" + Math.max(1, Math.round(got)), "tick"); b.flash = Math.max(b.flash, 0.1); }
       checkEnd();
     }
     if (p.t >= p.dur || (p.ticks <= 0 && p.t >= p.dur - 0.05)) {
