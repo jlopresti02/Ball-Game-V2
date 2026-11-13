@@ -375,7 +375,6 @@ function beginTfSub(self, vic, kind, fromGuard) {
   playPunch(20);
   if (!reduceMotion) shake = Math.max(shake, 8);
   if (tfIsChoke(kind) && cfg.lines && cfg.lines.subCaught && canSay(self) && Math.random() < 0.5) say(self, cfg.lines.subCaught);
-  tfCall(self, kind);
 }
 function endTfSub(self) {
   var m = self.tfSub;
@@ -429,7 +428,7 @@ function runTfSub(self, other, cfg, dt) {
     m.bar = Math.max(-1, Math.min(1, sgn * Math.pow(p, 2.2) + swing));
     if (p < 1) return true;
     m.bar = sgn;
-    if (m.taps) { m.phase = "tap"; floater(vic.x, vic.y - vic.r - 30, "TAP", "crit"); playPunch(10); return true; }
+    if (m.taps) { m.phase = "tap"; floater(vic.x, vic.y - vic.r - 30, "TAP", "crit"); playPunch(10); tfCall(self, m.kind); return true; }
     tfLetGo(self, vic, m, "ESCAPE");
     return true;
   }
@@ -722,10 +721,10 @@ function tfLines(b, cfg, dt) {
   }
 }
 
-// The commentator's call for one of his famous finishes, when it's verified
-// and in his file (calls.<kind>: { text, who }).
+// The commentator's real call as they tap: calls.<kind> ({ text, who }) for
+// that hold, or calls.any for the rest.
 function tfCall(b, kind) {
-  var c = tfCfg(b) && tfCfg(b).calls && tfCfg(b).calls[kind];
+  var cs = tfCfg(b) && tfCfg(b).calls, c = cs && (cs[kind] || cs.any);
   if (c && c.text && typeof announce === "function") announce(c.text, { who: c.who || "COMMENTARY" });
 }
 

@@ -3468,7 +3468,16 @@ var SAVED_ROSTER = [
           }
         }
       },
-      "calls": {}
+      "calls": {
+        "darce": {
+          "text": "He's got it! Tony Ferguson has done it again! The winning streak!",
+          "who": "UFC BROADCAST"
+        },
+        "any": {
+          "text": "What a spectacular performance. Tony Ferguson, ladies and gentlemen! Yeah, baby!",
+          "who": "UFC BROADCAST"
+        }
+      }
     },
     "hasSpecial": true,
     "special": {

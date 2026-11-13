@@ -78,7 +78,7 @@ var HW_LINES = {
   // His sign-off (YouTube interview, voice-clips manifest hollowayBestIsBlessed)
   blessed: "The best is blessed.",
   // Same interview, about Ilia Topuria (ESPN; Bleacher Report)
-  matador: "There's 'El Matador.' He's running away from the bull!",
+  matador: "El Matador, he is running away!",
   // On Conor McGregor's trash talk before UFC 329, MMA Junkie video (Middle Easy, Jul 2026), trimmed
   conor: "I support it 100 percent. Keep talking."
 };
