@@ -135,6 +135,7 @@ function draw() {
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
     var kmo = kameOffset(b); wox += kmo.x; woy += kmo.y; // leaning back to charge, lunging into the Kamehameha (kamehameha.js)
+    var rbo = rainbowOffset(b); wox += rbo.x; woy += rbo.y; // leaning over the pot of gold (rainbow-beam.js)
     var ngo = ngannouOffset(b); wox += ngo.x; woy += ngo.y; // up in the air for Ngannou's Smash (ngannou.js)
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
@@ -351,6 +352,7 @@ function draw() {
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
+    drawRainbowPot(b); // Conor's pot of gold and his hands on it (rainbow-beam.js)
     drawShot(b);    // Hokit's double leg
     drawChairShot(b); // and his folding chair
     drawDazed(b);   // stars after a chair shot
@@ -389,6 +391,8 @@ function draw() {
   drawJonGoats();      // the goats (jon.js)
   drawHelmetChargeOver(); // the helmet dropping onto Hokit's head (hokit-helmet.js)
   drawKamehameha(); // Charles's Kamehameha beam (kamehameha.js)
+  drawRainbowBeam(); // Conor's Pot o' Gold rainbow (rainbow-beam.js)
+  drawBeamClash(); // where the two meet in a beam clash (beam-clash.js)
   drawItFx(); // and his Instant Transmission zip lines and hard shot (instant-transmission.js)
   drawTornadoOver(); // the Rose Tornado and the roses flying out of it (ilia-tornado.js)
   drawRingBear(); // Khabib's bear, or the dust cloud it's fighting in (khabib-bear.js)

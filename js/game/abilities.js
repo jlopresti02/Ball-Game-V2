@@ -180,6 +180,7 @@ function updateAbilities(dt) {
     if (updateIliaTornado(self, other, dt)) continue; // Ilia's Rose Tornado (ilia-tornado.js)
     if (!darkSideBlocks(self) && updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
     if (updateKamehameha(self, other, dt)) continue; // Charles's Kamehameha (kamehameha.js)
+    if (updateRainbow(self, other, dt)) continue; // Conor's Pot o' Gold rainbow beam (rainbow-beam.js)
     if (updateInstantTransmission(self, other, dt)) continue; // and his Instant Transmission hard shot (instant-transmission.js)
     if (updateHotSauce(self, other, dt)) continue; // Dustin's Hot Sauce Fire Breath (hot-sauce.js)
     if (updateSendLocation(self, other, dt)) continue; // Khabib's Send Me Location (send-location.js)

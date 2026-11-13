@@ -58,6 +58,7 @@ function update(dt) {
   tickGsp(dt); // GSP's walkout, the Montreal chant, his slip run (gsp.js)
   tickMightyMouse(dt); // Mighty Mouse's game film, copycat, cardio, voice lines (mighty-mouse.js)
   tickConor(dt); // Conor McGregor's gas tank, his lines, 13 SECONDS (conor.js)
+  tickRainbow(dt); tickBeamClash(dt); // the Pot o' Gold's coins, and a beam clash (rainbow-beam.js, beam-clash.js)
   tickLiddell(dt); // frost melting, the snow, Chuck Liddell's all-out attack (liddell.js)
   tickNgannou(dt); // Francis Ngannou's rage meter, knockdowns, Dana White (ngannou.js)
   tickSlows(dt); // limps wearing off (slowdown.js)

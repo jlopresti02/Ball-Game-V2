@@ -116,6 +116,7 @@ function drawHands(b, other) {
   if (b.taunt && b.taunt.t < 0) return; // the punch is still finishing
   if (b.igbb && b.igbb.move === "dobronx") return; // posing (drawDoBronx)
   if (kameOn(b)) return; // hands cupped for the Kamehameha (drawKameHands)
+  if (rainbowOn(b)) return; // hands on the pot of gold (drawRainbowPot, rainbow-beam.js)
   if (b.mock) return; // giving a thumbs down (drawMock)
   if (cheaterHandsBusy(b)) return; // cheating (drawCheater)
   if (bearHandsBusy(b)) return; // holding the bear up over his head (khabib-bear.js)

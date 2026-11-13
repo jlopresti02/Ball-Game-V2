@@ -42,15 +42,8 @@ function updateKamehameha(self, other, dt) {
     if (!started || over || self.kameN >= 1 || self.doBronx || charlesBlond(self)) return false;
     self.kameT -= dt;
     if (self.kameT > 0 || !canStartIgbb(self, other) || swordDuelActive()) return false;
-    clearActions(self);
-    self.kameN++;
-    self.igbb = { move: "kamehameha", phase: "power", t: 0, calls: 0, hit: false };
-    kmAim(self, other);
-    self.igbb.side = self.igbb.dx > 0 ? -1 : 1;
-    // The aura bursts on: blond hair, the gold flames and Joe's burst (dobronx.js).
-    doBronxHair(self, true); self.kameBlond = true;
-    kmPushAway(self, other); // the energy coming up shoves them back, so the beam has room to fly
-    if (!reduceMotion) shake = Math.max(shake, 10);
+    startKamehameha(self, other, false);
+    bcPair(self, other); // Conor answers with his Pot o' Gold (beam-clash.js)
   }
   var m = self.igbb;
   if (m.move !== "kamehameha") return false;
@@ -63,15 +56,16 @@ function updateKamehameha(self, other, dt) {
   if (m.phase === "power") {
     if (other.alive) kmAim(self, other);
     kmTurn(m, dt);
-    if (m.t >= KM_POWER) { m.phase = "charge"; m.t = 0; playKameCharge(cfg.charge); }
+    if (m.pair) bcSlide(self, other, dt); // backing off to make room for a beam clash (beam-clash.js)
+    if (m.t >= KM_POWER) { m.phase = "charge"; m.t = 0; playKameCharge(m.charge); }
     return true;
   }
   if (m.phase === "charge") {
     // (Right after a teleport out, it follows them for a moment even in the
     // last second, then locks again.)
-    if ((m.t < cfg.charge - KM_LOCK || m.track > 0) && other.alive) { kmAim(self, other); kmTurn(m, dt); }
+    if ((m.t < m.charge - KM_LOCK || m.track > 0 || m.pair) && other.alive) { kmAim(self, other); kmTurn(m, dt); }
     if (m.track) m.track = Math.max(0, m.track - dt);
-    var call = Math.floor(m.t / (cfg.charge / (KM_CALLS.length + 0.4)));
+    var call = Math.floor(m.t / (m.charge / (KM_CALLS.length + 0.4)));
     if (call >= m.calls && m.calls < KM_CALLS.length) {
       m.calls++; m.callT = 0; // shown in the caption (drawKameCaption), not over his head (Joe)
       m.pulse = 1; // the ball flares on every syllable
@@ -79,7 +73,7 @@ function updateKamehameha(self, other, dt) {
     }
     m.pulse = Math.max(0, (m.pulse || 0) - dt * 3);
     // The ground trembles harder and harder, and bits of the mat lift off round him.
-    var ck = m.t / cfg.charge;
+    var ck = m.t / m.charge;
     if (!reduceMotion) {
       shake = Math.max(shake, 1 + 3 * ck);
       if (Math.random() < 0.25 + 0.5 * ck) {
@@ -88,27 +82,18 @@ function updateKamehameha(self, other, dt) {
           life: 0.7, max: 0.7, size: 2 + Math.random() * 3, color: Math.random() < 0.5 ? "#c9bfa6" : "#9fd6ff" });
       }
     }
-    if (m.t >= cfg.charge) {
-      m.phase = "fire"; m.t = 0;
-      m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
-      m.callT = 0;
-      self.squash = { t: 0.2, max: 0.2, nx: -m.dx, ny: -m.dy };
-      if (!reduceMotion) { shake = Math.max(shake, 18); hitStop = Math.max(hitStop, 0.06); }
-      duelFlash = Math.max(duelFlash, 0.9); // a white flash as it goes off (sword.js draws it)
-      impacts.push({ x: self.x + m.dx * self.r * 1.4, y: self.y + m.dy * self.r * 1.4, nx: m.dx, ny: m.dy, life: 0.5, max: 0.5, color: "#bfe6ff" });
-      crowdReact(0.9);
-      playKameBlast(cfg.beamTime);
-    }
+    if (m.t >= m.charge) { kameFire(self); bcFire(self, other); }
     return true;
   }
   if (m.phase === "fire") {
+    if (bcHolds(self)) return true; // locked in a beam clash with Conor (beam-clash.js)
     // The blast's recoil slides him back a little.
     if (m.t < cfg.beamTime * 0.6) {
       self.x = Math.min(W - self.r, Math.max(self.r, self.x - m.dx * 40 * dt));
       self.y = Math.min(H - self.r, Math.max(self.r, self.y - m.dy * 40 * dt));
     }
     m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
-    m.ext = Math.min(m.len, m.t * KM_SPEED);
+    m.ext = Math.min(m.len, (m.ext0 || 0) + m.t * KM_SPEED);
     if (!reduceMotion) shake = Math.max(shake, 6);
     // Sparks and dust thrown off the sides of the beam, and the cage taking it.
     if (!reduceMotion && m.ext > self.r * 2) {
@@ -151,16 +136,53 @@ function updateKamehameha(self, other, dt) {
   return true;
 }
 
+// Plants, the aura bursts on, and he starts powering up. paired: started by
+// Conor's Pot o' Gold for a beam clash (no shove, he backs off instead);
+// charge: how long he charges (the clash lines both beams up with it).
+function startKamehameha(self, other, paired, charge) {
+  clearActions(self);
+  self.kameN++;
+  self.igbb = { move: "kamehameha", phase: "power", t: 0, calls: 0, hit: false, charge: charge || self.char.kamehameha.charge, pair: !!paired };
+  kmAim(self, other);
+  self.igbb.side = self.igbb.dx > 0 ? -1 : 1;
+  // The aura bursts on: blond hair, the gold flames and Joe's burst (dobronx.js).
+  doBronxHair(self, true); self.kameBlond = true;
+  if (!paired) kmPushAway(self, other); // the energy coming up shoves them back, so the beam has room to fly
+  if (!reduceMotion) shake = Math.max(shake, 10);
+}
+
+// Can he start it right now (for the beam clash, started by Conor's beam)?
+function kameReady(b) {
+  return !!(b.char.kamehameha && b.alive && !b.igbb && (b.kameN || 0) < 1 && !b.doBronx && !charlesBlond(b) && !specialBusy(b));
+}
+
+// "HA!": the beam goes off.
+function kameFire(self) {
+  var m = self.igbb, cfg = self.char.kamehameha;
+  if (!kameOn(self) || m.phase === "fire") return;
+  m.phase = "fire"; m.t = 0;
+  m.len = kmRayToWall(self.x, self.y, m.dx, m.dy);
+  m.ext = 0;
+  m.callT = 0;
+  self.squash = { t: 0.2, max: 0.2, nx: -m.dx, ny: -m.dy };
+  if (!reduceMotion) { shake = Math.max(shake, 18); hitStop = Math.max(hitStop, 0.06); }
+  duelFlash = Math.max(duelFlash, 0.9); // a white flash as it goes off (sword.js draws it)
+  impacts.push({ x: self.x + m.dx * self.r * 1.4, y: self.y + m.dy * self.r * 1.4, nx: m.dx, ny: m.dy, life: 0.5, max: 0.5, color: "#bfe6ff" });
+  crowdReact(0.9);
+  playKameBlast(cfg.beamTime);
+}
+
 // The camera pushes in on him while he charges (closer on every syllable),
 // then snaps back out to show the beam crossing the ring. Uses the sword
 // duel's camera and vignette (sword.js). Null when nobody's doing it.
 function kameCam() {
-  var out = null;
+  var bc = beamClashCam(); if (bc) return bc; // the beam clash (beam-clash.js)
+  var out = rainbowCam(); // Conor's Pot o' Gold (rainbow-beam.js)
   balls.forEach(function (b) {
     if (!kameOn(b) || !b.alive) return;
-    var m = b.igbb, cfg = b.char.kamehameha;
+    var m = b.igbb;
     if (m.phase === "power") out = { z: 1 + 0.12 * Math.min(1, m.t / KM_POWER), x: b.x, y: b.y };
-    else if (m.phase === "charge") out = { z: 1.12 + 0.2 * (m.t / cfg.charge) + 0.03 * (m.pulse || 0), x: b.x, y: b.y };
+    else if (m.phase === "charge") out = { z: 1.12 + 0.2 * (m.t / m.charge) + 0.03 * (m.pulse || 0), x: b.x, y: b.y };
     else if (m.phase === "fire" && m.t < 0.12) out = { z: 1.36, x: b.x, y: b.y };
   });
   return out;
@@ -212,7 +234,7 @@ function kameEscape(b, attackerId, grab, path) {
   m.snap = 0.25; // the path flashes as it snaps across (drawKamehameha)
   // About to fire: hold it a moment, so they can see where it's going now.
   var cfg = b.char.kamehameha;
-  if (m.phase === "charge" && m.t > cfg.charge - KM_SNAP) m.t = cfg.charge - KM_SNAP;
+  if (m.phase === "charge" && m.t > m.charge - KM_SNAP) m.t = m.charge - KM_SNAP;
   m.track = KM_SNAP - 0.3; // then locks for the last 0.3s
   b.justDodged = true;
   return true;
@@ -265,7 +287,7 @@ function kmEase(k) { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k)
 function kmStance(b) {
   var m = b.igbb, cfg = b.char.kamehameha;
   if (m.phase === "power") return { crouch: kmEase(m.t / KM_POWER), back: kmEase(m.t / KM_POWER) * 0.4, lunge: 0, ck: 0 };
-  if (m.phase === "charge") return { crouch: 1, back: 0.4 + 0.6 * kmEase(m.t / 0.5), lunge: 0, ck: m.t / cfg.charge };
+  if (m.phase === "charge") return { crouch: 1, back: 0.4 + 0.6 * kmEase(m.t / 0.5), lunge: 0, ck: m.t / m.charge };
   if (m.phase === "fire") { var l = kmEase(m.t / 0.08); return { crouch: 1 - 0.6 * l, back: 1 - l, lunge: l, ck: 1 }; }
   var e = 1 - kmEase(m.t / KM_END); return { crouch: 0.4 * e, back: 0, lunge: e, ck: 0 };
 }
@@ -309,7 +331,7 @@ function kmHandPose(b) {
     var cs = m.side;
     var k = kmEase((m.phase === "charge" ? m.t + KM_POWER : m.t) / (KM_POWER * 0.6));
     return { hx: b.x + cs * r * (0.85 + 0.45 * k), hy: b.y + r * (0.05 + 0.3 * k), side: cs, cup: true, k: k,
-      ball: m.phase === "charge" ? size * (0.5 + 1.3 * Math.min(1, m.t / cfg.charge)) : size * 0.35 * k };
+      ball: m.phase === "charge" ? size * (0.5 + 1.3 * Math.min(1, m.t / m.charge)) : size * 0.35 * k };
   }
   var k2 = m.phase === "fire" ? kmEase(m.t / 0.08) : 1 - kmEase(m.t / KM_END);
   return { hx: b.x + dx * r * (0.95 + 0.6 * k2), hy: b.y + dy * r * (0.95 + 0.6 * k2), side: 0, k: k2,
@@ -400,7 +422,7 @@ function drawKameHands(b) {
   var m = b.igbb;
   if (m.phase === "charge" && ball > 1) {
     ball *= 1 + 0.35 * (m.pulse || 0);
-    var ck = m.t / b.char.kamehameha.charge;
+    var ck = m.t / m.charge;
     ctx.save();
     // Light rays spinning off the ball.
     ctx.globalAlpha = 0.25 + 0.35 * ck;
@@ -459,7 +481,7 @@ function drawKamehameha() {
       // The path the beam will take: it follows them while he aims, then
       // locks and flashes for the last second.
       var len0 = kmRayToWall(b.x, b.y, m.dx, m.dy), wdt = cfg.width;
-      var locked = m.phase === "charge" && m.t >= cfg.charge - KM_LOCK;
+      var locked = m.phase === "charge" && !m.pair && m.t >= m.charge - KM_LOCK;
       var show = m.phase === "power" ? Math.min(1, m.t / 0.3) : 1;
       var pulse = locked ? 0.6 + 0.4 * Math.sin(t * 30) : 0.75 + 0.25 * Math.sin(t * 10);
       if (m.snap) pulse = 1 + 1.5 * m.snap / 0.25; // snapping onto them after a teleport
@@ -523,6 +545,7 @@ function drawKamehameha() {
 // the ring from him: POWER UP!, then KA... ME... HA... ME... and HA!!!
 function drawKameCaption(b) {
   var m = b.igbb, words, last;
+  if (bcCaptionTaken()) return; // the beam clash has its own (beam-clash.js)
   if (m.phase === "power") { words = ["POWER UP!"]; last = true; }
   else if (m.phase === "charge") { words = KM_CALLS.slice(0, m.calls); last = false; }
   else if (m.phase === "fire" || (m.phase === "end" && m.t < 0.3)) { words = KM_CALLS.concat(["HA!!!"]); last = true; }

@@ -2439,6 +2439,136 @@ function playKameBlast(dur) {
   } catch (e) { /* never let audio break the game */ }
 }
 
+// Conor's Pot o' Gold and the beam clash (rainbow-beam.js, beam-clash.js).
+// All code-made (no clips yet). Noise comes from its own little generator so
+// the sounds never touch the fight's seeded random numbers.
+var rbNoiseSeed = 12345;
+function rbNoise() { rbNoiseSeed = (rbNoiseSeed * 1103515245 + 12345) & 0x7fffffff; return rbNoiseSeed / 0x3fffffff - 1; }
+function rbNoiseBuf(ctx, dur) {
+  var n = Math.ceil(ctx.sampleRate * dur), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+  for (var i = 0; i < n; i++) d[i] = rbNoise();
+  return buf;
+}
+// One bright coin "ting".
+function rbTing(ctx, at, f, vol) {
+  [1, 2.76, 5.4].forEach(function (h, i) {
+    var o = ctx.createOscillator(); o.type = "sine"; o.frequency.value = f * h;
+    var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol / (1 + i * 1.5), at + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.25 / (1 + i));
+    o.connect(g); g.connect(ctx.destination); o.start(at); o.stop(at + 0.3);
+  });
+}
+// The pot bursting up out of the mat: a whoomp and a shower of coins.
+function playRainbowSummon() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    var o = ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(70, now); o.frequency.exponentialRampToValueAtTime(160, now + 0.25);
+    var og = ctx.createGain(); og.gain.setValueAtTime(0.7, now); og.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+    o.connect(og); og.connect(ctx.destination); o.start(now); o.stop(now + 0.45);
+    for (var i = 0; i < 16; i++) rbTing(ctx, now + 0.05 + i * 0.035 + Math.abs(rbNoise()) * 0.04, 2200 + Math.abs(rbNoise()) * 2600, 0.08);
+  } catch (e) { /* never let audio break the game */ }
+}
+// Charging: a harp running up a major scale over and over, higher and
+// faster, over a shimmering pad and coins jingling, peaking as it tips.
+function playRainbowCharge(dur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + dur;
+    var scale = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
+    var t = now, k = 0;
+    while (t < end - 0.02) {
+      var prog = (t - now) / dur, step = 0.11 - 0.07 * prog;
+      var f = 392 * Math.pow(2, (scale[k % scale.length] + 12 * Math.floor(prog * 2)) / 12);
+      var o = ctx.createOscillator(); o.type = "triangle"; o.frequency.value = f;
+      var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09 + 0.08 * prog, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.55);
+      if (k % 3 === 0) rbTing(ctx, t + 0.02, 2600 + Math.abs(rbNoise()) * 2000, 0.03 + 0.04 * prog);
+      t += step; k++;
+    }
+    [261.6, 329.6, 392, 523.3].forEach(function (f) {
+      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(f, now); o.frequency.exponentialRampToValueAtTime(f * 2, end);
+      var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(500, now); lp.frequency.exponentialRampToValueAtTime(4000, end);
+      var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.03, end - 0.05); g.gain.exponentialRampToValueAtTime(0.0001, end + 0.05);
+      o.connect(lp); lp.connect(g); g.connect(ctx.destination); o.start(now); o.stop(end + 0.1);
+    });
+  } catch (e) { /* never let audio break the game */ }
+}
+// The tip: a big bright major chord blast, a rushing roar and coins pouring.
+function playRainbowBlast(dur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + dur + 0.3;
+    var src = ctx.createBufferSource(); src.buffer = rbNoiseBuf(ctx, dur + 0.4);
+    var bp = ctx.createBiquadFilter(); bp.type = "lowpass"; bp.frequency.setValueAtTime(7000, now); bp.frequency.exponentialRampToValueAtTime(1200, end);
+    var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.45, now + 0.03); g.gain.setValueAtTime(0.35, now + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, end);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination); src.start(now); src.stop(end + 0.05);
+    var o = ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(130, now); o.frequency.exponentialRampToValueAtTime(45, now + 0.6);
+    var og = ctx.createGain(); og.gain.setValueAtTime(0.9, now); og.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+    o.connect(og); og.connect(ctx.destination); o.start(now); o.stop(now + 0.75);
+    [523.3, 659.3, 784, 1046.5, 1318.5].forEach(function (f, i) {
+      var c = ctx.createOscillator(); c.type = i < 3 ? "sawtooth" : "triangle"; c.frequency.value = f;
+      var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(6000, now); lp.frequency.exponentialRampToValueAtTime(1500, end);
+      var cg = ctx.createGain(); cg.gain.setValueAtTime(0.0001, now); cg.gain.exponentialRampToValueAtTime(0.06, now + 0.02); cg.gain.exponentialRampToValueAtTime(0.0001, end);
+      c.connect(lp); lp.connect(cg); cg.connect(ctx.destination); c.start(now); c.stop(end + 0.05);
+    });
+    for (var i = 0; i < 26; i++) rbTing(ctx, now + 0.05 + i * (dur / 26) + Math.abs(rbNoise()) * 0.03, 2000 + Math.abs(rbNoise()) * 3000, 0.06);
+  } catch (e) { /* never let audio break the game */ }
+}
+// The beams meeting: a deep grinding rumble that swells and throbs, with
+// crackles, for as long as they push.
+function playBeamClash(dur) {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime, end = now + dur;
+    var src = ctx.createBufferSource(); src.buffer = rbNoiseBuf(ctx, dur + 0.3);
+    var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 900;
+    var g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.55, now + 0.05); g.gain.setValueAtTime(0.5, end - 0.3); g.gain.exponentialRampToValueAtTime(0.0001, end + 0.2);
+    var lfo = ctx.createOscillator(); lfo.frequency.value = 7; var lg = ctx.createGain(); lg.gain.value = 0.18;
+    lfo.connect(lg); lg.connect(g.gain);
+    src.connect(lp); lp.connect(g); g.connect(ctx.destination); src.start(now); src.stop(end + 0.25); lfo.start(now); lfo.stop(end + 0.25);
+    [55, 82.4].forEach(function (f) {
+      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(f, now); o.frequency.linearRampToValueAtTime(f * 1.5, end);
+      var ol = ctx.createBiquadFilter(); ol.type = "lowpass"; ol.frequency.value = 400;
+      var og = ctx.createGain(); og.gain.setValueAtTime(0.0001, now); og.gain.exponentialRampToValueAtTime(0.18, now + 0.1); og.gain.exponentialRampToValueAtTime(0.0001, end + 0.2);
+      o.connect(ol); ol.connect(og); og.connect(ctx.destination); o.start(now); o.stop(end + 0.25);
+    });
+    var w = ctx.createOscillator(); w.type = "square"; w.frequency.setValueAtTime(700, now); w.frequency.linearRampToValueAtTime(1400, end);
+    var wl = ctx.createBiquadFilter(); wl.type = "bandpass"; wl.frequency.value = 2000; wl.Q.value = 3;
+    var wg = ctx.createGain(); wg.gain.setValueAtTime(0.0001, now); wg.gain.exponentialRampToValueAtTime(0.05, now + 0.1); wg.gain.exponentialRampToValueAtTime(0.0001, end + 0.1);
+    w.connect(wl); wl.connect(wg); wg.connect(ctx.destination); w.start(now); w.stop(end + 0.15);
+    for (var t = now + 0.1; t < end; t += 0.12 + Math.abs(rbNoise()) * 0.2) {
+      var cs = ctx.createBufferSource(); cs.buffer = rbNoiseBuf(ctx, 0.05);
+      var ch = ctx.createBiquadFilter(); ch.type = "highpass"; ch.frequency.value = 2500;
+      var cg = ctx.createGain(); cg.gain.setValueAtTime(0.25, t); cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+      cs.connect(ch); ch.connect(cg); cg.connect(ctx.destination); cs.start(t); cs.stop(t + 0.06);
+    }
+  } catch (e) { /* never let audio break the game */ }
+}
+// The clash blowing up in the middle.
+function playClashBoom() {
+  try {
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
+    var now = ctx.currentTime;
+    var src = ctx.createBufferSource(); src.buffer = rbNoiseBuf(ctx, 1.6);
+    var lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(5000, now); lp.frequency.exponentialRampToValueAtTime(300, now + 1.4);
+    var g = ctx.createGain(); g.gain.setValueAtTime(1.0, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+    src.connect(lp); lp.connect(g); g.connect(ctx.destination); src.start(now); src.stop(now + 1.6);
+    var o = ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(90, now); o.frequency.exponentialRampToValueAtTime(30, now + 0.9);
+    var og = ctx.createGain(); og.gain.setValueAtTime(1.0, now); og.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+    o.connect(og); og.connect(ctx.destination); o.start(now); o.stop(now + 1.05);
+  } catch (e) { /* never let audio break the game */ }
+}
+
 // Joe's spin recording for the Rose Tornado: loops while it spins (winding
 // up from a little slower), then fades out as it winds down. Falls back to
 // the synth wind if the clip isn't loaded.
