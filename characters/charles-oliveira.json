@@ -1,6 +1,6 @@
 {
   "id": "c-charles-oliveira",
-  "rev": 15,
+  "rev": 16,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Charles Oliveira",
@@ -91,6 +91,8 @@
     "hairColor": "#f4edd2"
   },
   "blockChance": 10,
+  "knee": { "damage": 9, "cooldown": 3.4, "speed": 0.3, "reach": 12, "knockback": 180,
+    "clinch": { "first": [4, 7], "every": [8, 12], "range": 16, "knees": [2, 4], "damage": 8, "gap": 0.4, "escape": 15, "grapplerEscape": 10, "knockback": 380 } },
   "kamehameha": {
     "first": [
       10,

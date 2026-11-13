@@ -1,6 +1,6 @@
 {
   "id": "c-tony-ferguson",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Tony Ferguson",
@@ -51,6 +51,7 @@
   "guard": { "chance": 22, "time": 4.5, "radius": 130, "passChance": 25, "passPunches": 4, "passDamage": 10, "subs": ["buggy", "darce", "elbows"], "cooldown": 4 },
   "blockChance": 10,
   "elbow": { "damage": 6, "cooldown": 1.15, "speed": 0.26, "reach": 14, "critChance": 40, "critMult": 3, "knockback": 150, "cut": { "chance": 45, "time": 4, "dps": 2 } },
+  "combos": { "first": [4, 6], "every": [7, 10], "list": { "jab-cross-elbow": 3, "elbow-elbow-knee": 2 } },
   "ferguson": {
     "durability": { "damageTaken": 0.82 },
     "wontTap": { "chances": [65, 40], "cost": 18, "vsCharlesArmbar": true },

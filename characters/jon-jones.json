@@ -1,6 +1,6 @@
 {
  "id": "c-jon-jones",
- "rev": 6,
+ "rev": 7,
  "builtin": false,
  "weightClass": "lightheavyweight",
  "name": "Jon Jones",
@@ -107,6 +107,7 @@
   }
  },
  "blockChance": 10,
+ "combos": { "first": [6, 9], "every": [9, 13], "list": { "jab-spin-elbow": 3, "jab-cross-elbow": 1 } },
  "jon": {
   "swapEvery": 12,
   "rncChance": 5,

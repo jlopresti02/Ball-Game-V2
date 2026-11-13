@@ -158,6 +158,8 @@ function galleryMoves(ch) {
   if (ch.hasTeep) add("🦶", "Teep", teepGalleryInfo(ch.teep)); // the front push kick (teep.js)
   if (ch.diaz) diazGalleryMoves(ch, add); // Nate Diaz (diaz.js)
   if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
+  if (ch.knee) kneeGalleryMoves(ch, add); // knees, the clinch, the flying knee (knees.js)
+  if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).

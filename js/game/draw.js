@@ -220,6 +220,8 @@ function draw() {
     applyHollowayPose(b); // Max Holloway's spinning back fist, bouncing at the booth (holloway.js)
     applyDiazPose(b); // Nate Diaz leaning into the slap, the level change, the taunt (diaz.js)
     applyFergusonPose(b); // Tony Ferguson on his back in a hold, leaning into his slide, and whoever he's got (ferguson.js)
+    applyKneePose(b); // pulled down into the clinch, crouching for and flying in with a flying knee (knees.js)
+    applyComboPose(b); // turning his back for a spinning back elbow (combos.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -429,6 +431,7 @@ function draw() {
   drawStricklandOver(); // the bald eagle at Strickland's side, fireworks over the test arena (strickland.js)
   drawDiazOver(); // Nick Diaz, his bubble, the NICK DIAZ banner in the test arena (diaz.js)
   drawFergusonOver(); // Tony Ferguson's holds and tug-of-war bar, the Kaioken flash, the CANCELLED stamps (ferguson.js)
+  drawKneesOver(); // knees coming up, the clinch, the flying knee and its red line (knees.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

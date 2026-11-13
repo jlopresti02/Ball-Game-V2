@@ -67,6 +67,8 @@ function update(dt) {
   tickDiaz(dt); // Nate Diaz's lines, holds and bottles, and Nick Diaz in the cage (diaz.js)
   tickFerguson(dt); // Tony Ferguson's Kaioken, won't-tap, lines, stamps, Burrito Bell (ferguson.js)
   tickElbows(dt); // cuts from elbows bleeding (elbows.js)
+  tickKnees(dt); // knees landing, the clinch and flying knee let go if something else takes over, a flying-knee knockout (knees.js)
+  tickCombos(dt); // a combination cut short if something else takes over (combos.js)
   tickSlows(dt); // limps wearing off (slowdown.js)
   tickSpeech(dt); // voice-line speech bubbles (speech.js)
   tickTopRope(dt); // the dented mat after Hokit's Top Rope Body Slam (hokit-toprope.js)
