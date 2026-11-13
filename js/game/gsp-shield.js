@@ -115,27 +115,36 @@ function gspDeflect(b, a) {
     var score = along < 0 ? 1e4 : across;
     if (!best || score > best.score) best = { rx: rx, ry: ry, sg: sg, score: score };
   });
-  var na = Math.atan2(-dy, -dx) + best.sg * GSP_SH_DEFLECT; // the shield's face
-  b.gspBrace = { owner: a.id, kind: m.move, t: 0, dx: dx, dy: dy, rx: best.rx, ry: best.ry, nx: Math.cos(na), ny: Math.sin(na), ext: 0 };
+  b.gspBrace = { owner: a.id, kind: m.move, t: 0, dx: dx, dy: dy, sg: best.sg, rx: best.rx, ry: best.ry, nx: -dx, ny: -dy, ext: 0 };
   b.justDodged = true;
   b.vx = 0; b.vy = 0;
   floater(b.x, b.y - b.r - 30, "DEFLECTED!", "crit");
-  hitStop = Math.max(hitStop, 0.06);
-  if (!reduceMotion) shake = Math.max(shake, 14);
+  if (!reduceMotion) shake = Math.max(shake, 14); // (no hit-stop: the beam would freeze passing through him)
   playShieldBlock(); playShieldPing();
   crowdReact(0.8);
   var cr = gspCfg(b).crowd;
   gspCrowd(b, cr && cr.shield);
   return true;
 }
-function gspBraceFace(b) { var br = b.gspBrace, d = b.r * 1.0; return { x: b.x + br.nx * d, y: b.y + br.ny * d }; }
+function gspBraceFace(b) { var br = b.gspBrace, d = b.r * 0.95; return { x: b.x + br.nx * d, y: b.y + br.ny * d }; }
+// Where along the beam the shield stops it: GSP's front edge on its line.
+function gspShieldAlong(shooter, g, m) { return (g.x - shooter.x) * m.dx + (g.y - shooter.y) * m.dy - g.r * 0.95; }
 // From the beam's fire phase (kamehameha.js, rainbow-beam.js): how far the
 // beam gets, stopped at a shield that's deflecting it.
 function gspBeamStop(shooter, m, len) {
   var g = balls && balls[1 - shooter.id];
-  if (!g || !g.gspBrace || g.gspBrace.owner !== shooter.id) return len;
-  var f = gspBraceFace(g), along = (f.x - shooter.x) * m.dx + (f.y - shooter.y) * m.dy;
-  return Math.max(shooter.r * 2, Math.min(len, along));
+  if (!g || !g.alive) return len;
+  var braced = g.gspBrace && g.gspBrace.owner === shooter.id;
+  if (!braced) {
+    // about to reach him with the shield up: stopped at it this frame too (the deflect lands in the same frame)
+    if (!gspShCfg(g) || m.hit || !gspShieldUp(g)) return len;
+    var cfg = shooter.igbb.move === "rainbow" ? shooter.char.potOfGold : shooter.char.kamehameha;
+    var ox = g.x - shooter.x, oy = g.y - shooter.y, al = ox * m.dx + oy * m.dy, ac = Math.abs(-m.dy * ox + m.dx * oy);
+    if (!(al > 0 && ac < cfg.width / 2 + g.r * 0.85 && (m.ext0 || 0) + m.t * 3000 > al - g.r)) return len;
+    return Math.max(shooter.r * 2, Math.min(len, al - g.r + 2)); // just touching his edge, so the hit (and the deflect) lands this frame
+  }
+  // (the beam's round head reaches a little past its length: tucked under the shield)
+  return Math.max(shooter.r * 2, Math.min(len, gspShieldAlong(shooter, g, m) - (shooter.igbb.move === "rainbow" ? 4 : 10)));
 }
 // From updateGsp: braced behind the shield until the beam's done.
 function runGspBrace(self, other, dt) {
@@ -146,7 +155,13 @@ function runGspBrace(self, other, dt) {
     if (self.alive && inOrdinaryMovement(self)) setSpeed(self, self.baseSpeed || SPEED);
     return false;
   }
-  // pushed back a little by it
+  // lined up square behind the shield on the beam's line, pushed back a little by it
+  var bm = a.igbb;
+  br.dx = bm.dx; br.dy = bm.dy; br.nx = -bm.dx; br.ny = -bm.dy;
+  var t2 = Math.PI + br.sg * 2 * GSP_SH_DEFLECT, c2 = Math.cos(t2), s3 = Math.sin(t2);
+  br.rx = br.dx * c2 - br.dy * s3; br.ry = br.dx * s3 + br.dy * c2;
+  var cx0 = self.x - a.x, cy0 = self.y - a.y, acr = -br.dy * cx0 + br.dx * cy0, k = Math.min(1, dt * 18);
+  self.x += br.dy * acr * k; self.y -= br.dx * acr * k;
   var push = br.t < 0.25 ? 140 : 45;
   self.x = Math.min(W - self.r, Math.max(self.r, self.x + br.dx * push * dt));
   self.y = Math.min(H - self.r, Math.max(self.r, self.y + br.dy * push * dt));
@@ -426,6 +441,9 @@ function drawGspShieldArms(b) {
       gspArm(b, b.x + qx * sd * r * 0.45, b.y + qy * sd * r * 0.45, f.x - br.nx * r * 0.25 + qx * sd * r * 0.3 + jit, f.y - br.ny * r * 0.25 + qy * sd * r * 0.3, size, na);
     });
     drawMapleShield(ctx, f.x + jit, f.y, gspShieldR(b) * 1.15, 0);
+    var fl = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, gspShieldR(b) * 1.5), fc = br.kind === "rainbow" ? "255,240,180" : "190,230,255";
+    fl.addColorStop(0, "rgba(255,255,255,0.75)"); fl.addColorStop(0.5, "rgba(" + fc + ",0.35)"); fl.addColorStop(1, "rgba(" + fc + ",0)");
+    ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(f.x, f.y, gspShieldR(b) * 1.5, 0, Math.PI * 2); ctx.fill(); // the beam splashing on its face
     return;
   }
   var bl = b.gspBlock;
@@ -447,7 +465,11 @@ function gspShieldHandsBusy(b) { return !!(b && (b.gspThrow || b.gspBlock || b.g
 // Over the ring (drawGspOver): the shield flying, with a red and white blur.
 function drawGspShields() {
   if (!balls) return;
-  balls.forEach(function (b) { if (b.gspBrace && b.alive && b.gspBrace.ext > 0) drawDeflectedBeam(b); });
+  balls.forEach(function (b) {
+    if (!b.gspBrace || !b.alive) return;
+    if (b.gspBrace.ext > 0) drawDeflectedBeam(b);
+    ctx.save(); drawGspShieldArms(b); ctx.restore(); // his gloves and the shield again, over both beams (same pose, drawn on top)
+  });
   balls.forEach(function (b) {
     var s = b.gspDisc;
     if (!s) return;

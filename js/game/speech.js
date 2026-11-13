@@ -15,7 +15,8 @@
 //                drawn: pass { clip: "name" } to say(), or list the line in
 //                SPEECH_CLIPS (exact text -> SOUND_CLIPS name, filled in by
 //                voice-clips.js) so no fighter code changes. The clip has its
-//                own bleeps. SPEECH_TEXT_WITH_CLIP shows the text as well. A line with
+//                own bleeps. Clips play on the talk channel (playTalk), so
+//                they never overlap another voice line. SPEECH_TEXT_WITH_CLIP shows the text as well. A line with
 //                no clip yet is silent and not drawn (SPEECH_TEXT_WITHOUT_CLIP
 //                false); it still takes its turn, so the fight plays the same.
 // canSay(b)      false while a bubble is up or for `SPEECH_GAP` seconds after,
@@ -284,10 +285,14 @@ function speechTextOn(hex) {
 }
 
 // A recorded line, when there is one (SOUND_CLIPS, decoded on first use).
+// It goes on the talk channel (playTalk in audio.js) like every other voice
+// line, so two people never talk over each other: if someone is already
+// talking it waits for them when they're nearly done, otherwise it's skipped.
+// Joe's rule, see CLAUDE.md: never play a voice line with playClip directly.
 function playSpeechClip(name) {
   try {
     if (typeof SOUND_CLIPS === "undefined" || !SOUND_CLIPS[name]) return;
-    withClip(name, function () { playClipOnce(name, 1); });
+    withClip(name, function () { playTalk(name, 1); });
   } catch (e) { /* never let audio break the game */ }
 }
 
