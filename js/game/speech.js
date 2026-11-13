@@ -19,6 +19,12 @@
 //                so a talker doesn't bury the fight in text.
 // pickLine(b, lines, key)  a random line from `lines`, never the same one
 //                twice in a row for that key.
+// announce(text, { who })  the commentator's call, as a TV lower-third
+//                across the bottom of the cage with his name on a gold tab
+//                (who: "ROGAN", "ANIK", "DC", "BUFFER"...). For a fighter's
+//                famous finish, call it the moment he lands that exact move.
+//                One at a time; it keeps going through a knockout. Takes
+//                { clip } like say().
 "use strict";
 
 var SPEECH_WORD = 0.11;  // seconds per word as the line comes in
@@ -33,7 +39,9 @@ var SPEECH_LINE_H = 27;
 var SPEECH_CLIPS = {};   // "exact line text": "soundClipName"
 var speech = [];         // by fighter id: { words, t, dur, said, quietT, clip }
 
-function resetSpeech() { speech = []; }
+var announcer = null;     // { words, t, dur, who, clip }
+
+function resetSpeech() { speech = []; announcer = null; }
 
 function speechOf(b) { return speech[b.id] || (speech[b.id] = { words: null, t: 0, dur: 0, said: 0, quietT: 0, last: {} }); }
 
@@ -71,6 +79,12 @@ function splitSpeech(text) {
 }
 
 function tickSpeech(dt) {
+  if (announcer) {
+    announcer.t += dt;
+    var an = Math.min(announcer.words.length, Math.floor(announcer.t / SPEECH_WORD) + 1);
+    while (announcer.said < an) { if (announcer.words[announcer.said].bleep && !announcer.clip) playBleep(); announcer.said++; }
+    if (announcer.t >= announcer.dur) announcer = null;
+  }
   for (var i = 0; i < speech.length; i++) {
     var s = speech[i];
     if (!s) continue;
@@ -113,6 +127,7 @@ function speechLayout(b, all) {
 // fighter or over him, whichever covers least of the other bubble and the
 // other fighter (under wins a tie: the hit numbers float upward).
 function drawSpeech() {
+  drawAnnouncer();
   var placed = null;
   for (var i = 0; i < speech.length; i++) {
     var s = speech[i], b = balls[i];
@@ -137,6 +152,69 @@ function overlapArea(a, c) {
   if (!a || !c) return 0;
   var w = Math.min(a.x + a.w, c.x + c.w) - Math.max(a.x, c.x), h = Math.min(a.y + a.h, c.y + c.h) - Math.max(a.y, c.y);
   return w > 0 && h > 0 ? w * h : 0;
+}
+
+function announce(text, opts) {
+  if (!text) return;
+  var words = splitSpeech(text);
+  announcer = { words: words, t: 0, said: 0, who: ((opts && opts.who) || "COMMENTARY").toUpperCase(),
+    dur: words.length * SPEECH_WORD + SPEECH_READ + 0.6 + words.length * 0.12 + ((opts && opts.hold) || 0),
+    clip: (opts && opts.clip) || SPEECH_CLIPS[text] || null };
+  if (announcer.clip) playSpeechClip(announcer.clip);
+}
+
+// From draw.js with the speech bubbles: the lower-third across the bottom of
+// the cage, sliding up into place.
+function drawAnnouncer() {
+  var a = announcer;
+  if (!a) return;
+  ctx.save();
+  ctx.font = SPEECH_FONT;
+  var space = ctx.measureText(" ").width, maxW = W - 24 - 28;
+  var lines = [[]], lw = 0;
+  a.words.forEach(function (w, k) {
+    var ww = speechWordW(w);
+    if (lines[lines.length - 1].length && lw + space + ww > maxW) { lines.push([]); lw = 0; }
+    lw += (lines[lines.length - 1].length ? space : 0) + ww;
+    lines[lines.length - 1].push({ w: w, k: k, ww: ww });
+  });
+  var h = lines.length * SPEECH_LINE_H + 16, x = 12, w = W - 24;
+  var slide = Math.min(1, a.t / 0.18), out = Math.min(1, (a.dur - a.t) / SPEECH_FADE);
+  var y = H - 12 - h + (1 - slide) * (h + 12);
+  ctx.globalAlpha = Math.max(0, out);
+  ctx.fillStyle = "rgba(14,14,16,0.9)"; ctx.strokeStyle = "#d4af37"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#d4af37"; ctx.fillRect(x, y, 5, h);
+  // the commentator's name on a gold tab
+  ctx.font = "800 13px \"Barlow Condensed\", \"Arial Narrow\", sans-serif";
+  var nw = ctx.measureText(a.who).width + 16;
+  ctx.fillStyle = "#d4af37"; ctx.strokeStyle = "#151515"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(x + 14, y - 10, nw, 18, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#151515"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(a.who, x + 14 + nw / 2, y - 0.5);
+  // the call, word by word
+  var shown = Math.min(a.words.length, Math.floor(a.t / SPEECH_WORD) + 1);
+  ctx.font = SPEECH_FONT; ctx.textAlign = "left";
+  lines.forEach(function (ln, li) {
+    var lx = x + 16, ly = y + 9 + SPEECH_LINE_H * li + SPEECH_LINE_H / 2 + 1;
+    ln.forEach(function (it) {
+      if (it.k < shown) {
+        var wd = it.w;
+        if (!wd.bleep) { ctx.fillStyle = "#ffffff"; ctx.fillText(wd.text, lx, ly); }
+        else {
+          var pw = ctx.measureText(wd.pre).width;
+          ctx.fillStyle = "#ffffff"; ctx.fillText(wd.pre, lx, ly);
+          ctx.fillStyle = "#000000"; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.roundRect(lx + pw, ly - 11, BLEEP_W, 22, 4); ctx.fill(); ctx.stroke();
+          ctx.save(); ctx.font = "800 14px \"Barlow Condensed\", \"Arial Narrow\", sans-serif";
+          ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.fillText("BLEEP", lx + pw + BLEEP_W / 2, ly + 1); ctx.restore();
+          ctx.fillStyle = "#ffffff"; ctx.fillText(wd.post, lx + pw + BLEEP_W, ly);
+        }
+      }
+      lx += it.ww + space;
+    });
+  });
+  ctx.restore();
 }
 
 function speechName(b) {
