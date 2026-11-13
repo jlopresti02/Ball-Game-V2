@@ -69,6 +69,7 @@ var SPECIAL_INFO = {
 };
 SPECIAL_INFO.kangaroo = function (sp) { return volkKangarooInfo(sp); }; // Alexander Volkanovski (volkanovski.js)
 SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
+SPECIAL_INFO.middle = function (sp) { return hollowaySpecialInfo(sp); }; // Max Holloway (holloway.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
 function galleryMoves(ch) {
@@ -148,6 +149,7 @@ function galleryMoves(ch) {
   }
   if (ch.gsp) gspGalleryMoves(ch, add); // Georges St-Pierre (gsp.js)
   if (ch.volk) volkGalleryMoves(ch, add); // Alexander Volkanovski (volkanovski.js)
+  if (ch.holloway) hollowayGalleryMoves(ch, add); // Max Holloway (holloway.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;
@@ -431,6 +433,7 @@ function gallerySounds() {
   ];
   gspGallerySounds(groups, synth); // GSP's sounds (gsp.js)
   volkGallerySounds(groups, synth); // Volkanovski's sounds (volkanovski.js)
+  hollowayGallerySounds(groups, synth); // Max Holloway's sounds (holloway.js)
   // Anything new in SOUND_CLIPS that isn't listed above still shows up.
   var listed = {};
   groups.forEach(function (g) { g.items.forEach(function (it) { if (it.clip) listed[it.clip] = true; }); });

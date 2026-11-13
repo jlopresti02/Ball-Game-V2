@@ -2298,6 +2298,192 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-max-holloway",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "featherweight",
+    "name": "Max Holloway",
+    "base": "Brawler",
+    "bio": "\"Blessed\". Built on the Brawler base, with the most strikes in the game: combos of quick punches off both hands instead of single shots, and no opening KO Rush. He gets better the longer it goes: his Blessed meter fills with fight time and every punch he lands, and his combos get longer, faster and heavier with it. Sprawls 70% of takedown shots and won't follow anyone down into the guard. Against a striker he's beating he turns to the commentators (\"Count it up!\", \"I'm the best boxer in the UFC, baby!\") and slips what they throw. Once a fight he has a flashback to playing an old fighting game and comes back button mashing. Special move The Middle (\"MEET ME IN THE MIDDLE\"): his real point down, from the Ricardo Lamas fight to the last-second knockout of Justin Gaethje at UFC 300. Featherweight.",
+    "color": "#0f9b8e",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#b47a54",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "mohawk",
+      "hairColor": "#17110d",
+      "waianae": true,
+      "beard": "short",
+      "beardColor": "#1b140f",
+      "ears": "normal",
+      "tattoos": {
+        "polynesian": true,
+        "armInk": true,
+        "armInkSide": "left"
+      },
+      "shorts": "#f4f2ec",
+      "trim": "#c8102e",
+      "shortsStyle": "hibiscus",
+      "flowers": [
+        "#c8102e",
+        "#123b8c"
+      ],
+      "legPatch": false,
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 7,
+      "cooldown": 0.8,
+      "speed": 0.13,
+      "size": 13,
+      "knockback": 150,
+      "reach": 38,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 12,
+    "tdd": {
+      "sprawlChance": 70
+    },
+    "holloway": {
+      "volume": {
+        "combo": [
+          3,
+          6
+        ],
+        "damage": [
+          6,
+          9
+        ],
+        "cooldown": [
+          0.75,
+          0.4
+        ],
+        "comboKnockback": 30,
+        "chase": 260,
+        "slack": 14
+      },
+      "blessed": {
+        "timeFill": 0.018,
+        "hitFill": 0.006,
+        "announce": [
+          0.5,
+          1
+        ]
+      },
+      "guardRespect": {
+        "chance": 85,
+        "margin": 22
+      },
+      "chin": {
+        "over": 15,
+        "mult": 0.8,
+        "sources": [
+          "punch",
+          "kick",
+          "kickback",
+          "swing",
+          "power",
+          "combo",
+          "flow"
+        ]
+      },
+      "unbothered": {
+        "chance": 75
+      },
+      "booth": {
+        "after": 14,
+        "lead": 50,
+        "minMeter": 0.3,
+        "range": 170,
+        "every": 14,
+        "max": 2,
+        "count": 1.1,
+        "boxer": 1.7,
+        "slip": 70,
+        "counter": 9
+      },
+      "flashback": {
+        "first": [
+          13,
+          22
+        ],
+        "zone": 0.45,
+        "tv": 2.8,
+        "back": 0.25
+      },
+      "mash": {
+        "time": 6,
+        "combo": [
+          4,
+          7
+        ],
+        "damage": 1.15,
+        "backfist": 18,
+        "chase": 300,
+        "gap": 0.3
+      },
+      "gaethje": {
+        "koBonus": 45,
+        "belt": true
+      },
+      "ilia": {
+        "hurt": 1.6
+      },
+      "lines": {
+        "booth": true,
+        "middle": true,
+        "zone": true,
+        "win": true,
+        "matador": true,
+        "conor": true,
+        "rogan": true
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "middle",
+      "chargeTime": 42,
+      "hitCut": 1,
+      "punchCut": 0.3,
+      "onlyWhenWinning": true,
+      "acceptChance": 85,
+      "point": 1.2,
+      "walk": 1.1,
+      "gap": 18,
+      "fury": 2.6,
+      "punchEvery": 0.09,
+      "damage": 5,
+      "answerEvery": 0.5,
+      "answerScale": 0.6,
+      "answerMax": 18,
+      "finalWindup": 0.32,
+      "finalDamage": 40,
+      "koBase": 15,
+      "koLow": 55,
+      "koMeter": 15,
+      "declineRefund": 0.5
+    }
+  },
+  {
     "id": "c-sean-omalley",
     "rev": 1,
     "builtin": false,

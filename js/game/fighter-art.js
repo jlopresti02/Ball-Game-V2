@@ -529,6 +529,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   }
 
   if (look.warPaint) drawWarPaint(c, r, look.warPaint, lw, look.skin);  // Alex Pereira's war paint
+  if (look.waianae) drawWaianaeFade(c, r, look, lw); // Max Holloway's Waianae fade (holloway.js)
   if (look.faceInk) drawFaceInk(c, r, lw);  // Sean O'Malley's face tattoos
   if (look.goatee || look.scalpInk) drawIcemanHead(c, r, look, lw);  // Chuck Liddell's goatee and scalp tattoo (liddell.js)
 
@@ -1160,6 +1161,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   }
   if (tat.gorilla) drawGorillaChest(c, r, look, contained);  // Conor McGregor's crowned gorilla
   if (tat.tiger) drawTigerStomach(c, r, look, lw, contained);  // and the tiger on his stomach
+  if (tat.polynesian) drawHollowayChest(c, r, lw, contained, look); // Max Holloway's Polynesian chest piece and HOLLOWAY (holloway.js)
   if (tat.portraits) {
     // Black-and-grey family portraits filling the upper chest: a woman with
     // long hair, an older man with grey hair (lowest) and a girl with dark
@@ -1525,6 +1527,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   }
   if (look.shortsStyle === "icicles") drawIcicleShorts(c, r, look, sTop, band, name); // Chuck Liddell's Iceman trunks (liddell.js)
   if (look.shortsStyle === "meander") drawMeanderShorts(c, r, look, sTop, band); // Volkanovski's Greek key trunks (volkanovski.js)
+  if (look.shortsStyle === "hibiscus") drawHibiscusShorts(c, r, look, sTop, band, name); // Max Holloway's UFC 300 hibiscus kit (holloway.js)
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {
@@ -1560,6 +1563,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.fillStyle = "#111111"; c.fillRect(r * 0.08, sTop, r * 0.4, band + r * 0.12);
     c.fillStyle = "#f2f2f2"; c.fillRect(r * 0.14, sTop + band * 0.45, r * 0.28, r * 0.07);
   }
+  if (look.shortsStyle === "hibiscus") drawHawaiiPatch(c, r, look, sTop, band); // and the Hawaii flag on his leg (holloway.js)
   // Leg split and a patch on the left leg
   c.fillStyle = ink;
   c.beginPath(); c.moveTo(-r * 0.07, r); c.lineTo(0, r * 0.8); c.lineTo(r * 0.07, r); c.closePath(); c.fill();

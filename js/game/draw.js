@@ -106,6 +106,7 @@ function draw() {
   drawLiddellUnder(); // snow on the mat, Chuck Liddell's ice flames (liddell.js)
   drawNgannouUnder(); // Ngannou's rage punch line, the Smash circle and crater, Dana at the cage (ngannou.js)
   drawVolkUnder(); // Volkanovski's circling arrow, his flag, the kangaroo behind him (volkanovski.js)
+  drawHollowayUnder(); // the gold ring in the middle of the cage, the commentary desk (holloway.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -212,6 +213,7 @@ function draw() {
     applyConorPose(b); // Conor McGregor rocking on his strut, planted, or gassed (conor.js)
     applyNgannouPose(b); // Ngannou crouching and leaping for the Smash, or knocked flat by it (ngannou.js)
     applyVolkPose(b); // Volkanovski leaning into his circling, small in the pouch (volkanovski.js)
+    applyHollowayPose(b); // Max Holloway's spinning back fist, bouncing at the booth (holloway.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -355,6 +357,7 @@ function draw() {
     drawLiddell(b); // Chuck Liddell packing the snow, his blue overhand (liddell.js)
     drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
     drawVolk(b); // Volkanovski's arms up, punching out of the pouch (volkanovski.js)
+    drawHolloway(b); // Max Holloway's Blessed meter, pointing, the flashback pose, the BMF belt (holloway.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -467,6 +470,7 @@ function draw() {
   drawGspCrowd(s, ox, oy); // the Montreal crowd chanting "GSP! GSP!" (gsp.js)
   drawLiddellSky(s, ox, oy); // snow falling over the whole arena (liddell.js)
   drawVolkSky(s, ox, oy); // AUSSIE AUSSIE AUSSIE, OI OI OI, and the streamers (volkanovski.js)
+  drawHollowaySky(s, ox, oy); // Max Holloway's flashback TV, the 0:10 clock, his Button Mash buttons (holloway.js)
   drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
   drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)
