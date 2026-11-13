@@ -68,6 +68,7 @@ function update(dt) {
   tickFerguson(dt); // Tony Ferguson's Kaioken, won't-tap, lines, stamps, Burrito Bell (ferguson.js)
   tickElbows(dt); // cuts from elbows bleeding (elbows.js)
   tickSlows(dt); // limps wearing off (slowdown.js)
+  tickChatter(dt); // extra real voice lines for any fighter, by id (chatter.js)
   tickSpeech(dt); // voice-line speech bubbles (speech.js)
   tickTopRope(dt); // the dented mat after Hokit's Top Rope Body Slam (hokit-toprope.js)
   tickDuckDrop(dt); // smoke, feathers and the cracked mat from his Duck Drop (jon-duck.js)

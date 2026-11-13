@@ -67,6 +67,7 @@ function makeBall(id, ch) {
   initNgannou(b); // Francis Ngannou's rage meter, and his own copy to turn green (ngannou.js)
   initVolk(b); // Alexander Volkanovski's fight IQ, circling and walkout flag (volkanovski.js)
   initHolloway(b); // Max Holloway's Blessed meter, the booth, his flashback (holloway.js)
+  initChatter(b); // extra real voice lines for any fighter, by id (chatter.js)
   initStrickland(b); // Sean Strickland's range, shell, pace and trauma meter (strickland.js)
   initDiaz(b); // Nate Diaz's slap, sub hunt, chin and Stockton surge (diaz.js)
   initFerguson(b); // Tony Ferguson's slide, shell, Kaioken and lines (ferguson.js)
