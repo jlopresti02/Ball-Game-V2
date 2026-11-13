@@ -66,7 +66,8 @@ var CM_LINES = {
     "He makes gang signs with his right hand and animal balloons with his left.",
     "He's in a [BLEEP] tracksuit. He can't even afford a suit anymore.",
     "He will be unconscious inside four rounds.",
-    "I'd like to take this chance to apologize... to absolutely nobody."
+    "I'd like to take this chance to apologize... to absolutely nobody.",
+    "You ring your wife: Baby, we done it. We're rich, baby. Conor McGregor made us rich. Break out the red panties!"
   ],
   slip: ["He throws an overhand right, looks at the floor, and hopes for the best."],
   presser: [
