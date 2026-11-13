@@ -205,6 +205,7 @@ function draw() {
     applyGspPose(b); // GSP crouching to load, up in the air for the leap and the dive (gsp.js)
     applyConorPose(b); // Conor McGregor rocking on his strut, planted, or gassed (conor.js)
     applyNgannouPose(b); // Ngannou crouching and leaping for the Smash, or knocked flat by it (ngannou.js)
+    applyDiazPose(b); // Nate Diaz leaning into the slap, the level change, the taunt (diaz.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -347,6 +348,7 @@ function draw() {
     drawConor(b); // Conor McGregor's strut, counter stance, podium and gas tank, Dustin's calf kick (conor.js)
     drawLiddell(b); // Chuck Liddell packing the snow, his blue overhand (liddell.js)
     drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
+    drawDiaz(b); // Nate Diaz's slap, arms out, the 209 surge, a handprint on whoever he slapped (diaz.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -398,6 +400,7 @@ function draw() {
   drawGspOver(); // GSP's gi and headband flying off (gsp.js)
   drawMightyMouseOver(); // Mighty Mouse's SCOUTING notepad, sweat off a tired opponent (mighty-mouse.js)
   drawNgannouOver(); // Ngannou's mat chunks, contract scraps, punch-power banner in the test arena (ngannou.js)
+  drawDiazOver(); // Nick Diaz, his bubble, the NICK DIAZ banner in the test arena (diaz.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

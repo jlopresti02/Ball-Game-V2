@@ -63,6 +63,7 @@ function makeBall(id, ch) {
   initConor(b); // Conor McGregor's trash talk, counter left and gas tank (conor.js)
   initLiddell(b); // Chuck Liddell's frost, snow and wind-up (liddell.js)
   initNgannou(b); // Francis Ngannou's rage meter, and his own copy to turn green (ngannou.js)
+  initDiaz(b); // Nate Diaz's slap, sub hunt, chin and Stockton surge (diaz.js)
   return b;
 }
 
@@ -102,6 +103,7 @@ function startMatchSeeded(ch0, ch1) {
   resetConor(); // Conor McGregor's podium and 13 SECONDS (conor.js)
   resetLiddell(); // Chuck Liddell's snow (liddell.js)
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
+  resetDiaz(); // Nick Diaz and his banner (diaz.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
@@ -310,6 +312,7 @@ function hurt(b, amount, source, attackerId) {
     b.flash = 0.1;
     return 0;
   }
+  if (diazIronChin(b, amount, source, attackerId)) return 0; // Nate Diaz's chin eats a knockout shot (diaz.js)
   // Sees Red is wide open mid wind-up: anything that lands while it's
   // charging (not the dash itself) does extra damage.
   if (b.rageState && b.rageState.phase === "charge") {
@@ -330,6 +333,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= weightDamageMult(b, attackerId);
   amount *= conorDamageMult(b, source, attackerId); // Conor McGregor's gas tank, open after a whiff, calf kicks on him (conor.js)
   amount *= icemanDamageMult(b, attackerId, source); // frosted gloves hit softer, Chuck Liddell hits harder (liddell.js)
+  amount *= diazDamageMult(b, source, attackerId); // Nate Diaz's durability, and his Stockton surge (diaz.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

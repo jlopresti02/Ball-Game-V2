@@ -2061,6 +2061,203 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-nate-diaz",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "welterweight",
+    "name": "Nate Diaz",
+    "base": "Brawler",
+    "bio": "From Stockton, California (the 209). A rangy boxer on the Brawler base with long, quick, light punches and a jaw nobody can find: he takes less from everything, and most one-punch knockouts just bounce off him (\"IRON CHIN!\"). A Gracie black belt who never stops hunting the neck: every few seconds he dives in for a rear naked choke, an armbar or a guillotine, and every time they fight him off he comes back sooner and sinks it deeper. The Stockton Slap: he drops his hands, arms out wide, then slaps them with an open glove. It barely hurts, but it leaves them dizzy, and a dizzy opponent is one he can take the back of. Late in the fight he says a line, lands a big Stockton Slap and turns it up for the rest of the fight: faster, harder, deeper chokes. Special move: Nick Diaz. His big brother hops the fence and comes in to help for a few seconds, \"Don't be scared, homie.\" Against Conor McGregor it's UFC 196 again: he answers the trash talk, slaps him all fight, and goes for the guillotine that turns into the back take and the choke.",
+    "color": "#d9622b",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#ebc5a6",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "short",
+      "hairColor": "#2a1e17",
+      "beard": "stubble",
+      "beardAlpha": 0.3,
+      "beardColor": "#2a1e17",
+      "ears": "normal",
+      "tattoos": {},
+      "shorts": "#151515",
+      "trim": "#f2f2f2",
+      "shortsStyle": "stripe",
+      "waistText": "209",
+      "waistTextColor": "#d9622b",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 11,
+      "cooldown": 0.55,
+      "speed": 0.22,
+      "size": 14,
+      "knockback": 120,
+      "reach": 46,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 12,
+    "hasGuillotine": true,
+    "guillotine": {
+      "chance": 30,
+      "tapBase": 8,
+      "tapLowHp": 45,
+      "cooldown": 5,
+      "outcomes": {
+        "escape": 55,
+        "gnp": 15,
+        "resink": 25,
+        "slam": 5
+      },
+      "slamDamage": 50
+    },
+    "rnc": {
+      "tapBase": 8,
+      "tapLowHp": 45
+    },
+    "armbar": {
+      "tapBase": 8,
+      "tapLowHp": 45
+    },
+    "diaz": {
+      "durability": {
+        "take": 0.72
+      },
+      "chin": {
+        "chance": 65,
+        "damage": 45,
+        "taunt": 0.8
+      },
+      "subDefense": {
+        "save": 50
+      },
+      "slap": {
+        "first": [
+          3,
+          5
+        ],
+        "every": [
+          5,
+          8
+        ],
+        "range": 70,
+        "reach": 44,
+        "windup": 0.38,
+        "damage": 6,
+        "dizzy": 1.3,
+        "knockback": 150,
+        "tauntAfter": 20,
+        "taunt": 0.7
+      },
+      "subHunt": {
+        "first": [
+          8,
+          12
+        ],
+        "every": [
+          6,
+          9
+        ],
+        "retry": [
+          3.5,
+          5.5
+        ],
+        "range": 60,
+        "reach": 0.34,
+        "escape": 40,
+        "escapeDizzy": 15,
+        "grapplerEscape": 15,
+        "weaveEscape": 15,
+        "onDizzy": 40,
+        "tapBase": 6,
+        "tapLowHp": 50,
+        "persist": 6,
+        "persistMax": 4,
+        "subs": {
+          "rnc": 45,
+          "armbar": 25,
+          "guillotine": 30
+        }
+      },
+      "stockton": {
+        "after": 30,
+        "orBelow": 0.45,
+        "minT": 12,
+        "call": 1.1,
+        "approach": 1.8,
+        "slapDamage": 10,
+        "slapDizzy": 2.0,
+        "damage": 1.2,
+        "speed": 1.12,
+        "attack": 1.2,
+        "tapBonus": 8,
+        "slapEvery": [
+          3.5,
+          5.5
+        ]
+      },
+      "lines": {
+        "start": 70,
+        "answer": 70
+      },
+      "iconic": {
+        "buffer": true,
+        "rogan": true
+      },
+      "vsConor": {
+        "slapEvery": [
+          3.5,
+          6
+        ],
+        "chain196": 60,
+        "chainBonus": 10,
+        "bottlesBack": 2,
+        "bottleDamage": 6,
+        "bottleSpeed": 560
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "nickdiaz",
+      "chargeTime": 55,
+      "hitCut": 3,
+      "punchCut": 0.8,
+      "announce": 2.6,
+      "time": 6,
+      "speed": 340,
+      "lunge": 80,
+      "dash": 900,
+      "dashTime": 0.2,
+      "reach": 14,
+      "slapWind": 0.6,
+      "slapDamage": 7,
+      "slapDizzy": 0.9,
+      "punch": 4,
+      "flurry": 3,
+      "flurryEvery": 0.7,
+      "maxDamage": 45
+    }
+  },
+  {
     "id": "c-sean-omalley",
     "rev": 1,
     "builtin": false,

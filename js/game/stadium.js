@@ -631,6 +631,7 @@ function drawJumbotron(px) {
   drawNgannouJumbo(sx, sy, sw, jt.h - 28); // Ngannou's rage meter, Dana White, the punch-power reading (ngannou.js)
   drawBearWarnJumbo(sx, sy, sw, jt.h - 28); // WARNING: BEAR IN ARENA, over everything (bear-warning.js)
   drawConorJumbo(sx, sy, sw, jt.h - 28); // Conor McGregor's 13 SECONDS (conor.js)
+  drawNickJumbo(sx, sy, sw, jt.h - 28); // NOW ENTERING THE CAGE: NICK DIAZ (diaz.js)
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(c.jtFront, jt.x * px, jt.y * px);
