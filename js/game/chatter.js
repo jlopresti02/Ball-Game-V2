@@ -9,15 +9,56 @@
 //     taunt: ["..."],          // one every `every` seconds while it's on
 //     every: [9, 14],
 //     win:   ["..."],          // after he wins
-//     vs: { "c-max-holloway": { start: [...], taunt: [...], win: [...] } }
+//     calls: ["..."],          // the commentator's real call after he wins,
+//     koCalls: ["..."],        //   any way, by knockout,
+//     subCalls: ["..."],       //   or by submission (announce, the TV
+//                              //   lower-third), before his own win line
+//     vs: { "c-max-holloway": { start: [...], taunt: [...], win: [...], calls: [...] } }
 //   };                         // `vs` lines only play against that fighter
+//
+// Fighters whose own file already calls their finishes (Conor, Strickland,
+// Tony, Nate, Max) get no calls here, so a finish never gets two.
 //
 // Each line is heard once a fight before any line repeats. Every line here is
 // something the fighter really said: the source is in the voice-clips
 // manifest under the clip's name.
 "use strict";
 
-var CHATTER = {};
+var CHATTER = {
+  "c-charles-oliveira": {
+    calls: ["Surprise, surprise. Charles Oliveira is the champion!", "Who can stop Charles Oliveira? Eleven in a row, and still the best lightweight on planet Earth."],
+    vs: { "c-dustin-poirier": { calls: ["He gets the signature win over Dustin Poirier."] } }
+  },
+  "c-sean-omalley": { koCalls: ["Out of nowhere, and didn't even bother following up!", "If you don't know, now you know. It's time to buy stock in Sugar Sean O'Malley."] },
+  "c-khabib-nurmagomedov": { calls: ["The Eagle rises again!", "Incredible. Absolutely incredible the way he dominates people in the grappling. Never seen anything like it."] },
+  "c-dustin-poirier": {
+    calls: ["Dustin Poirier has produced the biggest win of his career by a mile."],
+    vs: { "c-conor-mcgregor": { koCalls: ["A stunner on Fight Island as they attend to Conor."] } }
+  },
+  "c-justin-gaethje": { koCalls: ["That is the most amazing performance of Justin Gaethje's career. Spectacular!", "Justin Gaethje has done it!"] },
+  "c-georges-st-pierre": { calls: ["Unbelievably dominant victory for Georges St-Pierre!", "What a fight! What a night! And Georges St-Pierre is a two-division UFC champion!"] },
+  // Ilia Topuria: supremely confident (UFC 308 and 317 pressers, ESPN, Bisping, Helwani).
+  "c-ilia-topuria": {
+    start: ["I am the best fighter in the world.", "I'm El Matador, you all know what El Matador is.", "Yeah, I will finish him."],
+    taunt: ["No one can match my level of skills inside the octagon", "Gonna get that huge knockout, you will see.", "I am the best fighter in the world.", "I'm El Matador, you all know what El Matador is."],
+    win: ["I'm the world champion.", "No one can match my level of skills inside the octagon"],
+    koCalls: ["No one's ever done it like that. The left hook, man.", "Oh my goodness! He called it!"],
+    vs: {
+      "c-max-holloway": { start: ["Going to be the first person to knock out Max Holloway."] },
+      "c-charles-oliveira": { koCalls: ["No one has ever done it like that to Charles Oliveira. Not like that."] }
+    }
+  },
+  // Mighty Mouse breaking it down, from his own channel's VOID breakdowns.
+  "c-demetrious-johnson": {
+    taunt: ["Change the angles, then different things come available.", "You got to use every part.", "He's way more intelligent. So you don't have to put on the size."],
+    calls: ["He's the best. I'm telling you, that kid is the best.", "Who's better? Who's better? Who's better? Nobody!"],
+    subCalls: ["It's all over! Unbelievable! All over! Johnson by submission!"]
+  },
+  "c-alexander-volkanovski": {
+    calls: ["Championship mettle from Volkanovski.", "Huge ground strikes from Volkanovski, one of the best title rounds."],
+    koCalls: ["Volkanovski's teeing off on him.", "That is picture perfect. And he just sits him down."]
+  }
+};
 var CHATTER_EVERY = [9, 14];
 
 function chatterCfg(b) { return b && b.char && CHATTER[b.char.id]; }
@@ -37,9 +78,12 @@ function chatterPick(b, o, kind) {
   var all = (cfg[kind] || []).concat((vs && vs[kind]) || []).filter(function (t) { return SPEECH_CLIPS[t]; });
   if (!all.length) return null;
   var fresh = all.filter(function (t) { return !b.chat.used[t]; });
-  if (!fresh.length) { all.forEach(function (t) { b.chat.used[t] = false; }); fresh = all; }
+  if (!fresh.length) {
+    all.forEach(function (t) { b.chat.used[t] = false; });
+    fresh = all.length > 1 ? all.filter(function (t) { return t !== b.chat.last; }) : all; // never the same line twice running
+  }
   var line = fresh[Math.floor(Math.random() * fresh.length)];
-  b.chat.used[line] = true;
+  b.chat.used[line] = true; b.chat.last = line;
   return line;
 }
 
@@ -51,7 +95,12 @@ function tickChatter(dt) {
     if (!c || !b.alive) continue;
     var cfg = chatterCfg(b), line = null;
     if (over) {
-      if (!c.won && o && !o.alive && canSay(b)) { c.won = true; line = chatterPick(b, o, "win"); }
+      if (!c.called && o && !o.alive) {
+        c.called = true;
+        var call = chatterPick(b, o, winBy === "submission" ? "subCalls" : "koCalls") || chatterPick(b, o, "calls");
+        if (call) announce(call, { who: cfg.who || "UFC BROADCAST" });
+      }
+      if (!c.won && o && !o.alive && !announcer && canSay(b)) { c.won = true; line = chatterPick(b, o, "win"); }
     } else {
       c.t += dt;
       if (!c.opened && c.t >= c.start && canSay(b)) { c.opened = true; line = chatterPick(b, o, "start"); }

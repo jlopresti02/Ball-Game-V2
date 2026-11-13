@@ -80,13 +80,13 @@ SPECIAL_MOVES.america = "America";
 // only one outlet has it); swear words are bleeped (speech.js).
 var SK_LINES = {
   start: [
-    "Here's the thing, you guys.", // his catchphrase (1 source: sportskeeda.com, Oct 2023)
+    "Here's the [BLEEP] thing, you guys.", // his catchphrase (1 source: sportskeeda.com, Oct 2023)
     "I know a lot of you hate me, a lot of you like me." // to Helen Yee before UFC 293, 2023 (1 source: sports.yahoo.com)
   ],
   // After a shoulder roll and the counter jab.
   roll: [
     "I'm also left-handed, so that's why my jab's so good.", // after Uriah Hall, 2021 (1 source: mmamania.com)
-    "I think I'm one of the best strikers in the world." // UFC 293 presser, 2023 (sherdog.com, sports.yahoo.com)
+    "I just think I'm one of the best strikers in the world." // UFC 293 presser, 2023 (sherdog.com, sports.yahoo.com)
   ],
   // When he stuffs a takedown.
   stuffed: [
@@ -94,7 +94,7 @@ var SK_LINES = {
   ],
   // Taunted.
   triggered: [
-    "I think I run my mouth a lot and people forget I can fight.", // UFC 293 presser (sherdog.com, clutchpoints.com)
+    "I think I run my mouth a lot and people forget I could fight.", // UFC 293 presser (sherdog.com, clutchpoints.com)
     "I don't crumble. I don't break. You'll see." // before UFC 328, 2026, opening "Everybody he fights crumbles, but" trimmed (1 source: ufc.com)
   ],
   // Rocked by a big shot.
@@ -110,8 +110,8 @@ var SK_LINES = {
     "Small moments like those bring me the most pride and love for OUR country." // his X post, May 8 2026 (x.com/SStricklandMMA)
   ],
   win: [
-    "Am I dreaming? Am I going to wake up? Somebody hit me!", // UFC 293 octagon interview, 2023 (fightersonly.com, sports.yahoo.com)
-    "I think I proved myself wrong, you know?" // UFC 293 presser (sports.yahoo.com, sherdog.com)
+    "Am I [BLEEP] dreaming? Am I gonna wake up? Somebody hit me.", // UFC 293 octagon interview, 2023 (fightersonly.com, sports.yahoo.com)
+    "I think I might prove myself wrong, you know?" // UFC 293 presser (sports.yahoo.com, sherdog.com)
   ],
   // Against Alex Pereira, who knocked him out at UFC 276 (2022).
   pereira: [

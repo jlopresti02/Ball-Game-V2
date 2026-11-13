@@ -56,12 +56,12 @@ SPECIAL_MOVES.mimic = "Mimic"; // (special.js)
 
 var MM_LINES = {
   start: "Nobody has been able to do what I've been able to do.",
-  dodge: "I'm not in the business of taking hits and concussions. That [BLEEP] is overrated.",
+  dodge: "I'm not in a business to get hit and take concussions. [BLEEP]'s way overrated.",
   miss: "What the [BLEEP] is this? Is this amateur hour?",
   borg: "Ray Borg was running his mouth, saying my scrambling game was garbage.", // names Borg, who isn't in the game: never said (isRayBorg)
-  fin1: "I'm here to make a fool of you.",
+  fin1: "Make a fool of you.",
   fin2: "Throw you like a bag of potatoes and break your arm.",
-  win: "It was like trying to fight a muskrat."
+  win: "It's like wrestling a damn muskrat."
 };
 var MM_PLAN_NAMES = { takedowns: "TAKEDOWNS", kicks: "KICKS", strikes: "STRIKES" };
 var MM_COPIES = { igbb: true, fathersplan: true, chairshot: true }; // specials he can copy safely

@@ -137,7 +137,7 @@ var CM_CALLS = {
   // UFC 178, the left hand on Dustin Poirier: his counter left knocking out Dustin.
   poirier: { who: "GOLDBERG", text: "Wow. That's the real deal, ladies and gentlemen. Make no mistake about it, Conor McGregor is for real." },
   // UFC 205, the combination on Eddie Alvarez: a fight he finishes with punches.
-  alvarez: { who: "GOLDBERG", text: "And it's all over! History has been made!" },
+  alvarez: { who: "GOLDBERG", text: "And it's all over! History has been made! Conor McGregor is the UFC lightweight champion!" },
   // UFC 246, Cerrone in 40 seconds (the head kick): a fight he finishes with a kick inside a minute.
   cerrone: { who: "ANIK", text: "Less than a minute in, Conor McGregor announces his return with about as many style points as you could produce." }
 };
