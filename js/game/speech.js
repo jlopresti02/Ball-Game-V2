@@ -10,11 +10,12 @@
 //                drawn under the hit numbers and move names so those always show.
 // [BLEEP]        anywhere in the text it's drawn as a black censor bar with
 //                BLEEP in it, and a bleep tone plays when that word comes in.
-// Clips          when a recorded clip exists for a line, it plays with the
-//                bubble: pass { clip: "name" } to say(), or add the line to
-//                SPEECH_CLIPS (exact text -> SOUND_CLIPS name) so no fighter
-//                code changes. A line with a clip doesn't bleep (the clip has
-//                its own).
+// Clips          when a real clip exists for a line, the fighter (or the
+//                commentator) SAYS it out loud and no bubble or caption is
+//                drawn: pass { clip: "name" } to say(), or list the line in
+//                SPEECH_CLIPS (exact text -> SOUND_CLIPS name, filled in by
+//                voice-clips.js) so no fighter code changes. The clip has its
+//                own bleeps. SPEECH_TEXT_WITH_CLIP shows the text as well.
 // canSay(b)      false while a bubble is up or for `SPEECH_GAP` seconds after,
 //                so a talker doesn't bury the fight in text.
 // pickLine(b, lines, key)  a random line from `lines`, never the same one
@@ -36,7 +37,8 @@ var SPEECH_MAX_W = 290;  // wrap width
 var SPEECH_SIZE = 23;
 var SPEECH_FONT = "800 " + SPEECH_SIZE + "px \"Barlow Condensed\", \"Arial Narrow\", sans-serif";
 var SPEECH_LINE_H = 27;
-var SPEECH_CLIPS = {};   // "exact line text": "soundClipName"
+var SPEECH_CLIPS = {};   // "exact line text": "soundClipName" (voice-clips.js)
+var SPEECH_TEXT_WITH_CLIP = false; // true: draw the bubble/caption even when the line is heard
 var speech = [];         // by fighter id: { words, t, dur, said, quietT, clip }
 
 var announcer = null;     // { words, t, dur, who, clip }
@@ -51,6 +53,7 @@ function say(b, text, opts) {
   s.words = words; s.t = 0; s.said = 0;
   s.dur = words.length * SPEECH_WORD + SPEECH_READ + words.length * 0.12 + ((opts && opts.hold) || 0);
   s.clip = (opts && opts.clip) || SPEECH_CLIPS[text] || null;
+  s.hidden = !!s.clip && !SPEECH_TEXT_WITH_CLIP;
   if (s.clip) playSpeechClip(s.clip);
 }
 
@@ -131,7 +134,7 @@ function drawSpeech() {
   var placed = null;
   for (var i = 0; i < speech.length; i++) {
     var s = speech[i], b = balls[i];
-    if (!s || !s.words || !b) continue;
+    if (!s || !s.words || !b || s.hidden) continue;
     var L = speechLayout(b, s.words), other = balls[1 - i];
     var best = null;
     [{ under: true, spot: L.below }, { under: false, spot: L.above }].forEach(function (c, k) {
@@ -160,6 +163,7 @@ function announce(text, opts) {
   announcer = { words: words, t: 0, said: 0, who: ((opts && opts.who) || "COMMENTARY").toUpperCase(),
     dur: words.length * SPEECH_WORD + SPEECH_READ + 0.6 + words.length * 0.12 + ((opts && opts.hold) || 0),
     clip: (opts && opts.clip) || SPEECH_CLIPS[text] || null };
+  announcer.hidden = !!announcer.clip && !SPEECH_TEXT_WITH_CLIP;
   if (announcer.clip) playSpeechClip(announcer.clip);
 }
 
@@ -167,7 +171,7 @@ function announce(text, opts) {
 // the cage, sliding up into place.
 function drawAnnouncer() {
   var a = announcer;
-  if (!a) return;
+  if (!a || a.hidden) return;
   ctx.save();
   ctx.font = SPEECH_FONT;
   var space = ctx.measureText(" ").width, maxW = W - 24 - 28;
