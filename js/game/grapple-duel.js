@@ -27,6 +27,7 @@ function isGrapplerDuel(a, b) {
 // Which way a fighter is facing: where it's moving, or toward the opponent
 // if it's standing still (the same rule its guard hands follow).
 function facingOf(b, other) {
+  if (stricklandSquaredUp(b)) { var sx = other.x - b.x, sy = other.y - b.y, sd = Math.sqrt(sx * sx + sy * sy) || 1; return { x: sx / sd, y: sy / sd }; } // Sean Strickland backpedals facing them (strickland.js)
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   if (s > 1) return { x: b.vx / s, y: b.vy / s };
   var dx = other.x - b.x, dy = other.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;

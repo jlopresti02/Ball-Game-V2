@@ -67,6 +67,7 @@ function makeBall(id, ch) {
   initNgannou(b); // Francis Ngannou's rage meter, and his own copy to turn green (ngannou.js)
   initVolk(b); // Alexander Volkanovski's fight IQ, circling and walkout flag (volkanovski.js)
   initHolloway(b); // Max Holloway's Blessed meter, the booth, his flashback (holloway.js)
+  initStrickland(b); // Sean Strickland's range, shell, pace and trauma meter (strickland.js)
   return b;
 }
 
@@ -109,6 +110,7 @@ function startMatchSeeded(ch0, ch1) {
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
   resetVolk(); // the kangaroo and the green and gold arena (volkanovski.js)
   resetHolloway(); // Max Holloway's ring in the middle, the clock, the flashback TV (holloway.js)
+  resetStrickland(); // the America show, the eagle and the bike (strickland.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
@@ -277,6 +279,7 @@ function hurt(b, amount, source, attackerId) {
   if (itDodge(b, source, attackerId)) return 0;
   if (gspDodge(b, source, attackerId)) return 0; // GSP slipping it (gsp.js)
   if (hollowayDodge(b, source, attackerId)) return 0; // Max Holloway slipping shots at the booth (holloway.js)
+  if (stricklandShell(b, source, attackerId)) return 0; // Sean Strickland rolling it off his shoulder (strickland.js)
   // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
   if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.

@@ -108,6 +108,7 @@ function draw() {
   drawVolkUnder(); // Volkanovski's circling arrow, his flag, the kangaroo behind him (volkanovski.js)
   drawHollowayUnder(); // the gold ring in the middle of the cage, the commentary desk (holloway.js)
   drawConorUnder(); // Conor McGregor's bus lane and the dolly's aim line (conor.js)
+  drawStricklandUnder(); // the flag on the mat, Strickland's bike lane, the bike and the wreck (strickland.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -344,6 +345,7 @@ function draw() {
     drawSwing(b);
     drawCheck(b);
     drawKick(b, other);
+    drawTeep(b); // a teep, the front push kick (teep.js)
     drawGrapple(b);
     drawThrow(b, other);
     drawPowerSpin(b);
@@ -359,6 +361,7 @@ function draw() {
     drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
     drawVolk(b); // Volkanovski's arms up, punching out of the pouch (volkanovski.js)
     drawHolloway(b); // Max Holloway's Blessed meter, pointing, the flashback pose, the BMF belt (holloway.js)
+    drawStrickland(b, other); // Sean Strickland's Philly shell, the bike, his overhands, the trauma meter (strickland.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -416,6 +419,7 @@ function draw() {
   drawNgannouOver(); // Ngannou's mat chunks, contract scraps, punch-power banner in the test arena (ngannou.js)
   drawVolkOver(); // the kangaroo's pouch, arms and kick, the FIGHT IQ card (volkanovski.js)
   drawConorOver(); // Conor McGregor's bus, the lads and their brawl cloud, the dolly (conor.js)
+  drawStricklandOver(); // the bald eagle at Strickland's side, fireworks over the test arena (strickland.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
@@ -471,6 +475,7 @@ function draw() {
   drawHotSauce(s, ox, oy); // Dustin's bottle, gloves, steam and fire breath (hot-sauce.js)
   drawChamaCrowd(s, ox, oy); // the crowd shouting CHAMA back (pereira.js)
   drawGspCrowd(s, ox, oy); // the Montreal crowd chanting "GSP! GSP!" (gsp.js)
+  drawStricklandSky(s, ox, oy); // America: flags all over the stands, fireworks, "U-S-A!" (strickland.js)
   drawLiddellSky(s, ox, oy); // snow falling over the whole arena (liddell.js)
   drawVolkSky(s, ox, oy); // AUSSIE AUSSIE AUSSIE, OI OI OI, and the streamers (volkanovski.js)
   drawHollowaySky(s, ox, oy); // Max Holloway's flashback TV, the 0:10 clock, his Button Mash buttons (holloway.js)

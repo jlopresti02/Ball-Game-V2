@@ -195,6 +195,8 @@ function updateAbilities(dt) {
     if (updateConor(self, other, dt)) continue; // Conor McGregor's trash talk and counter left, Dustin's calf kicks on him (conor.js)
     if (updateNgannou(self, other, dt)) continue; // Francis Ngannou's rage punch and Dana White (ngannou.js)
     if (updateHolloway(self, other, dt)) continue; // Max Holloway at the booth, his flashback, staying out of the guard (holloway.js)
+    if (updateStrickland(self, other, dt)) continue; // Sean Strickland's one-two (strickland.js)
+    if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
     if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }

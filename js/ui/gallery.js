@@ -71,6 +71,7 @@ SPECIAL_INFO.kangaroo = function (sp) { return volkKangarooInfo(sp); }; // Alexa
 SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
 SPECIAL_INFO.middle = function (sp) { return hollowaySpecialInfo(sp); }; // Max Holloway (holloway.js)
 SPECIAL_INFO.buscrew = function (sp) { return busCrewInfo(sp); }; // Conor McGregor (conor.js)
+SPECIAL_INFO.america = function (sp) { return stricklandSpecialInfo(sp); }; // Sean Strickland (strickland.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
 function galleryMoves(ch) {
@@ -151,6 +152,8 @@ function galleryMoves(ch) {
   if (ch.gsp) gspGalleryMoves(ch, add); // Georges St-Pierre (gsp.js)
   if (ch.volk) volkGalleryMoves(ch, add); // Alexander Volkanovski (volkanovski.js)
   if (ch.holloway) hollowayGalleryMoves(ch, add); // Max Holloway (holloway.js)
+  if (ch.strickland) stricklandGalleryMoves(ch, add); // Sean Strickland (strickland.js)
+  if (ch.hasTeep) add("🦶", "Teep", teepGalleryInfo(ch.teep)); // the front push kick (teep.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;
@@ -345,6 +348,7 @@ function galleryAssets() {
   } });
   gspGalleryAssets(list); // GSP's Montreal stadium and the Quebec and Canada flags (gsp.js)
   volkGalleryAssets(list); // Volkanovski's kangaroo and the Australian flag (volkanovski.js)
+  stricklandGalleryAssets(list); // Sean Strickland's motorcycle (strickland.js)
   return list;
 }
 
@@ -425,6 +429,7 @@ function gallerySounds() {
   gspGallerySounds(groups, synth); // GSP's sounds (gsp.js)
   volkGallerySounds(groups, synth); // Volkanovski's sounds (volkanovski.js)
   hollowayGallerySounds(groups, synth); // Max Holloway's sounds (holloway.js)
+  stricklandGallerySounds(groups, synth); // Sean Strickland's and the teep's sounds (strickland.js)
   // Anything new in SOUND_CLIPS that isn't listed above still shows up.
   var listed = {};
   groups.forEach(function (g) { g.items.forEach(function (it) { if (it.clip) listed[it.clip] = true; }); });
