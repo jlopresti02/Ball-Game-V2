@@ -154,6 +154,7 @@ function landChamaPunch(self, other, m, cc, kp) {
   }
   if (kp.chama === "hook") {
     var ko = Math.random() * 100 < cc.koBase + cc.koLow * (1 - other.hp / MAX_HP);
+    if (!ko) ko = stricklandRematchKo(self, other); // UFC 276: the left hook that knocked out Sean Strickland (strickland.js)
     if (ko && !other.holdAtOne) {
       // Goes through every normal defence (weave, block, ...) like the KO Rush.
       if (throwKoPunch(self, other)) { beginChamaKo(self, other, m); return true; }

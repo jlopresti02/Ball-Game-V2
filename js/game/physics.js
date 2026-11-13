@@ -22,6 +22,7 @@ function inOrdinaryMovement(b) {
   if (gspBusy(b)) return false; // GSP's Superman punch, his taunt, dazed after a missed dive (gsp.js)
   if (conorBusy(b)) return false; // strutting, or planted for the counter left (conor.js)
   if (ngannouBusy(b)) return false; // Francis Ngannou's rage punch, or off to rip up Dana's contract (ngannou.js)
+  if (teepBusy(b) || stricklandBusy(b)) return false; // planted for a teep (teep.js), or Sean Strickland's one-two (strickland.js)
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
   return true;

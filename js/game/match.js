@@ -63,6 +63,7 @@ function makeBall(id, ch) {
   initConor(b); // Conor McGregor's trash talk, counter left and gas tank (conor.js)
   initLiddell(b); // Chuck Liddell's frost, snow and wind-up (liddell.js)
   initNgannou(b); // Francis Ngannou's rage meter, and his own copy to turn green (ngannou.js)
+  initStrickland(b); // Sean Strickland's range, shell, pace and trauma meter (strickland.js)
   return b;
 }
 
@@ -102,6 +103,7 @@ function startMatchSeeded(ch0, ch1) {
   resetConor(); // Conor McGregor's podium and 13 SECONDS (conor.js)
   resetLiddell(); // Chuck Liddell's snow (liddell.js)
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
+  resetStrickland(); // the America show, the eagle and the bike (strickland.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
@@ -268,6 +270,7 @@ function hurt(b, amount, source, attackerId) {
   // Charles teleporting out of the way (instant-transmission.js).
   if (itDodge(b, source, attackerId)) return 0;
   if (gspDodge(b, source, attackerId)) return 0; // GSP slipping it (gsp.js)
+  if (stricklandShell(b, source, attackerId)) return 0; // Sean Strickland rolling it off his shoulder (strickland.js)
   // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
   if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.

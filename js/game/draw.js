@@ -103,6 +103,7 @@ function draw() {
   drawGspUnder(); // GSP's shadow in the air and the Superman Dive's red lane (gsp.js)
   drawLiddellUnder(); // snow on the mat, Chuck Liddell's ice flames (liddell.js)
   drawNgannouUnder(); // Ngannou's rage punch line, the Smash circle and crater, Dana at the cage (ngannou.js)
+  drawStricklandUnder(); // the flag on the mat, Strickland's bike lane, the bike and the wreck (strickland.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -334,6 +335,7 @@ function draw() {
     drawSwing(b);
     drawCheck(b);
     drawKick(b, other);
+    drawTeep(b); // a teep, the front push kick (teep.js)
     drawGrapple(b);
     drawThrow(b, other);
     drawPowerSpin(b);
@@ -347,6 +349,7 @@ function draw() {
     drawConor(b); // Conor McGregor's strut, counter stance, podium and gas tank, Dustin's calf kick (conor.js)
     drawLiddell(b); // Chuck Liddell packing the snow, his blue overhand (liddell.js)
     drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
+    drawStrickland(b, other); // Sean Strickland's Philly shell, the bike, his overhands, the trauma meter (strickland.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -398,6 +401,7 @@ function draw() {
   drawGspOver(); // GSP's gi and headband flying off (gsp.js)
   drawMightyMouseOver(); // Mighty Mouse's SCOUTING notepad, sweat off a tired opponent (mighty-mouse.js)
   drawNgannouOver(); // Ngannou's mat chunks, contract scraps, punch-power banner in the test arena (ngannou.js)
+  drawStricklandOver(); // the bald eagle at Strickland's side, fireworks over the test arena (strickland.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
@@ -452,6 +456,7 @@ function draw() {
   drawHotSauce(s, ox, oy); // Dustin's bottle, gloves, steam and fire breath (hot-sauce.js)
   drawChamaCrowd(s, ox, oy); // the crowd shouting CHAMA back (pereira.js)
   drawGspCrowd(s, ox, oy); // the Montreal crowd chanting "GSP! GSP!" (gsp.js)
+  drawStricklandSky(s, ox, oy); // America: flags all over the stands, fireworks, "U-S-A!" (strickland.js)
   drawLiddellSky(s, ox, oy); // snow falling over the whole arena (liddell.js)
   drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)

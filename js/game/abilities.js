@@ -190,6 +190,8 @@ function updateAbilities(dt) {
     if (updateMightyMouse(self, other, dt)) continue; // Mighty Mouse's suplex into the mid-air armbar (mighty-mouse.js)
     if (updateConor(self, other, dt)) continue; // Conor McGregor's trash talk and counter left, Dustin's calf kicks on him (conor.js)
     if (updateNgannou(self, other, dt)) continue; // Francis Ngannou's rage punch and Dana White (ngannou.js)
+    if (updateStrickland(self, other, dt)) continue; // Sean Strickland's one-two (strickland.js)
+    if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
     if (updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }

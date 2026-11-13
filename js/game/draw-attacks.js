@@ -137,6 +137,7 @@ function drawHands(b, other) {
   if (allAmericanHandsBusy(b)) return; // the haymaker, or fists pumping (drawAllAmerican)
   if (herbCovering(b)) { drawHerbCover(b); return; } // covering up from the bat and the cane
   if (aaCovering(b)) { drawAaPanic(b); return; } // freaking out on the highway (allamerican.js)
+  if (stricklandHandsBusy(b)) return; // the Philly shell, the bike, the overhands (drawStrickland, strickland.js)
   if (b.koRush && b.koRush.phase === "celebrate") return; // hands up (drawn by drawKoCelebrate)
   if (b.taunt) {
     // Celebrating: both hands thrown up in the air, pumping in turn.
