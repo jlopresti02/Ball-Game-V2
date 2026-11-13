@@ -107,6 +107,7 @@ function draw() {
   drawNgannouUnder(); // Ngannou's rage punch line, the Smash circle and crater, Dana at the cage (ngannou.js)
   drawVolkUnder(); // Volkanovski's circling arrow, his flag, the kangaroo behind him (volkanovski.js)
   drawHollowayUnder(); // the gold ring in the middle of the cage, the commentary desk (holloway.js)
+  drawConorUnder(); // Conor McGregor's bus lane and the dolly's aim line (conor.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -414,6 +415,7 @@ function draw() {
   drawMightyMouseOver(); // Mighty Mouse's SCOUTING notepad, sweat off a tired opponent (mighty-mouse.js)
   drawNgannouOver(); // Ngannou's mat chunks, contract scraps, punch-power banner in the test arena (ngannou.js)
   drawVolkOver(); // the kangaroo's pouch, arms and kick, the FIGHT IQ card (volkanovski.js)
+  drawConorOver(); // Conor McGregor's bus, the lads and their brawl cloud, the dolly (conor.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
@@ -444,6 +446,7 @@ function draw() {
   drawCologneBanner(); // and Ilia's cologne ad (cologne-ad.js)
   drawGoatGoatGoBanner(); // and Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawTapWaterBanner(); // and Charles's Tap Water ad (tapwater-ad.js)
+  drawProper12Banner(); // and Conor's Proper No. 12 ad (proper12-ad.js)
   drawConorBanner(); // and Conor McGregor's 13 SECONDS (conor.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)

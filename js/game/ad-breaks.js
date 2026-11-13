@@ -29,6 +29,7 @@ function resetAdBreaks() {
   resetCologneAd();
   resetGoatGoatGo();
   resetTapWater();
+  resetProper12(); // (proper12-ad.js)
 }
 // Every frame from update().
 function tickAdBreaks(dt) {
@@ -39,6 +40,7 @@ function tickAdBreaks(dt) {
   tickCologneAd(dt);
   tickGoatGoatGo(dt);
   tickTapWater(dt);
+  tickProper12(dt); // (proper12-ad.js)
   // No ad breaks in gallery demos, or once the fight's over.
   if (over || (typeof galleryDemo !== "undefined" && galleryDemo) || !SPONSOR_ADS.length) return;
   adBreakT -= dt;

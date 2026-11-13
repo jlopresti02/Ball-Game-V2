@@ -19,6 +19,7 @@
 
 var SPECIAL_MOVES = { igbb: "IGBB", fathersplan: "Father's Plan", dobronx: "Do Bronx", chairshot: "Chair Shot", herbdean: "Herb Dean", allamerican: "All American", aurafarm: "Aura Farm", goatstampede: "GOAT Stampede", bow: "Bow and Arrow", sugarrush: "Sugar Rush", snow: "Snow Day", smash: "Smash" };
 SPECIAL_MOVES.presser = "Press Conference"; // Conor McGregor (conor.js)
+SPECIAL_MOVES.buscrew = "Bus Crew"; // Conor McGregor (conor.js, which loads before this file)
 
 var IGBB_CLOSE_SPEED = 820;   // dash in to grab
 var IGBB_CLOSE_GIVEUP = 3;
@@ -94,6 +95,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "supermandive") return updateSupermanDive(self, other, dt); // gsp.js
   if (sp.move === "mimic") return updateMimicSpecial(self, other, dt); // Mighty Mouse (mighty-mouse.js)
   if (sp.move === "presser") return updatePresser(self, other, dt); // conor.js
+  if (sp.move === "buscrew") return updateBusCrew(self, other, dt); // Conor McGregor's Bus Crew (conor.js)
   if (sp.move === "snow") return updateSnowDay(self, other, dt); // liddell.js
   if (sp.move === "smash") return updateSmash(self, other, dt); // ngannou.js
   if (sp.move === "kangaroo") return updateKangaroo(self, other, dt); // volkanovski.js

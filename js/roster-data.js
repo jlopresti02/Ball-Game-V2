@@ -693,7 +693,7 @@ var SAVED_ROSTER = [
     "weightClass": "lightweight",
     "name": "Conor McGregor",
     "base": "Brawler",
-    "bio": "\"The Notorious\". A counter-puncher built on the Brawler base, in green shorts, with a slicked-back ginger undercut, a thick beard and the gorilla and tiger tattoos. He never stops talking: every few seconds he does the billionaire strut and says one of his real lines, and every line is a taunt. They see red and storm straight at him, and he plants and fires the left hand as they come in. It can whiff and leave him wide open, but when it lands clean it's often a knockout. For the first 20 seconds he's the fastest, hardest-hitting fighter in the game; then his gas tank runs dry and he gets slower, softer and easier to submit. Knock someone out inside 13 seconds and the jumbotron shows the time. Against Khabib, Khabib wrestles him harder, takes his back and says \"Let's talk now.\" Against Dustin, the calf kicks come out. Once a fight he pulls a pot of gold up out of the mat, grabs it by the handles and tips it over at them: a huge rainbow beam pours out across the ring (Pot o' Gold, his Kamehameha). Against Charles, whoever fires first gets the other one charging too, and the beams meet in a beam clash. Special move: Press Conference, a podium, a mic, a line, water bottles, then the left hand with extra knockout power.",
+    "bio": "\"The Notorious\". A counter-puncher built on the Brawler base, in green shorts, with a slicked-back ginger undercut, a thick beard and the gorilla and tiger tattoos. He never stops talking: every few seconds he does the billionaire strut and says one of his real lines, and every line is a taunt. They see red and storm straight at him, and he plants and fires the left hand as they come in. It can whiff and leave him wide open, but when it lands clean it's often a knockout. Early on he kicks too: front kicks and spinning kicks to the body that push them back out and set them up for the left. He's the fastest, hardest-hitting fighter in the game for about 10 seconds, then his gas tank runs dry fast: slower, softer, no more kicks, easier to submit. When he's running low he stops for a swig of Proper No. 12 Irish root beer, which winds the tank back unless they catch him with the bottle up. Knock someone out inside 13 seconds and the jumbotron shows the time, and his famous finishes get the commentator's real call. Against Khabib, Khabib wrestles him harder, takes his back and says \"Let's talk now.\" Against Dustin, the calf kicks come out. Once a fight he pulls a pot of gold up out of the mat, grabs it by the handles and tips it over at them: a huge rainbow beam pours out across the ring (Pot o' Gold, his Kamehameha). Against Charles, whoever fires first gets the other one charging too, and the beams meet in a beam clash. Special move: Bus Crew, his UFC 223 bus: a coach pulls up, a crew of lads in green hats piles out and brawls the opponent, and he throws a dolly at them.",
     "color": "#169b62",
     "label": "",
     "imgData": null,
@@ -780,31 +780,76 @@ var SAVED_ROSTER = [
         "openVuln": 1.25
       },
       "gasTank": {
-        "fresh": 20,
-        "fade": 25,
-        "floor": 0.6,
+        "fresh": 9,
+        "fade": 12,
+        "floor": 0.55,
         "speed": [
-          1.22,
-          0.85
+          1.25,
+          0.82
         ],
         "damage": [
           1.3,
-          0.8
+          0.75
         ],
         "attack": [
           1.3,
-          0.85
+          0.8
         ],
         "koMult": [
           1,
-          0.55
+          0.5
         ],
         "tapExtra": [
           8,
-          30
+          32
         ],
         "gassedAt": 0.35
       },
+      "kicks": {
+        "until": 0.4,
+        "range": 64,
+        "every": [
+          1.2,
+          2.0
+        ],
+        "tire": 1.6,
+        "front": {
+          "damage": 12,
+          "knockback": 460,
+          "dur": 0.34,
+          "hitAt": 0.15,
+          "cost": 0.25
+        },
+        "spin": {
+          "chance": 30,
+          "damage": 22,
+          "knockback": 600,
+          "spinTime": 0.3,
+          "dur": 0.62,
+          "hitAt": 0.4,
+          "cost": 0.5
+        },
+        "setup": {
+          "time": 3,
+          "koBonus": 12
+        }
+      },
+      "drink": {
+        "below": 0.5,
+        "max": 2,
+        "first": 0,
+        "every": [
+          3,
+          5
+        ],
+        "gap": 150,
+        "time": 1.05,
+        "refill": 4,
+        "vuln": 1.3,
+        "theyCome": true
+      },
+      "ad": true,
+      "calls": true,
       "calfKicksHurt": 1.4,
       "thirteen": {
         "within": 13,
@@ -818,6 +863,11 @@ var SAVED_ROSTER = [
           "sendLocFirst": [
             6,
             11
+          ],
+          "busCrew": 1,
+          "answerBus": [
+            1,
+            2
           ]
         },
         "dustin": {
@@ -836,6 +886,22 @@ var SAVED_ROSTER = [
             "time": 3
           }
         }
+      },
+      "pressConference": {
+        "on": true,
+        "chance": 40,
+        "at": [
+          7,
+          14
+        ],
+        "room": 140,
+        "talk": 1.5,
+        "anger": 5,
+        "bottles": 3,
+        "bottleDamage": 6,
+        "bottleSpeed": 560,
+        "wait": 2.5,
+        "koBonus": 20
       }
     },
     "potOfGold": {
@@ -853,18 +919,25 @@ var SAVED_ROSTER = [
     },
     "hasSpecial": true,
     "special": {
-      "move": "presser",
-      "chargeTime": 36,
+      "move": "buscrew",
+      "chargeTime": 30,
       "hitCut": 3,
       "punchCut": 2,
-      "room": 140,
-      "talk": 1.5,
-      "anger": 5,
-      "bottles": 3,
-      "bottleDamage": 6,
-      "bottleSpeed": 560,
-      "wait": 2.5,
-      "koBonus": 20
+      "call": 0.9,
+      "crew": 4,
+      "crewSpeed": 330,
+      "chase": 3.2,
+      "scene": 9,
+      "brawlTime": 1.0,
+      "pileOn": 0.35,
+      "hitGap": 0.2,
+      "hitDamage": 4,
+      "laneBump": 8,
+      "windup": 0.75,
+      "holdMax": 1.5,
+      "dollyDamage": 24,
+      "dollySpeed": 640,
+      "dollyKnockback": 420
     }
   },
   {
