@@ -109,6 +109,7 @@ function draw() {
   drawHollowayUnder(); // the gold ring in the middle of the cage, the commentary desk (holloway.js)
   drawConorUnder(); // Conor McGregor's bus lane and the dolly's aim line (conor.js)
   drawStricklandUnder(); // the flag on the mat, Strickland's bike lane, the bike and the wreck (strickland.js)
+  drawFergusonUnder(); // Tony Ferguson's slide afterimages (ferguson.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -148,6 +149,7 @@ function draw() {
     b.x += wox; b.y += woy;
     drawDarkSideRise(b); // dark smoke swirling round Hokit as he suits up (hokit-darkside.js)
     drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
+    drawFergusonBehind(b); // Tony Ferguson's red Kaioken aura (ferguson.js)
     drawGspBehind(b); // GSP's red cape, behind him (gsp.js)
     drawKameArmsBehind(b); // his arms reaching up behind his head for a Kamehameha fired upward (kamehameha.js)
 
@@ -217,6 +219,7 @@ function draw() {
     applyVolkPose(b); // Volkanovski leaning into his circling, small in the pouch (volkanovski.js)
     applyHollowayPose(b); // Max Holloway's spinning back fist, bouncing at the booth (holloway.js)
     applyDiazPose(b); // Nate Diaz leaning into the slap, the level change, the taunt (diaz.js)
+    applyFergusonPose(b); // Tony Ferguson on his back in a hold, leaning into his slide, and whoever he's got (ferguson.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -364,6 +367,8 @@ function draw() {
     drawHolloway(b); // Max Holloway's Blessed meter, pointing, the flashback pose, the BMF belt (holloway.js)
     drawStrickland(b, other); // Sean Strickland's Philly shell, the bike, his overhands, the trauma meter (strickland.js)
     drawDiaz(b); // Nate Diaz's slap, arms out, the 209 surge, a handprint on whoever he slapped (diaz.js)
+    drawElbow(b, other); // an elbow being thrown, and a cut bleeding (elbows.js)
+    drawFerguson(b, other); // Tony Ferguson's slide, shot, shell, Kaioken glow and katanas (ferguson.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -423,6 +428,7 @@ function draw() {
   drawConorOver(); // Conor McGregor's bus, the lads and their brawl cloud, the dolly (conor.js)
   drawStricklandOver(); // the bald eagle at Strickland's side, fireworks over the test arena (strickland.js)
   drawDiazOver(); // Nick Diaz, his bubble, the NICK DIAZ banner in the test arena (diaz.js)
+  drawFergusonOver(); // Tony Ferguson's holds and tug-of-war bar, the Kaioken flash, the CANCELLED stamps (ferguson.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
@@ -454,6 +460,7 @@ function draw() {
   drawGoatGoatGoBanner(); // and Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawTapWaterBanner(); // and Charles's Tap Water ad (tapwater-ad.js)
   drawProper12Banner(); // and Conor's Proper No. 12 ad (proper12-ad.js)
+  drawBurritoBellBanner(); // and Tony Ferguson's Burrito Bell ad (burrito-bell-ad.js)
   drawConorBanner(); // and Conor McGregor's 13 SECONDS (conor.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)

@@ -305,6 +305,10 @@ var STILL_ADS = [
   // The search engine's orange poster, with Jon and his duck (goatgoatgo-ad.js).
   { name: "goatgoatgo-poster", fighter: "Jon Jones", draw: function (x, y, w, h, k, ch) { drawGoatGoatGoStill(x, y, w, h, k, ch); } },
 
+  // ---------------------------------------------------------------- Burrito Bell
+  // Tony Ferguson's burrito: a drive-thru menu board (burrito-bell-ad.js).
+  { name: "burritobell-menu", fighter: "Tony Ferguson", draw: function (x, y, w, h, k, ch) { drawBurritoBellStill(x, y, w, h, k, ch); } },
+
   // ---------------------------------------------------------------- Tap Water
   // Charles's water: a chrome tap pouring into a glass (tapwater-ad.js).
   { name: "tapwater-kitchen", fighter: "Charles Oliveira", draw: function (x, y, w, h, k, ch) { drawTapWaterStill(x, y, w, h, k, ch); } },

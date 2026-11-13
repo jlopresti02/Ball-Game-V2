@@ -199,6 +199,7 @@ function attemptGrab(attacker, target) {
   if (tryTddSprawl(attacker, target)) return false; // takedown defense without grappling (ilia.js)
   if (tryJonTakedown(attacker, target)) return true; // GOAT Jon Jones: to the back, or ground and pound (jon.js)
   if (tryKhabibOnConor(attacker, target)) return true; // Khabib vs Conor McGregor: to the back, or ground and pound (conor.js)
+  if (tryFergusonTakedown(attacker, target)) return true; // Tony Ferguson's shot: into the buggy choke, his D'Arce or elbows (ferguson.js)
   beginGrapple(attacker, target);
   return true;
 }

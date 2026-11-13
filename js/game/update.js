@@ -65,6 +65,8 @@ function update(dt) {
   tickHolloway(dt); // Max Holloway's Blessed meter, Button Mash buttons, the flashback (holloway.js)
   tickStrickland(dt); // Sean Strickland's range, pace, trauma meter and the America show (strickland.js)
   tickDiaz(dt); // Nate Diaz's lines, holds and bottles, and Nick Diaz in the cage (diaz.js)
+  tickFerguson(dt); // Tony Ferguson's Kaioken, won't-tap, lines, stamps, Burrito Bell (ferguson.js)
+  tickElbows(dt); // cuts from elbows bleeding (elbows.js)
   tickSlows(dt); // limps wearing off (slowdown.js)
   tickSpeech(dt); // voice-line speech bubbles (speech.js)
   tickTopRope(dt); // the dented mat after Hokit's Top Rope Body Slam (hokit-toprope.js)
