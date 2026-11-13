@@ -68,6 +68,7 @@ var SPECIAL_INFO = {
   allamerican: function (sp) { return "A hook for " + sp.punchDamage + " so hard the cameras white out. They wake up on a highway at night under Free Bird: four bald eagles dive at them (" + sp.eagleDamage + " each), a semi runs them over (" + sp.truckDamage + "), \"U-S-A!\", then back in the cage he finishes with a rolling thunder kick (" + sp.thunderDamage + ")."; }
 };
 SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
+SPECIAL_INFO.buscrew = function (sp) { return busCrewInfo(sp); }; // Conor McGregor (conor.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
 function galleryMoves(ch) {
@@ -150,17 +151,7 @@ function galleryMoves(ch) {
     if (mm.cardio) add("🫀", "Cardio", "Every " + secs(mm.cardio.every) + " he's " + Math.round(mm.cardio.speed * 100) + "% faster and attacks " + Math.round(mm.cardio.rate * 100) + "% faster, while they tire (" + Math.round(mm.cardio.tire * 100) + "% slower each time) and sweat.");
     if (mm.finisher) add("🦾", "Suplex to armbar", "Once they're under " + Math.round(mm.finisher.at * 100) + "% health, his next takedown is a back suplex he turns into an armbar in mid-air (" + mm.finisher.slamDamage + " on landing). They tap " + mm.finisher.tapBase + "%, up to " + (mm.finisher.tapBase + mm.finisher.tapLowHp) + "% the more hurt they are. \"Throw you like a bag of potatoes and break your arm.\"");
   }
-  if (ch.notorious) {
-    // Conor McGregor (conor.js).
-    var cn = ch.notorious, ct = cn.trashTalk, cc = cn.counter, cg = cn.gasTank, cr = cn.rivals || {};
-    if (ct) add("🗣️", "Trash talk", "He never stops talking: every few seconds he does the billionaire strut and says one of his real lines. Every line is a taunt: they see red for " + secs(ct.anger) + " and storm straight at him.");
-    if (cc) add("🥊", "Counter left", "When they come at him angry he plants (the left hand glows) and fires it as they arrive" + (cc.angryCantSlip ? ": they run onto it, so it can't be slipped or blocked" : "") + ". It whiffs " + cc.whiff + "% of the time and leaves him open for " + secs(cc.openTime) + ". If it lands: " + cc.damage + " damage, or a knockout: " + (cc.koBase > 0 ? cc.koBase + "% of the time at full health, " : "never at full health, ") + "up to " + (cc.koBase + cc.koLow) + "% the more hurt they are" + (cc.koAfter ? ", and never in the first " + cc.koAfter + "s" : "") + ".");
-    if (cg) add("⛽", "Gas tank", "The fastest, hardest-hitting fighter in the game for " + secs(cg.fresh) + " (x" + cg.speed[0] + " speed, x" + cg.damage[0] + " damage). Then over " + secs(cg.fade) + " it runs dry: x" + cg.speed[1] + " speed, x" + cg.damage[1] + " damage, and up to " + cg.tapExtra[1] + "% more likely to tap to a submission.");
-    if (ch.tdd) add("🧱", "Takedown defense", "Stuffs " + ch.tdd.sprawlChance + "% of takedown shots and punches straight back.");
-    if (cn.thirteen) add("⏱️", "13 seconds", "Knock someone out inside " + cn.thirteen.within + " seconds and the jumbotron shows the time, like his knockout of José Aldo.");
-    if (cr.khabib) add("🦅", "vs Khabib", "Khabib's grabs come round " + cr.khabib.grappleBoost + "x as fast, " + cr.khabib.rncChance + "% of his takedowns take the back for a choke and " + cr.khabib.gnpChance + "% go to ground and pound (\"Let's talk now.\"), and Send Me Location comes early.");
-    if (cr.dustin && cr.dustin.calfKicks) add("🦵", "vs Dustin", "Dustin throws calf kicks at him (" + cr.dustin.calfKicks.damage + ", and a limp). Calf kicks do x" + (cn.calfKicksHurt || 1) + " damage to him.");
-  }
+  if (ch.notorious) conorGalleryMoves(ch, add); // Conor McGregor (conor.js)
   if (ch.iceman) {
     // Chuck Liddell (liddell.js).
     var ic = ch.iceman, fr = ic.frost, sn = ic.snow, pct = function (x) { return Math.round(x * 100) + "%"; };

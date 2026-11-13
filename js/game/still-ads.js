@@ -307,5 +307,9 @@ var STILL_ADS = [
 
   // ---------------------------------------------------------------- Tap Water
   // Charles's water: a chrome tap pouring into a glass (tapwater-ad.js).
-  { name: "tapwater-kitchen", fighter: "Charles Oliveira", draw: function (x, y, w, h, k, ch) { drawTapWaterStill(x, y, w, h, k, ch); } }
+  { name: "tapwater-kitchen", fighter: "Charles Oliveira", draw: function (x, y, w, h, k, ch) { drawTapWaterStill(x, y, w, h, k, ch); } },
+
+  // ---------------------------------------------------------------- Proper No. 12
+  // Conor's root beer: a frosty mug on a pub bar, ORDER A PROPER ONE (proper12-ad.js).
+  { name: "proper12-pub", fighter: "Conor McGregor", draw: function (x, y, w, h, k, ch) { drawProper12Still(x, y, w, h, k, ch); } }
 ];
