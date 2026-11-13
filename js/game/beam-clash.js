@@ -123,6 +123,75 @@ function bcP(c, s) {
   return p + (target - p) * fk;
 }
 
+// ---------------------------------------------------------------- the pin
+// Joe (2026-11-13): a beam doesn't land as one big hit. Whoever's caught in
+// it is driven back into the cage and pinned there for as long as it's
+// blasting, taking small chip hits that add up to what the old single hit
+// and its cage slams did (BEAM_PIN_TICK apart).
+var BEAM_PIN_TICK = 0.1;
+var BEAM_PIN_SPEED = 1500; // how fast it drives them back to the cage
+
+// owner fires along (dx, dy); total: all the damage, over dur seconds.
+// first: damage already dealt by the hit that started it (counted in total).
+function beginBeamPin(target, owner, dx, dy, total, dur, color, first) {
+  if (!target.alive) return;
+  clearActions(target);
+  target.slam = null;
+  target.vx = 0; target.vy = 0;
+  dur = Math.max(0.6, dur);
+  var n = Math.max(3, Math.round(dur / BEAM_PIN_TICK));
+  target.beamPin = { owner: owner.id, dx: dx, dy: dy, t: 0, dur: dur, next: BEAM_PIN_TICK, left: Math.max(0, total - (first || 0)), ticks: n - 1, color: color, wall: false };
+}
+function beamPinned(b) { return !!(b && b.beamPin); }
+
+// From update(): pinned fighters slide back into the cage and take their chips.
+function tickBeamPins(dt) {
+  if (!balls) return;
+  balls.forEach(function (b) {
+    var p = b.beamPin;
+    if (!p) return;
+    if (!b.alive || over) { b.beamPin = null; return; }
+    p.t += dt;
+    b.vx = 0; b.vy = 0;
+    // Driven back until the cage stops them, then held flat against it.
+    var nx = Math.min(W - b.r, Math.max(b.r, b.x + p.dx * BEAM_PIN_SPEED * dt));
+    var ny = Math.min(H - b.r, Math.max(b.r, b.y + p.dy * BEAM_PIN_SPEED * dt));
+    var moved = Math.abs(nx - b.x) + Math.abs(ny - b.y);
+    b.x = nx; b.y = ny;
+    if (!p.wall && moved < BEAM_PIN_SPEED * dt * 0.3) {
+      p.wall = true;
+      if (!reduceMotion) shake = Math.max(shake, 16);
+      impacts.push({ x: b.x + p.dx * b.r, y: b.y + p.dy * b.r, nx: -p.dx, ny: -p.dy, life: 0.5, max: 0.5, color: "#ffffff" });
+      playBounce();
+    }
+    if (p.wall && !reduceMotion) {
+      shake = Math.max(shake, 5);
+      if (Math.random() < 0.5) particles.push({ x: b.x + p.dx * b.r, y: b.y + p.dy * b.r, vx: (Math.random() - 0.5) * 300 - p.dx * 120, vy: (Math.random() - 0.5) * 300 - p.dy * 120, life: 0.35, max: 0.35, size: 2 + Math.random() * 3, color: p.color });
+    }
+    p.next -= dt;
+    while (p.next <= 0 && p.ticks > 0 && b.alive) {
+      p.next += BEAM_PIN_TICK;
+      var chip = p.left / p.ticks;
+      p.ticks--; p.left -= chip;
+      var got = hurt(b, chip, "laser", p.owner); // (chip hits: never blocked or slipped, no floater of their own)
+      if (got > 0) { floater(b.x + (Math.random() - 0.5) * b.r, b.y - b.r - 8, "-" + Math.max(1, Math.round(got)), "tick"); b.flash = Math.max(b.flash, 0.1); }
+      checkEnd();
+    }
+    if (p.t >= p.dur || (p.ticks <= 0 && p.t >= p.dur - 0.05)) {
+      b.beamPin = null;
+      if (b.alive) { b.vx = -p.dx * 260; b.vy = -p.dy * 260; } // sliding back off the cage as it lets go
+    }
+  });
+}
+
+// From draw.js: shaking against the cage while pinned.
+function beamPinOffset(b) {
+  var p = b.beamPin;
+  if (!p || !b.alive || reduceMotion) return { x: 0, y: 0 };
+  var t = performance.now() / 1000, a = b.r * (p.wall ? 0.06 : 0.03);
+  return { x: Math.sin(t * 71) * a, y: Math.cos(t * 63) * a };
+}
+
 // From update(): the clash itself.
 function tickBeamClash(dt) {
   var c = beamClash;
@@ -194,7 +263,9 @@ function bcFinish(A, B, c) {
   var m = X.igbb, cfg = kx.cfg(X);
   ky.end(Y); // their beam's beaten: it's gone, and they're wide open
   m.hit = true; m.ext0 = m.ext; m.t = 0; // the winning beam carries on through them to the cage
-  var dealt = hurt(Y, cfg.damage + CLASH_BONUS, "igbb", X.id);
+  var total = cfg.damage + CLASH_BONUS + cfg.wallSlams * cfg.slamDamage;
+  var first = total / Math.max(3, Math.round(cfg.beamTime / BEAM_PIN_TICK));
+  var dealt = hurt(Y, first, "igbb", X.id);
   if (dealt <= 0) return;
   floater(Y.x, Y.y - Y.r - 30, kx.label, "crit");
   if (!reduceMotion) { shake = Math.max(shake, 24); hitStop = Math.max(hitStop, 0.1); }
@@ -206,7 +277,7 @@ function bcFinish(A, B, c) {
     particles.push({ x: Y.x, y: Y.y, vx: Math.cos(pa) * pv + m.dx * 200, vy: Math.sin(pa) * pv + m.dy * 200, life: 0.6, max: 0.6, size: 3 + Math.random() * 4, color: kx.spark[pi % kx.spark.length] });
   }
   crowdReact(1);
-  if (Y.alive) beginWallSlam(Y, m.dx, m.dy, { knockback: cfg.knockback, wallSlams: cfg.wallSlams, slamDamage: cfg.slamDamage });
+  if (Y.alive) beginBeamPin(Y, X, m.dx, m.dy, total, cfg.beamTime, kx.color, first);
   checkEnd();
 }
 

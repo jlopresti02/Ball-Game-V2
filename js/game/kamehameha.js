@@ -111,7 +111,9 @@ function updateKamehameha(self, other, dt) {
       var along = ox * m.dx + oy * m.dy, across = Math.abs(-m.dy * ox + m.dx * oy);
       if (along > 0 && along < m.ext + other.r && across < cfg.width / 2 + other.r * 0.85) {
         m.hit = true;
-        var dealt = hurtProjectile(other, cfg.damage, self.id, m.dx, m.dy);
+        // Driven into the cage and pinned there, chipped for as long as it blasts (beam-clash.js).
+        var total = cfg.damage + cfg.wallSlams * cfg.slamDamage, first = total / Math.max(3, Math.round((cfg.beamTime - m.t) / BEAM_PIN_TICK));
+        var dealt = hurtProjectile(other, first, self.id, m.dx, m.dy);
         if (dealt > 0) {
           floater(other.x, other.y - other.r - 30, "KAMEHAMEHA!", "crit");
           if (!reduceMotion) { shake = Math.max(shake, 22); hitStop = Math.max(hitStop, 0.08); }
@@ -121,7 +123,7 @@ function updateKamehameha(self, other, dt) {
             var pa = Math.random() * Math.PI * 2, pv = 150 + Math.random() * 350;
             particles.push({ x: other.x, y: other.y, vx: Math.cos(pa) * pv + m.dx * 200, vy: Math.sin(pa) * pv + m.dy * 200, life: 0.6, max: 0.6, size: 3 + Math.random() * 4, color: pi % 2 ? "#9fd6ff" : "#ffffff" });
           }
-          if (other.alive) beginWallSlam(other, m.dx, m.dy, { knockback: cfg.knockback, wallSlams: cfg.wallSlams, slamDamage: cfg.slamDamage });
+          if (other.alive) beginBeamPin(other, self, m.dx, m.dy, total, cfg.beamTime - m.t, "#7cc8ff", first);
           checkEnd();
         }
       }

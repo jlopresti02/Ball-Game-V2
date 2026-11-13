@@ -48,7 +48,7 @@ function tickSpecialCharge(b, dt) {
 // Busy with something that shouldn't be interrupted.
 function specialBusy(b) {
   return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.combo || b.taunt || b.flow ||
-    b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled || b.dazed || chamaOn(b) || ngannouBusy(b); // (Alex Pereira's CHAMA combo, pereira.js; Francis Ngannou's rage punch, ngannou.js)
+    b.beamPin || b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled || b.dazed || chamaOn(b) || ngannouBusy(b); // (Alex Pereira's CHAMA combo, pereira.js; Francis Ngannou's rage punch, ngannou.js)
 }
 function canStartIgbb(self, other) {
   if (!other.alive || other.invincible || specialBusy(self) || specialBusy(other)) return false;

@@ -135,6 +135,7 @@ function draw() {
     var jfo = jonFloatOffset(b); wox += jfo.x; woy += jfo.y; // floating for GOAT Stampede (jon.js)
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
     var kmo = kameOffset(b); wox += kmo.x; woy += kmo.y; // leaning back to charge, lunging into the Kamehameha (kamehameha.js)
+    var bpo = beamPinOffset(b); wox += bpo.x; woy += bpo.y; // shaking, pinned to the cage by a beam (beam-clash.js)
     var rbo = rainbowOffset(b); wox += rbo.x; woy += rbo.y; // leaning over the pot of gold (rainbow-beam.js)
     var ngo = ngannouOffset(b); wox += ngo.x; woy += ngo.y; // up in the air for Ngannou's Smash (ngannou.js)
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)

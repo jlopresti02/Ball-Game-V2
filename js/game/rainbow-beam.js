@@ -91,8 +91,9 @@ function updateRainbow(self, other, dt) {
       var along = ox * m.dx + oy * m.dy, across = Math.abs(-m.dy * ox + m.dx * oy);
       if (along > 0 && along < m.ext + other.r && across < cfg.width / 2 + other.r * 0.85) {
         m.hit = true;
-        var dealt = hurtProjectile(other, cfg.damage, self.id, m.dx, m.dy);
-        if (dealt > 0) rbLand(self, other, m, cfg);
+        var total = cfg.damage + cfg.wallSlams * cfg.slamDamage, first = total / Math.max(3, Math.round((cfg.beamTime - m.t) / BEAM_PIN_TICK));
+        var dealt = hurtProjectile(other, first, self.id, m.dx, m.dy);
+        if (dealt > 0) { rbLand(self, other, m, cfg); beginBeamPin(other, self, m.dx, m.dy, total, cfg.beamTime - m.t, "#ffd84a", first); } // pinned to the cage, chipped (beam-clash.js)
       }
     }
     if (m.t >= cfg.beamTime) {
@@ -153,7 +154,6 @@ function rbLand(self, other, m, cfg, label) {
     if (i % 2) rbCoins.push({ x: other.x, y: other.y, vx: Math.cos(a) * v + m.dx * 200, vy: Math.sin(a) * v + m.dy * 200, rot: Math.random() * 6, spin: 10 + Math.random() * 12, life: 0.8, max: 0.8, size: 5 + Math.random() * 3, g: 500 });
     else if (!reduceMotion) particles.push({ x: other.x, y: other.y, vx: Math.cos(a) * v + m.dx * 200, vy: Math.sin(a) * v + m.dy * 200, life: 0.6, max: 0.6, size: 3 + Math.random() * 4, color: RB_COLORS[i % 7] });
   }
-  if (other.alive) beginWallSlam(other, m.dx, m.dy, { knockback: cfg.knockback, wallSlams: cfg.wallSlams, slamDamage: cfg.slamDamage });
   checkEnd();
 }
 

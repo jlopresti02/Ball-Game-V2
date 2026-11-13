@@ -65,7 +65,7 @@ function step(dt) {
     b = balls[i];
     var spinning = b.powerState && b.powerState.phase === "attack";
     var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
-    if (!b.alive || b.grappled || b.grapple || b.sprawl || b.sprawled || subLocked(b) || b.koDuel || igbbLocked(b) || swordDuelLocked(b) || spinning || sitting) continue;
+    if (!b.alive || b.beamPin || b.grappled || b.grapple || b.sprawl || b.sprawled || subLocked(b) || b.koDuel || igbbLocked(b) || swordDuelLocked(b) || spinning || sitting) continue;
     b.x += b.vx * dt; b.y += b.vy * dt;
     var hitWall = false, wnx = 0, wny = 0;
     if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); hitWall = true; wnx = 1; }
@@ -86,7 +86,7 @@ function step(dt) {
   // Sees Red keeps a normal collision box even mid-charge-dash, so it
   // still bounces off the opponent on contact like any other pair of
   // balls; only its punch damage is handled separately, on a timer.
-  if (!a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || subLocked(a) || subLocked(c) || a.koDuel || c.koDuel || (igbbLocked(a) && !duckSolid(a) && !kameOn(a) && !rainbowOn(a)) || (igbbLocked(c) && !duckSolid(c) && !kameOn(c) && !rainbowOn(c)) || swordDuelLocked(a) || swordDuelLocked(c) || aSpin || cSpin) return;
+  if (!a.alive || !c.alive || a.beamPin || c.beamPin || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || subLocked(a) || subLocked(c) || a.koDuel || c.koDuel || (igbbLocked(a) && !duckSolid(a) && !kameOn(a) && !rainbowOn(a)) || (igbbLocked(c) && !duckSolid(c) && !kameOn(c) && !rainbowOn(c)) || swordDuelLocked(a) || swordDuelLocked(c) || aSpin || cSpin) return;
   // Jon's Duck Drop duck, and Jon in its landing pose, are solid like a seat (jon-duck.js).
   if (duckSolid(a)) aSit = true;
   if (duckSolid(c)) cSit = true;
