@@ -54,7 +54,7 @@
     },
     "snow": { "first": [10, 15], "every": [14, 20], "time": 7, "speed": 1.35, "windup": 0.8 },
     "flames": { "below": 0.6 },
-    "taunt": { "behind": 40, "every": [25, 40] }
+    "taunt": { "behind": 40, "first": [2, 4], "every": [25, 40] }
   },
   "hasSpecial": true,
   "special": {

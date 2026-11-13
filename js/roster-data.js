@@ -552,6 +552,10 @@ var SAVED_ROSTER = [
       },
       "taunt": {
         "behind": 40,
+        "first": [
+          2,
+          4
+        ],
         "every": [
           25,
           40
