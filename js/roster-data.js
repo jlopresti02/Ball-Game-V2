@@ -3680,6 +3680,19 @@ var SAVED_ROSTER = [
       "cycloneHits": 2,
       "flashChance": 15,
       "flashRange": 150,
+      "clash": {
+        "parry": {
+          "blade": 55,
+          "saber": 50,
+          "bat": 40
+        },
+        "lockAfter": 2,
+        "win": 40,
+        "hurt": 30,
+        "disarm": 30,
+        "winDamage": 26,
+        "hurtDamage": 18
+      },
       "cut": {
         "chance": 60,
         "time": 4,

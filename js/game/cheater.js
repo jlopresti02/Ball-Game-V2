@@ -72,7 +72,8 @@ function wakeRef(rf) {
 }
 
 function startCheater(b) {
-  var mode = CHEATER_MODES[Math.floor(Math.random() * CHEATER_MODES.length)];
+  var modes = b.weaponLost ? CHEATER_MODES.filter(function (k) { return k !== "bat"; }) : CHEATER_MODES; // (disarmed: no bat for the rest of the fight)
+  var mode = modes[Math.floor(Math.random() * modes.length)];
   b.cheater = { mode: mode, cd: 0.3 };
   b.punch = null; b.kick = null;
   floater(b.x, b.y - b.r - 30, "CHEATER MODE", "crit");
@@ -201,7 +202,7 @@ function updateCheaterAct(self, other, dt) {
       var dist = Math.sqrt((other.x - self.x) * (other.x - self.x) + (other.y - self.y) * (other.y - self.y));
       // Sword clash (diamond.js): Diamond Guard Dustin can parry it with his diamond sword.
       // Saber clash (hokit-darkside.js): Josh Hokit's lightsaber meeting a bat or club, either way round.
-      if (other.alive && dist < self.r + other.r + cfg.bat.reach + 6 && !sithClash(other, self) && !diamondSwordClash(other, self, "bat")) {
+      if (other.alive && dist < self.r + other.r + cfg.bat.reach + 6 && !sithClash(other, self) && !diamondSwordClash(other, self, "bat") && !katanaBatClash(other, self)) { // (Tony's katanas knocking it away, ferguson-katanas.js)
         var saber = !!(self.cheater && self.cheater.saber);
         var dealt = hurt(other, cfg.bat.damage, "bat", self.id);
         if (!other.justDodged) {
@@ -420,7 +421,7 @@ function drawCheater(b) {
   }
   if (b.cheater && b.cheater.saber && sendLocHandsBusy(b)) return; // calling in the Death Star (send-location.js draws him)
   if (b.cheater && b.cheater.saber && drawSithArms(b)) return; // Hokit's Force pull and push (hokit-darkside.js)
-  if (b.cheater && b.cheater.mode === "bat" && saberLockHeld(b)) { drawBatIdle(b, "lock"); return; } // blade on bat
+  if (b.cheater && b.cheater.mode === "bat" && (saberLockHeld(b) || katanaLockOpp(b))) { drawBatIdle(b, "lock"); return; } // blade on bat (or in a katana lock, ferguson-katanas.js)
   if (b.cheater && b.cheater.mode === "bat" && !swordDuelLocked(b)) { // (sword.js draws it in a sword duel)
     // The bat: held and played with between swings, or swung two-handed
     // across at them (one set of poses, so it flows between the two).

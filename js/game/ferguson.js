@@ -1188,7 +1188,7 @@ function fergusonGalleryMoves(ch, add) {
   if (f.rivals) add("🗂️", "Rivals", "Khabib: five CANCELLED stamps before the fight (it fell through five times). Gaethje and Charles: a REMATCH, and his first Kaioken comes early.");
 }
 function fergusonKatanaInfo(sp) {
-  return "Steel blades slide out of both elbows (the tell: some back off). Then for " + secs(sp.time) + " he hunts them down with sweeping blade slashes, " + sp.damage + " a cut but " + sp.critChance + "% are crits for " + sp.critMult + "x" + (sp.cut ? " that can open a cut" : "") + ". Now and then (" + sp.cycloneChance + "%) a quick blade cyclone, or (" + sp.flashChance + "%) a flash-step cut right past them. It ends with an X-slash for " + sp.finisher + " that slams them into the cage.";
+  return "Steel blades slide out of both elbows (the tell: some back off). Then for " + secs(sp.time) + " he hunts them down with sweeping blade slashes, " + sp.damage + " a cut but " + sp.critChance + "% are crits for " + sp.critMult + "x" + (sp.cut ? " that can open a cut" : "") + ". Now and then (" + sp.cycloneChance + "%) a quick blade cyclone, or (" + sp.flashChance + "%) a flash-step cut right past them. It ends with an X-slash for " + sp.finisher + " that slams them into the cage." + (sp.clash ? " His blades clash with swords, sabers and bats: the " + (sp.clash.lockAfter === 2 ? "second" : "next") + " clash is a KATANA LOCK that he wins, loses, or ends by knocking their weapon away for the rest of the fight. He can never be disarmed: the blades are part of him." : "");
 }
 
 // ---------------------------------------------------------------- sound

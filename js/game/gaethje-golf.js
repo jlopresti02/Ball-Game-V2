@@ -213,7 +213,7 @@ function golfDrawFighter(b, x, y, st, rot) {
 
 function startGolfMode(b) {
   var cfg = golfCfg(b);
-  if (!cfg || !b.alive) return;
+  if (!cfg || !b.alive || b.weaponLost) return; // (disarmed: the club is gone for the fight)
   golfPutHatOn(b);
   b.golfLeft = cfg.duration;
   b.cheater = { mode: "bat", club: true, cd: 0.4, golfCd: 1.2, cfg: { bat: cfg.club, ball: cfg.ball } };

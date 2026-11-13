@@ -20,6 +20,17 @@
 // The X-slash: blades crossed high with a glint, he dashes in and both rip
 // down through them (`finisher`), a big X on them and a wall slam.
 //
+// Clashes (`clash` in his special, Joe 2026-11-13): Ilia's rapier and
+// Dustin's diamond sword come out against the katanas, Hokit's Dark Side
+// counts them as a weapon. A cut into a sword, saber or bat is parried or
+// clashes (`parry`% by weapon), and his blades knock a bat or saber swing
+// away the same way. The `lockAfter`-th clash of a special is a KATANA LOCK:
+// side by side, blades crossed, shoving and sparking, nothing lands. Then
+// `win` (an X cut and a wall slam), `hurt` (their weapon gets through, he's
+// slammed back) or `disarm` (their weapon goes flying, gone for the fight;
+// Hokit Force-pulls his saber back and Force-pushes Tony). Tony is never
+// disarmed: the blades are part of him.
+//
 // Every cut is hurt(..., "elbow"), so slips, blocks, GSP's Maple Shield
 // (gsp-shield.js) and the rest work as before. `critChance`% are crits for
 // `critMult`x that can open a `cut`.
@@ -48,6 +59,10 @@ function updateKatanas(self, other, dt) {
   }
   var m = self.igbb;
   if (m.move !== "katana") return false;
+  // Held in a katana lock (his special runs before the lock hold in the
+  // abilities loop), or stunned / thrown by a Force push or a wall slam:
+  // the special waits instead of steering him.
+  if (katanaLockHeld(self) || self.slam || (self.checkStun || 0) > 0) { if (katanaLockHeld(self)) { self.vx = 0; self.vy = 0; } return true; }
   m.t += dt;
   m.fx.forEach(function (f) { f.t += dt; });
   m.fx = m.fx.filter(function (f) { return f.t < f.max; });
@@ -198,6 +213,10 @@ function katRunSlash(self, other, sp, m, dt, ux, uy, gap) {
 // One cut landing.
 function katCut(self, other, sp, m, mult, fxKind, fxAng, knock) {
   if (!other.alive || other.koOut) return 0;
+  // Their weapon in the way: parried or a clash. Once the blades have met,
+  // nothing gets through until the katana lock is decided.
+  var w = katOppWeapon(other);
+  if (w && katClashLive(self) && ((m.clashes > 0 && !m.lockDone) || Math.random() * 100 < katClashCfg(self).parry[w])) { katClash(self, other, w, true); return 0; }
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
   var crit = Math.random() * 100 < sp.critChance;
   var dealt = hurt(other, sp.damage * (crit ? sp.critMult : 1) * mult, "elbow", self.id);
@@ -216,6 +235,144 @@ function katCut(self, other, sp, m, mult, fxKind, fxAng, knock) {
   }
   checkEnd();
   return dealt;
+}
+
+// ------------------------------------------------------------ clashes
+
+var KL_IN = 0.25, KL_TIME = 1.35;
+var katanaLock = null; // the lock, while it's on
+
+function katClashCfg(t) { return t.char.special.clash || { parry: { blade: 55, saber: 50, bat: 40 }, lockAfter: 2, win: 40, hurt: 30, disarm: 30, winDamage: 26, hurtDamage: 18 }; }
+// The weapon in their hands that can meet his blades.
+function katOppWeapon(o) {
+  if (!o || !o.alive) return null;
+  var h = bladeHost(o);
+  if (h && h.sword && h.sword.out && h.sword.t >= SWORD_DRAW) return "blade";
+  if (sithArmed(o)) return "saber";
+  if (o.cheater && o.cheater.mode === "bat") return "bat";
+  return null;
+}
+function katClashLive(t) { return katanaOn(t) && t.igbb.phase === "close" && !katanaLock && !swordDuelActive() && !saberLock; }
+// From swordWeaponOut (sword.js): his katanas pull Ilia's and Dustin's swords out like a bat does.
+function katanaWeaponOut(o) { return katanaOn(o) && o.alive && o.igbb.phase !== "sheathe" ? "bat" : null; }
+// From updateDarkSide (hokit-darkside.js): Hokit can suit up against the katanas mid special.
+function canSuitUpVsKatanas(self, other) { return katanaOn(other) && !specialBusy(self) && !self.punch && !self.kick; }
+// From the bat landing (cheater.js): a bat, club or saber swing into Tony's blades.
+function katanaBatClash(def, atk) {
+  if (!katClashLive(def) || !atk.cheater) return false;
+  var w = atk.cheater.saber ? "saber" : "bat";
+  if (Math.random() * 100 >= katClashCfg(def).parry[w]) return false;
+  atk.chAct = null;
+  katClash(def, atk, w, false);
+  return true;
+}
+function katClash(t, o, w, tonyAttacking) {
+  var m = t.igbb, cc = katClashCfg(t), nx = o.x - t.x, ny = o.y - t.y, nd = Math.sqrt(nx * nx + ny * ny) || 1;
+  nx /= nd; ny /= nd;
+  var cx = (t.x + o.x) / 2, cy = (t.y + o.y) / 2 - t.r * 0.3;
+  m.clashes = (m.clashes || 0) + 1;
+  if (m.clashes >= cc.lockAfter && !m.locked) { m.locked = true; startKatanaLock(t, o, w); return; }
+  if (w === "saber") saberClashFx(cx, cy, -nx, -ny, 1.2); else clashFx(cx, cy, -nx, -ny, 1.2, w === "blade" ? bladeColors(o) : null);
+  var h = bladeHost(o);
+  if (h && h.sword) { h.sword.parry = 0; h.sword.parries = 0; }
+  var kb = 420; // whoever swung gets knocked back off it
+  if (tonyAttacking) { t.vx = -nx * kb; t.vy = -ny * kb; o.vx += nx * kb * 0.3; o.vy += ny * kb * 0.3; t.squash = { t: 0.14, max: 0.14, nx: nx, ny: ny }; }
+  else { o.vx = nx * kb; o.vy = ny * kb; t.vx -= nx * kb * 0.3; t.vy -= ny * kb * 0.3; o.squash = { t: 0.14, max: 0.14, nx: -nx, ny: -ny }; if (o.cheater) o.cheater.cd = Math.max(o.cheater.cd, 0.6); }
+  if (m.sl && m.sl.kind === "A") m.sl.hit = true;
+  floater(cx, Math.min(t.y, o.y) - t.r - 34, w === "blade" && tonyAttacking ? "PARRY!" : "CLASH!", "crit");
+  crowdReact(0.6);
+  if (w === "saber") playSaberClash(1); else playSwordClash(1);
+}
+
+function startKatanaLock(t, o, w) {
+  clearActions(o); o.chAct = null;
+  var m = t.igbb, cc = katClashCfg(t);
+  m.sl = null; m.next = 0.35;
+  // Side by side, like Hokit's saber lock, so the blades cross over the middle.
+  var nx = o.x >= t.x ? 1 : -1, gap = t.r + o.r + 40;
+  var mx = Math.min(W - gap / 2 - t.r - 10, Math.max(gap / 2 + t.r + 10, (t.x + o.x) / 2));
+  var my = Math.min(H - t.r - 10, Math.max(t.r * 2.4, (t.y + o.y) / 2));
+  var r = Math.random() * (cc.win + cc.hurt + cc.disarm), out = r < cc.win ? "win" : r < cc.win + cc.hurt ? "hurt" : "disarm";
+  katanaLock = { tId: t.id, oId: o.id, tRef: t, oRef: o, w: w, t: 0, nx: nx, mx: mx, my: my, gap: gap,
+    fromT: { x: t.x, y: t.y }, fromO: { x: o.x, y: o.y }, outcome: out, sparkT: 0 };
+  t.vx = t.vy = o.vx = o.vy = 0;
+  floater(mx, my - t.r - 56, "KATANA LOCK!", "crit");
+  crowdReact(1);
+  if (w === "saber") { playSaberClash(1.6); playSaberLockBuzz(KL_TIME - KL_IN); } else playSwordClash(1.6);
+  if (!reduceMotion) shake = Math.max(shake, 12);
+}
+// Both of them held (swordDuelLocked, sword.js); the one with the bat or
+// saber drawn in its lock pose (cheater.js).
+function katanaLockHeld(b) { return !!(katanaLock && b && (b === katanaLock.tRef || b === katanaLock.oRef)); }
+function katanaLockOpp(b) { return !!(katanaLock && b && b === katanaLock.oRef); }
+function katLockPoint() { var L = katanaLock, t = L.tRef, o = L.oRef; return { x: (t.x + o.x) / 2, y: (t.y + o.y) / 2 - t.r * 1.1 }; }
+
+// Every frame (update.js).
+function tickKatanaLock(dt) {
+  var L = katanaLock;
+  if (!L) return;
+  var t = L.tRef, o = L.oRef;
+  if (balls[L.tId] !== t || balls[L.oId] !== o || !t.alive || !o.alive || over || !katanaOn(t)) { katanaLock = null; return; }
+  if (L.w === "bat" && !o.cheater) { katanaLock = null; t.igbb.lockDone = true; return; } // their bat went away (the ref woke up)
+  if (L.w === "bat" && o.cheater.mode !== "bat") o.cheater.mode = "bat"; // (a new Cheater mode doesn't take it out of their hands mid lock)
+  L.t += dt;
+  var k = ease(L.t / KL_IN), push = L.t > KL_IN ? Math.sin((L.t - KL_IN) * 7) * t.r * 0.14 : 0, half = L.gap / 2;
+  var tx = L.mx - L.nx * (half - push), ox = L.mx + L.nx * (half + push);
+  t.x = L.fromT.x + (tx - L.fromT.x) * k; t.y = L.fromT.y + (L.my - L.fromT.y) * k;
+  o.x = L.fromO.x + (ox - L.fromO.x) * k; o.y = L.fromO.y + (L.my - L.fromO.y) * k;
+  t.vx = t.vy = o.vx = o.vy = 0;
+  var h = bladeHost(o);
+  if (h && h.sword) h.sword.parry = 0.12; // their sword held up against his
+  if (L.t > KL_IN) {
+    L.sparkT -= dt;
+    if (L.sparkT <= 0) {
+      L.sparkT = 0.07;
+      var p = katLockPoint();
+      for (var i = 0; i < 4 && !reduceMotion; i++) {
+        var a = -Math.PI / 2 + (Math.random() - 0.5) * 2.6, s = 120 + Math.random() * 260;
+        particles.push({ x: p.x, y: p.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.3, max: 0.3, size: 2 + Math.random() * 2.5, color: i % 2 ? (L.w === "saber" ? "#ff3b3b" : "#ffffff") : "#fff2c2" });
+      }
+      if (!reduceMotion) shake = Math.max(shake, 3);
+    }
+  }
+  if (L.t < KL_TIME) return;
+  // Broken apart: how it ends.
+  katanaLock = null;
+  var m = t.igbb, cc = katClashCfg(t), nx = L.nx, p2 = { x: (t.x + o.x) / 2, y: (t.y + o.y) / 2 - t.r * 0.5 };
+  m.lockDone = true;
+  if (L.w === "saber") saberClashFx(p2.x, p2.y, nx, 0, 2); else clashFx(p2.x, p2.y, nx, 0, 2, L.w === "blade" ? bladeColors(o) : null);
+  if (L.outcome === "win") {
+    // He shoves their weapon up and rips both blades down through them.
+    var dealt = hurt(o, cc.winDamage, "igbb", t.id);
+    floater(o.x, o.y - o.r - 34, "KATANA SLASH!", "crit");
+    m.fx.push({ id: o.id, ang: Math.atan2(o.y - t.y, o.x - t.x), t: 0, max: 0.9, kind: "x" });
+    playElbowHit(cc.winDamage, true, true);
+    if (dealt > 0 && o.alive) beginWallSlam(o, nx, 0, { knockback: 1100, wallSlams: 1, slamDamage: 4 });
+    if (!reduceMotion) { shake = Math.max(shake, 22); hitStop = Math.max(hitStop, 0.1); }
+  } else if (L.outcome === "hurt") {
+    // They muscle through it and hit him.
+    var dealt2 = hurt(t, cc.hurtDamage, "igbb", o.id);
+    t.flash = 0.16;
+    floater(t.x, t.y - t.r - 34, L.w === "saber" ? "SABER SLASH!" : L.w === "blade" ? (o.rapier ? "RAPIER SLASH!" : "DIAMOND SLASH!") : (o.cheater && o.cheater.club ? "WHACK!" : "CRACK!"), "crit");
+    if (o.cheater) o.chAct = { kind: "bat", t: (cheaterCfg(o).bat.windup || 0), hit: true, dir: 1 };
+    if (L.w === "saber") playSaberHit(true); else if (L.w === "bat") playBatHit(true); else playSwordClash(1.4);
+    if (dealt2 > 0 && t.alive) beginWallSlam(t, -nx, 0, { knockback: 1100, wallSlams: 1, slamDamage: 4 });
+    if (!reduceMotion) { shake = Math.max(shake, 20); hitStop = Math.max(hitStop, 0.08); }
+  } else {
+    // He twists their weapon out of their hands.
+    floater(o.x, o.y - o.r - 34, "DISARMED!", "crit");
+    playSwordClash(1.6);
+    if (L.w === "saber") startForce(o, t, nx, 0); // Hokit: pulls it back with the Force and pushes Tony away (hokit-darkside.js)
+    else {
+      var oh = bladeHost(o), blade = oh && oh.sword ? (o.rapier ? "rapier" : "longsword") : null;
+      flyingBats.push({ x: o.x + nx * o.r * 0.5, y: o.y - o.r * 0.4, vx: nx * 380, vy: -820, rot: 0, spin: 19, t: 0, len: blade ? o.r * bladeLen(o) : weaponLen(o), trail: [], club: !!(o.cheater && o.cheater.club), blade: blade });
+      if (o.cheater) { o.cheater = null; o.weaponLost = true; } // the bat or club is gone for the fight
+      if (blade) { oh.sword = null; oh.disarmed = true; } // and so is a sword
+      o.vx = nx * 380;
+    }
+  }
+  crowdReact(1);
+  checkEnd();
 }
 
 // ------------------------------------------------------------ drawing
@@ -314,6 +471,15 @@ function katGhosts(b, pts, fade) {
 // From drawFerguson (ferguson.js) while his katanas are out.
 function drawTfKatanas(b, other, ang) {
   var m = b.igbb, sp = b.char.special, L = b.r * KAT_LEN;
+  if (katanaLock && katanaLock.tRef === b && m.phase === "close") {
+    // In the lock: both elbows forward, the blades angled up into theirs, straining.
+    var lp = katLockPoint(), jt = !reduceMotion ? Math.sin(performance.now() / 21) * 0.04 : 0;
+    [-1, 1].forEach(function (s) {
+      var th = ang + s * 0.55, re = b.r * 0.95 + 8, ex = b.x + Math.cos(th) * re, ey = b.y + Math.sin(th) * re;
+      katArm(b, ang, s, th, 8, Math.atan2(lp.y - ey, lp.x - ex) + jt + s * 0.04, L * 0.92, 0.35 + 0.25 * Math.sin(performance.now() / 40));
+    });
+    return;
+  }
   var len = m.phase === "draw" ? easeOut(m.t / sp.draw) * L : m.phase === "sheathe" ? Math.max(0, 1 - m.t / 0.4) * L : L;
   if (m.phase === "draw" || m.phase === "sheathe") {
     [-1, 1].forEach(function (s) { var th = ang + s * 0.5; katArm(b, ang, s, th, 0, th + s * 0.55, len, m.phase === "draw" ? Math.max(0, 1 - m.t / 0.35) : 0); });
