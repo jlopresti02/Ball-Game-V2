@@ -59,7 +59,8 @@
     "notImpressed": { "after": 3, "window": 10, "hitCost": 0, "cooldown": 12, "max": 3, "handsDown": 1.0 },
     "superman": { "first": [3, 5], "every": [4, 7], "chantEvery": [2.5, 4.5], "minGap": 25, "maxGap": 190, "load": 0.34, "speed": 950, "turn": 2.5, "reach": 30, "damage": 18, "chantDamage": 30, "knockback": 380, "chantKnockback": 620 },
     "doubleLeg": { "through": 45 },
-    "crowd": { "chantAt": 0.5, "dodge": 2, "taunt": 5, "superman": 5, "takedown": 3, "beat": 1.7, "hold": 2.5 },
+    "shield": { "first": [4, 7], "every": [8, 12], "chantEvery": [6, 9], "minGap": 110, "maxGap": 600, "wind": 0.32, "speed": 820, "size": 0.62, "damage": 14, "chantDamage": 20, "knockback": 420, "hits": 2, "bounces": 4, "block": 25, "blockKnockback": 380 },
+    "crowd": { "chantAt": 0.5, "dodge": 2, "taunt": 5, "superman": 5, "takedown": 3, "shield": 3, "beat": 1.7, "hold": 2.5 },
     "chant": { "damage": 1.35, "speed": 1.15, "attack": 1.25 }
   },
   "hasSpecial": true,

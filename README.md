@@ -218,6 +218,7 @@ Everything is in his character file under `gsp` (leave a block out and that part
 - **Slips** (`dodge`): he slips `chance`% of strikes (32) and `projChance`% of anything thrown at him (24) ("SLIP"), but not while he's held, flying in a leap or lying dazed.
 - **Not impressed** (`notImpressed`): after `after` slips (3), each within `window` seconds (10) of the last, he drops his hands for `handsDown` seconds (1, open to anything) and says "I'm not impressed by your performance." (a speech bubble; his line to Matt Hughes at UFC 63). `hitCost` takes that many off the run each time he's hit (0: off). At most `max` times a fight (3), `cooldown` seconds apart (12).
 - **Double leg** (`doubleLeg`): `through`% of his shots (45) go straight through, with no slip, block, sprawl or guillotine. A cheating Gane still grabs the cage.
+- **Maple Shield** (`shield`, `js/game/gsp-shield.js`): a round steel shield in Canada's colours (red bands, white middle, the maple leaf, a riveted steel rim) slung on his back. First after `first` seconds (4-7), then every `every` (8-12s, `chantEvery` 6-9s while they chant), when they're `minGap`..`maxGap` away (110-600), he pulls it off his back and throws it backhand ("MAPLE SHIELD!"), banked off the cage into them when there's a clean bank shot. Every wall it rings off it turns back at them, up to `hits` hits (2) and `bounces` walls (4), then it flies back and he catches it. `damage` a hit (14, `chantDamage` 20 while they chant) and `knockback` (420); it can be slipped or blocked like anything thrown, and each hit adds `crowd.shield` seconds (3) to the crowd meter. With it on his back he blocks `block`% (25) of the strikes he doesn't slip (punches, kicks, elbows, swings, bats): it swings round onto his lead arm, "BLOCKED!", no damage, and the attacker is knocked back `blockKnockback` (380). While it's in the air his back is empty, so no shield blocks. Synth sounds for now.
 
 A fighter who has just been grabbed can't start a grab of his own in the same moment (it used to lock both fighters up for good when a counter-grab landed mid-turn), and an eye poke that gets its thrower counter-grabbed no longer dazes them (the same lock-up).
 
@@ -399,6 +400,7 @@ js/game/allamerican.js  Justin Gaethje's special move, All American (eagles and 
 js/game/ilia.js         Ilia Topuria's punches that build as he's hurt, sprawls and kick checks
 js/game/aurafarm.js     Ilia Topuria's special move, Aura Farm (the dance, the cape and the bull)
 js/game/gsp.js          Georges St-Pierre: walkout gi, crowd meter and the Montreal crowd, Superman punch, slips, "not impressed", double leg, Superman Dive
+js/game/gsp-shield.js   Georges St-Pierre's Maple Shield: thrown off the cage walls, blocks strikes
 js/game/liddell.js      Chuck Liddell: frost on their gloves, the snow, Snow Day and his overhand rights, his look
 js/game/diaz.js         Nate Diaz: durability, iron chin, Stockton Slap, sub hunt, Stockton surge, the Conor rivalry, Nick Diaz
 js/game/korush.js       Brawler's opening KO Rush and the Brawler vs Brawler Slugfest
