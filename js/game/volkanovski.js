@@ -79,7 +79,7 @@ var VK_LINES = {
   // https://www.mmamania.com/2023/2/10/23594111/ufc-284-pre-fight-press-conference-quotes-volkanovski-doesnt-buy-makhachevs-ko-talk (UFC 284 presser, Perth, 2023; trimmed)
   fans: "Some of the best fans in the world are here in Australia.",
   // https://www.espn.com/mma/story/_/id/44651940/volkanovski-wins-vacant-title-slugfest-lopes-ufc-314 (UFC 314, 2025; the swear word bleeped)
-  movie: "This is the [BLEEP] people are going to write books about. This is a movie!",
+  movie: "This [BLEEP], people are going to write books about. These are going to be movies.",
   // same ESPN UFC 314 story
   adversity: "Adversity is a privilege.",
   // https://www.espn.com/mma/story/_/id/27984767/alexander-volkanovski-blessed-era-ends-ufc-245 (UFC 245 presser, 2019, about Max Holloway)

@@ -90,7 +90,14 @@ var ND_LINES = {
     "Now we're fighting for the baddest [BLEEP] in the game belt. And that's mine." // same presser
   ],
   win: "I'm not surprised, [BLEEP].",                                        // UFC 196 octagon interview, 2016
-  trash: []                                                                  // more real trash talk, no names (filled in as clips are cut)
+  trash: [                                                                   // more real trash talk, no names
+    "I got one talent, I can baptize people, but I'm not God or nothing like that.", // UFC 244 press conference, 2019
+    "I mean, honestly, I don't care about the belt.",                        // interview (voice-clips manifest diazDontCareBelt)
+    "The belt is just a credential for all these guys.",                     // same interview
+    "I don't need to fight. I beat the best guy at the moment.",             // ESPN interview
+    "I sneeze loud and everybody hears about it.",                           // same
+    "I want to fight the best guys. I want to win the best."                 // same
+  ]
 };
 var NICK_LINE = "Don't be scared, homie."; // Nick Diaz to K.J. Noons, EliteXC: Return of the King, 2008
 // The commentators' calls on the real UFC 196 finish (diaz.iconic).

@@ -65,6 +65,12 @@ var CHATTER = {
     win: ["The only thing on my mind is Lahaina, Maui. This one is for you guys."],
     koCalls: ["Oh my God. All night long. Look at this right hand that ends it."]
   },
+  // Tony Ferguson talking trash on top of his own lines (ferguson.js); UFC 216 media day and others.
+  "c-tony-ferguson": {
+    taunt: ["I'm so far ahead of the curve.", "I'm a different animal than these guys.", "I'm one of the most ruthless vatos out there, man.",
+      "I don't have to be fake. I'm probably one of the most real.", "I'm not afraid, I'm a [BLEEP] Ultimate Fighter and a champion."],
+    every: [8, 12]
+  },
   "c-alexander-volkanovski": {
     calls: ["Championship mettle from Volkanovski.", "Huge ground strikes from Volkanovski, one of the best title rounds."],
     koCalls: ["Volkanovski's teeing off on him.", "That is picture perfect. And he just sits him down."]
