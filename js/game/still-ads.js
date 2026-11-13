@@ -315,5 +315,9 @@ var STILL_ADS = [
 
   // ---------------------------------------------------------------- Proper No. 12
   // Conor's root beer: a frosty mug on a pub bar, ORDER A PROPER ONE (proper12-ad.js).
-  { name: "proper12-pub", fighter: "Conor McGregor", draw: function (x, y, w, h, k, ch) { drawProper12Still(x, y, w, h, k, ch); } }
+  { name: "proper12-pub", fighter: "Conor McGregor", draw: function (x, y, w, h, k, ch) { drawProper12Still(x, y, w, h, k, ch); } },
+
+  // ---------------------------------------------------------------- Maxx Energy
+  // Max Holloway's energy drink: game night, a CRT, the controller and the can (maxx-energy-ad.js).
+  { name: "maxx-gamenight", fighter: "Max Holloway", draw: function (x, y, w, h, k, ch) { drawMaxxStill(x, y, w, h, k, ch); } }
 ];

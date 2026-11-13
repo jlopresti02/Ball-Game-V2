@@ -462,6 +462,7 @@ function draw() {
   drawCologneBanner(); // and Ilia's cologne ad (cologne-ad.js)
   drawGoatGoatGoBanner(); // and Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawTapWaterBanner(); // and Charles's Tap Water ad (tapwater-ad.js)
+  drawMaxxBanner(); // and Max's Maxx Energy ad (maxx-energy-ad.js)
   drawProper12Banner(); // and Conor's Proper No. 12 ad (proper12-ad.js)
   drawBurritoBellBanner(); // and Tony Ferguson's Burrito Bell ad (burrito-bell-ad.js)
   drawConorBanner(); // and Conor McGregor's 13 SECONDS (conor.js)

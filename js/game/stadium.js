@@ -628,6 +628,7 @@ function drawJumbotron(px) {
   drawCologneJumbo(sx, sy, sw, jt.h - 28); // Ilia's Who's Joe & Arman T? cologne ad (cologne-ad.js)
   drawGoatGoatGoJumbo(sx, sy, sw, jt.h - 28); // Jon's GoatGoatGo ad (goatgoatgo-ad.js)
   drawTapWaterJumbo(sx, sy, sw, jt.h - 28); // Charles's Tap Water ad (tapwater-ad.js)
+  drawMaxxJumbo(sx, sy, sw, jt.h - 28); // Max's Maxx Energy ad (maxx-energy-ad.js)
   drawProper12Jumbo(sx, sy, sw, jt.h - 28); // Conor's Proper No. 12 root beer ad (proper12-ad.js)
   drawBurritoBellJumbo(sx, sy, sw, jt.h - 28); // Tony Ferguson's Burrito Bell ad (burrito-bell-ad.js)
   drawNgannouJumbo(sx, sy, sw, jt.h - 28); // Ngannou's rage meter, Dana White, the punch-power reading (ngannou.js)
