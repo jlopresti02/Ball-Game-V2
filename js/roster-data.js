@@ -3631,6 +3631,9 @@ var SAVED_ROSTER = [
         "beamSurf": {
           "chance": 60,
           "speed": 560,
+          "leapGap": 120,
+          "leapBack": 70,
+          "width": 46,
           "damage": 30,
           "knockback": 950,
           "wallSlams": 1,
