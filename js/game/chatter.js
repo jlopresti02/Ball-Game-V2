@@ -71,7 +71,11 @@ var CHATTER = {
       "I don't have to be fake. I'm probably one of the most real.", "I'm not afraid, I'm a [BLEEP] Ultimate Fighter and a champion."],
     every: [8, 12]
   },
+  // Volkanovski: on top of his own lines (volkanovski.js); UFC 333 presser, Bisping, JRE MMA Show, Helwani.
   "c-alexander-volkanovski": {
+    start: ["I'm going to put the pressure on."],
+    taunt: ["I'm a problem solver.", "I'm gonna figure it out.", "That's just how I am.", "Making him adjust.", "That's it. One more, you're done."],
+    win: ["That's how it should be done.", "That's the champion I want to be."],
     calls: ["Championship mettle from Volkanovski.", "Huge ground strikes from Volkanovski, one of the best title rounds."],
     koCalls: ["Volkanovski's teeing off on him.", "That is picture perfect. And he just sits him down."]
   }
