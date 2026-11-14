@@ -347,6 +347,295 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-anderson-silva",
+    "rev": 2,
+    "builtin": false,
+    "weightClass": "middleweight",
+    "name": "Anderson Silva",
+    "base": "Brawler",
+    "bio": "\"The Spider\". Built on the Brawler base, with one of the widest move sets in the game: sharp punches, long kicks, elbows, knees, the Thai plum, a flying knee, combinations and a dangerous game off his back. He leans back out of nearly everything, Matrix style, leaving a ghost of himself behind, and often fires a counter straight back; after a few in a row he drops his hands and dares them to try again. Every few seconds he chambers his knee (a yellow line shows where it's going) and hops in with a front kick to the face, the one that knocked out Vitor Belfort. Put him on his back and he throws his legs up for the triangle choke that beat Chael Sonnen, and hits them while he holds it. Losing late, he gets more dangerous: crits, and triangles that finish. His special, Spider Code, goes off at the start of the fight: the cage goes dark, green code rains down and he's in a long black coat and dark glasses, bending back out of shots in bullet time. Shaved head, goatee, black shorts with yellow stripes and a yellow spider.",
+    "color": "#f5c400",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#8a5636",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "bald",
+      "hairColor": "#15100c",
+      "beard": "none",
+      "goatee": true,
+      "beardColor": "#15100c",
+      "ears": "normal",
+      "tattoos": {},
+      "shorts": "#151515",
+      "trim": "#f5c400",
+      "shortsStyle": "stripe",
+      "legPatch": false,
+      "spiderLogo": "#f5c400",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 16,
+      "cooldown": 0.75,
+      "speed": 0.24,
+      "size": 14,
+      "knockback": 200,
+      "reach": 42,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 26,
+      "cooldown": 3.0,
+      "speed": 0.42,
+      "size": 15,
+      "knockback": 300,
+      "reach": 68,
+      "checkChance": 30
+    },
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 12,
+    "tdd": {
+      "sprawlChance": 25
+    },
+    "hasGuard": true,
+    "guard": {
+      "chance": 18,
+      "time": 5,
+      "radius": 130,
+      "passChance": 35,
+      "passPunches": 4,
+      "passDamage": 7,
+      "subs": [
+        "triangle"
+      ],
+      "cooldown": 6
+    },
+    "armbar": {
+      "tapBase": 8,
+      "tapLowHp": 40
+    },
+    "knee": {
+      "damage": 10,
+      "cooldown": 3.2,
+      "speed": 0.3,
+      "reach": 12,
+      "critChance": 30,
+      "critMult": 2,
+      "knockback": 200,
+      "clinch": {
+        "first": [
+          6,
+          9
+        ],
+        "every": [
+          10,
+          15
+        ],
+        "range": 14,
+        "knees": [
+          2,
+          3
+        ],
+        "damage": 9,
+        "gap": 0.38,
+        "escape": 18,
+        "grapplerEscape": 10,
+        "knockback": 380
+      },
+      "flying": {
+        "first": [
+          12,
+          16
+        ],
+        "every": [
+          16,
+          22
+        ],
+        "minGap": 80,
+        "maxGap": 220,
+        "load": 0.4,
+        "speed": 950,
+        "damage": 22,
+        "knockback": 560,
+        "koBase": 2,
+        "koLow": 12,
+        "readChance": 20,
+        "open": 0.8
+      }
+    },
+    "anderson": {
+      "weave": {
+        "chance": 47,
+        "projChance": 22,
+        "lean": 0.3
+      },
+      "counter": {
+        "chance": 45,
+        "delay": 0.1,
+        "damage": 18,
+        "reach": 20
+      },
+      "handsDown": {
+        "after": 3,
+        "window": 8,
+        "time": 1.6,
+        "dodge": 60,
+        "cooldown": 10,
+        "max": 3
+      },
+      "frontKick": {
+        "first": [
+          3,
+          5
+        ],
+        "every": [
+          5,
+          8
+        ],
+        "minGap": 30,
+        "maxGap": 170,
+        "load": 0.45,
+        "speed": 880,
+        "reach": 30,
+        "damage": 40,
+        "knockback": 620,
+        "koBase": 4,
+        "koLow": 22,
+        "koAfter": 12,
+        "readChance": 15,
+        "open": 0.55
+      },
+      "triangle": {
+        "tapBase": 30,
+        "tapLowHp": 45,
+        "tapAfter": 15,
+        "guardArmbar": 25,
+        "time": [
+          2.8,
+          3.8
+        ],
+        "fromGnp": 60,
+        "gnpAfter": [
+          1,
+          2
+        ],
+        "fromTakedown": 50,
+        "cooldown": 4,
+        "reroll": 0.62,
+        "strikes": {
+          "first": 0.45,
+          "gap": 0.42,
+          "max": 5,
+          "damage": 5,
+          "critChance": 30,
+          "critMult": 2.5,
+          "elbows": 60
+        }
+      },
+      "lines": {
+        "handsDown": [
+          "Relax, take it easy. Trust me, I'm Jedi."
+        ],
+        "comeback": [
+          "I back. Trust me, I back."
+        ],
+        "win": [
+          "Because fight is my life, fight is my heart. This is me."
+        ],
+        "combo": [
+          "I love my job."
+        ]
+      },
+      "comeback": {
+        "behind": 60,
+        "lowHp": 0.45,
+        "after": 35,
+        "crit": 40,
+        "critMult": 2,
+        "triTap": 35,
+        "kickKo": 20,
+        "fromGnp": 30
+      },
+      "talk": {
+        "handsDownChance": 50,
+        "comebackChance": 75,
+        "comboChance": 60,
+        "comboGap": 12
+      }
+    },
+    "elbow": {
+      "damage": 7,
+      "cooldown": 1.8,
+      "speed": 0.26,
+      "reach": 14,
+      "critChance": 30,
+      "critMult": 2.5,
+      "knockback": 140,
+      "cut": {
+        "chance": 30,
+        "time": 3,
+        "dps": 2
+      }
+    },
+    "combos": {
+      "first": [
+        5,
+        8
+      ],
+      "every": [
+        8,
+        12
+      ],
+      "list": {
+        "jab-cross-elbow": 2,
+        "cross-hook-knee": 2,
+        "punch-clinch": 2,
+        "one-two-kick": 1,
+        "elbow-elbow-knee": 1
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "mranderson",
+      "chargeTime": 50,
+      "hitCut": 1.5,
+      "punchCut": 1,
+      "atStart": true,
+      "delay": 0.6,
+      "suit": 1.1,
+      "time": 12,
+      "again": true,
+      "dodge": 85,
+      "projDodge": 75,
+      "counter": 70,
+      "lean": 0.45,
+      "rain": 0.78,
+      "bullet": {
+        "chance": 60,
+        "scale": 0.3,
+        "time": 0.6,
+        "cooldown": 1.4
+      }
+    }
+  },
+  {
     "id": "c-charles-oliveira",
     "rev": 16,
     "builtin": false,
@@ -1360,6 +1649,154 @@ var SAVED_ROSTER = [
       "burn": 2.2,
       "burnDmg": 1
     }
+  },
+  {
+    "id": "c-fedor-emelianenko",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "heavyweight",
+    "name": "Fedor Emelianenko",
+    "base": "Brawler",
+    "bio": "\"The Last Emperor\". The PRIDE heavyweight champion, a Combat Sambo world champion from Stary Oskol, Russia, with a soft, everyman heavyweight build and no expression on his face. Slow on his feet, but his hands are the fastest heavy hands in the game: hard punches off alternating hands, strung into jab, cross, hook. Shoot on him and he sprawls on almost everything. Every so often he drops his level, reaches out with both arms and clinches: break free or he throws you over his hip, follows you down and rains punches from on top, the PRIDE flurry, sometimes switching to the armbar that finished Mark Coleman twice. He barely reacts to being hit: big shots barely move him, a dizzy wears off fast, and a low church bell rings when he walks through one. A quiet Russian Orthodox-style choir hums under every fight he's in. Special move: not picked yet.",
+    "color": "#7d93b2",
+    "label": "",
+    "imgData": null,
+    "speedMult": 0.9,
+    "look": {
+      "skin": "#e8c3a4",
+      "build": "stocky",
+      "bodyHair": "light",
+      "hair": "short",
+      "hairColor": "#5b4330",
+      "beard": "none",
+      "ears": "normal",
+      "tattoos": {},
+      "shorts": "#1f3c96",
+      "trim": "#c8202c",
+      "shortsStyle": "tricolor",
+      "gloves": "#151515",
+      "legPatch": false
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 20,
+      "cooldown": 0.38,
+      "speed": 0.16,
+      "size": 14,
+      "knockback": 50,
+      "reach": 44,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 12,
+    "tdd": {
+      "sprawlChance": 78
+    },
+    "combos": {
+      "first": [
+        3,
+        5
+      ],
+      "every": [
+        4,
+        6.5
+      ],
+      "list": {
+        "jab-cross-hook": 1
+      }
+    },
+    "fedor": {
+      "hands": {
+        "alternate": true,
+        "streaks": true,
+        "whip": true
+      },
+      "stalk": {
+        "turn": 3.5,
+        "minGap": 8
+      },
+      "durability": {
+        "take": 0.82
+      },
+      "throw": {
+        "first": [
+          6,
+          9
+        ],
+        "every": [
+          8,
+          12
+        ],
+        "range": 24,
+        "reach": 0.3,
+        "escape": 25,
+        "escapeDizzy": 5,
+        "grapplerEscape": 10,
+        "weaveEscape": 10,
+        "tddScale": 0.3,
+        "lift": 0.55,
+        "damage": 14,
+        "gnpChance": 75
+      },
+      "gnp": {
+        "punches": 6,
+        "damage": 5,
+        "lastDamage": 10,
+        "wind": 0.07,
+        "lastWind": 0.22,
+        "armbarChance": 30
+      },
+      "armbar": {
+        "tapBase": 15,
+        "tapLowHp": 55
+      },
+      "stoic": {
+        "knockback": 0.45,
+        "dizzy": 0.4,
+        "slamCut": 1,
+        "squash": 0.35,
+        "taunts": 100,
+        "furious": 60,
+        "noteAt": 20,
+        "noteGap": 9,
+        "bell": true
+      },
+      "mantra": {
+        "on": true,
+        "level": 0.8,
+        "duck": 0.35,
+        "fadeIn": 2.5,
+        "fadeOut": 3,
+        "followKey": true
+      },
+      "lines": {
+        "start": [],
+        "win": [],
+        "unfazed": [],
+        "armbar": [],
+        "startAt": [
+          0.8,
+          2
+        ],
+        "startChance": 100
+      }
+    },
+    "hasSpecial": false
   },
   {
     "id": "c-francis-ngannou",
@@ -2787,6 +3224,235 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-michael-bisping",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "middleweight",
+    "name": "Michael Bisping",
+    "base": "Brawler",
+    "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. His special is Broadside: a pirate cannon rolls in at his side with a Union Jack flying behind it, he puts on a captain's hat, lights the fuse and fires cannonballs down a red line at them.",
+    "color": "#b3202a",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#e8b39a",
+      "build": "lean",
+      "bodyHair": "light",
+      "hair": "short",
+      "hairColor": "#2e2119",
+      "beard": "short",
+      "beardColor": "#2e2119",
+      "ears": "normal",
+      "tattoos": {},
+      "eyePatch": "right",
+      "shorts": "#161618",
+      "trim": "#b3202a",
+      "shortsStyle": "jollyroger",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 14,
+      "cooldown": 0.5,
+      "speed": 0.18,
+      "size": 13,
+      "knockback": 120,
+      "reach": 40,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 26,
+      "cooldown": 2.0,
+      "speed": 0.36,
+      "size": 14,
+      "knockback": 220,
+      "reach": 64,
+      "checkChance": 25
+    },
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 15,
+    "tdd": {
+      "sprawlChance": 75
+    },
+    "knee": {
+      "clinch": {
+        "first": [
+          3,
+          5
+        ],
+        "every": [
+          5,
+          8
+        ],
+        "range": 16,
+        "knees": [
+          2,
+          4
+        ],
+        "damage": 10,
+        "gap": 0.66,
+        "escape": 12,
+        "grapplerEscape": 10,
+        "knockback": 380
+      }
+    },
+    "combos": {
+      "first": [
+        4,
+        6
+      ],
+      "every": [
+        6,
+        9
+      ],
+      "list": {
+        "one-two-kick": 3,
+        "jab-cross-hook": 2,
+        "punch-clinch": 1
+      }
+    },
+    "bisping": {
+      "footwork": {
+        "out": 0.2,
+        "angle": 1.2,
+        "press": 60,
+        "circle": 0.8,
+        "rate": 4.2,
+        "switch": [
+          1.5,
+          3.5
+        ]
+      },
+      "scorecard": {
+        "every": 10,
+        "max": 6
+      },
+      "clinch": {
+        "elbows": true,
+        "damage": 9,
+        "speed": 0.24,
+        "critChance": 35,
+        "critMult": 2.5,
+        "cut": {
+          "chance": 40,
+          "time": 4,
+          "dps": 2
+        }
+      },
+      "punish": {
+        "chance": 100,
+        "knees": [
+          2,
+          3
+        ]
+      },
+      "kickDodge": {
+        "chance": 40,
+        "speed": 520,
+        "time": 0.22,
+        "back": 0.35
+      },
+      "kickAngle": {
+        "chance": 100,
+        "speed": 400,
+        "time": 0.2,
+        "fwd": 0.45
+      },
+      "lines": {
+        "start": [
+          "I started fighting when I came out of my mother, really.",
+          "I'm fighting myself in this fight."
+        ],
+        "mirror": [
+          "I'm fighting myself in this fight."
+        ],
+        "startAt": [
+          1,
+          2.5
+        ],
+        "taunt": [
+          "I think I'm a nice guy. I go through life, I'm respectful to people, I never trash talk, and everybody wants to fight me."
+        ],
+        "tauntEvery": [
+          16,
+          26
+        ],
+        "tauntMax": 2,
+        "takedown": [
+          "I can't wrestle too well, but I can stop takedowns."
+        ],
+        "takedownChance": 70,
+        "clinch": [
+          "If the guy's holding you down and he won't let you move, just, just fire away with elbows.",
+          "I'm going to bring my knee up and knee him in the face."
+        ],
+        "clinchChance": 45,
+        "combo": [
+          "Very basic stuff done to a high level is what wins fights."
+        ],
+        "comboChance": 70,
+        "blind": [
+          "I can't look two places at once, guys."
+        ],
+        "blindChance": 10,
+        "missChance": 4,
+        "cannonMissChance": 60,
+        "blindMax": 1,
+        "knockdown": [
+          "I've always said I had knockout power, for God's sake. Nobody believed it."
+        ],
+        "knockdownChance": 100,
+        "win": [
+          "Everybody, everybody that doubted me, kiss my [BLEEP]."
+        ],
+        "loss": [
+          "It's back to the drawing board. I'm going nowhere, don't you forget it."
+        ],
+        "vs": {
+          "c-anderson-silva": {
+            "once": [
+              "I worship this guy. This guy is the greatest martial artist of all time."
+            ]
+          }
+        },
+        "gap": 6
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "broadside",
+      "chargeTime": 45,
+      "hitCut": 2,
+      "punchCut": 0.5,
+      "roll": 0.45,
+      "aim": 0.9,
+      "reaim": 0.5,
+      "lock": 0.3,
+      "shots": 3,
+      "gap": 0.45,
+      "hold": 0.5,
+      "speed": 900,
+      "size": 9,
+      "damage": 20,
+      "knockback": 520
+    }
+  },
+  {
     "id": "c-nate-diaz",
     "rev": 1,
     "builtin": false,
@@ -2995,7 +3661,7 @@ var SAVED_ROSTER = [
     "weightClass": "bantamweight",
     "name": "Sean O'Malley",
     "base": "Kicker",
-    "bio": "\"Suga\". Built on the Kicker base: long kicks from range, plus quick punches up close that land as critical hits for double damage 30% of the time. Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Sweets pop up in the ring and both fighters race for them: he eats them, the opponent stomps them. A lollipop doubles his crit chance, a gummy bear doubles his crit damage, and a rare golden donut does both, for a few seconds. Every sweet changes his braids to another of his real fight-night hair colours. After three he hits a sugar crash and slows right down. Special move: Sugar Rush, a shower of sweets raining into the ring.",
+    "bio": "\"Suga\". Built on the Kicker base: long kicks from range and a hard punch up close, a lot of them critical hits for double damage. He doesn't throw many combinations. He snipes: from a few steps away he plants, measures them with his lead hand while a laser and a scope settle on them, then fires one long straight right, the single clean shot he's known for, with a much bigger chance to crit (SNIPED!). Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Candy rains into the ring all fight long and only he goes for it: between exchanges he drifts toward the nearest one, and anything he touches is his. Every candy is more sugar (SUGAR x4 by his health bar), and every sugar is a bigger chance to crit. A golden donut is worth three, and every candy changes his braids to another of his real fight-night hair colours. At ten he is on a sugar high, then he crashes: slow and drowsy for a moment, and most of the sugar is gone. Cotton candy is pure sugar: straight to the high, then the crash. Special move: Sugar Rush, a shower of extra candy he hunts down.",
     "color": "#e75480",
     "label": "",
     "imgData": null,
@@ -3034,8 +3700,8 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 22,
-      "cooldown": 0.8,
+      "damage": 25,
+      "cooldown": 1.25,
       "speed": 0.26,
       "size": 13,
       "knockback": 120,
@@ -3044,7 +3710,7 @@ var SAVED_ROSTER = [
     },
     "hasKick": true,
     "kick": {
-      "damage": 32,
+      "damage": 36,
       "cooldown": 2.6,
       "speed": 0.45,
       "size": 15,
@@ -3063,15 +3729,52 @@ var SAVED_ROSTER = [
     "tdd": {
       "sprawlChance": 50
     },
+    "combos": {
+      "first": [
+        9,
+        13
+      ],
+      "every": [
+        13,
+        19
+      ],
+      "list": {
+        "one-two-kick": 1
+      }
+    },
     "suga": {
       "crit": {
-        "chance": 50,
+        "chance": 40,
         "mult": 2
       },
       "critKo": {
         "base": 20,
         "low": 50,
-        "after": 14
+        "after": 14,
+        "sugar": 6
+      },
+      "snipe": {
+        "first": [
+          3,
+          5
+        ],
+        "every": [
+          5.5,
+          8.5
+        ],
+        "minGap": 60,
+        "maxGap": 240,
+        "aim": 0.6,
+        "lock": 0.12,
+        "track": 9,
+        "speed": 1150,
+        "turn": 3,
+        "reach": 34,
+        "damage": 30,
+        "crit": 15,
+        "knockback": 560,
+        "miss": 0.35,
+        "readChance": 20
       },
       "craneKick": {
         "first": [
@@ -3093,53 +3796,81 @@ var SAVED_ROSTER = [
         "slamDamage": 6,
         "readChance": 25
       },
-      "sweets": {
+      "candy": {
         "first": [
-          3,
-          5
+          1,
+          2
         ],
         "every": [
-          4,
-          7
+          1,
+          1.8
         ],
-        "life": 9,
-        "contested": 60,
-        "turn": 5,
-        "sprint": 1.15,
-        "odds": {
-          "lollipop": 45,
-          "gummy": 45,
-          "donut": 10
-        },
+        "max": 6,
+        "life": 12,
+        "fall": 0.55,
+        "gap": 70,
+        "reach": 3,
+        "magnet": 30,
         "kinds": {
           "lollipop": {
-            "boosts": [
-              "chance"
-            ]
+            "odds": 18,
+            "sugar": 1
           },
           "gummy": {
-            "boosts": [
-              "mult"
-            ]
+            "odds": 18,
+            "sugar": 1
+          },
+          "wrapped": {
+            "odds": 16,
+            "sugar": 1
+          },
+          "gumball": {
+            "odds": 16,
+            "sugar": 1
+          },
+          "candyCane": {
+            "odds": 14,
+            "sugar": 1
+          },
+          "cottonCandy": {
+            "odds": 9,
+            "sugar": 0,
+            "crash": true
           },
           "donut": {
-            "boosts": [
-              "chance",
-              "mult"
-            ]
+            "odds": 6,
+            "sugar": 3
           }
-        },
-        "boost": {
-          "time": 4,
-          "chance": 2,
-          "mult": 2
         }
       },
+      "drift": {
+        "every": [
+          1.5,
+          3
+        ],
+        "time": [
+          1.2,
+          2
+        ],
+        "range": 240,
+        "turn": 2.4,
+        "speed": 1.08,
+        "notWithin": 40
+      },
+      "sugar": {
+        "crit": 4,
+        "cap": 10,
+        "drain": 7,
+        "maxChance": 90,
+        "floater": true
+      },
       "crash": {
-        "after": 3,
+        "atCap": true,
+        "high": 3.5,
+        "time": 2.5,
         "slow": 0.6,
         "attackSlow": 0.75,
-        "time": 3.5
+        "keep": 0.25
       },
       "hair": [
         {
@@ -3207,9 +3938,53 @@ var SAVED_ROSTER = [
       ],
       "hairStart": 6,
       "hairTag": true,
+      "hairTagGap": 8,
       "voice": {
         "start": 100,
-        "win": true
+        "win": true,
+        "wait": 8,
+        "candy": 30,
+        "gap": 5,
+        "snipeAim": 25,
+        "snipeLand": 30,
+        "rightHand": 50,
+        "bigShot": 30,
+        "combo": 60,
+        "comeback": 75,
+        "comebackDown": 100
+      },
+      "lines": {
+        "start": [
+          "Every single fight I go into, I'm looking for the knockout.",
+          "Welcome to the Suga Show."
+        ],
+        "sniper": [
+          "I'm a sniper. I'm gonna snipe his chin. I'm gonna find it."
+        ],
+        "rightHand": [
+          "I know what I possess in this right hand, baby."
+        ],
+        "bigShot": [
+          "I don't even know if that was a mistake. I'm just that good."
+        ],
+        "combo": [
+          "Ah, that was sexy."
+        ],
+        "comeback": [
+          "Championship mindset, baby!"
+        ],
+        "candy": [],
+        "donut": [],
+        "sugarHigh": [],
+        "crash": [],
+        "wakeUp": []
+      },
+      "linesVs": {
+        "c-ilia-topuria": {
+          "start": [
+            "Dana, give me a jet to Spain, baby. I'm coming for Ilia Topuria."
+          ]
+        }
       }
     },
     "hasSpecial": true,
@@ -3221,7 +3996,10 @@ var SAVED_ROSTER = [
       "call": 1.0,
       "sweets": 5,
       "donuts": 1,
-      "fall": 0.7
+      "fall": 0.7,
+      "hunt": 4,
+      "huntSprint": 1.25,
+      "huntTurn": 7
     }
   },
   {

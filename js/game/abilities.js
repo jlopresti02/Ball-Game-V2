@@ -11,6 +11,7 @@
 var CHECK_TIME = 0.22; // the shin stays up this long before the kick back
 
 function canCheck(b) {
+  if (bispingSideStepping(b)) return false; // Michael Bisping stepping out of it instead (bisping.js)
   return (b.char.hasKick || b.char.kickCheck > 0) && b.alive && !b.checkAnim && !(b.kick && b.kick.counter) && !b.grappled && !b.grapple && !b.slam &&
     !b.combo && !b.taunt && !b.flow && !b.sprawl && !b.sprawled && !b.invincible;
 }
@@ -199,7 +200,9 @@ function updateAbilities(dt) {
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)
     if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
+    if (updateFedor(self, other, dt)) continue; // Fedor Emelianenko's Sambo throw (fedor.js)
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
+    if (updateAnderson(self, other, dt)) continue; // Anderson Silva's front kick, hands down, counter, triangle off ground and pound (anderson.js)
     if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
