@@ -48,6 +48,7 @@ function tickSpecialCharge(b, dt) {
 
 // Busy with something that shouldn't be interrupted.
 function specialBusy(b) {
+  if (pratesPartyBusy(b)) return true; // Carlos Prates lighting up or partying: nothing new starts on him (prates.js)
   return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.combo || b.taunt || b.flow ||
     b.beamPin || b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled || b.dazed || chamaOn(b) || ngannouBusy(b); // (Alex Pereira's CHAMA combo, pereira.js; Francis Ngannou's rage punch, ngannou.js)
 }
@@ -103,6 +104,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "america") return updateAmerica(self, other, dt); // Sean Strickland (strickland.js)
   if (sp.move === "nickdiaz") return updateNickDiaz(self, other, dt); // diaz.js
   if (sp.move === "katana") return updateKatanas(self, other, dt); // Tony Ferguson (ferguson-katanas.js)
+  if (sp.move === "cigarette") return updateCigarette(self, other, dt); // Carlos Prates (prates.js)
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };

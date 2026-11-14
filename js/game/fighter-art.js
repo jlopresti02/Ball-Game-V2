@@ -532,6 +532,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.waianae) drawWaianaeFade(c, r, look, lw); // Max Holloway's Waianae fade (holloway.js)
   if (look.faceInk) drawFaceInk(c, r, lw);  // Sean O'Malley's face tattoos
   if (look.goatee || look.scalpInk) drawIcemanHead(c, r, look, lw);  // Chuck Liddell's goatee and scalp tattoo (liddell.js)
+  if (look.nightmare) drawPratesInk(c, r, look, lw);  // Carlos Prates's head, neck and chest script (prates.js)
 
   // Chinstrap: a narrow band from the sideburns along the jaw to the chin
   if (look.beard === "chinstrap") {

@@ -347,6 +347,320 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-carlos-prates",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "welterweight",
+    "name": "Carlos Prates",
+    "base": "Kicker",
+    "bio": "\"The Nightmare\". A long, lanky Brazilian kickboxer who smokes on fight day. He fights at the end of the longest punch and the longest kick in the game, in and out: he backs off at an angle, then comes back in on a different entrance every time and fires as he arrives, with a teep to shove them back out. His arms are rubber: now and then his fist shoots across the whole ring (Rubber Pistol) or his leg stretches out and whips round (Rubber Whip). Shots on him mostly catch nothing but air: he steps back out of them and kicks. Up close his elbows and knees crit a lot, and in the clinch his knees crit too. But once a choke or an armbar is on him he's in trouble. His special is the Cigarette: he stops and lights one, and nothing can touch him while the party music plays. Then he goes Super Saiyan: a gold aura, everyone misses him, every miss sets up a counter that crits, and his combinations come back to back.",
+    "color": "#86c232",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#b47f5a",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "buzz",
+      "hairColor": "#1b1512",
+      "beard": "stubble",
+      "beardColor": "#1b1512",
+      "beardAlpha": 0.45,
+      "ears": "normal",
+      "tattoos": {
+        "leftArm": true,
+        "rightArm": true,
+        "armInk": true
+      },
+      "nightmare": true,
+      "cigarette": true,
+      "cigWisp": 0.35,
+      "shorts": "#141414",
+      "trim": "#86c232",
+      "shortsStyle": "stripe",
+      "gloves": "#141414"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 15,
+      "cooldown": 0.65,
+      "speed": 0.24,
+      "size": 13,
+      "knockback": 220,
+      "reach": 52,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 25,
+      "cooldown": 1.35,
+      "speed": 0.42,
+      "size": 14,
+      "knockback": 420,
+      "reach": 84,
+      "checkChance": 35
+    },
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 12,
+    "hasTeep": true,
+    "teep": {
+      "cooldown": 3.2,
+      "range": 30,
+      "reach": 58,
+      "chamber": 0.13,
+      "extend": 0.08,
+      "hold": 0.12,
+      "recover": 0.16,
+      "damage": 9,
+      "push": 660,
+      "blockPush": 0.5,
+      "stuff": true,
+      "onlyClosing": true,
+      "size": 14
+    },
+    "elbow": {
+      "damage": 7,
+      "cooldown": 1.3,
+      "speed": 0.24,
+      "reach": 14,
+      "critChance": 45,
+      "critMult": 2.6,
+      "knockback": 180,
+      "cut": {
+        "chance": 35,
+        "time": 4,
+        "dps": 2
+      }
+    },
+    "knee": {
+      "damage": 10,
+      "cooldown": 2.4,
+      "speed": 0.3,
+      "reach": 12,
+      "critChance": 40,
+      "critMult": 2.4,
+      "knockback": 280,
+      "clinch": {
+        "first": [
+          4,
+          7
+        ],
+        "every": [
+          7,
+          11
+        ],
+        "range": 16,
+        "knees": [
+          2,
+          4
+        ],
+        "damage": 8,
+        "gap": 0.38,
+        "escape": 18,
+        "grapplerEscape": 10,
+        "knockback": 420
+      }
+    },
+    "prates": {
+      "lanky": {
+        "wide": 0.93,
+        "tall": 1.07
+      },
+      "range": {
+        "keep": 30,
+        "outGap": [
+          70,
+          95
+        ],
+        "outTime": [
+          0.45,
+          0.85
+        ],
+        "outAngle": [
+          0.35,
+          0.9
+        ],
+        "set": [
+          0.15,
+          0.45
+        ],
+        "inTime": 1.4,
+        "press": 150,
+        "entries": {
+          "left": 1,
+          "right": 1,
+          "straight": 1,
+          "wide": 1,
+          "switch": 1
+        },
+        "fireIn": true,
+        "rate": 5.5,
+        "wall": 70,
+        "closing": 140,
+        "counterCd": 1.1,
+        "counterReady": 0.3,
+        "squaredUp": true
+      },
+      "backOff": {
+        "chance": 68,
+        "step": 460,
+        "window": 1.0,
+        "counter": {
+          "kick": 50,
+          "punch": 30,
+          "teep": 20
+        }
+      },
+      "guardAvoid": {
+        "chance": 85,
+        "margin": 8
+      },
+      "subDefense": {
+        "extraTap": 25
+      },
+      "clinchCrit": {
+        "chance": 40,
+        "mult": 2.2,
+        "partingElbow": 60
+      },
+      "rubber": {
+        "first": [
+          3,
+          6
+        ],
+        "every": [
+          4.5,
+          7
+        ],
+        "partyEvery": [
+          2.2,
+          3.6
+        ],
+        "minGap": 70,
+        "maxGap": 320,
+        "range": 340,
+        "windup": 0.5,
+        "lock": 0.16,
+        "speed": 1800,
+        "fist": 15,
+        "damage": 22,
+        "knockback": 560,
+        "snap": 0.22,
+        "readChance": 12,
+        "whip": {
+          "chance": 35,
+          "damage": 24,
+          "knockback": 640,
+          "extend": 0.12,
+          "sweep": 0.24,
+          "arc": 0.9
+        }
+      },
+      "lines": {
+        "start": [
+          "I'm fighter. I like to fight, I like to make money, and that's it.",
+          "Brazil never had the champion the welterweight division. I will be the first.",
+          "I can punch, I can knee, I can kick, so I'm better now."
+        ],
+        "taunt": [
+          "I can punch, I can knee, I can kick, so I'm better now."
+        ],
+        "punches": [
+          "I'm not here to play, you know."
+        ],
+        "smoke": [
+          "I can be a champ still smoking, still party, still drinking whiskey."
+        ],
+        "party": [
+          "Time to party, let's go!"
+        ],
+        "win": []
+      },
+      "lineOdds": {
+        "gap": 6,
+        "start": 100,
+        "taunt": 45,
+        "punches": 30,
+        "smoke": 100,
+        "party": 100,
+        "win": 100
+      },
+      "lineTiming": {
+        "tauntEvery": [
+          16,
+          26
+        ],
+        "punchRun": 3,
+        "punchWin": 4,
+        "bigWait": 8
+      }
+    },
+    "combos": {
+      "first": [
+        6,
+        9
+      ],
+      "every": [
+        8,
+        12
+      ],
+      "list": {
+        "one-two-kick": 3,
+        "jab-cross-knee": 2,
+        "jab-cross-elbow": 2,
+        "cross-hook-knee": 1,
+        "elbow-elbow-knee": 1,
+        "punch-clinch": 1
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "cigarette",
+      "chargeTime": 44,
+      "hitCut": 2,
+      "punchCut": 1,
+      "notBefore": 10,
+      "light": 1.4,
+      "smoke": 2.2,
+      "theyCome": true,
+      "party": 5,
+      "speed": 1.15,
+      "attack": 1.2,
+      "damage": 1.1,
+      "critChance": 25,
+      "critMult": 1.8,
+      "counter": {
+        "window": 0.8,
+        "mult": 1.9,
+        "lunge": 1.3,
+        "cd": 0.6
+      },
+      "comboEvery": [
+        0.9,
+        1.6
+      ],
+      "out": 0.7,
+      "missFloat": 3,
+      "music": true,
+      "song": true,
+      "musicLevel": 0.22
+    }
+  },
+  {
     "id": "c-charles-oliveira",
     "rev": 16,
     "builtin": false,

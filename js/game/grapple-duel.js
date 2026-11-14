@@ -27,6 +27,7 @@ function isGrapplerDuel(a, b) {
 // Which way a fighter is facing: where it's moving, or toward the opponent
 // if it's standing still (the same rule its guard hands follow).
 function facingOf(b, other) {
+  if (pratesSquaredUp(b)) { var px = other.x - b.x, py = other.y - b.y, pd = Math.sqrt(px * px + py * py) || 1; return { x: px / pd, y: py / pd }; } // Carlos Prates backs off facing them (prates.js)
   if (stricklandSquaredUp(b)) { var sx = other.x - b.x, sy = other.y - b.y, sd = Math.sqrt(sx * sx + sy * sy) || 1; return { x: sx / sd, y: sy / sd }; } // Sean Strickland backpedals facing them (strickland.js)
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   if (s > 1) return { x: b.vx / s, y: b.vy / s };
@@ -185,6 +186,7 @@ function attemptGrab(attacker, target) {
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;
   }
+  if (pratesBackOff(attacker, target)) return false; // Carlos Prates steps back out of it, and it always misses while he parties (prates.js)
   if (gspDoubleLeg(attacker, target)) return true; // GSP's elite double leg goes straight through (gsp.js)
   if (grabEscaped(attacker, target)) return false;
   if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
