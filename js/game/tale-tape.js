@@ -257,7 +257,11 @@ function drawTapeCard(box, t, withTitle) {
 
   // Portraits slide in from their sides
   var pr = 108, py = top + 136, lx = 180, rx = w - 180;
-  var fs = [[A, ca, lx, -1, TAPE_HIT.left, TAPE_HIT.sig[0]], [B, cb, rx, 1, TAPE_HIT.right, TAPE_HIT.sig[1]]];
+  // Taunts go left then right, but a thumbs down always comes first, so the
+  // other fighter answers it (Gane pokes Hokit in the eye for it: Joe)
+  var sg = TAPE_HIT.sig;
+  if (tapeSigKind(B) === "thumbs" && tapeSigKind(A) !== "thumbs") sg = [sg[1], sg[0]];
+  var fs = [[A, ca, lx, -1, TAPE_HIT.left, sg[0]], [B, cb, rx, 1, TAPE_HIT.right, sg[1]]];
   fs.forEach(function (f, i) {
     var p = tapeEase((t - f[4]) / 0.3);
     if (p <= 0) return;
