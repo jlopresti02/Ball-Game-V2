@@ -2710,9 +2710,9 @@ var SAVED_ROSTER = [
           13,
           22
         ],
-        "zone": 0.45,
-        "tv": 2.8,
-        "back": 0.25
+        "zone": 0.6,
+        "tv": 5.5,
+        "back": 0.9
       },
       "mash": {
         "time": 6,

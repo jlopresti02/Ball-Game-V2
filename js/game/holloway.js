@@ -29,11 +29,11 @@
 //            up!" (his strikes landed come up), then "I'm the best boxer in
 //            the UFC, baby!" Meanwhile he slips `slip`% of what they throw
 //            without looking and counters each slip (`counter`).
-// Flashback  (holloway.flashback) once a fight he thinks back: both fighters
-//            hold, the arena goes sepia and a TV comes up over the cage. He's
-//            playing an old fighting game, ULTIMATE BALL FIGHTING 2009 (a
-//            made-up parody: two balls in a pixel cage, so it's this game
-//            too), mashing buttons for a big combo. Then back in the cage it's
+// Flashback  (holloway.flashback) once a fight both fighters hold for a
+//            cutscene (holloway-room.js): the picture goes grainy like an old
+//            TV, the camera pulls back into his living room where the fight is
+//            the game he's playing, he chugs a Maxx Energy and plays like a
+//            sweat, a lightbulb pops on and it dives back in. Then it's
 //            Button Mash (holloway.mash) for `time` seconds: wild combos, the
 //            controller button for each strike popping over his head, a
 //            spinning back fist in there now and then, "N HIT COMBO!".
@@ -108,7 +108,6 @@ var hwBooth = null;   // the commentary desk while he talks to it: { id, x, t, o
 var hwRing = null;    // the gold ring in the middle of the cage: { id, t, out }
 var hwBoo = null;     // the crowd booing a turned-down call: { t }
 var hwClock = 0;      // drawing clock
-var hwPix = null;     // the flashback TV's pixel screen (an offscreen canvas)
 
 function hwCfg(b) { return b && b.char && b.char.holloway; }
 function hwRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
@@ -131,7 +130,7 @@ function hollowayHandsBusy(b) {
 function hwKnockable(o) { return o.alive && !o.grappled && !o.grapple && !o.slam && !subLocked(o) && !o.igbb && !o.koOut && !o.dazed; }
 
 // From startMatchSeeded.
-function resetHolloway() { hwFlash = null; hwClockFx = null; hwBooth = null; hwRing = null; hwBoo = null; hwClock = 0; }
+function resetHolloway() { hwFlash = null; hwClockFx = null; hwBooth = null; hwRing = null; hwBoo = null; hwClock = 0; hwRoomReset(); /* the flashback cutscene (holloway-room.js) */ }
 // From makeBall.
 function initHolloway(b) {
   b.hwAct = null; b.hwMash = null; b.hwBtns = []; b.hwSpin = null; b.hwCounter = null;
@@ -351,7 +350,7 @@ function endHwAct(self, other) {
   }
   if (a.kind === "flash") {
     if (other.dazed === "held") other.dazed = false;
-    if (hwFlash && hwFlash.id === self.id) hwFlash = null;
+    if (hwFlash && hwFlash.id === self.id) { hwFlash = null; hwRoomStop(); } // (holloway-room.js)
     if (other.alive && !other.koOut) setSpeed(other, other.baseSpeed || SPEED);
   }
   if (self.koPunch && self.koPunch.hw) self.koPunch = null;
@@ -376,8 +375,8 @@ function startFlashback(self, other) {
   other.dazed = "held"; // the whole fight holds while he thinks back
   self.hwAct = { kind: "flash", phase: "zone", t: 0 };
   hwFlash = { id: self.id, t: 0, phase: "zone", presses: [], combo: 0, pressT: 0 };
-  floater(self.x, self.y - self.r - 34, "FLASHBACK...", "note");
   playHwFlashIn();
+  hwRoomStart(); // the living-room cutscene's TV static (holloway-room.js)
 }
 
 function runFlashback(self, other, a, cfg, dt) {
@@ -809,28 +808,19 @@ function hwLines(b) {
   }
 }
 
-// The flashback's own clock: the game on the TV, and his button presses.
+// The flashback's own clock; the cutscene's can, presses and lightbulb are in holloway-room.js.
 function tickHwFlash(dt) {
   var f = hwFlash, owner = balls[f.id];
   if (!owner || !owner.hwAct || owner.hwAct.kind !== "flash") { // cut off
     var fo = balls[1 - f.id];
     if (fo && fo.dazed === "held") fo.dazed = false;
-    hwFlash = null;
+    hwFlash = null; hwRoomStop(); // (holloway-room.js)
     return;
   }
   f.t += dt;
   f.presses.forEach(function (p) { p.t += dt; });
   f.presses = f.presses.filter(function (p) { return p.t < 0.9; });
-  if (f.phase === "tv" && owner.hwAct.t > 0.6 && owner.hwAct.t < hwCfg(owner).flashback.tv - 0.45) {
-    f.pressT -= dt;
-    if (f.pressT <= 0) {
-      f.pressT += 0.12;
-      var keys = ["X", "Y", "A", "B"], k = keys[Math.floor(Math.random() * 4)];
-      f.presses.push({ k: k, t: 0 });
-      f.combo++;
-      playHwChip(k);
-    }
-  }
+  hwRoomTick(f, owner, dt); // the living-room cutscene (holloway-room.js)
 }
 
 // ---------------------------------------------------------------- drawing
@@ -1020,19 +1010,9 @@ function drawHwButtons(b) {
   ctx.restore();
 }
 
-// In the flashback: gloves down, a thought cloud puffing up off his head.
+// In the flashback he's the fighter in the game on his TV (holloway-room.js).
 function drawFlashPose(b, a) {
-  var r = b.r, gr = r * 0.3;
-  [-1, 1].forEach(function (s) { hwArm(b, b.x + s * r * 0.62, b.y + r * 0.05, b.x + s * r * 0.9, b.y + r * 0.62, gr, Math.PI / 2); });
-  var grow = a.phase === "zone" ? Math.min(1, a.t / 0.4) : (a.phase === "back" ? Math.max(0, 1 - a.t / 0.25) : 1);
-  ctx.save();
-  ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#151515"; ctx.lineWidth = 2.5;
-  [[0.55, 1.25, 0.13], [0.85, 1.65, 0.19], [1.1, 2.15, 0.27]].forEach(function (p, i) {
-    var g = Math.max(0, Math.min(1, grow * 3 - i));
-    if (g <= 0) return;
-    ctx.beginPath(); ctx.arc(b.x + r * p[0], b.y - r * p[1], r * p[2] * g, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  });
-  ctx.restore();
+  hwRoomPose(b); // gloves up, a jab on every button press (holloway-room.js)
 }
 
 // The knockout: both arms up, or the BMF belt held up over his head.
@@ -1111,144 +1091,7 @@ function drawBoo(B) {
 // ---------------------------------------------------------------- the flashback, drawn
 
 function drawFlashback(s, ox, oy) {
-  var f = hwFlash, owner = balls[f.id], fb = hwCfg(owner) && hwCfg(owner).flashback, a = owner.hwAct;
-  if (!fb || !a) return;
-  var appear = a.phase === "zone" ? Math.min(1, a.t / fb.zone) : (a.phase === "back" ? Math.max(0, 1 - a.t / fb.back) : 1);
-  // Sepia over the whole screen: we're in his head.
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = "rgba(70,42,12," + (0.5 * appear) + ")";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.setTransform(s, 0, 0, s, ox, oy);
-  var tvW = 312, tvH = 236, tvX = W / 2 - tvW / 2, tvY = 42;
-  var k = 0.25 + 0.75 * easeOut(appear), hx = owner.x + owner.r * 1.1, hy = owner.y - owner.r * 2.2;
-  var cx = hx + (W / 2 - hx) * easeOut(appear), cy = hy + (tvY + tvH / 2 + 50 - hy) * easeOut(appear);
-  ctx.save();
-  ctx.globalAlpha = Math.min(1, appear * 1.6);
-  // the thought trail from his head
-  ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#151515"; ctx.lineWidth = 2.5;
-  [0.25, 0.5, 0.75].forEach(function (u, i) {
-    var x = hx + (cx - hx) * u * 0.6, y = hy + (cy - hy) * u * 0.6;
-    ctx.beginPath(); ctx.arc(x, y, 5 + i * 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  });
-  ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-W / 2, -(tvY + tvH / 2 + 50));
-  // a cloud behind the TV
-  ctx.fillStyle = "#fffaf0";
-  [[-0.38, -0.32, 0.3], [0.05, -0.42, 0.34], [0.4, -0.3, 0.28], [-0.46, 0.1, 0.26], [0.46, 0.12, 0.27], [-0.25, 0.42, 0.28], [0.22, 0.44, 0.3], [0, 0.05, 0.42]].forEach(function (c) {
-    ctx.beginPath(); ctx.arc(W / 2 + c[0] * 380, tvY + tvH / 2 + 50 + c[1] * 330, c[2] * 250, 0, Math.PI * 2); ctx.fill();
-  });
-  ctx.font = 'italic 900 24px "Barlow Condensed", "Arial Narrow", sans-serif';
-  ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#6b4a1e";
-  ctx.fillText("FLASHBACK...", tvX - 8, tvY - 18);
-  // the TV
-  ctx.fillStyle = "#3b3530"; ctx.strokeStyle = "#151515"; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.roundRect(tvX, tvY, tvW, tvH, 22); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#2a2622"; ctx.beginPath(); ctx.roundRect(tvX + tvW - 46, tvY + 18, 32, tvH - 36, 8); ctx.fill();
-  [0, 1].forEach(function (i) { ctx.fillStyle = "#8a8178"; ctx.beginPath(); ctx.arc(tvX + tvW - 30, tvY + 48 + i * 40, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
-  var sw = tvW - 76, sh = sw * 0.75, sx = tvX + 16, sy = tvY + (tvH - sh) / 2; // a 4:3 screen
-  drawFlashScreen(f, owner, a, fb, sx, sy, sw, sh);
-  // the controller under it
-  drawFlashController(f, owner, W / 2, tvY + tvH + 58);
-  ctx.restore();
-  if (a.phase === "back") { // a white flash: back in the cage
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = "rgba(255,255,255," + Math.max(0, 1 - a.t / fb.back) * 0.85 + ")";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-}
-
-// The game on the TV: the picture is drawn small on its own canvas and blown
-// up so it's all big pixels (two balls in a pixel cage), and the words go on
-// over it in a chunky monospace so they read on a phone.
-function drawFlashScreen(f, owner, a, fb, sx, sy, sw, sh) {
-  if (!hwPix) { hwPix = document.createElement("canvas"); hwPix.width = 80; hwPix.height = 60; }
-  var g = hwPix.getContext("2d"), pw = 80, ph = 60, u = a.phase === "zone" ? 0 : (a.phase === "tv" ? a.t : fb.tv);
-  var oc = balls[1 - owner.id], blink = Math.floor(hwClock * 4) % 2 === 0, words = [];
-  var say2 = function (txt, x, y, size, col) { words.push([txt, x, y, size, col]); };
-  g.fillStyle = "#0d1430"; g.fillRect(0, 0, pw, ph);
-  if (u < 0.6) {
-    g.fillStyle = "#ffd23f"; g.fillRect(14, 22, 52, 2); g.fillRect(14, 44, 52, 2); // title rules
-    say2("ULTIMATE", pw / 2, 9, 8, "#ffd23f");
-    say2("BALL FIGHTING", pw / 2, 17, 8, "#ffd23f");
-    say2("2009", pw / 2, 33, 17, "#ff4d40");
-    if (blink) say2("PRESS START", pw / 2, 52, 7, "#ffffff");
-  } else {
-    var t = u - 0.6, n = f.combo, fight = Math.max(0.1, fb.tv - 1.05), hp = Math.max(0.05, 1 - t / fight);
-    g.fillStyle = "#2f3a55"; g.fillRect(4, 18, pw - 8, ph - 22); // the cage floor and fence
-    g.strokeStyle = "#8b96b3"; g.lineWidth = 1; g.strokeRect(4.5, 18.5, pw - 9, ph - 23);
-    g.fillStyle = "#3a0d10"; g.fillRect(3, 3, 32, 4); g.fillRect(pw - 35, 3, 32, 4); // health bars
-    g.fillStyle = "#2fd14f"; g.fillRect(3, 3, 32, 4);
-    g.fillStyle = hp < 0.3 ? "#ff4d40" : "#2fd14f"; g.fillRect(pw - 35 + 32 * (1 - hp), 3, 32 * hp, 4);
-    say2("MAX", 12, 12, 6, "#ffffff");
-    say2(oc.char.name.split(" ").pop().toUpperCase().slice(0, 8), pw - 19, 12, 6, "#ffffff");
-    // the two balls: him darting in and out with the combo
-    var dash = Math.abs(Math.sin(t * 22)) * 7, lx = 24 + dash, rx = 54 + (f.presses.length && f.presses[f.presses.length - 1].t < 0.06 ? 2 : 0);
-    [[lx, owner.char.color], [rx, oc.char.color]].forEach(function (p) {
-      g.fillStyle = "#151515"; g.beginPath(); g.arc(p[0], 38, 7.5, 0, Math.PI * 2); g.fill();
-      g.fillStyle = p[1]; g.beginPath(); g.arc(p[0], 38, 6.5, 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#ffffff"; g.fillRect(p[0] - 5, 40, 10, 2);
-    });
-    if (dash > 5) { g.fillStyle = "#fff3b0"; g.fillRect(lx + 7, 35, 3, 2); g.fillRect(lx + 9, 32, 2, 2); g.fillRect(lx + 9, 39, 2, 2); } // POW
-    if (t > fight) say2("K.O.!", pw / 2, 27, 14, blink ? "#ff4d40" : "#ffd23f");
-    else if (n > 1) say2(n + " HITS", pw / 2, 25, 8, "#ffd23f");
-    // the buttons going in, along the bottom
-    f.presses.slice(-6).forEach(function (p, i, arr) {
-      var bx = pw / 2 + (i - (arr.length - 1) / 2) * 11, by = 53;
-      g.fillStyle = "#0b0b0d"; g.beginPath(); g.arc(bx, by, 5, 0, Math.PI * 2); g.fill();
-      g.fillStyle = HW_BTN[p.k]; g.beginPath(); g.arc(bx, by, 4.2, 0, Math.PI * 2); g.fill();
-      say2(p.k, bx, by + 0.4, 5.5, "#ffffff");
-    });
-  }
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(hwPix, sx, sy, sw, sh);
-  var kx = sw / pw, ky = sh / ph;
-  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
-  words.forEach(function (w) {
-    ctx.font = "900 " + Math.round(w[3] * kx) + 'px "Courier New", Courier, monospace';
-    ctx.lineWidth = Math.max(2, w[3] * kx * 0.18); ctx.strokeStyle = "#05070f";
-    ctx.strokeText(w[0], sx + w[1] * kx, sy + w[2] * ky);
-    ctx.fillStyle = w[4]; ctx.fillText(w[0], sx + w[1] * kx, sy + w[2] * ky);
-  });
-  // scanlines and the curve of the glass
-  ctx.fillStyle = "rgba(0,0,0,0.16)";
-  for (var y = sy; y < sy + sh; y += 4) ctx.fillRect(sx, y, sw, 1.5);
-  var gl = ctx.createRadialGradient(sx + sw * 0.35, sy + sh * 0.3, 10, sx + sw / 2, sy + sh / 2, sw * 0.75);
-  gl.addColorStop(0, "rgba(255,255,255,0.12)"); gl.addColorStop(1, "rgba(0,0,0,0.35)");
-  ctx.fillStyle = gl; ctx.fillRect(sx, sy, sw, sh);
-  ctx.strokeStyle = "#151515"; ctx.lineWidth = 3; ctx.strokeRect(sx, sy, sw, sh);
-  ctx.restore();
-}
-
-// An old controller with his gloves on it, mashing the buttons.
-function drawFlashController(f, owner, cx, cy) {
-  var last = f.presses.length ? f.presses[f.presses.length - 1] : null, lit = last && last.t < 0.08 ? last.k : null;
-  ctx.save();
-  ctx.fillStyle = "#cfcac2"; ctx.strokeStyle = "#151515"; ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(cx - 70, cy - 22); ctx.lineTo(cx + 70, cy - 22);
-  ctx.quadraticCurveTo(cx + 104, cy - 22, cx + 98, cy + 16); ctx.quadraticCurveTo(cx + 92, cy + 44, cx + 66, cy + 30);
-  ctx.lineTo(cx - 66, cy + 30); ctx.quadraticCurveTo(cx - 92, cy + 44, cx - 98, cy + 16); ctx.quadraticCurveTo(cx - 104, cy - 22, cx - 70, cy - 22);
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  // d-pad
-  ctx.fillStyle = "#2a2a2e";
-  ctx.fillRect(cx - 72, cy - 4, 30, 10); ctx.fillRect(cx - 62, cy - 14, 10, 30);
-  // face buttons
-  var spots = { X: [-14, 0], Y: [0, -13], B: [14, 0], A: [0, 13] };
-  Object.keys(spots).forEach(function (k) { drawHwButton(cx + 56 + spots[k][0], cy + 1 + spots[k][1], 7.5, k, lit === k); });
-  // his gloves: the left thumb on the d-pad, the right one jumping to each button
-  var gr = 15, rg = lit ? spots[lit] : [0, 0], press = lit ? 3 : 0;
-  ctx.globalAlpha = 0.92;
-  drawGloveAt(cx - 57, cy + 14, gr, owner.char, -Math.PI / 2);
-  drawGloveAt(cx + 56 + rg[0] * 0.8, cy + 16 + rg[1] * 0.6 + press, gr, owner.char, -Math.PI / 2);
-  ctx.globalAlpha = 1;
-  if (lit) { // a little burst off the button
-    ctx.strokeStyle = HW_BTN[lit]; ctx.lineWidth = 2.5;
-    for (var i = 0; i < 6; i++) {
-      var an = i / 6 * Math.PI * 2;
-      ctx.beginPath(); ctx.moveTo(cx + 56 + rg[0] + Math.cos(an) * 12, cy + 1 + rg[1] + Math.sin(an) * 12); ctx.lineTo(cx + 56 + rg[0] + Math.cos(an) * 19, cy + 1 + rg[1] + Math.sin(an) * 19); ctx.stroke();
-    }
-  }
-  ctx.restore();
+  drawHwRoom(s, ox, oy); // grainy TV, out to his living room and back (holloway-room.js)
 }
 
 // ---------------------------------------------------------------- his look (fighter-art.js)
@@ -1409,7 +1252,7 @@ function hollowayGalleryMoves(ch, add) {
   if (ch.tdd) add("🤼", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots (\"STUFFED\") and punches straight back.");
   if (h.guardRespect) add("🚫", "Stays out of the guard", h.guardRespect.chance + "% of the times they pull guard he won't follow them down: he stays out of the circle until they stand up.");
   if (bo) add("🎙️", "The booth", "Against a striker he's beating, he turns to the commentators: \"Count it up!\", then \"I'm the best boxer in the UFC, baby!\" (Calvin Kattar fight, 2021), slipping " + bo.slip + "% of what they throw without looking and countering. Up to " + bo.max + " times a fight.");
-  if (fb) add("🎮", "Flashback", "Once a fight the fight holds and he thinks back to playing an old fighting game (Ultimate Ball Fighting 2009), mashing buttons." + (ms ? " Then " + secs(ms.time) + " of Button Mash: wild " + ms.combo[0] + " to " + ms.combo[1] + " strike combos with the buttons over his head, and a spinning back fist (" + ms.backfist + ")." : ""));
+  if (fb) add("🎮", "Flashback", "Once a fight the fight holds for a cutscene: the picture goes grainy like an old TV and pulls back into his living room, where the fight is the game he's playing. He chugs a Maxx Energy, plays like a sweat and gets an idea (lightbulb), and it dives back into the fight." + (ms ? " Then " + secs(ms.time) + " of Button Mash: wild " + ms.combo[0] + " to " + ms.combo[1] + " strike combos with the buttons over his head, and a spinning back fist (" + ms.backfist + ")." : ""));
   if (h.gaethje) add("🏆", "vs Justin Gaethje", "Gaethje always meets him in the middle, and the right hand at 0:01 is " + h.gaethje.koBonus + "% more likely to knock him out, like UFC 300. Then he holds up the BMF belt.");
 }
 
