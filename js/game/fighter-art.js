@@ -78,6 +78,7 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
   if (contained && look.robe) drawSithRobe(c, r, look, ink);
+  if (contained && look.neoCoat) drawNeoKit(c, r, look, ink); // Anderson Silva's Mr. Anderson coat and glasses (anderson.js)
   if (contained && look.hair === "coils" && look.hairHigh) drawCoilTop(c, r, look, ink);
   if (contained && look.headwear === "trucker") drawTruckerHat(c, r, look, ink);
   if (contained && look.headwear === "football") drawFootballHelmet(c, r, look, ink);
@@ -1578,6 +1579,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.globalAlpha = look.shortsStyle === "print" || look.legPatch === false ? 0 : 0.85;
   c.fillRect(-r * 0.42, sTop + band + r * 0.1, r * 0.18, r * 0.09);
   c.globalAlpha = 1;
+  if (look.spiderLogo) drawSpiderLogo(c, r, look, sTop, band); // Anderson Silva's spider (anderson.js)
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
   c.beginPath(); c.moveTo(-r, sTop); c.lineTo(r, sTop); c.stroke();
 

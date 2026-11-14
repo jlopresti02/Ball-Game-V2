@@ -72,6 +72,7 @@ function update(dt) {
   tickElbows(dt); // cuts from elbows bleeding (elbows.js)
   tickKnees(dt); // knees landing, the clinch and flying knee let go if something else takes over, a flying-knee knockout (knees.js)
   tickCombos(dt); // a combination cut short if something else takes over (combos.js)
+  tickAnderson(dt); // Anderson Silva's lean, front kick knockout, triangle off a takedown, lines (anderson.js)
   tickSlows(dt); // limps wearing off (slowdown.js)
   tickChatter(dt); // extra real voice lines for any fighter, by id (chatter.js)
   tickSpeech(dt); // voice-line speech bubbles (speech.js)
