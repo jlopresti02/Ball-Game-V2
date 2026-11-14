@@ -2172,7 +2172,7 @@ var SAVED_ROSTER = [
     "thumbsDown": {
       "cooldown": 8,
       "anger": 3,
-      "openTaunt": true
+      "openTaunt": 1.5
     },
     "hasSpecial": true,
     "helmetCharge": {

@@ -43,10 +43,12 @@ function updateHokit(self, other, dt, d) {
   }
 
   if (self.char.hasThumbsDown) {
-    self.mockCd = Math.max(0, self.mockCd - dt * self.atkRate);
+    var openT = !self.mockedOnce && typeof self.char.thumbsDown.openTaunt === "number"; // the opening one runs on the clock, not his weight class
+    self.mockCd = Math.max(0, self.mockCd - dt * (openT ? 1 : self.atkRate));
     if (free && self.mockCd === 0 && d > self.r + other.r + MOCK_GAP) {
       clearActions(self);
       self.mock = { t: 0, landed: false, side: other.x >= self.x ? 1 : -1 };
+      self.mockedOnce = true;
       self.mockCd = self.char.thumbsDown.cooldown;
       self.vx = 0; self.vy = 0;
       return true;
@@ -91,6 +93,13 @@ function updateShot(self, dt) {
 // go and goes right into a thumbs down.
 function onArmbarLetGo(self) {
   if (self.char.hasThumbsDown) self.mockCd = Math.min(self.mockCd, 0.6);
+}
+
+// The first thumbs down of the fight: thumbsDown.openTaunt is when (seconds
+// after the whistle) it lands on them, instead of the usual staggered wait.
+function openingMockCd(ch, usual) {
+  var at = ch.thumbsDown && ch.thumbsDown.openTaunt;
+  return typeof at === "number" ? Math.max(0, at - MOCK_AT) : usual;
 }
 
 function updateMock(self, other, dt) {
