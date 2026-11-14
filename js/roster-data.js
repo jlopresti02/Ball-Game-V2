@@ -1378,7 +1378,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-conor-mcgregor",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Conor McGregor",
@@ -1602,6 +1602,8 @@ var SAVED_ROSTER = [
       "charge": 3.0,
       "beamTime": 1.5,
       "width": 60,
+      "lock": 1.0,
+      "lead": 1.2,
       "damage": 35,
       "knockback": 1500,
       "wallSlams": 2,

@@ -38,9 +38,9 @@ function pgSeat(b, m, s) {
 }
 
 // Is the rainbow aimed (and locked) yet, so the pot can come up?
-function pgAimed(m) {
+function pgAimed(m, b) {
   if (m.pair) return m.phase === "fire" && m.hit; // a beam clash: only once the rainbow has won it
-  return m.phase === "fire" || m.phase === "end" || (m.phase === "charge" && m.t >= m.charge - RB_LOCK);
+  return m.phase === "fire" || m.phase === "end" || (m.phase === "charge" && m.t >= m.charge - rbLock(b)); // (conor-rainbow-aim.js)
 }
 
 // From tickRainbow (rainbow-beam.js), every tick.
@@ -50,7 +50,7 @@ function tickPotOfGoldEnd(dt) {
     var cfg = pgCfg(b);
     if (!cfg || !b.alive || !rainbowOn(b)) return;
     var m = b.igbb;
-    if (m.pgPot || !pgAimed(m)) return;
+    if (m.pgPot || !pgAimed(m, b)) return;
     var s = pgSize(b, cfg), seat = pgSeat(b, m, s);
     m.pgPot = { owner: b.id, m: m, phase: "rise", t: 0, x: seat.x, y: seat.y, rot: 0, a: 1, cfg: cfg };
     pgPots.push(m.pgPot);
