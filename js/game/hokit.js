@@ -101,7 +101,7 @@ function updateMock(self, other, dt) {
     m.landed = true;
     floater(self.x, self.y - self.r - 26, "👎", "crit");
     playHokitTaunt();
-    if (other.alive) {
+    if (other.alive && !fedorShrugs(other, false)) { // (Fedor Emelianenko doesn't react, fedor.js)
       other.angry = { t: 0, dur: self.char.thumbsDown.anger, atId: self.id };
       floater(other.x, other.y - other.r - 26, "ANGRY", "note");
     }

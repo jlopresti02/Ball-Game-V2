@@ -1532,6 +1532,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   if (look.shortsStyle === "icicles") drawIcicleShorts(c, r, look, sTop, band, name); // Chuck Liddell's Iceman trunks (liddell.js)
   if (look.shortsStyle === "meander") drawMeanderShorts(c, r, look, sTop, band); // Volkanovski's Greek key trunks (volkanovski.js)
   if (look.shortsStyle === "hibiscus") drawHibiscusShorts(c, r, look, sTop, band, name); // Max Holloway's UFC 300 hibiscus kit (holloway.js)
+  if (look.shortsStyle === "tricolor") drawTricolorShorts(c, r, look, sTop, band); // Fedor Emelianenko's PRIDE trunks (fedor.js)
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {

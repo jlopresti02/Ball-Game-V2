@@ -157,6 +157,7 @@ function galleryMoves(ch) {
   if (ch.strickland) stricklandGalleryMoves(ch, add); // Sean Strickland (strickland.js)
   if (ch.hasTeep) add("🦶", "Teep", teepGalleryInfo(ch.teep)); // the front push kick (teep.js)
   if (ch.diaz) diazGalleryMoves(ch, add); // Nate Diaz (diaz.js)
+  if (ch.fedor) fedorGalleryMoves(ch, add); // Fedor Emelianenko (fedor.js)
   if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
   if (ch.knee) kneeGalleryMoves(ch, add); // knees, the clinch, the flying knee (knees.js)
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
@@ -438,6 +439,7 @@ function gallerySounds() {
   hollowayGallerySounds(groups, synth); // Max Holloway's sounds (holloway.js)
   stricklandGallerySounds(groups, synth); // Sean Strickland's and the teep's sounds (strickland.js)
   diazGallerySounds(groups, synth); // Nate Diaz's sounds (diaz.js)
+  fedorGallerySounds(groups, synth); // Fedor Emelianenko's sounds and the mantra (fedor.js)
   // Anything new in SOUND_CLIPS that isn't listed above still shows up.
   var listed = {};
   groups.forEach(function (g) { g.items.forEach(function (it) { if (it.clip) listed[it.clip] = true; }); });
