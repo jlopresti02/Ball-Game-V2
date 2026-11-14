@@ -200,6 +200,7 @@ function updateAbilities(dt) {
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)
     if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
+    if (updateAnderson(self, other, dt)) continue; // Anderson Silva's front kick, hands down, counter, triangle off ground and pound (anderson.js)
     if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }

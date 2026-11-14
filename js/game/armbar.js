@@ -107,6 +107,7 @@ function drawArmbars() {
   balls.forEach(function (self) {
     var c = self.armbar;
     if (!c) return;
+    if (c.tri) { drawSpiderTriangle(self, c); return; } // Anderson Silva's triangle (anderson.js)
     var vic = balls[c.vicId], s = c.side, r = self.r, ar = vic.r;
     var sx = self.x, sy = self.y, vx = vic.x, vy = vic.y;
     var squeeze = armbarSqueeze(c);

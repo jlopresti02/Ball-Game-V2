@@ -71,6 +71,7 @@ function makeBall(id, ch) {
   initStrickland(b); // Sean Strickland's range, shell, pace and trauma meter (strickland.js)
   initDiaz(b); // Nate Diaz's slap, sub hunt, chin and Stockton surge (diaz.js)
   initFerguson(b); // Tony Ferguson's slide, shell, Kaioken and lines (ferguson.js)
+  initAnderson(b); // Anderson Silva's weave, front kick and triangle (anderson.js)
   return b;
 }
 
@@ -116,6 +117,7 @@ function startMatchSeeded(ch0, ch1) {
   resetStrickland(); // the America show, the eagle and the bike (strickland.js)
   resetDiaz(); // Nick Diaz and his banner (diaz.js)
   resetFerguson(); // Tony Ferguson's stamps, afterimages, the Burrito Bell ad (ferguson.js)
+  resetAnderson(); // Anderson Silva's code rain and bullet time (anderson.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
@@ -283,6 +285,7 @@ function hurt(b, amount, source, attackerId) {
   // Charles teleporting out of the way (instant-transmission.js).
   if (itDodge(b, source, attackerId)) return 0;
   if (gspDodge(b, source, attackerId)) return 0; // GSP slipping it (gsp.js)
+  if (andersonWeave(b, source, attackerId)) return 0; // Anderson Silva leaning back out of it (anderson.js)
   if (hollowayDodge(b, source, attackerId)) return 0; // Max Holloway slipping shots at the booth (holloway.js)
   if (stricklandShell(b, source, attackerId)) return 0; // Sean Strickland rolling it off his shoulder (strickland.js)
   if (fergusonDodge(b, source, attackerId)) return 0; // Tony Ferguson slipping it on his slide, or it clanks off his turtle shell (ferguson.js)
@@ -353,6 +356,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= hollowayChin(b, amount, source, attackerId); // Max Holloway's chin, and Ilia's edge on him (holloway.js)
   amount *= diazDamageMult(b, source, attackerId); // Nate Diaz's durability, and his Stockton surge (diaz.js)
   amount *= fergusonDamageMult(b, source, attackerId); // Tony Ferguson's chin, and his Kaioken (ferguson.js)
+  amount *= andersonDamageMult(b, source, attackerId); // Anderson Silva's crits in a late comeback (anderson.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
