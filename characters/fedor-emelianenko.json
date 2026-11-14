@@ -28,7 +28,7 @@
   "hasProjectile": false,
   "proj": { "size": 7, "speed": 460, "damage": 10, "cooldown": 1.6, "imgData": null },
   "hasPunch": true,
-  "punch": { "damage": 19, "cooldown": 0.42, "speed": 0.17, "size": 14, "knockback": 50, "reach": 44, "koChance": 0 },
+  "punch": { "damage": 20, "cooldown": 0.38, "speed": 0.16, "size": 14, "knockback": 50, "reach": 44, "koChance": 0 },
   "hasKick": false,
   "hasGrapple": false,
   "hasPowerPunch": false,

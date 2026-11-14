@@ -1390,9 +1390,9 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 19,
-      "cooldown": 0.42,
-      "speed": 0.17,
+      "damage": 20,
+      "cooldown": 0.38,
+      "speed": 0.16,
       "size": 14,
       "knockback": 50,
       "reach": 44,
