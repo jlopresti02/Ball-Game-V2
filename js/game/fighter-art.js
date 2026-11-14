@@ -665,6 +665,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.headwear === "bandana") drawBandana(c, r, line, lw);
   if (look.hachimaki) drawGspHachimaki(c, r, look.hachimaki, line, lw); // GSP's walkout headband (gsp.js)
   if (look.cucuy) drawCucuyHead(c, r, look, line, lw); // Tony Ferguson's moustache and headband (ferguson.js)
+  if (look.vanGoatee) drawVanGoatee(c, r, look, line, lw); // Joshua Van's thin moustache and chin beard (van.js)
   if (look.glasses === "shades") drawShades(c, r, lw);
 }
 
@@ -1163,6 +1164,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   if (tat.gorilla) drawGorillaChest(c, r, look, contained);  // Conor McGregor's crowned gorilla
   if (tat.tiger) drawTigerStomach(c, r, look, lw, contained);  // and the tiger on his stomach
   if (tat.polynesian) drawHollowayChest(c, r, lw, contained, look); // Max Holloway's Polynesian chest piece and HOLLOWAY (holloway.js)
+  if (tat.blessed) drawVanChest(c, r, lw, contained, look); // Joshua Van's Blessed chest piece, wings and roses (van.js)
   if (tat.portraits) {
     // Black-and-grey family portraits filling the upper chest: a woman with
     // long hair, an older man with grey hair (lowest) and a girl with dark
@@ -1529,6 +1531,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   if (look.shortsStyle === "icicles") drawIcicleShorts(c, r, look, sTop, band, name); // Chuck Liddell's Iceman trunks (liddell.js)
   if (look.shortsStyle === "meander") drawMeanderShorts(c, r, look, sTop, band); // Volkanovski's Greek key trunks (volkanovski.js)
   if (look.shortsStyle === "hibiscus") drawHibiscusShorts(c, r, look, sTop, band, name); // Max Holloway's UFC 300 hibiscus kit (holloway.js)
+  if (look.shortsStyle === "acheik") drawVanShorts(c, r, look, sTop, band, name); // Joshua Van's Myanmar kit (van.js)
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {

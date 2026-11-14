@@ -100,6 +100,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "smash") return updateSmash(self, other, dt); // ngannou.js
   if (sp.move === "kangaroo") return updateKangaroo(self, other, dt); // volkanovski.js
   if (sp.move === "middle") return updateMiddle(self, other, dt); // Max Holloway (holloway.js)
+  if (sp.move === "vanfire") return updateVanFire(self, other, dt); // Joshua Van's Hands on Fire (van.js)
   if (sp.move === "america") return updateAmerica(self, other, dt); // Sean Strickland (strickland.js)
   if (sp.move === "nickdiaz") return updateNickDiaz(self, other, dt); // diaz.js
   if (sp.move === "katana") return updateKatanas(self, other, dt); // Tony Ferguson (ferguson-katanas.js)

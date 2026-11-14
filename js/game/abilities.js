@@ -223,6 +223,7 @@ function updateAbilities(dt) {
     // Josh Hokit's armbar shot and thumbs down (hokit.js).
     if ((self.char.hasArmbarShot || self.char.hasThumbsDown) && updateHokit(self, other, dt, d)) continue;
     if (updateHollowayHands(self, other, dt, d)) continue; // Max Holloway's volume combos and Button Mash, in place of the punch (holloway.js)
+    if (updateVanHands(self, other, dt, d)) continue; // Joshua Van's combos and hot hands, in place of the punch (van.js)
 
     if (self.throwAnim) {
       var ta = self.throwAnim;

@@ -1,0 +1,211 @@
+{
+  "id": "c-joshua-van",
+  "rev": 1,
+  "builtin": false,
+  "weightClass": "flyweight",
+  "name": "Joshua Van",
+  "base": "Brawler",
+  "bio": "\"The Fearless\". UFC flyweight champion, born in Myanmar, fights out of Houston. Built on the Brawler base: a flyweight, but not as quick on his feet as the other small guys, with his hands always up in a high guard and long combinations of punches off both hands instead of single shots, and no opening KO Rush. Hot hands: every punch that lands in a combo makes the next one hit harder and crit more often, and the count goes up under him (x5, x7...) until one gets blocked or misses. Once the chain is going his left swings in as a hook, and a big left hook can drop them. His hands get better through the fight, most of all with clean combos. Sprawls 70% of takedown shots and is hard to hurt. Special move Hands on Fire: his gloves catch fire, and while they burn he keeps the chain he built at the end of each combo for a moment instead of losing it. Holds the Myanmar flag up when he wins. Flyweight.",
+  "color": "#fecb00",
+  "label": "",
+  "imgData": null,
+  "speedMult": 0.85,
+  "look": {
+    "skin": "#c08460",
+    "build": "lean",
+    "bodyHair": "none",
+    "hair": "crop",
+    "hairColor": "#141110",
+    "beard": "stubble",
+    "beardAlpha": 0.16,
+    "beardColor": "#161210",
+    "vanGoatee": true,
+    "ears": "normal",
+    "tattoos": {
+      "blessed": true,
+      "rightArm": true,
+      "armInk": true,
+      "armInkSide": "right"
+    },
+    "shorts": "#b3132a",
+    "trim": "#7a0c1c",
+    "accent": "#e8b923",
+    "shortsStyle": "acheik",
+    "legPatch": false,
+    "gloves": "#151515"
+  },
+  "hasProjectile": false,
+  "proj": {
+    "size": 7,
+    "speed": 460,
+    "damage": 10,
+    "cooldown": 1.6,
+    "imgData": null
+  },
+  "hasPunch": true,
+  "punch": {
+    "damage": 9,
+    "cooldown": 0.8,
+    "speed": 0.13,
+    "size": 12,
+    "knockback": 130,
+    "reach": 36,
+    "koChance": 0
+  },
+  "hasKick": false,
+  "hasGrapple": false,
+  "hasPowerPunch": false,
+  "hasRage": false,
+  "hasWatcher": false,
+  "hasWeave": false,
+  "hasSwing": false,
+  "hasForget": false,
+  "blockChance": 25,
+  "tdd": {
+    "sprawlChance": 70
+  },
+  "van": {
+    "highGuard": true,
+    "combos": {
+      "punches": [
+        5,
+        8.5
+      ],
+      "spread": 1.6,
+      "cooldown": [
+        0.6,
+        0.4
+      ],
+      "chase": 250,
+      "slack": [
+        12,
+        22
+      ],
+      "comboKnockback": 25
+    },
+    "hotHands": {
+      "step": [
+        0.13,
+        0.2
+      ],
+      "maxMult": 2.5,
+      "critBase": 3,
+      "critStep": [
+        4,
+        6
+      ],
+      "critMax": 50,
+      "critMult": 1.8
+    },
+    "hook": {
+      "from": 3,
+      "down": 30,
+      "downTime": 1.0,
+      "knockback": 90,
+      "callGap": 25
+    },
+    "level": {
+      "hitFill": 0.012,
+      "cleanFill": 0.035,
+      "cleanMin": 3,
+      "pierce": [
+        0,
+        10
+      ],
+      "marks": [
+        0.5,
+        1
+      ]
+    },
+    "durable": {
+      "over": 10,
+      "mult": 0.74,
+      "sources": [
+        "punch",
+        "kick",
+        "kickback",
+        "swing",
+        "power",
+        "combo",
+        "flow"
+      ]
+    },
+    "winFlag": true,
+    "voice": {
+      "minGap": 6,
+      "start": {
+        "at": 1.2,
+        "wait": 12,
+        "always": true
+      },
+      "combo": {
+        "landed": 5,
+        "chance": 50,
+        "gap": 15,
+        "wait": 1
+      },
+      "knockdown": {
+        "chance": 75,
+        "gap": 15,
+        "wait": 3.5
+      },
+      "shot": {
+        "chance": 75,
+        "gap": 20,
+        "wait": 1.5
+      },
+      "trading": {
+        "after": 5,
+        "window": 2.5,
+        "took": 2,
+        "landed": 3,
+        "chance": 45,
+        "gap": 30,
+        "wait": 0.5
+      },
+      "win": {
+        "chance": 50,
+        "otherwise": "knockdown",
+        "wait": 10,
+        "always": true
+      }
+    },
+    "lines": {
+      "start": [
+        "I know my, my striking will stand out.",
+        "Whoever y'all got in front of me, I'll fight."
+      ],
+      "combo": [
+        "What can I say, man? I'm just that good, you know.",
+        "Doubt me now!"
+      ],
+      "knockdown": [
+        "Doubt me now!"
+      ],
+      "shot": [
+        "This is MMA fight, you know. This is not a jiu-jitsu match."
+      ],
+      "trading": [
+        "We knew we was in here for a war."
+      ],
+      "win": [
+        "Look at me, Joe, I'm so blessed."
+      ]
+    }
+  },
+  "hasSpecial": true,
+  "special": {
+    "move": "vanfire",
+    "chargeTime": 32,
+    "hitCut": 1,
+    "punchCut": 0.3,
+    "range": 240,
+    "call": 0.45,
+    "time": 8,
+    "keep": 2.5,
+    "keepMin": 2,
+    "maxMult": 3,
+    "pierce": 20,
+    "chase": 1.3
+  }
+}

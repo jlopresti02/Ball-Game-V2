@@ -23,6 +23,7 @@ function inOrdinaryMovement(b) {
   if (conorBusy(b)) return false; // strutting, or planted for the counter left (conor.js)
   if (ngannouBusy(b)) return false; // Francis Ngannou's rage punch, or off to rip up Dana's contract (ngannou.js)
   if (hollowayBusy(b)) return false; // Max Holloway at the booth or in his flashback (holloway.js)
+  if (vanBusy(b)) return false; // Joshua Van stopped while his gloves catch fire (van.js)
   if (teepBusy(b) || stricklandBusy(b)) return false; // planted for a teep (teep.js), or Sean Strickland's one-two (strickland.js)
   if (diazBusy(b)) return false; // Nate Diaz slapping, diving for the neck, or arms out (diaz.js)
   if (fergusonBusy(b)) return false; // Tony Ferguson sliding, shooting, in a hold or his shell (ferguson.js)
