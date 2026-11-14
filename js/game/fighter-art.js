@@ -84,6 +84,7 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   if (contained && look.headwear === "football") drawFootballHelmet(c, r, look, ink);
   if (contained && look.headwear === "mouse") drawMouseHead(c, r, look, ink); // Mighty Mouse's mouse head (mighty-mouse-art.js)
   if (contained && look.icehawk) drawIcehawk(c, r, look, ink); // Chuck Liddell's Icehawk mohawk (liddell.js)
+  if (contained && look.warHair) drawWarHair(c, r, look, ink); // Jiří Procházka's war hair topknot (prochazka.js)
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
   c.restore();
 }
@@ -1586,6 +1587,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   if (look.belly) drawDcBelly(c, r, look, ink, lw, contained, sTop); // Daniel Cormier's big round belly over his waistband (cormier.js)
 
   if (contained && look.gi) drawGspGi(c, r, look, ink, lw); // GSP's walkout karate gi (gsp.js)
+  if (contained && look.samurai) drawSamuraiKit(c, r, look, ink, lw); // Jiří Procházka's kimono and hakama (prochazka.js)
   if (contained) drawArtHeadLayer(c, r, look, line, lw, name);
 
   // Overall roundness: rim shadow

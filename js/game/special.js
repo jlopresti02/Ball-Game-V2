@@ -108,6 +108,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "mranderson") return updateMrAnderson(self, other, dt); // Anderson Silva's Spider Code (anderson.js)
   if (sp.move === "cake") return updateCake(self, other, dt); // Daniel Cormier's All About That Cake (cormier.js)
   if (sp.move === "cigarette") return updateCigarette(self, other, dt); // Carlos Prates (prates.js)
+  if (sp.move === "samurai") return updateSamurai(self, other, dt); // Jiří Procházka (prochazka.js)
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };

@@ -233,6 +233,7 @@ function draw() {
     applyComboPose(b); // turning his back for a spinning back elbow (combos.js)
     applyAndersonPose(b); // Anderson Silva bent back in a weave, crouched for and flying in with the front kick (anderson.js)
     applyCormierPose(b); // Daniel Cormier dropping his level, carrying, chewing; whoever he's got lying across over his head (cormier.js)
+    applyProchazkaPose(b); // Jiří Procházka twisting into a katana cut (prochazka.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -387,6 +388,7 @@ function draw() {
     drawAnderson(b); // Anderson Silva's hands down (anderson.js)
     drawCormier(b, other); // Daniel Cormier's arms in the shot and the carry, the cake, his cake pips; whoever he's carrying kicking (cormier.js)
     drawPrates(b, other); // Carlos Prates's gold hair, the cigarette, lighting up, the rubber arm and leg (prates.js)
+    drawProchazka(b, other); // Jiří Procházka's hands low, his crit chin, the swords in his belt and his katanas (prochazka.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -453,6 +455,7 @@ function draw() {
   drawBispingOver(); // Michael Bisping's clinch elbows, cannonballs, smoke and 10-9 cards (bisping.js)
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)
   drawCormierOver(); // SUPER SLAM! (cormier.js)
+  drawProchazkaOver(); // the cuts Jiří Procházka's katanas leave (prochazka.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
@@ -514,6 +517,7 @@ function draw() {
   drawLiddellSky(s, ox, oy); // snow falling over the whole arena (liddell.js)
   drawVolkSky(s, ox, oy); // AUSSIE AUSSIE AUSSIE, OI OI OI, and the streamers (volkanovski.js)
   drawHollowaySky(s, ox, oy); // Max Holloway's flashback TV, the 0:10 clock, his Button Mash buttons (holloway.js)
+  drawProchazkaSky(s, ox, oy); // Jiří Procházka's dream of Musashi, over the whole screen (prochazka.js)
   drawTopRopeSky(s, ox, oy); // Hokit on the corner and flying off it, over the stands (hokit-toprope.js)
   drawDuckSky(s, ox, oy); // Jon falling in from the top of the screen, over the jumbotron (jon-duck.js)
   drawEagleSky(s, ox, oy); // Gaethje carried off by his eagle and dropping back in (gaethje-golf.js)

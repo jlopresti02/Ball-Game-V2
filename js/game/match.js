@@ -76,6 +76,7 @@ function makeBall(id, ch) {
   initAnderson(b); // Anderson Silva's weave, front kick and triangle (anderson.js)
   initCormier(b); // Daniel Cormier's double leg, his own copy for the growing belly (cormier.js)
   initPrates(b); // Carlos Prates's footwork, Rubber Pistol and cigarette (prates.js)
+  initProchazka(b); // Jiří Procházka's samurai count and lines (prochazka.js)
   return b;
 }
 
@@ -126,6 +127,7 @@ function startMatchSeeded(ch0, ch1) {
   resetAnderson(); // Anderson Silva's code rain and bullet time (anderson.js)
   resetCormier(); // the dents and SUPER SLAM! from Daniel Cormier's slams (cormier.js)
   resetPrates(); // Carlos Prates's smoke, butts, disco lights and baile funk (prates.js)
+  resetProchazka(); // Jiří Procházka's blade lock and cut lines (prochazka.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetTaleTape(); // the tale of the tape intro (tale-tape.js)
   resetEagleStrikes();
@@ -300,6 +302,7 @@ function hurt(b, amount, source, attackerId) {
   if (fergusonDodge(b, source, attackerId)) return 0; // Tony Ferguson slipping it on his slide, or it clanks off his turtle shell (ferguson.js)
   if (bispingDodge(b, source, attackerId)) return 0; // Michael Bisping stepping off to the side of a kick (bisping.js)
   if (pratesDodge(b, source, attackerId)) return 0; // Carlos Prates partying: nothing touches him (prates.js)
+  if (prochazkaParry(b, source, attackerId)) return 0; // Jiří Procházka's katanas meeting a katana, saber or bat (prochazka.js)
   // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
   if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.
@@ -371,6 +374,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= andersonDamageMult(b, source, attackerId); // Anderson Silva's crits in a late comeback (anderson.js)
   amount *= cormierDamageMult(b, source, attackerId); // Daniel Cormier full of cake, and harder on Jon Jones (cormier.js)
   amount *= pratesDamageMult(b, source, attackerId); // Carlos Prates wide open lighting up, and his knees crit in the clinch (prates.js)
+  amount *= prochazkaChin(b, source, attackerId); // Jiří Procházka's hands low: what lands is often a crit (prochazka.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

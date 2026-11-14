@@ -135,6 +135,7 @@ function drawHands(b, other) {
   if (hollowayHandsBusy(b)) return; // pointing at the booth or the middle, the flashback, the celebration (drawHolloway, holloway.js)
   if (diazHandsBusy(b)) return; // the slap, the lunge, arms out, a bottle (drawDiaz, diaz.js)
   if (elbowHandsBusy(b) || fergusonHandsBusy(b)) return; // an elbow (drawElbow, elbows.js), Tony Ferguson's moves (drawFerguson, ferguson.js)
+  if (prochazkaHandsBusy(b)) return; // Jiří Procházka's hands down by his hips, or on his katanas (drawProchazka, prochazka.js)
   if (kneeHandsBusy(b)) return; // both hands round their head in the clinch (drawKneesOver, knees.js)
   if (fedorHandsBusy(b)) return; // reaching for the clinch, arms round them in the throw (drawFedor, fedor.js)
   if (bispingHandsBusy(b)) return; // the linstock and pointing at them in Broadside (drawBisping, bisping.js)
