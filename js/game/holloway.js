@@ -480,6 +480,7 @@ function hwMashLand(self, other, kp, cfg) {
 function hwComboDone(self, ms, mc) {
   if (ms.hits >= 3) {
     floater(self.x, self.y - self.r - 34, ms.hits + " HIT COMBO!", ms.hits >= 6 ? "crit" : "note");
+    commentaryCall("combo", self, balls[1 - self.id], { hits: ms.hits }); // "What a combination!" (commentary-calls.js)
     playHwCombo(ms.hits);
     crowdReact(0.2 + ms.hits * 0.05);
   }

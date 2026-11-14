@@ -792,6 +792,7 @@ function landKick(self, other, m, kc, spec, k) {
     if (kc.setup) other.cmSetup = { id: self.id, t: kc.setup.time };
     if (k.kind === "spin") {
       floater(other.x, other.y - other.r - 30, "SPINNING KICK!", "crit");
+      commentaryCall("spinKick", self, other); // "Nice spinning kick to the body!" (commentary-calls.js)
       playPunch(dealt * 1.5);
       crowdReact(0.45);
       if (!reduceMotion) shake = Math.max(shake, 10);

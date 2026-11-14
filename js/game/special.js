@@ -246,6 +246,7 @@ function flurrySchedule(n, total) {
 
 function landIgbbPunch(self, other, kp) {
   var dealt = hurt(other, self.char.special.damage, "igbb", self.id);
+  if (dealt > 0) commentaryCall("dustinBigLeft", self, other, { last: kp.last }); // only Dustin's, the last one (commentary-calls.js)
   if (dealt > 0) playPunch(dealt * (kp.last ? 3 : 1.8));
   // Smashed back into the corner behind the shell: the body caves in, a
   // shockwave and a spray of sparks fly off the contact point.
@@ -451,6 +452,7 @@ function updateFathersPlan(self, other, m, sp, dt) {
 function landFpPunch(self, other, gp) {
   var big = gp.last;
   var dealt = hurt(other, self.char.special.damage, "igbb", self.id);
+  if (dealt > 0) commentaryCall("khabibGroundElbow", self, other, { big: big }); // only Khabib's, the big last one (commentary-calls.js)
   if (dealt > 0) playPunch(dealt * (big ? 4 : 3));
   if (big) playSlam();
   var cx = other.x, cy = other.y - other.r * 0.45;

@@ -72,6 +72,7 @@ function update(dt) {
   tickCombos(dt); // a combination cut short if something else takes over (combos.js)
   tickSlows(dt); // limps wearing off (slowdown.js)
   tickChatter(dt); // extra real voice lines for any fighter, by id (chatter.js)
+  tickCommentaryCalls(dt); // the commentators' calls on big moments, knockouts, the end of the fight (commentary-calls.js)
   tickSpeech(dt); // voice-line speech bubbles (speech.js)
   tickTopRope(dt); // the dented mat after Hokit's Top Rope Body Slam (hokit-toprope.js)
   tickDuckDrop(dt); // smoke, feathers and the cracked mat from his Duck Drop (jon-duck.js)

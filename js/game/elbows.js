@@ -111,6 +111,7 @@ function landElbow(self, other, e) {
     if (!reduceMotion) shake = Math.max(shake, crit ? 12 : 5);
     if (crit) hitStop = Math.max(hitStop, 0.06);
   }
+  if (dealt > 0) commentaryCall("elbow", self, other, { crit: crit, blade: e.blade }); // "Big elbow!", "Excellent elbows!" (commentary-calls.js)
   if (o.onLand) o.onLand(dealt, crit);
   checkEnd();
   return dealt;

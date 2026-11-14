@@ -36,6 +36,7 @@ var SPEECH_READ = 1.6;   // holding once it's all in, plus a bit per word
 var SPEECH_FADE = 0.25;
 var SPEECH_POP = 0.14;   // the pop-in
 var SPEECH_GAP = 2.5;    // quiet time after a bubble before canSay
+var SPEECH_CLIP_LATE = 5; // a clip held for a commentator's call is dropped if it would start later than this into its line
 var SPEECH_MAX_W = 290;  // wrap width
 var SPEECH_SIZE = 23;
 var SPEECH_FONT = "800 " + SPEECH_SIZE + "px \"Barlow Condensed\", \"Arial Narrow\", sans-serif";
@@ -58,7 +59,8 @@ function say(b, text, opts) {
   s.dur = words.length * SPEECH_WORD + SPEECH_READ + words.length * 0.12 + ((opts && opts.hold) || 0);
   s.clip = (opts && opts.clip) || SPEECH_CLIPS[text] || null;
   s.hidden = s.clip ? !SPEECH_TEXT_WITH_CLIP : !SPEECH_TEXT_WITHOUT_CLIP;
-  if (s.clip) playSpeechClip(s.clip);
+  s.clipWait = !!(s.clip && typeof commentaryTalking === "function" && commentaryTalking()); // a commentator's call is talking: the line waits for it (commentary-calls.js)
+  if (s.clip && !s.clipWait) playSpeechClip(s.clip);
 }
 
 function canSay(b) {
@@ -99,6 +101,7 @@ function tickSpeech(dt) {
     var b = balls[i];
     if (!b || !b.alive) { s.words = null; continue; }
     s.t += dt;
+    if (s.clipWait && !commentaryTalking()) { s.clipWait = false; if (s.t < SPEECH_CLIP_LATE) playSpeechClip(s.clip); } // (commentary-calls.js)
     var n = Math.min(s.words.length, Math.floor(s.t / SPEECH_WORD) + 1);
     while (s.said < n) { if (s.words[s.said].bleep && !s.clip && !s.hidden) playBleep(); s.said++; }
     if (s.t >= s.dur) { s.words = null; s.quietT = SPEECH_GAP; }
@@ -163,6 +166,7 @@ function overlapArea(a, c) {
 
 function announce(text, opts) {
   if (!text) return;
+  if (!(opts && opts.commentary) && typeof commentaryYield === "function") commentaryYield(); // a fighter's own call cuts a commentary call off (commentary-calls.js)
   var words = splitSpeech(text);
   announcer = { words: words, t: 0, said: 0, who: ((opts && opts.who) || "COMMENTARY").toUpperCase(),
     dur: words.length * SPEECH_WORD + SPEECH_READ + 0.6 + words.length * 0.12 + ((opts && opts.hold) || 0),

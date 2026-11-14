@@ -65,6 +65,7 @@ function updateSuplex(self, dt) {
     fpImpact(self, vic, { nx: 0, ny: -1 }, self.char.suplex.damage, true);
     if (typeof recordTakedown === "function") recordTakedown(self.id);
     floater(vic.x, vic.y - vic.r - 30, "TAKEDOWN", "note");
+    commentaryCall("suplex", self, vic); // "Did that just suplex him?" (commentary-calls.js)
     c.phase = "down"; c.t = 0;
     checkEnd();
     return;

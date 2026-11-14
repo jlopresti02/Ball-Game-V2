@@ -179,6 +179,7 @@ function attemptGrab(attacker, target) {
   }
   var ag = attacker.char.grapple;
   if (ag && ag.shotName) floater(attacker.x, attacker.y - attacker.r - 44, ag.shotName, "crit"); // calls the shot (Gaethje's DOUBLE LEG)
+  commentaryCall("shot", attacker, target); // the commentator, once it's clear what came of it: takedown, sprawl or just the shot (commentary-calls.js)
   if (doBronxPosing(target)) {
     // Slips the grab mid pose (dobronx.js).
     doBronxDodge(target);
