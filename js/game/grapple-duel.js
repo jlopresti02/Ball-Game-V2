@@ -189,6 +189,7 @@ function attemptGrab(attacker, target) {
   if (grabEscaped(attacker, target)) return false;
   if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
   if (cheaterFenceGrab(attacker, target)) return false; // cheating: grabs the cage (cheater.js); suplexes still land
+  if (tryJonGuillotine(attacker, target)) return false; // GOAT Jon Jones catches it more the more hurt they are (jon-clinch.js)
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.

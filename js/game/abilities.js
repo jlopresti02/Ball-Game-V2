@@ -199,6 +199,7 @@ function updateAbilities(dt) {
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)
     if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
+    if (updateJonClinch(self, other, dt)) continue; // Jon Jones's clinch, its elbows and knees, the inside trip (jon-clinch.js)
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
     if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;

@@ -222,6 +222,7 @@ function draw() {
     applyFergusonPose(b); // Tony Ferguson on his back in a hold, leaning into his slide, and whoever he's got (ferguson.js)
     applyKneePose(b); // pulled down into the clinch, crouching for and flying in with a flying knee (knees.js)
     applyComboPose(b); // turning his back for a spinning back elbow (combos.js)
+    applyJonClinchPose(b); // Jon Jones leaning into the clinch, and whoever he's tripping (jon-clinch.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -432,6 +433,7 @@ function draw() {
   drawDiazOver(); // Nick Diaz, his bubble, the NICK DIAZ banner in the test arena (diaz.js)
   drawFergusonOver(); // Tony Ferguson's holds and tug-of-war bar, the Kaioken flash, the CANCELLED stamps (ferguson.js)
   drawKneesOver(); // knees coming up, the clinch, the flying knee and its red line (knees.js)
+  drawJonClinch(); // Jon Jones's arms locked over-under, his clinch knees and elbows, the trip's leg and red arrow (jon-clinch.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
