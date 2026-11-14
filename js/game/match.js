@@ -117,6 +117,7 @@ function startMatchSeeded(ch0, ch1) {
   resetDiaz(); // Nick Diaz and his banner (diaz.js)
   resetFerguson(); // Tony Ferguson's stamps, afterimages, the Burrito Bell ad (ferguson.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
+  resetTaleTape(); // the tale of the tape intro (tale-tape.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
   resetCheater();

@@ -53,7 +53,7 @@ document.getElementById("menuChange").addEventListener("click", function () { sh
 startBtn.addEventListener("click", function () {
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();
-  if (over) startMatchWith(balls[0].baseChar, balls[1].baseChar); else start();
+  if (over) startMatchWith(balls[0].baseChar, balls[1].baseChar); else if (!startTaleTape()) start(); // the tale of the tape first, if it's on (tale-tape.js)
 });
 window.addEventListener("resize", resize);
 if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
