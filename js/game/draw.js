@@ -113,6 +113,7 @@ function draw() {
   drawBispingUnder(); // Michael Bisping's cannon and its red aim line (bisping.js)
   drawAndersonUnder(); // Anderson Silva's weave ghosts, the front kick's yellow line and his shadow (anderson.js)
   drawCormierUnder(); // Daniel Cormier's double-leg lane and the dents his super slams leave (cormier.js)
+  drawPratesUnder(); // Carlos Prates's Rubber Pistol aim line, cigarette butts on the mat (prates.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -155,6 +156,7 @@ function draw() {
     drawDarkSideRise(b); // dark smoke swirling round Hokit as he suits up (hokit-darkside.js)
     drawSaiyanAura(b); // Charles's golden aura while he's blond, behind him (dobronx.js)
     drawFergusonBehind(b); // Tony Ferguson's red Kaioken aura (ferguson.js)
+    drawPratesBehind(b); // Carlos Prates's gold party aura (prates.js)
     drawGspBehind(b); // GSP's red cape, behind him (gsp.js)
     drawKameArmsBehind(b); // his arms reaching up behind his head for a Kamehameha fired upward (kamehameha.js)
 
@@ -226,6 +228,7 @@ function draw() {
     applyDiazPose(b); // Nate Diaz leaning into the slap, the level change, the taunt (diaz.js)
     applyFergusonPose(b); // Tony Ferguson on his back in a hold, leaning into his slide, and whoever he's got (ferguson.js)
     applyFedorPose(b); // Fedor Emelianenko dropping his level, turning into the throw, and whoever he throws (fedor.js)
+    applyPratesPose(b); // Carlos Prates long and lanky, bouncing on the beat in the party (prates.js)
     applyKneePose(b); // pulled down into the clinch, crouching for and flying in with a flying knee (knees.js)
     applyComboPose(b); // turning his back for a spinning back elbow (combos.js)
     applyAndersonPose(b); // Anderson Silva bent back in a weave, crouched for and flying in with the front kick (anderson.js)
@@ -383,6 +386,7 @@ function draw() {
     drawBisping(b, other); // Michael Bisping's captain's hat and his hands at the cannon (bisping.js)
     drawAnderson(b); // Anderson Silva's hands down (anderson.js)
     drawCormier(b, other); // Daniel Cormier's arms in the shot and the carry, the cake, his cake pips; whoever he's carrying kicking (cormier.js)
+    drawPrates(b, other); // Carlos Prates's gold hair, the cigarette, lighting up, the rubber arm and leg (prates.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -443,6 +447,7 @@ function draw() {
   drawStricklandOver(); // the bald eagle at Strickland's side, fireworks over the test arena (strickland.js)
   drawDiazOver(); // Nick Diaz, his bubble, the NICK DIAZ banner in the test arena (diaz.js)
   drawFergusonOver(); // Tony Ferguson's holds and tug-of-war bar, the Kaioken flash, the CANCELLED stamps (ferguson.js)
+  drawPratesOver(); // Carlos Prates's smoke, music notes and the disco lights (prates.js)
   drawKneesOver(); // knees coming up, the clinch, the flying knee and its red line (knees.js)
   drawFedorOver(); // Fedor Emelianenko's arms locked round them in the clinch and the throw (fedor.js)
   drawBispingOver(); // Michael Bisping's clinch elbows, cannonballs, smoke and 10-9 cards (bisping.js)

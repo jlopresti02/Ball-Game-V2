@@ -27,6 +27,7 @@ function isGrapplerDuel(a, b) {
 // Which way a fighter is facing: where it's moving, or toward the opponent
 // if it's standing still (the same rule its guard hands follow).
 function facingOf(b, other) {
+  if (pratesSquaredUp(b)) { var px = other.x - b.x, py = other.y - b.y, pd = Math.sqrt(px * px + py * py) || 1; return { x: px / pd, y: py / pd }; } // Carlos Prates backs off facing them (prates.js)
   if (stricklandSquaredUp(b)) { var sx = other.x - b.x, sy = other.y - b.y, sd = Math.sqrt(sx * sx + sy * sy) || 1; return { x: sx / sd, y: sy / sd }; } // Sean Strickland backpedals facing them (strickland.js)
   if (bispingSquaredUp(b)) { var bx = other.x - b.x, by = other.y - b.y, bd = Math.sqrt(bx * bx + by * by) || 1; return { x: bx / bd, y: by / bd }; } // Michael Bisping steps out facing them (bisping.js)
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
@@ -186,6 +187,7 @@ function attemptGrab(attacker, target) {
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;
   }
+  if (pratesBackOff(attacker, target)) return false; // Carlos Prates steps back out of it, and it always misses while he parties (prates.js)
   if (gspDoubleLeg(attacker, target)) return true; // GSP's elite double leg goes straight through (gsp.js)
   if (cormierBodyLock(attacker, target)) return true; // Daniel Cormier's body lock: some go straight through (cormier.js)
   if (grabEscaped(attacker, target)) return false;

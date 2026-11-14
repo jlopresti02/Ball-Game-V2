@@ -27,6 +27,7 @@ function inOrdinaryMovement(b) {
   if (diazBusy(b)) return false; // Nate Diaz slapping, diving for the neck, or arms out (diaz.js)
   if (fergusonBusy(b)) return false; // Tony Ferguson sliding, shooting, in a hold or his shell (ferguson.js)
   if (fedorBusy(b)) return false; // Fedor Emelianenko reaching for the clinch or throwing (fedor.js)
+  if (pratesBusy(b)) return false; // Carlos Prates planted for the Rubber Pistol, or lighting up (prates.js)
   if (kneesBusy(b)) return false; // in the clinch, or crouching for, flying in with or landing off a flying knee (knees.js)
   if (andersonBusy(b)) return false; // Anderson Silva's front kick, or his hands down (anderson.js)
   if (cormierBusy(b)) return false; // Daniel Cormier dropping his level for the double leg, or shooting it (cormier.js)

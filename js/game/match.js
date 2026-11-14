@@ -75,6 +75,7 @@ function makeBall(id, ch) {
   initBisping(b); // Michael Bisping's footwork, scorecard and voice lines (bisping.js)
   initAnderson(b); // Anderson Silva's weave, front kick and triangle (anderson.js)
   initCormier(b); // Daniel Cormier's double leg, his own copy for the growing belly (cormier.js)
+  initPrates(b); // Carlos Prates's footwork, Rubber Pistol and cigarette (prates.js)
   return b;
 }
 
@@ -124,6 +125,7 @@ function startMatchSeeded(ch0, ch1) {
   resetBisping(); // Michael Bisping's cannonballs and smoke (bisping.js)
   resetAnderson(); // Anderson Silva's code rain and bullet time (anderson.js)
   resetCormier(); // the dents and SUPER SLAM! from Daniel Cormier's slams (cormier.js)
+  resetPrates(); // Carlos Prates's smoke, butts, disco lights and baile funk (prates.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetTaleTape(); // the tale of the tape intro (tale-tape.js)
   resetEagleStrikes();
@@ -297,6 +299,7 @@ function hurt(b, amount, source, attackerId) {
   if (stricklandShell(b, source, attackerId)) return 0; // Sean Strickland rolling it off his shoulder (strickland.js)
   if (fergusonDodge(b, source, attackerId)) return 0; // Tony Ferguson slipping it on his slide, or it clanks off his turtle shell (ferguson.js)
   if (bispingDodge(b, source, attackerId)) return 0; // Michael Bisping stepping off to the side of a kick (bisping.js)
+  if (pratesDodge(b, source, attackerId)) return 0; // Carlos Prates partying: nothing touches him (prates.js)
   // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
   if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.
@@ -367,6 +370,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= fedorDamageMult(b, source, attackerId); // Fedor Emelianenko's chin (fedor.js)
   amount *= andersonDamageMult(b, source, attackerId); // Anderson Silva's crits in a late comeback (anderson.js)
   amount *= cormierDamageMult(b, source, attackerId); // Daniel Cormier full of cake, and harder on Jon Jones (cormier.js)
+  amount *= pratesDamageMult(b, source, attackerId); // Carlos Prates wide open lighting up, and his knees crit in the clinch (prates.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

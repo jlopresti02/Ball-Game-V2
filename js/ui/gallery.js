@@ -77,6 +77,7 @@ SPECIAL_INFO.buscrew = function (sp) { return busCrewInfo(sp); }; // Conor McGre
 SPECIAL_INFO.america = function (sp) { return stricklandSpecialInfo(sp); }; // Sean Strickland (strickland.js)
 SPECIAL_INFO.broadside = function (sp) { return bispingSpecialInfo(sp); }; // Michael Bisping (bisping.js)
 SPECIAL_INFO.cake = function (sp) { return cormierCakeInfo(sp); }; // Daniel Cormier (cormier.js)
+SPECIAL_INFO.cigarette = function (sp) { return pratesCigaretteInfo(sp); }; // Carlos Prates (prates.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
 function galleryMoves(ch) {
@@ -170,6 +171,7 @@ function galleryMoves(ch) {
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
   if (ch.anderson) andersonGalleryMoves(ch, add); // Anderson Silva (anderson.js)
   if (ch.cormier) cormierGalleryMoves(ch, add); // Daniel Cormier (cormier.js)
+  if (ch.prates) pratesGalleryMoves(ch, add); // Carlos Prates (prates.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;
@@ -451,6 +453,7 @@ function gallerySounds() {
   diazGallerySounds(groups, synth); // Nate Diaz's sounds (diaz.js)
   fedorGallerySounds(groups, synth); // Fedor Emelianenko's sounds and the mantra (fedor.js)
   cormierGallerySounds(groups, synth); // Daniel Cormier's sounds (cormier.js)
+  pratesGallerySounds(groups, synth); // Carlos Prates's sounds (prates.js)
   // Anything new in SOUND_CLIPS that isn't listed above still shows up.
   var listed = {};
   groups.forEach(function (g) { g.items.forEach(function (it) { if (it.clip) listed[it.clip] = true; }); });
