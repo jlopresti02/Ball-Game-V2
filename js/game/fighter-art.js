@@ -1574,6 +1574,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.globalAlpha = 1;
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
   c.beginPath(); c.moveTo(-r, sTop); c.lineTo(r, sTop); c.stroke();
+  if (look.belly) drawDcBelly(c, r, look, ink, lw, contained, sTop); // Daniel Cormier's big round belly over his waistband (cormier.js)
 
   if (contained && look.gi) drawGspGi(c, r, look, ink, lw); // GSP's walkout karate gi (gsp.js)
   if (contained) drawArtHeadLayer(c, r, look, line, lw, name);

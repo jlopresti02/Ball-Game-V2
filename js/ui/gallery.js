@@ -74,6 +74,7 @@ SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and
 SPECIAL_INFO.middle = function (sp) { return hollowaySpecialInfo(sp); }; // Max Holloway (holloway.js)
 SPECIAL_INFO.buscrew = function (sp) { return busCrewInfo(sp); }; // Conor McGregor (conor.js)
 SPECIAL_INFO.america = function (sp) { return stricklandSpecialInfo(sp); }; // Sean Strickland (strickland.js)
+SPECIAL_INFO.cake = function (sp) { return cormierCakeInfo(sp); }; // Daniel Cormier (cormier.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
 function galleryMoves(ch) {
@@ -161,6 +162,7 @@ function galleryMoves(ch) {
   if (ch.knee) kneeGalleryMoves(ch, add); // knees, the clinch, the flying knee (knees.js)
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
+  if (ch.cormier) cormierGalleryMoves(ch, add); // Daniel Cormier (cormier.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;
@@ -438,6 +440,7 @@ function gallerySounds() {
   hollowayGallerySounds(groups, synth); // Max Holloway's sounds (holloway.js)
   stricklandGallerySounds(groups, synth); // Sean Strickland's and the teep's sounds (strickland.js)
   diazGallerySounds(groups, synth); // Nate Diaz's sounds (diaz.js)
+  cormierGallerySounds(groups, synth); // Daniel Cormier's sounds (cormier.js)
   // Anything new in SOUND_CLIPS that isn't listed above still shows up.
   var listed = {};
   groups.forEach(function (g) { g.items.forEach(function (it) { if (it.clip) listed[it.clip] = true; }); });

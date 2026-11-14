@@ -136,6 +136,7 @@ function drawHands(b, other) {
   if (diazHandsBusy(b)) return; // the slap, the lunge, arms out, a bottle (drawDiaz, diaz.js)
   if (elbowHandsBusy(b) || fergusonHandsBusy(b)) return; // an elbow (drawElbow, elbows.js), Tony Ferguson's moves (drawFerguson, ferguson.js)
   if (kneeHandsBusy(b)) return; // both hands round their head in the clinch (drawKneesOver, knees.js)
+  if (cormierHandsBusy(b)) return; // the double leg, the carry, the cake, and whoever he's carrying (drawCormier, cormier.js)
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)

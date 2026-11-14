@@ -103,6 +103,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "america") return updateAmerica(self, other, dt); // Sean Strickland (strickland.js)
   if (sp.move === "nickdiaz") return updateNickDiaz(self, other, dt); // diaz.js
   if (sp.move === "katana") return updateKatanas(self, other, dt); // Tony Ferguson (ferguson-katanas.js)
+  if (sp.move === "cake") return updateCake(self, other, dt); // Daniel Cormier's All About That Cake (cormier.js)
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };
@@ -293,6 +294,7 @@ function specialGuarding(b) {
   if (b.igbb && b.igbb.move === "toprope" && b.igbb.phase === "down") return false; // Hokit flat on the mat can be hit (hokit-toprope.js)
   if (b.igbb && b.igbb.move === "duckdrop") return false; // Jon's Duck Drop landing can be hit (jon-duck.js)
   if (middleTrading(b)) return false; // Max Holloway trading in the middle can be hit (holloway.js)
+  if (cormierOpen(b)) return false; // Daniel Cormier can be hit while he eats (cormier.js)
   return b.igbb && b.igbb.phase !== "close";
 }
 
@@ -571,7 +573,7 @@ function updateSpecialHud(force) {
     if (!b.char.hasSpecial) continue;
     var p = Math.max(0, Math.min(1, (b.specialT || 0) / b.char.special.chargeTime));
     if (b.doBronx) p = Math.max(0, 1 - b.doBronx.t / b.doBronx.dur); // Do Bronx running down
-    var live = !!b.igbb && !b.doBronx;
+    var live = !!b.igbb && !b.doBronx && !dcSlamOn(b); // (Daniel Cormier's super slam isn't his special, cormier.js)
     var key = Math.round(p * 400) + (live ? "l" : "") + (p >= 1 ? "f" : "");
     if (!force && specialCache[i] === key) continue;
     specialCache[i] = key;

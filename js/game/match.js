@@ -71,6 +71,7 @@ function makeBall(id, ch) {
   initStrickland(b); // Sean Strickland's range, shell, pace and trauma meter (strickland.js)
   initDiaz(b); // Nate Diaz's slap, sub hunt, chin and Stockton surge (diaz.js)
   initFerguson(b); // Tony Ferguson's slide, shell, Kaioken and lines (ferguson.js)
+  initCormier(b); // Daniel Cormier's double leg, his own copy for the growing belly (cormier.js)
   return b;
 }
 
@@ -116,6 +117,7 @@ function startMatchSeeded(ch0, ch1) {
   resetStrickland(); // the America show, the eagle and the bike (strickland.js)
   resetDiaz(); // Nick Diaz and his banner (diaz.js)
   resetFerguson(); // Tony Ferguson's stamps, afterimages, the Burrito Bell ad (ferguson.js)
+  resetCormier(); // the dents and SUPER SLAM! from Daniel Cormier's slams (cormier.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
@@ -353,6 +355,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= hollowayChin(b, amount, source, attackerId); // Max Holloway's chin, and Ilia's edge on him (holloway.js)
   amount *= diazDamageMult(b, source, attackerId); // Nate Diaz's durability, and his Stockton surge (diaz.js)
   amount *= fergusonDamageMult(b, source, attackerId); // Tony Ferguson's chin, and his Kaioken (ferguson.js)
+  amount *= cormierDamageMult(b, source, attackerId); // Daniel Cormier full of cake, and harder on Jon Jones (cormier.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
