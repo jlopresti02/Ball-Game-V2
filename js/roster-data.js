@@ -3441,7 +3441,7 @@ var SAVED_ROSTER = [
         },
         "headband": {
           "color": "#c41e1e",
-          "drop": 0.11
+          "drop": 0.07
         }
       }
     },
