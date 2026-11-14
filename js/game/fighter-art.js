@@ -666,6 +666,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.hachimaki) drawGspHachimaki(c, r, look.hachimaki, line, lw); // GSP's walkout headband (gsp.js)
   if (look.cucuy) drawCucuyHead(c, r, look, line, lw); // Tony Ferguson's moustache and headband (ferguson.js)
   if (look.glasses === "shades") drawShades(c, r, lw);
+  if (look.eyePatch) drawEyePatch(c, r, look.eyePatch, lw); // Michael Bisping's pirate eye patch (bisping.js)
 }
 
 // A crowned lion's head in the middle of the chest with a shaggy mane hanging
@@ -1529,6 +1530,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   if (look.shortsStyle === "icicles") drawIcicleShorts(c, r, look, sTop, band, name); // Chuck Liddell's Iceman trunks (liddell.js)
   if (look.shortsStyle === "meander") drawMeanderShorts(c, r, look, sTop, band); // Volkanovski's Greek key trunks (volkanovski.js)
   if (look.shortsStyle === "hibiscus") drawHibiscusShorts(c, r, look, sTop, band, name); // Max Holloway's UFC 300 hibiscus kit (holloway.js)
+  if (look.shortsStyle === "jollyroger") drawJollyRogerShorts(c, r, look, sTop, band); // Michael Bisping's skull and crossbones (bisping.js)
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {

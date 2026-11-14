@@ -67,6 +67,7 @@ function update(dt) {
   tickStrickland(dt); // Sean Strickland's range, pace, trauma meter and the America show (strickland.js)
   tickDiaz(dt); // Nate Diaz's lines, holds and bottles, and Nick Diaz in the cage (diaz.js)
   tickFerguson(dt); // Tony Ferguson's Kaioken, won't-tap, lines, stamps, Burrito Bell (ferguson.js)
+  tickBisping(dt); // Michael Bisping's clinch elbows, footwork, scorecard, lines and cannonballs (bisping.js)
   tickElbows(dt); // cuts from elbows bleeding (elbows.js)
   tickKnees(dt); // knees landing, the clinch and flying knee let go if something else takes over, a flying-knee knockout (knees.js)
   tickCombos(dt); // a combination cut short if something else takes over (combos.js)
