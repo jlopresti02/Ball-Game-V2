@@ -35,7 +35,7 @@ function initRainbow(b) {
   b.rbN = 0;
   b.rbT = cfg ? rbRand(cfg.first) : Infinity;
 }
-function resetRainbow() { rbCoins = []; }
+function resetRainbow() { rbCoins = []; resetPotOfGoldEnd(); } // (and the pot of gold at the end of it, conor-pot-of-gold.js)
 
 // Can he start it right now (for the beam clash, started by the other one's beam)?
 function rainbowReady(b) {
@@ -211,6 +211,7 @@ function tickRainbow(dt) {
     if (!c.ride) { c.vx *= 1 - dt * 1.2; }
     return c.life > 0;
   });
+  tickPotOfGoldEnd(dt); // the pot of gold at the end of the rainbow (conor-pot-of-gold.js)
 }
 
 // ---------------------------------------------------------------- the pot
@@ -392,6 +393,7 @@ function drawRainbowBeam() {
     }
     drawRainbowCaption(b);
   });
+  drawPotOfGoldEnd(); // the pot of gold at the end of the rainbow (conor-pot-of-gold.js)
   rbDrawCoins();
 }
 

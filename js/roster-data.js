@@ -775,7 +775,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-conor-mcgregor",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Conor McGregor",
@@ -1002,7 +1002,15 @@ var SAVED_ROSTER = [
       "damage": 35,
       "knockback": 1500,
       "wallSlams": 2,
-      "slamDamage": 6
+      "slamDamage": 6,
+      "endPot": {
+        "on": true,
+        "damage": 15,
+        "radius": 64,
+        "hold": 1.1,
+        "size": 2.0,
+        "label": "JACKPOT!"
+      }
     },
     "hasSpecial": true,
     "special": {
@@ -3398,24 +3406,23 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
     "base": "Brawler",
-    "bio": "\"El Cucuy\" (the boogeyman). A lean Lightweight in a red karate headband with a thick moustache. Low base damage, but his elbows are sharp: lots of them are critical hits, and a crit can open a cut that bleeds. He's a hard man to hurt, and when a choke or an armbar is about to finish him, he often just won't tap. Knock him down and he's at home on his back: step into his guard and he catches you in a buggy choke, his D'Arce or elbows from the bottom. His walkout shuffle is a weapon: he slides side to side, slipping strikes, then shoots for the takedown. Under fire he pulls into a ninja turtle shell, and up to twice a fight he goes Kaioken: red aura, harder and faster. Special move: Katanas, blades out of both elbows. When he loses he trips over a TV cable before he blows up.",
+    "bio": "\"El Cucuy\" (the boogeyman). A lean Lightweight in a red karate headband, prime Tony: blonde hair receding at the temples and a lean, angular face. Low base damage, but his elbows are sharp: lots of them are critical hits, and a crit can open a cut that bleeds. He's a hard man to hurt, and when a choke or an armbar is about to finish him, he often just won't tap. Knock him down and he's at home on his back: step into his guard and he catches you in a buggy choke, his D'Arce or elbows from the bottom. His walkout shuffle is a weapon: he slides side to side, slipping strikes, then shoots for the takedown. Under fire he pulls into a ninja turtle shell, and up to twice a fight he goes Kaioken: red aura, harder and faster. Special move: Katanas, blades out of both elbows. When he loses he trips over a TV cable before he blows up.",
     "color": "#e86a10",
     "label": "",
     "imgData": null,
     "look": {
-      "skin": "#c99272",
+      "skin": "#dfae8e",
       "build": "lean",
+      "face": "angular",
       "bodyHair": "none",
-      "hair": "short",
-      "hairColor": "#16110d",
-      "beard": "stubble",
-      "beardAlpha": 0.32,
-      "beardColor": "#16110d",
+      "hair": "receding",
+      "hairColor": "#d6b05a",
+      "beard": "none",
       "ears": "normal",
       "tattoos": {
         "leftArm": true,
@@ -3427,9 +3434,13 @@ var SAVED_ROSTER = [
       "shortsStyle": "stripe",
       "gloves": "#141414",
       "cucuy": {
-        "moustache": true,
+        "stubble": {
+          "color": "#7a5a30",
+          "alpha": 0.16
+        },
         "headband": {
-          "color": "#c41e1e"
+          "color": "#c41e1e",
+          "drop": 0.11
         }
       }
     },

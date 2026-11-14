@@ -52,6 +52,10 @@
 //            start (their fight fell through five times); against Justin
 //            Gaethje and Charles Oliveira, both of whom beat him, it's a
 //            REMATCH and his first Kaioken comes early.
+// Look       (look) prime Tony, 2017-2019 (Christian, 2026-11-13): blonde hair
+//            receding at the temples (hair "receding"), a lean, angular face
+//            (face "angular"), light stubble on the jaw and no moustache, the
+//            headband worn low so the hairline shows (drawn at the bottom).
 // Lines      (lines) real quotes as speech bubbles, each sourced in the
 //            README. calls: commentator calls for his famous finishes
 //            (announce(), speech.js), only once a call's wording is verified.
@@ -1105,6 +1109,7 @@ function drawTfStamps() {
 // karate-style headband with the knot's tails flying out by his ear.
 function drawCucuyHead(c, r, look, line, lw) {
   var mc = look.beardColor || look.hairColor || "#141010";
+  if (look.cucuy.stubble) drawCucuyStubble(c, r, look.cucuy.stubble, lw);
   if (look.cucuy.moustache) {
     c.save();
     c.fillStyle = mc;
@@ -1124,17 +1129,18 @@ function drawCucuyHead(c, r, look, line, lw) {
   var hb = look.cucuy.headband;
   if (hb) {
     var col = hb.color || TF_BAND;
+    var dr = hb.drop || 0; // (Christian, 2026-11-13) worn lower on the forehead, so his receding hairline shows above it
     var band = function () {
       c.beginPath();
-      c.moveTo(-r, -r * 0.66); c.quadraticCurveTo(0, -r * 0.92, r, -r * 0.66);
-      c.lineTo(r, -r * 0.55); c.quadraticCurveTo(0, -r * 0.8, -r, -r * 0.55);
+      c.moveTo(-r, -r * (0.66 - dr * 0.25)); c.quadraticCurveTo(0, -r * (0.92 - dr * 2), r, -r * (0.66 - dr * 0.25));
+      c.lineTo(r, -r * (0.55 - dr * 0.15)); c.quadraticCurveTo(0, -r * (0.8 - dr * 1.8), -r, -r * (0.55 - dr * 0.15));
       c.closePath();
     };
     c.save();
     c.fillStyle = col; band(); c.fill();
     c.save(); band(); c.clip();
-    c.fillStyle = "rgba(0,0,0,0.18)"; c.fillRect(-r, -r * 0.66, r * 2, r * 0.035);
-    c.fillStyle = "rgba(255,255,255,0.18)"; c.fillRect(-r, -r * 0.86, r * 2, r * 0.05);
+    c.fillStyle = "rgba(0,0,0,0.18)"; c.fillRect(-r, -r * (0.66 - dr), r * 2, r * 0.035);
+    c.fillStyle = "rgba(255,255,255,0.18)"; c.fillRect(-r, -r * (0.86 - dr), r * 2, r * 0.05);
     c.restore();
     c.strokeStyle = line; c.lineWidth = lw(0.025); band(); c.stroke();
     // the knot and its two tails, by his left ear
@@ -1144,6 +1150,101 @@ function drawCucuyHead(c, r, look, line, lw) {
     c.beginPath(); c.moveTo(-r * 0.86, -r * 0.57); c.quadraticCurveTo(-r * 1.0, -r * 0.44, -r * 1.02, -r * 0.26); c.lineTo(-r * 0.93, -r * 0.27); c.quadraticCurveTo(-r * 0.92, -r * 0.42, -r * 0.8, -r * 0.52); c.closePath(); c.fill(); c.stroke();
     c.restore();
   }
+}
+
+// Light stubble (cucuy.stubble: color, alpha) along his angular jaw and chin,
+// so it doesn't round his face off the way the plain stubble beard does, and
+// with nothing on the top lip (no moustache, Christian 2026-11-13).
+function drawCucuyStubble(c, r, st, lw) {
+  var col = st.color || "#6e5230";
+  var shape = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.64, -r * 0.52);
+    c.quadraticCurveTo(-r * 0.46, -r * 0.42, -r * 0.24, -r * 0.37); // the cheek line
+    c.quadraticCurveTo(0, -r * 0.34, r * 0.24, -r * 0.37);          // under the mouth
+    c.quadraticCurveTo(r * 0.46, -r * 0.42, r * 0.64, -r * 0.52);
+    c.lineTo(r * 0.68, -r * 0.48);
+    c.lineTo(r * 0.32, -r * 0.27); c.lineTo(r * 0.14, -r * 0.2);   // along the jaw
+    c.lineTo(-r * 0.14, -r * 0.2); c.lineTo(-r * 0.32, -r * 0.27);
+    c.lineTo(-r * 0.68, -r * 0.48);
+    c.closePath();
+  };
+  c.save();
+  c.globalAlpha = st.alpha || 0.2; c.fillStyle = col; shape(); c.fill();
+  shape(); c.clip();
+  var rnd = artRand(61); c.globalAlpha = 0.2; c.fillStyle = shadeHex(col, -0.3);
+  for (var i = 0; i < 70; i++) c.fillRect((rnd() * 2 - 1) * r * 0.66, -r * 0.5 + rnd() * r * 0.3, lw(0.012), lw(0.012));
+  c.restore();
+}
+
+// Prime Tony (2017-2019, Christian 2026-11-13): look.hair "receding", from
+// the head layer (fighter-art.js). Short hair pulled well back at both
+// temples into bare bays of forehead, a widow's peak left in the middle,
+// short sides down to the ears, brushed up in short spikes.
+function tfRecedingPath(c, r) {
+  c.beginPath();
+  c.moveTo(-r, -r * 0.5);
+  c.lineTo(-r * 0.8, -r * 0.6);                                   // short side, down to the ear
+  c.quadraticCurveTo(-r * 0.68, -r * 0.64, -r * 0.6, -r * 0.7);    // the corner in front of the ear
+  c.quadraticCurveTo(-r * 0.46, -r * 0.86, -r * 0.28, -r * 0.84);  // the temple, pulled well back
+  c.quadraticCurveTo(-r * 0.12, -r * 0.82, -r * 0.07, -r * 0.75);  // down into the widow's peak
+  c.quadraticCurveTo(0, -r * 0.67, r * 0.07, -r * 0.75);
+  c.quadraticCurveTo(r * 0.12, -r * 0.82, r * 0.28, -r * 0.84);
+  c.quadraticCurveTo(r * 0.46, -r * 0.86, r * 0.6, -r * 0.7);
+  c.quadraticCurveTo(r * 0.68, -r * 0.64, r * 0.8, -r * 0.6);
+  c.lineTo(r, -r * 0.5); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
+}
+function drawRecedingHair(c, r, look, lw) {
+  var hc = look.hairColor;
+  // A little shine on the bare temples.
+  c.fillStyle = "rgba(255,255,255,0.22)";
+  [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(s * r * 0.3, -r * 0.77, r * 0.1, r * 0.03, s * 0.25, 0, Math.PI * 2); c.fill(); });
+  // Darker at the roots on the crown, lighter where it's brushed up at the front.
+  var g = c.createLinearGradient(0, -r, 0, -r * 0.68);
+  g.addColorStop(0, shadeHex(hc, -0.28)); g.addColorStop(1, shadeHex(hc, 0.14));
+  c.fillStyle = g; tfRecedingPath(c, r); c.fill();
+  // Short spikes brushed up off the hairline.
+  c.save(); tfRecedingPath(c, r); c.clip();
+  c.lineCap = "round";
+  for (var i = -8; i <= 8; i++) {
+    var x = i * r * 0.075, y = -r * (0.7 + Math.abs(Math.abs(i) - 4) * 0.025);
+    c.strokeStyle = i % 2 ? shadeHex(hc, -0.32) : shadeHex(hc, 0.34);
+    c.lineWidth = lw(0.014); c.globalAlpha = 0.55;
+    c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + r * 0.02, y - r * 0.1, x + r * 0.05, y - r * 0.22); c.stroke();
+  }
+  c.restore();
+  c.strokeStyle = shadeHex(hc, -0.45); c.lineWidth = lw(0.02);
+  tfRecedingPath(c, r); c.stroke();
+}
+
+// His lean, angular face (look.face "angular", from the head layer in
+// fighter-art.js, which leaves out its round jaw line for it): the jaw cut in
+// straight lines down to a narrow chin, and hollows under high cheekbones.
+function drawAngularFace(c, r, look, line, lw) {
+  var jaw = -r * 0.3;
+  // Hollows under the cheekbones, a highlight on the bone above each.
+  [-1, 1].forEach(function (s) {
+    c.save();
+    c.translate(s * r * 0.46, -r * 0.44); c.rotate(-s * 0.6); c.scale(1, 0.36);
+    var g = c.createRadialGradient(0, 0, 0, 0, 0, r * 0.26);
+    g.addColorStop(0, "rgba(70,30,20,0.42)"); g.addColorStop(1, "rgba(70,30,20,0)");
+    c.fillStyle = g; c.beginPath(); c.arc(0, 0, r * 0.24, 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.save();
+    c.translate(s * r * 0.52, -r * 0.54); c.rotate(-s * 0.5); c.scale(1, 0.3);
+    c.fillStyle = "rgba(255,240,225,0.2)"; c.beginPath(); c.arc(0, 0, r * 0.13, 0, Math.PI * 2); c.fill();
+    c.restore();
+  });
+  // The jaw (fighter-art.js has drawn the chin shadow and left out its round line).
+  c.strokeStyle = line; c.lineWidth = lw(0.045); c.lineJoin = "round"; c.lineCap = "round";
+  c.beginPath();
+  c.moveTo(-r * 0.68, jaw - r * 0.18);
+  c.lineTo(-r * 0.32, jaw + r * 0.03); // the corner of the jaw
+  c.lineTo(-r * 0.14, jaw + r * 0.1);
+  c.lineTo(r * 0.14, jaw + r * 0.1);   // a narrow, squared-off chin
+  c.lineTo(r * 0.32, jaw + r * 0.03);
+  c.lineTo(r * 0.68, jaw - r * 0.18);
+  c.stroke();
 }
 
 // His back (face down after the cable trip): the big cross with wings

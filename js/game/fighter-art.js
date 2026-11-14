@@ -342,8 +342,9 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   c.fillStyle = "rgba(0,0,0,0.2)";
   c.beginPath(); c.ellipse(0, jaw + r * 0.08, r * 0.45, r * 0.08, 0, 0, Math.PI * 2); c.fill();
   // (a chinstrap beard traces the jaw itself, so it skips the line)
-  c.strokeStyle = look.beard === "chinstrap" ? "rgba(0,0,0,0)" : line; c.lineWidth = lw(0.045);
+  c.strokeStyle = look.beard === "chinstrap" || look.face === "angular" ? "rgba(0,0,0,0)" : line; c.lineWidth = lw(0.045);
   c.beginPath(); c.moveTo(-r * 0.66, jaw - r * 0.14); c.quadraticCurveTo(-r * 0.5, jaw + r * 0.1, 0, jaw + r * 0.1); c.quadraticCurveTo(r * 0.5, jaw + r * 0.1, r * 0.66, jaw - r * 0.14); c.stroke();
+  if (look.face === "angular") drawAngularFace(c, r, look, line, lw); // a lean, angular jaw instead of the round one (ferguson.js)
 
   // Ears at the edges of the ball (drawn over a chinstrap beard instead, so
   // the sideburns run behind them)
@@ -421,6 +422,8 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.fillRect(cgx, cgy, r * 0.016, r * 0.016);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "receding") {
+    drawRecedingHair(c, r, look, lw); c.fillStyle = hc;  // Tony Ferguson's receding hairline (ferguson.js)
   } else if (look.hair === "slick") {
     drawSlickHair(c, r, look, lw, hairline); c.fillStyle = hc;  // Conor McGregor's slicked-back undercut
   } else if (look.hair === "coils") {
@@ -523,7 +526,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.fillStyle = "rgba(255,255,255,0.35)";
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
-  if (look.hair !== "bald" && look.hair !== "crop" && look.hair !== "coils") {  // these outline their own shape
+  if (look.hair !== "bald" && look.hair !== "crop" && look.hair !== "coils" && look.hair !== "receding") {  // these outline their own shape
     c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
