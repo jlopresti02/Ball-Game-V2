@@ -83,10 +83,10 @@ var duelCam = { z: 1, x: 0, y: 0 };
 function resetSwordClash() { swordDuel = null; flyingBats = []; clashFlashes = []; duelFlash = 0; duelCam = { z: 1, x: 0, y: 0 }; }
 function swordDuelActive() { return !!swordDuel; }
 // (Once it's decided, whoever lost it is let go: knocked flying or disarmed.)
-function swordDuelLocked(b) { return !!(swordDuel && b && (b.id === swordDuel.dId || (b.id === swordDuel.oId && !swordDuel.let))) || katanaLockHeld(b); } // (or a katana lock, ferguson-katanas.js)
+function swordDuelLocked(b) { return !!(swordDuel && b && (b.id === swordDuel.dId || (b.id === swordDuel.oId && !swordDuel.let))) || katanaLockHeld(b) || samuraiLockHeld(b); } // (or a katana lock, ferguson-katanas.js; or Jiří Procházka's blade lock, prochazka.js)
 
 function swordWeaponOut(o) {
-  return !!(o && o.alive && o.cheater && o.cheater.mode === "bat") ? "bat" : katanaWeaponOut(o); // (Tony's katanas count as a bat, ferguson-katanas.js)
+  return !!(o && o.alive && o.cheater && o.cheater.mode === "bat") ? "bat" : (katanaWeaponOut(o) || samuraiWeaponOut(o)); // (Tony's katanas count as a bat, ferguson-katanas.js; so do Jiří Procházka's, prochazka.js)
 }
 function ease(u) { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }
 function easeOut(u) { u = Math.max(0, Math.min(1, u)); return 1 - (1 - u) * (1 - u); }
