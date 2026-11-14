@@ -389,6 +389,7 @@ function runFlashback(self, other, a, cfg, dt) {
   else if (a.phase === "tv" && a.t >= fb.tv) { a.phase = "back"; a.t = 0; playHwFlashOut(); }
   else if (a.phase === "back" && a.t >= fb.back) {
     endHwAct(self, other);
+    maxxOnFlashback(self, other); // his Maxx Energy ad on the jumbotron, first flashback only (maxx-energy-ad.js)
     if (cfg.mash) startMash(self);
     return false;
   }
