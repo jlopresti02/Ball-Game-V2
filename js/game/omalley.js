@@ -1,6 +1,19 @@
-// Sean O'Malley, "Suga" (Christian, 2026-11-12; the candy rain 2026-11-13).
-// Bantamweight.
+// Sean O'Malley, "Suga" (Christian, 2026-11-12; the candy rain 2026-11-13;
+// the sniper's right hand and his real lines 2026-11-14). Bantamweight.
 //
+// Sniper      (suga.snipe) fewer punches, more single power shots. Every
+//             `every` seconds, when they're `minGap`-`maxGap` away, he plants
+//             and lines them up for `aim` seconds: lead hand out measuring,
+//             right hand cocked by his chin, a laser from his glove to them
+//             and a scope closing in on them ("SNIPER!"). The aim follows them
+//             (`track`) until the last `lock` seconds, when it locks and goes
+//             red. Then one long straight right: he flies down the line at
+//             `speed`, leaning after them a little (`turn`), for `damage` with
+//             `crit`% more crit chance on top of his own ("SNIPED!", and a
+//             Suga KO like any crit). `readChance`% of the time they see it
+//             coming ("!") and slip out of the line, and it whiffs; he's off
+//             balance for `miss` seconds. It can be slipped or blocked like
+//             any punch. Runs on b.sgSnipe, from updateCraneKick.
 // Crits       his punches are critical hits for `suga.crit.mult` times the
 //             damage ("CRIT!", a pink and gold star burst and a ding),
 //             `crit.chance`% of the time plus `sugar.crit`% for every sugar
@@ -53,12 +66,23 @@
 //             goes after them for real, straight at each one (`huntTurn`) at
 //             `huntSprint` times his speed with the magnet twice as strong,
 //             until he's on the sugar high.
-// Voice lines "Welcome to the Suga Show." at the start of the fight
-//             (`voice.start`% of fights) and on Sugar Rush, and "Is this
-//             real?" when he wins (speech.js). Empty slots for the real lines
-//             still being found (suga.lines, read through say()): `candy`
-//             (`voice.candy`% of the candies he eats), `donut`, `sugarHigh`,
-//             `crash` and `wakeUp` (the crash wearing off).
+// Voice lines his real lines, Christian's picks (suga.lines, through say(),
+//             so they go on the talk channel), the exact text as the clip key.
+//             Every time (they wait up to `voice.wait` seconds for their turn
+//             rather than be dropped): one of `start` at the start of
+//             `voice.start`% of fights (100; against Ilia Topuria his
+//             `linesVs` callout instead), "Welcome to the Suga Show." on every
+//             Sugar Rush, and "Is this real?" on every win (or `comeback` if
+//             he won from behind and hasn't said it yet). Now and then, at
+//             most one every `voice.gap` seconds: `sniper` as he lines one up
+//             (`voice.snipeAim`%) or lands it (`snipeLand`%), `rightHand`
+//             after a SNIPED! (`rightHand`%), `bigShot` after a crane kick or
+//             a SUGA CRIT lands (`bigShot`%), `combo` after a clean
+//             combination (`combo`%, combos.js), and `comeback` (`comeback`%)
+//             once a fight, when he draws level after being `comebackDown`
+//             points behind. Empty slots stay silent: `candy` (`voice.candy`%
+//             of the candies he eats), `donut`, `sugarHigh`, `crash`, `wakeUp`.
+// Combos      (combos, combos.js) only a rare one-two-kick now.
 // The crane kick runs on b.crane, the candies on sgSweets, the lean on
 // b.sgDrift; Sugar Rush runs on b.igbb (move "sugarrush") for its call only.
 "use strict";
@@ -72,6 +96,7 @@ var SG_POP = 0.3;         // the SUGAR pill swelling when it goes up
 var SG_PULL = 480;        // how fast a candy slides into him (the magnet)
 var SG_WIN_BEAT = 0.7;    // "Is this real?" this long after the win
 var SG_KO_HOLD = 1.5;     // the walk-off after a Suga KO, before it's called
+var SG_SNIPE_SETTLE = 0.16; // pulling the right hand back after a snipe lands
 var SG_GUMMY = ["#ff3b3b", "#35c64a", "#ff9f1c", "#ffcf1f"];
 var SG_BRIGHT = ["#ff5fa8", "#2d7ff9", "#35c64a", "#ffcf1f", "#8a3ffc", "#ff9f1c"]; // wrappers and gumballs
 var sgSweets = [];        // candies in the ring (and falling into it)
@@ -83,16 +108,66 @@ function craneOn(b) { return !!(b && b.crane); }
 function sugarRushCalling(b) { return !!(b && b.igbb && b.igbb.move === "sugarrush"); }
 function sugaCrashed(b) { return !!(b && b.sugar && b.sugar.crashT > 0); }
 function sugaHigh(b) { return !!(b && b.sugar && b.sugar.highT > 0); }
-// On one leg or in the air for the crane kick: the speed regulator leaves
-// him alone (physics.js).
-function omalleyBusy(b) { return (craneOn(b) && b.crane.phase !== "land") || !!(b && b.sgKo); }
+// On one leg or in the air for the crane kick, or lining up and firing a
+// snipe: the speed regulator leaves him alone (physics.js).
+function omalleyBusy(b) { return (craneOn(b) && b.crane.phase !== "land") || !!(b && (b.sgKo || b.sgSnipe)); }
 // His arms are drawn by drawOmalley (drawHands skips them, draw-attacks.js).
 function omalleyHandsBusy(b) { return omalleyBusy(b) || sugarRushCalling(b); }
 function sgDist(a, b) { var dx = b.x - a.x, dy = b.y - a.y; return Math.sqrt(dx * dx + dy * dy) || 1; }
-// One of his empty voice-line slots (suga.lines), if it's been filled.
+function sgTurn(a, want, maxStep) { var d = Math.atan2(Math.sin(want - a), Math.cos(want - a)); return a + Math.max(-maxStep, Math.min(maxStep, d)); }
+
+// ---------------------------------------------------------------- his lines
+
+// A slot's lines (suga.lines), or his lines for this one opponent
+// (suga.linesVs, by fighter id) when he has some for that moment.
+function sgLines(b, key) {
+  var cfg = sgCfg(b), o = balls && balls[1 - b.id], vs = cfg.linesVs && o && o.char && cfg.linesVs[o.char.id];
+  if (vs && vs[key] && vs[key].length) return vs[key];
+  return cfg.lines && cfg.lines[key];
+}
+// Says a line from a slot if he's quiet. True if he said it. (A line with
+// no clip yet is silent but still takes its turn, speech.js.)
 function sgSay(b, key) {
-  var ln = sgCfg(b).lines, line = ln ? pickLine(b, ln[key], key) : null;
-  if (line && canSay(b)) say(b, line);
+  var lines = sgLines(b, key);
+  if (!lines || !lines.length || !canSay(b)) return false;
+  say(b, pickLine(b, lines, key));
+  return true;
+}
+// A line for something that just happened in the fight: `chance`% of the
+// time, and never within `voice.gap` seconds of his last one (and never
+// while one of his always-lines is waiting for its turn).
+function sgMoment(b, key, chance) {
+  var v = sgCfg(b).voice || {};
+  if (b.sgDue || !(chance > 0) || Math.random() * 100 >= chance) return false;
+  if (sgFightT - b.sgLineT < (v.gap || 0)) return false;
+  if (!sgSay(b, key)) return false;
+  b.sgLineT = sgFightT;
+  return true;
+}
+// Lines that play every time (the start of the fight, the win, Sugar Rush's
+// call): rather than be dropped because someone else is talking (playTalk
+// skips a line that would wait more than TALK_WAIT), the line waits until
+// he's quiet and the talk channel can take it, for up to `voice.wait`
+// seconds. Then it goes through say() like any other.
+function sgSayAlways(b, text) {
+  if (!text) return;
+  b.sgDue = { text: text, t: 0 };
+  tickSgDue(b, 0);
+}
+function sgTalkClear() {
+  if (typeof audioCtx === "undefined" || !audioCtx || audioCtx.state !== "running" || typeof talkEnd === "undefined") return true;
+  var left = talkEnd - audioCtx.currentTime;
+  return left <= 0 || (!talkQueued && left <= TALK_WAIT - 0.1);
+}
+function tickSgDue(b, dt) {
+  var q = b.sgDue, v = sgCfg(b).voice || {};
+  if (!q) return;
+  q.t += dt;
+  if (!b.alive || q.t > (v.wait || 8)) { b.sgDue = null; return; }
+  if (speaking(b) || !sgTalkClear()) return;
+  b.sgDue = null;
+  say(b, q.text);
+  b.sgLineT = sgFightT;
 }
 
 // From startMatchSeeded.
@@ -107,12 +182,14 @@ function resetOmalley() {
 // From makeBall.
 function initOmalley(b) {
   b.crane = null; b.sugaCrit = null; b.sgDrift = null; b.sgHuntT = 0; b.sgSaid = null; b.sgWon = false; b.sgKo = null;
+  b.sgSnipe = null; b.sgLineT = -99; b.sgDown = false; b.sgBack = false; b.sgCmb = null; b.sgDue = null; b.sgBackTry = 0;
   var cfg = sgCfg(b);
   if (!cfg) return;
   // His own copy of the fighter, so his hair can change colour mid-fight
   // without touching the roster (or the other one, in a mirror match).
   b.char = JSON.parse(JSON.stringify(b.char));
   b.craneT = cfg.craneKick ? sgRand(cfg.craneKick.first) : Infinity;
+  b.snipeT = cfg.snipe ? sgRand(cfg.snipe.first) : Infinity;
   b.sgDriftT = cfg.drift ? sgRand(cfg.drift.every) : Infinity;
   b.sugar = { n: 0, highT: 0, highMax: 0, crashT: 0, drainT: 0, pop: 0, floatT: 0, hair: cfg.hairStart || 0, flash: 0, tagT: 0, tagCd: 0 };
   b.sgAtkRate = b.atkRate;
@@ -156,7 +233,7 @@ function sugaCritLanded(self, other) {
   if (!c) return;
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
   var cx = other.x - ux * other.r, cy = other.y - uy * other.r;
-  floater(other.x, other.y - other.r - 34, c.boosted ? "SUGA CRIT!" : "CRIT!", "crit");
+  floater(other.x, other.y - other.r - 34, c.snipe ? "SNIPED!" : (c.boosted ? "SUGA CRIT!" : "CRIT!"), "crit");
   impacts.push({ x: cx, y: cy, nx: -ux, ny: -uy, life: 0.35, max: 0.35, color: c.boosted ? "#ffd34d" : "#ff5fa8" });
   hitStop = Math.max(hitStop, c.boosted ? 0.08 : 0.05);
   if (!reduceMotion) {
@@ -177,11 +254,16 @@ function sugaCritLanded(self, other) {
     other.hp = 0; other.koOut = true;
     other.punch = null; other.kick = null; other.swing = null; other.throwAnim = null; other.jabAnim = null;
     other.vx = ux * 260; other.vy = uy * 260;
+    if (typeof commentaryCall === "function") commentaryCall("instantKo", self, other); // one shot, out cold (commentary-calls.js)
     knockoutFx(self, other);
     clearActions(self);
+    self.sgSnipe = null;
     self.sgKo = { t: 0, targetId: other.id };
     crowdReact(1);
+    return;
   }
+  // "I'm just that good." after a big one (the snipe has its own lines).
+  if (c.boosted && !c.snipe && other.alive) sgMoment(self, "bigShot", (sgCfg(self).voice || {}).bigShot);
 }
 // Out cold: he walks off with his arms up while they slump (from the
 // abilities loop, so he throws nothing else meanwhile).
@@ -219,15 +301,17 @@ function sgBackOff(self, other) {
 }
 
 // From the abilities loop, before the special. True while it's running.
+// (The snipe and the walk-off after a Suga KO run from here too.)
 function updateCraneKick(self, other, dt) {
-  if (self.sgKo) return sugaKoWalkOff(self, other, dt); // (and the walk-off after a Suga KO)
+  if (self.sgKo) return sugaKoWalkOff(self, other, dt);
+  if (!self.crane && updateSnipe(self, other, dt)) return true;
   var cfg = sgCfg(self), ck = cfg && cfg.craneKick;
   if (!ck) return false;
   var m = self.crane;
   if (m && (craneInterrupted(self) || other.igbb)) { endCrane(self); return false; } // (their special took over)
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   if (!m) {
-    if (!started || over || self.igbb || sugaCrashed(self)) return false;
+    if (!started || over || self.igbb || self.sgSnipe || sugaCrashed(self)) return false;
     self.craneT -= dt;
     if (self.craneT > 0 || d > self.r + other.r + ck.range || !canStartIgbb(self, other) || swordDuelActive()) return false;
     clearActions(self);
@@ -280,6 +364,7 @@ function landCraneKick(self, other, ck, m) {
       if (ck.wallSlams > 0) beginWallSlam(other, ux, uy, { wallSlams: ck.wallSlams, slamDamage: ck.slamDamage, knockback: ck.knockback });
       else { other.vx += ux * ck.knockback; other.vy += uy * ck.knockback; }
     }
+    if (other.alive) sgMoment(self, "bigShot", (sgCfg(self).voice || {}).bigShot); // "I'm just that good."
   }
   checkEnd();
 }
@@ -292,19 +377,135 @@ function endCrane(self) {
   if (self.alive && inOrdinaryMovement(self)) setSpeed(self, self.baseSpeed || SPEED);
 }
 
+// ---------------------------------------------------------------- the snipe
+
+// From updateCraneKick: lining one up, firing it, and pulling the hand back.
+// True while it's running.
+function updateSnipe(self, other, dt) {
+  var sn = sgCfg(self) && sgCfg(self).snipe;
+  if (!sn) return false;
+  var m = self.sgSnipe;
+  if (m && (craneInterrupted(self) || other.igbb || over)) { endSnipe(self); return false; } // (their special took over)
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, want = Math.atan2(dy, dx);
+  if (!m) {
+    if (!started || over || self.igbb || sugaCrashed(self) || self.sgHuntT > 0 || !other.alive || other.koOut) return false;
+    self.snipeT -= dt;
+    if (self.snipeT > 0) return false;
+    var gap = d - self.r - other.r;
+    if (gap < sn.minGap || gap > sn.maxGap || self.cmb || !canStartIgbb(self, other) || swordDuelActive()) return false;
+    startSnipe(self, other, sn, want);
+    return true;
+  }
+  m.t += dt;
+  if (m.phase === "aim") {
+    // Planted, measuring: the aim follows them until it locks.
+    self.vx = 0; self.vy = 0;
+    if (m.t < sn.aim - sn.lock) m.aim = sgTurn(m.aim, want, dt * (sn.track || 9));
+    else if (!m.locked) { m.locked = true; playSnipeLock(); }
+    if (m.read) sgSidestep(other, m);
+    if (m.t >= sn.aim) {
+      m.phase = "shot"; m.t = 0;
+      m.dur = Math.max(0.12, Math.min(0.34, (d - self.r - other.r + sn.reach) / sn.speed + 0.05));
+      playSnipeShot();
+    }
+    return true;
+  }
+  if (m.phase === "shot") {
+    // Down the line, right hand first. They juked it if they read it.
+    if (!m.read) m.aim = sgTurn(m.aim, want, dt * (sn.turn || 0));
+    else sgSidestep(other, m);
+    var ux = Math.cos(m.aim), uy = Math.sin(m.aim);
+    self.vx = ux * sn.speed; self.vy = uy * sn.speed;
+    if (!m.hit && other.alive && !other.koOut) {
+      var fx = self.x + ux * (self.r + sn.reach * 0.8), fy = self.y + uy * (self.r + sn.reach * 0.8);
+      var fd = Math.sqrt((other.x - fx) * (other.x - fx) + (other.y - fy) * (other.y - fy));
+      if (fd < other.r + 10 || d < self.r + other.r + 4) { m.hit = true; landSnipe(self, other, sn, m); }
+    }
+    if (!reduceMotion && self.sgSnipe) particles.push({ x: self.x - ux * self.r * 0.6, y: self.y - uy * self.r * 0.6, vx: -ux * 60, vy: -uy * 60, life: 0.18, max: 0.18, size: self.r * 0.35, color: "#ffffff" });
+    if (!self.sgSnipe) return true; // (a Suga KO took over)
+    if (m.hit || m.t >= m.dur) {
+      if (!m.hit) { m.missed = true; floater(other.x, other.y - other.r - 8, "WHIFF", "dodge"); }
+      m.phase = "land"; m.t = 0;
+      self.vx *= m.hit ? 0.2 : 0.6; self.vy *= m.hit ? 0.2 : 0.6;
+    }
+    return true;
+  }
+  // Pulling the hand back (off balance for a moment after a miss).
+  var damp = Math.exp(-10 * dt);
+  self.vx *= damp; self.vy *= damp;
+  if (m.t >= (m.missed ? (sn.miss || 0.3) : SG_SNIPE_SETTLE)) { endSnipe(self); return false; }
+  return true;
+}
+
+function startSnipe(self, other, sn, aim) {
+  clearActions(self);
+  self.vx = 0; self.vy = 0;
+  if (self.sgDrift) endDrift(self);
+  var m = self.sgSnipe = { phase: "aim", t: 0, aim: aim, locked: false, hit: false, missed: false,
+    read: Math.random() * 100 < (sn.readChance || 0), side: Math.random() < 0.5 ? -1 : 1 };
+  floater(self.x, self.y - self.r - 56, "SNIPER!", "crit"); // (over his health bar and SUGAR pill)
+  if (m.read) floater(other.x, other.y - other.r - 30, "!", "crit");
+  playSnipeAim();
+  crowdReact(0.25);
+  sgMoment(self, "sniper", (sgCfg(self).voice || {}).snipeAim); // "I'm a sniper."
+}
+
+// Seeing it coming: they slide out of the line, sideways to it (only while
+// they're rolling about on their own).
+function sgSidestep(other, m) {
+  if (!other.alive || !inOrdinaryMovement(other) || other.angry) return;
+  var sp = Math.max(Math.sqrt(other.vx * other.vx + other.vy * other.vy), 240);
+  other.vx = -Math.sin(m.aim) * m.side * sp; other.vy = Math.cos(m.aim) * m.side * sp;
+}
+
+// The right hand lands: `damage`, a bigger chance to crit than his punches.
+function landSnipe(self, other, sn, m) {
+  var cfg = sgCfg(self), sg = cfg.sugar || {}, ux = Math.cos(m.aim), uy = Math.sin(m.aim);
+  var crit = !!cfg.crit && Math.random() * 100 < Math.min(sg.maxChance || 95, sugaCritChance(self) + (sn.crit || 0));
+  var dealt = hurt(other, sn.damage * (crit ? cfg.crit.mult : 1), "punch", self.id);
+  if (dealt > 0) {
+    if (!other.justDodged && sgKnockable(other)) { other.vx += ux * sn.knockback; other.vy += uy * sn.knockback; other.knockFly = 0.25; }
+    var cx = other.x - ux * other.r, cy = other.y - uy * other.r;
+    impacts.push({ x: cx, y: cy, nx: -ux, ny: -uy, life: 0.45, max: 0.45, color: "#ff2a3d" });
+    igbbSparks(cx, cy, -ux, -uy, "#ff5fa8", 12, 420);
+    other.squash = { t: 0.16, max: 0.16, nx: -ux, ny: -uy };
+    hitStop = Math.max(hitStop, 0.07);
+    if (!reduceMotion) shake = Math.max(shake, 13);
+    playPunch(dealt);
+    playSnipeHit();
+    crowdReact(0.5);
+    if (typeof commentaryCall === "function") commentaryCall("rightHand", self, other); // "Big right hand!" (commentary-calls.js)
+    if (crit) {
+      self.sugaCrit = { mult: cfg.crit.mult, boosted: sugaBoosted(self), snipe: true };
+      sugaCritLanded(self, other); // SNIPED!, and a Suga KO like any crit
+    }
+    var v = cfg.voice || {};
+    if (self.sgKo || !other.alive) { checkEnd(); return; } // (out cold, or it finished them: the win has its own line)
+    if (!(crit && sgMoment(self, "rightHand", v.rightHand))) sgMoment(self, "sniper", v.snipeLand);
+  }
+  checkEnd();
+}
+
+function endSnipe(self) {
+  var sn = sgCfg(self).snipe;
+  self.sgSnipe = null;
+  self.snipeT = sgRand(sn.every);
+  if (self.alive && inOrdinaryMovement(self)) setSpeed(self, self.baseSpeed || SPEED);
+}
+
 // ---------------------------------------------------------------- Sugar Rush
 
 // From updateSpecial (special.js) for special.move "sugarrush".
 function updateSugarRush(self, other, dt) {
   var sp = self.char.special;
   if (!self.igbb) {
-    if (self.specialT < sp.chargeTime || !started || over || craneOn(self) || sugaCrashed(self) || sugaHigh(self) || !canStartIgbb(self, other)) return false;
+    if (self.specialT < sp.chargeTime || !started || over || craneOn(self) || self.sgSnipe || sugaCrashed(self) || sugaHigh(self) || !canStartIgbb(self, other)) return false;
     clearActions(self);
     self.igbb = { move: "sugarrush", phase: "call", t: 0 };
     self.vx = 0; self.vy = 0;
     self.sgDrift = null;
     floater(self.x, self.y - self.r - 84, "SUGAR RUSH!", "crit"); // (over the speech bubble)
-    if (canSay(self)) say(self, "Welcome to the Suga Show.");
+    sgSayAlways(self, "Welcome to the Suga Show."); // every Sugar Rush (it waits its turn)
     playSugarRush();
     crowdReact(1);
   }
@@ -560,20 +761,45 @@ function tickOmalley(dt) {
       if (su.drainT >= sg.drain) { su.drainT = 0; su.n--; } // going without
     }
     if (b.sgHuntT > 0) b.sgHuntT = Math.max(0, b.sgHuntT - dt);
-    // "Welcome to the Suga Show." as the fight gets going.
-    var v = cfg.voice || {};
+    // His start line as the fight gets going, every fight (against Ilia,
+    // his callout), waiting its turn if someone's talking.
+    var v = cfg.voice || {}, o = balls[1 - b.id];
     if (!b.sgSaid && started && sgFightT > 0.6) {
       b.sgSaid = true;
-      if (v.start && Math.random() * 100 < v.start && canSay(b)) say(b, "Welcome to the Suga Show.");
+      var st = sgLines(b, "start");
+      if (v.start && Math.random() * 100 < v.start && st && st.length) sgSayAlways(b, pickLine(b, st, "start"));
+    }
+    tickSgDue(b, dt);
+    if (!started || over || !o) return;
+    // "Championship mindset, baby!": when he draws level after being
+    // `comebackDown` behind, `voice.comeback`% of the time (once a fight; it
+    // keeps trying for a couple of seconds if he's busy talking).
+    if (v.comebackDown) {
+      if (o.hp - b.hp >= v.comebackDown) b.sgDown = true;
+      else if (b.sgDown && !b.sgBack && b.hp >= o.hp && o.alive) { b.sgBack = true; b.sgBackTry = Math.random() * 100 < (v.comeback || 0) ? 2 : 0; }
+      if (b.sgBackTry > 0) { b.sgBackTry -= dt; if (sgMoment(b, "comeback", 100)) b.sgBackTry = 0; }
+    }
+    // "Ah, that was sexy." after a combination where every strike landed
+    // (combos.js ends it and clears b.cmb).
+    if (b.cmb) b.sgCmb = b.cmb;
+    else if (b.sgCmb) {
+      var cm = b.sgCmb;
+      b.sgCmb = null;
+      if (cm.n >= 2 && cm.hits >= cm.n && cm.n === cm.steps.length && o.alive) sgMoment(b, "combo", v.combo);
     }
   });
 
-  // "Is this real?" after a win.
+  // Every win: "Is this real?" ("Championship mindset, baby!" if he won it
+  // from behind and hasn't said it yet), waiting for the knockout call.
   if (over) {
     sgWinT += dt;
     sugas.forEach(function (b) {
       var v = sgCfg(b).voice || {};
-      if (v.win && b.alive && !balls[1 - b.id].alive && !b.sgWon && sgWinT >= SG_WIN_BEAT) { b.sgWon = true; say(b, "Is this real?"); }
+      if (v.win && b.alive && !balls[1 - b.id].alive && !b.sgWon && sgWinT >= SG_WIN_BEAT) {
+        b.sgWon = true;
+        var back = b.sgDown && !b.sgBack ? sgLines(b, "comeback") : null;
+        sgSayAlways(b, back && back.length ? pickLine(b, back, "comeback") : "Is this real?");
+      }
     });
   }
   if (frozen) return;
@@ -680,6 +906,7 @@ function drawOmalleyUnder() {
     }
     ctx.restore();
   });
+  balls.forEach(function (b) { if (b.alive && b.sgSnipe && b.sgSnipe.phase === "aim") drawSnipeLaser(b); });
   sgSweets.forEach(function (s) {
     if (s.fall > 0) { drawSweetShadow(s); return; }
     var melt = Math.max(0, Math.min(1, (s.life - s.t) / 0.8)), pop = Math.min(1, s.t / 0.25);
@@ -705,10 +932,53 @@ function drawOmalleyUnder() {
   });
 }
 
-// Over the fighters: candies dropping in (the rain, and the Sugar Rush
-// shower from higher up). From draw().
+// The snipe's laser, from his lead glove to them along the aim: pink and
+// dashed while it follows them, solid red and flashing once it locks.
+function drawSnipeLaser(b) {
+  var m = b.sgSnipe, sn = sgCfg(b).snipe, o = balls[1 - b.id];
+  var ux = Math.cos(m.aim), uy = Math.sin(m.aim), on = Math.min(1, m.t / 0.12);
+  var x0 = b.x + ux * b.r * 1.1, y0 = b.y + uy * b.r * 1.1, len = Math.max(20, sgDist(b, o) - b.r * 1.1 + o.r * 0.4);
+  var flash = m.locked ? 0.55 + 0.45 * Math.abs(Math.sin(sgClock * 38)) : 1;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.globalAlpha = 0.35 * on; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 7;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + ux * len, y0 + uy * len); ctx.stroke();
+  ctx.globalAlpha = 0.95 * on * flash; ctx.strokeStyle = m.locked ? "#ff2a3d" : "#ff5fa8"; ctx.lineWidth = m.locked ? 3.5 : 3;
+  if (!m.locked) { ctx.setLineDash([9, 7]); ctx.lineDashOffset = -sgClock * 60; }
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + ux * len, y0 + uy * len); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+// The scope settling on them while he lines it up: a ring with crosshair
+// ticks that closes in, then snaps red when it locks. Over the fighters.
+function drawSnipeScope(b) {
+  var m = b.sgSnipe, sn = sgCfg(b).snipe, o = balls[1 - b.id];
+  if (!o || !o.alive) return;
+  var k = easeOut(Math.min(1, m.t / Math.max(0.05, sn.aim - sn.lock))), rr = o.r * (2.2 - 1.0 * k);
+  var col = m.locked ? "#ff2a3d" : "#ff5fa8", flash = m.locked ? 0.6 + 0.4 * Math.abs(Math.sin(sgClock * 38)) : 1;
+  var spin = m.locked ? 0 : (1 - k) * 1.2;
+  ctx.save();
+  ctx.translate(o.x, o.y); ctx.rotate(spin);
+  ctx.globalAlpha = Math.min(1, m.t / 0.1) * flash;
+  ctx.lineCap = "round";
+  [[theme.wall, 6], [col, 3]].forEach(function (p) {
+    ctx.strokeStyle = p[0]; ctx.lineWidth = p[1];
+    ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.stroke();
+    for (var i = 0; i < 4; i++) {
+      var a = i * Math.PI / 2, c = Math.cos(a), s = Math.sin(a);
+      ctx.beginPath(); ctx.moveTo(c * rr * 0.55, s * rr * 0.55); ctx.lineTo(c * rr * 1.3, s * rr * 1.3); ctx.stroke();
+    }
+  });
+  if (m.locked) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+}
+
+// Over the fighters: the snipe's scope, and candies dropping in (the rain,
+// and the Sugar Rush shower from higher up). From draw().
 function drawOmalleyOver() {
-  if (!sgSweets.length || (typeof allAmericanOn === "function" && allAmericanOn())) return;
+  if (typeof allAmericanOn === "function" && allAmericanOn()) return;
+  balls.forEach(function (b) { if (b.alive && b.sgSnipe && b.sgSnipe.phase === "aim" && sgCfg(b)) drawSnipeScope(b); });
+  if (!sgSweets.length) return;
   sgSweets.forEach(function (s) {
     if (!(s.fall > 0)) return;
     var k = s.fall / s.fallMax, h = k * k * s.high;
@@ -923,6 +1193,7 @@ function drawOmalley(b) {
   if (b.crane && b.crane.phase === "pose") drawCraneStance(b, lift);
   else if (b.crane && b.crane.phase === "leap") drawCraneLeap(b, lift);
   else if (sugarRushCalling(b) || b.sgKo) drawSugarRushArms(b);
+  else if (b.sgSnipe) drawSnipeArms(b);
 
   // On the sugar high: a gold ring draining as it runs out, sparkles round it.
   if (sugaHigh(b)) {
@@ -1073,6 +1344,48 @@ function drawSugarRushArms(b) {
   ctx.restore();
 }
 
+// The snipe: lining up (lead hand out measuring, right hand cocked by his
+// chin and glowing as it loads), then the long straight right, then pulling
+// it back.
+function drawSnipeArms(b) {
+  var m = b.sgSnipe, sn = sgCfg(b).snipe, r = b.r, size = (b.char.punch.size || 13);
+  var ux = Math.cos(m.aim), uy = Math.sin(m.aim), px = -uy, py = ux, cx = b.x, cy = b.y;
+  function arm(sx, sy, hx, hy, w, ang) {
+    strokeLimb(w * 0.62, armColor(b.char), function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
+    drawGloveAt(hx, hy, w * 0.82, b.char, ang);
+  }
+  ctx.save();
+  if (m.phase === "aim") {
+    var c = Math.min(1, m.t / 0.15), paw = m.locked ? 0 : Math.sin(sgClock * 16) * r * 0.08;
+    var tr = m.locked ? Math.sin(sgClock * 80) * 1.2 : 0;
+    // the lead hand, out at them, pawing to measure the distance
+    arm(cx - px * r * 0.45, cy - py * r * 0.45, cx + ux * (r * (0.75 + 0.45 * c) + paw) - px * r * 0.3, cy + uy * (r * (0.75 + 0.45 * c) + paw) - py * r * 0.3, size, m.aim);
+    // the right hand, cocked back by his chin
+    var hx = cx - ux * r * 0.2 * c + px * r * (0.55 + 0.25 * c) + tr, hy = cy - uy * r * 0.2 * c + py * r * (0.55 + 0.25 * c);
+    var load = Math.min(1, m.t / sn.aim);
+    ctx.save();
+    ctx.globalAlpha = 0.25 + 0.35 * load; ctx.fillStyle = m.locked ? "#ff2a3d" : "#ff5fa8";
+    ctx.beginPath(); ctx.arc(hx, hy, size * (0.9 + 0.9 * load), 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    arm(cx + px * r * 0.45, cy + py * r * 0.45, hx, hy, size * 1.1, m.aim);
+  } else {
+    // the right hand all the way out down the line, the left tucked at his chin
+    var ext = m.phase === "shot" ? Math.min(1, m.t / Math.max(0.05, m.dur * 0.45)) : Math.max(0, 1 - m.t / SG_SNIPE_SETTLE);
+    var tx = cx + ux * (r + sn.reach * ext) + px * r * 0.1, ty = cy + uy * (r + sn.reach * ext) + py * r * 0.1;
+    arm(cx - px * r * 0.45, cy - py * r * 0.45, cx + ux * r * 0.55 - px * r * 0.55, cy + uy * r * 0.55 - py * r * 0.55, size * 0.95, m.aim);
+    arm(cx + px * r * 0.35, cy + py * r * 0.35, tx, ty, size * (1.05 + 0.25 * ext), m.aim);
+    if (m.phase === "shot") {
+      // speed lines behind him, like a round leaving the barrel
+      ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.lineWidth = 3; ctx.lineCap = "round";
+      for (var i = -1; i <= 1; i++) {
+        var ox = cx - ux * r * 1.15 + px * i * r * 0.5, oy = cy - uy * r * 1.15 + py * i * r * 0.5, ll = r * (0.8 + 0.3 * (1 - Math.abs(i)));
+        ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox - ux * ll, oy - uy * ll); ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+}
+
 // ---------------------------------------------------------------- sound
 // Synthesized, like the rest of the game's stand-ins.
 
@@ -1133,6 +1446,35 @@ function playSugarCrash() {
   sgAudio(function (ac, t) {
     caneTone(ac, t, "triangle", 392, 330, 0.3, 0.32);
     caneTone(ac, t + 0.34, "triangle", 330, 196, 0.3, 0.7);
+  });
+}
+// Lining up a snipe: the scope's two clicks, and a rising whine as it loads.
+function playSnipeAim() {
+  sgAudio(function (ac, t) {
+    caneBurst(ac, t, 3600, 4, 0.35, 0.03);
+    caneBurst(ac, t + 0.07, 2600, 4, 0.3, 0.03);
+    caneTone(ac, t + 0.08, "sine", 500, 1700, 0.05, 0.5);
+  });
+}
+// The aim locking: two quick beeps.
+function playSnipeLock() {
+  sgAudio(function (ac, t) {
+    caneTone(ac, t, "square", 2200, 2200, 0.06, 0.045);
+    caneTone(ac, t + 0.065, "square", 2200, 2200, 0.06, 0.045);
+  });
+}
+// The shot going: a sharp crack and a falling zip.
+function playSnipeShot() {
+  sgAudio(function (ac, t) {
+    caneBurst(ac, t, 5200, 0.8, 0.55, 0.06);
+    caneTone(ac, t, "sawtooth", 1500, 220, 0.1, 0.14);
+  });
+}
+// The right hand landing: a deep thump under the punch.
+function playSnipeHit() {
+  sgAudio(function (ac, t) {
+    caneTone(ac, t, "sine", 170, 55, 0.55, 0.2);
+    caneBurst(ac, t, 1300, 1, 0.45, 0.07);
   });
 }
 // Sugar Rush: a bright jingle up the scale.

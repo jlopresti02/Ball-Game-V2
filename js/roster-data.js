@@ -2977,7 +2977,7 @@ var SAVED_ROSTER = [
     "weightClass": "bantamweight",
     "name": "Sean O'Malley",
     "base": "Kicker",
-    "bio": "\"Suga\". Built on the Kicker base: long kicks from range, plus quick punches up close, a lot of them critical hits for double damage. Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Candy rains into the ring all fight long and only he goes for it: between exchanges he drifts toward the nearest one, and anything he touches is his. Every candy is more sugar (SUGAR x4 by his health bar), and every sugar is a bigger chance to crit. A golden donut is worth three, and every candy changes his braids to another of his real fight-night hair colours. At ten he is on a sugar high, then he crashes: slow and drowsy for a moment, and most of the sugar is gone. Cotton candy is pure sugar: straight to the high, then the crash. Special move: Sugar Rush, a shower of extra candy he hunts down.",
+    "bio": "\"Suga\". Built on the Kicker base: long kicks from range and a hard punch up close, a lot of them critical hits for double damage. He doesn't throw many combinations. He snipes: from a few steps away he plants, measures them with his lead hand while a laser and a scope settle on them, then fires one long straight right, the single clean shot he's known for, with a much bigger chance to crit (SNIPED!). Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Candy rains into the ring all fight long and only he goes for it: between exchanges he drifts toward the nearest one, and anything he touches is his. Every candy is more sugar (SUGAR x4 by his health bar), and every sugar is a bigger chance to crit. A golden donut is worth three, and every candy changes his braids to another of his real fight-night hair colours. At ten he is on a sugar high, then he crashes: slow and drowsy for a moment, and most of the sugar is gone. Cotton candy is pure sugar: straight to the high, then the crash. Special move: Sugar Rush, a shower of extra candy he hunts down.",
     "color": "#e75480",
     "label": "",
     "imgData": null,
@@ -3016,8 +3016,8 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 22,
-      "cooldown": 0.8,
+      "damage": 25,
+      "cooldown": 1.25,
       "speed": 0.26,
       "size": 13,
       "knockback": 120,
@@ -3026,7 +3026,7 @@ var SAVED_ROSTER = [
     },
     "hasKick": true,
     "kick": {
-      "damage": 32,
+      "damage": 36,
       "cooldown": 2.6,
       "speed": 0.45,
       "size": 15,
@@ -3045,6 +3045,19 @@ var SAVED_ROSTER = [
     "tdd": {
       "sprawlChance": 50
     },
+    "combos": {
+      "first": [
+        9,
+        13
+      ],
+      "every": [
+        13,
+        19
+      ],
+      "list": {
+        "one-two-kick": 1
+      }
+    },
     "suga": {
       "crit": {
         "chance": 40,
@@ -3055,6 +3068,29 @@ var SAVED_ROSTER = [
         "low": 50,
         "after": 14,
         "sugar": 6
+      },
+      "snipe": {
+        "first": [
+          3,
+          5
+        ],
+        "every": [
+          5.5,
+          8.5
+        ],
+        "minGap": 60,
+        "maxGap": 240,
+        "aim": 0.6,
+        "lock": 0.12,
+        "track": 9,
+        "speed": 1150,
+        "turn": 3,
+        "reach": 34,
+        "damage": 30,
+        "crit": 15,
+        "knockback": 560,
+        "miss": 0.35,
+        "readChance": 20
       },
       "craneKick": {
         "first": [
@@ -3222,14 +3258,49 @@ var SAVED_ROSTER = [
       "voice": {
         "start": 100,
         "win": true,
-        "candy": 30
+        "wait": 8,
+        "candy": 30,
+        "gap": 5,
+        "snipeAim": 25,
+        "snipeLand": 30,
+        "rightHand": 50,
+        "bigShot": 30,
+        "combo": 60,
+        "comeback": 75,
+        "comebackDown": 100
       },
       "lines": {
+        "start": [
+          "Every single fight I go into, I'm looking for the knockout.",
+          "Welcome to the Suga Show."
+        ],
+        "sniper": [
+          "I'm a sniper. I'm gonna snipe his chin. I'm gonna find it."
+        ],
+        "rightHand": [
+          "I know what I possess in this right hand, baby."
+        ],
+        "bigShot": [
+          "I don't even know if that was a mistake. I'm just that good."
+        ],
+        "combo": [
+          "Ah, that was sexy."
+        ],
+        "comeback": [
+          "Championship mindset, baby!"
+        ],
         "candy": [],
         "donut": [],
         "sugarHigh": [],
         "crash": [],
         "wakeUp": []
+      },
+      "linesVs": {
+        "c-ilia-topuria": {
+          "start": [
+            "Dana, give me a jet to Spain, baby. I'm coming for Ilia Topuria."
+          ]
+        }
       }
     },
     "hasSpecial": true,
