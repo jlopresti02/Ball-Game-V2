@@ -16,7 +16,7 @@ try { tapeOn = localStorage.getItem(TAPE_KEY) === "on"; } catch (e) {}
 // is one phrase and every reveal lands on a beat (seconds from the start).
 var TAPE_LEN = 8.7;
 var TAPE_HIT = { card: 0.07, voice: 0.12, left: 0.72, right: 1.29, vs: 1.87, rows: [2.39, 2.93, 3.46, 3.99, 4.55, 5.09, 5.63], flash: 6.2, out: 8.05 };
-var TAPE_THEME_GAIN = 0.62, TAPE_THEME_UNDER = 0.3; // the theme, and under the announcer
+var TAPE_THEME_GAIN = 1, TAPE_THEME_UNDER = 0.5; // the theme, and under the announcer
 var tape = null; // { t0, voiced } while the intro is running
 var tapeTheme = null; // { src, gain } the theme playing
 
@@ -157,7 +157,7 @@ function drawTaleTape() {
   if (t >= TAPE_LEN) { tape = null; tapeTheme = null; start(); return; }
   // "Our tale of the tape!" on the talk channel (tried until it plays)
   if (!tape.voiced && t >= TAPE_HIT.voice && t < 1.2 && clipBuffers.taleOfTheTape && audioCtx) {
-    tape.voiced = !!cutInTalk("taleOfTheTape", 0.95);
+    tape.voiced = !!cutInTalk("taleOfTheTape", 1);
   }
   var stadium = stadiumOn(), k, box;
   if (stadium) {
