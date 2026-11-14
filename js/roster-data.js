@@ -3421,7 +3421,7 @@ var SAVED_ROSTER = [
       "face": "angular",
       "bodyHair": "none",
       "hair": "receding",
-      "hairColor": "#d6b05a",
+      "hairColor": "#17130f",
       "beard": "none",
       "ears": "normal",
       "tattoos": {
@@ -3436,7 +3436,7 @@ var SAVED_ROSTER = [
       "gloves": "#141414",
       "cucuy": {
         "stubble": {
-          "color": "#7a5a30",
+          "color": "#2a211a",
           "alpha": 0.16
         },
         "headband": {
