@@ -3416,7 +3416,7 @@ var SAVED_ROSTER = [
     "label": "",
     "imgData": null,
     "look": {
-      "skin": "#dfae8e",
+      "skin": "#c49a6c",
       "build": "lean",
       "face": "angular",
       "bodyHair": "none",
