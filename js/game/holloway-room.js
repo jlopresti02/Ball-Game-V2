@@ -211,14 +211,12 @@ function drawRoom(f, owner, a, fb) {
   ctx.fillStyle = "#3b2414"; ctx.strokeStyle = "#151515"; ctx.lineWidth = 5;
   ctx.beginPath(); ctx.roundRect(70, 905, 720, 150, 10); ctx.fill(); ctx.stroke();
   ctx.fillStyle = "#2a190d"; ctx.fillRect(100, 1055, 26, 70); ctx.fillRect(734, 1055, 26, 70);
-  ctx.fillStyle = "#cfcac2"; ctx.beginPath(); ctx.roundRect(330, 960, 200, 56, 8); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#ff3b30"; ctx.beginPath(); ctx.arc(510, 988, 6, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#2a2a2e"; ctx.fillRect(350, 978, 110, 8);
+  rmConsole();
   // the cord to his controller
   var ctl = rmController(f, a);
   ctx.strokeStyle = "#1c1c1c"; ctx.lineWidth = 5; ctx.beginPath();
   var ccx = ctl.body.x - 60, ccy = ctl.body.y + RM_MAX.r * 0.55;
-  ctx.moveTo(470, 1012); ctx.bezierCurveTo(470, 1240, ccx - 80, ccy + 60, ccx, ccy + 20); ctx.stroke();
+  ctx.moveTo(485, 994); ctx.bezierCurveTo(485, 1240, ccx - 80, ccy + 60, ccx, ccy + 20); ctx.stroke();
   // the TV (an old tube set)
   ctx.fillStyle = "#3b3530"; ctx.strokeStyle = "#151515"; ctx.lineWidth = 8;
   ctx.beginPath(); ctx.roundRect(RM_T.x - 50, RM_T.y - 50, RM_T.w + 200, RM_T.h + 100, 40); ctx.fill(); ctx.stroke();
@@ -296,21 +294,7 @@ function drawRoomMax(f, owner, a, ctl) {
   else { ctx.fillStyle = owner.char.color; ctx.strokeStyle = STAGE_INK; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
   // headphones: the band hugging the top of the ball, the cups out on its
   // edges where his ears are; nothing over his face
-  var ea = 0.62; // cups this far up from the sides (radians)
-  ctx.lineCap = "round";
-  [["#111", 14], ["#e23b3b", 4]].forEach(function (p) {
-    ctx.strokeStyle = p[0]; ctx.lineWidth = p[1];
-    ctx.beginPath(); ctx.arc(0, 0, R * 1.04, Math.PI + ea, -ea); ctx.stroke();
-  });
-  [-1, 1].forEach(function (sd) {
-    var cx = sd * Math.cos(ea) * R * 1.0, cy = -Math.sin(ea) * R * 1.0, rot = sd * (Math.PI / 2 - ea);
-    ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
-    ctx.fillStyle = "#151515"; ctx.strokeStyle = "#e23b3b"; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.arc(0, 0, 21, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#3df07a"; ctx.globalAlpha = 0.6 + 0.4 * Math.sin(hwClock * 9);
-    ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-    ctx.restore();
-  });
+  rmHeadphones(R);
   // the controller, two hands on the handles, held up in front of his chest
   var cy = R * 0.42 - ctl.stop * 10 + (ctl.hit ? 4 : 0) + R * 0.2 * dk.lap, ang = ctl.tilt - 0.25 * dk.lap;
   var ca = Math.cos(ang), sa = Math.sin(ang), L2 = function (lx, ly) { return { x: lx * ca - ly * sa, y: cy + lx * sa + ly * ca }; };
@@ -325,21 +309,7 @@ function drawRoomMax(f, owner, a, ctl) {
   });
   ctx.save();
   ctx.translate(0, cy); ctx.rotate(ang);
-  ctx.fillStyle = "#cfcac2"; ctx.strokeStyle = "#151515"; ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.moveTo(-72, -24); ctx.lineTo(72, -24);
-  ctx.quadraticCurveTo(106, -24, 102, 14); ctx.quadraticCurveTo(98, 52, 72, 38);
-  ctx.lineTo(-72, 38); ctx.quadraticCurveTo(-98, 52, -102, 14); ctx.quadraticCurveTo(-106, -24, -72, -24);
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#2a2a2e"; ctx.fillRect(-80, -5, 36, 12); ctx.fillRect(-68, -17, 12, 36);
-  Object.keys(spots).forEach(function (k) { drawHwButton(62 + spots[k][0], spots[k][1], 8.5, k, ctl.lit === k); });
-  if (ctl.lit) {
-    ctx.strokeStyle = HW_BTN[ctl.lit]; ctx.lineWidth = 4;
-    for (var i2 = 0; i2 < 6; i2++) {
-      var an2 = i2 / 6 * Math.PI * 2, qx = 62 + rg[0], qy = rg[1];
-      ctx.beginPath(); ctx.moveTo(qx + Math.cos(an2) * 15, qy + Math.sin(an2) * 15); ctx.lineTo(qx + Math.cos(an2) * 27, qy + Math.sin(an2) * 27); ctx.stroke();
-    }
-  }
+  rmControllerArt(ctl, spots, rg);
   ctx.restore();
   // gloves wrapped round the handles from below, thumbs up on the pad and buttons
   drawGloveAt(gL.x, gL.y, gr, b.char, ang - Math.PI / 2);
@@ -362,6 +332,179 @@ function drawRoomMax(f, owner, a, ctl) {
   }
   rmDrawSweat();
   theme.wall = tw;
+}
+
+// ---------------------------------------------------------------- props
+
+// His gaming headphones: a padded band along the top of his outline, metal
+// sliders, and round leather-padded cups on the sides where his ears are.
+function rmHeadphones(R) {
+  var ea = 0.62; // cups this far up from the sides (radians)
+  ctx.save();
+  ctx.lineCap = "round";
+  // the band: dark shell, a soft pad underneath, a highlight along the top, red stitching
+  ctx.strokeStyle = "#0b0b0d"; ctx.lineWidth = 19; ctx.beginPath(); ctx.arc(0, 0, R * 1.05, Math.PI + ea + 0.08, -ea - 0.08); ctx.stroke();
+  ctx.strokeStyle = "#2b2d34"; ctx.lineWidth = 13; ctx.beginPath(); ctx.arc(0, 0, R * 1.05, Math.PI + ea + 0.08, -ea - 0.08); ctx.stroke();
+  ctx.strokeStyle = "#3f424c"; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(0, 0, R * 1.0, Math.PI + ea + 0.25, -ea - 0.25); ctx.stroke(); // the pad
+  ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, R * 1.085, Math.PI + ea + 0.3, -Math.PI * 0.38); ctx.stroke();
+  ctx.strokeStyle = "#e23b3b"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(0, 0, R * 1.05, Math.PI + ea + 0.3, -ea - 0.3); ctx.stroke(); ctx.setLineDash([]);
+  [-1, 1].forEach(function (sd) {
+    var an = sd < 0 ? Math.PI + ea : -ea, ca = Math.cos(an), sa = Math.sin(an);
+    // the metal slider between the band and the cup
+    var a0 = an + (sd < 0 ? 0.13 : -0.13);
+    var g = ctx.createLinearGradient(Math.cos(a0) * R * 0.98, Math.sin(a0) * R * 0.98, Math.cos(a0) * R * 1.12, Math.sin(a0) * R * 1.12);
+    g.addColorStop(0, "#5d636e"); g.addColorStop(0.5, "#e3e7ee"); g.addColorStop(1, "#6b717c");
+    ctx.strokeStyle = g; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(0, 0, R * 1.05, Math.min(an, a0), Math.max(an, a0)); ctx.stroke();
+    // the cup
+    ctx.save(); ctx.translate(ca * R, sa * R);
+    var cush = ctx.createRadialGradient(-4, -4, 4, 0, 0, 26);
+    cush.addColorStop(0, "#3a3b42"); cush.addColorStop(0.7, "#1c1d22"); cush.addColorStop(1, "#0d0d10");
+    ctx.fillStyle = cush; ctx.strokeStyle = "#060607"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    var shell = ctx.createRadialGradient(-7, -8, 2, 0, 0, 19);
+    shell.addColorStop(0, "#6c707c"); shell.addColorStop(0.45, "#2c2e36"); shell.addColorStop(1, "#121317");
+    ctx.fillStyle = shell; ctx.beginPath(); ctx.arc(0, 0, 18.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#e23b3b"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.stroke();
+    // a glowing logo light in the middle
+    ctx.save();
+    ctx.shadowColor = "#3df07a"; ctx.shadowBlur = 12;
+    ctx.fillStyle = "rgba(61,240,122," + (0.65 + 0.35 * Math.sin(hwClock * 9)) + ")";
+    ctx.beginPath(); ctx.moveTo(0, -7); ctx.lineTo(6, 0); ctx.lineTo(0, 7); ctx.lineTo(-6, 0); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    // the shine
+    ctx.strokeStyle = "rgba(255,255,255,0.55)"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(0, 0, 21, Math.PI * 1.08, Math.PI * 1.42); ctx.stroke();
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+// A glossy face button: coloured, a soft highlight, its letter.
+function rmButton(x, y, rad, k, lit) {
+  var base = HW_BTN[k] || "#555555";
+  ctx.save();
+  if (lit) { ctx.shadowColor = base; ctx.shadowBlur = 16; }
+  var g = ctx.createRadialGradient(x - rad * 0.35, y - rad * 0.4, rad * 0.1, x, y, rad);
+  g.addColorStop(0, shadeHex(base, lit ? 0.6 : 0.35)); g.addColorStop(0.6, base); g.addColorStop(1, shadeHex(base, -0.35));
+  ctx.fillStyle = g; ctx.strokeStyle = "#0b0b0d"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y + (lit ? 1.5 : 0), rad, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = "rgba(255,255,255,0.95)"; ctx.font = "900 " + Math.round(rad * 1.1) + "px Arial, Helvetica, sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(k, x, y + 0.5 + (lit ? 1.5 : 0));
+  ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.beginPath(); ctx.ellipse(x - rad * 0.3, y - rad * 0.48, rad * 0.42, rad * 0.2, -0.4, 0, Math.PI * 2); ctx.fill();
+}
+
+// The controller (in its own frame, centred): a shaded two-tone body with
+// shoulder buttons, a d-pad, two thumbsticks, start/select, a glowing
+// centre button and glossy face buttons.
+function rmControllerArt(ctl, spots, rg) {
+  var outline = function () {
+    ctx.beginPath();
+    ctx.moveTo(-72, -24); ctx.lineTo(72, -24);
+    ctx.quadraticCurveTo(106, -24, 102, 14); ctx.quadraticCurveTo(98, 52, 72, 38);
+    ctx.quadraticCurveTo(40, 22, 0, 24); ctx.quadraticCurveTo(-40, 22, -72, 38);
+    ctx.quadraticCurveTo(-98, 52, -102, 14); ctx.quadraticCurveTo(-106, -24, -72, -24);
+    ctx.closePath();
+  };
+  // shoulder buttons peeking out the top
+  [-1, 1].forEach(function (sd) {
+    var g = ctx.createLinearGradient(0, -34, 0, -20);
+    g.addColorStop(0, "#5a5e68"); g.addColorStop(1, "#24262c");
+    ctx.fillStyle = g; ctx.strokeStyle = "#0b0b0d"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(sd * 82 - 22, -34, 44, 16, 7); ctx.fill(); ctx.stroke();
+  });
+  // body
+  var bg = ctx.createLinearGradient(0, -26, 0, 50);
+  bg.addColorStop(0, "#3b3e47"); bg.addColorStop(0.55, "#23252c"); bg.addColorStop(1, "#121318");
+  ctx.fillStyle = bg; ctx.strokeStyle = "#060607"; ctx.lineWidth = 4.5;
+  outline(); ctx.fill(); ctx.stroke();
+  ctx.save(); outline(); ctx.clip();
+  // the teal faceplate in the middle, and a light along the top edge
+  var fp = ctx.createLinearGradient(0, -24, 0, 24);
+  fp.addColorStop(0, "#1fd1bd"); fp.addColorStop(1, "#0b7d71");
+  ctx.fillStyle = fp; ctx.beginPath(); ctx.roundRect(-44, -24, 88, 40, 12); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.28)"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(-70, -21); ctx.lineTo(70, -21); ctx.stroke();
+  ctx.restore();
+  // d-pad: a recessed well, a raised cross with shading
+  ctx.fillStyle = "#0d0e11"; ctx.beginPath(); ctx.arc(-62, -2, 19, 0, Math.PI * 2); ctx.fill();
+  var dg = ctx.createLinearGradient(-62, -17, -62, 13);
+  dg.addColorStop(0, "#4b4f59"); dg.addColorStop(1, "#1b1c21");
+  ctx.fillStyle = dg; ctx.strokeStyle = "#060607"; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-67, -16); ctx.lineTo(-57, -16); ctx.lineTo(-57, -7); ctx.lineTo(-48, -7); ctx.lineTo(-48, 3); ctx.lineTo(-57, 3);
+  ctx.lineTo(-57, 12); ctx.lineTo(-67, 12); ctx.lineTo(-67, 3); ctx.lineTo(-76, 3); ctx.lineTo(-76, -7); ctx.lineTo(-67, -7); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#101114"; ctx.beginPath(); ctx.arc(-62, -2, 3, 0, Math.PI * 2); ctx.fill();
+  // thumbsticks
+  [[-27, 14, ctl.go ? Math.sin(hwClock * 23) * 3 : 0], [27, 14, ctl.go ? Math.cos(hwClock * 19) * 3 : 0]].forEach(function (st) {
+    ctx.fillStyle = "#0b0c0f"; ctx.beginPath(); ctx.arc(st[0], st[1], 13, 0, Math.PI * 2); ctx.fill();
+    var sg = ctx.createRadialGradient(st[0] + st[2] - 3, st[1] - 4, 1, st[0] + st[2], st[1], 10);
+    sg.addColorStop(0, "#6a6e79"); sg.addColorStop(1, "#202228");
+    ctx.fillStyle = sg; ctx.strokeStyle = "#060607"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(st[0] + st[2], st[1], 9.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(st[0] + st[2], st[1], 6, 0, Math.PI * 2); ctx.stroke();
+  });
+  // select / start, and the glowing centre button
+  [-15, 15].forEach(function (x) { ctx.fillStyle = "#0d0e11"; ctx.beginPath(); ctx.roundRect(x - 6, -13, 12, 5, 2.5); ctx.fill(); });
+  ctx.save();
+  ctx.shadowColor = "#3df07a"; ctx.shadowBlur = 10;
+  ctx.fillStyle = "#0d0e11"; ctx.beginPath(); ctx.arc(0, -1, 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#3df07a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, -1, 5, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+  // face buttons in their well
+  ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.beginPath(); ctx.arc(62, -2, 25, 0, Math.PI * 2); ctx.fill();
+  Object.keys(spots).forEach(function (k) { rmButton(62 + spots[k][0], -2 + spots[k][1], 7.8, k, ctl.lit === k); });
+  if (ctl.lit) {
+    ctx.strokeStyle = HW_BTN[ctl.lit]; ctx.lineWidth = 4;
+    for (var i2 = 0; i2 < 6; i2++) {
+      var an2 = i2 / 6 * Math.PI * 2, qx = 62 + rg[0], qy = -2 + rg[1];
+      ctx.beginPath(); ctx.moveTo(qx + Math.cos(an2) * 15, qy + Math.sin(an2) * 15); ctx.lineTo(qx + Math.cos(an2) * 27, qy + Math.sin(an2) * 27); ctx.stroke();
+    }
+  }
+}
+
+// The console on the TV stand: a slim black box in 3/4 view, vents on top,
+// a disc slot, two USB ports (his controller's cord plugs into one) and a
+// glowing power light.
+function rmConsole() {
+  var x = 300, y = 958, w = 260, h = 56, dx = 30, dy = 24;
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.35)"; ctx.beginPath(); ctx.ellipse(x + w / 2 + 14, y + h + 2, w * 0.58, 9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.lineJoin = "round"; ctx.strokeStyle = "#060607"; ctx.lineWidth = 4;
+  // top
+  var tg = ctx.createLinearGradient(0, y - dy, 0, y);
+  tg.addColorStop(0, "#4a4e58"); tg.addColorStop(1, "#2a2c33");
+  ctx.fillStyle = tg; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx, y - dy); ctx.lineTo(x + w + dx, y - dy); ctx.lineTo(x + w, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // side
+  var sg = ctx.createLinearGradient(x + w, 0, x + w + dx, 0);
+  sg.addColorStop(0, "#15161a"); sg.addColorStop(1, "#22242a");
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.moveTo(x + w, y); ctx.lineTo(x + w + dx, y - dy); ctx.lineTo(x + w + dx, y - dy + h); ctx.lineTo(x + w, y + h); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // front
+  var fg = ctx.createLinearGradient(0, y, 0, y + h);
+  fg.addColorStop(0, "#2d3038"); fg.addColorStop(1, "#111216");
+  ctx.fillStyle = fg; ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+  // a bright edge where the top meets the front
+  ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 3, y + 1.5); ctx.lineTo(x + w - 2, y + 1.5); ctx.stroke();
+  // vents on top
+  ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = 2.5;
+  for (var i = 0; i < 9; i++) { var vx = x + 150 + i * 11; ctx.beginPath(); ctx.moveTo(vx + 4, y - 5); ctx.lineTo(vx + 4 + dx * 0.55, y - dy * 0.75); ctx.stroke(); }
+  // teal stripe and disc slot
+  ctx.fillStyle = "#16c2b0"; ctx.fillRect(x, y + h - 9, w, 3);
+  ctx.fillStyle = "#050506"; ctx.beginPath(); ctx.roundRect(x + 18, y + 16, 130, 6, 3); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.15)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x + 20, y + 25); ctx.lineTo(x + 146, y + 25); ctx.stroke();
+  // logo: a little ball
+  ctx.fillStyle = "#8a909c"; ctx.beginPath(); ctx.arc(x + 32, y + 38, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#16c2b0"; ctx.beginPath(); ctx.arc(x + 32, y + 38, 3, 0, Math.PI * 2); ctx.fill();
+  // USB ports
+  [178, 200].forEach(function (px) { ctx.fillStyle = "#050506"; ctx.fillRect(x + px, y + 30, 14, 8); ctx.fillStyle = "#3a3d45"; ctx.fillRect(x + px + 2, y + 32, 10, 2); });
+  // power light, glowing
+  ctx.save();
+  ctx.shadowColor = "#4fc3ff"; ctx.shadowBlur = 16;
+  ctx.fillStyle = "rgba(120,210,255," + (0.75 + 0.25 * Math.sin(hwClock * 3)) + ")";
+  ctx.beginPath(); ctx.arc(x + w - 22, y + 30, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  ctx.restore();
 }
 
 // The Maxx Energy can: cracks it, chugs it, tosses the empty on the pile.
