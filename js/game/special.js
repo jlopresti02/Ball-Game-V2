@@ -104,7 +104,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "nickdiaz") return updateNickDiaz(self, other, dt); // diaz.js
   if (sp.move === "katana") return updateKatanas(self, other, dt); // Tony Ferguson (ferguson-katanas.js)
   if (sp.move === "broadside") return updateBroadside(self, other, dt); // Michael Bisping (bisping.js)
-  if (sp.move === "mranderson") return updateMrAnderson(self, other, dt); // Anderson Silva's Mr. Anderson (anderson.js)
+  if (sp.move === "mranderson") return updateMrAnderson(self, other, dt); // Anderson Silva's Spider Code (anderson.js)
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };

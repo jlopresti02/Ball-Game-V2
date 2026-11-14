@@ -4,7 +4,7 @@
 // Thai plum and the flying knee (his `knee` block, knees.js), combinations
 // (his `combos` block, combos.js), and his own moves below. A Matrix homage:
 // he leans back out of nearly everything. Everything below is set in his
-// character file under "anderson" (and "special" for Mr. Anderson); leave a
+// character file under "anderson" (and "special" for Spider Code); leave a
 // block out and that part is switched off.
 //
 // Weave     (anderson.weave) the Matrix head movement (the Forrest Griffin
@@ -72,12 +72,12 @@
 //           triangle taps `triTap`% more often and comes off ground and pound
 //           `fromGnp`% more often, and his front kick knocks out `kickKo`%
 //           more often. Off again once he's back within 40% of `behind`.
-// Mr. Anderson (special.move "mranderson") his special, a Matrix homage under
+// Spider Code (special.move "mranderson") his special, a Matrix homage under
 //           our own name. The bar is full at the start of the fight
 //           (`atStart`), so `delay` seconds in he stops, the cage goes dark,
 //           green code rains down it (`rain`, how dark) and over `suit`
 //           seconds he's in a long black coat and small dark glasses
-//           ("MR. ANDERSON"). For `time` seconds he leans out of `dodge`% of
+//           ("SPIDER CODE"). For `time` seconds he leans out of `dodge`% of
 //           strikes and `projDodge`% of anything thrown (`lean` seconds, a
 //           trail of ghosts), counters `counter`% of them, and `bullet.chance`%
 //           of those weaves (every one off something thrown) go into bullet
@@ -102,21 +102,21 @@
 //           elbow from the triangle.
 //
 // The front kick runs on b.asKick, the hands down on b.asTaunt, a waiting
-// counter on b.asCounter, the lean on b.asLean, Mr. Anderson on b.igbb (move
+// counter on b.asCounter, the lean on b.asLean, Spider Code on b.igbb (move
 // "mranderson", the change) then b.asNeo, comeback mode on b.asCb. The code
 // rain is asRain, bullet time asBullet. Look: shaved head, goatee, black
 // shorts with yellow stripes and a yellow spider (look.spiderLogo,
-// drawSpiderLogo below); in Mr. Anderson, look.neoCoat on his own copy of the
+// drawSpiderLogo below); in Spider Code, look.neoCoat on his own copy of the
 // character (drawNeoKit below, Hokit's Dark Side pattern).
 "use strict";
 
 // Registered here rather than in special.js's table (GSP's pattern).
-SPECIAL_MOVES.mranderson = "Mr. Anderson";
+SPECIAL_MOVES.mranderson = "Spider Code";
 
 var AS_LAND = 0.3;       // settling after a clean front kick
 var AS_KO_HOLD = 1.3;    // standing over a front kick knockout before it's called
 var AS_GHOST = 0.32;     // how long a ghost of him hangs where he leaned from
-var AS_NEO_GHOST = 0.55; // and the trail of ghosts in Mr. Anderson
+var AS_NEO_GHOST = 0.55; // and the trail of ghosts in Spider Code
 var AS_YELLOW = "#f5c400", AS_GREEN = "#3dff6e";
 var AS_NO_SLIP = { laser: true, slam: true, grapple: true, finisher: true, flow: true, kickback: true, slugfest: true, kofinal: true, igbb: true, kopunch: true };
 var AS_CRIT_SOURCES = { punch: true, kick: true, elbow: true, knee: true, combo: true, finisher: true }; // what a comeback crit can be
@@ -124,7 +124,7 @@ var AS_GLYPHS = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅ
 var AS_CELL = 20;        // one glyph of code rain
 var asFrame = 0;         // bumped once a frame (tickAnderson): a move the abilities loop didn't reach is let go
 var asNow = 0;           // fight time, for the coat and the rain
-var asRain = null;       // the green code rain while anyone's in Mr. Anderson
+var asRain = null;       // the green code rain while anyone's in Spider Code
 var asBullet = null;     // bullet time: { t (real seconds), dur, scale, x0, y0, x1, y1 }
 var asAtlas = null;      // the code glyphs, drawn once
 
@@ -137,7 +137,7 @@ GUARD_SUBS.triangle = function (self, atk) {
 };
 
 function asCfg(b) { return b && b.char && b.char.anderson; }
-// Mr. Anderson's numbers, with defaults for anything the special block leaves
+// Spider Code's numbers, with defaults for anything the special block leaves
 // out (a created fighter can pick it in the editor with just a charge time).
 var AS_NEO_DEF = { chargeTime: 50, atStart: true, delay: 0.6, suit: 1.1, time: 12, again: true, dodge: 85, projDodge: 75, counter: 70, lean: 0.45, rain: 0.78,
   bullet: { chance: 60, scale: 0.3, time: 0.6, cooldown: 1.4 } };
@@ -173,7 +173,7 @@ function initAnderson(b) {
   b.asNeo = null; b.asNeoN = 0; b.asLookOff = null; b.asBulletCd = 0; b.asCb = false; b.asCbN = 0; b.asPend = null;
   var cfg = asCfg(b), sp = asNeoSp(b);
   if (cfg || sp) b.asStats = { kick: 0, kickHit: 0, kickKo: 0, weave: 0, handsDown: 0, counter: 0, tri: 0, triTap: 0, triGuard: 0, triGnp: 0, triTd: 0, guard: 0, triHit: 0, sinking: 0, neo: 0, bullet: 0, comeback: 0, crit: 0 };
-  if (sp && sp.atStart !== false) b.specialT = sp.chargeTime; // Mr. Anderson goes off at the start
+  if (sp && sp.atStart !== false) b.specialT = sp.chargeTime; // Spider Code goes off at the start
   if (!cfg) return;
   b.asKickT = cfg.frontKick ? asRand(cfg.frontKick.first) : Infinity;
   b.asHp = b.hp; b.asSaid = {}; b.asWasGuard = false; b.asCmbSeen = null; b.asPlumSeen = null; b.asComboT = -99;
@@ -602,7 +602,7 @@ function andersonDamageMult(b, source, attackerId) {
   return cb.critMult || 1.5;
 }
 
-// ---------------------------------------------------------------- Mr. Anderson
+// ---------------------------------------------------------------- Spider Code
 
 // From updateSpecial (special.js) for special.move "mranderson".
 function updateMrAnderson(self, other, dt) {
@@ -616,7 +616,7 @@ function updateMrAnderson(self, other, dt) {
     self.igbb = { move: "mranderson", phase: "suit", t: 0, frame: asFrame };
     self.vx = 0; self.vy = 0;
     self.asNeoN++;
-    floater(self.x, self.y - self.r - 84, "MR. ANDERSON", "crit"); // (over the speech bubble)
+    floater(self.x, self.y - self.r - 84, "SPIDER CODE", "crit"); // (over the speech bubble)
     asRainOn(sp);
     playAsNeoOn();
     crowdReact(0.8);
@@ -672,7 +672,7 @@ function asGlyphBurst(b, n) {
   }
 }
 
-// Bullet time off a weave in Mr. Anderson.
+// Bullet time off a weave in Spider Code.
 function asTryBullet(b, atk, bt, proj) {
   if (asBullet || (b.asBulletCd || 0) > 0 || over) return;
   if (!proj && Math.random() * 100 >= bt.chance) return;
@@ -691,7 +691,7 @@ function andersonTimeScale() {
   return 1 - (1 - bt.scale) * ramp;
 }
 
-// The code rain: on while anyone's in Mr. Anderson, fading in and out.
+// The code rain: on while anyone's in Spider Code, fading in and out.
 function asRainOn(sp) {
   if (!asRain) asRain = { k: 0, want: 1, dark: sp && sp.rain != null ? sp.rain : 0.55, cols: [] };
   asRain.want = 1;
@@ -747,7 +747,7 @@ function tickAnderson(dt) {
     if (b.asGhosts && b.asGhosts.length) b.asGhosts = b.asGhosts.filter(function (g) { g.t += dt; return g.t < (g.neo ? AS_NEO_GHOST : AS_GHOST); });
     if (b.asBulletCd > 0) b.asBulletCd -= dt;
     if (started && !over) b.asClock += dt;
-    // Mr. Anderson: the change, then the mode running down.
+    // Spider Code: the change, then the mode running down.
     var nm = b.igbb;
     if (nm && nm.move === "mranderson" && (nm.frame !== asFrame || !b.alive)) asSuited(b); // (something else took him over: the change is done)
     if (b.asNeo) {
@@ -1160,7 +1160,7 @@ function drawSpiderLogo(c, r, look, sTop, band) {
 }
 
 // From drawFighterArt (fighter-art.js), contained layout, with look.neoCoat:
-// Mr. Anderson's long black leather coat, open down the chest, its collar up
+// Spider Code's long black leather coat, open down the chest, its collar up
 // round his neck, and small dark oval glasses with green code glinting in
 // them. `c` is at the ball's centre.
 function drawNeoKit(c, r, look, ink) {
@@ -1251,7 +1251,7 @@ function playAsTriangle() {
     caneTone(ac, t + 0.1, "sawtooth", 90, 70, 0.08, 0.45);
   });
 }
-// Mr. Anderson: a run of digital blips tumbling down, then a low hum.
+// Spider Code: a run of digital blips tumbling down, then a low hum.
 function playAsNeoOn() {
   asAudio(function (ac, t) {
     [880, 660, 990, 520, 740, 440, 590].forEach(function (f, i) { caneTone(ac, t + i * 0.045, "square", f, f * 0.98, 0.05, 0.04); });
@@ -1268,7 +1268,7 @@ function playAsComeback() { asAudio(function (ac, t) { caneTone(ac, t, "triangle
 
 // ---------------------------------------------------------------- gallery
 
-// Mr. Anderson on the fighter card (gallery.js SPECIAL_INFO).
+// Spider Code on the fighter card (gallery.js SPECIAL_INFO).
 function andersonSpecialInfo(raw) {
   var sp = asNeoNums(raw), bt = sp.bullet;
   return (sp.atStart !== false ? "Goes off at the start of the fight" : "Goes off when the bar fills") + ": the cage goes dark, green code rains down it and he's in a long black coat and small dark glasses. For " +
