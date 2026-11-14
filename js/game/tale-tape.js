@@ -15,7 +15,8 @@ try { tapeOn = localStorage.getItem(TAPE_KEY) === "on"; } catch (e) {}
 // The theme is about 110 bpm and its phrase is 8.7s long, so the whole intro
 // is one phrase and every reveal lands on a beat (seconds from the start).
 var TAPE_LEN = 8.7;
-var TAPE_HIT = { card: 0.07, voice: 0.12, left: 0.72, right: 1.29, vs: 1.87, rows: [2.39, 2.93, 3.46, 3.99, 4.55, 5.09, 5.63], flash: 6.2, out: 8.05 };
+var TAPE_HIT = { card: 0.07, voice: 0.12, left: 0.72, right: 1.29, vs: 1.87, rows: [2.39, 2.93, 3.46, 3.99, 4.55, 5.09, 5.63], flash: 6.2, out: 8.05, sig: [5.9, 6.85] };
+// sig: when each fighter does their taunt, left then right (drawTapeFighter).
 var TAPE_THEME_GAIN = 1, TAPE_THEME_UNDER = 0.5; // the theme, and under the announcer
 var tape = null; // { t0, voiced } while the intro is running
 var tapeTheme = null; // { src, gain } the theme playing
@@ -256,17 +257,14 @@ function drawTapeCard(box, t, withTitle) {
 
   // Portraits slide in from their sides
   var pr = 108, py = top + 136, lx = 180, rx = w - 180;
-  [[A, ca, lx, -1, TAPE_HIT.left], [B, cb, rx, 1, TAPE_HIT.right]].forEach(function (f) {
+  var fs = [[A, ca, lx, -1, TAPE_HIT.left, TAPE_HIT.sig[0]], [B, cb, rx, 1, TAPE_HIT.right, TAPE_HIT.sig[1]]];
+  fs.forEach(function (f, i) {
     var p = tapeEase((t - f[4]) / 0.3);
     if (p <= 0) return;
     var x = f[2] + f[3] * (1 - p) * 420;
+    var o = fs[1 - i]; // the other fighter, whose taunt this one reacts to
     ctx.save();
-    ctx.shadowColor = shadeHex(f[1], 0.35); ctx.shadowBlur = 30;
-    ctx.fillStyle = f[1]; ctx.beginPath(); ctx.arc(x, py, pr, 0, Math.PI * 2); ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.lineWidth = 6; ctx.strokeStyle = "#e3cd9a"; ctx.stroke();
-    if (f[0].look) drawFighterArt(ctx, x, py, pr - 12, f[0].look, "#0b0f12", { layout: "contained", name: f[0].name });
-    else { ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 110px " + TAPE_IMPACT; ctx.fillText((f[0].name || "?").charAt(0).toUpperCase(), x, py + 4); }
+    drawTapeFighter(f[0], f[1], x, py, pr, t, f[4], f[3], f[5], tapeSigKind(o[0]), o[5]);
     // Name and nickname under the portrait
     ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
     var parts = (f[0].name || "").toUpperCase().trim().split(/\s+/), last = parts.pop(), first = parts.join(" ");
@@ -331,4 +329,161 @@ function drawTapeCard(box, t, withTitle) {
   if (ctx.roundRect) ctx.roundRect(0, 0, w, h, 24); else ctx.rect(0, 0, w, h);
   ctx.stroke();
   ctx.globalAlpha = 1;
+}
+
+// ---------------------------------------------------------------
+// The fighters in their portraits: bouncing on the beat with their two
+// gloves up, then one taunt each once the stats are in. Josh Hokit gives the
+// thumbs down (and the other fighter fumes), Ciryl Gane pokes the camera in
+// the eye (and the other fighter sees stars); everyone else touches gloves
+// at the camera. Only ever the fighter's own two gloves.
+// ---------------------------------------------------------------
+var TAPE_BEAT = 0.543;
+var TAPE_SIG_LEN = 1.1;
+function tapeSigKind(ch) {
+  if (ch.id === "c-josh-hokit") return "thumbs";
+  if (ch.id === "c-ciryl-gane" || ch.id === "c-jon-jones") return "poke"; // both poke eyes in a fight
+  return "gloves";
+}
+
+function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSigAt) {
+  var kind = tapeSigKind(ch), st = t - sigAt, sig = st > 0 && st < TAPE_SIG_LEN ? st : -1;
+  var ost = t - oppSigAt, oppSig = ost > 0 && ost < TAPE_SIG_LEN + 0.5 ? ost : -1;
+  // Bounce on the beat (a fighter's stance), a little sway
+  var ph = (t - tIn) / TAPE_BEAT;
+  var bob = -Math.abs(Math.sin(Math.PI * ph)) * 7, sway = Math.sin(Math.PI * ph * 0.5) * 0.05;
+  if (oppSig >= 0 && oppKind === "poke" && ost > 0.35) { bob += Math.sin(ost * 40) * 3 * Math.max(0, 1 - ost); } // rocked by the poke
+  var ink = "#0b0f12";
+  // Ring
+  ctx.shadowColor = shadeHex(col, 0.35); ctx.shadowBlur = 30;
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, pr, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  // Fumes when Hokit gives the thumbs down: red glow
+  if (oppSig >= 0 && oppKind === "thumbs" && ost > 0.2) {
+    var fume = Math.min(1, (ost - 0.2) / 0.2, (TAPE_SIG_LEN + 0.5 - ost) / 0.3);
+    ctx.fillStyle = "rgba(225,29,46," + (0.35 * fume * (0.6 + 0.4 * Math.sin(ost * 14))) + ")";
+    ctx.beginPath(); ctx.arc(x, y, pr, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.lineWidth = 6; ctx.strokeStyle = "#e3cd9a"; ctx.stroke();
+  // The fighter, inside the ring
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x, y, pr - 3, 0, Math.PI * 2); ctx.clip();
+  ctx.translate(x, y + bob); ctx.rotate(sway);
+  if (ch.look) drawFighterArt(ctx, 0, 0, pr - 12, ch.look, ink, { layout: "contained", name: ch.name });
+  else { ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 110px " + TAPE_IMPACT; ctx.fillText((ch.name || "?").charAt(0).toUpperCase(), 0, 4); }
+  ctx.restore();
+
+  // Guard: both gloves up by the chin, bobbing in turn
+  var gr = pr * 0.27, gy = y + pr * 0.3 + bob;
+  var g = [
+    { x: x - pr * 0.6, y: gy + Math.sin(Math.PI * ph) * 4, s: 1 },
+    { x: x + pr * 0.6, y: gy - Math.sin(Math.PI * ph) * 4, s: 1 }
+  ];
+  // Which glove does the taunt: the one on the outside (away from the VS)
+  var out = side < 0 ? 0 : 1, inn = 1 - out;
+  var extra = null;
+  if (sig >= 0) {
+    var k = tapeEase(sig / 0.18), back = Math.min(1, Math.max(0, (TAPE_SIG_LEN - sig) / 0.2));
+    k *= back;
+    if (kind === "thumbs") {
+      // Arm out, glove turned over, thumb pointing down, pumping twice
+      var pump = sig > 0.18 ? Math.abs(Math.sin((sig - 0.18) * 7)) * pr * 0.16 * back : 0;
+      g[out].x += side * pr * 0.55 * k; g[out].y -= pr * 0.45 * k - pump; g[out].thumb = k;
+      extra = sig > 0.2 && sig < TAPE_SIG_LEN - 0.1 ? "boo" : null;
+    } else if (kind === "poke") {
+      // Two fingers jabbed across at the other fighter's eyes, twice
+      var jab = sig < 0.5 ? Math.sin(Math.min(1, sig / 0.35) * Math.PI) : Math.sin(Math.min(1, (sig - 0.5) / 0.35) * Math.PI);
+      jab = Math.max(0, jab) * back;
+      g[inn].x += -side * pr * (0.35 * k + 0.45 * jab); g[inn].y -= pr * 0.55 * k;
+      g[inn].poke = k; g[inn].pokeDir = -side; g[inn].s = 1 + 0.3 * k;
+      extra = jab > 0.85 ? "poke" : null;
+    } else {
+      // Both gloves punch together at the camera
+      var tap = Math.max(0, Math.sin(Math.min(1, sig / 0.45) * Math.PI)) * back;
+      [0, 1].forEach(function (j) { g[j].x += (x - g[j].x) * 0.55 * k; g[j].y -= pr * 0.2 * k; g[j].s = 1 + 0.9 * tap; });
+      extra = tap > 0.9 ? "tap" : null;
+    }
+  }
+  // Draw the far glove first so the one coming at the camera is on top
+  var order = g[0].s > g[1].s ? [1, 0] : [0, 1];
+  order.forEach(function (j) { drawTapeGlove(ch, g[j], gr, side); });
+
+  // Little bursts on the hits
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+  if (extra === "poke" || extra === "tap") {
+    var hx = extra === "poke" ? g[inn].x - side * gr * 2.6 : x, hy = extra === "poke" ? g[inn].y : y - pr * 0.25;
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 5; ctx.lineCap = "round";
+    for (var a = 0; a < 8; a++) {
+      var an = a / 8 * Math.PI * 2;
+      ctx.beginPath(); ctx.moveTo(hx + Math.cos(an) * gr * 1.6, hy + Math.sin(an) * gr * 1.6); ctx.lineTo(hx + Math.cos(an) * gr * 2.3, hy + Math.sin(an) * gr * 2.3); ctx.stroke();
+    }
+  }
+  if (extra === "boo") {
+    ctx.font = "900 40px " + TAPE_IMPACT;
+    var bx = x - side * pr * 0.95, by = y - pr * 0.72;
+    ctx.lineWidth = 7; ctx.strokeStyle = "#000"; ctx.strokeText("BOOO!", bx, by);
+    ctx.fillStyle = "#e11d2e"; ctx.fillText("BOOO!", bx, by);
+  }
+  // Reacting to the other fighter's taunt
+  if (oppSig >= 0 && oppKind === "thumbs" && ost > 0.25) drawTapeAnger(x + pr * 0.62, y - pr * 0.72, ost);
+  if (oppSig >= 0 && oppKind === "poke" && ost > 0.35) drawTapeStars(x, y - pr * 0.82, pr, ost);
+}
+
+function drawTapeGlove(ch, g, gr, side) {
+  var r = gr * g.s;
+  ctx.save();
+  var gc = gloveColor(ch) || "#c8102e";
+  ctx.fillStyle = gc; ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = 4;
+  if (g.thumb) {
+    ctx.beginPath(); ctx.arc(g.x, g.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // The thumb, sticking straight down out of the glove
+    ctx.beginPath(); ctx.ellipse(g.x + side * r * 0.15, g.y + r * 1.2 * g.thumb, r * 0.38, r * 0.72 * g.thumb, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  } else if (g.poke) {
+    // Two fingers out of the glove, pointing across at the other fighter
+    [-1, 1].forEach(function (d) {
+      ctx.save(); ctx.translate(g.x + g.pokeDir * r * 0.75, g.y + d * r * 0.28); ctx.rotate(d * g.pokeDir * 0.12);
+      ctx.beginPath(); ctx.ellipse(g.pokeDir * r * 0.45 * g.poke, 0, r * 0.85 * g.poke, r * 0.24, 0, 0, Math.PI * 2);
+      ctx.fillStyle = ch.look ? ch.look.skin : gc; ctx.fill(); ctx.stroke();
+      ctx.restore();
+    });
+    ctx.fillStyle = gc;
+    ctx.beginPath(); ctx.arc(g.x, g.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  } else if (ch.look && typeof drawGlove === "function") {
+    drawGlove(ctx, g.x, g.y, r, ch.look, "#0b0f12", -Math.PI / 2);
+  } else {
+    ctx.beginPath(); ctx.arc(g.x, g.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+  // a shine
+  ctx.fillStyle = "rgba(255,255,255,0.25)";
+  ctx.beginPath(); ctx.ellipse(g.x - r * 0.35, g.y - r * 0.4, r * 0.28, r * 0.16, -0.6, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+// An anger mark: four bent red ticks round a point (as when Hokit taunts in a fight)
+function drawTapeAnger(cx, cy, t) {
+  var pulse = 0.5 + 0.5 * Math.sin(t * 12), u = 20 + 4 * pulse;
+  ctx.save();
+  ctx.strokeStyle = "#e11d2e"; ctx.lineWidth = 7; ctx.lineCap = "round";
+  [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(function (q) {
+    ctx.beginPath();
+    ctx.moveTo(cx + q[0] * u * 0.35, cy + q[1] * u);
+    ctx.quadraticCurveTo(cx + q[0] * u * 0.35, cy + q[1] * u * 0.35, cx + q[0] * u, cy + q[1] * u * 0.35);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+// Dizzy stars circling over the head (after Gane's poke)
+function drawTapeStars(cx, cy, pr, t) {
+  ctx.save();
+  for (var i = 0; i < 3; i++) {
+    var a = t * 5 + i * Math.PI * 2 / 3, sx = cx + Math.cos(a) * pr * 0.55, sy = cy + Math.sin(a) * pr * 0.14;
+    ctx.save(); ctx.translate(sx, sy); ctx.rotate(t * 4);
+    ctx.fillStyle = "#ffd23f"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (var p = 0; p < 10; p++) { var rr = p % 2 ? 7 : 17, aa = p / 10 * Math.PI * 2 - Math.PI / 2; ctx.lineTo(Math.cos(aa) * rr, Math.sin(aa) * rr); }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
 }
