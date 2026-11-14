@@ -1,8 +1,9 @@
 // Maxx Energy (Joe, 2026-11-13): an energy-drink parody for Max Holloway,
 // the man with the most strikes in the game. It runs on the jumbotron (a
-// banner in the test arena) the first time his special, The Middle, ends
-// in a fight (endMiddle, holloway.js), as long as the fight's still on.
-// Joe's music plays under it.
+// banner in the test arena) the first time his Flashback cutscene ends in
+// a fight (runFlashback, holloway.js), as long as the fight's still on. It
+// runs up on the jumbotron while Button Mash plays out in the cage, and
+// never pauses or holds it. Joe's music plays under it.
 //   - A black can with his teal, a red-and-blue hibiscus wrap (Waianae,
 //     Hawaii) and the MAXX logo, slammed down, cracked open: PSSHT.
 //   - Max grabs it, chugs it (GLUG GLUG GLUG), smashes the empty can on his
@@ -24,9 +25,9 @@ var MAXX_TEAL = "#16c2b0", MAXX_RED = "#e3173d", MAXX_BLUE = "#1a4fd6";
 var maxxShow = 0, maxxId = 0, maxxDone = false, maxxOut = null, maxxMusicSrc = null;
 
 function resetMaxxAd() { maxxShow = 0; maxxDone = false; stopMaxxSound(); }
-// From endMiddle (holloway.js): his special just ended. Not when it
-// finished the fight.
-function maxxOnMiddle(b, other) {
+// From runFlashback (holloway.js): the cutscene just ended, Button Mash is
+// about to start. Not if the fight's over.
+function maxxOnFlashback(b, other) {
   if (maxxDone || (typeof galleryDemo !== "undefined" && galleryDemo)) return;
   if (!b.alive || !other || !other.alive || other.koOut) return;
   maxxDone = true;

@@ -389,6 +389,7 @@ function runFlashback(self, other, a, cfg, dt) {
   else if (a.phase === "tv" && a.t >= fb.tv) { a.phase = "back"; a.t = 0; playHwFlashOut(); }
   else if (a.phase === "back" && a.t >= fb.back) {
     endHwAct(self, other);
+    maxxOnFlashback(self, other); // his Maxx Energy ad on the jumbotron, first flashback only (maxx-energy-ad.js)
     if (cfg.mash) startMash(self);
     return false;
   }
@@ -724,7 +725,6 @@ function endMiddle(self, other) {
   if (hwClockFx && hwClockFx.id === self.id && !hwClockFx.out) hwClockFx.out = 0.001;
   if (self.alive) setSpeed(self, self.baseSpeed || SPEED);
   if (other && other.alive && !other.koOut && inOrdinaryMovement(other) && Math.abs(other.vx) + Math.abs(other.vy) < 1) setSpeed(other, other.baseSpeed || SPEED);
-  maxxOnMiddle(self, other); // his Maxx Energy ad on the jumbotron, first time only (maxx-energy-ad.js)
 }
 
 // From conor.js when one of Conor's lines would make him angry: `chance`% of
