@@ -502,6 +502,7 @@ function draw() {
   swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
   tossScreenZoom(ox, oy, s); // the camera punching in on a takedown landing (toss.js)
   deathScreenZoom(ox, oy, s); // the camera riding in on a K.O. flight (death.js)
+  drawTaleTape(); // the tale of the tape before the whistle, which then starts the fight (tale-tape.js)
   drawIntroMsg(s, ox, oy); // the instruction to the viewer at the start (intro-msg.js)
   drawSendLocSpace(); // cut up to the space station while the fight holds (send-location.js)
 }
