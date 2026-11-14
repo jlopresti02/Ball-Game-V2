@@ -74,6 +74,7 @@ function makeBall(id, ch) {
   initFedor(b); // Fedor Emelianenko's throw, his calm and his lines (fedor.js)
   initBisping(b); // Michael Bisping's footwork, scorecard and voice lines (bisping.js)
   initAnderson(b); // Anderson Silva's weave, front kick and triangle (anderson.js)
+  initCormier(b); // Daniel Cormier's double leg, his own copy for the growing belly (cormier.js)
   return b;
 }
 
@@ -122,6 +123,7 @@ function startMatchSeeded(ch0, ch1) {
   resetFedor(); // Fedor Emelianenko's mantra (fedor.js)
   resetBisping(); // Michael Bisping's cannonballs and smoke (bisping.js)
   resetAnderson(); // Anderson Silva's code rain and bullet time (anderson.js)
+  resetCormier(); // the dents and SUPER SLAM! from Daniel Cormier's slams (cormier.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetTaleTape(); // the tale of the tape intro (tale-tape.js)
   resetEagleStrikes();
@@ -364,6 +366,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= fergusonDamageMult(b, source, attackerId); // Tony Ferguson's chin, and his Kaioken (ferguson.js)
   amount *= fedorDamageMult(b, source, attackerId); // Fedor Emelianenko's chin (fedor.js)
   amount *= andersonDamageMult(b, source, attackerId); // Anderson Silva's crits in a late comeback (anderson.js)
+  amount *= cormierDamageMult(b, source, attackerId); // Daniel Cormier full of cake, and harder on Jon Jones (cormier.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

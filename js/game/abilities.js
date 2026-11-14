@@ -203,6 +203,7 @@ function updateAbilities(dt) {
     if (updateFedor(self, other, dt)) continue; // Fedor Emelianenko's Sambo throw (fedor.js)
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
     if (updateAnderson(self, other, dt)) continue; // Anderson Silva's front kick, hands down, counter, triangle off ground and pound (anderson.js)
+    if (updateCormier(self, other, dt)) continue; // Daniel Cormier's double leg and super slam (cormier.js)
     if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }

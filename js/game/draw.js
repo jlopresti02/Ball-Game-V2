@@ -112,6 +112,7 @@ function draw() {
   drawFergusonUnder(); // Tony Ferguson's slide afterimages (ferguson.js)
   drawBispingUnder(); // Michael Bisping's cannon and its red aim line (bisping.js)
   drawAndersonUnder(); // Anderson Silva's weave ghosts, the front kick's yellow line and his shadow (anderson.js)
+  drawCormierUnder(); // Daniel Cormier's double-leg lane and the dents his super slams leave (cormier.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -148,6 +149,7 @@ function draw() {
     var rbo = rainbowOffset(b); wox += rbo.x; woy += rbo.y; // leaning over the pot of gold (rainbow-beam.js)
     var ngo = ngannouOffset(b); wox += ngo.x; woy += ngo.y; // up in the air for Ngannou's Smash (ngannou.js)
     var aso = andersonOffset(b); wox += aso.x; woy += aso.y; // Anderson Silva leaning back out of a shot, swaying with his hands down (anderson.js)
+    var dco = cormierOffset(b); wox += dco.x; woy += dco.y; // held up over Daniel Cormier's head, or him running with them (cormier.js)
     var homeX = b.x, homeY = b.y; // put back exactly after (adding and subtracting would drift: seed.js replays)
     b.x += wox; b.y += woy;
     drawDarkSideRise(b); // dark smoke swirling round Hokit as he suits up (hokit-darkside.js)
@@ -227,6 +229,7 @@ function draw() {
     applyKneePose(b); // pulled down into the clinch, crouching for and flying in with a flying knee (knees.js)
     applyComboPose(b); // turning his back for a spinning back elbow (combos.js)
     applyAndersonPose(b); // Anderson Silva bent back in a weave, crouched for and flying in with the front kick (anderson.js)
+    applyCormierPose(b); // Daniel Cormier dropping his level, carrying, chewing; whoever he's got lying across over his head (cormier.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -379,6 +382,7 @@ function draw() {
     drawFedor(b, other); // Fedor Emelianenko reaching for the clinch, speed lines off his fists, UNFAZED (fedor.js)
     drawBisping(b, other); // Michael Bisping's captain's hat and his hands at the cannon (bisping.js)
     drawAnderson(b); // Anderson Silva's hands down (anderson.js)
+    drawCormier(b, other); // Daniel Cormier's arms in the shot and the carry, the cake, his cake pips; whoever he's carrying kicking (cormier.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -443,6 +447,7 @@ function draw() {
   drawFedorOver(); // Fedor Emelianenko's arms locked round them in the clinch and the throw (fedor.js)
   drawBispingOver(); // Michael Bisping's clinch elbows, cannonballs, smoke and 10-9 cards (bisping.js)
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)
+  drawCormierOver(); // SUPER SLAM! (cormier.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

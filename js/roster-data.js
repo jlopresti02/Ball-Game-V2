@@ -1325,6 +1325,209 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-daniel-cormier",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "heavyweight",
+    "speedMult": 1.12,
+    "name": "Daniel Cormier",
+    "base": "Brawler",
+    "bio": "\"DC\". Olympic wrestler, two-division UFC champion, and a man who loves his food. A heavyweight with a big round belly who still rolls faster than the other big men. He mostly punches: heavy 20-damage hands every 0.75 seconds and jab-cross-hook combinations, plus a body lock that slams them into the cage (a quarter of them can't be stopped) and a suplex if he gets behind them. Every few seconds up close he drops his level while a red lane shows where he's going, then shoots a double leg. Sprawl on it or get out of the way; if it gets through he picks you up over his head, carries you to the middle of the cage while the crowd gets to its feet, and SUPER SLAMS you into the mat there. Special move: All About That Cake, after his 2015 video. When the bar fills he stops for a snack, a slice of chocolate cake or a fried chicken drumstick, wide open while he eats, then his belly gets bigger and he hits harder for the rest of the fight. Jon Jones is his rival: he hits Jon harder and shoots on him more.",
+    "color": "#b0703c",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#5a3826",
+      "build": "stocky",
+      "core": "solid",
+      "belly": 1,
+      "bodyHair": "none",
+      "hair": "bald",
+      "hairColor": "#141010",
+      "beard": "boxed",
+      "beardColor": "#1a1412",
+      "beardChin": 0.04,
+      "ears": "cauliflower",
+      "tattoos": {},
+      "shorts": "#151515",
+      "trim": "#c9a13b",
+      "shortsStyle": "stripe",
+      "gloves": "#151515",
+      "legPatch": false
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 20,
+      "cooldown": 0.75,
+      "speed": 0.26,
+      "size": 15,
+      "knockback": 160,
+      "reach": 40,
+      "koChance": 3
+    },
+    "hasKick": false,
+    "hasGrapple": true,
+    "grapple": {
+      "damage": 32,
+      "cooldown": 1.6,
+      "speed": 0.45,
+      "reach": 6,
+      "counterChance": 15,
+      "finSlamDamage": 20,
+      "finPunches": 3,
+      "finPunchDamage": 10,
+      "sprawlChance": 55,
+      "reattackChance": 70,
+      "vsGrapplerChance": 100,
+      "shotChance": 20,
+      "shotName": "BODY LOCK"
+    },
+    "hasSuplex": true,
+    "suplex": {
+      "chance": 35,
+      "damage": 45,
+      "cooldown": 4
+    },
+    "combos": {
+      "first": [
+        4,
+        6
+      ],
+      "every": [
+        5,
+        8
+      ],
+      "list": {
+        "jab-cross-hook": 3
+      }
+    },
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 10,
+    "cormier": {
+      "doubleLeg": {
+        "first": [
+          5,
+          9
+        ],
+        "every": [
+          11,
+          16
+        ],
+        "retry": [
+          4,
+          7
+        ],
+        "range": 170,
+        "tell": 0.5,
+        "readChance": 15,
+        "shootSpeed": 950,
+        "shootTime": 0.34,
+        "turn": 6,
+        "whiffStun": 0.5,
+        "sprawlScale": 0.45,
+        "minStuff": 8,
+        "carrySpeed": 320,
+        "minCarry": 0.9,
+        "crowd": 0.5,
+        "hoist": 0.35,
+        "damage": 62,
+        "downTime": 1.2
+      },
+      "bodyLock": {
+        "through": 25
+      },
+      "food": {
+        "menu": [
+          "cake",
+          "chicken",
+          "cake"
+        ],
+        "max": 3,
+        "eatTime": 1.5,
+        "bites": 3,
+        "damage": 1.17,
+        "take": 0.94,
+        "belly": 0.28,
+        "grow": 0.035
+      },
+      "vsJon": {
+        "damage": 1.12,
+        "every": [
+          9,
+          14
+        ]
+      },
+      "lines": {
+        "start": [
+          "Good thing about our job is we get to punch each other in the face. So I'm gonna keep talking, and it's his job to shut me up."
+        ],
+        "food": [
+          "I'm all about that cake, 'bout that cake, and chicken!"
+        ],
+        "slam": [
+          "Take a seat right here, champ.",
+          "Sit down, young man. Sit down."
+        ],
+        "clinch": [
+          "I know nobody can wrestle me."
+        ],
+        "taunt": [
+          "You can't beat me, you know it. Don't lie to yourself.",
+          "I could give two [BLEEP] about his feelings, you know."
+        ],
+        "win": [
+          "This is my octagon. I'm the man."
+        ],
+        "winVsJon": [
+          "Two belts, one on each shoulder, baby!"
+        ],
+        "vsJon": [
+          "I wish they would let me next door so I could spit in your [BLEEP] face.",
+          "Then you should try, Jon. You really should try, Jon."
+        ]
+      },
+      "lineTiming": {
+        "slamChance": 60,
+        "clinchChance": 40,
+        "tauntEvery": [
+          12,
+          20
+        ],
+        "tauntChance": 60,
+        "gap": 8,
+        "jonFirst": [
+          8,
+          14
+        ],
+        "jonGap": [
+          12,
+          18
+        ],
+        "wait": 8
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "cake",
+      "chargeTime": 32,
+      "hitCut": 2.5,
+      "punchCut": 1.2
+    }
+  },
+  {
     "id": "c-demetrious-johnson",
     "rev": 2,
     "builtin": false,

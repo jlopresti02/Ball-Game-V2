@@ -29,6 +29,7 @@ function inOrdinaryMovement(b) {
   if (fedorBusy(b)) return false; // Fedor Emelianenko reaching for the clinch or throwing (fedor.js)
   if (kneesBusy(b)) return false; // in the clinch, or crouching for, flying in with or landing off a flying knee (knees.js)
   if (andersonBusy(b)) return false; // Anderson Silva's front kick, or his hands down (anderson.js)
+  if (cormierBusy(b)) return false; // Daniel Cormier dropping his level for the double leg, or shooting it (cormier.js)
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
   return true;

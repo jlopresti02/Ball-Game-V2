@@ -187,6 +187,7 @@ function attemptGrab(attacker, target) {
     return false;
   }
   if (gspDoubleLeg(attacker, target)) return true; // GSP's elite double leg goes straight through (gsp.js)
+  if (cormierBodyLock(attacker, target)) return true; // Daniel Cormier's body lock: some go straight through (cormier.js)
   if (grabEscaped(attacker, target)) return false;
   if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
   if (cheaterFenceGrab(attacker, target)) return false; // cheating: grabs the cage (cheater.js); suplexes still land

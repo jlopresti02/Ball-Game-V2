@@ -139,6 +139,7 @@ function drawHands(b, other) {
   if (fedorHandsBusy(b)) return; // reaching for the clinch, arms round them in the throw (drawFedor, fedor.js)
   if (bispingHandsBusy(b)) return; // the linstock and pointing at them in Broadside (drawBisping, bisping.js)
   if (andersonHandsBusy(b)) return; // hands down by his sides (drawAnderson, anderson.js)
+  if (cormierHandsBusy(b)) return; // the double leg, the carry, the cake, and whoever he's carrying (drawCormier, cormier.js)
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)

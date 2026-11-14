@@ -69,6 +69,7 @@ function update(dt) {
   tickFerguson(dt); // Tony Ferguson's Kaioken, won't-tap, lines, stamps, Burrito Bell (ferguson.js)
   tickFedor(dt); // Fedor Emelianenko's hands, his calm, his ground and pound and armbar, the mantra (fedor.js)
   tickBisping(dt); // Michael Bisping's clinch elbows, footwork, scorecard, lines and cannonballs (bisping.js)
+  tickCormier(dt); // Daniel Cormier's belly, lines, the dents in the mat (cormier.js)
   tickElbows(dt); // cuts from elbows bleeding (elbows.js)
   tickKnees(dt); // knees landing, the clinch and flying knee let go if something else takes over, a flying-knee knockout (knees.js)
   tickCombos(dt); // a combination cut short if something else takes over (combos.js)
