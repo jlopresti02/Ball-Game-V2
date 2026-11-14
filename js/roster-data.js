@@ -2091,7 +2091,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-josh-hokit",
-    "rev": 14,
+    "rev": 15,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Josh Hokit",
@@ -2171,7 +2171,8 @@ var SAVED_ROSTER = [
     "hasThumbsDown": true,
     "thumbsDown": {
       "cooldown": 8,
-      "anger": 3
+      "anger": 3,
+      "openTaunt": true
     },
     "hasSpecial": true,
     "helmetCharge": {
