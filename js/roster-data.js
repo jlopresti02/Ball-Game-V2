@@ -2925,6 +2925,235 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-michael-bisping",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "middleweight",
+    "name": "Michael Bisping",
+    "base": "Brawler",
+    "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. His special is Broadside: a pirate cannon rolls in at his side with a Union Jack flying behind it, he puts on a captain's hat, lights the fuse and fires cannonballs down a red line at them.",
+    "color": "#b3202a",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#e8b39a",
+      "build": "lean",
+      "bodyHair": "light",
+      "hair": "short",
+      "hairColor": "#2e2119",
+      "beard": "short",
+      "beardColor": "#2e2119",
+      "ears": "normal",
+      "tattoos": {},
+      "eyePatch": "right",
+      "shorts": "#161618",
+      "trim": "#b3202a",
+      "shortsStyle": "jollyroger",
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 14,
+      "cooldown": 0.5,
+      "speed": 0.18,
+      "size": 13,
+      "knockback": 120,
+      "reach": 40,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 26,
+      "cooldown": 2.0,
+      "speed": 0.36,
+      "size": 14,
+      "knockback": 220,
+      "reach": 64,
+      "checkChance": 25
+    },
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 15,
+    "tdd": {
+      "sprawlChance": 75
+    },
+    "knee": {
+      "clinch": {
+        "first": [
+          3,
+          5
+        ],
+        "every": [
+          5,
+          8
+        ],
+        "range": 16,
+        "knees": [
+          2,
+          4
+        ],
+        "damage": 10,
+        "gap": 0.66,
+        "escape": 12,
+        "grapplerEscape": 10,
+        "knockback": 380
+      }
+    },
+    "combos": {
+      "first": [
+        4,
+        6
+      ],
+      "every": [
+        6,
+        9
+      ],
+      "list": {
+        "one-two-kick": 3,
+        "jab-cross-hook": 2,
+        "punch-clinch": 1
+      }
+    },
+    "bisping": {
+      "footwork": {
+        "out": 0.2,
+        "angle": 1.2,
+        "press": 60,
+        "circle": 0.8,
+        "rate": 4.2,
+        "switch": [
+          1.5,
+          3.5
+        ]
+      },
+      "scorecard": {
+        "every": 10,
+        "max": 6
+      },
+      "clinch": {
+        "elbows": true,
+        "damage": 9,
+        "speed": 0.24,
+        "critChance": 35,
+        "critMult": 2.5,
+        "cut": {
+          "chance": 40,
+          "time": 4,
+          "dps": 2
+        }
+      },
+      "punish": {
+        "chance": 100,
+        "knees": [
+          2,
+          3
+        ]
+      },
+      "kickDodge": {
+        "chance": 40,
+        "speed": 520,
+        "time": 0.22,
+        "back": 0.35
+      },
+      "kickAngle": {
+        "chance": 100,
+        "speed": 400,
+        "time": 0.2,
+        "fwd": 0.45
+      },
+      "lines": {
+        "start": [
+          "I started fighting when I came out of my mother, really.",
+          "I'm fighting myself in this fight."
+        ],
+        "mirror": [
+          "I'm fighting myself in this fight."
+        ],
+        "startAt": [
+          1,
+          2.5
+        ],
+        "taunt": [
+          "I think I'm a nice guy. I go through life, I'm respectful to people, I never trash talk, and everybody wants to fight me."
+        ],
+        "tauntEvery": [
+          16,
+          26
+        ],
+        "tauntMax": 2,
+        "takedown": [
+          "I can't wrestle too well, but I can stop takedowns."
+        ],
+        "takedownChance": 70,
+        "clinch": [
+          "If the guy's holding you down and he won't let you move, just, just fire away with elbows.",
+          "I'm going to bring my knee up and knee him in the face."
+        ],
+        "clinchChance": 45,
+        "combo": [
+          "Very basic stuff done to a high level is what wins fights."
+        ],
+        "comboChance": 70,
+        "blind": [
+          "I can't look two places at once, guys."
+        ],
+        "blindChance": 10,
+        "missChance": 4,
+        "cannonMissChance": 60,
+        "blindMax": 1,
+        "knockdown": [
+          "I've always said I had knockout power, for God's sake. Nobody believed it."
+        ],
+        "knockdownChance": 100,
+        "win": [
+          "Everybody, everybody that doubted me, kiss my [BLEEP]."
+        ],
+        "loss": [
+          "It's back to the drawing board. I'm going nowhere, don't you forget it."
+        ],
+        "vs": {
+          "c-anderson-silva": {
+            "once": [
+              "I worship this guy. This guy is the greatest martial artist of all time."
+            ]
+          }
+        },
+        "gap": 6
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "broadside",
+      "chargeTime": 45,
+      "hitCut": 2,
+      "punchCut": 0.5,
+      "roll": 0.45,
+      "aim": 0.9,
+      "reaim": 0.5,
+      "lock": 0.3,
+      "shots": 3,
+      "gap": 0.45,
+      "hold": 0.5,
+      "speed": 900,
+      "size": 9,
+      "damage": 20,
+      "knockback": 520
+    }
+  },
+  {
     "id": "c-nate-diaz",
     "rev": 1,
     "builtin": false,

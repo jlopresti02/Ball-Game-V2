@@ -72,6 +72,7 @@ function makeBall(id, ch) {
   initDiaz(b); // Nate Diaz's slap, sub hunt, chin and Stockton surge (diaz.js)
   initFerguson(b); // Tony Ferguson's slide, shell, Kaioken and lines (ferguson.js)
   initFedor(b); // Fedor Emelianenko's throw, his calm and his lines (fedor.js)
+  initBisping(b); // Michael Bisping's footwork, scorecard and voice lines (bisping.js)
   return b;
 }
 
@@ -118,6 +119,7 @@ function startMatchSeeded(ch0, ch1) {
   resetDiaz(); // Nick Diaz and his banner (diaz.js)
   resetFerguson(); // Tony Ferguson's stamps, afterimages, the Burrito Bell ad (ferguson.js)
   resetFedor(); // Fedor Emelianenko's mantra (fedor.js)
+  resetBisping(); // Michael Bisping's cannonballs and smoke (bisping.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetTaleTape(); // the tale of the tape intro (tale-tape.js)
   resetEagleStrikes();
@@ -289,6 +291,7 @@ function hurt(b, amount, source, attackerId) {
   if (hollowayDodge(b, source, attackerId)) return 0; // Max Holloway slipping shots at the booth (holloway.js)
   if (stricklandShell(b, source, attackerId)) return 0; // Sean Strickland rolling it off his shoulder (strickland.js)
   if (fergusonDodge(b, source, attackerId)) return 0; // Tony Ferguson slipping it on his slide, or it clanks off his turtle shell (ferguson.js)
+  if (bispingDodge(b, source, attackerId)) return 0; // Michael Bisping stepping off to the side of a kick (bisping.js)
   // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
   if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.

@@ -110,6 +110,7 @@ function draw() {
   drawConorUnder(); // Conor McGregor's bus lane and the dolly's aim line (conor.js)
   drawStricklandUnder(); // the flag on the mat, Strickland's bike lane, the bike and the wreck (strickland.js)
   drawFergusonUnder(); // Tony Ferguson's slide afterimages (ferguson.js)
+  drawBispingUnder(); // Michael Bisping's cannon and its red aim line (bisping.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
   // A fighter running its special move is drawn on top (e.g. mounted for
@@ -373,6 +374,7 @@ function draw() {
     drawElbow(b, other); // an elbow being thrown, and a cut bleeding (elbows.js)
     drawFerguson(b, other); // Tony Ferguson's slide, shot, shell, Kaioken glow and katanas (ferguson.js)
     drawFedor(b, other); // Fedor Emelianenko reaching for the clinch, speed lines off his fists, UNFAZED (fedor.js)
+    drawBisping(b, other); // Michael Bisping's captain's hat and his hands at the cannon (bisping.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
     drawKameHands(b); // and his hands and the ball of energy for the Kamehameha (kamehameha.js)
@@ -435,6 +437,7 @@ function draw() {
   drawFergusonOver(); // Tony Ferguson's holds and tug-of-war bar, the Kaioken flash, the CANCELLED stamps (ferguson.js)
   drawKneesOver(); // knees coming up, the clinch, the flying knee and its red line (knees.js)
   drawFedorOver(); // Fedor Emelianenko's arms locked round them in the clinch and the throw (fedor.js)
+  drawBispingOver(); // Michael Bisping's clinch elbows, cannonballs, smoke and 10-9 cards (bisping.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

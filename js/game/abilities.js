@@ -11,6 +11,7 @@
 var CHECK_TIME = 0.22; // the shin stays up this long before the kick back
 
 function canCheck(b) {
+  if (bispingSideStepping(b)) return false; // Michael Bisping stepping out of it instead (bisping.js)
   return (b.char.hasKick || b.char.kickCheck > 0) && b.alive && !b.checkAnim && !(b.kick && b.kick.counter) && !b.grappled && !b.grapple && !b.slam &&
     !b.combo && !b.taunt && !b.flow && !b.sprawl && !b.sprawled && !b.invincible;
 }
