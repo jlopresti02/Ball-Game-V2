@@ -27,7 +27,7 @@ function armColor(ch, side) {
   if (side && tat.armInkSide && side !== (tat.armInkSide === "left" ? -1 : 1)) return ch.look.skin;
   return sleevePattern(ch.look);
 }
-function gloveColor(ch) { return icedGloveColor(ch) || (ch.look ? ch.look.gloves : ch.color); } // frosted by Chuck Liddell, or his blue flare (liddell.js)
+function gloveColor(ch) { return icedGloveColor(ch) || (typeof gear5GloveColor === "function" && gear5GloveColor(ch)) || (ch.look ? ch.look.gloves : ch.color); } // frosted by Chuck Liddell, or his blue flare (liddell.js); white in Carlos Prates's Gear 5 (prates-gear5.js)
 
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
 // Blend hex colour a toward b by t (0..1)
@@ -1836,7 +1836,7 @@ function sleevePattern(look) {
 function drawGlove(c, x, y, gr, look, ink, ang) {
   c.save();
   c.translate(x, y); c.rotate(ang);
-  var col = look.gloves;
+  var col = (typeof gear5LookGloves === "function" && gear5LookGloves(look)) || look.gloves; // white in Carlos Prates's Gear 5 (prates-gear5.js)
   // Wrist and forearm stub in skin
   c.fillStyle = look.skin; c.strokeStyle = ink; c.lineWidth = Math.max(1.5, gr * 0.2);
   c.beginPath(); c.ellipse(-gr * 0.95, 0, gr * 0.45, gr * 0.42, 0, 0, Math.PI * 2); c.fill(); c.stroke();

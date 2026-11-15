@@ -613,7 +613,7 @@ function prMissed(b, atk) {
   playPrMiss();
   if (sm.phase !== "party" || !atk || atk === b) return;
   // Super Saiyan: he's already somewhere else, and he's coming back.
-  if (prGhosts.length < 8 && !reduceMotion) prGhosts.push({ x: b.x, y: b.y, r: b.r, t: 0, dur: 0.35 });
+  if (prGhosts.length < 8 && !reduceMotion) prGhosts.push({ x: b.x, y: b.y, r: b.r, t: 0, dur: 0.35, white: prGear5On(b) });
   var co = sp.counter;
   if (co && b.pr.ccCd <= 0) { b.pr.cc = { t: co.window || 0.9, on: atk.id }; b.pr.ccCd = co.cd || 0.35; }
 }
@@ -877,13 +877,13 @@ function prStartParty(b, other, sp) {
   b.baseSpeed = (b.baseSpeed || SPEED) * (sp.speed || 1);
   b.atkRate = (b.atkRate || 1) * (sp.attack || 1);
   if (b.char.combos && sp.comboEvery) b.cmbT = Math.min(b.cmbT != null ? b.cmbT : 9, 0.3);
-  floater(b.x, b.y - b.r - 44, "SUPER SAIYAN!", "crit");
+  if (prGear5On(b)) prGear5Burst(b); else floater(b.x, b.y - b.r - 44, "SUPER SAIYAN!", "crit"); // "GEAR 5!" and a white burst (prates-gear5.js)
   prLights.want = 1;
   if (sp.music !== false && !prMusic) prMusicStart(sp.musicLevel || 0.22, sp.song);
   playPartyBurst();
   crowdReact(0.8);
-  impacts.push({ x: b.x, y: b.y + b.r, nx: 0, ny: -1, life: 0.45, max: 0.45, color: "#ffd21f" });
-  for (var i = 0; i < 18; i++) {
+  impacts.push({ x: b.x, y: b.y + b.r, nx: 0, ny: -1, life: 0.45, max: 0.45, color: prGear5On(b) ? "#ffffff" : "#ffd21f" });
+  for (var i = 0; i < (prGear5On(b) ? 0 : 18); i++) {
     var a = Math.random() * Math.PI * 2, v = 160 + Math.random() * 220;
     particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5, max: 0.5, size: 2.5 + Math.random() * 3, color: i % 2 ? "#ffd21f" : "#fff6b0" });
   }
@@ -1102,6 +1102,7 @@ function prAuraK(b) {
 
 // From draw.js, behind him: the gold aura and its party sparkles.
 function drawPratesBehind(b) {
+  if (prGear5On(b)) { drawPratesGear5Behind(b); return; } // Gear 5: the smoke off his cigarette instead of the gold aura (prates-gear5.js)
   var k = prAuraK(b);
   if (k <= 0) return;
   var p = prPose(b), r = b.r * p.tall, t = performance.now() / 1000, pulse = 0.5 + 0.5 * Math.sin(t * 14), cy = b.y + p.bob;
@@ -1148,7 +1149,8 @@ function drawPrates(b, other) {
   if (!b.pr || !b.alive) return;
   var sm = b.pr.smoke, p = prPose(b);
   var ak = prAuraK(b);
-  if (ak > 0 && sm && (sm.phase === "party" || sm.phase === "out")) drawPrSpikes(b, p, ak);
+  if (prGear5On(b)) drawPratesGear5Front(b); // Gear 5: white curly hair, the smoke leaving the tip, the poof (prates-gear5.js)
+  else if (ak > 0 && sm && (sm.phase === "party" || sm.phase === "out")) drawPrSpikes(b, p, ak);
   if (sm && sm.phase === "light") drawPrLighting(b, sm);
   else if (sm && (sm.phase === "smoke" || sm.phase === "party")) drawPrCig(b, sm.glow);
   else if (!sm && prCigLook(b) && !(b.pr.freshT > 0)) drawPrCig(b, 0.05, 0.85); // the one he keeps in all fight, barely burning
@@ -1346,7 +1348,7 @@ function drawPratesUnder() {
     var k = g.t / g.dur;
     ctx.save();
     ctx.globalAlpha = 0.5 * (1 - k);
-    ctx.fillStyle = "rgba(255,214,40,0.35)"; ctx.strokeStyle = "#ffcc00"; ctx.lineWidth = 3;
+    ctx.fillStyle = g.white ? "rgba(255,255,255,0.4)" : "rgba(255,214,40,0.35)"; ctx.strokeStyle = g.white ? "#e6e8ec" : "#ffcc00"; ctx.lineWidth = 3; // white in Gear 5
     ctx.beginPath(); ctx.arc(g.x, g.y, g.r * (1 + 0.15 * k), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.restore();
   });
@@ -1459,7 +1461,7 @@ function pratesCigaretteInfo(sp) {
   var co = sp.counter || {};
   return "Not before " + sp.notBefore + "s. He stops and the cigarette comes out: the lighter, the flick, the flame, a long drag (" + secs(sp.light) +
     "). From that moment NOTHING touches him: every strike, shot, grab and thrown thing misses (\"CAN'T TOUCH HIM!\") and nothing new can start on him. " +
-    "The party music kicks in and he smokes to it for " + secs(sp.smoke) + ". Then SUPER SAIYAN: a gold aura, gold hair, and for " + secs(sp.party) +
+    "The party music kicks in and he smokes to it for " + secs(sp.smoke) + (sp.gear5 ? ", the smoke pouring off the tip and wrapping round him. Then POOF, GEAR 5: white curly hair, a white kit, clouds flowing round him off the cigarette, and for " : ". Then SUPER SAIYAN: a gold aura, gold hair, and for ") + secs(sp.party) +
     " everyone still misses him while he fights " + Math.round(((sp.speed || 1) - 1) * 100) + "% faster and " + Math.round(((sp.damage || 1) - 1) * 100) +
     "% harder, throwing combinations back to back. " + (sp.critChance || 0) + "% of his punches and kicks crit for " + (sp.critMult || 2) +
     "x, and every miss on him sets up a counter that crits for " + (co.mult || 2.2) + "x. Then he blows out the smoke and flicks the butt onto the mat.";

@@ -1049,6 +1049,7 @@ var SAVED_ROSTER = [
         1.6
       ],
       "out": 0.7,
+      "gear5": true,
       "missFloat": 3,
       "music": true,
       "song": true,
