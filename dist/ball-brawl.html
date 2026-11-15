@@ -1348,12 +1348,49 @@ var SOUND_CLIPS = {
 var audioCtx = null;
 var echoBus = null;
 var lastBounceSound = 0;
+// Master bus (Joe, 2026-11-15: "bass boosted ear rape"). With so many
+// fighters, moves and ads now playing their own sounds straight to the
+// speakers, the mix piled up past full scale and clipped, which a phone
+// speaker turns into a distorted, boomy roar. Everything that connects to
+// the speakers now goes through one bus instead: the sub-bass rumble under
+// 35 Hz (that a phone can't play, only distort on) is cut, the whole mix is
+// trimmed a little, and a fast limiter with a soft ceiling catches the peaks
+// so it never clips.
+// Nothing else changes: each sound keeps its own level against the others.
+var MASTER_TRIM = 0.7, masterIn = null;
+function installMasterBus(ctx) {
+  try {
+    var real = ctx.destination;
+    var hp = ctx.createBiquadFilter();
+    hp.type = "highpass"; hp.frequency.value = 35; hp.Q.value = 0.7;
+    var trim = ctx.createGain(); trim.gain.value = MASTER_TRIM;
+    var lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -10; lim.knee.value = 4; lim.ratio.value = 20;
+    lim.attack.value = 0.001; lim.release.value = 0.15;
+    // and a soft ceiling after it for anything still too fast for the limiter
+    var soft = ctx.createWaveShaper(), curve = new Float32Array(2049);
+    for (var i = 0; i < curve.length; i++) { var x = i / 1024 - 1, ax = Math.abs(x); curve[i] = ax < 0.7 ? x : Math.sign(x) * (0.7 + 0.25 * Math.tanh((ax - 0.7) / 0.25)); }
+    soft.curve = curve;
+    var connect = AudioNode.prototype.connect;
+    connect.call(hp, trim); connect.call(trim, lim); connect.call(lim, soft); connect.call(soft, real);
+    masterIn = hp;
+    AudioNode.prototype.connect = function (dest) {
+      if (dest === real && this !== soft) {
+        var args = Array.prototype.slice.call(arguments); args[0] = hp;
+        return connect.apply(this, args);
+      }
+      return connect.apply(this, arguments);
+    };
+  } catch (e) { /* without it the sound still plays, just unprotected */ }
+}
+
 function getAudioCtx() {
   if (audioCtx) return audioCtx;
   var Ctor = window.AudioContext || window.webkitAudioContext;
   if (!Ctor) return null;
   try {
     audioCtx = new Ctor();
+    installMasterBus(audioCtx);
     // A brief, low-feedback echo every ding feeds into, for a touch of
     // sparkle without a ringing, musical tail.
     var delay = audioCtx.createDelay();
@@ -78267,17 +78304,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115034606"></script>
-  <script src="js/game/tale-tape.js?v=20261115034606"></script>
-<script src="js/game/watchdog.js?v=20261115034606"></script>
-<script src="js/game/update.js?v=20261115034606"></script>
-<script src="js/game/fighter-art.js?v=20261115034606"></script>
-<script src="js/game/draw-attacks.js?v=20261115034606"></script>
-<script src="js/game/wwit-badge.js?v=20261115034606"></script>
-<script src="js/game/stadium.js?v=20261115034606"></script>
-<script src="js/game/draw.js?v=20261115034606"></script>
-<script src="js/ui/gallery.js?v=20261115034606"></script>
-<script src="js/ui/saved-fights.js?v=20261115034606"></script>
-<script src="js/main.js?v=20261115034606"></script>
+  <script src="js/game/intro-msg.js?v=20261115090012"></script>
+  <script src="js/game/tale-tape.js?v=20261115090012"></script>
+<script src="js/game/watchdog.js?v=20261115090012"></script>
+<script src="js/game/update.js?v=20261115090012"></script>
+<script src="js/game/fighter-art.js?v=20261115090012"></script>
+<script src="js/game/draw-attacks.js?v=20261115090012"></script>
+<script src="js/game/wwit-badge.js?v=20261115090012"></script>
+<script src="js/game/stadium.js?v=20261115090012"></script>
+<script src="js/game/draw.js?v=20261115090012"></script>
+<script src="js/ui/gallery.js?v=20261115090012"></script>
+<script src="js/ui/saved-fights.js?v=20261115090012"></script>
+<script src="js/main.js?v=20261115090012"></script>
 </body>
 </html>
