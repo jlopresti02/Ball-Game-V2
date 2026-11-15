@@ -43,7 +43,7 @@ function makeBall(id, ch) {
     combo: null, taunt: null, weaveAnim: null, knockFly: 0, justDodged: false, slamSafe: 0, specialT: 0, igbb: null, beamPin: null, shelled: false,
     koRush: null, koPunch: null, shocked: false, koOut: false, koDuel: false,
     guillo: null, choked: false, guilloCd: 0, rnc: null, suplex: null, suplexCd: 0, guard: null, guardCd: 0, doBronx: null, dazed: false, cheater: null, chAct: null, fenceGrab: null,
-    hokitShot: null, shotRollCd: 0, mock: null, mockCd: (ch.thumbsDown ? ch.thumbsDown.cooldown : 8) * stagger(), angry: null
+    hokitShot: null, shotRollCd: 0, mock: null, mockCd: openingMockCd(ch, (ch.thumbsDown ? ch.thumbsDown.cooldown : 8) * stagger()), angry: null // Hokit's thumbs down at the whistle (hokit.js)
   };
   applyWeight(b); // size, speed and attack speed for its weight class (weight.js)
   initJon(b);

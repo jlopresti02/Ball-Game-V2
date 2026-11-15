@@ -2086,9 +2086,9 @@ function playSendLocation(moment) {
       withClip("dsMusic", function () {
         var b = clipBuffers.dsMusic; if (!b) return;
         var src = ctx.createBufferSource(), g = ctx.createGain();
-        src.buffer = b; g.gain.value = 0.6; src.connect(g); g.connect(ctx.destination); src.start();
-        src.onended = function () { if (dsMusicSrc && dsMusicSrc.src === src) { dsMusicSrc = null; releaseMusic(); } };
-        dsMusicSrc = { src: src, gain: g };
+        var at = ctx.currentTime;
+        src.buffer = b; g.gain.value = 0.6; src.connect(g); g.connect(ctx.destination); src.start(at);
+        dsMusicSrc = { src: src, gain: g, end: at + b.duration }; // tickDsMusic brings the fight music back at `end`
       });
       return;
     }
@@ -2096,12 +2096,13 @@ function playSendLocation(moment) {
       stopSendLocationCharge();
       var cn = ds ? "dsCharge" : "slCharge";
       withClip(cn, function () { slChargeSrc = playClip(cn, ds ? 1.0 : 0.9); });
+      if (ds) quietSaberHum(true); // no saber hum up in space (hokit-darkside.js)
       var c = crowd; // the arena goes quiet while we're up in orbit
       if (c && c.gain) { c.duckUntil = now + (ds ? 6.3 : 4.0); c.gain.gain.cancelScheduledValues(now); c.gain.gain.setTargetAtTime(0.0001, now, 0.08); }
       synthWhoosh(ctx, ctx.destination, now);
       return;
     }
-    if (moment === "back") { stopSendLocationCharge(); synthWhoosh(ctx, ctx.destination, now); return; }
+    if (moment === "back") { stopSendLocationCharge(); synthWhoosh(ctx, ctx.destination, now); if (ds) quietSaberHum(false); return; }
     if (moment === "impact") { var inm = ds ? "dsImpact" : "slImpact"; withClip(inm, function () { playClip(inm, ds ? 0.9 : 0.75); }); crowdReact(1); return; }
     if (moment === "pull") { synthWhoosh(ctx, ctx.destination, now); return; }
     var o = ctx.createOscillator(), g = ctx.createGain();
@@ -2125,6 +2126,14 @@ function stopDsMusic(fade) {
   if (!dsMusicSrc) return;
   var m = dsMusicSrc; dsMusicSrc = null;
   try { var now = audioCtx.currentTime; m.gain.gain.cancelScheduledValues(now); m.gain.gain.setTargetAtTime(0.0001, now, (fade || 0.1) / 3); m.src.stop(now + (fade || 0.1) + 0.05); } catch (e) {}
+  releaseMusic();
+}
+// Every frame (from tickDarkSide): once the Death Star music has run out, the
+// fight music comes back. Checked on the clock rather than the clip's onended,
+// which doesn't always fire (a tab in the background, an offline render).
+function tickDsMusic() {
+  if (!dsMusicSrc || !audioCtx || audioCtx.currentTime < dsMusicSrc.end) return;
+  dsMusicSrc = null;
   releaseMusic();
 }
 function stopSendLocationCharge() {

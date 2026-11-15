@@ -69,10 +69,12 @@ function updateRainbow(self, other, dt) {
   if (m.phase === "summon") {
     if (other.alive) rbAim(self, other);
     if (m.pair) bcSlide(self, other, dt);
+    else bcPair(self, other); // Charles couldn't answer yet: keep asking (beam-clash.js)
     if (m.t >= RB_SUMMON) { m.phase = "charge"; m.t = 0; playRainbowCharge(m.charge); }
     return true;
   }
   if (m.phase === "charge") {
+    if (!m.pair) bcPair(self, other); // Charles couldn't answer yet: keep asking (beam-clash.js)
     if ((m.t < m.charge - rbLock(self) || m.pair) && other.alive) rbAim(self, other); // (when it locks: conor-rainbow-aim.js)
     var call = Math.floor(m.t / (m.charge / (RB_CALLS.length + 0.4)));
     if (call >= m.calls && m.calls < RB_CALLS.length) {

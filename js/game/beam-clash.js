@@ -58,12 +58,19 @@ function bcKind(b) {
 // this fight, they answer with it, timed to go off together.
 function bcPair(self, other) {
   var mine = bcKind(self);
-  if (!mine || !other.alive || over) return;
+  if (!mine || !other.alive || over || self.igbb.pair) return;
   var theirs = null;
   for (var k in BEAMS) if (k !== mine && BEAMS[k].has(other)) theirs = k;
   if (!theirs || !BEAMS[theirs].ready(other)) return;
+  // Joe (2026-11-15): every beam gets answered. Called again every frame
+  // while it powers up and charges (kamehameha.js, rainbow-beam.js), so if
+  // they were busy when it started (Do Bronx pose, dazed, mid grab) they
+  // answer the moment they're free, timed to the time left on this one.
+  var m0 = self.igbb, powering = m0.phase === "power" || m0.phase === "summon";
+  var fireIn = powering ? BEAMS[mine].prep() - m0.t + m0.charge : m0.charge - m0.t;
+  if (m0.phase !== "power" && m0.phase !== "summon" && m0.phase !== "charge") return;
+  if (fireIn < 0.6) return; // too late to answer this one
   // (Conor drops whatever he was saying; conor.js lets go of a taunt or a counter mid igbb.)
-  var fireIn = BEAMS[mine].prep() + self.igbb.charge;
   var charge = Math.max(1, fireIn - BEAMS[theirs].prep());
   BEAMS[theirs].start(other, self, charge);
   if (!rainbowOn(other) && !kameOn(other)) return;

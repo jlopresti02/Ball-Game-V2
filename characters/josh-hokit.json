@@ -1,6 +1,6 @@
 {
   "id": "c-josh-hokit",
-  "rev": 17,
+  "rev": 18,
   "builtin": false,
   "weightClass": "heavyweight",
   "name": "Josh Hokit",
@@ -47,7 +47,7 @@
   "armbarShot": { "chance": 5 },
   "armbar": { "tapBase": 0, "tapLowHp": 0 },
   "hasThumbsDown": true,
-  "thumbsDown": { "cooldown": 8, "anger": 3 },
+  "thumbsDown": { "cooldown": 8, "anger": 3, "openTaunt": 1.5 },
   "tdd": { "sprawlChance": 85 },
   "smother": { "chance": 70 },
   "pressure": { "turn": 12, "speed": 1.15, "pocket": 18, "shotChance": 35, "shotWait": 2.5,

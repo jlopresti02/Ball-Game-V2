@@ -36,7 +36,7 @@ var forceWaves = [];    // the Force push rippling out
 var saberCuts = [];     // a red line where he cut through (his duel win)
 
 function resetDarkSide() {
-  saberLock = null; forceWaves = []; saberCuts = [];
+  saberLock = null; forceWaves = []; saberCuts = []; saberHumQuiet = false;
   stopSaberHum();
 }
 function dsRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
@@ -388,6 +388,8 @@ function forceHand(h, f) {
 // ---------------------------------------------------------------- the hum
 
 var saberHum = null;
+var saberHumQuiet = false; // muted while the Death Star cutscene is up (Joe: no hum in space)
+var SABER_HUM_LEVEL = 0.07;
 function startSaberHum() {
   try {
     if (saberHum) return;
@@ -395,7 +397,7 @@ function startSaberHum() {
     if (!ctx) return;
     var now = ctx.currentTime, out = ctx.createGain(), lp = ctx.createBiquadFilter();
     lp.type = "lowpass"; lp.frequency.value = 420; lp.Q.value = 2;
-    out.gain.setValueAtTime(0.0001, now); out.gain.exponentialRampToValueAtTime(0.07, now + 0.3);
+    out.gain.setValueAtTime(0.0001, now); if (!saberHumQuiet) out.gain.exponentialRampToValueAtTime(SABER_HUM_LEVEL, now + 0.3);
     lp.connect(out); out.connect(ctx.destination);
     var oscs = [[88, "sawtooth"], [90.5, "sawtooth"], [176, "triangle"]].map(function (p) {
       var o = ctx.createOscillator(); o.type = p[1]; o.frequency.value = p[0]; o.connect(lp); o.start(now); return o;
@@ -415,12 +417,24 @@ function stopSaberHum() {
   } catch (e) { /* */ }
   saberHum = null;
 }
+// The Death Star's space cut (send-location.js via audio.js): the hum drops
+// out as the cut starts and comes back when we're back in the ring.
+function quietSaberHum(on) {
+  saberHumQuiet = !!on;
+  if (!saberHum) return;
+  try {
+    var now = audioCtx.currentTime, g = saberHum.out.gain;
+    g.cancelScheduledValues(now);
+    g.setTargetAtTime(on ? 0.0001 : SABER_HUM_LEVEL, now, on ? 0.04 : 0.15);
+  } catch (e) { /* never let audio break the game */ }
+}
 // Every frame: no saber lit, no hum (match over, reset, knocked out).
 function tickDarkSide(dt) {
   forceWaves = forceWaves.filter(function (w) { w.t += dt; return w.t < w.max; });
   saberCuts = saberCuts.filter(function (c) { c.t += dt; return c.t < 0.9; });
   var lit = balls.some(function (b) { return b.alive && b.sith && b.cheater && b.cheater.saber; });
   if (!lit || over) stopSaberHum();
+  tickDsMusic(); // the Death Star music running out brings the fight music back (audio.js)
   if (saberLock && (!balls[saberLock.hId] || !balls[saberLock.hId].alive || !balls[saberLock.oId].alive)) saberLock = null;
 }
 

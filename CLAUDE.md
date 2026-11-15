@@ -80,6 +80,12 @@ Christian's Claude must not revert, undo or overwrite anything Joe (or Joe's Cla
 - **Tony Ferguson** (Joe, 2026-11-15): olive skin `#c49a6c`, black hair `#17130f`, dark stubble `#2a211a`, with his real arm tattoo and the higher headband (PR #92). Joe asked for this look; please don't switch him back to light skin or blonde hair. Ask Joe first if you think a look should change.
 - **Carlos Prates** (Joe, 2026-11-15): Joe's look from four photos (`prates-skin.js`, turned on by `look.pratesSkin` in characters/carlos-prates.json). His tattoos are mapped to the real body parts; arm ink shows only on his arms, the chest script only on his chest. Please leave his hair, face, tattoos and decals as they are and ask Joe first. His special's transformation is Joe's Gear 5 (`prates-gear5.js`): please don't switch it back to the gold Super Saiyan look, and keep the smoke coming off the tip of the cigarette.
 
+### Joe's calls on moves and sound (don't change these back)
+
+- **Beam clash every time** (Joe, 2026-11-15): whenever Charles fires his Kamehameha or Conor his rainbow beam, the other one answers and the beams clash, every time (`bcPair` in `beam-clash.js`, called from the charge phases in `kamehameha.js` and `rainbow-beam.js`; Charles can fire it during Do Bronx too). Please don't add conditions that skip the clash.
+- **Hokit's opening taunt** (Joe, 2026-11-15): Hokit throws his thumbs-down 1.5s into every fight (`thumbsDown.openTaunt` in characters/josh-hokit.json, `openingMockCd` in hokit.js).
+- **Death Star sound** (Joe, 2026-11-15): the epic music plays only on the Death Star, the match music comes back after it (`tickDsMusic` in audio.js), and the saber hum is silent during the space cutscene (`quietSaberHum`).
+
 ## Working in the same files
 
 - Every new fighter or move gets its own file in `js/game/`. Hooks into shared files (`match.js`, `abilities.js`, `update.js`, `physics.js`, `draw.js`, `draw-attacks.js`, `special.js`) stay one line each, with a comment naming the file they call into, the same way the existing ones do.
