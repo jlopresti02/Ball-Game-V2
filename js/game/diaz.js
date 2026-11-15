@@ -53,8 +53,9 @@
 //             `punch`, one flurry every `flurryEvery`, at most `maxDamage` in
 //             all). His shots slip and block like anything thrown, and he
 //             misses if they got out of `reach`. Nate keeps fighting.
-//             Then Nick hops back out. NICK DIAZ name tag, long hair, full
-//             beard, white shorts: he reads as Nick, not a second Nate.
+//             Then Nick hops back out. NICK DIAZ name tag, messy dark hair,
+//             fuller chin beard, chest hair, grey waistband and blue glove
+//             straps: he reads as Nick, not a second Nate.
 // Iconic finish  (diaz.iconic) a win by rear naked choke gets Bruce Buffer's
 //             UFC 196 call on the lower-third (speech.js announce), and
 //             against Conor, Joe Rogan's question and "I'm not surprised".
@@ -111,10 +112,10 @@ var ND_ROGAN = "You just shook up the world. How's that feel?"; // Joe Rogan's f
 // Conor's real lines about Nate (UFC 196 press conference, 2016) come out more against him.
 if (typeof CM_LINES !== "undefined") CM_LINES.vs[ND_ID] = ["Congratulations. You're rich now.", "He makes gang signs with his right hand and animal balloons with his left."];
 
-var NICK_LOOK = {
-  skin: "#e8c0a0", build: "lean", bodyHair: "light", hair: "long", hairColor: "#1f1712",
-  beard: "full", beardColor: "#2a1e17", ears: "normal", tattoos: {},
-  shorts: "#f2f2f2", trim: "#151515", shortsStyle: "stripe", waistText: "209", waistTextColor: "#151515", gloves: "#151515"
+var NICK_LOOK = {  // Joe's skin from his photos, 2026-11-15 (chin beard and skinny-fat body: diaz-skins.js)
+  skin: "#e0ae8b", build: "lean", flat: true, bodyHair: "heavy", hair: "short", hairColor: "#24180f",
+  beard: "none", beardColor: "#24180f", diazChin: 0.2, ears: "normal", tattoos: {},
+  shorts: "#141414", trim: "#9a9a9a", shortsStyle: "stripe", waistText: "209", waistTextColor: "#151515", gloves: "#151515", gloveStrap: "#2f5fc4"
 };
 var NICK_CH = { name: "Nick", color: "#d9622b", look: NICK_LOOK };
 var NICK_R = 36;
