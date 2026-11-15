@@ -5389,12 +5389,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-sean-omalley",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "bantamweight",
     "name": "Sean O'Malley",
     "base": "Kicker",
-    "bio": "\"Suga\". Built on the Kicker base: long kicks from range and a hard punch up close, a lot of them critical hits for 2.6 times the damage. He doesn't throw many combinations. He snipes: from a few steps away he plants, measures them with his lead hand while a laser and a scope settle on them, then fires one long straight right, the single clean shot he's known for, with a much bigger chance to crit, and a sniper crit is triple damage (SNIPED!). Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Candy rains into the ring all fight long and only he goes for it: between exchanges he drifts toward the nearest one, and anything he touches is his. Every candy is more sugar (SUGAR x4 by his health bar), and every sugar is a bigger chance to crit. A golden donut is worth three, and every candy changes his braids to another of his real fight-night hair colours. At ten he is on a sugar high, then he crashes: slow and drowsy for a moment, and most of the sugar is gone. Cotton candy is pure sugar: straight to the high, then the crash. Special move: Sugar Rush, a shower of extra candy he hunts down.",
+    "bio": "\"Suga\". Built on the Kicker base: long kicks from range and a hard punch up close, a lot of them critical hits for double damage. He doesn't throw many combinations. He snipes: from a few steps away he plants, measures them with his lead hand while a laser and a scope settle on them, then fires one long straight right, the single clean shot he's known for, with a much bigger chance to crit (SNIPED!). Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Candy rains into the ring all fight long and only he goes for it: between exchanges he drifts toward the nearest one, and anything he touches is his. Every candy is more sugar (SUGAR x4 by his health bar), and every sugar is a bigger chance to crit. A golden donut is worth three, and every candy changes his braids to another of his real fight-night hair colours. At ten he is on a sugar high, then he crashes: slow and drowsy for a moment, and most of the sugar is gone. Cotton candy is pure sugar: straight to the high, then the crash. Special move: Sugar Rush, a shower of extra candy he hunts down.",
     "color": "#e75480",
     "label": "",
     "imgData": null,
@@ -5478,7 +5478,7 @@ var SAVED_ROSTER = [
     "suga": {
       "crit": {
         "chance": 40,
-        "mult": 2.6
+        "mult": 2
       },
       "critKo": {
         "base": 20,
@@ -5504,8 +5504,7 @@ var SAVED_ROSTER = [
         "turn": 3,
         "reach": 34,
         "damage": 36,
-        "crit": 25,
-        "critMult": 3,
+        "crit": 15,
         "knockback": 560,
         "miss": 0.35,
         "readChance": 15
