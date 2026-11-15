@@ -10,10 +10,12 @@
 //             red. Then one long straight right: he flies down the line at
 //             `speed`, leaning after them a little (`turn`), for `damage` with
 //             `crit`% more crit chance on top of his own ("SNIPED!", and a
-//             Suga KO like any crit). `readChance`% of the time they see it
-//             coming ("!") and slip out of the line, and it whiffs; he's off
-//             balance for `miss` seconds. It can be slipped or blocked like
-//             any punch. Runs on b.sgSnipe, from updateCraneKick.
+//             Suga KO like any crit). A sniper crit is `critMult` times the
+//             damage (opt-in; without it, his normal `crit.mult`).
+//             `readChance`% of the time they see it coming ("!") and slip
+//             out of the line, and it whiffs; he's off balance for `miss`
+//             seconds. It can be slipped or blocked like any punch. Runs on
+//             b.sgSnipe, from updateCraneKick.
 // Crits       his punches are critical hits for `suga.crit.mult` times the
 //             damage ("CRIT!", a pink and gold star burst and a ding),
 //             `crit.chance`% of the time plus `sugar.crit`% for every sugar
@@ -460,11 +462,13 @@ function sgSidestep(other, m) {
   other.vx = -Math.sin(m.aim) * m.side * sp; other.vy = Math.cos(m.aim) * m.side * sp;
 }
 
-// The right hand lands: `damage`, a bigger chance to crit than his punches.
+// The right hand lands: `damage`, a bigger chance to crit than his punches,
+// and a crit hits harder than theirs (`critMult`, else his normal mult).
 function landSnipe(self, other, sn, m) {
   var cfg = sgCfg(self), sg = cfg.sugar || {}, ux = Math.cos(m.aim), uy = Math.sin(m.aim);
   var crit = !!cfg.crit && Math.random() * 100 < Math.min(sg.maxChance || 95, sugaCritChance(self) + (sn.crit || 0));
-  var dealt = hurt(other, sn.damage * (crit ? cfg.crit.mult : 1), "punch", self.id);
+  var critMult = cfg.crit ? (sn.critMult != null ? sn.critMult : cfg.crit.mult) : 1;
+  var dealt = hurt(other, sn.damage * (crit ? critMult : 1), "punch", self.id);
   if (dealt > 0) {
     if (!other.justDodged && sgKnockable(other)) { other.vx += ux * sn.knockback; other.vy += uy * sn.knockback; other.knockFly = 0.25; }
     var cx = other.x - ux * other.r, cy = other.y - uy * other.r;
@@ -478,7 +482,7 @@ function landSnipe(self, other, sn, m) {
     crowdReact(0.5);
     if (typeof commentaryCall === "function") commentaryCall("rightHand", self, other); // "Big right hand!" (commentary-calls.js)
     if (crit) {
-      self.sugaCrit = { mult: cfg.crit.mult, boosted: sugaBoosted(self), snipe: true };
+      self.sugaCrit = { mult: critMult, boosted: sugaBoosted(self), snipe: true };
       sugaCritLanded(self, other); // SNIPED!, and a Suga KO like any crit
     }
     var v = cfg.voice || {};
