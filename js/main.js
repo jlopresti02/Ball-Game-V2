@@ -17,6 +17,7 @@ function frame(t) {
   last = t;
   if (!screens.game.hidden) {
     var ts = deathTimeScale() * sendLocTimeScale(); // slow motion or a freeze while the loser dies (death.js); held while Khabib's strike is up in orbit (send-location.js)
+    ts *= andersonTimeScale(); // bullet time while Anderson Silva leans back in Spider Code (anderson.js)
     if (started && !gamePaused) advanceSendLocSpace(dt); // the space cut plays out in real time
     if (started && !gamePaused && ts > 0) runTicks(dt * ts); // a gallery demo can be paused (gallery.js)
     updateHud(false);
@@ -53,7 +54,7 @@ document.getElementById("menuChange").addEventListener("click", function () { sh
 startBtn.addEventListener("click", function () {
   var ctx = getAudioCtx();
   if (ctx && ctx.state === "suspended") ctx.resume();
-  if (over) startMatchWith(balls[0].baseChar, balls[1].baseChar); else start();
+  if (over) startMatchWith(balls[0].baseChar, balls[1].baseChar); else if (!startTaleTape()) start(); // the tale of the tape first, if it's on (tale-tape.js)
 });
 window.addEventListener("resize", resize);
 if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);

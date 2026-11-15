@@ -14,8 +14,8 @@ var HERB_CLOSE_SPEED = 820;
 var HERB_GIVEUP = 3.5;     // can't reach them: calls it off (stays charged)
 var HERB_R = 34;
 var HERB_WALK = 120;       // Herb tapping his way across the cage
-var HERB_BEAT_MAX = 7;     // the beating can't go on longer than this
-var HERB_JOINED = 2.4;     // how long Herb gets to hit them before the finish
+var HERB_BEAT_MAX = 7;     // the beating can't go on longer than this (special.beatMax overrides)
+var HERB_JOINED = 2.4;     // how long Herb gets to hit them before the finish (special.herbJoined overrides)
 var HERB_SHOW = 3.2;       // seconds the jumbotron shows the announcement
 var HERB_RUN = 300;        // running in (and back out) through the crowd
 var HERB_CLIMB = 0.75;     // climbing over the fence, in or out
@@ -82,7 +82,7 @@ function updateHerbDean(self, other, dt) {
     self.y += (other.y - m.ny * gap - self.y) * Math.min(1, dt * 18);
     m.swingT += dt;
     var joined = herb && herb.phase === "hit" ? herb.hitT : 0;
-    var finish = joined >= HERB_JOINED || m.t >= HERB_BEAT_MAX;
+    var finish = joined >= (sp.herbJoined != null ? sp.herbJoined : HERB_JOINED) || m.t >= (sp.beatMax != null ? sp.beatMax : HERB_BEAT_MAX);
     if (m.swingT >= sp.batGap && other.alive) {
       m.swingT = 0; m.swings++; m.side = -m.side;
       var last = finish;
@@ -534,6 +534,7 @@ function herbShove(f, dt) {
   if (gp) { tx += gp.x; ty += gp.y; }
   var brp = bearCrowdPush(f); // or Khabib's bear barging through (khabib-bear.js)
   if (brp) { tx += brp.x; ty += brp.y; }
+  var lnp = lionCrowdPush(f); if (lnp) { tx += lnp.x; ty += lnp.y; } // or Nate's lion (nate-lion.js)
   var a = Math.min(1, dt * 12);
   f.shx = (f.shx || 0) + (tx - (f.shx || 0)) * a;
   f.shy = (f.shy || 0) + (ty - (f.shy || 0)) * a;

@@ -59,7 +59,7 @@ var SPECIAL_INFO = {
   chairshot: function (sp) { return "Pulls a folding chair from under the ring, charges them down and swings it over their head for " + sp.damage + " (can't be weaved or blocked), leaving them dazed for " + sp.dazeTime + "s. Then hurls the chair into the stands" + (sp.ladder ? ", pulls a ladder out from under the ring, stands it up in the middle, climbs it and dives off it in a body slam for " + sp.ladder.slamDamage + " as \"watch out!\" plays, runs a lap celebrating (bowling anyone in his way aside), throws the ladder at them for " + sp.ladder.throwDamage + "." : " and runs a lap celebrating, bowling anyone in his way aside."); },
   herbdean: function (sp) { return "The ref falls asleep and blind Herb Dean barges in through the crowd with his cane. Gane beats them with a bat (" + sp.batDamage + " a swing), Herb whacks them with the cane (" + sp.caneDamage + "), and a last bat swing does " + sp.finisher + "."; },
   goatstampede: function (sp) { return "Floats up into the air, his tattoo flickering gold and red, and summons " + sp.goats + " goats. Each runs in through the crowd, leaps the fence and charges straight across the cage through center stage, down a lane shown in red first (" + sp.goatDamage + " if it rams them, then they pinball off " + sp.ramWalls + " walls for " + sp.ramWallDamage + " each). The lanes are random, so they can be dodged by being somewhere else."; },
-  sugarrush: function (sp) { return "Throws both arms up, \"Welcome to the Suga Show.\", and " + sp.sweets + " sweets rain down into the ring" + (sp.donuts ? ", " + sp.donuts + " of them a golden donut" : "") + ". He races to eat them and the opponent races to stomp them, and three of them means a sugar crash."; },
+  sugarrush: function (sp) { return "Throws both arms up, \"Welcome to the Suga Show.\", and " + sp.sweets + " more candies rain down into the ring" + (sp.donuts ? ", " + sp.donuts + " of them a golden donut" : "") + ". Then for " + secs(sp.hunt || 0) + " he hunts them down at full speed until he's on a sugar high."; },
   supermandive: function (sp) { return "Goes off by itself when the crowd meter fills. He rises up off the mat while a red lane shows where he'll fly (it follows them, then locks), then flies down it with both arms out and a red cape. Catch them and it's " + sp.damage + " (can't be slipped or blocked): he pins them and drives them round the cage, " + sp.walls + " wall slams of " + sp.wallDamage + ". Miss and he crashes into the cage, dazed for " + secs(sp.crashTime) + "."; },
   mimic: function (sp) { return "Copies their special at " + Math.round((sp.power != null ? sp.power : 0.5) * 100) + "% of its damage, in his colours: " + (sp.copies || ["igbb", "fathersplan", "chairshot"]).map(function (k) { return SPECIAL_MOVES[k] || k; }).join(", ") + ". Against any other special he does his own: crouches for the level change (the tell), shoots across the cage, and if the shot gets through it's the suplex into the mid-air armbar (" + sp.slamDamage + " on landing; they tap " + sp.tapBase + "%, up to " + (sp.tapBase + sp.tapLowHp) + "% when hurt)."; }, // Mighty Mouse (mighty-mouse.js)
   snow: function (sp) { var rp = sp.rampage; return "Charges as he gets hurt. Snow starts falling, he scoops a double handful off the mat and packs it like a snowball (\"I'm gonna knock his head off.\"), blue ice flames come up round him and the snow turns into a blue flare on his gloves. Then " + rp.time + " seconds all out: he hunts them down " + rp.speed + "x as fast, throwing nothing but looping overhand rights that hit " + Math.round((rp.damage - 1) * 100) + "% harder."; },
@@ -70,10 +70,16 @@ var SPECIAL_INFO = {
 SPECIAL_INFO.kangaroo = function (sp) { return volkKangarooInfo(sp); }; // Alexander Volkanovski (volkanovski.js)
 SPECIAL_INFO.nickdiaz = function (sp) { return nickDiazSpecialInfo(sp); }; // Nate Diaz (diaz.js)
 SPECIAL_INFO.katana = function (sp) { return fergusonKatanaInfo(sp); }; SUB_NAMES.buggy = "buggy choke"; SUB_NAMES.darce = "D'Arce choke"; SUB_NAMES.elbows = "elbows from the bottom"; // Tony Ferguson (ferguson.js)
+SPECIAL_INFO.mranderson = function (sp) { return andersonSpecialInfo(sp); }; SUB_NAMES.triangle = "triangle choke"; // Anderson Silva (anderson.js)
 SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
 SPECIAL_INFO.middle = function (sp) { return hollowaySpecialInfo(sp); }; // Max Holloway (holloway.js)
+SPECIAL_INFO.vanfire = function (sp) { return vanSpecialInfo(sp); }; // Joshua Van (van.js)
 SPECIAL_INFO.buscrew = function (sp) { return busCrewInfo(sp); }; // Conor McGregor (conor.js)
 SPECIAL_INFO.america = function (sp) { return stricklandSpecialInfo(sp); }; // Sean Strickland (strickland.js)
+SPECIAL_INFO.broadside = function (sp) { return bispingSpecialInfo(sp); }; // Michael Bisping (bisping.js)
+SPECIAL_INFO.cake = function (sp) { return cormierCakeInfo(sp); }; // Daniel Cormier (cormier.js)
+SPECIAL_INFO.cigarette = function (sp) { return pratesCigaretteInfo(sp); }; // Carlos Prates (prates.js)
+SPECIAL_INFO.samurai = function (sp) { return samuraiSpecialInfo(sp); }; // Jiří Procházka (prochazka.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
 function galleryMoves(ch) {
@@ -136,31 +142,53 @@ function galleryMoves(ch) {
   }
   if (ch.poatan) {
     // Alex Pereira (pereira.js).
-    var pc = ch.poatan.chama, pk2 = ch.poatan.calfKick;
-    if (pc) add("📣", "CHAMA", "Every " + pc.every[0] + "-" + pc.every[1] + "s up close he plants and shouts \"CHAMA!\", and the crowd shouts it back. That's the tell: they back off " + pc.readChance + "% of the time. Then left-right-left (" + pc.jab + ", " + pc.cross + ", then a " + pc.hook + "-damage left hook). A clean hook knocks them out " + pc.koBase + "% of the time at full health, up to " + (pc.koBase + pc.koLow) + "% the more hurt they are, and he shoots an arrow into the sky.");
-    if (pk2) add("🦵", "Calf kicks", "His kicks land low: they limp at " + Math.round(pk2.slow * 100) + "% speed for " + secs(pk2.time) + ".");
+    var pc = ch.poatan.chama;
+    if (pc) add("📣", "CHAMA", (pc.whenHurt != null || pc.whenLate != null ? "Only when " + [pc.whenHurt != null ? "they're under " + pc.whenHurt + "% health" : "", pc.whenLate != null ? "the fight's past " + pc.whenLate + "s" : ""].filter(Boolean).join(" or ") + ": every " : "Every ") + pc.every[0] + "-" + pc.every[1] + "s up close he plants and shouts \"CHAMA!\", and the crowd shouts it back. That's the tell: they back off " + pc.readChance + "% of the time. Then left-right-left (" + pc.jab + ", " + pc.cross + ", then a " + pc.hook + "-damage left hook). A clean hook knocks them out " + pc.koBase + "% of the time at full health, up to " + (pc.koBase + pc.koLow) + "% the more hurt they are, and he shoots an arrow into the sky." +
+      (pc.miss ? " Each punch misses " + pc.miss + "% of the time; as a counter (they were coming at him) " + Math.max(0, pc.miss - (pc.counterBonus || 0)) + "% and " + (pc.counterMult || 1) + "x the damage, walking forward into them " + (pc.miss + (pc.chaseMalus || 0)) + "%." : ""));
     if (ch.poatan.duckHunt) add("🦆", "Duck season", "Against Jon Jones: when Jon turns into a duck and flies off, " + ch.poatan.duckHunt.chance + "% of the time he shoots it out of the sky. Jon still drops in, but he's the one who gets hurt (" + ch.poatan.duckHunt.damage + ").");
   }
   if (ch.suga) {
     // Sean O'Malley (omalley.js).
-    var sg = ch.suga, ssw = sg.sweets, scr = sg.crash, sck = sg.craneKick;
-    if (sg.crit) add("✨", "Critical hits", sg.crit.chance + "% of his punches are critical hits for " + sg.crit.mult + "x damage.");
-    if (sg.critKo) add("💤", "Suga KO", "With a sweet in him, a critical hit knocks them out cold " + sg.critKo.base + "% of the time at full health, up to " + (sg.critKo.base + sg.critKo.low) + "% the more hurt they are (not in the first " + secs(sg.critKo.after || 0) + "). He walks off with his arms up.");
+    var sg = ch.suga, scc = sg.candy, ssu = sg.sugar, scr = sg.crash, sck = sg.craneKick;
+    if (sg.crit) add("✨", "Critical hits", sg.crit.chance + "% of his punches are critical hits for " + sg.crit.mult + "x damage" + (ssu ? ", plus " + ssu.crit + "% for every sugar in him" : "") + ".");
+    if (sg.snipe) add("🎯", "Sniper's right hand", "Every " + sg.snipe.every[0] + "-" + sg.snipe.every[1] + "s, when they're a few steps away, he plants and lines them up: lead hand out measuring, a laser and a scope settling on them. Then one long straight right for " + sg.snipe.damage + " with " + sg.snipe.crit + "% more crit chance" + (sg.snipe.critMult != null && sg.crit && sg.snipe.critMult !== sg.crit.mult ? ", and a crit off it is " + sg.snipe.critMult + "x damage" : "") + " (\"SNIPED!\"). " + sg.snipe.readChance + "% of the time they see it coming and slip out of the line.");
+    if (sg.critKo) add("💤", "Suga KO", "With " + (sg.critKo.sugar != null ? sg.critKo.sugar + " sugar" : "sugar") + " or more in him, a critical hit knocks them out cold " + sg.critKo.base + "% of the time at full health, up to " + (sg.critKo.base + sg.critKo.low) + "% the more hurt they are (not in the first " + secs(sg.critKo.after || 0) + "). He walks off with his arms up.");
     if (ch.tdd) add("🤼", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots (\"STUFFED\") and punches straight back.");
     if (sck) add("🦩", "Crane kick", "Every " + sck.every[0] + "-" + sck.every[1] + "s up close he goes up on one leg, arms out like wings, while a pink path shows where he'll kick. That's the tell: they back off " + sck.readChance + "% of the time. Then he leaps in with a front kick for " + sck.damage + " that knocks them into the cage.");
-    if (ssw) add("🍭", "Sweets", "A sweet pops up in the ring every " + ssw.every[0] + "-" + ssw.every[1] + "s and both of them race for it: he eats it, the opponent stomps it. Lollipop: " + ssw.boost.chance + "x crit chance. Gummy bear: " + ssw.boost.mult + "x crit damage. Golden donut (rare): both. Each boost lasts " + secs(ssw.boost.time) + ", and every sweet changes his braids to another of his real fight-night hair colours.");
-    if (scr) add("😴", "Sugar crash", "After " + scr.after + " sweets he crashes: " + Math.round(scr.slow * 100) + "% speed, slower hands and no crane kicks for " + secs(scr.time) + ".");
+    if (scc) add("🍭", "Candy rain", "Candy drops into the ring all fight long, up to " + scc.max + " at a time, and only he goes for it: between exchanges he drifts toward the nearest one, and anything he touches is his. Every candy changes his braids to another of his real fight-night hair colours.");
+    if (ssu) add("🍬", "Sugar", "Every candy is one more sugar (a golden donut " + ((scc && scc.kinds && scc.kinds.donut && scc.kinds.donut.sugar) || 3) + "), up to " + ssu.cap + ": +" + ssu.crit + "% crit chance each. He loses one every " + secs(ssu.drain) + " he goes without.");
+    if (scr) add("😴", "Sugar high and crash", "At " + (ssu ? ssu.cap : "full") + " sugar he's on a sugar high for " + secs(scr.high) + ", then he crashes: " + Math.round(scr.slow * 100) + "% speed, slower hands, no candy and no crane kicks for " + secs(scr.time) + ", and he keeps " + Math.round((scr.keep || 0) * 100) + "% of his sugar. Cotton candy is pure sugar: straight to the high.");
   }
   if (ch.gsp) gspGalleryMoves(ch, add); // Georges St-Pierre (gsp.js)
   if (ch.volk) volkGalleryMoves(ch, add); // Alexander Volkanovski (volkanovski.js)
+  if (ch.movement) movementGalleryMoves(ch, add); // walking them down, cutting the cage, side steps (movement.js)
   if (ch.holloway) hollowayGalleryMoves(ch, add); // Max Holloway (holloway.js)
+  if (ch.van) vanGalleryMoves(ch, add); // Joshua Van (van.js)
   if (ch.strickland) stricklandGalleryMoves(ch, add); // Sean Strickland (strickland.js)
+  if (ch.bisping) bispingGalleryMoves(ch, add); // Michael Bisping (bisping.js)
   if (ch.hasTeep) add("🦶", "Teep", teepGalleryInfo(ch.teep)); // the front push kick (teep.js)
   if (ch.diaz) diazGalleryMoves(ch, add); // Nate Diaz (diaz.js)
+  if (ch.fedor) fedorGalleryMoves(ch, add); // Fedor Emelianenko (fedor.js)
   if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
   if (ch.knee) kneeGalleryMoves(ch, add); // knees, the clinch, the flying knee (knees.js)
+  if (ch.chin) chinGalleryMoves(ch, add); // a chin that gets cracked (chin.js)
+  if (ch.smother) smotherGalleryMoves(ch, add); // kicks smothered up close (kick-smother.js)
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
+  if (ch.clinch) clinchGalleryMoves(ch, add); // the clinch and the parting shot on the break (clinch.js)
+  if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
+  if (ch.darce) iliaDarceGalleryMoves(ch, add); // Ilia Topuria's D'Arce choke (ilia-darce.js)
+  if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
+  if (ch.legKick) legKickGalleryMoves(ch, add); // calf kicks that leave them limping (leg-kick.js)
+  if (ch.headKick) headKickGalleryMoves(ch, add); // the head kick the calf kicks set up (head-kick.js)
+  if (ch.gane) ganeGalleryMoves(ch, add); // Ciryl Gane: hands down, back foot, weak up close (gane.js)
+  if (ch.getUp) getUpGalleryMoves(ch, add); // getting back up off the mat (get-up.js)
+  if (ch.uppercuts || ch.bodyShots) punchTypeGalleryMoves(ch, add); // uppercuts and body shots (body-shots-uppercuts.js)
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
+  if (ch.anderson) andersonGalleryMoves(ch, add); // Anderson Silva (anderson.js)
+  if (ch.cormier) cormierGalleryMoves(ch, add); // Daniel Cormier (cormier.js)
+  if (ch.prates) pratesGalleryMoves(ch, add); // Carlos Prates (prates.js)
+  if (ch.prochazka) prochazkaGalleryMoves(ch, add); // Jiří Procházka (prochazka.js)
+  maxHpGalleryMoves(ch, add); hokitPressureGalleryMoves(ch, add); // a lot of health (max-hp.js), Josh Hokit's pressure (hokit-pressure.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;
@@ -195,6 +223,7 @@ function galleryMoves(ch) {
     add("🐐", "GOAT mode", "Everything above, with his chest tattoo glowing gold. " + j.rncChance + "% of his takedowns go to the back for a rear naked choke and " + j.gnpChance + "% into ground and pound (" + j.gnp.length + " punches, " + gnpTotal + " total). Swaps modes every " + secs(j.swapEvery) + ".");
     add("😈", "EVIL mode", "Tattoo glowing red. Switches from kicks to punches, sprawls " + (j.evil.tdd ? j.evil.tdd.sprawlChance : 0) + "% of shots and slips " + ch.weave.dodgeChance + "% of attacks. " + ch.weave.critChance + "% of slips are an eye poke into a " + pk.combo.length + "-punch combination (" + pkTotal + " total).");
   }
+  if (ch.jonClinch) jonClinchGalleryMoves(ch, add); // Jon Jones's clinch, inside trip and guillotine (jon-clinch.js)
   if (ch.diamond) {
     // Dustin Poirier's Diamond Guard (diamond.js).
     var dm = ch.diamond, gemDmg = dm.gemDamage != null ? dm.gemDamage : ch.punch.damage;
@@ -356,6 +385,7 @@ function galleryAssets() {
   gspGalleryAssets(list); // GSP's Montreal stadium and the Quebec and Canada flags (gsp.js)
   volkGalleryAssets(list); // Volkanovski's kangaroo and the Australian flag (volkanovski.js)
   stricklandGalleryAssets(list); // Sean Strickland's motorcycle (strickland.js)
+  bispingGalleryAssets(list); // Michael Bisping's pirate ship (bisping.js)
   return list;
 }
 
@@ -436,8 +466,14 @@ function gallerySounds() {
   gspGallerySounds(groups, synth); // GSP's sounds (gsp.js)
   volkGallerySounds(groups, synth); // Volkanovski's sounds (volkanovski.js)
   hollowayGallerySounds(groups, synth); // Max Holloway's sounds (holloway.js)
+  vanGallerySounds(groups, synth); // Joshua Van's sounds (van.js)
   stricklandGallerySounds(groups, synth); // Sean Strickland's and the teep's sounds (strickland.js)
+  bispingGallerySounds(groups, synth); // Michael Bisping's Broadside and scorecard sounds (bisping.js)
   diazGallerySounds(groups, synth); // Nate Diaz's sounds (diaz.js)
+  fedorGallerySounds(groups, synth); // Fedor Emelianenko's sounds and the mantra (fedor.js)
+  cormierGallerySounds(groups, synth); // Daniel Cormier's sounds (cormier.js)
+  pratesGallerySounds(groups, synth); // Carlos Prates's sounds (prates.js)
+  prochazkaGallerySounds(groups, synth); // Jiří Procházka's sounds (prochazka.js)
   // Anything new in SOUND_CLIPS that isn't listed above still shows up.
   var listed = {};
   groups.forEach(function (g) { g.items.forEach(function (it) { if (it.clip) listed[it.clip] = true; }); });

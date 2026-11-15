@@ -51,7 +51,10 @@ function update(dt) {
   tickJon(dt);      // Jon Jones swapping between GOAT and EVIL mode (jon.js)
   tickHelmetCharge(dt); // the 67'ers ad's clock (hokit-helmet.js)
   tickRingBear(dt); // Khabib's bear wandering the ring (khabib-bear.js)
+  tickNateLion(dt); // Nate Diaz's lion stalking his opponent (nate-lion.js)
   tickIliaTornado(dt); // roses from Ilia's Rose Tornado (ilia-tornado.js)
+  tickIliaCombos(dt); // Ilia's combo finisher: the ring and its text (ilia-combos.js)
+  tickPunchTypes(dt); // setups from body shots and uppercuts wearing off (body-shots-uppercuts.js)
   tickSendLocation(dt); // Khabib's Send Me Location: sparks, rings, the crater cooling (send-location.js)
   tickHotSauce(dt); // Dustin's Hot Sauce Fire Breath: flames, steam, whoever's burning (hot-sauce.js)
   tickPereira(dt); // Alex Pereira's step, his arrow, the crowd's CHAMA (pereira.js)
@@ -63,15 +66,29 @@ function update(dt) {
   tickLiddell(dt); // frost melting, the snow, Chuck Liddell's all-out attack (liddell.js)
   tickNgannou(dt); // Francis Ngannou's rage meter, knockdowns, Dana White (ngannou.js)
   tickVolk(dt); // Alexander Volkanovski's fight IQ, circling, the green and gold arena (volkanovski.js)
+  tickMovement(dt); // shared movement styles: walking them down, cutting the cage, side steps (movement.js)
   tickHolloway(dt); // Max Holloway's Blessed meter, Button Mash buttons, the flashback (holloway.js)
+  tickVan(dt); // Joshua Van's chain counter, the fire on his gloves, the win flag, his lines (van.js)
   tickStrickland(dt); // Sean Strickland's range, pace, trauma meter and the America show (strickland.js)
   tickDiaz(dt); // Nate Diaz's lines, holds and bottles, and Nick Diaz in the cage (diaz.js)
   tickFerguson(dt); // Tony Ferguson's Kaioken, won't-tap, lines, stamps, Burrito Bell (ferguson.js)
+  tickFedor(dt); // Fedor Emelianenko's hands, his calm, his ground and pound and armbar, the mantra (fedor.js)
+  tickBisping(dt); // Michael Bisping's clinch elbows, footwork, scorecard, lines and cannonballs (bisping.js)
+  tickCormier(dt); // Daniel Cormier's belly, lines, the dents in the mat (cormier.js)
+  tickPrates(dt); // Carlos Prates's footwork, the cigarette and the party, smoke and music (prates.js)
+  tickProchazka(dt); // Jiří Procházka's samurai bar, the blade lock, his lines (prochazka.js)
   tickElbows(dt); // cuts from elbows bleeding (elbows.js)
+  tickClinch(dt); // a clinch let go if something else takes over (clinch.js)
   tickKnees(dt); // knees landing, the clinch and flying knee let go if something else takes over, a flying-knee knockout (knees.js)
   tickCombos(dt); // a combination cut short if something else takes over (combos.js)
+  tickAnderson(dt); // Anderson Silva's lean, front kick knockout, triangle off a takedown, lines (anderson.js)
+  tickGetUp(dt); // a striker with a getUp block getting back up off the mat (get-up.js)
   tickSlows(dt); // limps wearing off (slowdown.js)
+  tickLegKicks(dt); // a leg kick let go if something else takes over, the limping step (leg-kick.js)
+  tickHeadKicks(dt); // the head kick's window and cooldown, a head kick knockout called (head-kick.js)
+  tickGane(dt); // Ciryl Gane's back-foot footwork, grabs coming round faster on him (gane.js)
   tickChatter(dt); // extra real voice lines for any fighter, by id (chatter.js)
+  tickCommentaryCalls(dt); // the commentators' calls on big moments, knockouts, the end of the fight (commentary-calls.js)
   tickSpeech(dt); // voice-line speech bubbles (speech.js)
   tickTopRope(dt); // the dented mat after Hokit's Top Rope Body Slam (hokit-toprope.js)
   tickDuckDrop(dt); // smoke, feathers and the cracked mat from his Duck Drop (jon-duck.js)
@@ -81,6 +98,7 @@ function update(dt) {
   tickGolf(dt);         // and his golf mode running out (gaethje-golf.js)
   tickDiamond(dt);  // Dustin turning into Diamond Guard and throwing diamonds (diamond.js)
   updateHerb(dt);   // Herb Dean wandering the cage (herbdean.js)
+  tickWatchdog(dt); // a fighter stuck in one state far too long gets let go (watchdog.js)
 
   balls.forEach(function (b) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;
@@ -158,6 +176,7 @@ function updateHud(force) {
     document.getElementById("hp" + i).textContent = rounded;
     document.getElementById("fill" + i).style.width = (b.hp / MAX_HP * 100) + "%";
     document.getElementById("ghost" + i).style.width = (b.shown / MAX_HP * 100) + "%";
+    maxHpHud(i, b); // health over 500 as a pale layer on the bar (max-hp.js)
     document.getElementById("bar" + i).setAttribute("aria-valuenow", rounded);
   }
   updateRejuvHud(force);

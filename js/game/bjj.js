@@ -27,7 +27,7 @@ var GUILLO_GAP = 0.66;        // how close the pair is held (1 = just touching):
 // Locked up in a submission (either applying it or caught in it), or down
 // on its back in guard.
 function subLocked(b) {
-  return !!(b.guillo || b.rnc || b.armbar || b.suplex || b.choked || b.guard || b.hokitShot);
+  return !!(b.guillo || b.rnc || b.armbar || b.suplex || b.choked || b.guard || b.hokitShot || b.darce); // (b.darce: Ilia applying his D'Arce, ilia-darce.js)
 }
 
 function canGuillotine(def) {
@@ -65,6 +65,7 @@ function beginGuillotine(def, atk) {
     b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null; b.checkAnim = null;
   });
   floater(def.x, Math.min(atk.y, def.y) - def.r - 30, "GUILLOTINE", "crit");
+  commentaryCall("choke", def, atk); // "It's under the neck!" (commentary-calls.js)
   playPunch(20);
   if (!reduceMotion) shake = Math.max(shake, 8);
 }

@@ -3,6 +3,8 @@
 
 function drawFist(self, other) {
   if (!self.punch || !other.alive || self.taunt || self.flow || self.combo) return;
+  if (drawHookFist(self, other)) return; // a hook comes round instead of straight (hook-punch.js)
+  if (drawPunchTypeFist(self, other)) return; // an uppercut or a body shot is drawn over both fighters instead (body-shots-uppercuts.js)
   var pu = self.char.punch;
   var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var qnx = qx / qd, qny = qy / qd;
@@ -30,18 +32,20 @@ function drawFist(self, other) {
   ctx.lineWidth = pu.size * 0.6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
   }
-  if ((self.punch.side || 1) === 1) drawTracedArm(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6); // sleeve on one arm only
+  if ((self.punch.side || 1) === 1 || hasTwoSleeves(self.char)) drawTracedArm(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6, self.punch.side || 1); // sleeve on one arm only
   ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(fistX, fistY, pu.size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   stoneFistOver(self.char, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // Alex Pereira's stone fists (fighter-art.js)
   frostFistOver(self, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // ice from punching Chuck Liddell (liddell.js)
+  iliaFistOver(self, fistX, fistY, pu.size); // Ilia's glove heating up through a combo, and the finisher (ilia-combos.js)
   ctx.restore();
 }
 
 function drawKick(self, other) {
   if (!self.kick || !other.alive || self.taunt || self.flow || self.combo) return;
+  if (drawLegKickOnKick(self, other)) return; // a kick that's a leg kick: drawn low into the calf, over both fighters (leg-kick.js)
   var ki = self.char.kick;
   var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var baseAngle = Math.atan2(qy, qx);
@@ -133,9 +137,19 @@ function drawHands(b, other) {
   if (ngannouHandsBusy(b)) return; // the rage punch, the Smash, the contract (drawNgannou, ngannou.js)
   if (volkHandsBusy(b)) return; // arms up, or punching out of the kangaroo's pouch (drawVolk, volkanovski.js)
   if (hollowayHandsBusy(b)) return; // pointing at the booth or the middle, the flashback, the celebration (drawHolloway, holloway.js)
+  if (vanHandsBusy(b)) return; // Joshua Van's high guard, or holding the flag up (drawVan, van.js)
   if (diazHandsBusy(b)) return; // the slap, the lunge, arms out, a bottle (drawDiaz, diaz.js)
   if (elbowHandsBusy(b) || fergusonHandsBusy(b)) return; // an elbow (drawElbow, elbows.js), Tony Ferguson's moves (drawFerguson, ferguson.js)
+  if (prochazkaHandsBusy(b)) return; // Jiří Procházka's hands down by his hips, or on his katanas (drawProchazka, prochazka.js)
   if (kneeHandsBusy(b)) return; // both hands round their head in the clinch (drawKneesOver, knees.js)
+  if (fedorHandsBusy(b)) return; // reaching for the clinch, arms round them in the throw (drawFedor, fedor.js)
+  if (bispingHandsBusy(b)) return; // the linstock and pointing at them in Broadside (drawBisping, bisping.js)
+  if (andersonHandsBusy(b)) return; // hands down by his sides (drawAnderson, anderson.js)
+  if (ganeHandsBusy(b)) return; // Ciryl Gane's hands down by his hips (drawGane, gane.js)
+  if (cormierHandsBusy(b)) return; // the double leg, the carry, the cake, and whoever he's carrying (drawCormier, cormier.js)
+  if (pratesHandsBusy(b)) return; // lighting up, or the Rubber Pistol (drawPrates, prates.js)
+  if (jonClinchHandsBusy(b)) return; // Jon Jones's arms locked round them (drawJonClinch, jon-clinch.js)
+  if (clinchHandsBusy(b)) return; // arms tied round them in the clinch (drawClinchOver, clinch.js)
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)

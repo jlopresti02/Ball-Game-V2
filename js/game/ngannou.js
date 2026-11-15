@@ -11,15 +11,26 @@
 // Rage punch   when it's full he turns green, grows (grow) and says "I'm going
 //              to connect, and you know what happen when I connect." He stalks
 //              in, then plants and cocks his right hand back for `windup`
-//              seconds while a green line shows where it's going. The line
-//              follows them, then locks for the last `lock` seconds. That's
-//              the tell: some read it and back off (readChance, plus readWeave
-//              for a weaver). Then he lunges down the line. It can miss
-//              ("MISSED!", and he's gassed for a moment) or land: `damage` and
-//              a pinball off the walls, and a knockout koBase% of the time at
-//              full health, up to koBase + koLow% the more hurt they are
-//              (always if it would finish them). Once it lands it can't be
-//              slipped or blocked: the dodge is reading the wind-up.
+//              seconds: a flash, a big "!" over his head and a green line
+//              showing where it's going. The line follows them, then locks
+//              (and the "!" flashes red) for the last `lock` seconds. That's
+//              the tell (Christian, 2026-11-15): how far apart they are when
+//              the "!" goes up decides whether they can get out of the way
+//              (`escape`): pointBlankChance% (default none) from
+//              `pointBlank` in, nearChance% out to `near`, rising to
+//              farChance% at `far` and beyond, plus lighterBonus% for every
+//              weight class they're lighter than him (he's huge, so the
+//              smaller fighters see it coming), plus slipBonus for a weaver
+//              or a footwork fighter (95% at most). One who reads it
+//              sidesteps off the line once it locks (at `slipSpeed`) and he
+//              lunges straight past them ("SLIPPED IT!"), skidding on for
+//              `overshoot` seconds before he's gassed. One who doesn't gets
+//              chased down: the lunge steers after them (`homing`) up to
+//              `chase` units. It lands for `damage` and a pinball off the
+//              walls, and a knockout koBase% of the time at full health, up
+//              to koBase + koLow% the more hurt they are (always if it would
+//              finish them). Once it lands it can't be slipped or blocked: the
+//              dodge is reading the wind-up.
 // Smash        his special (special.move "smash"): "In this fight, I'm just
 //              looking to smash." He crouches and leaps, a red circle showing
 //              where he'll come down (where they're heading), and smashes the
@@ -36,7 +47,7 @@
 //              his real record on the punch-power machine.
 // Voice lines  (ngannou.lines) speech bubbles (speech.js): the rage line; a
 //              taunt after a big shot lands; "Of course, he's really
-//              intimidated." when they back off and he misses; vs Jon Jones
+//              intimidated." when they slip the rage punch; vs Jon Jones
 //              only, at the start: "This time I am the champ. He is coming up
 //              and looking for me."
 // The rage punch runs on b.ngSt, the walk over to Dana on b.ngAct, and the
@@ -189,21 +200,32 @@ function updateNgannou(self, other, dt) {
   if (st.phase === "windup") {
     self.vx = 0; self.vy = 0;
     if (st.t < rc.windup - rc.lock) st.aim = ngTurn(st.aim, Math.atan2(dy, dx), dt * 6);
-    else if (!st.locked) { st.locked = true; playNgLock(); }
-    if (st.read) ngBackOff(self, other);
+    else if (!st.locked) { st.locked = true; st.side = ngSlipSide(st, other); playNgLock(); }
+    if (st.escape && st.locked) ngSlip(other, st, rc);
     if (st.t >= rc.windup) { st.phase = "lunge"; st.t = 0; st.went = 0; playWhoosh(); playNgSwing(); }
     return true;
   }
   if (st.phase === "lunge") {
+    // They read it: straight down the locked line while they slip off it.
+    // They didn't: it steers after them, and goes further.
+    if (st.escape) ngSlip(other, st, rc);
+    else if (rc.homing) st.aim = ngTurn(st.aim, Math.atan2(dy, dx), dt * rc.homing);
     var ux = Math.cos(st.aim), uy = Math.sin(st.aim);
     self.vx = ux * rc.lunge; self.vy = uy * rc.lunge;
     st.went += rc.lunge * dt;
-    if (st.read) ngBackOff(self, other);
     var fr = ngFistR(self), reach = self.r + fr * 0.6;
     var ox = other.x - (self.x + ux * reach), oy = other.y - (self.y + uy * reach);
     if (other.alive && !other.koOut && ox * ox + oy * oy < (other.r + fr) * (other.r + fr)) { landRage(self, other, rc, ux, uy); return !!self.ngSt; }
-    if (st.went >= rc.lungeDist) { rageMiss(self, rc); return false; }
+    if (st.went >= (st.escape ? rc.lungeDist : (rc.chase || rc.lungeDist))) { rageMiss(self, other, rc); return true; }
     if (!reduceMotion) particles.push({ x: self.x, y: self.y, vx: -self.vx * 0.1, vy: -self.vy * 0.1, life: 0.22, max: 0.22, size: self.r * 0.6, color: "#58c94a" });
+    return true;
+  }
+  if (st.phase === "whiff") {
+    // Missed: he overshoots, skidding on down the line with the arm out.
+    var k = Math.max(0, 1 - st.t / (rc.overshoot || 0.3)), wx = Math.cos(st.aim), wy = Math.sin(st.aim);
+    self.vx = wx * rc.lunge * 0.55 * k; self.vy = wy * rc.lunge * 0.55 * k;
+    if (!reduceMotion && Math.random() < dt * 30) particles.push({ x: self.x - wx * self.r * 0.8 + (Math.random() - 0.5) * self.r, y: self.y - wy * self.r * 0.8 + self.r * 0.5, vx: -wx * 40 + (Math.random() - 0.5) * 60, vy: -wy * 40 - 30, life: 0.4, max: 0.4, size: 4 + Math.random() * 5, color: "rgba(200,190,170,0.75)" });
+    if (st.t >= (rc.overshoot || 0.3)) { endRage(self); return false; }
     return true;
   }
   // "ko": flexing over them while they're out cold.
@@ -229,18 +251,49 @@ function startRage(self, other) {
 function beginRageWindup(self, other, rc, dx, dy) {
   var st = self.ngSt;
   st.phase = "windup"; st.t = 0; st.aim = Math.atan2(dy, dx); st.locked = false;
-  st.read = Math.random() * 100 < rc.readChance + (other.char.hasWeave ? rc.readWeave : 0);
-  if (st.read) floater(other.x, other.y - other.r - 30, "!", "crit");
+  // The "!" goes up now: how far away they are decides if they can get out.
+  st.gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;
+  st.escape = Math.random() * 100 < ngEscapeChance(rc.escape, st.gap, other, self);
+  st.side = 1; st.slipped = false;
   playNgWindup(rc.windup);
 }
 
-// Backing off from a punch they saw coming (only while they're rolling about
-// on their own).
-function ngBackOff(self, other) {
+// The chance (in %) they read it and get out of the way, by the gap between
+// them when the "!" goes up, and how much smaller than him they are.
+function ngEscapeChance(ec, gap, o, self) {
+  if (!ec) return 0;
+  if (gap <= ec.pointBlank) return ec.pointBlankChance || 0; // touching: it (nearly) always lands
+  var k = Math.max(0, Math.min(1, (gap - ec.near) / Math.max(1, ec.far - ec.near)));
+  var c = ec.nearChance + (ec.farChance - ec.nearChance) * k;
+  var oc = o.char || {};
+  if (ec.lighterBonus && self) c += ec.lighterBonus * Math.max(0, weightIndex(self.char) - weightIndex(oc)); // (weight.js)
+  if (oc.hasWeave || (oc.gane && oc.gane.footwork) || (oc.bisping && oc.bisping.footwork)) c += ec.slipBonus || 0;
+  return Math.min(95, c);
+}
+
+// Which way they slip once the line locks: the side with more room before
+// the cage.
+function ngSlipSide(st, o) {
+  var px = -Math.sin(st.aim), py = Math.cos(st.aim);
+  function room(s) {
+    var x = o.x + px * s * 110, y = o.y + py * s * 110;
+    return Math.min(x - o.r, W - o.r - x, y - o.r, H - o.r - y);
+  }
+  var a = room(1), b = room(-1);
+  if (Math.abs(a - b) < 15) return (o.vx * px + o.vy * py) >= 0 ? 1 : -1; // the way they were already drifting
+  return a > b ? 1 : -1;
+}
+
+// Sidestepping off the locked line (only while they're rolling about on
+// their own). A weaver or a footwork fighter shows a slip as they go.
+function ngSlip(other, st, rc) {
   if (!other.alive || !inOrdinaryMovement(other) || other.angry) return;
-  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-  var sp = Math.max(Math.sqrt(other.vx * other.vx + other.vy * other.vy), 260);
-  other.vx = dx / d * sp; other.vy = dy / d * sp;
+  var sp = Math.max(Math.sqrt(other.vx * other.vx + other.vy * other.vy), (rc.escape && rc.escape.slipSpeed) || 400);
+  other.vx = -Math.sin(st.aim) * st.side * sp; other.vy = Math.cos(st.aim) * st.side * sp;
+  if (!st.slipped) {
+    st.slipped = true;
+    if (other.char.hasWeave && !other.weaveAnim) other.weaveAnim = { t: 0, dur: 0.3, sign: st.side };
+  }
 }
 
 function ngKnockable(o) { return o.alive && !o.grappled && !o.grapple && !o.slam && !subLocked(o) && !o.igbb && !o.koOut; }
@@ -257,10 +310,10 @@ function landRage(self, other, rc, ux, uy) {
       crowdReact(1);
       return;
     }
-    if (other.justDodged) { rageMiss(self, rc); return; }
+    if (other.justDodged) { rageMiss(self, other, rc); return; }
   }
   var dealt = hurt(other, rc.damage, "igbb", self.id); // can't be slipped or blocked once it lands
-  if (other.justDodged) { rageMiss(self, rc); return; }
+  if (other.justDodged) { rageMiss(self, other, rc); return; }
   if (dealt > 0) {
     ngPunchFx(self, other, ux, uy);
     floater(other.x, other.y - other.r - 34, "CONNECTED!", "crit");
@@ -303,13 +356,16 @@ function ngPunchFx(self, other, ux, uy) {
   crowdReact(0.9);
 }
 
-function rageMiss(self, rc) {
-  var st = self.ngSt;
-  floater(self.x + Math.cos(st.aim) * self.r * 1.6, self.y + Math.sin(st.aim) * self.r * 1.6 - 20, "MISSED!", "dodge");
+// A whiff: he skids on past (the "whiff" phase in updateNgannou), then he's
+// gassed (the slow's clock is already running while he skids).
+function rageMiss(self, other, rc) {
+  var st = self.ngSt, slipped = st.escape && st.slipped && other.alive;
+  if (slipped) floater(other.x, other.y - other.r - 30, "SLIPPED IT!", "dodge");
+  else floater(self.x + Math.cos(st.aim) * self.r * 1.6, self.y + Math.sin(st.aim) * self.r * 1.6 - 20, "MISSED!", "dodge");
   playNgWhiff();
   addSlow(self, rc.gasSlow, rc.gasTime, "gassed");
-  if (st.read && ngCfg(self).lines) say(self, NG_LINES.backOff); // they saw it coming and backed off
-  endRage(self);
+  if (slipped && ngCfg(self).lines) say(self, NG_LINES.backOff); // they saw it coming and got out of the way
+  st.phase = "whiff"; st.t = 0;
 }
 
 function endRage(self) {
@@ -560,7 +616,7 @@ function tickNgannou(dt) {
     // vs Jon Jones only, right at the start.
     if (b.ngJon === undefined) b.ngJon = cfg.lines && isJon(other) ? 1.2 : null;
     if (b.ngJon != null && started && b.alive) { b.ngJon -= dt; if (b.ngJon <= 0) { b.ngJon = null; say(b, NG_LINES.jon); } }
-    if (b.ngSt && b.ngSt.phase !== "ko" && ngInterrupted(b)) cancelRage(b);
+    if (b.ngSt && b.ngSt.phase !== "ko" && ngInterrupted(b)) { if (b.ngSt.phase === "whiff") endRage(b); else cancelRage(b); }
     if (b.ngSt && b.ngSt.phase === "ko" && !b.alive) { b.ngSt = null; finishKnockedOut(other); checkEnd(); }
     if (cfg.rage && b.alive && !b.ngSt) watchFrustration(b, other, cfg.rage);
     // Green and bigger while the rage is on (and while it's full, waiting to go).
@@ -670,6 +726,12 @@ function drawNgannou(b, other) {
       ctx.beginPath(); ctx.arc(hxR, hyR, fr * (1.35 + 0.25 * k), 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
       ngArm(b, b.x + px * r * 0.5, b.y + py * r * 0.5, b.x + ux * r * 0.85 + px * r * 0.4, b.y + uy * r * 0.85 + py * r * 0.4, gr, ang);
+      drawNgTell(b, st, cfg.rage);
+    } else if (st.phase === "whiff") { // overshot: the arm flung on past where they were, the left one flailing
+      var wk = easeOut(Math.min(1, st.t / 0.2)), wa = ang + 0.55 * wk, fr3 = ngFistR(b);
+      var wux = Math.cos(wa), wuy = Math.sin(wa);
+      ngArm(b, b.x - px * r * 0.35, b.y - py * r * 0.35, b.x + wux * (r + fr3 * 0.7), b.y + wuy * (r + fr3 * 0.7), fr3, wa);
+      ngArm(b, b.x + px * r * 0.5, b.y + py * r * 0.5, b.x - ux * r * 0.35 + px * r * (0.95 + 0.15 * Math.sin(ngClock * 22)), b.y - uy * r * 0.35 + py * r * (0.95 + 0.15 * Math.sin(ngClock * 22)), gr, ang);
     } else if (st.phase === "lunge") { // thrown: arm out straight down the line
       var fr2 = ngFistR(b);
       ngArm(b, b.x - px * r * 0.35, b.y - py * r * 0.35, b.x + ux * (r + fr2 * 0.6), b.y + uy * (r + fr2 * 0.6), fr2, ang);
@@ -707,6 +769,36 @@ function drawNgannou(b, other) {
       [-1, 1].forEach(function (s) { ngArm(b, b.x + s * r * 0.62, b.y + r * 0.05, b.x + s * r * (0.95 - 0.15 * dn), b.y + r * (0.55 + 0.45 * dn), gr * 1.05, Math.PI / 2); });
     }
   }
+}
+
+// The tell over him during the wind-up: a white flash on him and a ring when
+// the "!" goes up, and again when the line locks; the "!" pops in yellow,
+// then flashes red and white once it's locked.
+function drawNgTell(b, st, rc) {
+  if (!rc) return;
+  var r = b.r, tl = st.t - (rc.windup - rc.lock);
+  ctx.save();
+  [st.t, tl].forEach(function (t) {
+    if (!(t >= 0 && t < 0.3)) return;
+    ctx.globalAlpha = 0.55 * Math.max(0, 1 - t / 0.14); ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(b.x, b.y, r * 1.02, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.9 * (1 - t / 0.3); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(b.x, b.y, r * (1.05 + 1.3 * easeOut(t / 0.3)), 0, Math.PI * 2); ctx.stroke();
+  });
+  var pop = st.t < 0.16 ? 1.6 - 0.6 * (st.t / 0.16) : 1;
+  var sc = pop * (st.locked ? 1 + 0.14 * Math.sin(ngClock * 34) : 1);
+  // Over his bars; under him instead when that's up against the top of the
+  // cage or behind the test arena's banner (still-ads.js, drawn over this).
+  var ey = b.y - r - 56, top = (typeof stillShow !== "undefined" && stillShow > 0 && !stadiumOn()) ? 146 : 28;
+  if (ey < top) ey = b.y + r + 46;
+  ctx.globalAlpha = 1;
+  ctx.translate(b.x, ey); ctx.scale(sc, sc);
+  ctx.font = "900 58px Impact, 'Arial Black', 'Helvetica Neue', Arial, sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+  ctx.lineWidth = 9; ctx.strokeStyle = "#111111"; ctx.strokeText("!", 0, 0);
+  ctx.fillStyle = st.locked ? (Math.sin(ngClock * 34) > 0 ? "#ff3b2f" : "#ffffff") : "#ffe14a";
+  ctx.fillText("!", 0, 0);
+  ctx.restore();
 }
 
 function drawNgFlex(b, gr) {

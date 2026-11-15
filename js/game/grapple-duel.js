@@ -27,7 +27,9 @@ function isGrapplerDuel(a, b) {
 // Which way a fighter is facing: where it's moving, or toward the opponent
 // if it's standing still (the same rule its guard hands follow).
 function facingOf(b, other) {
+  if (pratesSquaredUp(b)) { var px = other.x - b.x, py = other.y - b.y, pd = Math.sqrt(px * px + py * py) || 1; return { x: px / pd, y: py / pd }; } // Carlos Prates backs off facing them (prates.js)
   if (stricklandSquaredUp(b)) { var sx = other.x - b.x, sy = other.y - b.y, sd = Math.sqrt(sx * sx + sy * sy) || 1; return { x: sx / sd, y: sy / sd }; } // Sean Strickland backpedals facing them (strickland.js)
+  if (bispingSquaredUp(b)) { var bx = other.x - b.x, by = other.y - b.y, bd = Math.sqrt(bx * bx + by * by) || 1; return { x: bx / bd, y: by / bd }; } // Michael Bisping steps out facing them (bisping.js)
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
   if (s > 1) return { x: b.vx / s, y: b.vy / s };
   var dx = other.x - b.x, dy = other.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -173,22 +175,30 @@ function attemptGrab(attacker, target) {
   // Hokit's Chair Shot blocks everything once it's started, takedowns too, right
   // through his celebration lap, even after their stars wear off (Joe, 2026-11-11).
   if (target.igbb && target.igbb.move === "chairshot" && specialGuarding(target)) return false;
+  if (americaUngrabbable(target)) return false; // nobody grabs Sean Strickland during America (strickland.js)
+  if (bispingAboard(target)) return false; // nobody takes Michael Bisping down off his pirate ship (bisping.js)
+  if (golfSwinging(target)) return false; // or Gaethje mid swing with his golf club (gaethje-golf.js)
   if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;
   }
   var ag = attacker.char.grapple;
   if (ag && ag.shotName) floater(attacker.x, attacker.y - attacker.r - 44, ag.shotName, "crit"); // calls the shot (Gaethje's DOUBLE LEG)
+  commentaryCall("shot", attacker, target); // the commentator, once it's clear what came of it: takedown, sprawl or just the shot (commentary-calls.js)
   if (doBronxPosing(target)) {
     // Slips the grab mid pose (dobronx.js).
     doBronxDodge(target);
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;
   }
+  if (pratesBackOff(attacker, target)) return false; // Carlos Prates steps back out of it, and it always misses while he parties (prates.js)
+  if (uppercutCounter(target, attacker)) return false; // an uppercut as they come in stuffs it (Gaethje, body-shots-uppercuts.js)
   if (gspDoubleLeg(attacker, target)) return true; // GSP's elite double leg goes straight through (gsp.js)
+  if (cormierBodyLock(attacker, target)) return true; // Daniel Cormier's body lock: some go straight through (cormier.js)
   if (grabEscaped(attacker, target)) return false;
   if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
   if (cheaterFenceGrab(attacker, target)) return false; // cheating: grabs the cage (cheater.js); suplexes still land
+  if (tryJonGuillotine(attacker, target)) return false; // GOAT Jon Jones catches it more the more hurt they are (jon-clinch.js)
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.
@@ -197,6 +207,7 @@ function attemptGrab(attacker, target) {
     return false;
   }
   if (tryTddSprawl(attacker, target)) return false; // takedown defense without grappling (ilia.js)
+  if (tryShotStuffed(attacker, target)) return false; // his shot gets stuffed anyway: Khabib, Charles Oliveira (stuffed-shots.js)
   if (tryJonTakedown(attacker, target)) return true; // GOAT Jon Jones: to the back, or ground and pound (jon.js)
   if (tryKhabibOnConor(attacker, target)) return true; // Khabib vs Conor McGregor: to the back, or ground and pound (conor.js)
   if (tryFergusonTakedown(attacker, target)) return true; // Tony Ferguson's shot: into the buggy choke, his D'Arce or elbows (ferguson.js)

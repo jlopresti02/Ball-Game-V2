@@ -11,6 +11,7 @@
 var CHECK_TIME = 0.22; // the shin stays up this long before the kick back
 
 function canCheck(b) {
+  if (bispingSideStepping(b)) return false; // Michael Bisping stepping out of it instead (bisping.js)
   return (b.char.hasKick || b.char.kickCheck > 0) && b.alive && !b.checkAnim && !(b.kick && b.kick.counter) && !b.grappled && !b.grapple && !b.slam &&
     !b.combo && !b.taunt && !b.flow && !b.sprawl && !b.sprawled && !b.invincible;
 }
@@ -173,12 +174,14 @@ function updateAbilities(dt) {
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
     if (self.beamPin) continue; // pinned to the cage by a beam (beam-clash.js)
     if (self.shocked || self.koOut || self.shelled || self.dazed || self.dizzy) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
+    if (americaOverwhelmed(self)) continue; // overwhelmed by Sean Strickland's America: throws nothing till it's over (strickland.js)
     if (updateDarkSide(self, other, dt)) continue; // Josh Hokit's Dark Side form change (hokit-darkside.js)
     if (saberLockHeld(self)) continue; // locked up blade on bat with him
     if (updateDuckDrop(self, other, dt)) continue; // Jon Jones's Duck Drop (jon-duck.js)
     if (bearOn(self)) continue; // Khabib fighting, lifting or throwing the bear (khabib-bear.js)
     if (updateRapierLunge(self, other, dt)) continue; // Ilia's rapier lunge (rapier.js)
     if (updateIliaTornado(self, other, dt)) continue; // Ilia's Rose Tornado (ilia-tornado.js)
+    if (updateIliaDarce(self, other, dt)) continue; // Ilia's D'Arce: the hold, or lunging in for a front headlock (ilia-darce.js)
     if (!darkSideBlocks(self) && updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
     if (updateKamehameha(self, other, dt)) continue; // Charles's Kamehameha (kamehameha.js)
     if (updateRainbow(self, other, dt)) continue; // Conor's Pot o' Gold rainbow beam (rainbow-beam.js)
@@ -192,15 +195,24 @@ function updateAbilities(dt) {
     if (updateCraneKick(self, other, dt)) continue; // Sean O'Malley's crane kick (omalley.js)
     if (updateGsp(self, other, dt)) continue; // GSP's Superman punch and "not impressed" (gsp.js)
     if (updateMightyMouse(self, other, dt)) continue; // Mighty Mouse's suplex into the mid-air armbar (mighty-mouse.js)
-    if (updateConor(self, other, dt)) continue; // Conor McGregor's trash talk and counter left, Dustin's calf kicks on him (conor.js)
+    if (updateConor(self, other, dt)) continue; // Conor McGregor's trash talk and counter left, his rivals' extras (conor.js)
     if (updateNgannou(self, other, dt)) continue; // Francis Ngannou's rage punch and Dana White (ngannou.js)
     if (updateHolloway(self, other, dt)) continue; // Max Holloway at the booth, his flashback, staying out of the guard (holloway.js)
     if (updateStrickland(self, other, dt)) continue; // Sean Strickland's one-two (strickland.js)
+    if (updatePrates(self, other, dt)) continue; // Carlos Prates lighting up, and his Rubber Pistol (prates.js)
+    if (updateGaneShot(self, other, dt)) continue; // Ciryl Gane's rare takedown shot: the level change and the drive (gane-shot.js)
+    if (updateClinch(self, other, dt)) continue; // the clinch: knees, elbows and a parting shot on the break (before the teep, so a teep can't cut it off) (clinch.js)
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
+    if (updateHeadKick(self, other, dt)) continue; // the head kick his calf kicks set up (head-kick.js)
+    if (updateLegKick(self, other, dt)) continue; // a leg kick into the calf that leaves them limping (leg-kick.js)
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)
     if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
+    if (updateFedor(self, other, dt)) continue; // Fedor Emelianenko's Sambo throw (fedor.js)
+    if (updateJonClinch(self, other, dt)) continue; // Jon Jones's clinch, its elbows and knees, the inside trip (jon-clinch.js)
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
-    if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
+    if (updateAnderson(self, other, dt)) continue; // Anderson Silva's front kick, hands down, counter, triangle off ground and pound (anderson.js)
+    if (updateCormier(self, other, dt)) continue; // Daniel Cormier's double leg and super slam (cormier.js)
+    if (!darkSideBlocks(self) && !ganeShotHolding(self) && updateSpecial(self, other, dt)) continue; // a created character's special move (it waits while Ciryl Gane's shot is a grab and slam, gane-shot.js)
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.guard) { updateGuard(self, other, dt); continue; }
@@ -219,10 +231,11 @@ function updateAbilities(dt) {
     if (updateWeave(self, other, dt)) continue;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
     // Ciryl Gane cheating while the ref's asleep (cheater.js).
-    if ((self.char.hasCheater || self.chAct || self.cheater) && updateCheater(self, other, dt, d)) continue; // (and EVIL Jon Jones's eye poke, jon.js)
+    if ((self.char.hasCheater || self.chAct || self.cheater) && !ganeShotHolding(self) && updateCheater(self, other, dt, d)) continue; // (and EVIL Jon Jones's eye poke, jon.js; it waits while his shot is a grab and slam, gane-shot.js)
     // Josh Hokit's armbar shot and thumbs down (hokit.js).
     if ((self.char.hasArmbarShot || self.char.hasThumbsDown) && updateHokit(self, other, dt, d)) continue;
     if (updateHollowayHands(self, other, dt, d)) continue; // Max Holloway's volume combos and Button Mash, in place of the punch (holloway.js)
+    if (updateVanHands(self, other, dt, d)) continue; // Joshua Van's combos and hot hands, in place of the punch (van.js)
 
     if (self.throwAnim) {
       var ta = self.throwAnim;
@@ -263,28 +276,26 @@ function updateAbilities(dt) {
       var pu = self.char.punch;
       if (!self.punch && !self.kick && !self.swing && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) { // (one limb at a time when it kicks too)
         self.punch = { t: 0, hit: false };
+        rollPunchType(self, self.punch, false); // chance% of them come round as a hook (hook-punch.js), come up as an uppercut or go to the body (body-shots-uppercuts.js)
         self.punchCd = pu.cooldown;
       }
       if (self.punch) {
+        var thrown = self.punch; // (a hook's knockback is read off it after hurt())
         self.punch.t += dt;
-        var windup = pu.speed * 0.35;
+        var windup = punchHitAt(self, self.punch); // (pu.speed * 0.35, later for a hook, hook-punch.js)
         if (!self.punch.hit && self.punch.t >= windup) {
           self.punch.hit = true;
           if (other.alive) {
-            var punchDealt = hurt(other, pu.damage * sugaCritRoll(self), "punch", self.id); // (Sean O'Malley's critical hits, omalley.js)
+            var punchDealt = punchHurt(self, other, thrown, pu.damage * sugaCritRoll(self)); // hurt() (Sean O'Malley's critical hits, omalley.js; a hook hits harder, hook-punch.js; a setup, body-shots-uppercuts.js)
             if (punchDealt > 0) sugaCritLanded(self, other); // CRIT! (omalley.js)
             if (punchDealt > 0) { if (bmfJabs(self.char)) playBmfJab(); else playPunch(punchDealt); violentHit(self, other, 0.5); }
-            if (pu.knockback > 0 && !other.justDodged) {
-              var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
-              other.vx += kx / kd * pu.knockback;
-              other.vy += ky / kd * pu.knockback;
-            }
+            if (!other.justDodged) hookShove(self, other, thrown, pu.knockback); // straight back, or sideways for a hook (hook-punch.js)
             // Light, rapid jabs (like the BMF's) only rattle the screen a little.
             if (!reduceMotion) shake = Math.max(shake, Math.min(10, 2 + pu.damage * 0.4));
             checkEnd();
           }
         }
-        if (self.punch && self.punch.t >= pu.speed) self.punch = null; // (a counter-grab can end it early)
+        if (self.punch && self.punch.t >= punchEndAt(self, self.punch)) self.punch = null; // (a counter-grab can end it early; a hook lasts longer)
       }
     }
 
@@ -311,7 +322,7 @@ function updateAbilities(dt) {
           } else if (other.alive) {
             var kickDealt = hurt(other, ki.damage, self.kick.counter ? "kickback" : "kick", self.id);
             if (kickDealt > 0) playKick();
-            if (kickDealt > 0) calfKickLanded(self, other); // Alex Pereira's calf kicks: a limp (pereira.js)
+            if (kickDealt > 0) legKickOnKick(self, other); // kicks that are leg kicks (Alex Pereira's): a limp (leg-kick.js)
             if (ki.knockback > 0 && !other.justDodged) {
               var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;
               other.vx += kkx / kkd * ki.knockback;
@@ -325,7 +336,7 @@ function updateAbilities(dt) {
       }
     }
 
-    if (self.char.hasGrapple) {
+    if (self.char.hasGrapple || ganeShotHolding(self)) { // (and Ciryl Gane's grab and slam when his shot gets through, gane-shot.js)
       self.grappleCd = Math.max(0, self.grappleCd - dt * self.atkRate);
       var gr = self.char.grapple, grabReach = gr.reach + (self.doBronx ? DB_REACH : 0);
       if (!self.grapple && !self.grabHold && !self.swing && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + grabReach) {

@@ -29,6 +29,7 @@ function updateHokit(self, other, dt, d) {
   if (self.hokitShot) { updateShot(self, dt); return true; }
   if (self.mock) { updateMock(self, other, dt); return true; }
   if (!other.alive) return false;
+  if (hokitPress(self, other, dt, d)) return true; // always walking them down, combinations or the shot (hokit-pressure.js)
   var free = !specialBusy(self) && !specialBusy(other) && !other.invincible && !self.punch;
 
   if (self.char.hasArmbarShot) {
@@ -65,6 +66,7 @@ function beginShot(self, vic) {
   vic.choked = true; // held: it can't do anything until it's out of the armbar
   self.vx = 0; self.vy = 0; vic.vx = 0; vic.vy = 0;
   floater((self.x + vic.x) / 2, Math.min(self.y, vic.y) - self.r - 30, "DOUBLE LEG", "crit");
+  commentaryCall("takedown", self, vic); // "Fast double leg!" (commentary-calls.js)
   playWhoosh();
 }
 
@@ -110,7 +112,7 @@ function updateMock(self, other, dt) {
     m.landed = true;
     floater(self.x, self.y - self.r - 26, "👎", "crit");
     playHokitTaunt();
-    if (other.alive) {
+    if (other.alive && !fedorShrugs(other, false)) { // (Fedor Emelianenko doesn't react, fedor.js)
       other.angry = { t: 0, dur: self.char.thumbsDown.anger, atId: self.id };
       floater(other.x, other.y - other.r - 26, "ANGRY", "note");
     }

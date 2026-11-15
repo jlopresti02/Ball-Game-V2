@@ -78,11 +78,13 @@ function drawFighterArt(c, x, y, r, look, ink, opts) {
   drawArtBody(c, r, look, ink, opts.name || "", contained);
   if (contained && look.cane) drawCane(c, r, ink, opts.caneSwing || 0);
   if (contained && look.robe) drawSithRobe(c, r, look, ink);
+  if (contained && look.neoCoat) drawNeoKit(c, r, look, ink); // Anderson Silva's Spider Code coat and glasses (anderson.js)
   if (contained && look.hair === "coils" && look.hairHigh) drawCoilTop(c, r, look, ink);
   if (contained && look.headwear === "trucker") drawTruckerHat(c, r, look, ink);
   if (contained && look.headwear === "football") drawFootballHelmet(c, r, look, ink);
   if (contained && look.headwear === "mouse") drawMouseHead(c, r, look, ink); // Mighty Mouse's mouse head (mighty-mouse-art.js)
   if (contained && look.icehawk) drawIcehawk(c, r, look, ink); // Chuck Liddell's Icehawk mohawk (liddell.js)
+  if (contained && look.warHair) drawWarHair(c, r, look, ink); // Jiří Procházka's war hair topknot (prochazka.js)
   if (!contained && opts.head !== false) drawArtHead(c, r, look, ink);
   c.restore();
 }
@@ -342,8 +344,9 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   c.fillStyle = "rgba(0,0,0,0.2)";
   c.beginPath(); c.ellipse(0, jaw + r * 0.08, r * 0.45, r * 0.08, 0, 0, Math.PI * 2); c.fill();
   // (a chinstrap beard traces the jaw itself, so it skips the line)
-  c.strokeStyle = look.beard === "chinstrap" ? "rgba(0,0,0,0)" : line; c.lineWidth = lw(0.045);
+  c.strokeStyle = look.beard === "chinstrap" || look.face === "angular" ? "rgba(0,0,0,0)" : line; c.lineWidth = lw(0.045);
   c.beginPath(); c.moveTo(-r * 0.66, jaw - r * 0.14); c.quadraticCurveTo(-r * 0.5, jaw + r * 0.1, 0, jaw + r * 0.1); c.quadraticCurveTo(r * 0.5, jaw + r * 0.1, r * 0.66, jaw - r * 0.14); c.stroke();
+  if (look.face === "angular") drawAngularFace(c, r, look, line, lw); // a lean, angular jaw instead of the round one (ferguson.js)
 
   // Ears at the edges of the ball (drawn over a chinstrap beard instead, so
   // the sideburns run behind them)
@@ -421,6 +424,8 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.fillRect(cgx, cgy, r * 0.016, r * 0.016);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "receding") {
+    drawRecedingHair(c, r, look, lw); c.fillStyle = hc;  // Tony Ferguson's receding hairline (ferguson.js)
   } else if (look.hair === "slick") {
     drawSlickHair(c, r, look, lw, hairline); c.fillStyle = hc;  // Conor McGregor's slicked-back undercut
   } else if (look.hair === "coils") {
@@ -523,7 +528,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.fillStyle = "rgba(255,255,255,0.35)";
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
-  if (look.hair !== "bald" && look.hair !== "crop" && look.hair !== "coils") {  // these outline their own shape
+  if (look.hair !== "bald" && look.hair !== "crop" && look.hair !== "coils" && look.hair !== "receding") {  // these outline their own shape
     c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
@@ -532,6 +537,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.waianae) drawWaianaeFade(c, r, look, lw); // Max Holloway's Waianae fade (holloway.js)
   if (look.faceInk) drawFaceInk(c, r, lw);  // Sean O'Malley's face tattoos
   if (look.goatee || look.scalpInk) drawIcemanHead(c, r, look, lw);  // Chuck Liddell's goatee and scalp tattoo (liddell.js)
+  if (look.nightmare) drawPratesInk(c, r, look, lw);  // Carlos Prates's head, neck and chest script (prates.js)
 
   // Chinstrap: a narrow band from the sideburns along the jaw to the chin
   if (look.beard === "chinstrap") {
@@ -665,7 +671,10 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.headwear === "bandana") drawBandana(c, r, line, lw);
   if (look.hachimaki) drawGspHachimaki(c, r, look.hachimaki, line, lw); // GSP's walkout headband (gsp.js)
   if (look.cucuy) drawCucuyHead(c, r, look, line, lw); // Tony Ferguson's moustache and headband (ferguson.js)
+  if (look.vanGoatee) drawVanGoatee(c, r, look, line, lw); // Joshua Van's thin moustache and chin beard (van.js)
+  if (look.diazChin) drawDiazChin(c, r, look); // the Diaz brothers' chin beards (diaz-skins.js)
   if (look.glasses === "shades") drawShades(c, r, lw);
+  if (look.eyePatch) drawEyePatch(c, r, look.eyePatch, lw); // Michael Bisping's pirate eye patch (bisping.js)
 }
 
 // A crowned lion's head in the middle of the chest with a shaggy mane hanging
@@ -979,7 +988,7 @@ function drawShades(c, r, lw) {
 function drawArtBody(c, r, look, ink, name, contained) {
   var skin = look.skin, build = look.build;
   var line = shadeHex(skin, -0.38), hi = shadeHex(skin, 0.28);
-  var def = build === "lean" ? 0.65 : build === "stocky" ? 0.55 : 1; // how cut the muscles look
+  var def = look.flat ? 0.12 : build === "lean" ? 0.65 : build === "stocky" ? 0.55 : 1; // how cut the muscles look
   var lw = function (k) { return Math.max(1, r * k); };
 
   c.save();
@@ -1012,7 +1021,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   // Pecs: highlight on top, deep shadow line underneath
   [-1, 1].forEach(function (s) {
-    c.globalAlpha = 0.45;
+    c.globalAlpha = look.flat ? 0.2 : 0.45;  // softer pecs when skinny fat (diaz-skins.js)
     c.fillStyle = hi;
     c.beginPath(); c.ellipse(s * r * 0.3, -r * 0.38, r * pecW * 0.42, r * 0.18, s * 0.15, 0, Math.PI * 2); c.fill();
     c.globalAlpha = 0.35 * def;
@@ -1040,6 +1049,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.globalAlpha = 0.4; c.strokeStyle = line; c.lineWidth = lw(0.04);
     c.beginPath(); c.moveTo(0, -r * 0.05); c.lineTo(0, r * 0.32); c.stroke();
     c.beginPath(); c.arc(0, r * 0.1, r * 0.42, 0.35, Math.PI - 0.35); c.stroke();
+  } else if (look.flat) { drawSkinnyFatCore(c, r, lw, line);  // skinny-fat stomach (diaz-skins.js)
   } else if (look.core === "solid") {
     // Solid, thick core with no six pack: one broad smooth panel, a faint
     // centre line and the obliques framing it
@@ -1163,6 +1173,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   if (tat.gorilla) drawGorillaChest(c, r, look, contained);  // Conor McGregor's crowned gorilla
   if (tat.tiger) drawTigerStomach(c, r, look, lw, contained);  // and the tiger on his stomach
   if (tat.polynesian) drawHollowayChest(c, r, lw, contained, look); // Max Holloway's Polynesian chest piece and HOLLOWAY (holloway.js)
+  if (tat.blessed) drawVanChest(c, r, lw, contained, look); // Joshua Van's Blessed chest piece, wings and roses (van.js)
   if (tat.portraits) {
     // Black-and-grey family portraits filling the upper chest: a woman with
     // long hair, an older man with grey hair (lowest) and a girl with dark
@@ -1362,7 +1373,12 @@ function drawArtBody(c, r, look, ink, name, contained) {
   // units (x, y, w, h as fractions of r), kept between the jaw and the shorts
   if (tat.decals && contained) {
     c.save();
-    c.beginPath(); c.rect(-r, -r * 0.28, r * 2, r * 0.64); c.clip();
+    c.beginPath();
+    if (tat.decalNeck) { // follow the neck line under the jaw instead of a flat top (Max Holloway's chest piece)
+      c.moveTo(-r, -r * 0.44); c.lineTo(-r * 0.66, -r * 0.44); c.quadraticCurveTo(-r * 0.5, -r * 0.2, 0, -r * 0.2);
+      c.quadraticCurveTo(r * 0.5, -r * 0.2, r * 0.66, -r * 0.44); c.lineTo(r, -r * 0.44); c.lineTo(r, r * 0.36); c.lineTo(-r, r * 0.36); c.closePath();
+    } else c.rect(-r, -r * 0.28, r * 2, r * 0.64);
+    c.clip();
     tat.decals.forEach(function (d) {
       var im = artDecalImage(d.img);
       if (!im.complete || !im.naturalWidth) return;
@@ -1529,6 +1545,9 @@ function drawArtBody(c, r, look, ink, name, contained) {
   if (look.shortsStyle === "icicles") drawIcicleShorts(c, r, look, sTop, band, name); // Chuck Liddell's Iceman trunks (liddell.js)
   if (look.shortsStyle === "meander") drawMeanderShorts(c, r, look, sTop, band); // Volkanovski's Greek key trunks (volkanovski.js)
   if (look.shortsStyle === "hibiscus") drawHibiscusShorts(c, r, look, sTop, band, name); // Max Holloway's UFC 300 hibiscus kit (holloway.js)
+  if (look.shortsStyle === "tricolor") drawTricolorShorts(c, r, look, sTop, band); // Fedor Emelianenko's PRIDE trunks (fedor.js)
+  if (look.shortsStyle === "jollyroger") drawJollyRogerShorts(c, r, look, sTop, band); // Michael Bisping's skull and crossbones (bisping.js)
+  if (look.shortsStyle === "acheik") drawVanShorts(c, r, look, sTop, band, name); // Joshua Van's Myanmar kit (van.js)
   if (look.shortsStyle === "stripe") {
     c.fillStyle = look.trim;
     [-1, 1].forEach(function (s) {
@@ -1572,11 +1591,15 @@ function drawArtBody(c, r, look, ink, name, contained) {
   c.globalAlpha = look.shortsStyle === "print" || look.legPatch === false ? 0 : 0.85;
   c.fillRect(-r * 0.42, sTop + band + r * 0.1, r * 0.18, r * 0.09);
   c.globalAlpha = 1;
+  if (look.spiderLogo) drawSpiderLogo(c, r, look, sTop, band); // Anderson Silva's spider (anderson.js)
   c.strokeStyle = ink; c.lineWidth = lw(0.05);
   c.beginPath(); c.moveTo(-r, sTop); c.lineTo(r, sTop); c.stroke();
+  if (look.belly) drawDcBelly(c, r, look, ink, lw, contained, sTop); // Daniel Cormier's big round belly over his waistband (cormier.js)
 
   if (contained && look.gi) drawGspGi(c, r, look, ink, lw); // GSP's walkout karate gi (gsp.js)
+  if (contained && look.samurai) drawSamuraiKit(c, r, look, ink, lw); // Jiří Procházka's kimono and hakama (prochazka.js)
   if (contained) drawArtHeadLayer(c, r, look, line, lw, name);
+  if (contained && look.pratesSkin) drawPratesSkinBody(c, r, look); // Carlos Prates's chest script and navel ring (prates-skin.js)
 
   // Overall roundness: rim shadow
   var rg = c.createRadialGradient(-r * 0.2, -r * 0.25, r * 0.6, 0, 0, r);
@@ -1736,10 +1759,14 @@ function drawArmMuscle(c, ch, x0, y0, x1, y1, w, edge) {
   c.restore();
 }
 
-function drawTracedArm(c, ch, x0, y0, x1, y1, w) {
+// `side` (1 his right hand, -1 his left) picks tattoos.armDecalRight /
+// armDecalLeft when a fighter has a different sleeve on each arm.
+function hasTwoSleeves(ch) { var t = ch && ch.look && ch.look.tattoos; return !!(t && t.armInk && t.armDecalRight && t.armDecalLeft); }
+function drawTracedArm(c, ch, x0, y0, x1, y1, w, side) {
   var tat = ch.look && ch.look.tattoos;
   if (!tat || !tat.armInk || !tat.armDecal) return false;
-  var im = artDecalImage(tat.armDecal);
+  var src = hasTwoSleeves(ch) && side ? (side < 0 ? tat.armDecalLeft : tat.armDecalRight) : tat.armDecal;
+  var im = artDecalImage(src);
   if (!im.complete || !im.naturalWidth) return false;
   var dx = x1 - x0, dy = y1 - y0, len = Math.sqrt(dx * dx + dy * dy);
   if (len < 1) return false;

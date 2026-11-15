@@ -82,10 +82,9 @@
 //             to the back for a choke and `gnpChance`% into ground and pound
 //             (grapple-duel.js calls tryKhabibOnConor), his Send Me Location
 //             comes early (`sendLocFirst`), and he says "Let's talk now."
-//             whenever he's pounding on him. vs Dustin: Dustin throws calf
-//             kicks at him (and nobody else): `damage` and a limp
-//             (slowdown.js). Calf kicks (Dustin's, and Alex Pereira's) do
-//             `calfKicksHurt` times the damage to him.
+//             whenever he's pounding on him. Leg kicks (leg-kick.js: Dustin's
+//             calf kicks, which come harder at him than anyone, and Alex
+//             Pereira's) do `calfKicksHurt` times the damage to him.
 // The taunt, the counter, the kicks and the drink run on b.cm and don't make
 // him untouchable; the press conference (move "presser") and his part of
 // the Bus Crew (move "buscrew") run on b.igbb like other specials. The bus,
@@ -202,7 +201,7 @@ function cmKnockable(o) { return o.alive && !o.grappled && !o.grapple && !o.slam
 function resetConor() { cm13 = null; cmPodium = null; cmBus = null; cmDolly = null; cmCrewHit = false; cmClock = 0; }
 // From makeBall (after applyWeight, so his normal speed and attack rate are set).
 function initConor(b) {
-  b.cmCalf = null; b.cmCalfT = null; b.cmTalkFor = null; b.cmSetup = null; b.cmBrawl = null; b.cmBumped = false; b.cmLastHit = null;
+  b.cmTalkFor = null; b.cmSetup = null; b.cmBrawl = null; b.cmBumped = false; b.cmLastHit = null;
   b.cm = null;
   var cfg = cmCfg(b);
   if (!cfg) return;
@@ -303,8 +302,7 @@ function conorDamageMult(b, source, attackerId) {
   if (m && cfg) {
     if (spill) mult *= cfg.drink.vuln || 1;
     if (m.counter && m.counter.phase === "open") mult *= cfg.counter.openVuln || 1;
-    if (atk && atk !== b && cfg.calfKicksHurt && (source === "kick" || source === "kickback") &&
-        (atk.cmCalf || (atk.char.poatan && atk.char.poatan.calfKick))) mult *= cfg.calfKicksHurt;
+    if (atk && atk !== b && cfg.calfKicksHurt && (source === "kick" || source === "kickback") && isLegKick(atk, source)) mult *= cfg.calfKicksHurt; // (leg-kick.js)
   }
   return mult;
 }
@@ -368,7 +366,7 @@ function cmCall(b, key) {
 // ---------------------------------------------------------------- the abilities loop
 
 // From the abilities loop, before the special. True while it's running.
-// Also runs for his rivals (Dustin's calf kicks, Khabib's extra grappling).
+// Also runs for his rivals (Khabib's extra grappling).
 function updateConor(self, other, dt) {
   if (!self.cm) return cmRivalUpdate(self, other, dt);
   var m = self.cm, cfg = cmCfg(self);
@@ -442,6 +440,7 @@ function endTaunt(self) {
 function angerThem(self, other, dur, furious) {
   if (!other || !other.alive || other.koOut || !(dur > 0)) return;
   if (hollowayShrugs(other, self, furious)) return; // Max Holloway doesn't take the bait: "Keep talking." (holloway.js)
+  if (fedorShrugs(other, furious)) return; // Fedor Emelianenko doesn't react (fedor.js)
   other.angry = { t: 0, dur: dur, atId: self.id };
   floater(other.x, other.y - other.r - 26, furious ? "FURIOUS!" : "ANGRY", "note");
   playTauntOoh();
@@ -792,6 +791,7 @@ function landKick(self, other, m, kc, spec, k) {
     if (kc.setup) other.cmSetup = { id: self.id, t: kc.setup.time };
     if (k.kind === "spin") {
       floater(other.x, other.y - other.r - 30, "SPINNING KICK!", "crit");
+      commentaryCall("spinKick", self, other); // "Nice spinning kick to the body!" (commentary-calls.js)
       playPunch(dealt * 1.5);
       crowdReact(0.45);
       if (!reduceMotion) shake = Math.max(shake, 10);
@@ -1216,46 +1216,15 @@ function cmSetupRivals(conor, other) {
   var rv = cmRival(conor, other);
   if (!rv) return;
   if (rv.sendLocFirst && other.char.sendLocation && !other.sendLocN) other.sendLocT = cmRand(rv.sendLocFirst);
-  if (rv.calfKicks) other.cmCalfT = cmRand(rv.calfKicks.first || rv.calfKicks.every);
 }
 
-// The abilities loop for his rivals: Khabib's grabs come round faster,
-// Dustin throws calf kicks. True while Dustin's kick is out.
+// The abilities loop for his rivals: Khabib's grabs come round faster.
+// (Dustin's calf kicks are his own now: legKick, leg-kick.js.)
 function cmRivalUpdate(self, other, dt) {
   var rv = cmRival(other, self);
   if (!rv || !other.cm) return false;
   if (rv.grappleBoost > 1 && self.char.hasGrapple && self.grappleCd > 0) self.grappleCd = Math.max(0, self.grappleCd - dt * (self.atkRate || 1) * (rv.grappleBoost - 1));
-  if (rv.calfKicks) return calfKick(self, other, rv.calfKicks, dt);
   return false;
-}
-
-// Dustin's calf kick (only against Conor): a low kick at his lead leg.
-function calfKick(self, other, ck, dt) {
-  var k = self.cmCalf, gap = cmDist(self, other) - self.r - other.r;
-  if (!k) {
-    if (self.cmCalfT == null) self.cmCalfT = cmRand(ck.every);
-    self.cmCalfT -= dt;
-    if (self.cmCalfT > 0 || !started || over || !other.alive || other.koOut || gap > ck.range) return false;
-    if (self.punch || self.koPunch || self.igbb || specialBusy(self) || specialBusy(other) || !inOrdinaryMovement(self) || swordDuelActive()) return false;
-    self.cmCalf = k = { t: 0, hit: false, dur: 0.4, side: Math.random() < 0.5 ? -1 : 1 };
-    playWhoosh();
-  }
-  k.t += dt;
-  if (!k.hit && k.t >= 0.15) {
-    k.hit = true;
-    if (other.alive && !other.koOut && gap <= ck.range + 12) {
-      var dealt = hurt(other, ck.damage, "kick", self.id);
-      if (dealt > 0) {
-        playKick();
-        if (!slowedBy(other, "limp")) floater(other.x, other.y - other.r - 30, "CALF KICK!", "note");
-        addSlow(other, ck.slow, ck.time, "limp");
-        if (!reduceMotion) shake = Math.max(shake, 8);
-      }
-      checkEnd();
-    }
-  }
-  if (k.t >= k.dur) { self.cmCalf = null; self.cmCalfT = cmRand(ck.every); return false; }
-  return true;
 }
 
 // From attemptGrab (grapple-duel.js) once the shot can't be stopped: Khabib
@@ -1345,10 +1314,9 @@ function applyConorPose(b) {
 }
 
 // From draw(), per fighter, after its hands: the gas tank bar, his strut,
-// the counter stance, the podium, and Dustin's calf kick.
+// the counter stance and the podium.
 function drawConor(b) {
   if (!b.alive) return;
-  if (b.cmCalf) drawCalfKick(b);
   var m = b.cm;
   if (!m) return;
   var other = balls[1 - b.id];
@@ -1669,28 +1637,6 @@ function drawBottleInHand(x, y, r) {
   ctx.save(); ctx.imageSmoothingEnabled = false;
   ctx.translate(x, y); ctx.rotate(-0.4);
   ctx.drawImage(im, -w / 2, -h / 2, w, h);
-  ctx.restore();
-}
-
-// Dustin's calf kick: his leg swinging out low into Conor's lead calf.
-function drawCalfKick(b) {
-  var k = b.cmCalf, o = balls[1 - b.id];
-  var ext = k.t < 0.15 ? easeOut(k.t / 0.15) : Math.max(0, 1 - (k.t - 0.15) / (k.dur - 0.15));
-  var dx = o.x - b.x, dy = o.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
-  var hip = { x: b.x + ux * b.r * 0.35, y: b.y + b.r * 0.55 };
-  var calf = { x: o.x - ux * o.r * 0.75, y: o.y + o.r * 0.62 };
-  var foot = { x: hip.x + (calf.x - hip.x) * ext, y: hip.y + (calf.y - hip.y) * ext };
-  var knee = { x: (hip.x + foot.x) / 2 - uy * b.r * 0.25 * k.side, y: (hip.y + foot.y) / 2 + b.r * 0.2 };
-  ctx.save();
-  drawBjjLeg(b.char, hip, knee, foot, b.r * 0.13, 0.5 * k.side, b.r * 0.2);
-  if (k.hit && k.t < 0.28) {
-    ctx.globalAlpha = 1 - (k.t - 0.15) / 0.13;
-    ctx.strokeStyle = "#ffe066"; ctx.lineWidth = 3;
-    for (var i = 0; i < 6; i++) {
-      var a = i / 6 * Math.PI * 2;
-      ctx.beginPath(); ctx.moveTo(calf.x + Math.cos(a) * 6, calf.y + Math.sin(a) * 6); ctx.lineTo(calf.x + Math.cos(a) * 16, calf.y + Math.sin(a) * 16); ctx.stroke();
-    }
-  }
   ctx.restore();
 }
 
@@ -2062,12 +2008,13 @@ function conorGalleryMoves(ch, add) {
   if (ck) add("🦵", "Kicks", "While he's fresh he kicks to the body from " + ck.range + " out: a front kick (" + ck.front.damage + ") that pushes them away, and " + ck.spin.chance + "% of the time a spinning kick (" + ck.spin.damage + ", he whips round first). A kick that lands sets them up: coming back in fires the counter left with " + ck.setup.koBonus + "% more knockout chance. The kicks dry up as he tires.");
   if (cg) add("⛽", "Gas tank", "The fastest, hardest-hitting fighter in the game for " + secs(cg.fresh) + " (x" + cg.speed[0] + " speed, x" + cg.damage[0] + " damage). Then over " + secs(cg.fade) + " it runs dry: x" + cg.speed[1] + " speed, x" + cg.damage[1] + " damage, and up to " + cg.tapExtra[1] + "% more likely to tap to a submission. Kicks burn it.");
   if (dk) add("🍺", "Proper No. 12", "When he's running low (up to " + dk.max + " times) he stops for a swig of root beer: " + secs(dk.time) + " stood still, and they come for him. Get through it and his tank winds back " + secs(dk.refill) + ". Get hit and he spills it and takes x" + dk.vuln + " damage.");
+  potOfGoldEndGalleryMove(ch, add); // the rainbow and the pot of gold at the end of it (conor-pot-of-gold.js)
   if (pc && pc.on) add("🎤", "Press conference", pc.chance + "% of fights, once: a podium rises, he says a line and they get FURIOUS, he throws " + pc.bottles + " water bottles (" + pc.bottleDamage + " each), then steps out into the counter left with " + pc.koBonus + "% more knockout chance.");
   if (ch.tdd) add("🧱", "Takedown defense", "Stuffs " + ch.tdd.sprawlChance + "% of takedown shots and punches straight back.");
   if (cn.thirteen) add("⏱️", "13 seconds", "Knock someone out inside " + cn.thirteen.within + " seconds and the jumbotron shows the time, like his knockout of José Aldo.");
   if (cn.calls !== false) add("🎙️", "Commentary", "Land a finish like one of his real ones and the commentator's real call comes up: Rogan on the counter left (Aldo), Goldberg against Dustin and on a punch finish (Alvarez), Anik on a kick finish inside a minute (Cerrone).");
   if (cr.khabib) add("🦅", "vs Khabib", "Khabib's grabs come round " + cr.khabib.grappleBoost + "x as fast, " + cr.khabib.rncChance + "% of his takedowns take the back for a choke and " + cr.khabib.gnpChance + "% go to ground and pound (\"Let's talk now.\"), and Send Me Location comes early" + (cr.khabib.answerBus ? ", and again right after the bus leaves (his answer to it)" : "") + ".");
-  if (cr.dustin && cr.dustin.calfKicks) add("🦵", "vs Dustin", "Dustin throws calf kicks at him (" + cr.dustin.calfKicks.damage + ", and a limp). Calf kicks do x" + (cn.calfKicksHurt || 1) + " damage to him.");
+  if (cn.calfKicksHurt) add("🦵", "Bad calf", "Leg kicks (Dustin's calf kicks, Alex Pereira's kicks) do x" + cn.calfKicksHurt + " damage to him.");
 }
 // The special's description (SPECIAL_INFO.buscrew, gallery.js).
 function busCrewInfo(sp) {

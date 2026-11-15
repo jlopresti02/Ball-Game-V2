@@ -29,6 +29,9 @@
 //            up!" (his strikes landed come up), then "I'm the best boxer in
 //            the UFC, baby!" Meanwhile he slips `slip`% of what they throw
 //            without looking and counters each slip (`counter`).
+// Slips      (holloway.slip) the rest of the fight he slips `chance`% of what
+//            they throw (no counter; not at the booth, which has its own, and
+//            never in The Middle).
 // Flashback  (holloway.flashback) once a fight both fighters hold for a
 //            cutscene (holloway-room.js): the picture goes grainy like an old
 //            TV, the camera pulls back into his living room where the fight is
@@ -39,9 +42,10 @@
 //            spinning back fist in there now and then, "N HIT COMBO!".
 // The Middle  his special (special.move "middle"), "MEET ME IN THE MIDDLE": his real point
 //            down, from the Ricardo Lamas fight (2016) to the last-second
-//            knockout of Justin Gaethje at UFC 300 (2024). His rule is that
-//            only the one winning can call it (onlyWhenWinning), so the full
-//            bar waits until he's ahead. He points down at the middle of the
+//            knockout of Justin Gaethje at UFC 300 (2024). A full bar waits
+//            for the end of the fight (`trigger` "late": either of them under
+//            lateHp% health or the fight past lateAfter seconds; "winning" is
+//            his real rule, only the one ahead calls it). He points down at the middle of the
 //            cage (the tell), a clock comes up at 0:10, and they walk out to
 //            the middle (acceptChance%, Gaethje always) and trade: his fastest
 //            punches in the game against their answers. At 0:01 the big right
@@ -221,30 +225,29 @@ function hwVolumePunch(self, other, dt, d, v) {
   if (!self.punch && !self.koPunch && self.punchCd === 0 && other.alive && d < reach) {
     var n = Math.max(1, Math.round(hwLerp(v.combo[0], v.combo[1], m) + (Math.random() - 0.5) * 1.6));
     self.punch = { t: 0, hit: false, side: Math.random() < 0.5 ? 1 : -1, left: n - 1, n: n, hw: true };
+    rollPunchType(self, self.punch, false); // a body shot or an uppercut in the volume (body-shots-uppercuts.js)
     self.punchCd = hwLerp(v.cooldown[0], v.cooldown[1], m);
   }
   var p = self.punch;
   if (!p) return;
   p.t += dt;
   if (p.left > 0 && other.alive) hwChase(self, other, d, pu.reach, v.chase); // walks into range behind the combo
-  if (!p.hit && p.t >= pu.speed * 0.35) {
+  if (!p.hit && p.t >= punchHitAt(self, p)) { // (pu.speed * 0.35; an uppercut or body shot has its own, body-shots-uppercuts.js)
     p.hit = true;
     if (other.alive && d < reach + v.slack) {
       var last = p.left === 0;
-      var dealt = hurt(other, hwLerp(v.damage[0], v.damage[1], m), "punch", self.id);
+      var dealt = punchHurt(self, other, p, hwLerp(v.damage[0], v.damage[1], m)); // hurt() (a setup, body-shots-uppercuts.js)
       if (dealt > 0) { playPunch(dealt); hwLanded(self, 1); }
       var kb = last ? pu.knockback : v.comboKnockback;
-      if (kb > 0 && !other.justDodged && hwKnockable(other)) {
-        var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
-        other.vx += kx / kd * kb; other.vy += ky / kd * kb;
-      }
+      if (!other.justDodged && hwKnockable(other)) hookShove(self, other, p, kb); // straight back (a body shot's own, hook-punch.js)
       if (!reduceMotion) shake = Math.max(shake, last ? 5 : 3);
       checkEnd();
     }
   }
-  if (self.punch && p.t >= pu.speed) {
+  if (self.punch && p.t >= punchEndAt(self, p)) {
     if (p.left > 0 && other.alive && self.alive && d < reach + v.slack * 2) {
       self.punch = { t: 0, hit: false, side: -p.side, left: p.left - 1, n: p.n, hw: true }; // next one, off the other hand
+      rollPunchType(self, self.punch, self.punch.left === 0); // (body-shots-uppercuts.js)
     } else {
       self.punch = null;
     }
@@ -326,16 +329,20 @@ function runBooth(self, other, a, bc, dt) {
 }
 
 // From hurt (match.js): at the booth he slips what they throw without
-// looking, and comes back with a counter.
+// looking, and comes back with a counter. The rest of the fight he slips
+// `slip.chance`% of it (holloway.slip), no counter; never in his special.
 function hollowayDodge(b, source, attackerId) {
   var a = b.hwAct, cfg = hwCfg(b);
-  if (!a || a.kind !== "booth" || !cfg || !cfg.booth || !b.alive) return false;
+  if (!cfg || !b.alive) return false;
+  var booth = !!(a && a.kind === "booth" && cfg.booth);
+  var chance = booth ? cfg.booth.slip : (!a && !b.igbb && cfg.slip ? cfg.slip.chance : 0);
+  if (!chance) return false;
   if (HW_NO_SLIP[source] || attackerId == null || attackerId === b.id || b.grappled || b.slam) return false;
-  if (Math.random() * 100 >= cfg.booth.slip) return false;
+  if (Math.random() * 100 >= chance) return false;
   b.weaveAnim = { t: 0, dur: 0.24, sign: Math.random() < 0.5 ? -1 : 1 };
   floater(b.x, b.y - b.r - 8, "SLIP", "dodge");
   b.justDodged = true;
-  if (!PROJECTILE_SOURCES[source]) b.hwCounter = attackerId;
+  if (booth && !PROJECTILE_SOURCES[source]) b.hwCounter = attackerId;
   playHwSlip();
   return true;
 }
@@ -480,6 +487,7 @@ function hwMashLand(self, other, kp, cfg) {
 function hwComboDone(self, ms, mc) {
   if (ms.hits >= 3) {
     floater(self.x, self.y - self.r - 34, ms.hits + " HIT COMBO!", ms.hits >= 6 ? "crit" : "note");
+    commentaryCall("combo", self, balls[1 - self.id], { hits: ms.hits }); // "What a combination!" (commentary-calls.js)
     playHwCombo(ms.hits);
     crowdReact(0.2 + ms.hits * 0.05);
   }
@@ -492,9 +500,10 @@ function hwComboDone(self, ms, mc) {
 function updateMiddle(self, other, dt) {
   var sp = self.char.special;
   if (!self.igbb) {
-    if (self.specialT < sp.chargeTime || !canStartIgbb(self, other) || self.hwAct || self.hwMash || hwFlash) return false;
+    var free = middleFreeCall(self, other, sp); // the end of the fight: no full bar needed the first time
+    if ((self.specialT < sp.chargeTime && !free) || !canStartIgbb(self, other) || self.hwAct || self.hwMash || hwFlash) return false;
     if (other.guard || other.dazed || other.koOut || other.hwAct || swordDuelActive()) return false;
-    if (sp.onlyWhenWinning && self.hp < other.hp) return false; // his rule: only the one winning calls the 10 seconds
+    if (!free && !middleTriggerOpen(self, other, sp)) return false; // `trigger`: late in the fight, only when winning, or any time
     startMiddle(self, other, sp);
   }
   var m = self.igbb;
@@ -512,11 +521,34 @@ function updateMiddle(self, other, dt) {
   return true;
 }
 
+// When a full bar may call it, by `special.trigger`:
+//   "late"     near the end of the fight: either of them under `lateHp`% health,
+//              or the fight past `lateAfter` seconds (the default now). With
+//              `lateFreeCall` the first call of the fight doesn't wait for a
+//              full bar, so it comes at the end of nearly every fight; after
+//              that it's the bar as usual.
+//   "winning"  his real rule, only the one ahead calls the last 10 seconds (the
+//              old setting; `onlyWhenWinning: true` with no `trigger` means this too)
+//   "any"      as soon as the bar's full
+function middleTriggerOpen(self, other, sp) {
+  var tr = sp.trigger || (sp.onlyWhenWinning ? "winning" : "any");
+  if (tr === "winning") return self.hp >= other.hp;
+  if (tr === "late") return middleLate(self, other, sp);
+  return true;
+}
+function middleLate(self, other, sp) {
+  return Math.min(self.hp, other.hp) < MAX_HP * (sp.lateHp || 0) / 100 || (self.hwT || 0) >= (sp.lateAfter || Infinity);
+}
+function middleFreeCall(self, other, sp) {
+  return sp.trigger === "late" && !!sp.lateFreeCall && !self.hwMidCalls && middleLate(self, other, sp);
+}
+
 function startMiddle(self, other, sp) {
   clearActions(self);
   self.koPunch = null; self.punch = null;
   var hc = hwCfg(self) || {}, gj = !!hc.gaethje && hwIs(other.char, HW_GAETHJE);
   var accept = gj || Math.random() * 100 < sp.acceptChance;
+  self.hwMidCalls = (self.hwMidCalls || 0) + 1;
   self.igbb = { move: "middle", phase: "point", t: 0, clockT: 0, accept: accept, side: self.x <= other.x ? -1 : 1, gaethje: gj, n: 10, thrown: 0, nextAt: 0, ansAt: 0, ansSide: 1 };
   floater(self.x, self.y - self.r - 34, "MEET ME IN THE MIDDLE", "crit");
   hwRing = { id: self.id, t: 0, out: 0 };
@@ -660,6 +692,7 @@ function landFinal(self, other, m, sp) {
     var d = hwDist(self, other), ux = (other.x - self.x) / d, uy = (other.y - self.y) / d;
     playPunch(dealt * 1.8);
     floater(other.x, other.y - other.r - 34, "RIGHT HAND!", "note");
+    commentaryCall("rightHand", self, other); // "Oh! Big right hand!" (commentary-calls.js)
     impacts.push({ x: other.x - ux * other.r, y: other.y - uy * other.r, nx: -ux, ny: -uy, life: 0.45, max: 0.45, color: self.char.color });
     other.squash = { t: 0.18, max: 0.18, nx: -ux, ny: -uy };
     hitStop = Math.max(hitStop, 0.1);
@@ -1239,9 +1272,16 @@ function drawWaianaeFade(c, r, look, lw) {
 
 // ---------------------------------------------------------------- gallery (gallery.js)
 
+function hwTriggerText(sp) {
+  var tr = sp.trigger || (sp.onlyWhenWinning ? "winning" : "any");
+  if (tr === "winning") return "Only when he's winning.";
+  if (tr === "late") return "Saved for the end of the fight: once either of them is under " + sp.lateHp + "% health or the fight's past " + secs(sp.lateAfter) + (sp.lateFreeCall ? ", and the first time it doesn't even need a full bar." : ".");
+  return "";
+}
+
 function hollowaySpecialInfo(sp) {
-  return "His real point down (Ricardo Lamas, 2016; the last-second knockout of Justin Gaethje at UFC 300). Only when he's winning. He points down at the middle of the cage and a clock comes up at 0:10. " + sp.acceptChance +
-    "% of the time they walk out to the middle with him (Gaethje always) and they trade: his fastest punches in the game (" + sp.damage + " each, one every " + secs(sp.punchEvery) + ", can't be slipped or blocked) against theirs. At 0:01 the big right hand: a knockout " + sp.koBase +
+  return "His real point down (Ricardo Lamas, 2016; the last-second knockout of Justin Gaethje at UFC 300). " + hwTriggerText(sp) + " He points down at the middle of the cage and a clock comes up at 0:10. " + (sp.acceptChance >= 100 ? "They always walk out to the middle with him" : sp.acceptChance +
+    "% of the time they walk out to the middle with him (Gaethje always)") + " and they trade: his fastest punches in the game (" + sp.damage + " each, one every " + secs(sp.punchEvery) + ", can't be slipped or blocked) against theirs. At 0:01 the big right hand: a knockout " + sp.koBase +
     "% of the time, up to " + (sp.koBase + sp.koLow + sp.koMeter) + "% when they're hurt and his meter is full, otherwise " + sp.finalDamage + " and the bell. A knockout brings up Joe Rogan's UFC 300 call. Turn it down and the crowd boos, and he gets " + Math.round(sp.declineRefund * 100) + "% of his bar back.";
 }
 
@@ -1251,6 +1291,7 @@ function hollowayGalleryMoves(ch, add) {
   if (bl) add("🙏", "Blessed meter", "Fills with fight time and every punch he lands. The fuller it is, the longer, faster and heavier his combos: the longer it goes, the better he gets.");
   if (ch.tdd) add("🤼", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots (\"STUFFED\") and punches straight back.");
   if (h.guardRespect) add("🚫", "Stays out of the guard", h.guardRespect.chance + "% of the times they pull guard he won't follow them down: he stays out of the circle until they stand up.");
+  if (h.slip) add("💨", "Slips", "Slips " + h.slip.chance + "% of what they throw at him, all fight long.");
   if (bo) add("🎙️", "The booth", "Against a striker he's beating, he turns to the commentators: \"Count it up!\", then \"I'm the best boxer in the UFC, baby!\" (Calvin Kattar fight, 2021), slipping " + bo.slip + "% of what they throw without looking and countering. Up to " + bo.max + " times a fight.");
   if (fb) add("🎮", "Flashback", "Once a fight the fight holds for a cutscene: the picture goes grainy like an old TV and pulls back into his living room, where the fight is the game he's playing. He chugs a Maxx Energy, plays like a sweat and gets an idea (lightbulb), and it dives back into the fight." + (ms ? " Then " + secs(ms.time) + " of Button Mash: wild " + ms.combo[0] + " to " + ms.combo[1] + " strike combos with the buttons over his head, and a spinning back fist (" + ms.backfist + ")." : ""));
   if (h.gaethje) add("🏆", "vs Justin Gaethje", "Gaethje always meets him in the middle, and the right hand at 0:01 is " + h.gaethje.koBonus + "% more likely to knock him out, like UFC 300. Then he holds up the BMF belt.");

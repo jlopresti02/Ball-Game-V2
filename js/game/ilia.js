@@ -39,6 +39,7 @@ function iliaDamage(b) {
 
 // Runs in place of the normal punch for a fighter with char.ramp.
 function updateRampPunch(self, other, dt, d) {
+  if (iliaChainOn(self)) { iliaChainPunch(self, other, dt, d); return; } // 3-4 punch combos with a 4x finisher instead (ilia-combos.js)
   var pu = self.char.punch, r = self.char.ramp;
   self.punchCd = Math.max(0, self.punchCd - dt * self.atkRate);
   if (!self.punch && !self.kick && !self.swing && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) {
@@ -99,6 +100,7 @@ function tryTddSprawl(attacker, target) {
 // Called by updateSprawl when the sprawler can't grapple.
 function endTddSprawl(self, atk) {
   if (!self.alive || !atk.alive) return;
+  if (tryDarceOffSprawl(self, atk)) return; // snaps on a D'Arce instead (Ilia Topuria, ilia-darce.js)
   floater(self.x, Math.min(self.y, atk.y) - self.r - 30, "STUFFED", "dodge");
   var dx = atk.x - self.x, dy = atk.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   atk.vx = dx / d * 240; atk.vy = dy / d * 240;

@@ -35,7 +35,7 @@ function initRainbow(b) {
   b.rbN = 0;
   b.rbT = cfg ? rbRand(cfg.first) : Infinity;
 }
-function resetRainbow() { rbCoins = []; }
+function resetRainbow() { rbCoins = []; resetPotOfGoldEnd(); } // (and the pot of gold at the end of it, conor-pot-of-gold.js)
 
 // Can he start it right now (for the beam clash, started by the other one's beam)?
 function rainbowReady(b) {
@@ -73,7 +73,7 @@ function updateRainbow(self, other, dt) {
     return true;
   }
   if (m.phase === "charge") {
-    if ((m.t < m.charge - RB_LOCK || m.pair) && other.alive) rbAim(self, other);
+    if ((m.t < m.charge - rbLock(self) || m.pair) && other.alive) rbAim(self, other); // (when it locks: conor-rainbow-aim.js)
     var call = Math.floor(m.t / (m.charge / (RB_CALLS.length + 0.4)));
     if (call >= m.calls && m.calls < RB_CALLS.length) {
       m.calls++; m.callT = 0; m.pulse = 1;
@@ -193,7 +193,7 @@ function rbSpill(self, m, n, pour) {
 }
 
 function rbAim(self, other) {
-  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var p = rbAimAt(self, other), dx = p.x - self.x, dy = p.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1; // where they're heading (conor-rainbow-aim.js)
   self.igbb.dx = dx / d; self.igbb.dy = dy / d;
 }
 
@@ -211,6 +211,7 @@ function tickRainbow(dt) {
     if (!c.ride) { c.vx *= 1 - dt * 1.2; }
     return c.life > 0;
   });
+  tickPotOfGoldEnd(dt); // the pot of gold at the end of the rainbow (conor-pot-of-gold.js)
 }
 
 // ---------------------------------------------------------------- the pot
@@ -360,7 +361,7 @@ function drawRainbowBeam() {
     ctx.translate(b.x, b.y); ctx.rotate(ang);
     if (m.phase === "summon" || m.phase === "charge") {
       var len0 = kmRayToWall(b.x, b.y, m.dx, m.dy), wdt = cfg.width;
-      var locked = m.phase === "charge" && !m.pair && m.t >= m.charge - RB_LOCK;
+      var locked = m.phase === "charge" && !m.pair && m.t >= m.charge - rbLock(b);
       var show = m.phase === "summon" ? Math.min(1, m.t / 0.3) : 1;
       var pulse = locked ? 0.6 + 0.4 * Math.sin(t * 30) : 0.75 + 0.25 * Math.sin(t * 10);
       ctx.globalAlpha = show;
@@ -392,6 +393,7 @@ function drawRainbowBeam() {
     }
     drawRainbowCaption(b);
   });
+  drawPotOfGoldEnd(); // the pot of gold at the end of the rainbow (conor-pot-of-gold.js)
   rbDrawCoins();
 }
 

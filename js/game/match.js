@@ -53,10 +53,12 @@ function makeBall(id, ch) {
   initSendLocation(b); // Khabib's Send Me Location (send-location.js)
   initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
   initDarkSide(b); // and his Dark Side form change (hokit-darkside.js)
+  initMaxHp(b); // more than 500 health, like Josh Hokit (max-hp.js)
   initKamehameha(b); // and Charles's Kamehameha (kamehameha.js)
   initRainbow(b); // Conor's Pot o' Gold rainbow beam (rainbow-beam.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
   initRingBear(b); // Khabib's ring bear (khabib-bear.js)
+  initNateLion(b); // Nate Diaz's lion (nate-lion.js)
   initIliaTornado(b); // Ilia's Rose Tornado (ilia-tornado.js)
   initPereira(b); // Alex Pereira's CHAMA combo and step (pereira.js)
   initOmalley(b); // Sean O'Malley's sugar, hair and crane kick (omalley.js)
@@ -67,10 +69,17 @@ function makeBall(id, ch) {
   initNgannou(b); // Francis Ngannou's rage meter, and his own copy to turn green (ngannou.js)
   initVolk(b); // Alexander Volkanovski's fight IQ, circling and walkout flag (volkanovski.js)
   initHolloway(b); // Max Holloway's Blessed meter, the booth, his flashback (holloway.js)
+  initVan(b); // Joshua Van's combos, hot hands, hands level and lines (van.js)
   initChatter(b); // extra real voice lines for any fighter, by id (chatter.js)
   initStrickland(b); // Sean Strickland's range, shell, pace and trauma meter (strickland.js)
   initDiaz(b); // Nate Diaz's slap, sub hunt, chin and Stockton surge (diaz.js)
   initFerguson(b); // Tony Ferguson's slide, shell, Kaioken and lines (ferguson.js)
+  initFedor(b); // Fedor Emelianenko's throw, his calm and his lines (fedor.js)
+  initBisping(b); // Michael Bisping's footwork, scorecard and voice lines (bisping.js)
+  initAnderson(b); // Anderson Silva's weave, front kick and triangle (anderson.js)
+  initCormier(b); // Daniel Cormier's double leg, his own copy for the growing belly (cormier.js)
+  initPrates(b); // Carlos Prates's footwork, Rubber Pistol and cigarette (prates.js)
+  initProchazka(b); // Jiří Procházka's samurai count and lines (prochazka.js)
   return b;
 }
 
@@ -94,6 +103,7 @@ function startMatchSeeded(ch0, ch1) {
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
   resetDoBronx();
   resetDeathFx(); resetIntroMsg(); resetToss();
+  resetGetUp(); // (get-up.js)
   resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
   resetAllAmerican();
@@ -113,10 +123,18 @@ function startMatchSeeded(ch0, ch1) {
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
   resetVolk(); // the kangaroo and the green and gold arena (volkanovski.js)
   resetHolloway(); // Max Holloway's ring in the middle, the clock, the flashback TV (holloway.js)
+  resetVan(); // Joshua Van's drawing clock (van.js)
   resetStrickland(); // the America show, the eagle and the bike (strickland.js)
   resetDiaz(); // Nick Diaz and his banner (diaz.js)
   resetFerguson(); // Tony Ferguson's stamps, afterimages, the Burrito Bell ad (ferguson.js)
+  resetFedor(); // Fedor Emelianenko's mantra (fedor.js)
+  resetBisping(); // Michael Bisping's cannonballs and smoke (bisping.js)
+  resetAnderson(); // Anderson Silva's code rain and bullet time (anderson.js)
+  resetCormier(); // the dents and SUPER SLAM! from Daniel Cormier's slams (cormier.js)
+  resetPrates(); // Carlos Prates's smoke, butts, disco lights and baile funk (prates.js)
+  resetProchazka(); // Jiří Procházka's blade lock and cut lines (prochazka.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
+  resetTaleTape(); // the tale of the tape intro (tale-tape.js)
   resetEagleStrikes();
   resetJumboAds(); // truckees-ad.js
   resetCheater();
@@ -283,9 +301,15 @@ function hurt(b, amount, source, attackerId) {
   // Charles teleporting out of the way (instant-transmission.js).
   if (itDodge(b, source, attackerId)) return 0;
   if (gspDodge(b, source, attackerId)) return 0; // GSP slipping it (gsp.js)
+  if (andersonWeave(b, source, attackerId)) return 0; // Anderson Silva leaning back out of it (anderson.js)
   if (hollowayDodge(b, source, attackerId)) return 0; // Max Holloway slipping shots at the booth (holloway.js)
   if (stricklandShell(b, source, attackerId)) return 0; // Sean Strickland rolling it off his shoulder (strickland.js)
   if (fergusonDodge(b, source, attackerId)) return 0; // Tony Ferguson slipping it on his slide, or it clanks off his turtle shell (ferguson.js)
+  if (bispingDodge(b, source, attackerId)) return 0; // Michael Bisping stepping off to the side of a kick (bisping.js)
+  if (volkAngleDodge(b, source, attackerId)) return 0; // Alexander Volkanovski on the angle: it goes where he was (volkanovski.js)
+  if (kickSmothered(b, source, attackerId)) return 0; // kicks smothered up close: Josh Hokit (kick-smother.js)
+  if (pratesDodge(b, source, attackerId)) return 0; // Carlos Prates partying: nothing touches him (prates.js)
+  if (prochazkaParry(b, source, attackerId)) return 0; // Jiří Procházka's katanas meeting a katana, saber or bat (prochazka.js)
   // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
   if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.
@@ -309,7 +333,7 @@ function hurt(b, amount, source, attackerId) {
   // CTE's wild swings are easier to see coming.
   var swinger = source === "swing" && attackerId != null ? balls[attackerId].char.swing : null;
   if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" &&
-      tryWeave(b, attackerId, swinger ? swinger.weaveMult : 1, projectile)) {
+      tryWeave(b, attackerId, (swinger ? swinger.weaveMult : 1) * ganeWeaveMult(b, attackerId), projectile)) { // (Ciryl Gane's weave drops up close, gane.js)
     b.justDodged = true;
     return 0;
   }
@@ -351,13 +375,23 @@ function hurt(b, amount, source, attackerId) {
   amount *= icemanDamageMult(b, attackerId, source); // frosted gloves hit softer, Chuck Liddell hits harder (liddell.js)
   amount *= volkDamageMult(b, source, attackerId); // Alexander Volkanovski's durability, Ilia and Max (volkanovski.js)
   amount *= hollowayChin(b, amount, source, attackerId); // Max Holloway's chin, and Ilia's edge on him (holloway.js)
+  amount *= vanDurable(b, amount, source, attackerId); // Joshua Van walking through the big ones (van.js)
   amount *= diazDamageMult(b, source, attackerId); // Nate Diaz's durability, and his Stockton surge (diaz.js)
   amount *= fergusonDamageMult(b, source, attackerId); // Tony Ferguson's chin, and his Kaioken (ferguson.js)
+  amount *= fedorDamageMult(b, source, attackerId); // Fedor Emelianenko's chin (fedor.js)
+  amount *= andersonDamageMult(b, source, attackerId); // Anderson Silva's crits in a late comeback (anderson.js)
+  amount *= cormierDamageMult(b, source, attackerId); // Daniel Cormier full of cake, and harder on Jon Jones (cormier.js)
+  amount *= pratesDamageMult(b, source, attackerId); // Carlos Prates wide open lighting up, and his knees crit in the clinch (prates.js)
+  amount *= prochazkaChin(b, source, attackerId); // Jiří Procházka's hands low: what lands is often a crit (prochazka.js)
+  amount *= ganeDamageMult(b, source, attackerId); // Ciryl Gane's hands down: strikes up close hurt more (gane.js)
+  amount *= chinCritMult(b, source, attackerId); // a chin that gets cracked: Khabib's chin up, Gane's hands down (chin.js)
+  amount *= hokitChin(b, source, attackerId); // Josh Hokit walking onto shots: some land as crits (hokit-pressure.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
   recordHit(b, hpBefore - b.hp, source, attackerId); // jumbotron stats
+  commentaryHit(b, hpBefore - b.hp, source, attackerId); // a big punch gets the commentator's call (commentary-calls.js)
   icemanHit(b, hpBefore - b.hp, source, attackerId); // punches on Chuck Liddell frost their gloves (liddell.js)
   ngannouHurt(b, hpBefore - b.hp, source, attackerId); // Francis Ngannou's rage meter and punch-power reading (ngannou.js)
   crowdReact((hpBefore - b.hp) / MAX_HP * 4); // a 50 HP shot lifts the crowd 40%

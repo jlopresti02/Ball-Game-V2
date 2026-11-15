@@ -62,12 +62,14 @@ function setJonMode(b, mode, quiet) {
 
 // Busy with something the swap would break: waits until it's done.
 function jonBusy(b) {
+  if (jonClinchBusy(b)) return true; // in the clinch or tripping them (jon-clinch.js)
   return !!(b.grapple || b.grappled || b.sprawl || b.sprawled || b.choked || b.rnc || b.suplex || b.guillo ||
     b.armbar || b.guard || b.chAct || b.combo || b.taunt || b.flow || b.igbb || b.slam || b.koRush || b.koDuel || b.checkAnim);
 }
 
 // Every frame from update().
 function tickJon(dt) {
+  tickJonClinch(dt); // a clinch let go if something else took him over (jon-clinch.js)
   balls.forEach(function (b) {
     if (!isJon(b)) return;
     if (b.jonGlow > 0) b.jonGlow = Math.max(0, b.jonGlow - dt);

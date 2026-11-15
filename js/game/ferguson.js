@@ -15,9 +15,17 @@
 //            choke, his D'Arce, or elbows from the bottom.
 // The slide  (slide) his side-to-side shuffle: every few seconds at mid range
 //            (and `react`% of the times they wind up something big) he slides
-//            left-right-left, slipping `dodge`% of strikes ("SLIDE"). Then he
-//            often shoots (`shoot`%): a level change and a dash in. The shot
-//            goes through every takedown defence (sprawls, guillotines, ...).
+//            left-right-left, slipping `dodge`% of strikes ("SLIDE"), edging
+//            in on them as he goes (`close`: the forward share of the slide's
+//            speed; a react slide backs out instead). It closes the distance:
+//            `chance`% of slides (half on a react slide) fire something off
+//            it, picked from `attack` (elbow, spin = a spinning back elbow,
+//            kick, shot). Once he's taken a side-step and they're within
+//            `range` (`shootRange` for the shot) he SLIDES IN: a `tell`
+//            step-in at `lunge` speed, the elbow cocked or the hands up, then
+//            the strike. Christian, 2026-11-15. The shot is a level change and
+//            a dash in that goes through every takedown defence (sprawls,
+//            guillotines, ...). (Older files: `shoot`% of slides shoot.)
 //            A takedown that lands (takedown) slams them down for `damage`
 //            and goes into one of `finish`: the buggy choke (buggy), his D'Arce
 //            (darce) or ground-and-pound elbows (groundElbows). The chokes use
@@ -52,6 +60,10 @@
 //            start (their fight fell through five times); against Justin
 //            Gaethje and Charles Oliveira, both of whom beat him, it's a
 //            REMATCH and his first Kaioken comes early.
+// Look       (look) prime Tony, 2017-2019 (Christian, 2026-11-13): blonde hair
+//            receding at the temples (hair "receding"), a lean, angular face
+//            (face "angular"), light stubble on the jaw and no moustache, the
+//            headband worn low so the hairline shows (drawn at the bottom).
 // Lines      (lines) real quotes as speech bubbles, each sourced in the
 //            README. calls: commentator calls for his famous finishes
 //            (announce(), speech.js), only once a call's wording is verified.
@@ -82,7 +94,7 @@ function tfIs(b, id) { return !!(b && b.char && String(b.char.id || "").indexOf(
 function katanaOn(b) { return !!(b && b.igbb && b.igbb.move === "katana"); }
 function tfShellUp(b) { return !!(b && b.tfShell && b.tfShell.phase !== "out"); }
 // Busy with one of his own moves: the speed regulator leaves him alone (physics.js).
-function fergusonBusy(b) { return !!(b && (b.tfSlide || b.tfShot || b.tfTd || b.tfSub || b.tfShell || b.tfPower || b.tfBur || b.tfMasMove || b.tfSurf)); }
+function fergusonBusy(b) { return !!(b && (b.tfSlide || b.tfOff || b.tfShot || b.tfTd || b.tfSub || b.tfShell || b.tfPower || b.tfBur || b.tfMasMove || b.tfSurf)); }
 // His hands are drawn by drawFerguson (drawHands skips them, draw-attacks.js).
 function fergusonHandsBusy(b) { return fergusonBusy(b) || katanaOn(b); }
 function tfClamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -91,7 +103,7 @@ function tfClamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function resetFerguson() { tfClock = 0; tfGhosts = []; tfStamps = []; tfFlash = 0; resetBurritoBell(); resetTfBurrito(); }
 // From makeBall (after its weight class is applied).
 function initFerguson(b) {
-  b.tfSlide = null; b.tfShot = null; b.tfTd = null; b.tfSub = null; b.tfShell = null; b.tfPower = null; b.tfKaio = null; b.tfWontTap = null; b.tfBur = null; b.tfMas = null; b.tfMasMove = null;
+  b.tfSlide = null; b.tfOff = null; b.tfShot = null; b.tfTd = null; b.tfSub = null; b.tfShell = null; b.tfPower = null; b.tfKaio = null; b.tfWontTap = null; b.tfBur = null; b.tfMas = null; b.tfMasMove = null;
   var cfg = tfCfg(b);
   if (!cfg) return;
   b.tfBase = { speed: b.baseSpeed, atk: b.atkRate };
@@ -135,11 +147,11 @@ function tickFerguson(dt) {
 // Anything that takes hold of him (a grab, a slam, a guard, a special) ends
 // whatever move of his own was running.
 function tfInterrupt(b) {
-  if (!b.tfSlide && !b.tfShot && !b.tfShell && !b.tfPower && !b.tfTd && !b.tfSub && !b.tfBur && !b.tfMasMove && !b.tfSurf) return;
+  if (!b.tfSlide && !b.tfOff && !b.tfShot && !b.tfShell && !b.tfPower && !b.tfTd && !b.tfSub && !b.tfBur && !b.tfMasMove && !b.tfSurf) return;
   var gone = !b.alive || b.grappled || b.grapple || b.slam || b.sprawl || b.sprawled || b.choked || b.guard || b.guillo || b.rnc || b.armbar || b.suplex ||
     b.koOut || b.shocked || b.dazed || b.dizzy || b.shelled || b.checkStun > 0 || (b.igbb && !katanaOn(b));
   if (!gone) return;
-  b.tfSlide = null; b.tfShot = null; b.tfPower = null;
+  b.tfSlide = null; b.tfOff = null; b.tfShot = null; b.tfPower = null;
   tfBurritoCancel(b);
   if (b.tfShell) b.tfShell = null;
   if (b.tfTd) { var v = balls[b.tfTd.vicId]; if (v) v.choked = false; b.tfTd = null; }
@@ -171,6 +183,7 @@ function updateFerguson(self, other, dt) {
   if (self.tfSurf) return runTfSurf(self, other, cfg, dt);
   if (self.tfShot) return runTfShot(self, other, cfg, dt);
   if (self.tfShell) return runTfShell(self, other, cfg, dt);
+  if (self.tfOff) return runTfOff(self, other, cfg, dt);
   if (self.tfSlide) return runTfSlide(self, other, cfg, dt);
   if (self.tfSlideT > 0) self.tfSlideT -= dt;
   if (self.tfShellT > 0) self.tfShellT -= dt;
@@ -185,7 +198,7 @@ function updateFerguson(self, other, dt) {
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, gap = d - self.r - other.r;
   if (tfWantBurrito(self, cfg)) { startTfBurrito(self); return true; }
   if (tfMasAct(self, other, cfg, dt)) return true;
-  if (tfWantKaioken(self, cfg)) { startKaiokenPower(self, cfg); return true; }
+  if (tfWantKaioken(self, cfg)) { if (!tfBurritoFirstKaioken(self, cfg)) startKaiokenPower(self, cfg); return true; } // his first Kaioken is the burrito (ferguson-burrito.js)
   if (tfWantShell(self, other, cfg, gap)) { startTfShell(self, other, cfg); return true; }
   var react = tfTelegraphing(other) && gap < 240;
   if (tfWantSlide(self, cfg, gap, react)) { startTfSlide(self, other, cfg, react); return true; }
@@ -214,8 +227,7 @@ function tfWantSlide(self, cfg, gap, react) {
 function startTfSlide(self, other, cfg, react) {
   var sl = cfg.slide;
   clearActions(self);
-  self.tfSlide = { t: 0, hops: sl.hops, dir: Math.random() < 0.5 ? -1 : 1, react: react, ghostT: 0,
-    shoot: Math.random() * 100 < sl.shoot * (react ? 0.5 : 1) };
+  self.tfSlide = { t: 0, hops: sl.hops, dir: Math.random() < 0.5 ? -1 : 1, react: react, ghostT: 0, off: tfPickOff(self, sl, react) };
   self.tfSlideT = tfRand(sl.every);
   if (react) floater(self.x, self.y - self.r - 30, "SLIDES OUT", "note");
   playTfSlide();
@@ -223,27 +235,96 @@ function startTfSlide(self, other, cfg, react) {
 function runTfSlide(self, other, cfg, dt) {
   var s = self.tfSlide, sl = cfg.slide;
   s.t += dt;
-  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
-  var hop = Math.floor(s.t / sl.hopTime);
-  if (hop >= s.hops || !other.alive || over) {
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d, gap = d - self.r - other.r;
+  var hop = Math.floor(s.t / sl.hopTime), done = hop >= s.hops || !other.alive || over;
+  // Off the shuffle: once he's taken a side-step and they're in range, it fires.
+  if (s.off && (hop >= 1 || done) && tfOffReady(self, other, sl, s.off, gap)) {
     self.tfSlide = null;
-    var gap = d - self.r - other.r;
-    if (s.shoot && other.alive && !over && gap < sl.shootRange && !other.choked && !subLocked(other) && !other.invincible && !other.igbb) {
-      startTfShot(self);
-      return true;
-    }
+    startTfOff(self, other, cfg, s.off);
+    return true;
+  }
+  if (done) {
+    self.tfSlide = null;
     setSpeed(self, self.baseSpeed || SPEED);
     return false;
   }
   if (hop !== s.hop) { s.hop = hop; if (hop) playTfSlide(); }
   var p = (s.t % sl.hopTime) / sl.hopTime, dir = s.dir * (hop % 2 ? -1 : 1);
   var spd = sl.speed * (0.3 + 0.7 * Math.sin(p * Math.PI));
-  var drift = s.react ? -0.45 : 0.28; // backing out of a big shot, or edging in
+  var drift = s.react ? -0.45 : (sl.close != null ? sl.close : 0.28); // backing out of a big shot, or closing in on them
   self.vx = (-uy * dir + ux * drift) * spd; self.vy = (ux * dir + uy * drift) * spd;
   s.lean = dir;
   s.ghostT -= dt;
   if (s.ghostT <= 0) { s.ghostT = 0.05; tfGhosts.push({ x: self.x, y: self.y, r: self.r, t: 0, max: 0.3, color: self.char.color }); }
   return true;
+}
+
+// ---------------------------------------------------------------- off the slide
+
+// What this slide fires once it's closed the distance (picked as it starts),
+// or null: `chance`% of slides (half on a react slide), one of `attack`.
+// (Files without `chance` use the old `shoot`%, always the shot.)
+function tfPickOff(self, sl, react) {
+  var chance = sl.chance != null ? sl.chance : (sl.shoot || 0), odds = sl.chance != null && sl.attack ? sl.attack : { shot: 1 }, ch = self.char;
+  if (Math.random() * 100 >= chance * (react ? 0.5 : 1)) return null;
+  var kinds = Object.keys(odds).filter(function (k) { return odds[k] > 0 && (k === "shot" || (k === "kick" ? !!(ch.hasKick && ch.kick) : !!ch.elbow)); });
+  var total = 0;
+  kinds.forEach(function (k) { total += odds[k]; });
+  var roll = Math.random() * total;
+  for (var i = 0; i < kinds.length; i++) { roll -= odds[kinds[i]]; if (roll < 0) return kinds[i]; }
+  return kinds[kinds.length - 1] || null;
+}
+// How close they have to be for it to fire (the gap between the two balls).
+function tfOffRange(self, sl, kind) {
+  if (kind === "shot") return sl.shootRange;
+  var range = sl.range != null ? sl.range : 70;
+  return kind === "kick" ? Math.max(range, self.char.kick.reach) : range;
+}
+// How close the strike itself lands from (a combination's elbow reach, combos.js).
+function tfOffReach(self, kind) { return kind === "kick" ? self.char.kick.reach : cbReach(self, kind === "spin" ? "spin" : "elbow"); }
+function tfOffReady(self, other, sl, kind, gap) {
+  return !!kind && other.alive && !over && !other.koOut && !other.invincible && !other.choked && !subLocked(other) && !other.igbb && gap <= tfOffRange(self, sl, kind);
+}
+// He SLIDES IN: the shot goes straight into its level change; an elbow, a
+// spinning back elbow or a kick get a quick step-in first (the tell).
+function startTfOff(self, other, cfg, kind) {
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  floater(self.x, self.y - self.r - 30, "SLIDES IN", "note");
+  for (var i = 0; i < 3; i++) tfGhosts.push({ x: self.x - dx / d * i * 9, y: self.y - dy / d * i * 9, r: self.r, t: i * 0.04, max: 0.34, color: self.char.color });
+  playTfSlide();
+  if (kind === "shot") { startTfShot(self); return; }
+  clearActions(self);
+  var side = -(self.elbowSide || 1);
+  self.tfOff = { kind: kind, t: 0, phase: "in", side: side, dir: side, ghostT: 0.04 };
+}
+function runTfOff(self, other, cfg, dt) {
+  var o = self.tfOff, sl = cfg.slide || {}, base = self.baseSpeed || SPEED;
+  o.t += dt;
+  if (!other.alive || over || other.koOut || other.invincible || other.choked || subLocked(other) || other.igbb) { self.tfOff = null; setSpeed(self, base); return false; }
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d, gap = d - self.r - other.r;
+  var reach = tfOffReach(self, o.kind), lunge = sl.lunge || 480;
+  // Stepping in behind it, stopping once he's on top of them.
+  if (gap > reach * 0.5) { self.vx = ux * lunge; self.vy = uy * lunge; } else { self.vx = 0; self.vy = 0; }
+  o.ghostT -= dt;
+  if (o.ghostT <= 0) { o.ghostT = 0.04; tfGhosts.push({ x: self.x, y: self.y, r: self.r, t: 0, max: 0.26, color: self.char.color }); }
+  if (o.phase === "in") {
+    if (o.t < (sl.tell || 0.16)) return true;
+    if (o.kind === "spin") { o.phase = "spin"; o.t = 0; playWhoosh(); return true; } // turning his back (the spinning elbow's own tell)
+  } else if (o.phase === "spin" && o.t < CB_SPIN) return true;
+  // The strike. The abilities loop carries on this frame and moves it along
+  // (the elbow in updateElbows, the kick in the kick block).
+  self.tfOff = null;
+  self.vx = ux * base; self.vy = uy * base;
+  if (o.kind === "kick") {
+    if (gap <= self.char.kick.reach && !self.kick) { self.kick = { t: 0, hit: false }; self.kickCd = self.char.kick.cooldown; }
+  } else if (gap <= reach + CB_GONE) {
+    self.elbowSide = o.side;
+    if (o.kind === "spin") cbSpinElbow(self, other, {}, o.side); // "SPINNING BACK ELBOW!" (combos.js)
+    else throwElbow(self, other, { reach: reach, side: o.side });
+    if (self.char.elbow) self.elbowCd = Math.max(self.elbowCd || 0, self.char.elbow.cooldown);
+  }
+  self.punchCd = Math.max(self.punchCd || 0, 0.35); // (the punch waits for it)
+  return false;
 }
 
 // From hurt (match.js): slipping a strike on the slide, or clanking it off
@@ -365,7 +446,7 @@ function tfIsChoke(kind) { return kind === "buggy" || kind === "darce"; }
 function beginTfSub(self, vic, kind, fromGuard) {
   var cfg = tfCfg(self) || {};
   clearActions(self); clearActions(vic);
-  self.tfTd = null; self.tfShot = null; self.tfSlide = null; self.guard = null;
+  self.tfTd = null; self.tfShot = null; self.tfSlide = null; self.tfOff = null; self.guard = null;
   var R = self.r, V = vic.r, side = vic.x >= self.x ? 1 : -1;
   var m = { kind: kind, vicId: vic.id, t: 0, phase: tfIsChoke(kind) ? "squeeze" : "pound", side: side, wob: Math.random() * 10, fromGuard: !!fromGuard,
     ax: tfClamp((self.x + vic.x) / 2, R + V, W - R - V), ay: tfClamp((self.y + vic.y) / 2, (R + V) * 0.95, H - (R + V) * 0.95), bar: 0, n: 0, next: 0.25, tapT: 0 };
@@ -848,7 +929,16 @@ function applyFergusonPose(b) {
     ctx.translate(b.x, b.y + b.r); ctx.rotate(Math.atan2(tony.tfTd.uy, tony.tfTd.ux) > 0 ? tk * 0.9 : -tk * 0.9); ctx.translate(-b.x, -(b.y + b.r));
     return;
   }
-  if (b.tfSlide && (s = b.tfSlide.lean)) {
+  if (b.tfOff) {
+    var to = b.tfOff;
+    if (to.phase === "spin") { // turning his back for the spinning elbow (as combos.js does it)
+      var sk = Math.min(1, to.t / CB_SPIN), se = 1 - (1 - sk) * (1 - sk);
+      ctx.translate(b.x, b.y); ctx.rotate(-to.dir * se * Math.PI * 2); ctx.translate(-b.x, -b.y);
+    } else { // sliding in: leaning into them, sunk a little low
+      var lk = Math.min(1, to.t / 0.08), foe = balls[1 - b.id], lean = foe && foe.x < b.x ? -1 : 1;
+      ctx.translate(b.x, b.y + b.r); ctx.rotate(lean * 0.2 * lk); ctx.scale(1 + 0.05 * lk, 1 - 0.07 * lk); ctx.translate(-b.x, -(b.y + b.r));
+    }
+  } else if (b.tfSlide && (s = b.tfSlide.lean)) {
     ctx.translate(b.x, b.y + b.r); ctx.rotate(s * 0.16); ctx.translate(-b.x, -(b.y + b.r));
   } else if (b.tfShot) {
     var lv = b.tfShot.phase === "level" ? Math.min(1, b.tfShot.t / 0.12) : 1;
@@ -883,6 +973,31 @@ function drawFerguson(b, other) {
       strokeLimb(size * 0.66, armColor(b.char, s), function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
       drawGloveAt(hx, hy, size * 0.82, b.char);
     });
+    return;
+  }
+  if (b.tfOff) {
+    var to = b.tfOff, ux2 = Math.cos(ang), uy2 = Math.sin(ang), px2 = -uy2, py2 = ux2;
+    if (to.kind === "kick") {
+      // Sliding in behind a kick: both hands up in guard.
+      [-1, 1].forEach(function (s) {
+        var sx = b.x + px2 * s * r * 0.5 + ux2 * r * 0.1, sy = b.y + py2 * s * r * 0.5 + uy2 * r * 0.1;
+        var hx = b.x + ux2 * r * 0.85 + px2 * s * r * 0.36, hy = b.y + uy2 * r * 0.85 + py2 * s * r * 0.36;
+        strokeLimb(size * 0.6, armColor(b.char, s), function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
+        drawGloveAt(hx, hy, size * 0.72, b.char, ang);
+      });
+      return;
+    }
+    // Sliding in behind an elbow: cocked, the point lighting up white; the
+    // other hand up in guard. Turning for the spinning elbow, the arm goes round with him.
+    var glow = to.phase === "spin" ? 1 : 0.9 * Math.min(1, to.t / ((cfg.slide && cfg.slide.tell) || 0.16));
+    ctx.save();
+    if (to.phase === "spin") {
+      var sk = Math.min(1, to.t / CB_SPIN), se = 1 - (1 - sk) * (1 - sk);
+      ctx.translate(b.x, b.y); ctx.rotate(-to.dir * se * Math.PI * 2); ctx.translate(-b.x, -b.y);
+    }
+    drawElbowArm(b, ang, to.side, -1, false, glow);
+    drawGloveAt(b.x + ux2 * r * 0.8 - px2 * to.side * r * 0.4, b.y + uy2 * r * 0.8 - py2 * to.side * r * 0.4, r * 0.3, b.char, ang);
+    ctx.restore();
     return;
   }
   if (b.tfSlide) {
@@ -1105,6 +1220,7 @@ function drawTfStamps() {
 // karate-style headband with the knot's tails flying out by his ear.
 function drawCucuyHead(c, r, look, line, lw) {
   var mc = look.beardColor || look.hairColor || "#141010";
+  if (look.cucuy.stubble) drawCucuyStubble(c, r, look.cucuy.stubble, lw);
   if (look.cucuy.moustache) {
     c.save();
     c.fillStyle = mc;
@@ -1124,17 +1240,18 @@ function drawCucuyHead(c, r, look, line, lw) {
   var hb = look.cucuy.headband;
   if (hb) {
     var col = hb.color || TF_BAND;
+    var dr = hb.drop || 0; // (Christian, 2026-11-13) worn lower on the forehead, so his receding hairline shows above it
     var band = function () {
       c.beginPath();
-      c.moveTo(-r, -r * 0.66); c.quadraticCurveTo(0, -r * 0.92, r, -r * 0.66);
-      c.lineTo(r, -r * 0.55); c.quadraticCurveTo(0, -r * 0.8, -r, -r * 0.55);
+      c.moveTo(-r, -r * (0.66 - dr * 0.25)); c.quadraticCurveTo(0, -r * (0.92 - dr * 2), r, -r * (0.66 - dr * 0.25));
+      c.lineTo(r, -r * (0.55 - dr * 0.15)); c.quadraticCurveTo(0, -r * (0.8 - dr * 1.8), -r, -r * (0.55 - dr * 0.15));
       c.closePath();
     };
     c.save();
     c.fillStyle = col; band(); c.fill();
     c.save(); band(); c.clip();
-    c.fillStyle = "rgba(0,0,0,0.18)"; c.fillRect(-r, -r * 0.66, r * 2, r * 0.035);
-    c.fillStyle = "rgba(255,255,255,0.18)"; c.fillRect(-r, -r * 0.86, r * 2, r * 0.05);
+    c.fillStyle = "rgba(0,0,0,0.18)"; c.fillRect(-r, -r * (0.66 - dr), r * 2, r * 0.035);
+    c.fillStyle = "rgba(255,255,255,0.18)"; c.fillRect(-r, -r * (0.86 - dr), r * 2, r * 0.05);
     c.restore();
     c.strokeStyle = line; c.lineWidth = lw(0.025); band(); c.stroke();
     // the knot and its two tails, by his left ear
@@ -1144,6 +1261,101 @@ function drawCucuyHead(c, r, look, line, lw) {
     c.beginPath(); c.moveTo(-r * 0.86, -r * 0.57); c.quadraticCurveTo(-r * 1.0, -r * 0.44, -r * 1.02, -r * 0.26); c.lineTo(-r * 0.93, -r * 0.27); c.quadraticCurveTo(-r * 0.92, -r * 0.42, -r * 0.8, -r * 0.52); c.closePath(); c.fill(); c.stroke();
     c.restore();
   }
+}
+
+// Light stubble (cucuy.stubble: color, alpha) along his angular jaw and chin,
+// so it doesn't round his face off the way the plain stubble beard does, and
+// with nothing on the top lip (no moustache, Christian 2026-11-13).
+function drawCucuyStubble(c, r, st, lw) {
+  var col = st.color || "#6e5230";
+  var shape = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.64, -r * 0.52);
+    c.quadraticCurveTo(-r * 0.46, -r * 0.42, -r * 0.24, -r * 0.37); // the cheek line
+    c.quadraticCurveTo(0, -r * 0.34, r * 0.24, -r * 0.37);          // under the mouth
+    c.quadraticCurveTo(r * 0.46, -r * 0.42, r * 0.64, -r * 0.52);
+    c.lineTo(r * 0.68, -r * 0.48);
+    c.lineTo(r * 0.32, -r * 0.27); c.lineTo(r * 0.14, -r * 0.2);   // along the jaw
+    c.lineTo(-r * 0.14, -r * 0.2); c.lineTo(-r * 0.32, -r * 0.27);
+    c.lineTo(-r * 0.68, -r * 0.48);
+    c.closePath();
+  };
+  c.save();
+  c.globalAlpha = st.alpha || 0.2; c.fillStyle = col; shape(); c.fill();
+  shape(); c.clip();
+  var rnd = artRand(61); c.globalAlpha = 0.2; c.fillStyle = shadeHex(col, -0.3);
+  for (var i = 0; i < 70; i++) c.fillRect((rnd() * 2 - 1) * r * 0.66, -r * 0.5 + rnd() * r * 0.3, lw(0.012), lw(0.012));
+  c.restore();
+}
+
+// Prime Tony (2017-2019, Christian 2026-11-13): look.hair "receding", from
+// the head layer (fighter-art.js). Short hair pulled well back at both
+// temples into bare bays of forehead, a widow's peak left in the middle,
+// short sides down to the ears, brushed up in short spikes.
+function tfRecedingPath(c, r) {
+  c.beginPath();
+  c.moveTo(-r, -r * 0.5);
+  c.lineTo(-r * 0.8, -r * 0.6);                                   // short side, down to the ear
+  c.quadraticCurveTo(-r * 0.68, -r * 0.64, -r * 0.6, -r * 0.7);    // the corner in front of the ear
+  c.quadraticCurveTo(-r * 0.46, -r * 0.86, -r * 0.28, -r * 0.84);  // the temple, pulled well back
+  c.quadraticCurveTo(-r * 0.12, -r * 0.82, -r * 0.07, -r * 0.75);  // down into the widow's peak
+  c.quadraticCurveTo(0, -r * 0.67, r * 0.07, -r * 0.75);
+  c.quadraticCurveTo(r * 0.12, -r * 0.82, r * 0.28, -r * 0.84);
+  c.quadraticCurveTo(r * 0.46, -r * 0.86, r * 0.6, -r * 0.7);
+  c.quadraticCurveTo(r * 0.68, -r * 0.64, r * 0.8, -r * 0.6);
+  c.lineTo(r, -r * 0.5); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
+}
+function drawRecedingHair(c, r, look, lw) {
+  var hc = look.hairColor;
+  // A little shine on the bare temples.
+  c.fillStyle = "rgba(255,255,255,0.22)";
+  [-1, 1].forEach(function (s) { c.beginPath(); c.ellipse(s * r * 0.3, -r * 0.77, r * 0.1, r * 0.03, s * 0.25, 0, Math.PI * 2); c.fill(); });
+  // Darker at the roots on the crown, lighter where it's brushed up at the front.
+  var g = c.createLinearGradient(0, -r, 0, -r * 0.68);
+  g.addColorStop(0, shadeHex(hc, -0.28)); g.addColorStop(1, shadeHex(hc, 0.14));
+  c.fillStyle = g; tfRecedingPath(c, r); c.fill();
+  // Short spikes brushed up off the hairline.
+  c.save(); tfRecedingPath(c, r); c.clip();
+  c.lineCap = "round";
+  for (var i = -8; i <= 8; i++) {
+    var x = i * r * 0.075, y = -r * (0.7 + Math.abs(Math.abs(i) - 4) * 0.025);
+    c.strokeStyle = i % 2 ? shadeHex(hc, -0.32) : shadeHex(hc, 0.34);
+    c.lineWidth = lw(0.014); c.globalAlpha = 0.55;
+    c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + r * 0.02, y - r * 0.1, x + r * 0.05, y - r * 0.22); c.stroke();
+  }
+  c.restore();
+  c.strokeStyle = shadeHex(hc, -0.45); c.lineWidth = lw(0.02);
+  tfRecedingPath(c, r); c.stroke();
+}
+
+// His lean, angular face (look.face "angular", from the head layer in
+// fighter-art.js, which leaves out its round jaw line for it): the jaw cut in
+// straight lines down to a narrow chin, and hollows under high cheekbones.
+function drawAngularFace(c, r, look, line, lw) {
+  var jaw = -r * 0.3;
+  // Hollows under the cheekbones, a highlight on the bone above each.
+  [-1, 1].forEach(function (s) {
+    c.save();
+    c.translate(s * r * 0.46, -r * 0.44); c.rotate(-s * 0.6); c.scale(1, 0.36);
+    var g = c.createRadialGradient(0, 0, 0, 0, 0, r * 0.26);
+    g.addColorStop(0, "rgba(70,30,20,0.42)"); g.addColorStop(1, "rgba(70,30,20,0)");
+    c.fillStyle = g; c.beginPath(); c.arc(0, 0, r * 0.24, 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.save();
+    c.translate(s * r * 0.52, -r * 0.54); c.rotate(-s * 0.5); c.scale(1, 0.3);
+    c.fillStyle = "rgba(255,240,225,0.2)"; c.beginPath(); c.arc(0, 0, r * 0.13, 0, Math.PI * 2); c.fill();
+    c.restore();
+  });
+  // The jaw (fighter-art.js has drawn the chin shadow and left out its round line).
+  c.strokeStyle = line; c.lineWidth = lw(0.045); c.lineJoin = "round"; c.lineCap = "round";
+  c.beginPath();
+  c.moveTo(-r * 0.68, jaw - r * 0.18);
+  c.lineTo(-r * 0.32, jaw + r * 0.03); // the corner of the jaw
+  c.lineTo(-r * 0.14, jaw + r * 0.1);
+  c.lineTo(r * 0.14, jaw + r * 0.1);   // a narrow, squared-off chin
+  c.lineTo(r * 0.32, jaw + r * 0.03);
+  c.lineTo(r * 0.68, jaw - r * 0.18);
+  c.stroke();
 }
 
 // His back (face down after the cable trip): the big cross with wings
@@ -1187,7 +1399,8 @@ function fergusonGalleryMoves(ch, add) {
   if (f.wontTap) add("😤", "Won't tap", "When a choke or armbar on him is about to end in a tap, " + (f.wontTap.chances || []).join("% then ") + "% of the time he refuses: the bar swings back and he rips out (it costs him " + f.wontTap.cost + ")." + (f.wontTap.vsCharlesArmbar ? " Charles Oliveira's first armbar never finishes him (UFC 256)." : ""));
   if (f.slide) {
     var sl = f.slide;
-    add("↔️", "The slide", "His side-to-side walkout shuffle, every " + sl.every[0] + "-" + sl.every[1] + "s at mid range (and " + sl.react + "% of the times they wind up something big): " + sl.hops + " slides, slipping " + sl.dodge + "% of strikes. Then " + sl.shoot + "% of the time he changes levels and shoots.");
+    var offNames = { elbow: "an elbow", spin: "a spinning back elbow", kick: "a kick", shot: "a shot" }, offs = sl.chance != null && sl.attack ? Object.keys(sl.attack) : ["shot"];
+    add("↔️", "The slide", "His side-to-side walkout shuffle, every " + sl.every[0] + "-" + sl.every[1] + "s at mid range (and " + sl.react + "% of the times they wind up something big): " + sl.hops + " slides, slipping " + sl.dodge + "% of strikes" + (sl.close ? " and closing in on them as he goes" : "") + ". " + (sl.chance != null ? sl.chance : sl.shoot) + "% of the time he slides in off it with " + offs.map(function (k) { return offNames[k] || k; }).join(", ").replace(/, ([^,]*)$/, " or $1") + " (the shot is a level change and a dash in).");
   }
   if (f.takedown) {
     var fin = f.takedown.finish || {}, names = { buggy: "the buggy choke", darce: "his D'Arce", elbows: "ground-and-pound elbows" };

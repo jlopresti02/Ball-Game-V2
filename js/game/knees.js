@@ -196,6 +196,7 @@ function updateKneeMoves(self, other, dt) {
 // into it (combos.js), if any: its count goes on through the knees.
 function startPlum(self, other, cmb) {
   if (!plumTarget(other)) return false;
+  if (uppercutCounter(other, self)) return false; // an uppercut as they tie him up stuffs it (Gaethje, body-shots-uppercuts.js)
   clearActions(self);
   self.kneeAnim = null;
   self.plum = { phase: "grab", t: 0, vicId: other.id, cmb: cmb, frame: kneeFrame, side: 1, thrown: 0, landed: 0, jolt: 0 };
@@ -557,6 +558,7 @@ function drawPlum(b) {
     drawKneeLeg(b, kneePose(b, ang, kn.side, p, reach), kn.hit ? Math.max(0, 1 - (kn.t - kn.dur * KNEE_HIT) / 0.12) : 0);
   }
   [-1, 1].forEach(function (s) {
+    if (bispingPlumElbow(b, s)) return; // that arm's throwing an elbow (drawBispingOver, bisping.js)
     var sh = { x: b.x + ux * r * 0.3 + px * s * r * 0.6, y: b.y + uy * r * 0.3 + py * s * r * 0.6 - r * 0.15 };
     var guard = { x: b.x + ux * r * 0.8 + px * s * r * 0.4, y: b.y + uy * r * 0.8 + py * s * r * 0.4 };
     var lock = { x: head.x + px * s * V * 0.2 - ux * V * 0.05, y: head.y + py * s * V * 0.2 - uy * V * 0.05 };
