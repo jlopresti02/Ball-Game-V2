@@ -4348,7 +4348,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-michael-bisping",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Michael Bisping",
