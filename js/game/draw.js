@@ -232,6 +232,7 @@ function draw() {
     applyKneePose(b); // pulled down into the clinch, crouching for and flying in with a flying knee (knees.js)
     applyComboPose(b); // turning his back for a spinning back elbow (combos.js)
     applyAndersonPose(b); // Anderson Silva bent back in a weave, crouched for and flying in with the front kick (anderson.js)
+    applyGaneShotPose(b); // Ciryl Gane crouched low and leaning into his shot (gane-shot.js)
     applyCormierPose(b); // Daniel Cormier dropping his level, carrying, chewing; whoever he's got lying across over his head (cormier.js)
     applyProchazkaPose(b); // Jiří Procházka twisting into a katana cut (prochazka.js)
     applyJonClinchPose(b); // Jon Jones leaning into the clinch, and whoever he's tripping (jon-clinch.js)

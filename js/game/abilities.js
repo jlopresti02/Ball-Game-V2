@@ -199,6 +199,7 @@ function updateAbilities(dt) {
     if (updateHolloway(self, other, dt)) continue; // Max Holloway at the booth, his flashback, staying out of the guard (holloway.js)
     if (updateStrickland(self, other, dt)) continue; // Sean Strickland's one-two (strickland.js)
     if (updatePrates(self, other, dt)) continue; // Carlos Prates lighting up, and his Rubber Pistol (prates.js)
+    if (updateGaneShot(self, other, dt)) continue; // Ciryl Gane's rare takedown shot: the level change and the drive (gane-shot.js)
     if (updateClinch(self, other, dt)) continue; // the clinch: knees, elbows and a parting shot on the break (before the teep, so a teep can't cut it off) (clinch.js)
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
     if (updateHeadKick(self, other, dt)) continue; // the head kick his calf kicks set up (head-kick.js)
@@ -210,7 +211,7 @@ function updateAbilities(dt) {
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
     if (updateAnderson(self, other, dt)) continue; // Anderson Silva's front kick, hands down, counter, triangle off ground and pound (anderson.js)
     if (updateCormier(self, other, dt)) continue; // Daniel Cormier's double leg and super slam (cormier.js)
-    if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
+    if (!darkSideBlocks(self) && !ganeShotHolding(self) && updateSpecial(self, other, dt)) continue; // a created character's special move (it waits while Ciryl Gane's shot is a grab and slam, gane-shot.js)
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.guard) { updateGuard(self, other, dt); continue; }
@@ -229,7 +230,7 @@ function updateAbilities(dt) {
     if (updateWeave(self, other, dt)) continue;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
     // Ciryl Gane cheating while the ref's asleep (cheater.js).
-    if ((self.char.hasCheater || self.chAct || self.cheater) && updateCheater(self, other, dt, d)) continue; // (and EVIL Jon Jones's eye poke, jon.js)
+    if ((self.char.hasCheater || self.chAct || self.cheater) && !ganeShotHolding(self) && updateCheater(self, other, dt, d)) continue; // (and EVIL Jon Jones's eye poke, jon.js; it waits while his shot is a grab and slam, gane-shot.js)
     // Josh Hokit's armbar shot and thumbs down (hokit.js).
     if ((self.char.hasArmbarShot || self.char.hasThumbsDown) && updateHokit(self, other, dt, d)) continue;
     if (updateHollowayHands(self, other, dt, d)) continue; // Max Holloway's volume combos and Button Mash, in place of the punch (holloway.js)
@@ -334,7 +335,7 @@ function updateAbilities(dt) {
       }
     }
 
-    if (self.char.hasGrapple) {
+    if (self.char.hasGrapple || ganeShotHolding(self)) { // (and Ciryl Gane's grab and slam when his shot gets through, gane-shot.js)
       self.grappleCd = Math.max(0, self.grappleCd - dt * self.atkRate);
       var gr = self.char.grapple, grabReach = gr.reach + (self.doBronx ? DB_REACH : 0);
       if (!self.grapple && !self.grabHold && !self.swing && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + grabReach) {

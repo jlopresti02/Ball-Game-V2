@@ -16,6 +16,8 @@
 //             fighters and combinations are his bad nights.
 // Shots in    (shotsIn) a Grappler's grabs come round `shotsIn` times as fast
 //             against him: takedowns get in on him easily.
+// Shot        (his `shots` block, gane-shot.js) every so often he changes
+//             levels and shoots: a striker's rare takedown.
 // Footwork    (footwork) he fights going backwards. When they come inside
 //             `keep` (or come charging faster than `closing`), he backs off at
 //             an angle off straight back (`angle`, a fresh side each time) for
@@ -139,6 +141,7 @@ function ganeHandsBusy(b) {
 // swaying; while he jabs, the other one stays down.
 function drawGane(b, other) {
   if (!ganeHandsBusy(b)) return;
+  if (drawGaneShot(b)) return; // arms out low for their legs on his shot (gane-shot.js)
   var r = b.r, size = ((b.char.punch && b.char.punch.size) || 14) * 0.72;
   var rear = other && other.x < b.x ? 1 : -1; // (while he jabs, the hand away from them stays down)
   [-1, 1].forEach(function (s) {
@@ -157,4 +160,6 @@ function ganeGalleryMoves(ch, add) {
   if (c.footwork) add("🔙", "Back foot", "Fights going backwards: backs off at an angle as they come in, circles at range, steps in to kick and backs straight out. Kicks them as they come charging in.");
   if (c.closeHurt || c.closeWeave != null) add("⚠️", "Up close", "Inside " + (c.close || 30) + " his weave works x" + (c.closeWeave != null ? c.closeWeave : 1) + " as often and strikes do x" + (c.closeHurt || 1) + " damage. Pressure and combinations are his bad nights.");
   if (c.shotsIn > 1) add("🤼", "Shots get in", "A Grappler's grabs come round " + c.shotsIn + "x as fast against him.");
+  var sh = ch.shots;
+  if (sh && !ch.hasGrapple) add("🦵", "Takedown shot", "Every " + sh.every[0] + "-" + sh.every[1] + "s or so he changes levels and shoots" + (ch.grapple && ch.grapple.shotName ? " a " + ch.grapple.shotName.toLowerCase() : "") + ": under them as they come charging in, or off his circling. Their takedown defense works on it" + (ch.grapple && ch.grapple.stuffChance ? ", and " + ch.grapple.stuffChance + "% get stuffed anyway" : "") + ".");
 }
