@@ -52,6 +52,7 @@ function update(dt) {
   tickHelmetCharge(dt); // the 67'ers ad's clock (hokit-helmet.js)
   tickRingBear(dt); // Khabib's bear wandering the ring (khabib-bear.js)
   tickIliaTornado(dt); // roses from Ilia's Rose Tornado (ilia-tornado.js)
+  tickIliaCombos(dt); // Ilia's combo finisher: the ring and its text (ilia-combos.js)
   tickSendLocation(dt); // Khabib's Send Me Location: sparks, rings, the crater cooling (send-location.js)
   tickHotSauce(dt); // Dustin's Hot Sauce Fire Breath: flames, steam, whoever's burning (hot-sauce.js)
   tickPereira(dt); // Alex Pereira's step, his arrow, the crowd's CHAMA (pereira.js)

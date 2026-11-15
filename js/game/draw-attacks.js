@@ -3,6 +3,7 @@
 
 function drawFist(self, other) {
   if (!self.punch || !other.alive || self.taunt || self.flow || self.combo) return;
+  if (drawHookFist(self, other)) return; // a hook comes round instead of straight (hook-punch.js)
   var pu = self.char.punch;
   var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var qnx = qx / qd, qny = qy / qd;
@@ -37,6 +38,7 @@ function drawFist(self, other) {
   ctx.beginPath(); ctx.arc(fistX, fistY, pu.size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   stoneFistOver(self.char, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // Alex Pereira's stone fists (fighter-art.js)
   frostFistOver(self, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // ice from punching Chuck Liddell (liddell.js)
+  iliaFistOver(self, fistX, fistY, pu.size); // Ilia's glove heating up through a combo, and the finisher (ilia-combos.js)
   ctx.restore();
 }
 

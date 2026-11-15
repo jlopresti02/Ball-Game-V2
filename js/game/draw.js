@@ -511,6 +511,7 @@ function draw() {
     ctx.fillStyle = f.kind === "note" ? theme.ink : ((f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit); ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
+  drawIliaCombos(); // Ilia's combo finisher: the gold ring and 4-PIECE! over them (ilia-combos.js)
 
   if (stadium) drawJumbotron(px);
   drawLadderSky(s, ox, oy); // Hokit up the ladder and diving off it (hokit-ladder.js)
