@@ -6287,12 +6287,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ciryl-gane",
-    "rev": 9,
+    "rev": 10,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
     "base": "Kicker",
-    "bio": "\"Bon Gamin\". Fighter mode: a back-foot kickboxer on the Kicker base with his hands down. He fights going backwards, jabbing fast (7 damage, one every 0.42s), looping an overhand over the top now and then, and kicking a lot: long 34-damage kicks every 2.6s that can be checked, and calf kicks that leave them limping. He slips shots at range (a 30% weave), but with his hands down what lands often crits, up close his weave drops and strikes hurt more, and takedowns get in on him easily. Cheater mode: in his fights the referee falls asleep for 5 seconds out of every 15, and Gane cheats the whole time, with eye pokes into a combo, throwing objects, or a bat. While he's cheating, every takedown on him fails: he grabs the cage and stands back up. Special move: Herb Dean.",
+    "bio": "\"Bon Gamin\". Fighter mode: a back-foot kickboxer on the Kicker base with his hands down. He fights going backwards, jabbing fast (7 damage, one every 0.42s), looping an overhand over the top now and then, and kicking a lot: long 34-damage kicks every 2.6s that can be checked, and calf kicks that leave them limping. He slips shots at range (a 30% weave), but with his hands down what lands often crits, up close his weave drops and strikes hurt more, and takedowns get in on him easily. Every 18-28s or so he changes levels and shoots a single leg himself (28 damage when it gets through), under them as they come charging in or off his circling. Cheater mode: in his fights the referee falls asleep for 5 seconds out of every 15, and Gane cheats the whole time, with eye pokes into a combo, throwing objects, or a bat. While he's cheating, every takedown on him fails: he grabs the cage and stands back up. Special move: Herb Dean.",
     "color": "#1f4fa8",
     "label": "",
     "imgData": null,
@@ -6370,6 +6370,26 @@ var SAVED_ROSTER = [
       "time": 3
     },
     "hasGrapple": false,
+    "grapple": {
+      "damage": 28,
+      "speed": 0.45,
+      "cooldown": 1.5,
+      "shotName": "SINGLE LEG",
+      "stuffChance": 20
+    },
+    "shots": {
+      "every": [
+        18,
+        28
+      ],
+      "range": 100,
+      "closing": 120,
+      "circle": true,
+      "level": 0.16,
+      "speed": 560,
+      "drive": 0.35,
+      "contact": 6
+    },
     "hasPowerPunch": false,
     "hasRage": false,
     "hasWatcher": false,
@@ -13163,6 +13183,7 @@ function inOrdinaryMovement(b) {
   if (legKickBusy(b)) return false; // planted for a leg kick (leg-kick.js)
   if (headKickBusy(b)) return false; // planted for a head kick, off balance after a miss, or over them out cold (head-kick.js)
   if (diazBusy(b)) return false; // Nate Diaz slapping, diving for the neck, or arms out (diaz.js)
+  if (ganeShotBusy(b)) return false; // Ciryl Gane dropping his level and driving in on a shot (gane-shot.js)
   if (fergusonBusy(b)) return false; // Tony Ferguson sliding, shooting, in a hold or his shell (ferguson.js)
   if (fedorBusy(b)) return false; // Fedor Emelianenko reaching for the clinch or throwing (fedor.js)
   if (pratesBusy(b)) return false; // Carlos Prates planted for the Rubber Pistol, or lighting up (prates.js)
@@ -13475,6 +13496,7 @@ function updateAbilities(dt) {
     if (updateHolloway(self, other, dt)) continue; // Max Holloway at the booth, his flashback, staying out of the guard (holloway.js)
     if (updateStrickland(self, other, dt)) continue; // Sean Strickland's one-two (strickland.js)
     if (updatePrates(self, other, dt)) continue; // Carlos Prates lighting up, and his Rubber Pistol (prates.js)
+    if (updateGaneShot(self, other, dt)) continue; // Ciryl Gane's rare takedown shot: the level change and the drive (gane-shot.js)
     if (updateClinch(self, other, dt)) continue; // the clinch: knees, elbows and a parting shot on the break (before the teep, so a teep can't cut it off) (clinch.js)
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
     if (updateHeadKick(self, other, dt)) continue; // the head kick his calf kicks set up (head-kick.js)
@@ -13486,7 +13508,7 @@ function updateAbilities(dt) {
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
     if (updateAnderson(self, other, dt)) continue; // Anderson Silva's front kick, hands down, counter, triangle off ground and pound (anderson.js)
     if (updateCormier(self, other, dt)) continue; // Daniel Cormier's double leg and super slam (cormier.js)
-    if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
+    if (!darkSideBlocks(self) && !ganeShotHolding(self) && updateSpecial(self, other, dt)) continue; // a created character's special move (it waits while Ciryl Gane's shot is a grab and slam, gane-shot.js)
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }
     if (self.guard) { updateGuard(self, other, dt); continue; }
@@ -13505,7 +13527,7 @@ function updateAbilities(dt) {
     if (updateWeave(self, other, dt)) continue;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
     // Ciryl Gane cheating while the ref's asleep (cheater.js).
-    if ((self.char.hasCheater || self.chAct || self.cheater) && updateCheater(self, other, dt, d)) continue; // (and EVIL Jon Jones's eye poke, jon.js)
+    if ((self.char.hasCheater || self.chAct || self.cheater) && !ganeShotHolding(self) && updateCheater(self, other, dt, d)) continue; // (and EVIL Jon Jones's eye poke, jon.js; it waits while his shot is a grab and slam, gane-shot.js)
     // Josh Hokit's armbar shot and thumbs down (hokit.js).
     if ((self.char.hasArmbarShot || self.char.hasThumbsDown) && updateHokit(self, other, dt, d)) continue;
     if (updateHollowayHands(self, other, dt, d)) continue; // Max Holloway's volume combos and Button Mash, in place of the punch (holloway.js)
@@ -13610,7 +13632,7 @@ function updateAbilities(dt) {
       }
     }
 
-    if (self.char.hasGrapple) {
+    if (self.char.hasGrapple || ganeShotHolding(self)) { // (and Ciryl Gane's grab and slam when his shot gets through, gane-shot.js)
       self.grappleCd = Math.max(0, self.grappleCd - dt * self.atkRate);
       var gr = self.char.grapple, grabReach = gr.reach + (self.doBronx ? DB_REACH : 0);
       if (!self.grapple && !self.grabHold && !self.swing && self.grappleCd === 0 && other.alive && !other.grappled && !other.sprawl && !other.sprawled && !subLocked(other) && !other.invincible && !grabBlockedByImpunity(self, other) && d < self.r + other.r + grabReach) {
@@ -57394,6 +57416,8 @@ function headKickGalleryMoves(ch, add) {
 //             fighters and combinations are his bad nights.
 // Shots in    (shotsIn) a Grappler's grabs come round `shotsIn` times as fast
 //             against him: takedowns get in on him easily.
+// Shot        (his `shots` block, gane-shot.js) every so often he changes
+//             levels and shoots: a striker's rare takedown.
 // Footwork    (footwork) he fights going backwards. When they come inside
 //             `keep` (or come charging faster than `closing`), he backs off at
 //             an angle off straight back (`angle`, a fresh side each time) for
@@ -57517,6 +57541,7 @@ function ganeHandsBusy(b) {
 // swaying; while he jabs, the other one stays down.
 function drawGane(b, other) {
   if (!ganeHandsBusy(b)) return;
+  if (drawGaneShot(b)) return; // arms out low for their legs on his shot (gane-shot.js)
   var r = b.r, size = ((b.char.punch && b.char.punch.size) || 14) * 0.72;
   var rear = other && other.x < b.x ? 1 : -1; // (while he jabs, the hand away from them stays down)
   [-1, 1].forEach(function (s) {
@@ -57535,6 +57560,128 @@ function ganeGalleryMoves(ch, add) {
   if (c.footwork) add("🔙", "Back foot", "Fights going backwards: backs off at an angle as they come in, circles at range, steps in to kick and backs straight out. Kicks them as they come charging in.");
   if (c.closeHurt || c.closeWeave != null) add("⚠️", "Up close", "Inside " + (c.close || 30) + " his weave works x" + (c.closeWeave != null ? c.closeWeave : 1) + " as often and strikes do x" + (c.closeHurt || 1) + " damage. Pressure and combinations are his bad nights.");
   if (c.shotsIn > 1) add("🤼", "Shots get in", "A Grappler's grabs come round " + c.shotsIn + "x as fast against him.");
+  var sh = ch.shots;
+  if (sh && !ch.hasGrapple) add("🦵", "Takedown shot", "Every " + sh.every[0] + "-" + sh.every[1] + "s or so he changes levels and shoots" + (ch.grapple && ch.grapple.shotName ? " a " + ch.grapple.shotName.toLowerCase() : "") + ": under them as they come charging in, or off his circling. Their takedown defense works on it" + (ch.grapple && ch.grapple.stuffChance ? ", and " + ch.grapple.stuffChance + "% get stuffed anyway" : "") + ".");
+}
+
+// Ciryl Gane's rare takedown shot (Christian, 2026-11-15): "Gane, at a very
+// low frequency, should shoot shots." He stays a striker (no hasGrapple):
+// every so often he changes levels and shoots, and the shot runs through the
+// same takedown system everyone's grabs do (attemptGrab, grapple-duel.js):
+// their sprawl or takedown defense, a weave or block, a guillotine, an
+// uppercut counter, his own stuffChance (stuffed-shots.js). One that gets
+// through is the ordinary grab and slam (beginGrapple, match.js) with his
+// own `grapple` numbers.
+//
+// Everything is in his `shots` block (leave it out and none of this runs):
+//   every    seconds between shots (the first one too), a fresh roll each time.
+//            Once one's due he waits for the moment:
+//   range    edge to edge, how close they have to be, and either
+//   closing  they're charging in faster than this (he goes under it), or
+//   circle   he's circling off at range on his back foot (gane.js "set").
+//   level    seconds dropping his level (the tell), planted.
+//   speed    the drive in on their legs, and
+//   drive    how long it can last before it's a "WHIFF".
+//   contact  edge to edge, in on the legs: the shot goes off.
+// His `grapple` block is the takedown itself (damage, speed, cooldown,
+// shotName, stuffChance), read by the shared grab code like anyone's.
+//
+// The shot runs on b.gs: { phase: "level" | "drive", t, aim, seen }.
+"use strict";
+
+function ganeShotCfg(b) { return b && b.char && !b.char.hasGrapple ? b.char.shots : null; }
+
+// physics.js (inOrdinaryMovement): planted for the level change or driving in.
+function ganeShotBusy(b) { return !!(b && b.gs); }
+
+// abilities.js: a shot of his that got through is a grab like anyone's, so
+// the grab and slam run for him while it lasts.
+function ganeShotHolding(b) { return !!(ganeShotCfg(b) && b.grapple); }
+
+function gsEnd(b) { b.gs = null; setSpeed(b, b.baseSpeed || SPEED); }
+
+// Is now the moment? They're in range, and charging in or he's circling.
+function gsMoment(self, other, c) {
+  if (!started || over || !other.alive || other.koOut || other.invincible || self.dizzy || self.angry || self.cheater || self.chAct) return false;
+  if (self.punch || self.kick || self.cmb || self.lk || self.swing || self.sprawled || !inOrdinaryMovement(self)) return false;
+  if (specialBusy(self) || specialBusy(other)) return false;
+  if (other.grappled || other.grapple || other.sprawl || other.sprawled || other.slam || other.igbb || subLocked(other)) return false;
+  if (typeof clinchBusy === "function" && (clinchBusy(self) || clinchBusy(other))) return false;
+  if (grabBlockedByImpunity(self, other)) return false;
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, gap = d - self.r - other.r;
+  if (gap > c.range) return false;
+  var ux = dx / d, uy = dy / d, closing = -(other.vx * ux + other.vy * uy) + (self.vx * ux + self.vy * uy);
+  if (closing > c.closing) return true;
+  return !!(c.circle && self.gn && self.gn.mode === "set");
+}
+
+// From updateAbilities (abilities.js), every frame. True while the shot has
+// him busy.
+function updateGaneShot(self, other, dt) {
+  var c = ganeShotCfg(self);
+  if (!c) return false;
+  var s = self.gs;
+  if (s && ganeClock - s.seen > 0.1) { gsEnd(self); s = null; } // held, grabbed or knocked out of it somewhere else
+  if (!s) {
+    if (self.gsNext == null) self.gsNext = gnRand(c.every);
+    if (self.gsNext > 0) { self.gsNext -= dt; return false; }
+    if (!gsMoment(self, other, c)) return false; // due: waits for the moment
+    self.gsNext = gnRand(c.every);
+    clearActions(self);
+    s = self.gs = { phase: "level", t: 0, aim: Math.atan2(other.y - self.y, other.x - self.x), seen: ganeClock };
+    self.vx = 0; self.vy = 0;
+    floater(self.x, self.y - self.r - 30, "LEVEL CHANGE", "note");
+    return true;
+  }
+  s.seen = ganeClock;
+  s.t += dt;
+  if (!other.alive || over || other.invincible || other.grappled || other.sprawl || other.sprawled || subLocked(other) || specialBusy(other) || self.knockFly > 0 || self.slam) { gsEnd(self); return false; }
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  s.aim = Math.atan2(dy, dx);
+  if (s.phase === "level") {
+    self.vx = 0; self.vy = 0;
+    if (s.t >= c.level) { s.phase = "drive"; s.t = 0; playWhoosh(); }
+    return true;
+  }
+  self.vx = dx / d * c.speed; self.vy = dy / d * c.speed;
+  if (d - self.r - other.r < c.contact) {
+    self.gs = null;
+    self.vx = 0; self.vy = 0;
+    if (attemptGrab(self, other) && self.grapple) floater(other.x, other.y - other.r - 30, "TAKEDOWN", "note"); // every takedown defense (grapple-duel.js)
+    else if (!self.sprawled && !self.grappled && !self.choked) setSpeed(self, self.baseSpeed || SPEED);
+    return true;
+  }
+  if (s.t > c.drive) {
+    floater(self.x, self.y - self.r - 8, "WHIFF", "dodge");
+    gsEnd(self);
+    return false;
+  }
+  return true;
+}
+
+// From draw() (draw.js), with the other poses: crouched low, leaning in.
+function applyGaneShotPose(b) {
+  var s = b.gs;
+  if (!s || !b.alive) return;
+  var k = s.phase === "level" ? ease(s.t / 0.12) : 1, ax = b.x, ay = b.y + b.r;
+  ctx.translate(ax, ay); ctx.rotate(Math.cos(s.aim) * 0.22 * k); ctx.scale(1 + 0.14 * k, 1 - 0.22 * k); ctx.translate(-ax, -ay);
+}
+
+// From drawGane (gane.js): both arms out low for their legs.
+function drawGaneShot(b) {
+  var s = b.gs;
+  if (!s) return false;
+  var k = s.phase === "level" ? ease(s.t / 0.12) : 1;
+  var nx = Math.cos(s.aim), ny = Math.sin(s.aim), px = -ny, py = nx, r = b.r;
+  var size = ((b.char.punch && b.char.punch.size) || 14) * 0.72;
+  [-1, 1].forEach(function (side) {
+    var sh = { x: b.x + px * side * r * 0.62 + nx * r * 0.2, y: b.y + r * 0.3 + py * side * r * 0.3 };
+    var reach = r * (0.5 + 0.75 * k);
+    var hand = { x: sh.x + nx * reach + px * side * r * 0.12, y: sh.y + ny * reach + r * 0.28 * k };
+    strokeLimb(size * 0.75, armColor(b.char), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
+    drawGloveAt(hand.x, hand.y, size, b.char, s.aim);
+  });
+  return true;
 }
 
 // A chin that gets cracked (Christian, 2026-11-15), for any fighter with a
@@ -77065,6 +77212,7 @@ function draw() {
     applyKneePose(b); // pulled down into the clinch, crouching for and flying in with a flying knee (knees.js)
     applyComboPose(b); // turning his back for a spinning back elbow (combos.js)
     applyAndersonPose(b); // Anderson Silva bent back in a weave, crouched for and flying in with the front kick (anderson.js)
+    applyGaneShotPose(b); // Ciryl Gane crouched low and leaning into his shot (gane-shot.js)
     applyCormierPose(b); // Daniel Cormier dropping his level, carrying, chewing; whoever he's got lying across over his head (cormier.js)
     applyProchazkaPose(b); // Jiří Procházka twisting into a katana cut (prochazka.js)
     applyJonClinchPose(b); // Jon Jones leaning into the clinch, and whoever he's tripping (jon-clinch.js)
@@ -78302,17 +78450,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115041147"></script>
-  <script src="js/game/tale-tape.js?v=20261115041147"></script>
-<script src="js/game/watchdog.js?v=20261115041147"></script>
-<script src="js/game/update.js?v=20261115041147"></script>
-<script src="js/game/fighter-art.js?v=20261115041147"></script>
-<script src="js/game/draw-attacks.js?v=20261115041147"></script>
-<script src="js/game/wwit-badge.js?v=20261115041147"></script>
-<script src="js/game/stadium.js?v=20261115041147"></script>
-<script src="js/game/draw.js?v=20261115041147"></script>
-<script src="js/ui/gallery.js?v=20261115041147"></script>
-<script src="js/ui/saved-fights.js?v=20261115041147"></script>
-<script src="js/main.js?v=20261115041147"></script>
+  <script src="js/game/intro-msg.js?v=20261115041529"></script>
+  <script src="js/game/tale-tape.js?v=20261115041529"></script>
+<script src="js/game/watchdog.js?v=20261115041529"></script>
+<script src="js/game/update.js?v=20261115041529"></script>
+<script src="js/game/fighter-art.js?v=20261115041529"></script>
+<script src="js/game/draw-attacks.js?v=20261115041529"></script>
+<script src="js/game/wwit-badge.js?v=20261115041529"></script>
+<script src="js/game/stadium.js?v=20261115041529"></script>
+<script src="js/game/draw.js?v=20261115041529"></script>
+<script src="js/ui/gallery.js?v=20261115041529"></script>
+<script src="js/ui/saved-fights.js?v=20261115041529"></script>
+<script src="js/main.js?v=20261115041529"></script>
 </body>
 </html>

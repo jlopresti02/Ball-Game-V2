@@ -28,6 +28,7 @@ function inOrdinaryMovement(b) {
   if (legKickBusy(b)) return false; // planted for a leg kick (leg-kick.js)
   if (headKickBusy(b)) return false; // planted for a head kick, off balance after a miss, or over them out cold (head-kick.js)
   if (diazBusy(b)) return false; // Nate Diaz slapping, diving for the neck, or arms out (diaz.js)
+  if (ganeShotBusy(b)) return false; // Ciryl Gane dropping his level and driving in on a shot (gane-shot.js)
   if (fergusonBusy(b)) return false; // Tony Ferguson sliding, shooting, in a hold or his shell (ferguson.js)
   if (fedorBusy(b)) return false; // Fedor Emelianenko reaching for the clinch or throwing (fedor.js)
   if (pratesBusy(b)) return false; // Carlos Prates planted for the Rubber Pistol, or lighting up (prates.js)
