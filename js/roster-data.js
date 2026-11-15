@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
@@ -153,6 +153,18 @@ var SAVED_ROSTER = [
       "onKick": true,
       "slow": 0.6,
       "time": 3
+    },
+    "headKick": {
+      "setup": 1,
+      "chance": 85,
+      "window": 2.5,
+      "cooldown": 12,
+      "range": 60,
+      "reach": 95,
+      "landChance": 50,
+      "blockShare": 40,
+      "koChance": 60,
+      "damagePct": 50
     },
     "hasSpecial": true,
     "special": {
@@ -2528,7 +2540,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-francis-ngannou",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Francis Ngannou",
@@ -2629,12 +2641,22 @@ var SAVED_ROSTER = [
         "range": 120,
         "windup": 1.0,
         "lock": 0.35,
-        "readChance": 30,
-        "readWeave": 20,
         "lunge": 1250,
         "lungeDist": 280,
         "damage": 75,
         "knockback": 1100,
+        "escape": {
+          "pointBlank": 25,
+          "near": 40,
+          "far": 160,
+          "nearChance": 8,
+          "farChance": 75,
+          "slipBonus": 15,
+          "slipSpeed": 420
+        },
+        "homing": 8,
+        "chase": 400,
+        "overshoot": 0.32,
         "wallSlams": 3,
         "slamDamage": 8,
         "koBase": 45,
@@ -4241,7 +4263,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 15,
+    "rev": 16,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4315,6 +4337,30 @@ var SAVED_ROSTER = [
       "guardDrop": 10
     },
     "hasKick": false,
+    "legKick": {
+      "first": [
+        1,
+        2
+      ],
+      "every": [
+        2,
+        3.5
+      ],
+      "range": 64,
+      "reach": 95,
+      "damage": 11,
+      "slow": 0.72,
+      "time": 5,
+      "stack": 0.12,
+      "maxStacks": 3,
+      "minSlow": 0.45,
+      "size": 1.15,
+      "buckle": {
+        "at": 3,
+        "slow": 0.25,
+        "time": 1.2
+      }
+    },
     "hasGrapple": true,
     "grapple": {
       "damage": 35,

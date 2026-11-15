@@ -29,7 +29,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Max Holloway hits harder (volume punches 8-12, punch 8) and Ilia Topuria hits harder (punch 8) | Christian's Claude | live on main |
 | Shared commentary calls (`commentary-calls.js`), Max's new lines, Khabib ground elbows | Christian's Claude | live on main |
 | Conor's rainbow aims where they're heading (`potOfGold` lock/lead keys) | Christian's Claude | live on main |
-| Tony Ferguson back to light skin and blonde hair (Joe's arm tattoo and headband kept) | Christian's Claude | live on main |
+| Tony Ferguson: Joe's look (olive skin, black hair, arm tattoo, higher headband, PR #96), see Joe's calls on looks below | Joe | live on main |
 | Ilia Topuria's 3-4 punch combos ending in a hook (`ilia-combos.js`) and the shared hook punch any fighter can use (`hook-punch.js`, `hooks` block) | Christian's Claude | live on main |
 | Michael Bisping's Broadside is a pirate ship in the middle of the ring with a three-cannon volley | Christian's Claude | live on main |
 | Joshua Van's left hook on the shared hook punch | Christian's Claude | live on main |
@@ -42,6 +42,8 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Uppercuts and body shots as shared punches that set up the bigger shot (`body-shots-uppercuts.js`, `uppercuts` / `bodyShots` blocks, hooks take `afterSetup` and `side`): Max, Ilia, Van, Dustin (body, then the left hook), Pereira, and Gaethje's uppercuts that stuff grabs, shots, clinches and guard pulls | Christian's Claude | live on main |
 | Josh Hokit always walks forward with light combos, stuffs takedowns, shoots now and then, 800 health (`hokit-pressure.js`, `max-hp.js`: only a fighter with `maxHp` over 500 changes) | Christian's Claude | live on main |
 | Balance from watching: Khabib's chin is up (shared `chin.js`, `chin` block, Gane's moved onto it) and 12% of his shots get stuffed (shared `stuffed-shots.js`, `grapple.stuffChance`); Charles Oliveira 30% stuffed, on the shared clinch with strong knees | Christian's Claude | live on main |
+| Francis Ngannou's Hulk punch telegraphs before it comes, and from far enough away it can be dodged (`rage.escape`, ngannou.js); close in it still lands. His rage fills as before | Christian's Claude | live on main |
+| Justin Gaethje chops the calf on the shared leg kick (his own timer; three in a row and the leg gives out); Alex Pereira's head kick follows his calf kicks (`head-kick.js`, `headKick` block) | Christian's Claude | live on main |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
