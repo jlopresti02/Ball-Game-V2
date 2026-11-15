@@ -328,7 +328,7 @@ function hurt(b, amount, source, attackerId) {
   // CTE's wild swings are easier to see coming.
   var swinger = source === "swing" && attackerId != null ? balls[attackerId].char.swing : null;
   if (source !== "laser" && source !== "slam" && source !== "grapple" && source !== "finisher" && source !== "flow" && source !== "kickback" && source !== "slugfest" && source !== "kofinal" && source !== "igbb" &&
-      tryWeave(b, attackerId, swinger ? swinger.weaveMult : 1, projectile)) {
+      tryWeave(b, attackerId, (swinger ? swinger.weaveMult : 1) * ganeWeaveMult(b, attackerId), projectile)) { // (Ciryl Gane's weave drops up close, gane.js)
     b.justDodged = true;
     return 0;
   }
@@ -378,6 +378,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= cormierDamageMult(b, source, attackerId); // Daniel Cormier full of cake, and harder on Jon Jones (cormier.js)
   amount *= pratesDamageMult(b, source, attackerId); // Carlos Prates wide open lighting up, and his knees crit in the clinch (prates.js)
   amount *= prochazkaChin(b, source, attackerId); // Jiří Procházka's hands low: what lands is often a crit (prochazka.js)
+  amount *= ganeDamageMult(b, source, attackerId); // Ciryl Gane's hands down: crits, and strikes up close hurt more (gane.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

@@ -142,9 +142,8 @@ function galleryMoves(ch) {
   }
   if (ch.poatan) {
     // Alex Pereira (pereira.js).
-    var pc = ch.poatan.chama, pk2 = ch.poatan.calfKick;
+    var pc = ch.poatan.chama;
     if (pc) add("📣", "CHAMA", "Every " + pc.every[0] + "-" + pc.every[1] + "s up close he plants and shouts \"CHAMA!\", and the crowd shouts it back. That's the tell: they back off " + pc.readChance + "% of the time. Then left-right-left (" + pc.jab + ", " + pc.cross + ", then a " + pc.hook + "-damage left hook). A clean hook knocks them out " + pc.koBase + "% of the time at full health, up to " + (pc.koBase + pc.koLow) + "% the more hurt they are, and he shoots an arrow into the sky.");
-    if (pk2) add("🦵", "Calf kicks", "His kicks land low: they limp at " + Math.round(pk2.slow * 100) + "% speed for " + secs(pk2.time) + ".");
     if (ch.poatan.duckHunt) add("🦆", "Duck season", "Against Jon Jones: when Jon turns into a duck and flies off, " + ch.poatan.duckHunt.chance + "% of the time he shoots it out of the sky. Jon still drops in, but he's the one who gets hurt (" + ch.poatan.duckHunt.damage + ").");
   }
   if (ch.suga) {
@@ -173,6 +172,8 @@ function galleryMoves(ch) {
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
   if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
   if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
+  if (ch.legKick) legKickGalleryMoves(ch, add); // calf kicks that leave them limping (leg-kick.js)
+  if (ch.gane) ganeGalleryMoves(ch, add); // Ciryl Gane: hands down, back foot, weak up close (gane.js)
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
   if (ch.anderson) andersonGalleryMoves(ch, add); // Anderson Silva (anderson.js)
   if (ch.cormier) cormierGalleryMoves(ch, add); // Daniel Cormier (cormier.js)

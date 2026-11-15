@@ -25,6 +25,7 @@ function inOrdinaryMovement(b) {
   if (hollowayBusy(b)) return false; // Max Holloway at the booth or in his flashback (holloway.js)
   if (vanBusy(b)) return false; // Joshua Van stopped while his gloves catch fire (van.js)
   if (teepBusy(b) || stricklandBusy(b)) return false; // planted for a teep (teep.js), or Sean Strickland's one-two (strickland.js)
+  if (legKickBusy(b)) return false; // planted for a leg kick (leg-kick.js)
   if (diazBusy(b)) return false; // Nate Diaz slapping, diving for the neck, or arms out (diaz.js)
   if (fergusonBusy(b)) return false; // Tony Ferguson sliding, shooting, in a hold or his shell (ferguson.js)
   if (fedorBusy(b)) return false; // Fedor Emelianenko reaching for the clinch or throwing (fedor.js)

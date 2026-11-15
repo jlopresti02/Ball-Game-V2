@@ -44,6 +44,7 @@ function drawFist(self, other) {
 
 function drawKick(self, other) {
   if (!self.kick || !other.alive || self.taunt || self.flow || self.combo) return;
+  if (drawLegKickOnKick(self, other)) return; // a kick that's a leg kick: drawn low into the calf, over both fighters (leg-kick.js)
   var ki = self.char.kick;
   var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var baseAngle = Math.atan2(qy, qx);
@@ -143,6 +144,7 @@ function drawHands(b, other) {
   if (fedorHandsBusy(b)) return; // reaching for the clinch, arms round them in the throw (drawFedor, fedor.js)
   if (bispingHandsBusy(b)) return; // the linstock and pointing at them in Broadside (drawBisping, bisping.js)
   if (andersonHandsBusy(b)) return; // hands down by his sides (drawAnderson, anderson.js)
+  if (ganeHandsBusy(b)) return; // Ciryl Gane's hands down by his hips (drawGane, gane.js)
   if (cormierHandsBusy(b)) return; // the double leg, the carry, the cake, and whoever he's carrying (drawCormier, cormier.js)
   if (pratesHandsBusy(b)) return; // lighting up, or the Rubber Pistol (drawPrates, prates.js)
   if (jonClinchHandsBusy(b)) return; // Jon Jones's arms locked round them (drawJonClinch, jon-clinch.js)

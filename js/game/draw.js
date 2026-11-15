@@ -235,6 +235,7 @@ function draw() {
     applyCormierPose(b); // Daniel Cormier dropping his level, carrying, chewing; whoever he's got lying across over his head (cormier.js)
     applyProchazkaPose(b); // Jiří Procházka twisting into a katana cut (prochazka.js)
     applyJonClinchPose(b); // Jon Jones leaning into the clinch, and whoever he's tripping (jon-clinch.js)
+    applyLegKickLimp(b); // limping on a kicked calf: dipping onto the bad leg, the leg hanging out bruised (leg-kick.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -371,11 +372,12 @@ function draw() {
     drawJab(b);
     drawDiamondSword(b, other); // Dustin's diamond sword, under his guard glove (diamond.js)
     drawHands(b, other);
-    drawPereira(b); // Alex Pereira's CHAMA fists and bow, and a calf-kick limp (pereira.js)
+    drawPereira(b); // Alex Pereira's CHAMA fists and bow (pereira.js)
+    drawGane(b, other); // Ciryl Gane's gloves down by his hips (gane.js)
     drawOmalley(b); // Sean O'Malley's crane kick, sugar boost, pips and crash (omalley.js)
     drawGsp(b); // GSP's Superman fists, hands down for "not impressed" (gsp.js)
     drawMightyMouse(b); // Mighty Mouse's mimic aura and crouch (mighty-mouse.js)
-    drawConor(b); // Conor McGregor's strut, counter stance, podium and gas tank, Dustin's calf kick (conor.js)
+    drawConor(b); // Conor McGregor's strut, counter stance, podium and gas tank (conor.js)
     drawLiddell(b); // Chuck Liddell packing the snow, his blue overhand (liddell.js)
     drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
     drawVolk(b); // Volkanovski's arms up, punching out of the pouch (volkanovski.js)
@@ -453,6 +455,7 @@ function draw() {
   drawFergusonOver(); // Tony Ferguson's holds and tug-of-war bar, the Kaioken flash, the CANCELLED stamps (ferguson.js)
   drawPratesOver(); // Carlos Prates's smoke, music notes and the disco lights (prates.js)
   drawKneesOver(); // knees coming up, the clinch, the flying knee and its red line (knees.js)
+  drawLegKicksOver(); // leg kicks whipping round low into the calf, the hit mark on it (leg-kick.js)
   drawFedorOver(); // Fedor Emelianenko's arms locked round them in the clinch and the throw (fedor.js)
   drawBispingOver(); // Michael Bisping's clinch elbows, cannonballs, smoke and 10-9 cards (bisping.js)
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)

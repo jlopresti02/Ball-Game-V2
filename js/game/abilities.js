@@ -193,12 +193,13 @@ function updateAbilities(dt) {
     if (updateCraneKick(self, other, dt)) continue; // Sean O'Malley's crane kick (omalley.js)
     if (updateGsp(self, other, dt)) continue; // GSP's Superman punch and "not impressed" (gsp.js)
     if (updateMightyMouse(self, other, dt)) continue; // Mighty Mouse's suplex into the mid-air armbar (mighty-mouse.js)
-    if (updateConor(self, other, dt)) continue; // Conor McGregor's trash talk and counter left, Dustin's calf kicks on him (conor.js)
+    if (updateConor(self, other, dt)) continue; // Conor McGregor's trash talk and counter left, his rivals' extras (conor.js)
     if (updateNgannou(self, other, dt)) continue; // Francis Ngannou's rage punch and Dana White (ngannou.js)
     if (updateHolloway(self, other, dt)) continue; // Max Holloway at the booth, his flashback, staying out of the guard (holloway.js)
     if (updateStrickland(self, other, dt)) continue; // Sean Strickland's one-two (strickland.js)
     if (updatePrates(self, other, dt)) continue; // Carlos Prates lighting up, and his Rubber Pistol (prates.js)
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
+    if (updateLegKick(self, other, dt)) continue; // a leg kick into the calf that leaves them limping (leg-kick.js)
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)
     if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
     if (updateFedor(self, other, dt)) continue; // Fedor Emelianenko's Sambo throw (fedor.js)
@@ -316,7 +317,7 @@ function updateAbilities(dt) {
           } else if (other.alive) {
             var kickDealt = hurt(other, ki.damage, self.kick.counter ? "kickback" : "kick", self.id);
             if (kickDealt > 0) playKick();
-            if (kickDealt > 0) calfKickLanded(self, other); // Alex Pereira's calf kicks: a limp (pereira.js)
+            if (kickDealt > 0) legKickOnKick(self, other); // kicks that are leg kicks (Alex Pereira's): a limp (leg-kick.js)
             if (ki.knockback > 0 && !other.justDodged) {
               var kkx = other.x - self.x, kky = other.y - self.y, kkd = Math.sqrt(kkx * kkx + kky * kky) || 1;
               other.vx += kkx / kkd * ki.knockback;

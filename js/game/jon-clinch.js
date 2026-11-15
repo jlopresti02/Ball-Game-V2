@@ -72,9 +72,9 @@
 // and lifts his lead knee for `chamber` seconds (the tell: his foot turned
 // out and a red ring on their knee), then stomps it down into their lead
 // knee: `damage`, a `knockback` shove that keeps them at bay, and a limp
-// (`slow` times their speed for `slowTime` seconds, the same limp as Alex
-// Pereira's calf kicks, slowdown.js). It's a kick: it can be slipped or
-// blocked, or whiff if they've got away.
+// (`slow` times their speed for `slowTime` seconds, the same limp as every
+// leg kick, leg-kick.js; `stack`, `maxStacks` and `minSlow` work here too).
+// It's a kick: it can be slipped or blocked, or whiff if they've got away.
 //
 // EVIL elbows: in a mode with `elbowCooldown`, his elbows (elbows.js) come
 // round at least that often instead of his elbow block's own cooldown.
@@ -526,7 +526,7 @@ function landJonOblique(self, v, k, oc) {
   if (dealt > 0) {
     k.landed = true;
     floater(v.x, v.y - v.r - 30, "OBLIQUE KICK!", "note");
-    if (oc.slow) addSlow(v, oc.slow, oc.slowTime || 2, "limp"); // the limp (slowdown.js; Alex Pereira's bruise shows it, pereira.js)
+    if (oc.slow) legKickLimp(v, oc, self); // the limp, and its look: the same as every leg kick's (leg-kick.js)
     var ux = (v.x - self.x) / d, uy = (v.y - self.y) / d;
     if (!v.justDodged && oc.knockback && elbowKnockable(v)) { v.vx += ux * oc.knockback; v.vy += uy * oc.knockback; }
     playKick(); playJonObliqueCrack();
