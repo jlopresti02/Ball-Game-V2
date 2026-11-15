@@ -6255,7 +6255,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ciryl-gane",
-    "rev": 8,
+    "rev": 9,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
@@ -6459,10 +6459,12 @@ var SAVED_ROSTER = [
       "chargeTime": 37,
       "hitCut": 3,
       "punchCut": 1,
-      "batDamage": 12,
+      "batDamage": 10,
       "batGap": 0.42,
-      "finisher": 40,
-      "caneDamage": 8
+      "finisher": 34,
+      "caneDamage": 7,
+      "herbJoined": 2,
+      "beatMax": 6
     }
   },
   {
@@ -70024,8 +70026,8 @@ var HERB_CLOSE_SPEED = 820;
 var HERB_GIVEUP = 3.5;     // can't reach them: calls it off (stays charged)
 var HERB_R = 34;
 var HERB_WALK = 120;       // Herb tapping his way across the cage
-var HERB_BEAT_MAX = 7;     // the beating can't go on longer than this
-var HERB_JOINED = 2.4;     // how long Herb gets to hit them before the finish
+var HERB_BEAT_MAX = 7;     // the beating can't go on longer than this (special.beatMax overrides)
+var HERB_JOINED = 2.4;     // how long Herb gets to hit them before the finish (special.herbJoined overrides)
 var HERB_SHOW = 3.2;       // seconds the jumbotron shows the announcement
 var HERB_RUN = 300;        // running in (and back out) through the crowd
 var HERB_CLIMB = 0.75;     // climbing over the fence, in or out
@@ -70092,7 +70094,7 @@ function updateHerbDean(self, other, dt) {
     self.y += (other.y - m.ny * gap - self.y) * Math.min(1, dt * 18);
     m.swingT += dt;
     var joined = herb && herb.phase === "hit" ? herb.hitT : 0;
-    var finish = joined >= HERB_JOINED || m.t >= HERB_BEAT_MAX;
+    var finish = joined >= (sp.herbJoined != null ? sp.herbJoined : HERB_JOINED) || m.t >= (sp.beatMax != null ? sp.beatMax : HERB_BEAT_MAX);
     if (m.swingT >= sp.batGap && other.alive) {
       m.swingT = 0; m.swings++; m.side = -m.side;
       var last = finish;
@@ -77404,17 +77406,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115032139"></script>
-  <script src="js/game/tale-tape.js?v=20261115032139"></script>
-<script src="js/game/watchdog.js?v=20261115032139"></script>
-<script src="js/game/update.js?v=20261115032139"></script>
-<script src="js/game/fighter-art.js?v=20261115032139"></script>
-<script src="js/game/draw-attacks.js?v=20261115032139"></script>
-<script src="js/game/wwit-badge.js?v=20261115032139"></script>
-<script src="js/game/stadium.js?v=20261115032139"></script>
-<script src="js/game/draw.js?v=20261115032139"></script>
-<script src="js/ui/gallery.js?v=20261115032139"></script>
-<script src="js/ui/saved-fights.js?v=20261115032139"></script>
-<script src="js/main.js?v=20261115032139"></script>
+  <script src="js/game/intro-msg.js?v=20261115032611"></script>
+  <script src="js/game/tale-tape.js?v=20261115032611"></script>
+<script src="js/game/watchdog.js?v=20261115032611"></script>
+<script src="js/game/update.js?v=20261115032611"></script>
+<script src="js/game/fighter-art.js?v=20261115032611"></script>
+<script src="js/game/draw-attacks.js?v=20261115032611"></script>
+<script src="js/game/wwit-badge.js?v=20261115032611"></script>
+<script src="js/game/stadium.js?v=20261115032611"></script>
+<script src="js/game/draw.js?v=20261115032611"></script>
+<script src="js/ui/gallery.js?v=20261115032611"></script>
+<script src="js/ui/saved-fights.js?v=20261115032611"></script>
+<script src="js/main.js?v=20261115032611"></script>
 </body>
 </html>
