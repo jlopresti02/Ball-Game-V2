@@ -5314,7 +5314,7 @@ var SAVED_ROSTER = [
         50
       ],
       "max": 1,
-      "call": 1.9,
+      "call": 2.6,
       "speed": 170,
       "pounceRange": 150,
       "stalk": 2.5,
