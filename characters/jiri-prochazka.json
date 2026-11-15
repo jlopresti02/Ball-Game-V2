@@ -1,11 +1,11 @@
 {
   "id": "c-jiri-prochazka",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "lightheavyweight",
   "name": "Jiří Procházka",
   "base": "Brawler",
-  "bio": "\"BJP\", \"Denisa\". The Czech samurai. A long, lean Light Heavyweight with his war hair tied up in a topknot and his hands down by his hips. He weaves a lot of what comes at him, but with his hands that low, what does land is often a critical hit. He throws a lot of punches, and hard ones, with elbows and knees up close and the spinning back elbow he knocked Dominick Reyes out with. He reads Miyamoto Musashi's Book of Five Rings: now and then, and always once a fight when he or they get low, he dreams of Musashi, comes back in a samurai's kimono and draws two katanas, and the samurai usually ends it.",
+  "bio": "\"BJP\", \"Denisa\". The Czech samurai. A long, lean Light Heavyweight with his war hair tied up in a topknot and his hands down by his hips. He weaves a lot of what comes at him, but with his hands that low, what does land is often a critical hit. He throws a lot of punches, and hard ones, with elbows and knees up close, wild elbows in the clinch, and the spinning back elbow he knocked Dominick Reyes out with. He reads Miyamoto Musashi's Book of Five Rings: now and then, and always once a fight when he or they get low, he dreams of Musashi, comes back in a samurai's kimono and draws two katanas, and the samurai usually ends it.",
   "color": "#6b8e23",
   "label": "",
   "imgData": null,
@@ -42,9 +42,13 @@
   "elbow": { "damage": 8, "cooldown": 1.6, "speed": 0.26, "reach": 14, "critChance": 35, "critMult": 2.5, "knockback": 160, "cut": { "chance": 35, "time": 3.5, "dps": 2 } },
   "knee": {
     "damage": 11, "cooldown": 2.4, "speed": 0.3, "reach": 12, "critChance": 30, "critMult": 2, "knockback": 220,
-    "clinch": { "first": [5, 8], "every": [9, 13], "range": 14, "knees": [2, 3], "damage": 8, "gap": 0.4, "escape": 15, "grapplerEscape": 10, "knockback": 380 },
     "flying": { "first": [8, 12], "every": [12, 18], "minGap": 70, "maxGap": 210, "load": 0.4, "speed": 950, "damage": 22, "knockback": 560, "koBase": 3, "koLow": 12, "readChance": 15, "open": 0.8 }
   },
+  "clinch": { "first": [5, 8], "every": [7, 11], "range": 16, "tie": "overUnder", "reach": 0.26, "evade": 12, "weaverEvade": 10,
+    "strikes": [2, 4], "gap": 0.3, "mix": { "elbow": 4, "headKnee": 1, "bodyKnee": 1 },
+    "knee": { "damage": 7, "headDamage": 9, "critChance": 25, "critMult": 2 }, "elbow": { "damage": 6 },
+    "escape": 15, "grapplerEscape": 10, "knockback": 380, "open": 0.6,
+    "parting": { "chance": 55, "mix": { "spinElbow": 3, "elbow": 1 } } },
   "combos": { "first": [3, 5], "every": [4, 6.5], "list": { "jab-cross-hook": 3, "cross-hook-knee": 3, "jab-spin-elbow": 5, "spin-back-elbow": 3, "elbow-elbow-knee": 2, "punch-clinch": 1 } },
   "prochazka": {
     "handsLow": true,

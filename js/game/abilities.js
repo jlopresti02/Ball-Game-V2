@@ -198,6 +198,7 @@ function updateAbilities(dt) {
     if (updateHolloway(self, other, dt)) continue; // Max Holloway at the booth, his flashback, staying out of the guard (holloway.js)
     if (updateStrickland(self, other, dt)) continue; // Sean Strickland's one-two (strickland.js)
     if (updatePrates(self, other, dt)) continue; // Carlos Prates lighting up, and his Rubber Pistol (prates.js)
+    if (updateClinch(self, other, dt)) continue; // the clinch: knees, elbows and a parting shot on the break (before the teep, so a teep can't cut it off) (clinch.js)
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
     if (updateLegKick(self, other, dt)) continue; // a leg kick into the calf that leaves them limping (leg-kick.js)
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)

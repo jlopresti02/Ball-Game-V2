@@ -1,11 +1,11 @@
 {
   "id": "c-carlos-prates",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "welterweight",
   "name": "Carlos Prates",
   "base": "Kicker",
-  "bio": "\"The Nightmare\". A long, lanky Brazilian kickboxer who smokes on fight day. He fights at the end of the longest punch and the longest kick in the game, in and out: he backs off at an angle, then comes back in on a different entrance every time and fires as he arrives, with a teep to shove them back out. His arms are rubber: now and then his fist shoots across the whole ring (Rubber Pistol) or his leg stretches out and whips round (Rubber Whip). Shots on him mostly catch nothing but air: he steps back out of them and kicks. Up close his elbows and knees crit a lot, and in the clinch his knees crit too. But once a choke or an armbar is on him he's in trouble. His special is the Cigarette: he stops and lights one, and nothing can touch him while the party music plays. Then he goes Super Saiyan: a gold aura, everyone misses him, every miss sets up a counter that crits, and his combinations come back to back.",
+  "bio": "\"The Nightmare\". A long, lanky Brazilian kickboxer who smokes on fight day. He fights at the end of the longest punch and the longest kick in the game, in and out: he backs off at an angle, then comes back in on a different entrance every time and fires as he arrives, with a teep to shove them back out. His arms are rubber: now and then his fist shoots across the whole ring (Rubber Pistol) or his leg stretches out and whips round (Rubber Whip). Shots on him mostly catch nothing but air: he steps back out of them and kicks. Up close his elbows and knees crit a lot, and in the clinch his long knees crit too and he comes off it with an elbow. But once a choke or an armbar is on him he's in trouble. His special is the Cigarette: he stops and lights one, and nothing can touch him while the party music plays. Then he goes Super Saiyan: a gold aura, everyone misses him, every miss sets up a counter that crits, and his combinations come back to back.",
   "color": "#86c232",
   "label": "",
   "imgData": null,
@@ -46,9 +46,13 @@
   "teep": { "cooldown": 3.2, "range": 30, "reach": 58, "chamber": 0.13, "extend": 0.08, "hold": 0.12, "recover": 0.16, "damage": 9, "push": 660, "blockPush": 0.5, "stuff": true, "onlyClosing": true, "size": 14 },
   "elbow": { "damage": 7, "cooldown": 1.3, "speed": 0.24, "reach": 14, "critChance": 45, "critMult": 2.6, "knockback": 180, "cut": { "chance": 35, "time": 4, "dps": 2 } },
   "knee": {
-    "damage": 10, "cooldown": 2.4, "speed": 0.3, "reach": 12, "critChance": 40, "critMult": 2.4, "knockback": 280,
-    "clinch": { "first": [4, 7], "every": [7, 11], "range": 16, "knees": [2, 4], "damage": 8, "gap": 0.38, "escape": 18, "grapplerEscape": 10, "knockback": 420 }
+    "damage": 10, "cooldown": 2.4, "speed": 0.3, "reach": 12, "critChance": 40, "critMult": 2.4, "knockback": 280
   },
+  "clinch": { "first": [4, 7], "every": [6, 9], "range": 22, "tie": "plum", "reach": 0.26, "evade": 12, "weaverEvade": 10,
+    "strikes": [2, 4], "gap": 0.36, "mix": { "bodyKnee": 3, "headKnee": 3, "elbow": 1 },
+    "knee": { "damage": 7, "headDamage": 10, "critChance": 40, "critMult": 2.2 },
+    "escape": 18, "grapplerEscape": 10, "knockback": 420, "open": 0.6,
+    "parting": { "chance": 60, "mix": { "elbow": 1 } } },
   "prates": {
     "lanky": { "wide": 0.93, "tall": 1.07 },
     "range": {
@@ -59,11 +63,10 @@
     "backOff": { "chance": 68, "step": 460, "window": 1.0, "counter": { "kick": 50, "punch": 30, "teep": 20 } },
     "guardAvoid": { "chance": 85, "margin": 8 },
     "subDefense": { "extraTap": 25 },
-    "clinchCrit": { "chance": 40, "mult": 2.2, "partingElbow": 60 },
     "rubber": {
-      "first": [3, 6], "every": [4.5, 7], "partyEvery": [2.2, 3.6], "minGap": 70, "maxGap": 320, "range": 340,
-      "windup": 0.5, "lock": 0.16, "speed": 1800, "fist": 15, "damage": 22, "knockback": 560, "snap": 0.22, "readChance": 12,
-      "whip": { "chance": 35, "damage": 24, "knockback": 640, "extend": 0.12, "sweep": 0.24, "arc": 0.9 }
+      "first": [4, 7], "every": [7, 10.5], "partyEvery": [3.3, 5.4], "minGap": 70, "maxGap": 320, "range": 340,
+      "windup": 0.42, "lock": 0.08, "speed": 2600, "fist": 15, "damage": 22, "knockback": 560, "snap": 0.22, "readChance": 12,
+      "whip": { "chance": 35, "damage": 24, "knockback": 640, "extend": 0.1, "sweep": 0.2, "arc": 0.9 }
     },
     "lines": {
       "start": ["I'm fighter. I like to fight, I like to make money, and that's it.", "Brazil never had the champion the welterweight division. I will be the first.", "I can punch, I can knee, I can kick, so I'm better now."],

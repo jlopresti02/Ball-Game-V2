@@ -1,6 +1,6 @@
 {
   "id": "c-anderson-silva",
-  "rev": 2,
+  "rev": 3,
   "builtin": false,
   "weightClass": "middleweight",
   "name": "Anderson Silva",
@@ -53,9 +53,13 @@
     "critChance": 30,
     "critMult": 2,
     "knockback": 200,
-    "clinch": { "first": [6, 9], "every": [10, 15], "range": 14, "knees": [2, 3], "damage": 9, "gap": 0.38, "escape": 18, "grapplerEscape": 10, "knockback": 380 },
     "flying": { "first": [12, 16], "every": [16, 22], "minGap": 80, "maxGap": 220, "load": 0.4, "speed": 950, "damage": 22, "knockback": 560, "koBase": 2, "koLow": 12, "readChance": 20, "open": 0.8 }
   },
+  "clinch": { "first": [6, 9], "every": [10, 14], "range": 14, "tie": "plum", "reach": 0.26, "evade": 10, "weaverEvade": 10,
+    "strikes": [3, 4], "gap": 0.34, "mix": { "headKnee": 5, "bodyKnee": 2 },
+    "knee": { "damage": 6, "headDamage": 7, "critChance": 15, "critMult": 2 }, "ramp": 15,
+    "escape": 18, "grapplerEscape": 10, "knockback": 380, "open": 0.6,
+    "parting": { "chance": 35, "mix": { "knee": 1, "elbow": 1 } } },
   "anderson": {
     "weave": { "chance": 47, "projChance": 22, "lean": 0.3 },
     "counter": { "chance": 45, "delay": 0.1, "damage": 18, "reach": 20 },

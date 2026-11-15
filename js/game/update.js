@@ -75,6 +75,7 @@ function update(dt) {
   tickPrates(dt); // Carlos Prates's footwork, the cigarette and the party, smoke and music (prates.js)
   tickProchazka(dt); // Jiří Procházka's samurai bar, the blade lock, his lines (prochazka.js)
   tickElbows(dt); // cuts from elbows bleeding (elbows.js)
+  tickClinch(dt); // a clinch let go if something else takes over (clinch.js)
   tickKnees(dt); // knees landing, the clinch and flying knee let go if something else takes over, a flying-knee knockout (knees.js)
   tickCombos(dt); // a combination cut short if something else takes over (combos.js)
   tickAnderson(dt); // Anderson Silva's lean, front kick knockout, triangle off a takedown, lines (anderson.js)
