@@ -26,6 +26,8 @@
 //                 carries on past them (radians).
 // size            the glove is this much bigger in a hook.
 // width, color    the swoosh: times the glove, and its colour.
+// over            true: it always comes round over the top (the side that
+//                 starts higher up on screen), a looping overhand (Ciryl Gane's).
 //
 // Joe's plain punch (abilities.js) is wired in: a fighter with a plain punch
 // and a "hooks" block throws `chance`% of its punches as hooks. A fighter
@@ -53,7 +55,7 @@
 "use strict";
 
 var HOOK_DEFAULTS = { finisherChance: 0, chance: 0, damageMult: 1.3, knockback: null, coil: 0.1, sweep: 0.2, recover: 0.12,
-  arc: 1.7, follow: 0.5, size: 1.15, width: 1, color: "#ffd21f" };
+  arc: 1.7, follow: 0.5, size: 1.15, width: 1, color: "#ffd21f", over: false };
 
 function hookCfg(b) { return b && b.char && b.char.hooks ? b.char.hooks : null; }
 function hookVal(c, k) { return c && c[k] != null ? c[k] : HOOK_DEFAULTS[k]; }
@@ -65,6 +67,7 @@ function rollHook(b, p, last) {
   if (!c || !p) return false;
   var pct = last ? hookVal(c, "finisherChance") : hookVal(c, "chance");
   if (pct > 0 && Math.random() * 100 < pct) { p.hook = true; if (p.side == null) p.side = 1; }
+  if (p.hook && hookVal(c, "over")) p.side = hookOverSide(b, c);
   return !!p.hook;
 }
 
@@ -244,10 +247,19 @@ function hookSwoosh(b, o, c, s, k0, k1, wMax, color) {
 // ---------------------------------------------------------------- gallery
 
 // The fighter card's move list (gallery.js).
+// An overhand (`over`): the side whose sweep starts higher up, so it loops
+// over the top.
+function hookOverSide(b, c) {
+  var o = balls[1 - b.id], a = o ? Math.atan2(o.y - b.y, o.x - b.x) : 0, arc = hookVal(c, "arc");
+  return Math.sin(a + arc) < Math.sin(a - arc) ? 1 : -1;
+}
+
 function hookGalleryMoves(ch, add) {
   var c = ch.hooks, fin = hookVal(c, "finisherChance"), any = hookVal(c, "chance"), parts = [];
   if (fin > 0) parts.push(fin + "% of his combos end in one");
   if (any > 0) parts.push(any + "% of his other punches are one");
-  add("↪️", "Hooks", "The glove comes round from the side in a wide sweep instead of straight, hits " + hookVal(c, "damageMult") +
+  if (hookVal(c, "over")) add("⤵️", "Overhands", "The glove loops over the top in a wide arc instead of straight, hits " + hookVal(c, "damageMult") +
+    "x as hard and knocks them sideways." + (parts.length ? " " + parts.join(", and ") + "." : ""));
+  else add("↪️", "Hooks", "The glove comes round from the side in a wide sweep instead of straight, hits " + hookVal(c, "damageMult") +
     "x as hard and knocks them sideways." + (parts.length ? " " + parts.join(", and ") + "." : ""));
 }

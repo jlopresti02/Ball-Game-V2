@@ -1,6 +1,6 @@
 {
   "id": "c-dustin-poirier",
-  "rev": 15,
+  "rev": 16,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Dustin Poirier",
@@ -50,6 +50,8 @@
     "koChance": 5
   },
   "hasKick": false,
+  "legKick": { "first": [2, 4], "every": [3, 5], "range": 56, "reach": 90, "damage": 7, "slow": 0.8, "time": 4.5, "stack": 0.1, "maxStacks": 3, "minSlow": 0.6,
+    "vs": { "c-conor-mcgregor": { "every": [1.5, 3], "damage": 12, "slow": 0.65, "time": 7, "minSlow": 0.45, "buckle": { "at": 3, "slow": 0.2, "time": 1.2 } } } },
   "hasGrapple": false,
   "hasPowerPunch": false,
   "hasRage": false,

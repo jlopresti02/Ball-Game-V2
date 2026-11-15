@@ -11,8 +11,8 @@
 //            the left hook. A clean hook is a knockout koBase% of the time at
 //            full health, up to koBase + koLow% the more hurt they are; then
 //            he shoots an arrow into the sky. Otherwise it's a big shot.
-// Calf kicks his kicks land low (poatan.calfKick): they limp at `slow` speed
-//            for `time` seconds (slowdown.js).
+// Calf kicks his kicks are leg kicks (legKick, onKick): drawn low into the
+//            calf, and they limp at `slow` speed for `time` seconds (leg-kick.js).
 // Bow and Arrow  his special (special.move "bow"): he draws a big red bow,
 //            the ricochet path lights up red, and he fires a big red arrow
 //            that bings off the cage up to `bounces` times. It hits them up to
@@ -261,16 +261,6 @@ function chamaEchoSpots() {
     }
   }
   return s;
-}
-
-// ---------------------------------------------------------------- calf kick
-
-// From the kick landing in abilities.js.
-function calfKickLanded(self, other) {
-  var ck = poCfg(self) && poCfg(self).calfKick;
-  if (!ck || !other.alive || other.justDodged) return;
-  if (!slowedBy(other, "limp")) floater(other.x, other.y - other.r - 30, "CALF KICK!", "note");
-  addSlow(other, ck.slow, ck.time, "limp");
 }
 
 // ---------------------------------------------------------------- Bow and Arrow
@@ -604,20 +594,10 @@ function drawArrowShape(x, y, ang, len) {
   ctx.restore();
 }
 
-// From draw(), per fighter, after its hands: the CHAMA shout, the bow, the
-// limp on a calf-kicked fighter.
+// From draw(), per fighter, after its hands: the CHAMA shout and the bow.
+// (A calf-kicked fighter's limp is drawn by leg-kick.js.)
 function drawPereira(b) {
   if (!b.alive) return;
-  var lp = slowedBy(b, "limp");
-  if (lp) {
-    // A throbbing bruise low on the ball where the calf kick landed.
-    var k = Math.min(1, lp.t / 0.5), pulse = 0.5 + 0.5 * Math.sin(poClock * 12);
-    ctx.save();
-    ctx.globalAlpha = 0.55 * k * (0.6 + 0.4 * pulse);
-    ctx.strokeStyle = "#7b2d8e"; ctx.lineWidth = 5; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r - 3, Math.PI * 0.62, Math.PI * 0.86); ctx.stroke();
-    ctx.restore();
-  }
   var m = b.igbb;
   if (m && m.move === "bow") {
     var pull = m.phase === "draw" ? easeOut(m.t / PO_DRAW) : (m.phase === "aim" ? 1 : 0);

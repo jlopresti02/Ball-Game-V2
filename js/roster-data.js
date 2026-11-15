@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
@@ -130,14 +130,15 @@ var SAVED_ROSTER = [
         "koBase": 15,
         "koLow": 48
       },
-      "calfKick": {
-        "slow": 0.6,
-        "time": 3
-      },
       "duckHunt": {
         "chance": 75,
         "damage": 25
       }
+    },
+    "legKick": {
+      "onKick": true,
+      "slow": 0.6,
+      "time": 3
     },
     "hasSpecial": true,
     "special": {
@@ -1258,12 +1259,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ciryl-gane",
-    "rev": 7,
+    "rev": 8,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
     "base": "Kicker",
-    "bio": "\"Bon Gamin\". Fighter mode: built on the Kicker base, long 40-damage kicks from range (one every 4.5s) that can be checked, plus a steady 12-damage punch up close. Cheater mode: in his fights the referee falls asleep for 5 seconds out of every 15, and Gane cheats the whole time, with eye pokes into a combo, throwing objects, or a bat. While he's cheating, every takedown on him fails: he grabs the cage and stands back up. Special move: Herb Dean.",
+    "bio": "\"Bon Gamin\". Fighter mode: a back-foot kickboxer on the Kicker base with his hands down. He fights going backwards, jabbing fast (7 damage, one every 0.42s), looping an overhand over the top now and then, and kicking a lot: long 34-damage kicks every 2.6s that can be checked, and calf kicks that leave them limping. He slips shots at range (a 30% weave), but with his hands down what lands often crits, up close his weave drops and strikes hurt more, and takedowns get in on him easily. Cheater mode: in his fights the referee falls asleep for 5 seconds out of every 15, and Gane cheats the whole time, with eye pokes into a combo, throwing objects, or a bat. While he's cheating, every takedown on him fails: he grabs the cage and stands back up. Special move: Herb Dean.",
     "color": "#1f4fa8",
     "label": "",
     "imgData": null,
@@ -1293,32 +1294,124 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 12,
-      "cooldown": 1.1,
-      "speed": 0.3,
+      "damage": 7,
+      "cooldown": 0.42,
+      "speed": 0.2,
       "size": 13,
-      "knockback": 80,
-      "reach": 35,
+      "knockback": 70,
+      "reach": 44,
       "koChance": 0
+    },
+    "hooks": {
+      "chance": 18,
+      "over": true,
+      "damageMult": 2.8,
+      "knockback": 360,
+      "coil": 0.14,
+      "sweep": 0.22,
+      "recover": 0.14,
+      "arc": 2.2,
+      "follow": 0.45,
+      "size": 1.25,
+      "width": 1.2,
+      "color": "#ffffff"
     },
     "hasKick": true,
     "kick": {
-      "damage": 40,
-      "cooldown": 4.5,
+      "damage": 34,
+      "cooldown": 2.6,
       "speed": 0.5,
       "size": 17,
       "knockback": 450,
-      "reach": 75,
+      "reach": 78,
       "checkChance": 25
+    },
+    "legKick": {
+      "first": [
+        3,
+        5
+      ],
+      "every": [
+        4,
+        6
+      ],
+      "range": 60,
+      "reach": 95,
+      "damage": 8,
+      "slow": 0.8,
+      "time": 3
     },
     "hasGrapple": false,
     "hasPowerPunch": false,
     "hasRage": false,
     "hasWatcher": false,
-    "hasWeave": false,
+    "hasWeave": true,
+    "weave": {
+      "dodgeChance": 30,
+      "critChance": 6,
+      "comboHits": 4,
+      "comboDamage": 4,
+      "finalDamage": 10,
+      "finalKnockback": 700,
+      "tauntDur": 1,
+      "tauntVuln": 1.25,
+      "flowChance": 0,
+      "flowDamage": 0
+    },
     "hasSwing": false,
     "hasForget": false,
     "blockChance": 0,
+    "gane": {
+      "handsDown": true,
+      "chin": {
+        "critChance": 22,
+        "critMult": 1.5,
+        "sources": [
+          "punch",
+          "jab",
+          "kick",
+          "kickback",
+          "elbow",
+          "knee",
+          "combo",
+          "swing",
+          "teep",
+          "flow",
+          "bat",
+          "poke"
+        ]
+      },
+      "close": 28,
+      "closeWeave": 0.3,
+      "closeHurt": 1.25,
+      "shotsIn": 1.6,
+      "footwork": {
+        "keep": 62,
+        "press": 150,
+        "closing": 120,
+        "angle": [
+          0.35,
+          0.9
+        ],
+        "outTime": [
+          0.5,
+          1.0
+        ],
+        "outGap": [
+          95,
+          125
+        ],
+        "set": [
+          0.3,
+          0.7
+        ],
+        "inTime": 1.6,
+        "rate": 6,
+        "wall": 70,
+        "fireIn": true,
+        "ready": 0.6
+      }
+    },
     "combos": {
       "first": [
         4,
@@ -1378,7 +1471,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-conor-mcgregor",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Conor McGregor",
@@ -1559,22 +1652,6 @@ var SAVED_ROSTER = [
             1,
             2
           ]
-        },
-        "dustin": {
-          "calfKicks": {
-            "first": [
-              2,
-              4
-            ],
-            "every": [
-              3.5,
-              6
-            ],
-            "range": 40,
-            "damage": 12,
-            "slow": 0.6,
-            "time": 3
-          }
         }
       },
       "pressConference": {
@@ -2047,7 +2124,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 15,
+    "rev": 16,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
@@ -2097,6 +2174,41 @@ var SAVED_ROSTER = [
       "koChance": 5
     },
     "hasKick": false,
+    "legKick": {
+      "first": [
+        2,
+        4
+      ],
+      "every": [
+        3,
+        5
+      ],
+      "range": 56,
+      "reach": 90,
+      "damage": 7,
+      "slow": 0.8,
+      "time": 4.5,
+      "stack": 0.1,
+      "maxStacks": 3,
+      "minSlow": 0.6,
+      "vs": {
+        "c-conor-mcgregor": {
+          "every": [
+            1.5,
+            3
+          ],
+          "damage": 12,
+          "slow": 0.65,
+          "time": 7,
+          "minSlow": 0.45,
+          "buckle": {
+            "at": 3,
+            "slow": 0.2,
+            "time": 1.2
+          }
+        }
+      }
+    },
     "hasGrapple": false,
     "hasPowerPunch": false,
     "hasRage": false,

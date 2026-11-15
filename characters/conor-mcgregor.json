@@ -1,6 +1,6 @@
 {
   "id": "c-conor-mcgregor",
-  "rev": 4,
+  "rev": 5,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Conor McGregor",
@@ -61,8 +61,7 @@
     "calfKicksHurt": 1.4,
     "thirteen": { "within": 13, "show": 4 },
     "rivals": {
-      "khabib": { "grappleBoost": 1.8, "rncChance": 15, "gnpChance": 25, "sendLocFirst": [6, 11], "busCrew": 1, "answerBus": [1, 2] },
-      "dustin": { "calfKicks": { "first": [2, 4], "every": [3.5, 6], "range": 40, "damage": 12, "slow": 0.6, "time": 3 } }
+      "khabib": { "grappleBoost": 1.8, "rncChance": 15, "gnpChance": 25, "sendLocFirst": [6, 11], "busCrew": 1, "answerBus": [1, 2] }
     },
     "pressConference": { "on": true, "chance": 40, "at": [7, 14], "room": 140, "talk": 1.5, "anger": 5, "bottles": 3, "bottleDamage": 6, "bottleSpeed": 560, "wait": 2.5, "koBonus": 20 }
   },
