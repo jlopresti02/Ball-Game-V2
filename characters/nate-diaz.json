@@ -1,6 +1,6 @@
 {
   "id": "c-nate-diaz",
-  "rev": 2,
+  "rev": 3,
   "builtin": false,
   "weightClass": "welterweight",
   "name": "Nate Diaz",
@@ -72,6 +72,18 @@
     "lines": { "start": 70, "answer": 70, "trash": [7, 11], "slapped": 25 },
     "iconic": { "buffer": true, "rogan": true },
     "vsConor": { "slapEvery": [3.5, 6], "chain196": 60, "chainBonus": 10, "bottlesBack": 2, "bottleDamage": 6, "bottleSpeed": 560 }
+  },
+  "lion": {
+    "first": [14, 24],
+    "every": [35, 50],
+    "max": 1,
+    "call": 1.3,
+    "speed": 170,
+    "pounceRange": 150,
+    "stalk": 2.5,
+    "pounces": 3,
+    "maulTime": 2.4,
+    "maulDamage": 34
   },
   "hasSpecial": true,
   "special": {

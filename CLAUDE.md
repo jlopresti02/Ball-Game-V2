@@ -42,6 +42,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Uppercuts and body shots as shared punches that set up the bigger shot (`body-shots-uppercuts.js`, `uppercuts` / `bodyShots` blocks, hooks take `afterSetup` and `side`): Max, Ilia, Van, Dustin (body, then the left hook), Pereira, and Gaethje's uppercuts that stuff grabs, shots, clinches and guard pulls | Christian's Claude | live on main |
 | Josh Hokit always walks forward with light combos, stuffs takedowns, shoots now and then, 800 health (`hokit-pressure.js`, `max-hp.js`: only a fighter with `maxHp` over 500 changes) | Christian's Claude | live on main |
 | Balance from watching: Khabib's chin is up (shared `chin.js`, `chin` block, Gane's moved onto it) and 12% of his shots get stuffed (shared `stuffed-shots.js`, `grapple.stuffChance`); Charles Oliveira 30% stuffed, on the shared clinch with strong knees | Christian's Claude | live on main |
+| Nate Diaz's lion: Nate summons a lion that hops the cage, stalks, pounces and mauls (`nate-lion.js`, `lion` block in his character file) | Joe's Claude | pull request |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
@@ -61,6 +62,14 @@ Christian's Claude updates this table with each change it ships. Joe's Claude: i
 - **Never name an absent opponent**: a line or commentator call that names a real fighter only plays when that fighter is the one in the cage (`vs` lines). Everything else names only the speaker or nobody.
 - **Strikes any fighter can have**: `teep.js`, `knees.js` (knee, clinch knees, flying knee), `combos.js`, `elbows.js`. Elbows crit 35% of the time unless a fighter's `elbow` block sets `critChance`; knees crit 30%. Jon Jones throws elbows and knees.
 - **Chuck Norris** (`js/game/chuck-norris.js`) is a guest in Sean Strickland's America (`special.norris` in Strickland's file), not a fighter.
+
+## Voice lines Joe wants (for Christian's clip tool)
+
+Joe asked for these real lines. Each one is already wired into the game with this **exact text**, so it plays as soon as its clip is keyed in `voice-clips.js` (silent until then). Christian's Claude: when you're finding voice lines, please cut these.
+
+| Fighter | Exact text in the code | Where it plays |
+|---|---|---|
+| Nate Diaz | `Who the [BLEEP] knows what a gazelle is?` (the real line: "Who the fuck knows what a gazelle is?", bleeped) | as he summons his lion (`LION_LINE` in `nate-lion.js`) |
 
 ## Voice lines never overlap (Joe's rule)
 

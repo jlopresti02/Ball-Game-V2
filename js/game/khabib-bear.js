@@ -43,6 +43,7 @@ function tickRingBear(dt) {
       if (!cfg || ringBear || !b.alive || b.bearN >= cfg.max) return;
       b.bearT -= dt;
       if (b.bearT > 0 || jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb; })) return;
+      if (typeof natLion !== "undefined" && natLion) return; // not while Nate's lion is in the ring (nate-lion.js)
       b.bearN++;
       b.bearT = bearRand(cfg.every);
       spawnRingBear(b);

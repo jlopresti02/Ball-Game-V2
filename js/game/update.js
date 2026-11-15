@@ -51,6 +51,7 @@ function update(dt) {
   tickJon(dt);      // Jon Jones swapping between GOAT and EVIL mode (jon.js)
   tickHelmetCharge(dt); // the 67'ers ad's clock (hokit-helmet.js)
   tickRingBear(dt); // Khabib's bear wandering the ring (khabib-bear.js)
+  tickNateLion(dt); // Nate Diaz's lion stalking his opponent (nate-lion.js)
   tickIliaTornado(dt); // roses from Ilia's Rose Tornado (ilia-tornado.js)
   tickIliaCombos(dt); // Ilia's combo finisher: the ring and its text (ilia-combos.js)
   tickPunchTypes(dt); // setups from body shots and uppercuts wearing off (body-shots-uppercuts.js)
