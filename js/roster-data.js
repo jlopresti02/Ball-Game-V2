@@ -5946,7 +5946,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 10,
+    "rev": 11,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
@@ -6211,7 +6211,7 @@ var SAVED_ROSTER = [
           "every": 0.06,
           "spread": 0.16,
           "speed": 900,
-          "damage": 3,
+          "damage": 4.5,
           "bigDamage": 42,
           "bigKnockback": 800,
           "bigSlamDamage": 12
@@ -6328,10 +6328,10 @@ var SAVED_ROSTER = [
       "speed": 1.35,
       "gap": 0.42,
       "reach": 16,
-      "damage": 7,
+      "damage": 7.7,
       "critChance": 55,
       "critMult": 3.5,
-      "finisher": 18,
+      "finisher": 19.8,
       "readChance": 25,
       "cycloneChance": 15,
       "cycloneTime": 0.65,
@@ -6348,7 +6348,7 @@ var SAVED_ROSTER = [
         "win": 40,
         "hurt": 30,
         "disarm": 30,
-        "winDamage": 30,
+        "winDamage": 33,
         "hurtDamage": 18
       },
       "cut": {
