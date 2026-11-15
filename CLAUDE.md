@@ -67,7 +67,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Ciryl Gane's first real voice lines (in `chatter.js`): "It's really hard to be under my skin" (start, and on a weave), "I don't have the good word in English" (rattled: a crit on his chin, a big hit, or his kick/overhand slipped or checked), "I got a good footwork and I moved very well" (backing out). New chatter moments `weave`, `rattled`, `backOut` and an opt-in `after` key; `chin.js` counts `b.chinCrits` | Christian's Claude | live on main |
 | Ilia Topuria sprawls 75% (was 68), his regular strikes do about 10% more, rounded (punch 9, combo punches 9 / `dmgMax` 10, get-up shot 9), and his combo's final punch lands 50% heavier (`ramp.chain.finisher` [5.45, 6.82], was [4, 5]). His specials are unchanged: the bull and throw 70, rapier slash 40 / lunge 24 / slam 3, tornado 10 / slam 6 | Christian's Claude | live on main |
 | Justin Gaethje's regular punch about 10% lighter again (19, rounded; uppercuts stay about 30 via `uppercuts.damageMult` 1.579) and a few more calf kicks (`legKick.every` [1.82, 3.18], was [2, 3.5]: about 6% more a minute, which Christian said is fine) | Christian's Claude | live on main |
-| Fedor's special | Christian | not picked yet |
+| Fedor's special: The Unmoving Man (`fedor-unmoving.js`, `special.move` "unmoving"): slips every punch hands down, catches the last one, one overhand right into the cage | Joe | pull request open |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
 
