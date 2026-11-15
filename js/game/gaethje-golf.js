@@ -14,6 +14,8 @@
 // his hands. Every few seconds, when they're far enough off, he stops, tees
 // one up and drives a golf ball at them ("FORE!"). After `duration` seconds
 // he tosses the club away and goes back to fighting; the hat stays on.
+// He also drops it the moment he's grabbed, held, choked, knocked out or caught
+// in their special, and nobody can take him down mid swing (grapple-duel.js).
 //
 // Settings, under `gaethje.golf` in the character JSON:
 //   duration       seconds he has the club
@@ -239,9 +241,29 @@ function tickGolf(dt) {
     if (!b.alive || over) { endGolfMode(b, false); return; }
     // His special takes over: the club goes.
     if (b.igbb || allAmericanOn()) { endGolfMode(b, true); return; }
+    // Grabbed, held, choked, knocked out or caught in their special: the club
+    // goes too, so a swing never hangs half done under a takedown or a hold.
+    if (golfCaught(b)) { endGolfMode(b, true); return; }
     b.golfLeft -= dt;
-    if (b.golfLeft <= 0 && !b.chAct) endGolfMode(b, true);
+    // A swing or a shot gets to finish, but never more than GOLF_OVERTIME past the end.
+    if (b.golfLeft <= 0 && (!b.chAct || b.golfLeft <= -GOLF_OVERTIME)) endGolfMode(b, true);
   });
+}
+
+var GOLF_OVERTIME = 1.6; // (the golf shot runs 1.55s)
+
+// His own takedown counts too: club in hand, his fighting runs through the
+// bat code (cheater.js), so a sprawl into a REATTACK used to leave his grab
+// frozen half way until the club ran out (up to 15 seconds).
+function golfCaught(b) {
+  var o = balls[1 - b.id];
+  return !!(b.grapple || b.grappled || b.sprawl || b.sprawled || subLocked(b) || b.koOut || b.shocked || b.shelled || b.beamPin || b.dazed || b.fenceGrab || (o && o.igbb));
+}
+
+// Mid swing or mid golf shot: nobody takes him down (grapple-duel.js), the
+// way nobody takes Bisping down off his ship.
+function golfSwinging(b) {
+  return golfing(b) && !!b.chAct && (b.chAct.kind === "golf" || b.chAct.kind === "bat");
 }
 
 // The shot itself (from updateCheaterAct, cheater.js): stopped dead, sets

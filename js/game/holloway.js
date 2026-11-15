@@ -39,9 +39,10 @@
 //            spinning back fist in there now and then, "N HIT COMBO!".
 // The Middle  his special (special.move "middle"), "MEET ME IN THE MIDDLE": his real point
 //            down, from the Ricardo Lamas fight (2016) to the last-second
-//            knockout of Justin Gaethje at UFC 300 (2024). His rule is that
-//            only the one winning can call it (onlyWhenWinning), so the full
-//            bar waits until he's ahead. He points down at the middle of the
+//            knockout of Justin Gaethje at UFC 300 (2024). A full bar waits
+//            for the end of the fight (`trigger` "late": either of them under
+//            lateHp% health or the fight past lateAfter seconds; "winning" is
+//            his real rule, only the one ahead calls it). He points down at the middle of the
 //            cage (the tell), a clock comes up at 0:10, and they walk out to
 //            the middle (acceptChance%, Gaethje always) and trade: his fastest
 //            punches in the game against their answers. At 0:01 the big right
@@ -493,9 +494,10 @@ function hwComboDone(self, ms, mc) {
 function updateMiddle(self, other, dt) {
   var sp = self.char.special;
   if (!self.igbb) {
-    if (self.specialT < sp.chargeTime || !canStartIgbb(self, other) || self.hwAct || self.hwMash || hwFlash) return false;
+    var free = middleFreeCall(self, other, sp); // the end of the fight: no full bar needed the first time
+    if ((self.specialT < sp.chargeTime && !free) || !canStartIgbb(self, other) || self.hwAct || self.hwMash || hwFlash) return false;
     if (other.guard || other.dazed || other.koOut || other.hwAct || swordDuelActive()) return false;
-    if (sp.onlyWhenWinning && self.hp < other.hp) return false; // his rule: only the one winning calls the 10 seconds
+    if (!free && !middleTriggerOpen(self, other, sp)) return false; // `trigger`: late in the fight, only when winning, or any time
     startMiddle(self, other, sp);
   }
   var m = self.igbb;
@@ -513,11 +515,34 @@ function updateMiddle(self, other, dt) {
   return true;
 }
 
+// When a full bar may call it, by `special.trigger`:
+//   "late"     near the end of the fight: either of them under `lateHp`% health,
+//              or the fight past `lateAfter` seconds (the default now). With
+//              `lateFreeCall` the first call of the fight doesn't wait for a
+//              full bar, so it comes at the end of nearly every fight; after
+//              that it's the bar as usual.
+//   "winning"  his real rule, only the one ahead calls the last 10 seconds (the
+//              old setting; `onlyWhenWinning: true` with no `trigger` means this too)
+//   "any"      as soon as the bar's full
+function middleTriggerOpen(self, other, sp) {
+  var tr = sp.trigger || (sp.onlyWhenWinning ? "winning" : "any");
+  if (tr === "winning") return self.hp >= other.hp;
+  if (tr === "late") return middleLate(self, other, sp);
+  return true;
+}
+function middleLate(self, other, sp) {
+  return Math.min(self.hp, other.hp) < MAX_HP * (sp.lateHp || 0) / 100 || (self.hwT || 0) >= (sp.lateAfter || Infinity);
+}
+function middleFreeCall(self, other, sp) {
+  return sp.trigger === "late" && !!sp.lateFreeCall && !self.hwMidCalls && middleLate(self, other, sp);
+}
+
 function startMiddle(self, other, sp) {
   clearActions(self);
   self.koPunch = null; self.punch = null;
   var hc = hwCfg(self) || {}, gj = !!hc.gaethje && hwIs(other.char, HW_GAETHJE);
   var accept = gj || Math.random() * 100 < sp.acceptChance;
+  self.hwMidCalls = (self.hwMidCalls || 0) + 1;
   self.igbb = { move: "middle", phase: "point", t: 0, clockT: 0, accept: accept, side: self.x <= other.x ? -1 : 1, gaethje: gj, n: 10, thrown: 0, nextAt: 0, ansAt: 0, ansSide: 1 };
   floater(self.x, self.y - self.r - 34, "MEET ME IN THE MIDDLE", "crit");
   hwRing = { id: self.id, t: 0, out: 0 };
@@ -1241,9 +1266,16 @@ function drawWaianaeFade(c, r, look, lw) {
 
 // ---------------------------------------------------------------- gallery (gallery.js)
 
+function hwTriggerText(sp) {
+  var tr = sp.trigger || (sp.onlyWhenWinning ? "winning" : "any");
+  if (tr === "winning") return "Only when he's winning.";
+  if (tr === "late") return "Saved for the end of the fight: once either of them is under " + sp.lateHp + "% health or the fight's past " + secs(sp.lateAfter) + (sp.lateFreeCall ? ", and the first time it doesn't even need a full bar." : ".");
+  return "";
+}
+
 function hollowaySpecialInfo(sp) {
-  return "His real point down (Ricardo Lamas, 2016; the last-second knockout of Justin Gaethje at UFC 300). Only when he's winning. He points down at the middle of the cage and a clock comes up at 0:10. " + sp.acceptChance +
-    "% of the time they walk out to the middle with him (Gaethje always) and they trade: his fastest punches in the game (" + sp.damage + " each, one every " + secs(sp.punchEvery) + ", can't be slipped or blocked) against theirs. At 0:01 the big right hand: a knockout " + sp.koBase +
+  return "His real point down (Ricardo Lamas, 2016; the last-second knockout of Justin Gaethje at UFC 300). " + hwTriggerText(sp) + " He points down at the middle of the cage and a clock comes up at 0:10. " + (sp.acceptChance >= 100 ? "They always walk out to the middle with him" : sp.acceptChance +
+    "% of the time they walk out to the middle with him (Gaethje always)") + " and they trade: his fastest punches in the game (" + sp.damage + " each, one every " + secs(sp.punchEvery) + ", can't be slipped or blocked) against theirs. At 0:01 the big right hand: a knockout " + sp.koBase +
     "% of the time, up to " + (sp.koBase + sp.koLow + sp.koMeter) + "% when they're hurt and his meter is full, otherwise " + sp.finalDamage + " and the bell. A knockout brings up Joe Rogan's UFC 300 call. Turn it down and the crowd boos, and he gets " + Math.round(sp.declineRefund * 100) + "% of his bar back.";
 }
 
