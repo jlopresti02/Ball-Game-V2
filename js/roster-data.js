@@ -5341,7 +5341,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-sean-omalley",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "bantamweight",
     "name": "Sean O'Malley",
@@ -5636,15 +5636,18 @@ var SAVED_ROSTER = [
         "bigShot": 30,
         "combo": 60,
         "comeback": 75,
-        "comebackDown": 100
+        "comebackDown": 100,
+        "loss": true
       },
       "lines": {
         "start": [
           "Every single fight I go into, I'm looking for the knockout.",
-          "Welcome to the Suga Show."
+          "Welcome to the Suga Show.",
+          "I've been knocking people out since I was 16 years old."
         ],
         "sniper": [
-          "I'm a sniper. I'm gonna snipe his chin. I'm gonna find it."
+          "I'm a sniper. I'm gonna snipe his chin. I'm gonna find it.",
+          "It only takes one mistake against me."
         ],
         "rightHand": [
           "I know what I possess in this right hand, baby."
@@ -5662,7 +5665,14 @@ var SAVED_ROSTER = [
         "donut": [],
         "sugarHigh": [],
         "crash": [],
-        "wakeUp": []
+        "wakeUp": [],
+        "win": [
+          "Is this real?",
+          "God, it feels good to win. I hate losing. [BLEEP], this feels good."
+        ],
+        "loss": [
+          "Yeah, I didn't feel like it was gonna go like that."
+        ]
       },
       "linesVs": {
         "c-ilia-topuria": {
