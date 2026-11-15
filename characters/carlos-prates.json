@@ -88,6 +88,6 @@
     "light": 1.4, "smoke": 2.2, "theyCome": true,
     "party": 5, "speed": 1.15, "attack": 1.2, "damage": 1.1, "critChance": 25, "critMult": 1.8,
     "counter": { "window": 0.8, "mult": 1.9, "lunge": 1.3, "cd": 0.6 }, "comboEvery": [0.9, 1.6],
-    "out": 0.7, "missFloat": 3, "music": true, "song": true, "musicLevel": 0.22
+    "out": 0.7, "gear5": true, "missFloat": 3, "music": true, "song": true, "musicLevel": 0.22
   }
 }

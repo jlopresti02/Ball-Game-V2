@@ -244,7 +244,7 @@ function draw() {
     var img = getImg(b.char.imgData);
     if (b.char.look) {
       // Fighter art: the muscled ball in its fight kit (beats a face photo)
-      drawFighterArt(ctx, b.x, b.y, b.r, b.char.look, theme.wall, { layout: "contained", name: b.char.name });
+      drawFighterArt(ctx, b.x, b.y, b.r, prGear5Look(b) || b.char.look, theme.wall, { layout: "contained", name: b.char.name }); // Carlos Prates's white Gear 5 kit (prates-gear5.js)
     } else if (img) {
       ctx.save();
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
