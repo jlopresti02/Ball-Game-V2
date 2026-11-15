@@ -1,6 +1,6 @@
 {
   "id": "c-ilia-topuria",
-  "rev": 11,
+  "rev": 12,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Ilia Topuria",
@@ -115,6 +115,11 @@
   "hasWeave": false,
   "hasSwing": false,
   "hasForget": false,
+  "movement": {
+    "after": 0.6,
+    "press": { "turn": 7, "lead": 0.2 },
+    "reset": { "combo": 3, "time": [0.15, 0.3] }
+  },
   "blockChance": 10,
   "getUp": {"size": 20, "wrestling": 85, "cut": 0.7, "reset": 2, "shot": 8},
   "hasSpecial": true,
