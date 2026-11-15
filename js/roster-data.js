@@ -1049,6 +1049,7 @@ var SAVED_ROSTER = [
         1.6
       ],
       "out": 0.7,
+      "gear5": true,
       "missFloat": 3,
       "music": true,
       "song": true,
@@ -2948,7 +2949,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 18,
+    "rev": 19,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -3001,7 +3002,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 8.8,
+      "damage": 9,
       "cooldown": 1.0,
       "speed": 0.22,
       "size": 15,
@@ -3015,8 +3016,8 @@ var SAVED_ROSTER = [
       "cdStart": 2.6,
       "cdFullCombo": 1.5,
       "cdMin": 0.5,
-      "dmgStart": 8.8,
-      "dmgMax": 9.9,
+      "dmgStart": 9,
+      "dmgMax": 10,
       "comboKnockback": 40,
       "comboSlack": 16,
       "chase": 420,
@@ -3114,7 +3115,7 @@ var SAVED_ROSTER = [
       "wrestling": 85,
       "cut": 0.7,
       "reset": 2,
-      "shot": 8.8
+      "shot": 9
     },
     "hasSpecial": true,
     "special": {
@@ -4343,7 +4344,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 19,
+    "rev": 20,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4395,7 +4396,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 18.9,
+      "damage": 19,
       "cooldown": 1.2,
       "speed": 0.352,
       "size": 15,
@@ -4407,7 +4408,7 @@ var SAVED_ROSTER = [
     "uppercuts": {
       "chance": 20,
       "close": 34,
-      "damageMult": 1.587,
+      "damageMult": 1.579,
       "critChance": 40,
       "critMult": 1.8,
       "onGrab": 90,

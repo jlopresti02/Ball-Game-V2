@@ -467,26 +467,73 @@ var MUSIC_SONGS = {
 // Renders one pass of a loop into a buffer. Notes ringing past the end are
 // folded back onto the start, so the loop joins up without a click or gap.
 var musicBuffers = {}, musicRendering = {};
+// The twelve picker loops are also saved as audio files (music/<id>.mp3, made
+// by tools/render_music.js from this same code in Chrome). The game plays
+// those, so every browser hears the same thing: on iPhone Safari the
+// code-made version came out as harsh static on every beat (Joe, 2026-11-15).
+// Each file holds 1.2 loops; it loops from MUSIC_LOOP_FROM of a loop in for
+// exactly one loop, clear of any silence the MP3 decoder adds at the start.
+// If a file can't be loaded (the single-file dist build, offline), the loop is
+// built in code as before.
+var MUSIC_FILES = { A: 1, B: 1, C: 1, D: 1, E: 1, F: 1, G: 1, H: 1, I: 1, J: 1, K: 1, L: 1 };
+var MUSIC_FILE_V = "20261115";
+var MUSIC_LOOP_FROM = 0.1;
+var MUSIC_HEADROOM = 0.25; // offline renders run at this, then get turned back up (renderMusicCode)
+var MUSIC_FILE_GAIN = 2.5; // the files are saved this much quieter so they never clip, and turned back up on load
+var musicLoops = {}; // id -> [loopStart, loopEnd] in seconds, for the files
 function renderMusic(id, done) {
   if (musicBuffers[id]) { done(musicBuffers[id]); return; }
   (musicRendering[id] = musicRendering[id] || []).push(done);
   if (musicRendering[id].length > 1) return;
+  var finish = function (buf) {
+    musicBuffers[id] = buf;
+    var waiting = musicRendering[id]; musicRendering[id] = null;
+    (waiting || []).forEach(function (cb) { cb(buf); });
+  };
+  if (MUSIC_FILES[id] && !window.MUSIC_FILES_OFF && /^https?:$/.test(location.protocol) && window.fetch) {
+    var code = function () { renderMusicCode(id, finish); };
+    try {
+      fetch("music/" + id + ".mp3?v=" + MUSIC_FILE_V).then(function (r) {
+        if (!r.ok) throw new Error("no file");
+        return r.arrayBuffer();
+      }).then(function (ab) {
+        var ctx = getAudioCtx(), song = MUSIC_SONGS[id], len = song.bars * 4 * 60 / song.bpm, done2 = false;
+        var ok = function (buf) {
+          if (done2) return; done2 = true;
+          if (!buf || buf.duration < len * (1 + MUSIC_LOOP_FROM)) { code(); return; }
+          musicLoops[id] = [len * MUSIC_LOOP_FROM, len * (1 + MUSIC_LOOP_FROM)];
+          for (var c = 0; c < buf.numberOfChannels; c++) { var d = buf.getChannelData(c); for (var i = 0; i < d.length; i++) d[i] *= MUSIC_FILE_GAIN; }
+          finish(buf);
+        };
+        var bad = function () { if (!done2) { done2 = true; code(); } };
+        var pr = ctx.decodeAudioData(ab, ok, bad); // callback form for older Safari
+        if (pr && pr.then) pr.then(ok, bad);
+      }).catch(code);
+    } catch (e) { code(); }
+    return;
+  }
+  renderMusicCode(id, finish);
+}
+function renderMusicCode(id, finish) {
   try {
     var song = MUSIC_SONGS[id], sr = 44100, len = song.bars * 4 * 60 / song.bpm, tail = 1;
     var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     var off = new OAC(2, Math.ceil(sr * (len + tail)), sr);
-    song.play(off, off.destination, 0);
+    // The loops peak well over full scale (up to about 2.5). Chrome keeps
+    // that, but Safari clips an offline render at full scale, which turned
+    // every kick into static on iPhone (Joe, 2026-11-15). So it's rendered
+    // at a quarter and turned back up here, where nothing clips.
+    var head = off.createGain(); head.gain.value = MUSIC_HEADROOM; head.connect(off.destination);
+    song.play(off, head, 0);
     off.oncomplete = function (e) {
-      var full = e.renderedBuffer, n = Math.round(sr * len);
+      var full = e.renderedBuffer, n = Math.round(sr * len), k = 1 / MUSIC_HEADROOM;
       var ctx = getAudioCtx(), buf = ctx.createBuffer(2, n, sr);
       for (var c = 0; c < 2; c++) {
         var src = full.getChannelData(c), dst = buf.getChannelData(c);
-        for (var i = 0; i < n; i++) dst[i] = src[i];
-        for (var j = n; j < src.length; j++) dst[j - n] += src[j];
+        for (var i = 0; i < n; i++) dst[i] = src[i] * k;
+        for (var j = n; j < src.length; j++) dst[j - n] += src[j] * k;
       }
-      musicBuffers[id] = buf;
-      var waiting = musicRendering[id]; musicRendering[id] = null;
-      waiting.forEach(function (cb) { cb(buf); });
+      finish(buf);
     };
     off.startRendering();
   } catch (e) { musicRendering[id] = null; /* no music is fine */ }
@@ -506,11 +553,13 @@ function startMusic() {
       var now = ctx.currentTime;
       token.level = MUSIC_GAIN * (MUSIC_SONGS[id].level || 1);
       token.src = ctx.createBufferSource(); token.src.buffer = buf; token.src.loop = true;
+      var lp = musicLoops[id];
+      if (lp) { token.src.loopStart = lp[0]; token.src.loopEnd = lp[1]; }
       token.gain = ctx.createGain();
       token.gain.gain.setValueAtTime(0.0001, now);
       if (!token.off) token.gain.gain.exponentialRampToValueAtTime(token.level, now + 0.03); // in right away (Joe)
       token.src.connect(token.gain); token.gain.connect(ctx.destination);
-      token.src.start(now);
+      token.src.start(now, lp ? lp[0] : 0);
     });
   } catch (e) { /* never let audio break the game */ }
 }

@@ -4505,26 +4505,73 @@ var MUSIC_SONGS = {
 // Renders one pass of a loop into a buffer. Notes ringing past the end are
 // folded back onto the start, so the loop joins up without a click or gap.
 var musicBuffers = {}, musicRendering = {};
+// The twelve picker loops are also saved as audio files (music/<id>.mp3, made
+// by tools/render_music.js from this same code in Chrome). The game plays
+// those, so every browser hears the same thing: on iPhone Safari the
+// code-made version came out as harsh static on every beat (Joe, 2026-11-15).
+// Each file holds 1.2 loops; it loops from MUSIC_LOOP_FROM of a loop in for
+// exactly one loop, clear of any silence the MP3 decoder adds at the start.
+// If a file can't be loaded (the single-file dist build, offline), the loop is
+// built in code as before.
+var MUSIC_FILES = { A: 1, B: 1, C: 1, D: 1, E: 1, F: 1, G: 1, H: 1, I: 1, J: 1, K: 1, L: 1 };
+var MUSIC_FILE_V = "20261115";
+var MUSIC_LOOP_FROM = 0.1;
+var MUSIC_HEADROOM = 0.25; // offline renders run at this, then get turned back up (renderMusicCode)
+var MUSIC_FILE_GAIN = 2.5; // the files are saved this much quieter so they never clip, and turned back up on load
+var musicLoops = {}; // id -> [loopStart, loopEnd] in seconds, for the files
 function renderMusic(id, done) {
   if (musicBuffers[id]) { done(musicBuffers[id]); return; }
   (musicRendering[id] = musicRendering[id] || []).push(done);
   if (musicRendering[id].length > 1) return;
+  var finish = function (buf) {
+    musicBuffers[id] = buf;
+    var waiting = musicRendering[id]; musicRendering[id] = null;
+    (waiting || []).forEach(function (cb) { cb(buf); });
+  };
+  if (MUSIC_FILES[id] && !window.MUSIC_FILES_OFF && /^https?:$/.test(location.protocol) && window.fetch) {
+    var code = function () { renderMusicCode(id, finish); };
+    try {
+      fetch("music/" + id + ".mp3?v=" + MUSIC_FILE_V).then(function (r) {
+        if (!r.ok) throw new Error("no file");
+        return r.arrayBuffer();
+      }).then(function (ab) {
+        var ctx = getAudioCtx(), song = MUSIC_SONGS[id], len = song.bars * 4 * 60 / song.bpm, done2 = false;
+        var ok = function (buf) {
+          if (done2) return; done2 = true;
+          if (!buf || buf.duration < len * (1 + MUSIC_LOOP_FROM)) { code(); return; }
+          musicLoops[id] = [len * MUSIC_LOOP_FROM, len * (1 + MUSIC_LOOP_FROM)];
+          for (var c = 0; c < buf.numberOfChannels; c++) { var d = buf.getChannelData(c); for (var i = 0; i < d.length; i++) d[i] *= MUSIC_FILE_GAIN; }
+          finish(buf);
+        };
+        var bad = function () { if (!done2) { done2 = true; code(); } };
+        var pr = ctx.decodeAudioData(ab, ok, bad); // callback form for older Safari
+        if (pr && pr.then) pr.then(ok, bad);
+      }).catch(code);
+    } catch (e) { code(); }
+    return;
+  }
+  renderMusicCode(id, finish);
+}
+function renderMusicCode(id, finish) {
   try {
     var song = MUSIC_SONGS[id], sr = 44100, len = song.bars * 4 * 60 / song.bpm, tail = 1;
     var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     var off = new OAC(2, Math.ceil(sr * (len + tail)), sr);
-    song.play(off, off.destination, 0);
+    // The loops peak well over full scale (up to about 2.5). Chrome keeps
+    // that, but Safari clips an offline render at full scale, which turned
+    // every kick into static on iPhone (Joe, 2026-11-15). So it's rendered
+    // at a quarter and turned back up here, where nothing clips.
+    var head = off.createGain(); head.gain.value = MUSIC_HEADROOM; head.connect(off.destination);
+    song.play(off, head, 0);
     off.oncomplete = function (e) {
-      var full = e.renderedBuffer, n = Math.round(sr * len);
+      var full = e.renderedBuffer, n = Math.round(sr * len), k = 1 / MUSIC_HEADROOM;
       var ctx = getAudioCtx(), buf = ctx.createBuffer(2, n, sr);
       for (var c = 0; c < 2; c++) {
         var src = full.getChannelData(c), dst = buf.getChannelData(c);
-        for (var i = 0; i < n; i++) dst[i] = src[i];
-        for (var j = n; j < src.length; j++) dst[j - n] += src[j];
+        for (var i = 0; i < n; i++) dst[i] = src[i] * k;
+        for (var j = n; j < src.length; j++) dst[j - n] += src[j] * k;
       }
-      musicBuffers[id] = buf;
-      var waiting = musicRendering[id]; musicRendering[id] = null;
-      waiting.forEach(function (cb) { cb(buf); });
+      finish(buf);
     };
     off.startRendering();
   } catch (e) { musicRendering[id] = null; /* no music is fine */ }
@@ -4544,11 +4591,13 @@ function startMusic() {
       var now = ctx.currentTime;
       token.level = MUSIC_GAIN * (MUSIC_SONGS[id].level || 1);
       token.src = ctx.createBufferSource(); token.src.buffer = buf; token.src.loop = true;
+      var lp = musicLoops[id];
+      if (lp) { token.src.loopStart = lp[0]; token.src.loopEnd = lp[1]; }
       token.gain = ctx.createGain();
       token.gain.gain.setValueAtTime(0.0001, now);
       if (!token.off) token.gain.gain.exponentialRampToValueAtTime(token.level, now + 0.03); // in right away (Joe)
       token.src.connect(token.gain); token.gain.connect(ctx.destination);
-      token.src.start(now);
+      token.src.start(now, lp ? lp[0] : 0);
     });
   } catch (e) { /* never let audio break the game */ }
 }
@@ -5984,6 +6033,7 @@ var SAVED_ROSTER = [
         1.6
       ],
       "out": 0.7,
+      "gear5": true,
       "missFloat": 3,
       "music": true,
       "song": true,
@@ -7883,7 +7933,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 18,
+    "rev": 19,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -7936,7 +7986,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 8.8,
+      "damage": 9,
       "cooldown": 1.0,
       "speed": 0.22,
       "size": 15,
@@ -7950,8 +8000,8 @@ var SAVED_ROSTER = [
       "cdStart": 2.6,
       "cdFullCombo": 1.5,
       "cdMin": 0.5,
-      "dmgStart": 8.8,
-      "dmgMax": 9.9,
+      "dmgStart": 9,
+      "dmgMax": 10,
       "comboKnockback": 40,
       "comboSlack": 16,
       "chase": 420,
@@ -8049,7 +8099,7 @@ var SAVED_ROSTER = [
       "wrestling": 85,
       "cut": 0.7,
       "reset": 2,
-      "shot": 8.8
+      "shot": 9
     },
     "hasSpecial": true,
     "special": {
@@ -9277,7 +9327,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 19,
+    "rev": 20,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -9329,7 +9379,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 18.9,
+      "damage": 19,
       "cooldown": 1.2,
       "speed": 0.352,
       "size": 15,
@@ -9341,7 +9391,7 @@ var SAVED_ROSTER = [
     "uppercuts": {
       "chance": 20,
       "close": 34,
-      "damageMult": 1.587,
+      "damageMult": 1.579,
       "critChance": 40,
       "critMult": 1.8,
       "onGrab": 90,
@@ -67120,7 +67170,7 @@ function prMissed(b, atk) {
   playPrMiss();
   if (sm.phase !== "party" || !atk || atk === b) return;
   // Super Saiyan: he's already somewhere else, and he's coming back.
-  if (prGhosts.length < 8 && !reduceMotion) prGhosts.push({ x: b.x, y: b.y, r: b.r, t: 0, dur: 0.35 });
+  if (prGhosts.length < 8 && !reduceMotion) prGhosts.push({ x: b.x, y: b.y, r: b.r, t: 0, dur: 0.35, white: prGear5On(b) });
   var co = sp.counter;
   if (co && b.pr.ccCd <= 0) { b.pr.cc = { t: co.window || 0.9, on: atk.id }; b.pr.ccCd = co.cd || 0.35; }
 }
@@ -67384,13 +67434,13 @@ function prStartParty(b, other, sp) {
   b.baseSpeed = (b.baseSpeed || SPEED) * (sp.speed || 1);
   b.atkRate = (b.atkRate || 1) * (sp.attack || 1);
   if (b.char.combos && sp.comboEvery) b.cmbT = Math.min(b.cmbT != null ? b.cmbT : 9, 0.3);
-  floater(b.x, b.y - b.r - 44, "SUPER SAIYAN!", "crit");
+  if (prGear5On(b)) prGear5Burst(b); else floater(b.x, b.y - b.r - 44, "SUPER SAIYAN!", "crit"); // "GEAR 5!" and a white burst (prates-gear5.js)
   prLights.want = 1;
   if (sp.music !== false && !prMusic) prMusicStart(sp.musicLevel || 0.22, sp.song);
   playPartyBurst();
   crowdReact(0.8);
-  impacts.push({ x: b.x, y: b.y + b.r, nx: 0, ny: -1, life: 0.45, max: 0.45, color: "#ffd21f" });
-  for (var i = 0; i < 18; i++) {
+  impacts.push({ x: b.x, y: b.y + b.r, nx: 0, ny: -1, life: 0.45, max: 0.45, color: prGear5On(b) ? "#ffffff" : "#ffd21f" });
+  for (var i = 0; i < (prGear5On(b) ? 0 : 18); i++) {
     var a = Math.random() * Math.PI * 2, v = 160 + Math.random() * 220;
     particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5, max: 0.5, size: 2.5 + Math.random() * 3, color: i % 2 ? "#ffd21f" : "#fff6b0" });
   }
@@ -67609,6 +67659,7 @@ function prAuraK(b) {
 
 // From draw.js, behind him: the gold aura and its party sparkles.
 function drawPratesBehind(b) {
+  if (prGear5On(b)) { drawPratesGear5Behind(b); return; } // Gear 5: the smoke off his cigarette instead of the gold aura (prates-gear5.js)
   var k = prAuraK(b);
   if (k <= 0) return;
   var p = prPose(b), r = b.r * p.tall, t = performance.now() / 1000, pulse = 0.5 + 0.5 * Math.sin(t * 14), cy = b.y + p.bob;
@@ -67655,7 +67706,8 @@ function drawPrates(b, other) {
   if (!b.pr || !b.alive) return;
   var sm = b.pr.smoke, p = prPose(b);
   var ak = prAuraK(b);
-  if (ak > 0 && sm && (sm.phase === "party" || sm.phase === "out")) drawPrSpikes(b, p, ak);
+  if (prGear5On(b)) drawPratesGear5Front(b); // Gear 5: white curly hair, the smoke leaving the tip, the poof (prates-gear5.js)
+  else if (ak > 0 && sm && (sm.phase === "party" || sm.phase === "out")) drawPrSpikes(b, p, ak);
   if (sm && sm.phase === "light") drawPrLighting(b, sm);
   else if (sm && (sm.phase === "smoke" || sm.phase === "party")) drawPrCig(b, sm.glow);
   else if (!sm && prCigLook(b) && !(b.pr.freshT > 0)) drawPrCig(b, 0.05, 0.85); // the one he keeps in all fight, barely burning
@@ -67853,7 +67905,7 @@ function drawPratesUnder() {
     var k = g.t / g.dur;
     ctx.save();
     ctx.globalAlpha = 0.5 * (1 - k);
-    ctx.fillStyle = "rgba(255,214,40,0.35)"; ctx.strokeStyle = "#ffcc00"; ctx.lineWidth = 3;
+    ctx.fillStyle = g.white ? "rgba(255,255,255,0.4)" : "rgba(255,214,40,0.35)"; ctx.strokeStyle = g.white ? "#e6e8ec" : "#ffcc00"; ctx.lineWidth = 3; // white in Gear 5
     ctx.beginPath(); ctx.arc(g.x, g.y, g.r * (1 + 0.15 * k), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.restore();
   });
@@ -67966,7 +68018,7 @@ function pratesCigaretteInfo(sp) {
   var co = sp.counter || {};
   return "Not before " + sp.notBefore + "s. He stops and the cigarette comes out: the lighter, the flick, the flame, a long drag (" + secs(sp.light) +
     "). From that moment NOTHING touches him: every strike, shot, grab and thrown thing misses (\"CAN'T TOUCH HIM!\") and nothing new can start on him. " +
-    "The party music kicks in and he smokes to it for " + secs(sp.smoke) + ". Then SUPER SAIYAN: a gold aura, gold hair, and for " + secs(sp.party) +
+    "The party music kicks in and he smokes to it for " + secs(sp.smoke) + (sp.gear5 ? ", the smoke pouring off the tip and wrapping round him. Then POOF, GEAR 5: white curly hair, a white kit, clouds flowing round him off the cigarette, and for " : ". Then SUPER SAIYAN: a gold aura, gold hair, and for ") + secs(sp.party) +
     " everyone still misses him while he fights " + Math.round(((sp.speed || 1) - 1) * 100) + "% faster and " + Math.round(((sp.damage || 1) - 1) * 100) +
     "% harder, throwing combinations back to back. " + (sp.critChance || 0) + "% of his punches and kicks crit for " + (sp.critMult || 2) +
     "x, and every miss on him sets up a counter that crits for " + (co.mult || 2.2) + "x. Then he blows out the smoke and flicks the butt onto the mat.";
@@ -68211,6 +68263,311 @@ function drawPratesSkinBody(c, r, look) {
   // Navel ring
   c.save(); c.strokeStyle = "#d8dde3"; c.lineWidth = Math.max(1, r * 0.02);
   c.beginPath(); c.arc(0, r * 0.335, r * 0.02, 0, Math.PI * 2); c.stroke(); c.restore();
+}
+
+// Carlos Prates's Gear 5 (Joe, 2026-11-15): his special's transformation, in
+// place of the gold Super Saiyan look. Turned on by `special.gear5` in
+// characters/carlos-prates.json; everything else about The Cigarette (the
+// light, the party, the misses, the numbers, the music) stays in prates.js.
+//
+//  - While he smokes, ONE smoke trail pours out of the tip of the cigarette:
+//    a thin wisp at the tip that swells as it travels out past his shoulder,
+//    up round behind his head, down his left side and under him, where it
+//    thins out and breaks into little puffs that drift off and fade. The bumps
+//    glide outward from the tip (each keeps its own size, nothing snaps back).
+//  - Just before the party the ring tightens and covers him; then POOF, it
+//    blows back out and he's in Gear 5: a short white curly cut with a white
+//    Clark Kent curl (sitting on his head like his real hair, faded sides),
+//    white shorts and gloves with purple trim, the clouds flowing round him
+//    off the cigarette the whole party.
+//  - When the party's over the smoke thins away and his own look comes back.
+//
+// Hooks (one line each): drawPratesBehind and drawPrates (prates.js) for the
+// smoke and the hair, prStartParty for the "GEAR 5!" call and the white burst,
+// draw.js for the white kit (prGear5Look), gloveColor (fighter-art.js) for
+// the punching gloves (gloveColor, drawGlove).
+"use strict";
+
+var G5_KIT = { shorts: "#f4f2ec", trim: "#6e4f96", gloves: "#f0eee8" };
+var G5_HAIR = { proud: 0.05, hl: 0.66, rows: 3, cs: 1 }; // Joe's pick: "2, a touch of height"
+var g5Puff = null;
+
+function prGear5On(b) { return !!(b && b.pr && b.char && b.char.special && b.char.special.gear5); }
+
+function g5Ease(t) { return t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t); }
+
+// Where the transformation is: pour (smoke coming off the tip, 0..1), close
+// (wrapping over him), open (blowing back out after the poof), gone (thinning
+// away at the end), on (Gear 5 look showing).
+function g5State(b) {
+  var sm = b.pr && b.pr.smoke, sp = b.char.special;
+  if (!sm || !b.alive) return null;
+  var S = sp.smoke || 2.2;
+  if (sm.phase === "smoke") return { pour: g5Ease((sm.t - 0.15) / Math.max(0.6, S - 0.8)), close: g5Ease((sm.t - (S - 0.55)) / 0.5), open: 0, gone: 0, on: 0, poof: 0 };
+  if (sm.phase === "party") return { pour: 1, close: 0, open: g5Ease(sm.t / 0.45), gone: 0, on: 1, poof: sm.t < 0.45 ? 1 - sm.t / 0.45 : 0 };
+  if (sm.phase === "out") { var o = Math.min(1, sm.t / (sp.out || 0.7)); return { pour: 1, close: 0, open: 1, gone: o, on: 1 - o, poof: 0 }; }
+  return null;
+}
+
+// The white kit for draw.js while he's in Gear 5 (null otherwise: his own look).
+function prGear5Look(b) {
+  if (!prGear5On(b)) return null;
+  var st = g5State(b);
+  if (!st || st.on <= 0) return null;
+  if (!b.pr.g5Look || b.pr.g5Base !== b.char.look) { b.pr.g5Base = b.char.look; b.pr.g5Look = Object.assign({}, b.char.look, G5_KIT); }
+  return b.pr.g5Look;
+}
+// The punching gloves (gloveColor, fighter-art.js).
+function gear5GloveColor(ch) {
+  if (typeof balls === "undefined" || !balls || !ch || !ch.special || !ch.special.gear5) return null;
+  for (var i = 0; i < balls.length; i++) if (balls[i].char === ch && prGear5Look(balls[i])) return G5_KIT.gloves;
+  return null;
+}
+
+// Any glove drawn from his own look (guard hands, punches: drawGlove, fighter-art.js).
+function gear5LookGloves(look) {
+  if (typeof balls === "undefined" || !balls || !look) return null;
+  for (var i = 0; i < balls.length; i++) { var b = balls[i]; if (b.char && b.char.look === look && prGear5Look(b)) return G5_KIT.gloves; }
+  return null;
+}
+
+// Local frame: his centre at 0,0, unsquashed (his lanky pose scales it).
+function g5Frame(b) {
+  var p = prPose(b);
+  ctx.translate(b.x, b.y + p.bob);
+  ctx.scale(p.wide, p.tall);
+  return p;
+}
+function g5Tip(b, p) {
+  var t = prCigTip(b);
+  return [(t.x - b.x) / p.wide, (t.y - b.y - p.bob) / p.tall];
+}
+
+// From drawPratesBehind (prates.js): the smoke ring behind him.
+function drawPratesGear5Behind(b) {
+  var st = g5State(b);
+  if (!st || st.close >= 0.5) return;
+  ctx.save();
+  var p = g5Frame(b);
+  g5Smoke(b, p, st, false);
+  ctx.restore();
+}
+
+// From drawPrates (prates.js), over him: the hair, the stretch of smoke
+// leaving the tip, the ring wrapped over him, the poof.
+function drawPratesGear5Front(b) {
+  var st = g5State(b);
+  if (!st) return;
+  var r = b.r, ink = theme.wall || "#16211f";
+  ctx.save();
+  var p = g5Frame(b);
+  if (st.on > 0) {
+    ctx.save(); ctx.globalAlpha = Math.min(1, st.on * 1.5);
+    g5Hair(ctx, r, G5_HAIR, ink);
+    ctx.restore();
+  }
+  if (st.close >= 0.5) g5Smoke(b, p, st, false);
+  else g5Smoke(b, p, st, true);
+  if (st.poof > 0 && !reduceMotion) { // puffs bursting out round him
+    var k = st.poof;
+    for (var i = 0; i < 12; i++) {
+      var a = i * 0.524 + 0.3, d = r * (1 + (1 - k) * 1.5), rr = r * (0.2 + 0.08 * (i % 3)) * k;
+      g5Blobs(ctx, [[Math.cos(a) * d, Math.sin(a) * d, rr, 1]], ink, 0);
+    }
+    var g = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, r * 2.6);
+    g.addColorStop(0, "rgba(255,255,255," + (0.8 * k) + ")"); g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r * 2.6, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// From prStartParty (prates.js): the call and a white burst instead of gold.
+function prGear5Burst(b) {
+  floater(b.x, b.y - b.r - 44, "GEAR 5!", "crit");
+  for (var i = 0; i < 16; i++) {
+    var a = Math.random() * Math.PI * 2, v = 140 + Math.random() * 200;
+    particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.55, max: 0.55, size: 3 + Math.random() * 3, color: i % 2 ? "#ffffff" : "#d9dce2" });
+  }
+}
+
+// ---------------------------------------------------------------- the smoke
+
+function g5Bez(P, t) {
+  var u = 1 - t;
+  return [u * u * u * P[0][0] + 3 * u * u * t * P[1][0] + 3 * u * t * t * P[2][0] + t * t * t * P[3][0],
+          u * u * u * P[0][1] + 3 * u * u * t * P[1][1] + 3 * u * t * t * P[2][1] + t * t * t * P[3][1]];
+}
+
+// One ribbon: tip -> out and up -> round behind his head -> down his left
+// side -> under him. In his local frame, r = his radius.
+function g5Smoke(b, p, st, front) {
+  var r = b.r, ink = theme.wall || "#16211f", ft = prClock;
+  var s = st.on > 0 ? 0.38 + 0.62 * st.open : 1 - st.close * 0.62; // how tight round him
+  var thick = (1 + (1 - s) * 2.2) * (1 - st.gone), g = st.pour;
+  if (g <= 0 || thick <= 0.02) return;
+  var tip = g5Tip(b, p), tx = tip[0], ty = tip[1];
+  var M = function (q) { return [q[0] * s, q[1] * s]; };
+  var segs = [
+    [[tx, ty], [tx + r * 0.3, ty - r * 0.05], M([r * 1.15, -r * 0.15]), M([r * 1.25, -r * 0.55])],
+    [[r * 1.25, -r * 0.55], [r * 1.75, -r * 1.1], [r * 0.9, -r * 1.95], [r * 0.05, -r * 1.8]].map(M),
+    [[r * 0.05, -r * 1.8], [-r * 0.95, -r * 1.95], [-r * 1.9, -r * 0.6], [-r * 1.15, r * 0.6]].map(M),
+    [[-r * 1.15, r * 0.6], [-r * 0.7, r * 1.55], [r * 0.7, r * 1.6], [r * 1.25, r * 1.0]].map(M)
+  ];
+  var P = [], L = [0], i, d;
+  segs.forEach(function (B, si) { for (var j = si ? 1 : 0; j <= 30; j++) { var q = g5Bez(B, j / 30); P.push([q[0], q[1], si]); } });
+  for (i = 1; i < P.length; i++) L.push(L[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+  var Lt = L[L.length - 1], Lg = Lt * g, L0 = L[30];
+  var at = function (dd) {
+    var k = 1; while (k < L.length - 1 && L[k] < dd) k++;
+    var f = (dd - L[k - 1]) / ((L[k] - L[k - 1]) || 1), a = P[k - 1], c = P[k];
+    var dx = c[0] - a[0], dy = c[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l, px = a[0] + dx * f, py = a[1] + dy * f;
+    if (nx * px + ny * py < 0) { nx = -nx; ny = -ny; }
+    return [px, py, nx, ny, a[2]];
+  };
+  var full = function (dd) { // thin at the tip, swelling, thinning to nothing at the far end
+    var u = Math.min(1, dd / (L0 * 1.35)), sw = u * u * (3 - 2 * u);
+    var wEnd = dd > Lt * 0.55 ? Math.pow(Math.max(0, (Lt * 0.82 - dd) / (Lt * 0.27)), 0.8) : 1;
+    var seg = at(dd)[4];
+    return (r * 0.05 + (r * (seg === 3 ? 0.3 : 0.42) - r * 0.05) * sw) * wEnd * thick;
+  };
+  var head = function (dd) { return Math.min(1, Math.max(0, (Lg - dd) / (r * 0.5))); };
+  var blobs = [], step = Math.max(1.5, r * 0.04);
+  for (d = 0; d <= Math.min(Lg, Lt * 0.82); d += step) {
+    var w = full(d) * (0.4 + 0.6 * Math.sqrt(head(d))), q = at(d);
+    if (w < 0.6) break;
+    var wav = Math.sin(d / (r * 0.35) - ft * 2.6) * r * 0.06 * Math.max(0, 1 - d / (L0 * 1.2)); // the wisp sways
+    blobs.push([q[0] + q[2] * wav, q[1] + q[3] * wav, w * 0.42 + 0.4, 0, d]);
+  }
+  // lobes gliding outward along it, each born small and growing in
+  var sp = r * 0.3, v = r * 0.45, d0 = L0 * 0.55, n;
+  for (n = Math.floor(-ft * v / sp) - 1; ; n++) {
+    d = d0 + n * sp + ft * v;
+    if (d > Lg) break;
+    if (d < d0) continue;
+    var born = Math.min(1, (d - d0) / (r * 0.5)), bs = born * born * (3 - 2 * born), w2 = full(d) * Math.sqrt(head(d)) * bs;
+    if (w2 < 0.8) continue;
+    var q2 = at(d), id = ((n % 1000) + 1000) % 1000, sd = id % 2 ? 1 : -0.55, rr = w2 * (0.42 + 0.22 * ((id * 7) % 3) / 2);
+    blobs.push([q2[0] + q2[2] * w2 * 0.3 * sd, q2[1] + q2[3] * w2 * 0.3 * sd, rr, id % 4 === 1 && w2 > r * 0.12 ? 2 : 1, d]);
+  }
+  if (Lg > L0 * 0.6 && Lg < Lt * 0.74) { var qh = at(Lg); blobs.push([qh[0], qh[1], full(Lg) * 0.45, 2, Lg]); } // the rolling front
+  ctx.save();
+  if (front) { // the stretch leaving the tip that lies over his body
+    blobs = blobs.filter(function (q) { return q[4] < L0 * 1.3 && Math.hypot(q[0], q[1]) < r * 1.3; });
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.99, 0, Math.PI * 2); ctx.clip();
+  }
+  g5Blobs(ctx, blobs, ink, 1);
+  ctx.restore();
+  // the far end breaks into little puffs that drift off and fade
+  if (!front && Lg > Lt * 0.66 && !reduceMotion) {
+    var D0 = Lt * 0.66, span = Lt - D0, sp2 = r * 0.3, v2 = r * 0.45, m;
+    for (m = Math.floor(-ft * v2 / sp2) - 1; ; m++) {
+      d = D0 + m * sp2 + ft * v2;
+      if (d > Lt || d > Lg) break;
+      if (d < D0) continue;
+      var k2 = ((m % 1000) + 1000) % 1000, u2 = (d - D0) / span, q3 = at(d);
+      var pr = r * 0.2 * thick * (1 - u2 * 0.6) * (0.85 + 0.3 * ((k2 * 5) % 3) / 2);
+      var ox = q3[2] * u2 * r * 0.8 + Math.sin(k2 * 2.1) * u2 * r * 0.12, oy = q3[3] * u2 * r * 0.8 - u2 * r * 0.5;
+      var al = Math.max(0, 1 - u2 * 1.15) * Math.min(1, u2 / 0.12) * Math.min(1, (Lg - d) / (r * 0.4));
+      if (al > 0.02 && pr > 0.8) g5FadePuff(q3[0] + ox, q3[1] + oy, pr, al, ink);
+    }
+  }
+}
+
+// Puffs with one shared ink outline, white, a grey crescent under each, swirls.
+function g5Blobs(c, blobs, ink, swirls) {
+  c.fillStyle = ink;
+  blobs.forEach(function (q) { c.beginPath(); c.arc(q[0], q[1], q[2] + Math.max(1.2, Math.min(2.4, q[2] * 0.18)), 0, Math.PI * 2); c.fill(); });
+  c.fillStyle = "#ffffff";
+  blobs.forEach(function (q) { c.beginPath(); c.arc(q[0], q[1], q[2], 0, Math.PI * 2); c.fill(); });
+  c.strokeStyle = "#d3d7de"; c.lineCap = "round";
+  blobs.forEach(function (q) { if (!q[3]) return; c.lineWidth = Math.max(1, q[2] * 0.18); c.beginPath(); c.arc(q[0], q[1], q[2] * 0.72, 0.3, 1.9); c.stroke(); });
+  if (!swirls) return;
+  c.strokeStyle = "#a9aeb8";
+  blobs.forEach(function (q) {
+    if (q[3] !== 2) return;
+    var R = q[2] * 0.58; c.lineWidth = Math.max(1, q[2] * 0.1); c.beginPath();
+    for (var t = 0; t <= 1; t += 0.05) { var a = t * Math.PI * 3 + 1, rr = R * (1 - t * 0.85), X = q[0] + Math.cos(a) * rr, Y = q[1] + Math.sin(a) * rr; if (t) c.lineTo(X, Y); else c.moveTo(X, Y); }
+    c.stroke();
+  });
+}
+
+// A fading puff: drawn on its own little canvas so the outline fades with it.
+function g5FadePuff(x, y, rr, a, ink) {
+  if (!g5Puff) { g5Puff = document.createElement("canvas"); g5Puff.cx = g5Puff.getContext("2d"); }
+  var m = ctx.getTransform ? ctx.getTransform() : null, sc = m ? Math.max(1, Math.hypot(m.a, m.b)) : 2;
+  var sz = Math.ceil((rr + 4) * 2), px = Math.ceil(sz * sc);
+  if (g5Puff.width !== px) { g5Puff.width = px; g5Puff.height = px; }
+  var c = g5Puff.cx;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, px, px); c.setTransform(sc, 0, 0, sc, sz * sc / 2, sz * sc / 2);
+  g5Blobs(c, [[0, 0, rr, 1]], ink, 0);
+  ctx.save(); ctx.globalAlpha *= a; ctx.drawImage(g5Puff, x - sz / 2, y - sz / 2, sz, sz); ctx.restore();
+}
+
+// ---------------------------------------------------------------- the hair
+
+// A short white curly cut sitting on his head like his real hair: the outline
+// follows his head with small curl bumps, a lined-up hairline on the forehead,
+// white with grey shading and drawn curls, white faded sides, the Clark Kent curl.
+function g5Hair(c, r, o, ink) {
+  var lw = Math.max(1.6, r * 0.032), G = "#9aa1ac", GL = "rgba(154,161,172,0.55)", i;
+  c.save();
+  // white fade on the sides
+  c.save(); c.beginPath(); c.arc(0, 0, r * 0.985, 0, Math.PI * 2); c.clip();
+  var side = function () {
+    c.beginPath(); c.moveTo(-r, -r * 0.46); c.lineTo(-r * 0.84, -r * 0.5); c.quadraticCurveTo(-r * 0.74, -r * (o.hl - 0.04), -r * 0.6, -r * o.hl);
+    c.lineTo(r * 0.6, -r * o.hl); c.quadraticCurveTo(r * 0.74, -r * (o.hl - 0.04), r * 0.84, -r * 0.5); c.lineTo(r, -r * 0.46); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
+  };
+  var fg = c.createLinearGradient(0, -r * 0.85, 0, -r * 0.48);
+  fg.addColorStop(0, "rgba(244,245,248,1)"); fg.addColorStop(0.6, "rgba(244,245,248,0.55)"); fg.addColorStop(1, "rgba(244,245,248,0)");
+  c.fillStyle = fg; side(); c.fill();
+  var gr = artRand(91); c.fillStyle = "rgba(150,156,166,0.35)"; c.save(); side(); c.clip();
+  for (i = 0; i < 140; i++) { var sx = (gr() < 0.5 ? -1 : 1) * r * (0.6 + gr() * 0.38), sy = -r * (0.5 + gr() * 0.3); c.fillRect(sx, sy, r * 0.012, r * 0.012); }
+  c.restore(); c.restore();
+  // the top
+  var R = r * (1 + o.proud), xt = 0.7, th = Math.acos(xt * r / R), A0 = Math.PI + th, A1 = 2 * Math.PI - th, N = 16;
+  var top = new Path2D();
+  top.moveTo(-r * xt, -r * (o.hl + 0.02)); top.lineTo(Math.cos(A0) * R, Math.sin(A0) * R);
+  for (i = 0; i < N; i++) {
+    var a = A0 + (A1 - A0) * (i + 1) / N, am = A0 + (A1 - A0) * (i + 0.5) / N, bb = R * (1 + 0.035 * o.cs);
+    top.quadraticCurveTo(Math.cos(am) * bb, Math.sin(am) * bb, Math.cos(a) * R, Math.sin(a) * R);
+  }
+  top.lineTo(r * xt, -r * (o.hl + 0.02));
+  var H = 7;
+  for (i = H - 1; i >= 0; i--) { var x1 = -r * xt + i * 2 * r * xt / H, xm = x1 + r * xt / H, dip = (i === 3 ? 0 : 0.045) * o.cs; top.quadraticCurveTo(xm, -r * (o.hl - dip), x1, -r * (o.hl + 0.02)); }
+  top.closePath();
+  // its shadow on the forehead
+  c.save(); c.beginPath(); c.arc(0, 0, r * 0.985, 0, Math.PI * 2); c.clip(); c.translate(0, r * 0.03); c.fillStyle = "rgba(60,35,20,0.22)"; c.fill(top); c.restore();
+  var tg = c.createLinearGradient(-r * 0.3, -R, r * 0.3, -r * o.hl);
+  tg.addColorStop(0, "#ffffff"); tg.addColorStop(0.7, "#f1f2f5"); tg.addColorStop(1, "#dcdfe5");
+  c.fillStyle = tg; c.fill(top);
+  c.save(); c.clip(top); c.lineCap = "round";
+  c.strokeStyle = "rgba(154,161,172,0.3)"; c.lineWidth = r * 0.07;
+  c.beginPath(); c.moveTo(-r * 0.75, -r * (o.hl - 0.01)); c.quadraticCurveTo(0, -r * (o.hl + 0.08), r * 0.75, -r * (o.hl - 0.01)); c.stroke();
+  c.strokeStyle = "rgba(255,255,255,0.9)"; c.lineWidth = r * 0.05;
+  c.beginPath(); c.moveTo(-r * 0.45, -R * 0.93); c.quadraticCurveTo(-r * 0.1, -R * 0.99, r * 0.2, -R * 0.95); c.stroke();
+  for (var ri = 0; ri < o.rows; ri++) {
+    var yy = -r * (o.hl + 0.07) - ri * (R - r * (o.hl + 0.07)) / o.rows, w = Math.sqrt(Math.max(0, R * R - yy * yy)) * 0.9;
+    var n = Math.max(3, Math.round(w * 2 / (r * 0.17 * o.cs)));
+    for (i = 0; i < n; i++) {
+      var xx = -w + (i + 0.5) * 2 * w / n + (ri % 2) * r * 0.04, cr = r * 0.055 * o.cs, d = (i + ri) % 2 ? 1 : -1;
+      c.strokeStyle = G; c.lineWidth = Math.max(1, r * 0.016);
+      c.beginPath(); c.arc(xx, yy, cr, d > 0 ? 0.2 : Math.PI - 3.2, d > 0 ? 3.4 : Math.PI - 0.2, d < 0); c.stroke();
+      c.strokeStyle = GL; c.lineWidth = Math.max(0.8, r * 0.011);
+      c.beginPath(); c.arc(xx + d * cr * 0.25, yy + cr * 0.15, cr * 0.45, d > 0 ? 3.2 : -0.1, d > 0 ? 6.0 : 2.7); c.stroke();
+    }
+  }
+  c.restore();
+  c.strokeStyle = ink; c.lineWidth = lw; c.lineJoin = "round"; c.stroke(top);
+  // the white Clark Kent curl dropping out of the front of the hairline
+  var s2 = r * 0.11, lx = -r * 0.06, ly = -r * (o.hl - 0.01);
+  c.beginPath(); c.moveTo(lx - s2 * 0.4, ly);
+  c.bezierCurveTo(lx - s2 * 0.9, ly + s2 * 0.8, lx + s2 * 0.3, ly + s2 * 1.3, lx + s2 * 0.7, ly + s2 * 0.9);
+  c.bezierCurveTo(lx + s2 * 1.0, ly + s2 * 0.5, lx + s2 * 0.6, ly + s2 * 0.15, lx + s2 * 0.25, ly + s2 * 0.45);
+  c.bezierCurveTo(lx + s2 * 0.5, ly + s2 * 0.6, lx + s2 * 0.2, ly + s2 * 0.8, lx, ly + s2 * 0.55);
+  c.bezierCurveTo(lx - s2 * 0.2, ly + s2 * 0.3, lx + s2 * 0.1, ly + s2 * 0.05, lx + s2 * 0.4, ly - s2 * 0.05);
+  c.closePath();
+  c.lineWidth = Math.max(1.3, r * 0.026); c.strokeStyle = ink; c.stroke(); c.fillStyle = "#fff"; c.fill();
+  c.restore();
 }
 
 // "Purple Lamborghini" by Skrillex and Rick Ross, Carlos Prates's real
@@ -73998,7 +74355,7 @@ function armColor(ch, side) {
   if (side && tat.armInkSide && side !== (tat.armInkSide === "left" ? -1 : 1)) return ch.look.skin;
   return sleevePattern(ch.look);
 }
-function gloveColor(ch) { return icedGloveColor(ch) || (ch.look ? ch.look.gloves : ch.color); } // frosted by Chuck Liddell, or his blue flare (liddell.js)
+function gloveColor(ch) { return icedGloveColor(ch) || (typeof gear5GloveColor === "function" && gear5GloveColor(ch)) || (ch.look ? ch.look.gloves : ch.color); } // frosted by Chuck Liddell, or his blue flare (liddell.js); white in Carlos Prates's Gear 5 (prates-gear5.js)
 
 // Mix a hex color toward black (amt < 0) or white (amt > 0).
 // Blend hex colour a toward b by t (0..1)
@@ -75807,7 +76164,7 @@ function sleevePattern(look) {
 function drawGlove(c, x, y, gr, look, ink, ang) {
   c.save();
   c.translate(x, y); c.rotate(ang);
-  var col = look.gloves;
+  var col = (typeof gear5LookGloves === "function" && gear5LookGloves(look)) || look.gloves; // white in Carlos Prates's Gear 5 (prates-gear5.js)
   // Wrist and forearm stub in skin
   c.fillStyle = look.skin; c.strokeStyle = ink; c.lineWidth = Math.max(1.5, gr * 0.2);
   c.beginPath(); c.ellipse(-gr * 0.95, 0, gr * 0.45, gr * 0.42, 0, 0, Math.PI * 2); c.fill(); c.stroke();
@@ -77604,7 +77961,7 @@ function draw() {
     var img = getImg(b.char.imgData);
     if (b.char.look) {
       // Fighter art: the muscled ball in its fight kit (beats a face photo)
-      drawFighterArt(ctx, b.x, b.y, b.r, b.char.look, theme.wall, { layout: "contained", name: b.char.name });
+      drawFighterArt(ctx, b.x, b.y, b.r, prGear5Look(b) || b.char.look, theme.wall, { layout: "contained", name: b.char.name }); // Carlos Prates's white Gear 5 kit (prates-gear5.js)
     } else if (img) {
       ctx.save();
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
@@ -78833,17 +79190,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115044826"></script>
-  <script src="js/game/tale-tape.js?v=20261115044826"></script>
-<script src="js/game/watchdog.js?v=20261115044826"></script>
-<script src="js/game/update.js?v=20261115044826"></script>
-<script src="js/game/fighter-art.js?v=20261115044826"></script>
-<script src="js/game/draw-attacks.js?v=20261115044826"></script>
-<script src="js/game/wwit-badge.js?v=20261115044826"></script>
-<script src="js/game/stadium.js?v=20261115044826"></script>
-<script src="js/game/draw.js?v=20261115044826"></script>
-<script src="js/ui/gallery.js?v=20261115044826"></script>
-<script src="js/ui/saved-fights.js?v=20261115044826"></script>
-<script src="js/main.js?v=20261115044826"></script>
+  <script src="js/game/intro-msg.js?v=20261115095911"></script>
+  <script src="js/game/tale-tape.js?v=20261115095911"></script>
+<script src="js/game/watchdog.js?v=20261115095911"></script>
+<script src="js/game/update.js?v=20261115095911"></script>
+<script src="js/game/fighter-art.js?v=20261115095911"></script>
+<script src="js/game/draw-attacks.js?v=20261115095911"></script>
+<script src="js/game/wwit-badge.js?v=20261115095911"></script>
+<script src="js/game/stadium.js?v=20261115095911"></script>
+<script src="js/game/draw.js?v=20261115095911"></script>
+<script src="js/ui/gallery.js?v=20261115095911"></script>
+<script src="js/ui/saved-fights.js?v=20261115095911"></script>
+<script src="js/main.js?v=20261115095911"></script>
 </body>
 </html>
