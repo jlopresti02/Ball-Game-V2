@@ -353,7 +353,8 @@ function draw() {
       var bw = 64, bh = 8, bx = b.x - bw / 2, by = b.y - b.r - 18;
       if (by < 4) by = b.y + b.r + 10;
       ctx.fillStyle = theme.grid; ctx.fillRect(bx, by, bw, bh);
-      ctx.fillStyle = b.char.color; ctx.fillRect(bx, by, bw * (b.hp / MAX_HP), bh);
+      ctx.fillStyle = b.char.color; ctx.fillRect(bx, by, bw * Math.min(1, b.hp / MAX_HP), bh);
+      drawExtraHp(b, bx, by, bw, bh, false); // health over 500 (max-hp.js)
       ctx.lineWidth = 2; ctx.strokeStyle = theme.wall; ctx.strokeRect(bx, by, bw, bh);
     }
 
