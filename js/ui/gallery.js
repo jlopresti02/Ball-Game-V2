@@ -175,6 +175,7 @@ function galleryMoves(ch) {
   if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
   if (ch.legKick) legKickGalleryMoves(ch, add); // calf kicks that leave them limping (leg-kick.js)
   if (ch.gane) ganeGalleryMoves(ch, add); // Ciryl Gane: hands down, back foot, weak up close (gane.js)
+  if (ch.getUp) getUpGalleryMoves(ch, add); // getting back up off the mat (get-up.js)
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
   if (ch.anderson) andersonGalleryMoves(ch, add); // Anderson Silva (anderson.js)
   if (ch.cormier) cormierGalleryMoves(ch, add); // Daniel Cormier (cormier.js)

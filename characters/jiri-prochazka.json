@@ -1,6 +1,6 @@
 {
   "id": "c-jiri-prochazka",
-  "rev": 2,
+  "rev": 3,
   "builtin": false,
   "weightClass": "lightheavyweight",
   "name": "Jiří Procházka",
@@ -39,6 +39,7 @@
   "hasSwing": false,
   "hasForget": false,
   "blockChance": 0,
+  "getUp": {"size": 55, "wrestling": 30, "cut": 0.55, "shot": 12, "style": "scramble"},
   "elbow": { "damage": 8, "cooldown": 1.6, "speed": 0.26, "reach": 14, "critChance": 35, "critMult": 2.5, "knockback": 160, "cut": { "chance": 35, "time": 3.5, "dps": 2 } },
   "knee": {
     "damage": 11, "cooldown": 2.4, "speed": 0.3, "reach": 12, "critChance": 30, "critMult": 2, "knockback": 220,

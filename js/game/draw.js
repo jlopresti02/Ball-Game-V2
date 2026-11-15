@@ -501,6 +501,7 @@ function draw() {
   drawConorBanner(); // and Conor McGregor's 13 SECONDS (conor.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)
+  drawGetUp(); // getting back up: the scramble, the wall walk, the pop (get-up.js)
   drawDeathFx(); // the loser's death animation (death.js)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   drawSpeech(); // voice-line speech bubbles (speech.js), under the hit numbers and move names
