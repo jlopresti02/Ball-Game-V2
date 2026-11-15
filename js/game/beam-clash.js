@@ -151,6 +151,13 @@ function beginBeamPin(target, owner, dx, dy, total, dur, color, first) {
 }
 function beamPinned(b) { return !!(b && b.beamPin); }
 
+// How far they can go along one axis (position x, direction d) before the cage.
+function bpRoom(x, d, hi, lo) {
+  if (d > 1e-6) return Math.max(0, (hi - x) / d);
+  if (d < -1e-6) return Math.max(0, (lo - x) / d);
+  return Infinity;
+}
+
 // From update(): pinned fighters slide back into the cage and take their chips.
 function tickBeamPins(dt) {
   if (!balls) return;
@@ -161,8 +168,13 @@ function tickBeamPins(dt) {
     p.t += dt;
     b.vx = 0; b.vy = 0;
     // Driven back until the cage stops them, then held flat against it.
-    var nx = Math.min(W - b.r, Math.max(b.r, b.x + p.dx * BEAM_PIN_SPEED * dt));
-    var ny = Math.min(H - b.r, Math.max(b.r, b.y + p.dy * BEAM_PIN_SPEED * dt));
+    // Joe (2026-11-15): straight down the beam and no further, so they stay
+    // in it (they used to slide along the cage out of it, into a corner,
+    // and missed Conor's pot of gold waiting where the beam ends).
+    var room = Math.min(bpRoom(b.x, p.dx, W - b.r, b.r), bpRoom(b.y, p.dy, H - b.r, b.r));
+    var step = Math.min(BEAM_PIN_SPEED * dt, room);
+    var nx = Math.min(W - b.r, Math.max(b.r, b.x + p.dx * step));
+    var ny = Math.min(H - b.r, Math.max(b.r, b.y + p.dy * step));
     var moved = Math.abs(nx - b.x) + Math.abs(ny - b.y);
     b.x = nx; b.y = ny;
     if (!p.wall && moved < BEAM_PIN_SPEED * dt * 0.3) {
