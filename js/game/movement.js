@@ -1,7 +1,8 @@
 // Shared movement styles (Christian, 2026-11-15). Any fighter can opt in
 // with a "movement" block in his character file; a fighter without one
 // moves exactly as before (nothing here runs for him, and nothing here draws
-// a random number for him). Ilia Topuria and Khabib Nurmagomedov use it.
+// a random number for him). Ilia Topuria, Khabib Nurmagomedov and Sean
+// Strickland (spacing) use it.
 //
 // Every part is its own block; take a block out and that part is off.
 // It only steers which way he's heading, never how fast (the speed
@@ -39,10 +40,24 @@
 //       "near": 30,          of the cage and him within `within` px of them,
 //       "within": 40,        his takedown cooldown (grapple.cooldown) runs
 //       "rate": 2            `rate` times as fast, so he shoots more often
-//     }
-//   }
+//     },
+//     "spacing": {           FIGHT IQ FOR RANGE (Sean Strickland): he holds
+//       "margin": 14,        just outside their reach, `margin` px past their
+//       "min": 30,           longest punch, grab (or, with `kicks`, kick) reach,
+//       "max": 96,           edge to edge, kept between `min` and `max`, so it
+//       "kicks": true,       fits each opponent. Within `band` px of that he
+//       "band": 10,          circles them (switching way every `switch`
+//       "turn": 14,          seconds); closer, he backs out at `angle` off
+//       "turnIn": 18,        straight back, toward open space, and comes off
+//       "angle": 0.6,        the cage sideways; further, he walks back in.
+//       "jabEvery": [0.25, 0.7],  Once his punch is ready and he's hovered
+//       "stepIn": 0.45,      `jabEvery` seconds he steps straight in (turning
+//       "switch": [1.5, 3.5],at `turnIn`) and the jab goes as soon as they're
+//       "read": 0.12         in reach; then straight back out. A step in
+//     }                      that hasn't reached them in `stepIn` s is called
+//   }                        off. He reads them coming `read` seconds ahead.
 //
-// State is on b.mv: { t, step, stepT, reset, lastPunch, cutSide }.
+// State is on b.mv: { t, step, stepT, reset, lastPunch, cutSide, sp }.
 // The fighter card lists each part (movementGalleryMoves, gallery.js).
 "use strict";
 
@@ -85,9 +100,13 @@ function mvCageShots(b, other, cfg, dt) {
 }
 
 function mvSteer(b, other, mv, cfg, dt) {
-  var pr = cfg.press, ss = cfg.sideStep;
-  if (!pr && !ss) return;
-  if (!inOrdinaryMovement(b) || b.dizzy || b.angry || b.speedEase || b.knockFly > 0) { mv.step = null; return; }
+  var pr = cfg.press, ss = cfg.sideStep, sc = cfg.spacing;
+  if (!pr && !ss && !sc) return;
+  if (!inOrdinaryMovement(b) || b.dizzy || b.angry || b.speedEase || b.knockFly > 0) {
+    mv.step = null;
+    if (mv.sp && mv.sp.mode === "in") mvSpMode(mv.sp, "out"); // threw something (a teep, a one-two) or got hit: back out after it
+    return;
+  }
   if (!other.alive || other.invincible || mv.t < (cfg.after || 0) || mv.reset) return;
   if (other.x < 0 || other.x > W || other.y < 0 || other.y > H) return; // (up in the air, off the screen)
   var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
@@ -103,6 +122,7 @@ function mvSteer(b, other, mv, cfg, dt) {
   ax /= al; ay /= al;
   if (cfg.cutCage) { var c = mvCut(b, other, mv, cfg.cutCage, ax, ay); ax = c[0]; ay = c[1]; }
   var want = Math.atan2(ay, ax), turn = (pr && pr.turn) || 0;
+  if (sc) { var w = mvSpacing(b, other, mv, sc, dt, dx, dy, gap); want = w[0]; turn = w[1]; }
   // The side step.
   if (ss) {
     if (mv.step) {
@@ -139,6 +159,73 @@ function mvCut(b, other, mv, cc, ux, uy) {
   return [ux + qx * k, uy + qy * k];
 }
 
+// ---------------------------------------------------------------- spacing
+
+// Their longest weapon, edge to edge: punch, grab, swing, teep, and with
+// `kicks` their kick.
+function mvReach(o, sc) {
+  var c = o.char, r = 0;
+  if (c.hasPunch && c.punch) r = Math.max(r, c.punch.reach || 0);
+  if (c.hasGrapple && c.grapple) r = Math.max(r, c.grapple.reach || 0);
+  if (c.hasSwing && c.swing) r = Math.max(r, c.swing.reach || 0);
+  if (c.hasTeep && c.teep) r = Math.max(r, c.teep.reach || 0);
+  if (sc.kicks !== false && c.hasKick && c.kick) r = Math.max(r, c.kick.reach || 0);
+  return r || 30;
+}
+// The gap he holds them at: just outside that.
+function mvHold(o, sc) { return Math.max(sc.min || 0, Math.min(sc.max || 999, mvReach(o, sc) + (sc.margin != null ? sc.margin : 14))); }
+function mvSpMode(sp, mode) { sp.mode = mode; sp.t = 0; }
+// How far he can go heading `a` before he's up against the cage.
+function mvRoom(b, a) {
+  var cx = Math.cos(a), cy = Math.sin(a), tx = 9999, ty = 9999;
+  if (cx > 0.01) tx = (W - b.r - b.x) / cx; else if (cx < -0.01) tx = (b.x - b.r) / -cx;
+  if (cy > 0.01) ty = (H - b.r - b.y) / cy; else if (cy < -0.01) ty = (b.y - b.r) / -cy;
+  return Math.max(0, Math.min(tx, ty));
+}
+
+// Which way he heads to keep them at the end of his jab: [heading, turn].
+function mvSpacing(b, other, mv, sc, dt, dx, dy, gap) {
+  var sp = mv.sp;
+  if (!sp) sp = mv.sp = { mode: "hold", t: 0, side: Math.random() < 0.5 ? 1 : -1, sideT: mvRand(sc.switch || [1.5, 3.5]), hover: mvRand(sc.jabEvery || [0.25, 0.7]) };
+  sp.t += dt;
+  sp.sideT -= dt;
+  if (sp.sideT <= 0) { sp.side = -sp.side; sp.sideT = mvRand(sc.switch || [1.5, 3.5]); }
+  var hold = mvHold(other, sc), band = sc.band || 10, to = Math.atan2(dy, dx), turn = sc.turn || 9;
+  // Reads them coming: how close they'll be `read` seconds from now.
+  var dl = Math.sqrt(dx * dx + dy * dy) || 1, closing = -((other.vx - b.vx) * dx + (other.vy - b.vy) * dy) / dl;
+  var soon = gap - Math.max(0, closing) * (sc.read != null ? sc.read : 0.12);
+  var ready = b.char.hasPunch && !b.punch && !b.kick && !(b.punchCd > 0.05);
+  if (sp.mode === "in") {
+    if (b.punch || sp.t > (sc.stepIn || 0.45)) mvSpMode(sp, "out"); // the jab's gone (or they got away): straight back out
+  } else if (sp.mode === "out") {
+    if (gap >= hold - band * 0.5 || sp.t > 0.6) { mvSpMode(sp, "hold"); sp.hover = mvRand(sc.jabEvery || [0.25, 0.7]); } // (starts turning before he's there: he can't stop dead)
+  } else {
+    sp.hover -= dt;
+    if (b.punch && gap < hold) mvSpMode(sp, "out"); // jabbed them as they came in: out again
+    else if (ready && sp.hover <= 0 && gap <= hold + band * 3) mvSpMode(sp, "in");
+  }
+  if (sp.mode === "in") return [to, sc.turnIn || turn * 1.5];
+  if (sp.mode === "out" || soon < hold - band) return [mvBackOut(b, sp, sc, to), turn];
+  if (gap > hold + band) return [to + sp.side * Math.min(0.35, 0.35 * band * 3 / (gap - hold)), turn];
+  // At range: circling them, never into the cage.
+  var c = to + sp.side * Math.PI / 2;
+  if (mvRoom(b, c) < b.r * 0.8 && mvRoom(b, to - sp.side * Math.PI / 2) > mvRoom(b, c)) { sp.side = -sp.side; c = to + sp.side * Math.PI / 2; }
+  return [c, turn];
+}
+
+// Backing out at an angle, toward whichever side has more room; with his
+// back to the cage he comes off it sideways.
+function mvBackOut(b, sp, sc, to) {
+  var ang = sc.angle != null ? sc.angle : 0.6, room = b.r * 1.5;
+  var a = to + Math.PI - sp.side * ang;
+  if (mvRoom(b, a) >= room) return a;
+  var a2 = to + Math.PI + sp.side * ang;
+  if (mvRoom(b, a2) >= room) { sp.side = -sp.side; return a2; }
+  var t1 = to + sp.side * Math.PI / 2, t2 = to - sp.side * Math.PI / 2;
+  if (mvRoom(b, t2) > mvRoom(b, t1)) { sp.side = -sp.side; return t2; }
+  return t1;
+}
+
 function mvStepDust(b) {
   if (reduceMotion) return;
   for (var i = 0; i < 6; i++) {
@@ -166,4 +253,6 @@ function movementGalleryMoves(ch, add) {
   if (cc) add("🧱", "Cuts the cage", "Works round to the middle-of-the-ring side of them before he comes in, so every collision pushes them back toward the cage.");
   if (ss) add("↔️", "Side step", "Every " + ss.every[0] + "-" + ss.every[1] + "s a small step to one side, then straight back in.");
   if (cs) add("🤼", "Against the cage", "With them on the cage and him right on them, his takedown attempts come " + cs.rate + "x as often.");
+  if (m.spacing) add("📏", "Spacing", "Hovers just outside their reach (their longest punch, grab" + (m.spacing.kicks !== false ? " or kick" : "") + ", plus " + (m.spacing.margin != null ? m.spacing.margin : 14) +
+    "px), steps straight in behind the jab and straight back out, and backs off at an angle or circles off the cage when they come in.");
 }
