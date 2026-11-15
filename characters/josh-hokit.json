@@ -1,11 +1,11 @@
 {
   "id": "c-josh-hokit",
-  "rev": 16,
+  "rev": 17,
   "builtin": false,
   "weightClass": "heavyweight",
   "name": "Josh Hokit",
   "base": "BMF",
-  "bio": "\"The Fresno Freight Train\". Built on the BMF base: he comes forward all fight, walking straight in with combinations of rapid 5-damage punches instead of slipping and celebrating, and he stuffs almost every takedown shot. He has a lot of health (800 to everyone else's 500), but walking forward he eats crits. Now and then, up close, he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Now and then he straps on his football helmet, gets down in a three-point stance and charges a red path across the ring, running over whoever is still in it, while the jumbotron plays an ad for the San Francisco 67'ers. When his opponent pulls out a weapon, or once at random, he turns to the Dark Side: a black hooded robe and a red lightsaber, no wrestling moves. His saber clashes with bats, clubs and swords, and if anyone knocks it out of his hand he pulls it straight back with the Force and Force pushes them across the ring. Once in the form he can call in the Death Star, whose green superlaser blasts the middle of the ring. Special move: Chair Shot, then a ladder: he stands one up in the middle of the ring, climbs it and dives off it in a body slam and throws the ladder at them.",
+  "bio": "\"The Fresno Freight Train\". Built on the BMF base: he comes forward all fight, walking straight in with combinations of rapid 5-damage punches instead of slipping and celebrating, and he stuffs almost every takedown shot. He's inside so much that most kicks thrown at him get smothered, and he blocks 15% of strikes, but walking forward he eats crits on punches. Now and then, up close, he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Now and then he straps on his football helmet, gets down in a three-point stance and charges a red path across the ring, running over whoever is still in it, while the jumbotron plays an ad for the San Francisco 67'ers. When his opponent pulls out a weapon, or once at random, he turns to the Dark Side: a black hooded robe and a red lightsaber, no wrestling moves. His saber clashes with bats, clubs and swords, and if anyone knocks it out of his hand he pulls it straight back with the Force and Force pushes them across the ring. Once in the form he can call in the Death Star, whose green superlaser blasts the middle of the ring. Special move: Chair Shot, then a ladder: he stands one up in the middle of the ring, climbs it and dives off it in a body slam and throws the ladder at them.",
   "color": "#c8202c",
   "label": "",
   "imgData": null,
@@ -48,10 +48,10 @@
   "armbar": { "tapBase": 0, "tapLowHp": 0 },
   "hasThumbsDown": true,
   "thumbsDown": { "cooldown": 8, "anger": 3 },
-  "maxHp": 800,
   "tdd": { "sprawlChance": 85 },
+  "smother": { "chance": 70 },
   "pressure": { "turn": 12, "speed": 1.15, "pocket": 18, "shotChance": 35, "shotWait": 2.5,
-    "chin": { "critChance": 60, "critMult": 1.8, "sources": ["punch", "jab", "kick", "kickback", "elbow", "knee", "combo", "swing", "teep", "flow", "bat", "poke"] } },
+    "chin": { "critChance": 20, "critMult": 1.5, "sources": ["punch", "jab", "combo", "power", "swing", "flow"] } },
   "combos": { "first": [0.5, 1], "every": [0.4, 0.9], "list": { "jab-jab-cross": 3, "jab-cross-jab-cross": 3, "jab-cross-hook": 2, "jab-cross-jab-cross-hook": 2 } },
   "hasSpecial": true,
   "helmetCharge": { "first": [18, 26], "every": [22, 32], "max": 2, "warn": 1.1, "speed": 1250, "width": 60, "damage": 30, "knockback": 1200, "wallSlams": 1, "slamDamage": 4, "helmet": { "headwear": "football", "helmetLogoText": "67" } },
@@ -63,5 +63,5 @@
     "push": { "knockback": 1700 },
     "deathStar": { "first": [3, 7], "max": 1, "dmg": 100, "waveDmg": 40 } },
   "special": { "move": "chairshot", "chargeTime": 82, "hitCut": 3, "punchCut": 1, "damage": 80, "dazeTime": 1.5, "celebrateTime": 2, "ladder": { "slamDamage": 25, "throwDamage": 15 } },
-  "blockChance": 0
+  "blockChance": 15
 }

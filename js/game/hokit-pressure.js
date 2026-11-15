@@ -4,8 +4,15 @@
 // He should just have a lot, a lot of health, and he should be trading
 // pitter-patter punches with them."
 //
-// Set under "pressure" in his character file (plus `combos` and `maxHp`
-// next to it); leave the block out and none of this happens.
+// Set under "pressure" in his character file (plus `combos`, `tdd`,
+// `smother` and `blockChance` next to it); leave the block out and none of
+// this happens.
+//
+// Rework (Christian, 2026-11-15): "instead of just adding 300 extra health
+// for him ... he should just have a slightly higher block rate or just get
+// hit by kicks less because he's inside so much ... he's more susceptible to
+// punches. We give him a 15% block rate but he's more susceptible to crits
+// on punches. And the health is back to normal."
 //
 // Walking them down  whenever he's rolling about freely he turns toward
 //           them at `turn` radians a second and rolls `speed` times his
@@ -25,14 +32,15 @@
 // Takedown defense  the plain `tdd` block in his file (ilia.js): he
 //           sprawls `tdd.sprawlChance`% of shots and grabs ("STUFFED").
 // Walking onto shots (pressure.chin)  coming forward he's wide open:
-//           `critChance`% of the strikes in `sources` that land on him while
+//           `critChance`% of the punches in `sources` that land on him while
 //           he's free and pressing (not in a shot, an armbar, a thumbs down or
 //           his Dark Side) are crits, `critMult` times the
 //           damage: "CRIT!" over his head, a white flash where it landed, a
 //           snap of his head and a crack. The weave still slips what it
 //           always did; this is only what gets through.
-// A lot of health  `maxHp` in his file (max-hp.js): the extra health is
-//           the pale layer over his health bar.
+// Normal health  no `maxHp` any more: 500 like everyone else.
+// Inside      `smother` (kick-smother.js): most kicks thrown at him get
+//           smothered ("SMOTHERED!"), and `blockChance` 15 blocks strikes.
 "use strict";
 
 // Extra combination strings (combos.js), all hands.
@@ -126,5 +134,5 @@ function hokitPressureGalleryMoves(ch, add) {
   if (pc.turn) add("➡️", "Always coming forward", "Walks them down all fight and turns straight back at them after every bounce. Up close it's combinations of light punches" +
     (pc.shotChance ? ", or (" + pc.shotChance + "% of the time) the double leg" : "") + ".");
   if (ch.tdd) add("🧱", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots and grabs (\"STUFFED\") and comes straight back with punches.");
-  if (pc.chin) add("💥", "Walks onto shots", pc.chin.critChance + "% of the strikes that land on him while he's coming forward are crits, " + pc.chin.critMult + "x the damage.");
+  if (pc.chin) add("💥", "Walks onto shots", pc.chin.critChance + "% of the punches that land on him while he's coming forward are crits, " + pc.chin.critMult + "x the damage.");
 }
