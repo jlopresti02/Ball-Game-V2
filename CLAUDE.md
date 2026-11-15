@@ -42,6 +42,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Uppercuts and body shots as shared punches that set up the bigger shot (`body-shots-uppercuts.js`, `uppercuts` / `bodyShots` blocks, hooks take `afterSetup` and `side`): Max, Ilia, Van, Dustin (body, then the left hook), Pereira, and Gaethje's uppercuts that stuff grabs, shots, clinches and guard pulls | Christian's Claude | live on main |
 | Josh Hokit always walks forward with light combos, stuffs takedowns, shoots now and then, 800 health (`hokit-pressure.js`, `max-hp.js`: only a fighter with `maxHp` over 500 changes) | Christian's Claude | live on main |
 | Balance from watching: Khabib's chin is up (shared `chin.js`, `chin` block, Gane's moved onto it) and 12% of his shots get stuffed (shared `stuffed-shots.js`, `grapple.stuffChance`); Charles Oliveira 30% stuffed, on the shared clinch with strong knees | Christian's Claude | live on main |
+| Nate Diaz's lion: Nate summons a lion that hops the cage, stalks, pounces and mauls (`nate-lion.js`, `lion` block in his character file) | Joe's Claude | live on main |
 | Francis Ngannou's Hulk punch telegraphs before it comes, and from far enough away it can be dodged (`rage.escape`, ngannou.js); close in it still lands. His rage fills as before | Christian's Claude | live on main |
 | Justin Gaethje chops the calf on the shared leg kick (his own timer; three in a row and the leg gives out); Alex Pereira's head kick follows his calf kicks (`head-kick.js`, `headKick` block) | Christian's Claude | live on main |
 | Sean Strickland keeps them at the end of his jab (opt-in spacing mode in `movement.js`) and his America is all his (no grabs, shots or punches on him; they back off dazed); Strickland and Ilia stuff more shots (takedown defense 80 and 68) | Christian's Claude | live on main |
@@ -75,6 +76,14 @@ Christian's Claude must not revert, undo or overwrite anything Joe (or Joe's Cla
 - **Never name an absent opponent**: a line or commentator call that names a real fighter only plays when that fighter is the one in the cage (`vs` lines). Everything else names only the speaker or nobody.
 - **Strikes any fighter can have**: `teep.js`, `knees.js` (knee, clinch knees, flying knee), `combos.js`, `elbows.js`. Elbows crit 35% of the time unless a fighter's `elbow` block sets `critChance`; knees crit 30%. Jon Jones throws elbows and knees.
 - **Chuck Norris** (`js/game/chuck-norris.js`) is a guest in Sean Strickland's America (`special.norris` in Strickland's file), not a fighter.
+
+## Voice lines Joe wants (for Christian's clip tool)
+
+Joe asked for these real lines. Christian's Claude: when you're finding voice lines, please cut the ones still marked *wanted* and key them by the **exact text** shown (silent until then). Ones marked *in* already have Joe's own clip; leave their text alone.
+
+| Fighter | Exact text in the code | Where it plays |
+|---|---|---|
+| Nate Diaz | `Who the [BLEEP] knows what a gazelle is?` (the real line: "Who the fuck knows what a gazelle is?", bleeped) | as he summons his lion (`LION_LINE` in `nate-lion.js`). *In*: Joe sent the clip (`nateGazelle`, `nate-lion-art.js`) |
 
 ## Voice lines never overlap (Joe's rule)
 

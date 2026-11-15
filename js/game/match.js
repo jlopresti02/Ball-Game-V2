@@ -58,6 +58,7 @@ function makeBall(id, ch) {
   initRainbow(b); // Conor's Pot o' Gold rainbow beam (rainbow-beam.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
   initRingBear(b); // Khabib's ring bear (khabib-bear.js)
+  initNateLion(b); // Nate Diaz's lion (nate-lion.js)
   initIliaTornado(b); // Ilia's Rose Tornado (ilia-tornado.js)
   initPereira(b); // Alex Pereira's CHAMA combo and step (pereira.js)
   initOmalley(b); // Sean O'Malley's sugar, hair and crane kick (omalley.js)
