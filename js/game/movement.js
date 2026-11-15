@@ -1,8 +1,8 @@
 // Shared movement styles (Christian, 2026-11-15). Any fighter can opt in
 // with a "movement" block in his character file; a fighter without one
 // moves exactly as before (nothing here runs for him, and nothing here draws
-// a random number for him). Ilia Topuria, Khabib Nurmagomedov and Sean
-// Strickland (spacing) use it.
+// a random number for him). Ilia Topuria, Khabib Nurmagomedov, Sean
+// Strickland (spacing) and Alex Pereira (center) use it.
 //
 // Every part is its own block; take a block out and that part is off.
 // It only steers which way he's heading, never how fast (the speed
@@ -55,7 +55,17 @@
 //       "switch": [1.5, 3.5],at `turnIn`) and the jab goes as soon as they're
 //       "read": 0.12         in reach; then straight back out. A step in
 //     }                      that hasn't reached them in `stepIn` s is called
-//   }                        off. He reads them coming `read` seconds ahead.
+//                            off. He reads them coming `read` seconds ahead.
+//     "center": {            HOLDS THE CENTER (Alex Pereira): he lets them
+//       "radius": 40,        come to him. Once he's drifted more than `radius`
+//       "turn": 9,           px from the middle of the ring he turns back
+//       "stepIn": 70,        toward it at `turn` (he loops through the middle
+//       "leash": 110,        instead of bouncing off the cage). With them
+//       "turnIn": 9          within `stepIn` px (edge to edge) while he's
+//     }                      within `leash` px of the middle, or his head
+//   }                        kick armed (b.hkArm, head-kick.js), he steps in
+//                            at them instead, turning at `turnIn`, to throw.
+//                            Past `leash` he heads back to the middle first.
 //
 // State is on b.mv: { t, step, stepT, reset, lastPunch, cutSide, sp }.
 // The fighter card lists each part (movementGalleryMoves, gallery.js).
@@ -100,8 +110,8 @@ function mvCageShots(b, other, cfg, dt) {
 }
 
 function mvSteer(b, other, mv, cfg, dt) {
-  var pr = cfg.press, ss = cfg.sideStep, sc = cfg.spacing;
-  if (!pr && !ss && !sc) return;
+  var pr = cfg.press, ss = cfg.sideStep, sc = cfg.spacing, ce = cfg.center;
+  if (!pr && !ss && !sc && !ce) return;
   if (!inOrdinaryMovement(b) || b.dizzy || b.angry || b.speedEase || b.knockFly > 0) {
     mv.step = null;
     if (mv.sp && mv.sp.mode === "in") mvSpMode(mv.sp, "out"); // threw something (a teep, a one-two) or got hit: back out after it
@@ -123,6 +133,7 @@ function mvSteer(b, other, mv, cfg, dt) {
   if (cfg.cutCage) { var c = mvCut(b, other, mv, cfg.cutCage, ax, ay); ax = c[0]; ay = c[1]; }
   var want = Math.atan2(ay, ax), turn = (pr && pr.turn) || 0;
   if (sc) { var w = mvSpacing(b, other, mv, sc, dt, dx, dy, gap); want = w[0]; turn = w[1]; }
+  if (ce) { var hc = mvCenter(b, ce, gap, Math.atan2(dy, dx)); if (hc) { want = hc[0]; turn = hc[1]; } }
   // The side step.
   if (ss) {
     if (mv.step) {
@@ -157,6 +168,15 @@ function mvCut(b, other, mv, cc, ux, uy) {
   if (dot < -0.85) { qx = -uy * mv.cutSide; qy = ux * mv.cutSide; } // right behind them: pick a way round
   var k = (cc.weight || 0) * Math.min(1, cd / (cc.fade || 80));
   return [ux + qx * k, uy + qy * k];
+}
+
+// Holding the center: [heading, turn], or null while he's in the middle
+// with nothing to step in on (he just rolls on, no steering).
+function mvCenter(b, ce, gap, to) {
+  var cx = W / 2 - b.x, cy = H / 2 - b.y, d2 = cx * cx + cy * cy, r = ce.radius || 50, lr = ce.leash || 9999;
+  if (b.hkArm > 0 || (gap <= (ce.stepIn || 0) && d2 <= lr * lr)) return [to, ce.turnIn || ce.turn || 5];
+  if (d2 <= r * r) return null;
+  return [Math.atan2(cy, cx), ce.turn || 5];
 }
 
 // ---------------------------------------------------------------- spacing
@@ -247,11 +267,12 @@ function playMvStep() {
 
 // The fighter card's move list (gallery.js).
 function movementGalleryMoves(ch, add) {
-  var m = ch.movement, pr = m.press, rc = m.reset, cc = m.cutCage, ss = m.sideStep, cs = m.cageShots;
+  var m = ch.movement, pr = m.press, rc = m.reset, cc = m.cutCage, ss = m.sideStep, cs = m.cageShots, ce = m.center;
   if (pr) add("👣", "Walks them down", "Keeps turning back toward them, aiming where they're going, so he's always coming forward." +
     (rc ? " After a combination he takes a short reset (" + rc.time[0] + "-" + rc.time[1] + "s), then walks straight back in." : ""));
   if (cc) add("🧱", "Cuts the cage", "Works round to the middle-of-the-ring side of them before he comes in, so every collision pushes them back toward the cage.");
   if (ss) add("↔️", "Side step", "Every " + ss.every[0] + "-" + ss.every[1] + "s a small step to one side, then straight back in.");
+  if (ce) add("🎯", "Holds the center", "Stays in the middle of the ring and lets them come to him. Once they're within " + (ce.stepIn || 0) + "px he steps in to throw, but he won't follow them out to the cage.");
   if (cs) add("🤼", "Against the cage", "With them on the cage and him right on them, his takedown attempts come " + cs.rate + "x as often.");
   if (m.spacing) add("📏", "Spacing", "Hovers just outside their reach (their longest punch, grab" + (m.spacing.kicks !== false ? " or kick" : "") + ", plus " + (m.spacing.margin != null ? m.spacing.margin : 14) +
     "px), steps straight in behind the jab and straight back out, and backs off at an angle or circles off the cage when they come in.");

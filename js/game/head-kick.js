@@ -37,7 +37,11 @@
 //    default): a miss is as it always was.
 //  - When it lands: "HEAD KICK!", a big star on their head, a freeze-frame.
 //    `koChance`% of the time they're out cold (the knockout, then the fight's
-//    called); otherwise it takes `damagePct`% of their full health.
+//    called); otherwise it takes exactly `damageHp` health off them, whatever
+//    their weight (Christian, 2026-11-15: "it should just do a tremendous
+//    amount of damage, like maybe 100 HP", then "100 is fine with a 5% or
+//    10% chance (maybe an 8% in between) of it being a straight knockout").
+//    `damageHp` 0 (the default): `damagePct`% of their full health instead.
 //
 // The API: headKickSetup(self, v) from legKickLimp (leg-kick.js), every calf
 // kick that lands; updateHeadKick from the abilities loop; headKickBusy from
@@ -49,7 +53,7 @@
 "use strict";
 
 var HEAD_KICK_DEFAULTS = { setup: 2, chance: 40, window: 2.5, cooldown: 12, range: 60, reach: 95,
-  landChance: 50, blockShare: 40, koChance: 60, damagePct: 50,
+  landChance: 50, blockShare: 40, koChance: 60, damagePct: 50, damageHp: 0,
   chamber: 0.26, sweep: 0.13, recover: 0.3, missRecover: 0.6,
   missOpen: 0, missGuard: 100, missShot: 85, missReach: 110,
   text: "HEAD KICK!", color: "#ff3b30", size: 1.35 };
@@ -198,7 +202,7 @@ function hkCanShoot(o, b) {
   return !grabBlockedByImpunity(o, b);
 }
 
-// It lands: a knockout, or half their health.
+// It lands: a knockout, or a big hit (damageHp, or damagePct% of a full bar).
 function hkLand(self, other, c, L) {
   var free = !other.holdAtOne && !other.guard && !other.sprawl && !other.sprawled && !other.grappled && !other.grapple && !other.slam && !subLocked(other);
   if (free && Math.random() * 100 < c.koChance) {
@@ -217,7 +221,9 @@ function hkLand(self, other, c, L) {
     self.vx = 0; self.vy = 0;
     return "ko";
   }
-  var dealt = hurt(other, MAX_HP * c.damagePct / 100, "finisher", self.id);
+  // damageHp is exactly that much off their bar: like the knockout above, it
+  // comes in already divided by what weight (or anything else) would scale it by.
+  var dealt = hurt(other, c.damageHp > 0 ? c.damageHp / incomingMultiplier(other) : MAX_HP * c.damagePct / 100, "finisher", self.id);
   if (!(dealt > 0)) { checkEnd(); return "slipped"; }
   hkImpact(self, other, c, L, false);
   if (other.alive && !other.grappled && !other.grapple && !other.slam && !subLocked(other)) {
@@ -384,6 +390,6 @@ function headKickGalleryMoves(ch, add) {
   var v = function (k) { return c[k] != null ? c[k] : HEAD_KICK_DEFAULTS[k]; };
   add("💥", "Head kick", "Once he's landed " + v("setup") + " calf kicks, each one that lands is a " + v("chance") + "% chance he goes high next: a head kick that lands " +
     v("landChance") + "% of the time (they duck it or block it, and he's left open). When it lands it's a knockout " + v("koChance") + "% of the time, otherwise " +
-    v("damagePct") + "% of their health. At most one every " + secs(v("cooldown")) + "." +
+    (v("damageHp") > 0 ? v("damageHp") + " damage" : v("damagePct") + "% of their health") + ". At most one every " + secs(v("cooldown")) + "." +
     (v("missOpen") > 0 ? " A miss leaves him off balance for " + secs(v("missOpen")) + ": his guard drops, they rush him, and a wrestler shoots on him " + v("missShot") + "% of the time." : ""));
 }
