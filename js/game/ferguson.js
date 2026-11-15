@@ -189,7 +189,7 @@ function updateFerguson(self, other, dt) {
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, gap = d - self.r - other.r;
   if (tfWantBurrito(self, cfg)) { startTfBurrito(self); return true; }
   if (tfMasAct(self, other, cfg, dt)) return true;
-  if (tfWantKaioken(self, cfg)) { startKaiokenPower(self, cfg); return true; }
+  if (tfWantKaioken(self, cfg)) { if (!tfBurritoFirstKaioken(self, cfg)) startKaiokenPower(self, cfg); return true; } // his first Kaioken is the burrito (ferguson-burrito.js)
   if (tfWantShell(self, other, cfg, gap)) { startTfShell(self, other, cfg); return true; }
   var react = tfTelegraphing(other) && gap < 240;
   if (tfWantSlide(self, cfg, gap, react)) { startTfSlide(self, other, cfg, react); return true; }
