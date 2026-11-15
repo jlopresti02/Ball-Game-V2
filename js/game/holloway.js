@@ -29,6 +29,9 @@
 //            up!" (his strikes landed come up), then "I'm the best boxer in
 //            the UFC, baby!" Meanwhile he slips `slip`% of what they throw
 //            without looking and counters each slip (`counter`).
+// Slips      (holloway.slip) the rest of the fight he slips `chance`% of what
+//            they throw (no counter; not at the booth, which has its own, and
+//            never in The Middle).
 // Flashback  (holloway.flashback) once a fight both fighters hold for a
 //            cutscene (holloway-room.js): the picture goes grainy like an old
 //            TV, the camera pulls back into his living room where the fight is
@@ -326,16 +329,20 @@ function runBooth(self, other, a, bc, dt) {
 }
 
 // From hurt (match.js): at the booth he slips what they throw without
-// looking, and comes back with a counter.
+// looking, and comes back with a counter. The rest of the fight he slips
+// `slip.chance`% of it (holloway.slip), no counter; never in his special.
 function hollowayDodge(b, source, attackerId) {
   var a = b.hwAct, cfg = hwCfg(b);
-  if (!a || a.kind !== "booth" || !cfg || !cfg.booth || !b.alive) return false;
+  if (!cfg || !b.alive) return false;
+  var booth = !!(a && a.kind === "booth" && cfg.booth);
+  var chance = booth ? cfg.booth.slip : (!a && !b.igbb && cfg.slip ? cfg.slip.chance : 0);
+  if (!chance) return false;
   if (HW_NO_SLIP[source] || attackerId == null || attackerId === b.id || b.grappled || b.slam) return false;
-  if (Math.random() * 100 >= cfg.booth.slip) return false;
+  if (Math.random() * 100 >= chance) return false;
   b.weaveAnim = { t: 0, dur: 0.24, sign: Math.random() < 0.5 ? -1 : 1 };
   floater(b.x, b.y - b.r - 8, "SLIP", "dodge");
   b.justDodged = true;
-  if (!PROJECTILE_SOURCES[source]) b.hwCounter = attackerId;
+  if (booth && !PROJECTILE_SOURCES[source]) b.hwCounter = attackerId;
   playHwSlip();
   return true;
 }
@@ -1284,6 +1291,7 @@ function hollowayGalleryMoves(ch, add) {
   if (bl) add("🙏", "Blessed meter", "Fills with fight time and every punch he lands. The fuller it is, the longer, faster and heavier his combos: the longer it goes, the better he gets.");
   if (ch.tdd) add("🤼", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots (\"STUFFED\") and punches straight back.");
   if (h.guardRespect) add("🚫", "Stays out of the guard", h.guardRespect.chance + "% of the times they pull guard he won't follow them down: he stays out of the circle until they stand up.");
+  if (h.slip) add("💨", "Slips", "Slips " + h.slip.chance + "% of what they throw at him, all fight long.");
   if (bo) add("🎙️", "The booth", "Against a striker he's beating, he turns to the commentators: \"Count it up!\", then \"I'm the best boxer in the UFC, baby!\" (Calvin Kattar fight, 2021), slipping " + bo.slip + "% of what they throw without looking and countering. Up to " + bo.max + " times a fight.");
   if (fb) add("🎮", "Flashback", "Once a fight the fight holds for a cutscene: the picture goes grainy like an old TV and pulls back into his living room, where the fight is the game he's playing. He chugs a Maxx Energy, plays like a sweat and gets an idea (lightbulb), and it dives back into the fight." + (ms ? " Then " + secs(ms.time) + " of Button Mash: wild " + ms.combo[0] + " to " + ms.combo[1] + " strike combos with the buttons over his head, and a spinning back fist (" + ms.backfist + ")." : ""));
   if (h.gaethje) add("🏆", "vs Justin Gaethje", "Gaethje always meets him in the middle, and the right hand at 0:01 is " + h.gaethje.koBonus + "% more likely to knock him out, like UFC 300. Then he holds up the BMF belt.");

@@ -4694,12 +4694,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-max-holloway",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Max Holloway",
     "base": "Brawler",
-    "bio": "\"Blessed\". Built on the Brawler base, with the most strikes in the game: combos of quick punches off both hands instead of single shots, and no opening KO Rush. He gets better the longer it goes: his Blessed meter fills with fight time and every punch he lands, and his combos get longer, faster and heavier with it. Sprawls 70% of takedown shots and won't follow anyone down into the guard. Against a striker he's beating he turns to the commentators (\"Count it up!\", \"I'm the best boxer in the UFC, baby!\") and slips what they throw. Once a fight he has a flashback to playing an old fighting game and comes back button mashing. Special move The Middle (\"MEET ME IN THE MIDDLE\"): his real point down, from the Ricardo Lamas fight to the last-second knockout of Justin Gaethje at UFC 300. Featherweight. Inside his combos he digs to the body and comes up with uppercuts, and one that lands sets up the next punch upstairs.",
+    "bio": "\"Blessed\". Built on the Brawler base, with the most strikes in the game: combos of quick punches off both hands instead of single shots, and no opening KO Rush. He gets better the longer it goes: his Blessed meter fills with fight time and every punch he lands, and his combos get longer, faster and heavier with it. Sprawls 70% of takedown shots and won't follow anyone down into the guard. He slips some of what they throw all fight long. Against a striker he's beating he turns to the commentators (\"Count it up!\", \"I'm the best boxer in the UFC, baby!\") and slips what they throw. Once a fight he has a flashback to playing an old fighting game and comes back button mashing. Special move The Middle (\"MEET ME IN THE MIDDLE\"): his real point down, from the Ricardo Lamas fight to the last-second knockout of Justin Gaethje at UFC 300. Featherweight. Inside his combos he digs to the body and comes up with uppercuts, and one that lands sets up the next punch upstairs.",
     "color": "#0f9b8e",
     "label": "",
     "imgData": null,
@@ -4836,6 +4836,9 @@ var SAVED_ROSTER = [
       "unbothered": {
         "chance": 75
       },
+      "slip": {
+        "chance": 15
+      },
       "booth": {
         "after": 14,
         "lead": 50,
@@ -4845,7 +4848,7 @@ var SAVED_ROSTER = [
         "max": 2,
         "count": 1.1,
         "boxer": 1.7,
-        "slip": 70,
+        "slip": 85,
         "counter": 9
       },
       "flashback": {
