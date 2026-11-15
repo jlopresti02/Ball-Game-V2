@@ -372,6 +372,7 @@ function draw() {
     drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
     drawVolk(b); // Volkanovski's arms up, punching out of the pouch (volkanovski.js)
     drawHolloway(b); // Max Holloway's Blessed meter, pointing, the flashback pose, the BMF belt (holloway.js)
+    drawVan(b); // Joshua Van's hands bar, his high guard, his gloves glowing or on fire, the flag (van.js)
     drawStrickland(b, other); // Sean Strickland's Philly shell, the bike, his overhands, the trauma meter (strickland.js)
     drawDiaz(b); // Nate Diaz's slap, arms out, the 209 surge, a handprint on whoever he slapped (diaz.js)
     drawElbow(b, other); // an elbow being thrown, and a cut bleeding (elbows.js)
@@ -443,6 +444,7 @@ function draw() {
   drawFedorOver(); // Fedor Emelianenko's arms locked round them in the clinch and the throw (fedor.js)
   drawBispingOver(); // Michael Bisping's clinch elbows, cannonballs, smoke and 10-9 cards (bisping.js)
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)
+  drawVanOver(); // Joshua Van's chain counter under him, lit while he keeps it (van.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
