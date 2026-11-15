@@ -5152,7 +5152,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-nate-diaz",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "welterweight",
     "name": "Nate Diaz",
@@ -5331,6 +5331,24 @@ var SAVED_ROSTER = [
         "bottleDamage": 6,
         "bottleSpeed": 560
       }
+    },
+    "lion": {
+      "first": [
+        14,
+        24
+      ],
+      "every": [
+        35,
+        50
+      ],
+      "max": 1,
+      "call": 2.6,
+      "speed": 170,
+      "pounceRange": 150,
+      "stalk": 2.5,
+      "pounces": 3,
+      "maulTime": 2.4,
+      "maulDamage": 150
     },
     "hasSpecial": true,
     "special": {

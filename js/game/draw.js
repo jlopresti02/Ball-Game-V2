@@ -445,6 +445,7 @@ function draw() {
   drawItFx(); // and his Instant Transmission zip lines and hard shot (instant-transmission.js)
   drawTornadoOver(); // the Rose Tornado and the roses flying out of it (ilia-tornado.js)
   drawRingBear(); // Khabib's bear, or the dust cloud it's fighting in (khabib-bear.js)
+  drawNateLion(); // Nate Diaz's lion (nate-lion.js)
   drawDuckOver();      // the duck, smoke and feathers, his superhero landing (jon-duck.js)
   drawEagleStrikeOver();  // the eagle swooping through, and its claw marks (gaethje-eagle.js)
   drawSuplexes();
