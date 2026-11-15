@@ -2619,9 +2619,9 @@ var SAVED_ROSTER = [
     },
     "ngannou": {
       "rage": {
-        "hitFill": 6,
-        "dmgFill": 0.135,
-        "missFill": 12,
+        "hitFill": 8,
+        "dmgFill": 0.18,
+        "missFill": 16,
         "first": 8,
         "grow": 1.22,
         "stalk": 3,

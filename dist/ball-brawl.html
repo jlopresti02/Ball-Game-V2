@@ -5902,7 +5902,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 16,
+    "rev": 18,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -5961,7 +5961,8 @@ var SAVED_ROSTER = [
       "finPunchDamage": 10,
       "sprawlChance": 30,
       "reattackChance": 50,
-      "vsGrapplerChance": 50
+      "vsGrapplerChance": 50,
+      "stuffChance": 30
     },
     "hasPowerPunch": false,
     "hasRage": false,
@@ -5998,26 +5999,49 @@ var SAVED_ROSTER = [
       "cooldown": 3.4,
       "speed": 0.3,
       "reach": 12,
-      "knockback": 180,
-      "clinch": {
-        "first": [
-          4,
-          7
-        ],
-        "every": [
-          8,
-          12
-        ],
-        "range": 16,
-        "knees": [
-          2,
-          4
-        ],
+      "knockback": 180
+    },
+    "clinch": {
+      "first": [
+        4,
+        7
+      ],
+      "every": [
+        7,
+        10
+      ],
+      "range": 16,
+      "tie": "plum",
+      "reach": 0.26,
+      "evade": 10,
+      "weaverEvade": 10,
+      "strikes": [
+        3,
+        5
+      ],
+      "gap": 0.34,
+      "mix": {
+        "bodyKnee": 3,
+        "headKnee": 3,
+        "elbow": 1
+      },
+      "knee": {
         "damage": 8,
-        "gap": 0.4,
-        "escape": 15,
-        "grapplerEscape": 10,
-        "knockback": 380
+        "headDamage": 11,
+        "critChance": 35,
+        "critMult": 2
+      },
+      "ramp": 10,
+      "escape": 12,
+      "grapplerEscape": 10,
+      "knockback": 400,
+      "open": 0.6,
+      "parting": {
+        "chance": 40,
+        "mix": {
+          "knee": 2,
+          "elbow": 1
+        }
       }
     },
     "kamehameha": {
@@ -7402,7 +7426,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-francis-ngannou",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Francis Ngannou",
@@ -9295,7 +9319,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 10,
+    "rev": 11,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
@@ -9348,7 +9372,8 @@ var SAVED_ROSTER = [
       "finPunches": 3,
       "finPunchDamage": 10,
       "sprawlChance": 30,
-      "reattackChance": 50
+      "reattackChance": 50,
+      "stuffChance": 12
     },
     "hasSuplex": true,
     "suplex": {
@@ -9415,6 +9440,11 @@ var SAVED_ROSTER = [
       "shellTime": 5
     },
     "blockChance": 10,
+    "chin": {
+      "critChance": 15,
+      "critMult": 1.5,
+      "text": "CHIN UP! CRIT!"
+    },
     "knee": {
       "clinch": {
         "first": [
@@ -12885,7 +12915,8 @@ function hurt(b, amount, source, attackerId) {
   amount *= cormierDamageMult(b, source, attackerId); // Daniel Cormier full of cake, and harder on Jon Jones (cormier.js)
   amount *= pratesDamageMult(b, source, attackerId); // Carlos Prates wide open lighting up, and his knees crit in the clinch (prates.js)
   amount *= prochazkaChin(b, source, attackerId); // Jiří Procházka's hands low: what lands is often a crit (prochazka.js)
-  amount *= ganeDamageMult(b, source, attackerId); // Ciryl Gane's hands down: crits, and strikes up close hurt more (gane.js)
+  amount *= ganeDamageMult(b, source, attackerId); // Ciryl Gane's hands down: strikes up close hurt more (gane.js)
+  amount *= chinCritMult(b, source, attackerId); // a chin that gets cracked: Khabib's chin up, Gane's hands down (chin.js)
   amount *= hokitChin(b, source, attackerId); // Josh Hokit walking onto shots: some land as crits (hokit-pressure.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
@@ -14317,6 +14348,7 @@ function attemptGrab(attacker, target) {
     return false;
   }
   if (tryTddSprawl(attacker, target)) return false; // takedown defense without grappling (ilia.js)
+  if (tryShotStuffed(attacker, target)) return false; // his shot gets stuffed anyway: Khabib, Charles Oliveira (stuffed-shots.js)
   if (tryJonTakedown(attacker, target)) return true; // GOAT Jon Jones: to the back, or ground and pound (jon.js)
   if (tryKhabibOnConor(attacker, target)) return true; // Khabib vs Conor McGregor: to the back, or ground and pound (conor.js)
   if (tryFergusonTakedown(attacker, target)) return true; // Tony Ferguson's shot: into the buggy choke, his D'Arce or elbows (ferguson.js)
@@ -56147,22 +56179,13 @@ function ganeWeaveMult(b, attackerId) {
 }
 
 // From hurt() (match.js), with the damage multipliers: up close strikes hurt
-// more, and with his hands down a strike that lands is often a crit.
+// more. (With his hands down a strike that lands is often a crit: his
+// `chin` runs through the shared chin, chin.js, right after this.)
 function ganeDamageMult(b, source, attackerId) {
   var c = ganeCfg(b);
   if (!c || attackerId == null || attackerId === b.id || !b.alive) return 1;
   var a = balls[attackerId], m = 1;
   if (c.closeHurt && GN_STRIKES[source] && gnGap(b, a) < (c.close || 30)) m *= c.closeHurt;
-  var ch = c.chin;
-  if (ch && (ch.sources || []).indexOf(source) >= 0 && Math.random() * 100 < ch.critChance) {
-    var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
-    floater(b.x, b.y - b.r - 34, "CRIT!", "crit");
-    impacts.push({ x: b.x - ux * b.r, y: b.y - uy * b.r, nx: -ux, ny: -uy, life: 0.3, max: 0.3, color: "#ffffff" });
-    b.squash = { t: 0.12, max: 0.12, nx: -ux, ny: -uy };
-    hitStop = Math.max(hitStop, 0.04);
-    if (!reduceMotion) shake = Math.max(shake, 9);
-    m *= ch.critMult;
-  }
   return m;
 }
 
@@ -56198,6 +56221,68 @@ function ganeGalleryMoves(ch, add) {
   if (c.footwork) add("🔙", "Back foot", "Fights going backwards: backs off at an angle as they come in, circles at range, steps in to kick and backs straight out. Kicks them as they come charging in.");
   if (c.closeHurt || c.closeWeave != null) add("⚠️", "Up close", "Inside " + (c.close || 30) + " his weave works x" + (c.closeWeave != null ? c.closeWeave : 1) + " as often and strikes do x" + (c.closeHurt || 1) + " damage. Pressure and combinations are his bad nights.");
   if (c.shotsIn > 1) add("🤼", "Shots get in", "A Grappler's grabs come round " + c.shotsIn + "x as fast against him.");
+}
+
+// A chin that gets cracked (Christian, 2026-11-15), for any fighter with a
+// `chin` block (Khabib Nurmagomedov fights with his chin up), and taken out
+// of Ciryl Gane's file so it's shared: his hands-down chin (`gane.chin`)
+// runs through here too, exactly as before.
+//
+// Chin    `critChance`% of the strikes in `sources` that land on him are
+//         critical hits for `critMult`x: `text` over his head ("CRIT!"
+//         unless it's set), a white flash where it landed, a jolt and a
+//         short freeze.
+//
+// A fighter with no `chin` block takes hits exactly as before. Jiří
+// Procházka keeps his own (`prochazka.chin`, with the crack and the sound).
+
+var CHIN_SOURCES = ["punch", "jab", "kick", "kickback", "elbow", "knee", "combo", "swing", "teep", "flow", "bat", "poke"];
+
+function chinCfg(b) {
+  var ch = b && b.char;
+  if (!ch) return null;
+  return ch.chin || (ch.gane && ch.gane.chin) || null;
+}
+
+// From hurt() (match.js), with the damage multipliers: 1, or `critMult`.
+function chinCritMult(b, source, attackerId) {
+  var ch = chinCfg(b);
+  if (!ch || attackerId == null || attackerId === b.id || !b.alive) return 1;
+  if ((ch.sources || CHIN_SOURCES).indexOf(source) < 0 || Math.random() * 100 >= ch.critChance) return 1;
+  var a = balls[attackerId], dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+  floater(b.x, b.y - b.r - 34, ch.text || "CRIT!", "crit");
+  impacts.push({ x: b.x - ux * b.r, y: b.y - uy * b.r, nx: -ux, ny: -uy, life: 0.3, max: 0.3, color: "#ffffff" });
+  b.squash = { t: 0.12, max: 0.12, nx: -ux, ny: -uy };
+  hitStop = Math.max(hitStop, 0.04);
+  if (!reduceMotion) shake = Math.max(shake, 9);
+  return ch.critMult;
+}
+
+// The fighter card (gallery.js). Gane's card says it itself (gane.js).
+function chinGalleryMoves(ch, add) {
+  if (!ch.chin) return;
+  add("🎯", "Chin up", ch.chin.critChance + "% of the strikes that land on him are critical hits for " + ch.chin.critMult + "x" +
+    (ch.chin.text ? " (\"" + ch.chin.text + "\")" : "") + ".");
+}
+
+// Shots that get stuffed (Christian, 2026-11-15). Khabib Nurmagomedov's and
+// Charles Oliveira's takedowns landed almost every time, because whether a
+// shot lands was only ever up to the one being shot on.
+//
+// A Grappler with `stuffChance` in his `grapple` block gets that % of his
+// takedown shots stuffed, on top of whatever takedown defense they have
+// (their sprawl, or a `tdd` block); half as often in the Do Bronx state,
+// like a sprawl. They sprawl on it ("SPRAWL"): a Grappler then scrambles for
+// the reattack as usual, anyone else stuffs it ("STUFFED") and comes
+// straight back with punches (ilia.js). Leave it out and his shots land
+// exactly as before. From attemptGrab (grapple-duel.js), after their own
+// sprawl.
+function tryShotStuffed(attacker, target) {
+  var gr = attacker.char.grapple;
+  if (!gr || !gr.stuffChance || !target.alive || target.sprawl || target.sprawled) return false;
+  if (Math.random() * 100 >= gr.stuffChance * (attacker.doBronx ? 0.5 : 1)) return false;
+  beginSprawl(attacker, target);
+  return true;
 }
 
 // Anderson Silva, "The Spider" (Christian, 2026-11-13; finished 2026-11-14).
@@ -75633,6 +75718,7 @@ function galleryMoves(ch) {
   if (ch.fedor) fedorGalleryMoves(ch, add); // Fedor Emelianenko (fedor.js)
   if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
   if (ch.knee) kneeGalleryMoves(ch, add); // knees, the clinch, the flying knee (knees.js)
+  if (ch.chin) chinGalleryMoves(ch, add); // a chin that gets cracked (chin.js)
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
   if (ch.clinch) clinchGalleryMoves(ch, add); // the clinch and the parting shot on the break (clinch.js)
   if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
@@ -76377,17 +76463,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115022838"></script>
-  <script src="js/game/tale-tape.js?v=20261115022838"></script>
-<script src="js/game/watchdog.js?v=20261115022838"></script>
-<script src="js/game/update.js?v=20261115022838"></script>
-<script src="js/game/fighter-art.js?v=20261115022838"></script>
-<script src="js/game/draw-attacks.js?v=20261115022838"></script>
-<script src="js/game/wwit-badge.js?v=20261115022838"></script>
-<script src="js/game/stadium.js?v=20261115022838"></script>
-<script src="js/game/draw.js?v=20261115022838"></script>
-<script src="js/ui/gallery.js?v=20261115022838"></script>
-<script src="js/ui/saved-fights.js?v=20261115022838"></script>
-<script src="js/main.js?v=20261115022838"></script>
+  <script src="js/game/intro-msg.js?v=20261115023438"></script>
+  <script src="js/game/tale-tape.js?v=20261115023438"></script>
+<script src="js/game/watchdog.js?v=20261115023438"></script>
+<script src="js/game/update.js?v=20261115023438"></script>
+<script src="js/game/fighter-art.js?v=20261115023438"></script>
+<script src="js/game/draw-attacks.js?v=20261115023438"></script>
+<script src="js/game/wwit-badge.js?v=20261115023438"></script>
+<script src="js/game/stadium.js?v=20261115023438"></script>
+<script src="js/game/draw.js?v=20261115023438"></script>
+<script src="js/ui/gallery.js?v=20261115023438"></script>
+<script src="js/ui/saved-fights.js?v=20261115023438"></script>
+<script src="js/main.js?v=20261115023438"></script>
 </body>
 </html>
