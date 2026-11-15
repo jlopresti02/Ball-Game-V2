@@ -50,6 +50,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Tony Ferguson's shuffle closes the distance and fires elbows, spinning elbows, kicks or a shot off the slide (`ferguson.slide` close/attack keys); his katana cuts a bit deeper (damage 7, finisher 18, clash win 30). Joe's look and Joe's burrito-as-first-Kaioken unchanged | Christian's Claude | live on main |
 | Ciryl Gane's Herb Dean special hits a bit softer and ends a bit sooner (bat 10, finisher 34, cane 7; Herb joins for 2s and the beating stops at 6s via `special.herbJoined` / `special.beatMax` in herbdean.js) | Christian's Claude | live on main |
 | Alex Pereira holds the middle of the ring and lets them come to him (opt-in `center` part in the shared `movement.js`, his `movement` block); his head kick misses more (lands 40%) but takes exactly 100 HP when it lands, 8% of those a knockout (`headKick.damageHp`, new in head-kick.js); CHAMA only once they're under 35% health or 40s into the fight (`poatan.chama.whenHurt` / `whenLate`) | Christian's Claude | live on main |
+| Carlos Prates's look from Joe's photos (`prates-skin.js`, `look.pratesSkin`): curly top with a Clark Kent curl and faded sides, pencil moustache and light goatee, throat letters and neck vine, traced "Muay Thai" on his chest only, navel ring, a different traced sleeve on each arm (only on his arms, `tattoos.armDecalRight` / `armDecalLeft`). See Joe's calls on looks below | Joe | live on main |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
@@ -61,6 +62,7 @@ Christian's Claude must not revert, undo or overwrite anything Joe (or Joe's Cla
 ### Joe's calls on looks (don't change these back)
 
 - **Tony Ferguson** (Joe, 2026-11-15): olive skin `#c49a6c`, black hair `#17130f`, dark stubble `#2a211a`, with his real arm tattoo and the higher headband (PR #92). Joe asked for this look; please don't switch him back to light skin or blonde hair. Ask Joe first if you think a look should change.
+- **Carlos Prates** (Joe, 2026-11-15): Joe's look from four photos (`prates-skin.js`, turned on by `look.pratesSkin` in characters/carlos-prates.json). His tattoos are mapped to the real body parts; arm ink shows only on his arms, the chest script only on his chest. Please leave his hair, face, tattoos and decals as they are and ask Joe first.
 
 ## Working in the same files
 
