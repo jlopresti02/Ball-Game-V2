@@ -2256,7 +2256,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 17,
+    "rev": 18,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
@@ -2374,7 +2374,7 @@ var SAVED_ROSTER = [
       "move": "igbb",
       "chargeTime": 58,
       "hitCut": 5,
-      "punches": 7,
+      "punches": 9,
       "damage": 20,
       "shellTime": 5
     },
