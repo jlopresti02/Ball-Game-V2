@@ -1,6 +1,6 @@
 {
   "id": "c-sean-omalley",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "bantamweight",
   "name": "Sean O'Malley",
@@ -80,15 +80,17 @@
     "hairStart": 6,
     "hairTag": true,
     "hairTagGap": 8,
-    "voice": { "start": 100, "win": true, "wait": 8, "candy": 30, "gap": 5, "snipeAim": 25, "snipeLand": 30, "rightHand": 50, "bigShot": 30, "combo": 60, "comeback": 75, "comebackDown": 100 },
+    "voice": { "start": 100, "win": true, "wait": 8, "candy": 30, "gap": 5, "snipeAim": 25, "snipeLand": 30, "rightHand": 50, "bigShot": 30, "combo": 60, "comeback": 75, "comebackDown": 100, "loss": true },
     "lines": {
-      "start": ["Every single fight I go into, I'm looking for the knockout.", "Welcome to the Suga Show."],
-      "sniper": ["I'm a sniper. I'm gonna snipe his chin. I'm gonna find it."],
+      "start": ["Every single fight I go into, I'm looking for the knockout.", "Welcome to the Suga Show.", "I've been knocking people out since I was 16 years old."],
+      "sniper": ["I'm a sniper. I'm gonna snipe his chin. I'm gonna find it.", "It only takes one mistake against me."],
       "rightHand": ["I know what I possess in this right hand, baby."],
       "bigShot": ["I don't even know if that was a mistake. I'm just that good."],
       "combo": ["Ah, that was sexy."],
       "comeback": ["Championship mindset, baby!"],
-      "candy": [], "donut": [], "sugarHigh": [], "crash": [], "wakeUp": []
+      "candy": [], "donut": [], "sugarHigh": [], "crash": [], "wakeUp": [],
+      "win": ["Is this real?", "God, it feels good to win. I hate losing. [BLEEP], this feels good."],
+      "loss": ["Yeah, I didn't feel like it was gonna go like that."]
     },
     "linesVs": { "c-ilia-topuria": { "start": ["Dana, give me a jet to Spain, baby. I'm coming for Ilia Topuria."] } }
   },

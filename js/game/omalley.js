@@ -72,8 +72,9 @@
 //             rather than be dropped): one of `start` at the start of
 //             `voice.start`% of fights (100; against Ilia Topuria his
 //             `linesVs` callout instead), "Welcome to the Suga Show." on every
-//             Sugar Rush, and "Is this real?" on every win (or `comeback` if
-//             he won from behind and hasn't said it yet). Now and then, at
+//             Sugar Rush, one of `win` on every win (or `comeback` if
+//             he won from behind and hasn't said it yet), and one of `loss`
+//             after every loss (`voice.loss`). Now and then, at
 //             most one every `voice.gap` seconds: `sniper` as he lines one up
 //             (`voice.snipeAim`%) or lands it (`snipeLand`%), `rightHand`
 //             after a SNIPED! (`rightHand`%), `bigShot` after a crane kick or
@@ -95,6 +96,7 @@ var SG_TAG = 1.6;         // how long the hair-colour event tag stays up
 var SG_POP = 0.3;         // the SUGAR pill swelling when it goes up
 var SG_PULL = 480;        // how fast a candy slides into him (the magnet)
 var SG_WIN_BEAT = 0.7;    // "Is this real?" this long after the win
+var SG_LOSS_BEAT = 1.8;   // his loss line no sooner than this after the loss
 var SG_KO_HOLD = 1.5;     // the walk-off after a Suga KO, before it's called
 var SG_SNIPE_SETTLE = 0.16; // pulling the right hand back after a snipe lands
 var SG_GUMMY = ["#ff3b3b", "#35c64a", "#ff9f1c", "#ffcf1f"];
@@ -181,7 +183,7 @@ function resetOmalley() {
 }
 // From makeBall.
 function initOmalley(b) {
-  b.crane = null; b.sugaCrit = null; b.sgDrift = null; b.sgHuntT = 0; b.sgSaid = null; b.sgWon = false; b.sgKo = null;
+  b.crane = null; b.sugaCrit = null; b.sgDrift = null; b.sgHuntT = 0; b.sgSaid = null; b.sgWon = false; b.sgLost = false; b.sgKo = null;
   b.sgSnipe = null; b.sgLineT = -99; b.sgDown = false; b.sgBack = false; b.sgCmb = null; b.sgDue = null; b.sgBackTry = 0;
   var cfg = sgCfg(b);
   if (!cfg) return;
@@ -789,16 +791,26 @@ function tickOmalley(dt) {
     }
   });
 
-  // Every win: "Is this real?" ("Championship mindset, baby!" if he won it
-  // from behind and hasn't said it yet), waiting for the knockout call.
+  // Every win: one of `win` ("Is this real?", "God, it feels good to win...")
+  // ("Championship mindset, baby!" if he won it from behind and hasn't said
+  // it yet), waiting for the knockout call.
   if (over) {
     sgWinT += dt;
     sugas.forEach(function (b) {
       var v = sgCfg(b).voice || {};
       if (v.win && b.alive && !balls[1 - b.id].alive && !b.sgWon && sgWinT >= SG_WIN_BEAT) {
         b.sgWon = true;
-        var back = b.sgDown && !b.sgBack ? sgLines(b, "comeback") : null;
-        sgSayAlways(b, back && back.length ? pickLine(b, back, "comeback") : "Is this real?");
+        var back = b.sgDown && !b.sgBack ? sgLines(b, "comeback") : null, won = sgLines(b, "win");
+        sgSayAlways(b, back && back.length ? pickLine(b, back, "comeback") : won && won.length ? pickLine(b, won, "win") : "Is this real?");
+      }
+      // Every loss (`voice.loss`): one of `loss` ("Yeah, I didn't feel like
+      // it was gonna go like that.") once the knockout call and the winner
+      // are done, for up to `voice.wait` seconds (he's down, so sgSayAlways
+      // can't carry it).
+      var lost = sgLines(b, "loss"), o = balls[1 - b.id];
+      if (v.loss && !b.alive && o.alive && !b.sgLost && sgWinT >= SG_LOSS_BEAT && lost && lost.length) {
+        if (sgWinT > SG_LOSS_BEAT + (v.wait || 8)) b.sgLost = true;
+        else if (!speaking(b) && !speaking(o) && sgTalkClear()) { b.sgLost = true; say(b, pickLine(b, lost, "loss")); }
       }
     });
   }
