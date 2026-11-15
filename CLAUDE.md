@@ -45,6 +45,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Francis Ngannou's Hulk punch telegraphs before it comes, and from far enough away it can be dodged (`rage.escape`, ngannou.js); close in it still lands. His rage fills as before | Christian's Claude | live on main |
 | Justin Gaethje chops the calf on the shared leg kick (his own timer; three in a row and the leg gives out); Alex Pereira's head kick follows his calf kicks (`head-kick.js`, `headKick` block) | Christian's Claude | live on main |
 | Sean Strickland keeps them at the end of his jab (opt-in spacing mode in `movement.js`) and his America is all his (no grabs, shots or punches on him; they back off dazed); Strickland and Ilia stuff more shots (takedown defense 80 and 68) | Christian's Claude | live on main |
+| Christian's calls from watching: Charles Oliveira's clinch is normal strength (Do Bronx doubles it, `special.clinchMult`); Ngannou's Hulk punch is slipped about 3 in 4 unless they're touching (`rage.escape`); Pereira's head kick lands half the time, half of those knock out, and a miss leaves him off balance to get shot on or punished (`headKick.miss*`); his CHAMA counters fighters closing in (`poatan.chama`); Gaethje answers 90% of grabs with a 1.22x uppercut | Christian's Claude | live on main |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
