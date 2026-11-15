@@ -225,7 +225,7 @@ function drawHookFist(self, other) {
     ctx.strokeStyle = armColor(self.char); ctx.lineWidth = pu.size * 0.6;
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(f.x, f.y); ctx.stroke();
   }
-  if (s === 1) drawTracedArm(ctx, self.char, sx, sy, f.x, f.y, pu.size * 0.6); // sleeve on one arm only (as drawFist)
+  if (s === 1 || hasTwoSleeves(self.char)) drawTracedArm(ctx, self.char, sx, sy, f.x, f.y, pu.size * 0.6, s); // sleeve on one arm only (as drawFist)
   ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = heat > 0 ? "#e0281c" : theme.wall; ctx.lineWidth = heat > 0 ? 4 : 3;
   ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   if (f.phase === "coil") {

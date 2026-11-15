@@ -1427,6 +1427,7 @@ function drawPratesOver() {
 // round his neck ("NOTHING CAN STOP ME") and MUAY THAI across his chest.
 // Brush strokes stand in for the lettering at fight size; it reads up close.
 function drawPratesInk(c, r, look, lw) {
+  if (look.pratesSkin) { drawPratesSkinHead(c, r, look, lw); return; } // his real hair, face and neck ink from Joe's photos (prates-skin.js)
   c.save();
   c.strokeStyle = "rgba(18,22,30,0.55)"; c.fillStyle = "rgba(18,22,30,0.6)"; c.lineCap = "round";
   c.lineWidth = lw(0.016);

@@ -53,6 +53,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Tony Ferguson's burrito ki barrage hits much harder (Christian asked for this change to Joe's numbers): fireballs 3 (was 1), the big one 42 (was 14), its slam 12 (was 4) (`ferguson.burrito.barrage`) | Christian's Claude | live on main |
 | Sean O'Malley's four new real voice lines: "knocking people out since I was 16" (start), "It only takes one mistake against me" (sniper), "God, it feels good to win" (win) and "I didn't feel like it was gonna go like that" (new `voice.loss`), clips in `voice-clips.js` | Christian's Claude | live on main |
 | Sean Strickland's four new real voice lines: "Peter Pan kicks" (start), "I love this country" (America), "blood splatter" (new `lines.combo`, once a fight on a landed one-two or Chuck Norris) and "It was a war. I'm salty" (new `lines.lose`), clips in `voice-clips.js` | Christian's Claude | live on main |
+| Carlos Prates's look from Joe's photos (`prates-skin.js`, `look.pratesSkin`): curly top with a Clark Kent curl and faded sides, pencil moustache and light goatee, throat letters and neck vine, traced "Muay Thai" on his chest only, navel ring, a different traced sleeve on each arm (only on his arms, `tattoos.armDecalRight` / `armDecalLeft`). See Joe's calls on looks below | Joe | live on main |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
@@ -64,6 +65,7 @@ Christian's Claude must not revert, undo or overwrite anything Joe (or Joe's Cla
 ### Joe's calls on looks (don't change these back)
 
 - **Tony Ferguson** (Joe, 2026-11-15): olive skin `#c49a6c`, black hair `#17130f`, dark stubble `#2a211a`, with his real arm tattoo and the higher headband (PR #92). Joe asked for this look; please don't switch him back to light skin or blonde hair. Ask Joe first if you think a look should change.
+- **Carlos Prates** (Joe, 2026-11-15): Joe's look from four photos (`prates-skin.js`, turned on by `look.pratesSkin` in characters/carlos-prates.json). His tattoos are mapped to the real body parts; arm ink shows only on his arms, the chest script only on his chest. Please leave his hair, face, tattoos and decals as they are and ask Joe first.
 
 ## Working in the same files
 
