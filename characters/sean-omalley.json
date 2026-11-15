@@ -1,6 +1,6 @@
 {
   "id": "c-sean-omalley",
-  "rev": 4,
+  "rev": 5,
   "builtin": false,
   "weightClass": "bantamweight",
   "name": "Sean O'Malley",
@@ -34,9 +34,9 @@
   "hasProjectile": false,
   "proj": { "size": 7, "speed": 460, "damage": 10, "cooldown": 1.6, "imgData": null },
   "hasPunch": true,
-  "punch": { "damage": 25, "cooldown": 1.25, "speed": 0.26, "size": 13, "knockback": 120, "reach": 38, "koChance": 0 },
+  "punch": { "damage": 21.25, "cooldown": 1.25, "speed": 0.26, "size": 13, "knockback": 120, "reach": 38, "koChance": 0 },
   "hasKick": true,
-  "kick": { "damage": 36, "cooldown": 2.6, "speed": 0.45, "size": 15, "knockback": 450, "reach": 76, "checkChance": 25 },
+  "kick": { "damage": 30.6, "cooldown": 2.6, "speed": 0.45, "size": 15, "knockback": 450, "reach": 76, "checkChance": 25 },
   "hasGrapple": false,
   "hasPowerPunch": false,
   "hasRage": false,
@@ -50,8 +50,8 @@
   "suga": {
     "crit": { "chance": 40, "mult": 2 },
     "critKo": { "base": 20, "low": 50, "after": 14, "sugar": 6 },
-    "snipe": { "first": [3, 5], "every": [5.5, 8.5], "minGap": 60, "maxGap": 240, "aim": 0.6, "lock": 0.12, "track": 9, "speed": 1150, "turn": 3, "reach": 34, "damage": 36, "crit": 15, "knockback": 560, "miss": 0.35, "readChance": 15 },
-    "craneKick": { "first": [4, 7], "every": [6, 9], "range": 100, "pose": 0.6, "leap": 0.22, "lunge": 760, "reach": 34, "damage": 45, "knockback": 900, "wallSlams": 1, "slamDamage": 6, "readChance": 25 },
+    "snipe": { "first": [3, 5], "every": [5.5, 8.5], "minGap": 60, "maxGap": 240, "aim": 0.6, "lock": 0.12, "track": 9, "speed": 1150, "turn": 3, "reach": 34, "damage": 30.6, "crit": 15, "knockback": 560, "miss": 0.35, "readChance": 15 },
+    "craneKick": { "first": [4, 7], "every": [6, 9], "range": 100, "pose": 0.6, "leap": 0.22, "lunge": 760, "reach": 34, "damage": 38.25, "knockback": 900, "wallSlams": 1, "slamDamage": 5.1, "readChance": 25 },
     "candy": {
       "first": [1, 2], "every": [1, 1.8], "max": 6, "life": 12, "fall": 0.55, "gap": 70, "reach": 3, "magnet": 30,
       "kinds": {
