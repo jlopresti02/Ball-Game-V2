@@ -318,6 +318,16 @@ Everything is in his character file under `strickland` (leave a block out and th
 
 A small strike any fighter can have, not just Strickland: `"hasTeep": true` and a `teep` block. The logic is in `js/game/teep.js`. When they're inside `range` (edge to edge) and, with `onlyClosing`, moving in on him, and it's off `cooldown`, he plants and lifts the knee for `chamber` seconds (the tell), then drives the foot straight out at them, sole first (`extend`). If they're inside `reach` it lands ("TEEP"): `damage`, and a shove straight back at `push` that stops them in their tracks; with `stuff`, anything they were winding up (a punch, a kick, a haymaker) is knocked out of them. A slipped teep does nothing, a blocked one still shoves them back `blockPush` of the way, and out of reach it's a "WHIFF". He holds the leg out for `hold`, then brings it back down (`recover`). It hurts as the source `"teep"`: it can be slipped or blocked like any strike, but never kick-checked. A fighter's own code can ask for one with `forceTeep(b)`.
 
+### Movement styles
+
+How a fighter moves round the ring, for any fighter: a `movement` block in the character file. The logic is in `js/game/movement.js`. Without the block a fighter moves exactly as before. It only steers which way he's heading (never his speed), and only in ordinary movement, so a grab, a knockback, a dizzy spell or a special leaves him alone. Each part is its own block; leave one out and that part is off.
+
+- **Walks them down** (`press`): he keeps turning back toward them at `turn` radians a second, aiming where they'll be `lead` seconds from now, so he's always coming forward. Ilia Topuria (turn 7, lead 0.2) and Khabib Nurmagomedov (turn 4) have it.
+- **Reset** (`reset`): after a combination of at least `combo` punches (3) he stops pressing for `time` seconds (0.15-0.3), then walks straight back in. Ilia.
+- **Cuts the cage** (`cutCage`): he works round to the middle-of-the-ring side of them before he comes in (`weight` 0.9), so running into them shoves them back toward the cage. It fades out when they're within `fade` px (80) of the middle. Khabib.
+- **Side step** (`sideStep`): every `every` seconds (6-10), at the next free moment with the gap between them inside `gap`, he steps `angle` degrees (55) off the line to them, to a random side, for `time` seconds (0.2-0.3), with a scuff of dust, then comes straight back in. Much smaller and rarer than Volkanovski's circling. Khabib.
+- **Takedowns on the cage** (`cageShots`): with them within `near` px (30) of the cage and him within `within` px (40) of them, his takedown cooldown runs `rate` times as fast (2), so he shoots more often. Khabib.
+
 ### Chuck Norris in America
 
 Sean Strickland's America gets a guest. Everything is in Strickland's character file under `special.norris` (leave it out, or `"on": false`, and America plays exactly as before). The logic is in `js/game/chuck-norris.js`.
@@ -559,6 +569,7 @@ js/game/rapier.js Ilia Topuria's Spanish rapier and lunge (on the sword clash in
 js/game/khabib-bear.js Khabib's ring bear (the dust cloud fight, the bear toss)
 js/game/omalley.js     Sean O'Malley's crits, sniper's right hand, crane kick, candy rain, sugar, sugar high and crash, Suga KO, his lines and Sugar Rush
 js/game/teep.js        The teep, a front push kick any fighter can have (Sean Strickland's)
+js/game/movement.js    Movement styles any fighter can have: walking them down, cutting the cage, side steps (Ilia's and Khabib's)
 js/game/strickland.js  Sean Strickland's range, Philly shell, one-two, pace, trauma meter, rivals and America
 js/game/bisping.js     Michael Bisping's eye patch and skull shorts, hit and move, side steps around kicks, scorecard, clinch elbows, stuffed-shot punish, voice lines and Broadside
 js/game/chuck-norris.js Chuck Norris, Strickland's guest in America: the rappel, the roundhouse, the walk-away explosion

@@ -2642,7 +2642,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 10,
+    "rev": 11,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -2757,6 +2757,20 @@ var SAVED_ROSTER = [
     "hasWeave": false,
     "hasSwing": false,
     "hasForget": false,
+    "movement": {
+      "after": 0.6,
+      "press": {
+        "turn": 7,
+        "lead": 0.2
+      },
+      "reset": {
+        "combo": 3,
+        "time": [
+          0.15,
+          0.3
+        ]
+      }
+    },
     "blockChance": 10,
     "hasSpecial": true,
     "special": {
@@ -4057,7 +4071,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 9,
+    "rev": 10,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
@@ -4124,6 +4138,38 @@ var SAVED_ROSTER = [
     "hasWeave": false,
     "hasSwing": false,
     "hasForget": false,
+    "movement": {
+      "after": 0.6,
+      "press": {
+        "turn": 4,
+        "lead": 0.1
+      },
+      "cutCage": {
+        "weight": 0.9,
+        "fade": 80
+      },
+      "sideStep": {
+        "every": [
+          6,
+          10
+        ],
+        "time": [
+          0.2,
+          0.3
+        ],
+        "angle": 55,
+        "turn": 14,
+        "gap": [
+          0,
+          150
+        ]
+      },
+      "cageShots": {
+        "near": 30,
+        "within": 40,
+        "rate": 2
+      }
+    },
     "hasSpecial": true,
     "groundElbows": {
       "on": [

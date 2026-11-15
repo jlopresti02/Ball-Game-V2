@@ -161,6 +161,7 @@ function galleryMoves(ch) {
   }
   if (ch.gsp) gspGalleryMoves(ch, add); // Georges St-Pierre (gsp.js)
   if (ch.volk) volkGalleryMoves(ch, add); // Alexander Volkanovski (volkanovski.js)
+  if (ch.movement) movementGalleryMoves(ch, add); // walking them down, cutting the cage, side steps (movement.js)
   if (ch.holloway) hollowayGalleryMoves(ch, add); // Max Holloway (holloway.js)
   if (ch.van) vanGalleryMoves(ch, add); // Joshua Van (van.js)
   if (ch.strickland) stricklandGalleryMoves(ch, add); // Sean Strickland (strickland.js)
