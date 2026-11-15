@@ -183,6 +183,7 @@ function galleryMoves(ch) {
   if (ch.cormier) cormierGalleryMoves(ch, add); // Daniel Cormier (cormier.js)
   if (ch.prates) pratesGalleryMoves(ch, add); // Carlos Prates (prates.js)
   if (ch.prochazka) prochazkaGalleryMoves(ch, add); // Jiří Procházka (prochazka.js)
+  maxHpGalleryMoves(ch, add); hokitPressureGalleryMoves(ch, add); // a lot of health (max-hp.js), Josh Hokit's pressure (hokit-pressure.js)
   if (ch.mightyMouse) {
     // Demetrious "Mighty Mouse" Johnson (mighty-mouse.js).
     var mm = ch.mightyMouse;

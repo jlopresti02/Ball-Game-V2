@@ -576,7 +576,7 @@ function drawJumbotron(px) {
     var bx = right ? nx - bw : nx, by = sy + 92, bh = 30;
     ctx.fillStyle = "#1b2238"; ctx.fillRect(bx, by, bw, bh);
     // Recent damage shows as a pale ghost, like the regular health bars
-    var gw = bw * Math.max(0, b.shown) / MAX_HP, fw = bw * Math.max(0, b.hp) / MAX_HP;
+    var gw = Math.min(bw, bw * Math.max(0, b.shown) / MAX_HP), fw = Math.min(bw, bw * Math.max(0, b.hp) / MAX_HP); // (health over 500 is a layer on top, max-hp.js)
     ctx.fillStyle = "rgba(255,255,255,0.35)";
     ctx.fillRect(right ? bx + bw - gw : bx, by, gw, bh);
     var hg = ctx.createLinearGradient(0, by, 0, by + bh);
@@ -584,6 +584,7 @@ function drawJumbotron(px) {
     ctx.fillStyle = hg; ctx.shadowColor = glow; ctx.shadowBlur = 12;
     ctx.fillRect(right ? bx + bw - fw : bx, by, fw, bh);
     ctx.shadowBlur = 0;
+    drawExtraHp(b, bx, by, bw, bh, right); // health over 500 (max-hp.js)
     ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, bh);
     jtText(String(Math.ceil(b.hp)), right ? bx + bw - 8 : bx + 8, by + bh / 2 + 1, 27, "#ffffff", right ? "right" : "left", "#000000");
 

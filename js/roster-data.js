@@ -3742,12 +3742,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-josh-hokit",
-    "rev": 14,
+    "rev": 16,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Josh Hokit",
     "base": "BMF",
-    "bio": "\"The Fresno Freight Train\". Built on the BMF base: rapid 5-damage jabs and slips three quarters of what's thrown at him. 5% of the time he bumps into someone he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Now and then he straps on his football helmet, gets down in a three-point stance and charges a red path across the ring, running over whoever is still in it, while the jumbotron plays an ad for the San Francisco 67'ers. When his opponent pulls out a weapon, or once at random, he turns to the Dark Side: a black hooded robe and a red lightsaber, no wrestling moves. His saber clashes with bats, clubs and swords, and if anyone knocks it out of his hand he pulls it straight back with the Force and Force pushes them across the ring. Once in the form he can call in the Death Star, whose green superlaser blasts the middle of the ring. Special move: Chair Shot, then a ladder: he stands one up in the middle of the ring, climbs it and dives off it in a body slam and throws the ladder at them.",
+    "bio": "\"The Fresno Freight Train\". Built on the BMF base: he comes forward all fight, walking straight in with combinations of rapid 5-damage punches instead of slipping and celebrating, and he stuffs almost every takedown shot. He has a lot of health (800 to everyone else's 500), but walking forward he eats crits. Now and then, up close, he shoots a double leg that always lands, straight into an armbar, then lets them escape every time. Every few seconds he gives his opponent a thumbs down, and they come storming straight at him. A few times a fight he runs to a corner, climbs the top rope and comes flying off it in a body slam onto a red circle wherever they are: 35 damage and a slam into the cage if they're still inside it when he lands. Now and then he straps on his football helmet, gets down in a three-point stance and charges a red path across the ring, running over whoever is still in it, while the jumbotron plays an ad for the San Francisco 67'ers. When his opponent pulls out a weapon, or once at random, he turns to the Dark Side: a black hooded robe and a red lightsaber, no wrestling moves. His saber clashes with bats, clubs and swords, and if anyone knocks it out of his hand he pulls it straight back with the Force and Force pushes them across the ring. Once in the form he can call in the Death Star, whose green superlaser blasts the middle of the ring. Special move: Chair Shot, then a ladder: he stands one up in the middle of the ring, climbs it and dives off it in a body slam and throws the ladder at them.",
     "color": "#c8202c",
     "label": "",
     "imgData": null,
@@ -3797,8 +3797,8 @@ var SAVED_ROSTER = [
     "hasWatcher": false,
     "hasWeave": true,
     "weave": {
-      "dodgeChance": 75,
-      "critChance": 20,
+      "dodgeChance": 12,
+      "critChance": 0,
       "comboHits": 5,
       "comboDamage": 3,
       "finalDamage": 8,
@@ -3823,6 +3823,51 @@ var SAVED_ROSTER = [
     "thumbsDown": {
       "cooldown": 8,
       "anger": 3
+    },
+    "maxHp": 800,
+    "tdd": {
+      "sprawlChance": 85
+    },
+    "pressure": {
+      "turn": 12,
+      "speed": 1.15,
+      "pocket": 18,
+      "shotChance": 35,
+      "shotWait": 2.5,
+      "chin": {
+        "critChance": 60,
+        "critMult": 1.8,
+        "sources": [
+          "punch",
+          "jab",
+          "kick",
+          "kickback",
+          "elbow",
+          "knee",
+          "combo",
+          "swing",
+          "teep",
+          "flow",
+          "bat",
+          "poke"
+        ]
+      }
+    },
+    "combos": {
+      "first": [
+        0.5,
+        1
+      ],
+      "every": [
+        0.4,
+        0.9
+      ],
+      "list": {
+        "jab-jab-cross": 3,
+        "jab-cross-jab-cross": 3,
+        "jab-cross-hook": 2,
+        "jab-cross-jab-cross-hook": 2
+      }
     },
     "hasSpecial": true,
     "helmetCharge": {

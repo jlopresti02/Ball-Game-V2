@@ -29,6 +29,7 @@ function updateHokit(self, other, dt, d) {
   if (self.hokitShot) { updateShot(self, dt); return true; }
   if (self.mock) { updateMock(self, other, dt); return true; }
   if (!other.alive) return false;
+  if (hokitPress(self, other, dt, d)) return true; // always walking them down, combinations or the shot (hokit-pressure.js)
   var free = !specialBusy(self) && !specialBusy(other) && !other.invincible && !self.punch;
 
   if (self.char.hasArmbarShot) {

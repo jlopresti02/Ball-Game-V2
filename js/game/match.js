@@ -53,6 +53,7 @@ function makeBall(id, ch) {
   initSendLocation(b); // Khabib's Send Me Location (send-location.js)
   initHelmetCharge(b); // and his Helmet Charge (hokit-helmet.js)
   initDarkSide(b); // and his Dark Side form change (hokit-darkside.js)
+  initMaxHp(b); // more than 500 health, like Josh Hokit (max-hp.js)
   initKamehameha(b); // and Charles's Kamehameha (kamehameha.js)
   initRainbow(b); // Conor's Pot o' Gold rainbow beam (rainbow-beam.js)
   initRapier(b); // Ilia's Spanish rapier (rapier.js)
@@ -380,6 +381,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= pratesDamageMult(b, source, attackerId); // Carlos Prates wide open lighting up, and his knees crit in the clinch (prates.js)
   amount *= prochazkaChin(b, source, attackerId); // Jiří Procházka's hands low: what lands is often a crit (prochazka.js)
   amount *= ganeDamageMult(b, source, attackerId); // Ciryl Gane's hands down: crits, and strikes up close hurt more (gane.js)
+  amount *= hokitChin(b, source, attackerId); // Josh Hokit walking onto shots: some land as crits (hokit-pressure.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it

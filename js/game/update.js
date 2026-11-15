@@ -174,6 +174,7 @@ function updateHud(force) {
     document.getElementById("hp" + i).textContent = rounded;
     document.getElementById("fill" + i).style.width = (b.hp / MAX_HP * 100) + "%";
     document.getElementById("ghost" + i).style.width = (b.shown / MAX_HP * 100) + "%";
+    maxHpHud(i, b); // health over 500 as a pale layer on the bar (max-hp.js)
     document.getElementById("bar" + i).setAttribute("aria-valuenow", rounded);
   }
   updateRejuvHud(force);
