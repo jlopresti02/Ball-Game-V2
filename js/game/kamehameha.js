@@ -57,10 +57,12 @@ function updateKamehameha(self, other, dt) {
     if (other.alive) kmAim(self, other);
     kmTurn(m, dt);
     if (m.pair) bcSlide(self, other, dt); // backing off to make room for a beam clash (beam-clash.js)
+    else bcPair(self, other); // Conor couldn't answer yet: keep asking (beam-clash.js)
     if (m.t >= KM_POWER) { m.phase = "charge"; m.t = 0; playKameCharge(m.charge); }
     return true;
   }
   if (m.phase === "charge") {
+    if (!m.pair) bcPair(self, other); // Conor couldn't answer yet: keep asking (beam-clash.js)
     // (Right after a teleport out, it follows them for a moment even in the
     // last second, then locks again.)
     if ((m.t < m.charge - KM_LOCK || m.track > 0 || m.pair) && other.alive) { kmAim(self, other); kmTurn(m, dt); }
@@ -148,14 +150,14 @@ function startKamehameha(self, other, paired, charge) {
   kmAim(self, other);
   self.igbb.side = self.igbb.dx > 0 ? -1 : 1;
   // The aura bursts on: blond hair, the gold flames and Joe's burst (dobronx.js).
-  doBronxHair(self, true); self.kameBlond = true;
+  if (!charlesBlond(self)) { doBronxHair(self, true); self.kameBlond = true; } // (already blond in Do Bronx: stays blond after)
   if (!paired) kmPushAway(self, other); // the energy coming up shoves them back, so the beam has room to fly
   if (!reduceMotion) shake = Math.max(shake, 10);
 }
 
 // Can he start it right now (for the beam clash, started by Conor's beam)?
 function kameReady(b) {
-  return !!(b.char.kamehameha && b.alive && !b.igbb && (b.kameN || 0) < 1 && !b.doBronx && !charlesBlond(b) && !specialBusy(b));
+  return !!(b.char.kamehameha && b.alive && !b.igbb && (b.kameN || 0) < 1 && !specialBusy(b)); // (Joe 2026-11-15: he answers even mid Do Bronx)
 }
 
 // "HA!": the beam goes off.
