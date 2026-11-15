@@ -236,19 +236,21 @@ function tickLionMaul(L, v, dt) {
   var cfg = L.cfg;
   v.x = L.cx + Math.sin(L.t * 31) * 3; v.y = L.cy + Math.cos(L.t * 27) * 3; v.vx = v.vy = 0;
   L.x = L.cx; L.y = L.cy;
-  var per = cfg.maulDamage / Math.max(1, Math.round(cfg.maulTime / 0.28));
   var before = L.words.length;
+  // Joe: at least maulDamage (150) actually comes off them, whatever their
+  // chin or durability takes off each hit: every hit asks for what's still
+  // owed spread over the hits left, counting only what really landed.
   tickBearCloud(L, dt, 0.28, function () {
     if (!v.alive || L.dealt >= cfg.maulDamage) return;
-    v.invincible = false;
-    var d = hurt(v, Math.min(per, cfg.maulDamage - L.dealt), "igbb", L.ownerId);
-    v.invincible = v.alive;
-    L.dealt += Math.max(d, per);
+    var left = Math.max(1, Math.round((cfg.maulTime - L.t) / 0.28));
+    L.dealt += lionHurt(L, v, (cfg.maulDamage - L.dealt) / left);
     if (Math.random() < 0.3) playBearGrowl(0.6);
     if (!v.alive) checkEnd();
   });
   if (L.words.length > before) L.words[L.words.length - 1].txt = LION_WORDS[Math.floor(Math.random() * LION_WORDS.length)]; // lion words, not the bear's
   if (L.t >= cfg.maulTime || !v.alive) {
+    for (var k = 0; k < 8 && v.alive && L.dealt < cfg.maulDamage - 0.5; k++) L.dealt += lionHurt(L, v, cfg.maulDamage - L.dealt); // whatever's still owed
+    if (!v.alive) checkEnd();
     v.bearHeld = false; v.invincible = false; v.immuneCd = 0;
     if (v.alive) { v.dazed = true; L.dazeT = LION_DAZE; L.dazeId = v.id; }
     else v.dazed = false;
@@ -263,6 +265,15 @@ function tickLionMaul(L, v, dt) {
     if (!reduceMotion) shake = Math.max(shake, 10);
     checkEnd();
   }
+}
+
+// One hit inside the cloud; returns what actually came off them.
+function lionHurt(L, v, amt) {
+  var hp0 = v.hp;
+  v.invincible = false;
+  hurt(v, amt, "igbb", L.ownerId);
+  v.invincible = v.alive;
+  return Math.max(0.5, hp0 - v.hp);
 }
 
 // Pads back out over the nearest side of the cage.

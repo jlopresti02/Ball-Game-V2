@@ -5333,7 +5333,7 @@ var SAVED_ROSTER = [
       "stalk": 2.5,
       "pounces": 3,
       "maulTime": 2.4,
-      "maulDamage": 34
+      "maulDamage": 150
     },
     "hasSpecial": true,
     "special": {
