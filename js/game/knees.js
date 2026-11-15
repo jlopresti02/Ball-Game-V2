@@ -196,6 +196,7 @@ function updateKneeMoves(self, other, dt) {
 // into it (combos.js), if any: its count goes on through the knees.
 function startPlum(self, other, cmb) {
   if (!plumTarget(other)) return false;
+  if (uppercutCounter(other, self)) return false; // an uppercut as they tie him up stuffs it (Gaethje, body-shots-uppercuts.js)
   clearActions(self);
   self.kneeAnim = null;
   self.plum = { phase: "grab", t: 0, vicId: other.id, cmb: cmb, frame: kneeFrame, side: 1, thrown: 0, landed: 0, jolt: 0 };

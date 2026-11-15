@@ -171,6 +171,7 @@ function updateJonClinch(self, other, dt) {
 // ---------------------------------------------------------------- the clinch
 
 function startJonClinch(self, other, c) {
+  if (uppercutCounter(other, self)) return; // an uppercut as he ties them up stuffs it (Gaethje, body-shots-uppercuts.js)
   clearActions(self);
   self.kneeAnim = null; self.elbowAnim = null;
   var evade = c.evade + (other.char.hasWeave ? (c.weaverEvade || 0) : 0);

@@ -191,6 +191,7 @@ function attemptGrab(attacker, target) {
     return false;
   }
   if (pratesBackOff(attacker, target)) return false; // Carlos Prates steps back out of it, and it always misses while he parties (prates.js)
+  if (uppercutCounter(target, attacker)) return false; // an uppercut as they come in stuffs it (Gaethje, body-shots-uppercuts.js)
   if (gspDoubleLeg(attacker, target)) return true; // GSP's elite double leg goes straight through (gsp.js)
   if (cormierBodyLock(attacker, target)) return true; // Daniel Cormier's body lock: some go straight through (cormier.js)
   if (grabEscaped(attacker, target)) return false;

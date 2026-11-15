@@ -222,30 +222,29 @@ function hwVolumePunch(self, other, dt, d, v) {
   if (!self.punch && !self.koPunch && self.punchCd === 0 && other.alive && d < reach) {
     var n = Math.max(1, Math.round(hwLerp(v.combo[0], v.combo[1], m) + (Math.random() - 0.5) * 1.6));
     self.punch = { t: 0, hit: false, side: Math.random() < 0.5 ? 1 : -1, left: n - 1, n: n, hw: true };
+    rollPunchType(self, self.punch, false); // a body shot or an uppercut in the volume (body-shots-uppercuts.js)
     self.punchCd = hwLerp(v.cooldown[0], v.cooldown[1], m);
   }
   var p = self.punch;
   if (!p) return;
   p.t += dt;
   if (p.left > 0 && other.alive) hwChase(self, other, d, pu.reach, v.chase); // walks into range behind the combo
-  if (!p.hit && p.t >= pu.speed * 0.35) {
+  if (!p.hit && p.t >= punchHitAt(self, p)) { // (pu.speed * 0.35; an uppercut or body shot has its own, body-shots-uppercuts.js)
     p.hit = true;
     if (other.alive && d < reach + v.slack) {
       var last = p.left === 0;
-      var dealt = hurt(other, hwLerp(v.damage[0], v.damage[1], m), "punch", self.id);
+      var dealt = punchHurt(self, other, p, hwLerp(v.damage[0], v.damage[1], m)); // hurt() (a setup, body-shots-uppercuts.js)
       if (dealt > 0) { playPunch(dealt); hwLanded(self, 1); }
       var kb = last ? pu.knockback : v.comboKnockback;
-      if (kb > 0 && !other.justDodged && hwKnockable(other)) {
-        var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
-        other.vx += kx / kd * kb; other.vy += ky / kd * kb;
-      }
+      if (!other.justDodged && hwKnockable(other)) hookShove(self, other, p, kb); // straight back (a body shot's own, hook-punch.js)
       if (!reduceMotion) shake = Math.max(shake, last ? 5 : 3);
       checkEnd();
     }
   }
-  if (self.punch && p.t >= pu.speed) {
+  if (self.punch && p.t >= punchEndAt(self, p)) {
     if (p.left > 0 && other.alive && self.alive && d < reach + v.slack * 2) {
       self.punch = { t: 0, hit: false, side: -p.side, left: p.left - 1, n: p.n, hw: true }; // next one, off the other hand
+      rollPunchType(self, self.punch, self.punch.left === 0); // (body-shots-uppercuts.js)
     } else {
       self.punch = null;
     }

@@ -1,11 +1,11 @@
 {
   "id": "c-ilia-topuria",
-  "rev": 13,
+  "rev": 14,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Ilia Topuria",
   "base": "Brawler",
-  "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits 4 times as hard, up to 5 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm.",
+  "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits 4 times as hard, up to 5 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm. He goes to the body right before the finisher, so the hook that ends the combo lands bigger, and comes up with uppercuts up close.",
   "color": "#b3121b",
   "label": "",
   "imgData": null,
@@ -102,6 +102,20 @@
     "size": 1.15,
     "width": 1.1,
     "color": "#e0281c"
+  },
+  "bodyShots": {
+    "chance": 15,
+    "beforeFinisher": 60,
+    "setupMult": 1.3,
+    "setupTime": 1.2,
+    "guardDrop": 15
+  },
+  "uppercuts": {
+    "chance": 15,
+    "close": 32,
+    "setupMult": 1.3,
+    "setupTime": 1.2,
+    "guardDrop": 15
   },
   "tdd": {
     "sprawlChance": 60

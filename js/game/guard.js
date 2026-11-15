@@ -100,6 +100,7 @@ function updateGuard(self, other, dt) {
   // can't just bounce straight back in.
   if (g.outT < GUARD_ARM_TIME || other.invincible || other.slam || specialBusy(other)) return;
   clearActions(other);
+  if (uppercutCounter(other, self, 320)) { g.outT = 0; return; } // an uppercut as they pull him in: he steps back out (Gaethje, body-shots-uppercuts.js)
   if (Math.random() < self.char.guard.passChance / 100) passGuard(self, other, g);
   else catchInGuard(self, other);
 }

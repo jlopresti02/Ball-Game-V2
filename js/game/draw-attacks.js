@@ -4,6 +4,7 @@
 function drawFist(self, other) {
   if (!self.punch || !other.alive || self.taunt || self.flow || self.combo) return;
   if (drawHookFist(self, other)) return; // a hook comes round instead of straight (hook-punch.js)
+  if (drawPunchTypeFist(self, other)) return; // an uppercut or a body shot is drawn over both fighters instead (body-shots-uppercuts.js)
   var pu = self.char.punch;
   var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var qnx = qx / qd, qny = qy / qd;
