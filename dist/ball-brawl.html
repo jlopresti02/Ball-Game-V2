@@ -7699,7 +7699,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 12,
+    "rev": 13,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -7841,7 +7841,7 @@ var SAVED_ROSTER = [
       "move": "aurafarm",
       "chargeTime": 85,
       "hitCut": 4,
-      "bullDamage": 60,
+      "bullDamage": 70,
       "throwDamage": 70
     },
     "rapier": {
@@ -9000,7 +9000,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 13,
+    "rev": 14,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -9101,7 +9101,7 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "allamerican",
-      "chargeTime": 48,
+      "chargeTime": 35,
       "hitCut": 4,
       "punchDamage": 25,
       "eagleDamage": 6,
@@ -9345,7 +9345,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-max-holloway",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Max Holloway",
@@ -9521,8 +9521,11 @@ var SAVED_ROSTER = [
       "chargeTime": 42,
       "hitCut": 1,
       "punchCut": 0.3,
-      "onlyWhenWinning": true,
-      "acceptChance": 85,
+      "trigger": "late",
+      "lateHp": 40,
+      "lateAfter": 45,
+      "lateFreeCall": true,
+      "acceptChance": 100,
       "point": 1.2,
       "walk": 1.1,
       "gap": 18,
@@ -14132,6 +14135,7 @@ function attemptGrab(attacker, target) {
   // through his celebration lap, even after their stars wear off (Joe, 2026-11-11).
   if (target.igbb && target.igbb.move === "chairshot" && specialGuarding(target)) return false;
   if (bispingAboard(target)) return false; // nobody takes Michael Bisping down off his pirate ship (bisping.js)
+  if (golfSwinging(target)) return false; // or Gaethje mid swing with his golf club (gaethje-golf.js)
   if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;
@@ -25803,6 +25807,8 @@ var GOLF_CLUB_GRIP = { x: 295, y: 1 }, GOLF_CLUB_HEAD = { x: 22, y: 272 };
 // his hands. Every few seconds, when they're far enough off, he stops, tees
 // one up and drives a golf ball at them ("FORE!"). After `duration` seconds
 // he tosses the club away and goes back to fighting; the hat stays on.
+// He also drops it the moment he's grabbed, held, choked, knocked out or caught
+// in their special, and nobody can take him down mid swing (grapple-duel.js).
 //
 // Settings, under `gaethje.golf` in the character JSON:
 //   duration       seconds he has the club
@@ -26028,9 +26034,29 @@ function tickGolf(dt) {
     if (!b.alive || over) { endGolfMode(b, false); return; }
     // His special takes over: the club goes.
     if (b.igbb || allAmericanOn()) { endGolfMode(b, true); return; }
+    // Grabbed, held, choked, knocked out or caught in their special: the club
+    // goes too, so a swing never hangs half done under a takedown or a hold.
+    if (golfCaught(b)) { endGolfMode(b, true); return; }
     b.golfLeft -= dt;
-    if (b.golfLeft <= 0 && !b.chAct) endGolfMode(b, true);
+    // A swing or a shot gets to finish, but never more than GOLF_OVERTIME past the end.
+    if (b.golfLeft <= 0 && (!b.chAct || b.golfLeft <= -GOLF_OVERTIME)) endGolfMode(b, true);
   });
+}
+
+var GOLF_OVERTIME = 1.6; // (the golf shot runs 1.55s)
+
+// His own takedown counts too: club in hand, his fighting runs through the
+// bat code (cheater.js), so a sprawl into a REATTACK used to leave his grab
+// frozen half way until the club ran out (up to 15 seconds).
+function golfCaught(b) {
+  var o = balls[1 - b.id];
+  return !!(b.grapple || b.grappled || b.sprawl || b.sprawled || subLocked(b) || b.koOut || b.shocked || b.shelled || b.beamPin || b.dazed || b.fenceGrab || (o && o.igbb));
+}
+
+// Mid swing or mid golf shot: nobody takes him down (grapple-duel.js), the
+// way nobody takes Bisping down off his ship.
+function golfSwinging(b) {
+  return golfing(b) && !!b.chAct && (b.chAct.kind === "golf" || b.chAct.kind === "bat");
 }
 
 // The shot itself (from updateCheaterAct, cheater.js): stopped dead, sets
@@ -60765,9 +60791,10 @@ function movementGalleryMoves(ch, add) {
 //            spinning back fist in there now and then, "N HIT COMBO!".
 // The Middle  his special (special.move "middle"), "MEET ME IN THE MIDDLE": his real point
 //            down, from the Ricardo Lamas fight (2016) to the last-second
-//            knockout of Justin Gaethje at UFC 300 (2024). His rule is that
-//            only the one winning can call it (onlyWhenWinning), so the full
-//            bar waits until he's ahead. He points down at the middle of the
+//            knockout of Justin Gaethje at UFC 300 (2024). A full bar waits
+//            for the end of the fight (`trigger` "late": either of them under
+//            lateHp% health or the fight past lateAfter seconds; "winning" is
+//            his real rule, only the one ahead calls it). He points down at the middle of the
 //            cage (the tell), a clock comes up at 0:10, and they walk out to
 //            the middle (acceptChance%, Gaethje always) and trade: his fastest
 //            punches in the game against their answers. At 0:01 the big right
@@ -61219,9 +61246,10 @@ function hwComboDone(self, ms, mc) {
 function updateMiddle(self, other, dt) {
   var sp = self.char.special;
   if (!self.igbb) {
-    if (self.specialT < sp.chargeTime || !canStartIgbb(self, other) || self.hwAct || self.hwMash || hwFlash) return false;
+    var free = middleFreeCall(self, other, sp); // the end of the fight: no full bar needed the first time
+    if ((self.specialT < sp.chargeTime && !free) || !canStartIgbb(self, other) || self.hwAct || self.hwMash || hwFlash) return false;
     if (other.guard || other.dazed || other.koOut || other.hwAct || swordDuelActive()) return false;
-    if (sp.onlyWhenWinning && self.hp < other.hp) return false; // his rule: only the one winning calls the 10 seconds
+    if (!free && !middleTriggerOpen(self, other, sp)) return false; // `trigger`: late in the fight, only when winning, or any time
     startMiddle(self, other, sp);
   }
   var m = self.igbb;
@@ -61239,11 +61267,34 @@ function updateMiddle(self, other, dt) {
   return true;
 }
 
+// When a full bar may call it, by `special.trigger`:
+//   "late"     near the end of the fight: either of them under `lateHp`% health,
+//              or the fight past `lateAfter` seconds (the default now). With
+//              `lateFreeCall` the first call of the fight doesn't wait for a
+//              full bar, so it comes at the end of nearly every fight; after
+//              that it's the bar as usual.
+//   "winning"  his real rule, only the one ahead calls the last 10 seconds (the
+//              old setting; `onlyWhenWinning: true` with no `trigger` means this too)
+//   "any"      as soon as the bar's full
+function middleTriggerOpen(self, other, sp) {
+  var tr = sp.trigger || (sp.onlyWhenWinning ? "winning" : "any");
+  if (tr === "winning") return self.hp >= other.hp;
+  if (tr === "late") return middleLate(self, other, sp);
+  return true;
+}
+function middleLate(self, other, sp) {
+  return Math.min(self.hp, other.hp) < MAX_HP * (sp.lateHp || 0) / 100 || (self.hwT || 0) >= (sp.lateAfter || Infinity);
+}
+function middleFreeCall(self, other, sp) {
+  return sp.trigger === "late" && !!sp.lateFreeCall && !self.hwMidCalls && middleLate(self, other, sp);
+}
+
 function startMiddle(self, other, sp) {
   clearActions(self);
   self.koPunch = null; self.punch = null;
   var hc = hwCfg(self) || {}, gj = !!hc.gaethje && hwIs(other.char, HW_GAETHJE);
   var accept = gj || Math.random() * 100 < sp.acceptChance;
+  self.hwMidCalls = (self.hwMidCalls || 0) + 1;
   self.igbb = { move: "middle", phase: "point", t: 0, clockT: 0, accept: accept, side: self.x <= other.x ? -1 : 1, gaethje: gj, n: 10, thrown: 0, nextAt: 0, ansAt: 0, ansSide: 1 };
   floater(self.x, self.y - self.r - 34, "MEET ME IN THE MIDDLE", "crit");
   hwRing = { id: self.id, t: 0, out: 0 };
@@ -61967,9 +62018,16 @@ function drawWaianaeFade(c, r, look, lw) {
 
 // ---------------------------------------------------------------- gallery (gallery.js)
 
+function hwTriggerText(sp) {
+  var tr = sp.trigger || (sp.onlyWhenWinning ? "winning" : "any");
+  if (tr === "winning") return "Only when he's winning.";
+  if (tr === "late") return "Saved for the end of the fight: once either of them is under " + sp.lateHp + "% health or the fight's past " + secs(sp.lateAfter) + (sp.lateFreeCall ? ", and the first time it doesn't even need a full bar." : ".");
+  return "";
+}
+
 function hollowaySpecialInfo(sp) {
-  return "His real point down (Ricardo Lamas, 2016; the last-second knockout of Justin Gaethje at UFC 300). Only when he's winning. He points down at the middle of the cage and a clock comes up at 0:10. " + sp.acceptChance +
-    "% of the time they walk out to the middle with him (Gaethje always) and they trade: his fastest punches in the game (" + sp.damage + " each, one every " + secs(sp.punchEvery) + ", can't be slipped or blocked) against theirs. At 0:01 the big right hand: a knockout " + sp.koBase +
+  return "His real point down (Ricardo Lamas, 2016; the last-second knockout of Justin Gaethje at UFC 300). " + hwTriggerText(sp) + " He points down at the middle of the cage and a clock comes up at 0:10. " + (sp.acceptChance >= 100 ? "They always walk out to the middle with him" : sp.acceptChance +
+    "% of the time they walk out to the middle with him (Gaethje always)") + " and they trade: his fastest punches in the game (" + sp.damage + " each, one every " + secs(sp.punchEvery) + ", can't be slipped or blocked) against theirs. At 0:01 the big right hand: a knockout " + sp.koBase +
     "% of the time, up to " + (sp.koBase + sp.koLow + sp.koMeter) + "% when they're hurt and his meter is full, otherwise " + sp.finalDamage + " and the bell. A knockout brings up Joe Rogan's UFC 300 call. Turn it down and the crowd boos, and he gets " + Math.round(sp.declineRefund * 100) + "% of his bar back.";
 }
 
@@ -70170,6 +70228,90 @@ function drawTapeStars(cx, cy, pr, t) {
   ctx.restore();
 }
 
+// The watchdog: a safety net so no fight can freeze for good.
+//
+// Every frame it notes how long each fighter has been in the same lock state
+// (a special, a grab, a hold, a choke, a weapon swing, being held, dazed or
+// dizzy). If one runs far longer than any real move does (`max` seconds, or
+// `special` for a special), or both fighters have stood frozen on the spot
+// for `frozen` seconds with no special running, it lets both of them go: the
+// stuck states are cleared, they get their speed back and the fight carries
+// on. Each time it logs "watchdog reset: <state>" to the console.
+//
+// Until it fires it only reads: it changes nothing and draws no random
+// numbers, so a fight that never gets stuck plays exactly the same with it.
+//
+// Settings (WATCHDOG below):
+//   max      seconds any one lock state may last
+//   special  seconds a special (igbb) may last; while one runs, the other
+//            lock states wait for it (being held through a long special is fine)
+//   frozen   seconds both fighters may stand still with no special running
+//   on       false switches it off
+"use strict";
+
+var WATCHDOG = { on: true, max: 20, special: 45, frozen: 15 };
+// The states it watches. Paired ones (a grab and being grabbed) are cleared on
+// both fighters together.
+var WD_KEYS = ["grapple", "grappled", "sprawl", "sprawled", "guillo", "choked", "rnc", "suplex", "armbar", "guard", "hokitShot",
+  "slam", "chAct", "fenceGrab", "dazed", "dizzy", "shocked", "shelled", "beamPin", "combo", "taunt", "flow", "checkAnim", "mock", "throwAnim"];
+
+var wdState = null; // { balls, held: [{ key: { v, t } }, ...], igbb: [{ v, t }, ...], still: { x0, y0, x1, y1, t } }
+
+function wdFresh() { return { balls: balls, held: [{}, {}], igbb: [null, null], still: null }; }
+
+// From update.js, every frame.
+function tickWatchdog(dt) {
+  if (!WATCHDOG.on || !balls || balls.length < 2) return;
+  if (!wdState || wdState.balls !== balls) wdState = wdFresh(); // a new fight
+  var a = balls[0], b = balls[1];
+  if (!started || over || !a.alive || !b.alive) { wdState.held = [{}, {}]; wdState.igbb = [null, null]; wdState.still = null; return; }
+  var anySpecial = false, hit = null;
+  for (var i = 0; i < 2; i++) {
+    var f = balls[i], ig = wdState.igbb[i];
+    if (f.igbb) {
+      anySpecial = true;
+      if (!ig || ig.v !== f.igbb) ig = wdState.igbb[i] = { v: f.igbb, t: 0 };
+      ig.t += dt;
+      if (ig.t > WATCHDOG.special && !hit) hit = { id: i, what: "special " + (f.igbb.move || "?") + (f.igbb.phase ? "/" + f.igbb.phase : "") + " " + Math.round(ig.t) + "s" };
+    } else wdState.igbb[i] = null;
+  }
+  for (var j = 0; j < 2; j++) {
+    var g = balls[j], held = wdState.held[j];
+    for (var k = 0; k < WD_KEYS.length; k++) {
+      var key = WD_KEYS[k], v = g[key];
+      if (!v || anySpecial) { if (held[key]) delete held[key]; continue; }
+      var h = held[key];
+      if (!h || h.v !== v) h = held[key] = { v: v, t: 0 };
+      h.t += dt;
+      if (h.t > WATCHDOG.max && !hit) hit = { id: j, what: key + wdKind(v) + " " + Math.round(h.t) + "s" };
+    }
+  }
+  // Both standing frozen on the spot, nothing running.
+  var s = wdState.still;
+  if (anySpecial || !s || Math.abs(a.x - s.x0) + Math.abs(a.y - s.y0) + Math.abs(b.x - s.x1) + Math.abs(b.y - s.y1) > 2) {
+    wdState.still = { x0: a.x, y0: a.y, x1: b.x, y1: b.y, t: 0 };
+  } else if ((s.t += dt) > WATCHDOG.frozen && !hit) hit = { id: -1, what: "both frozen " + Math.round(s.t) + "s" };
+  if (hit) wdRelease(hit);
+}
+
+function wdKind(v) { return v && typeof v === "object" ? (v.move || v.kind || v.phase ? "(" + (v.move || v.kind || v.phase) + ")" : "") : v === true ? "" : "(" + v + ")"; }
+
+// Lets both fighters go and puts them back to fighting.
+function wdRelease(hit) {
+  var who = hit.id >= 0 ? balls[hit.id].char.name + " " : "";
+  console.log("watchdog reset: " + who + hit.what);
+  balls.forEach(function (f) {
+    if (!f.alive) return;
+    clearActions(f);
+    f.igbb = null; f.grapple = null; f.grappled = false; f.sprawl = null; f.sprawled = false;
+    f.guillo = null; f.choked = false; f.rnc = null; f.suplex = null; f.armbar = null; f.guard = null; f.hokitShot = null;
+    f.slam = null; f.fenceGrab = null; f.dazed = false; f.dizzy = null; f.shocked = false; f.shelled = false; f.beamPin = null;
+    if (golfing(f)) endGolfMode(f, true); // Gaethje drops the club (gaethje-golf.js)
+    setSpeed(f, f.baseSpeed || SPEED);
+  });
+  wdState.held = [{}, {}]; wdState.igbb = [null, null]; wdState.still = null;
+}
+
 // Per-frame update, HUD health bars and canvas sizing.
 "use strict";
 
@@ -70267,6 +70409,7 @@ function update(dt) {
   tickGolf(dt);         // and his golf mode running out (gaethje-golf.js)
   tickDiamond(dt);  // Dustin turning into Diamond Guard and throwing diamonds (diamond.js)
   updateHerb(dt);   // Herb Dean wandering the cage (herbdean.js)
+  tickWatchdog(dt); // a fighter stuck in one state far too long gets let go (watchdog.js)
 
   balls.forEach(function (b) {
     var charging = (!over && b.alive) ? chargeProgress(b) : null;
@@ -75215,16 +75358,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115022059"></script>
-  <script src="js/game/tale-tape.js?v=20261115022059"></script>
-<script src="js/game/update.js?v=20261115022059"></script>
-<script src="js/game/fighter-art.js?v=20261115022059"></script>
-<script src="js/game/draw-attacks.js?v=20261115022059"></script>
-<script src="js/game/wwit-badge.js?v=20261115022059"></script>
-<script src="js/game/stadium.js?v=20261115022059"></script>
-<script src="js/game/draw.js?v=20261115022059"></script>
-<script src="js/ui/gallery.js?v=20261115022059"></script>
-<script src="js/ui/saved-fights.js?v=20261115022059"></script>
-<script src="js/main.js?v=20261115022059"></script>
+  <script src="js/game/intro-msg.js?v=20261115022333"></script>
+  <script src="js/game/tale-tape.js?v=20261115022333"></script>
+<script src="js/game/watchdog.js?v=20261115022333"></script>
+<script src="js/game/update.js?v=20261115022333"></script>
+<script src="js/game/fighter-art.js?v=20261115022333"></script>
+<script src="js/game/draw-attacks.js?v=20261115022333"></script>
+<script src="js/game/wwit-badge.js?v=20261115022333"></script>
+<script src="js/game/stadium.js?v=20261115022333"></script>
+<script src="js/game/draw.js?v=20261115022333"></script>
+<script src="js/ui/gallery.js?v=20261115022333"></script>
+<script src="js/ui/saved-fights.js?v=20261115022333"></script>
+<script src="js/main.js?v=20261115022333"></script>
 </body>
 </html>

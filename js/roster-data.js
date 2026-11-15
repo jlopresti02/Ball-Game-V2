@@ -2801,7 +2801,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 12,
+    "rev": 13,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -2943,7 +2943,7 @@ var SAVED_ROSTER = [
       "move": "aurafarm",
       "chargeTime": 85,
       "hitCut": 4,
-      "bullDamage": 60,
+      "bullDamage": 70,
       "throwDamage": 70
     },
     "rapier": {
@@ -4102,7 +4102,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 13,
+    "rev": 14,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4203,7 +4203,7 @@ var SAVED_ROSTER = [
     "hasSpecial": true,
     "special": {
       "move": "allamerican",
-      "chargeTime": 48,
+      "chargeTime": 35,
       "hitCut": 4,
       "punchDamage": 25,
       "eagleDamage": 6,
@@ -4447,7 +4447,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-max-holloway",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Max Holloway",
@@ -4623,8 +4623,11 @@ var SAVED_ROSTER = [
       "chargeTime": 42,
       "hitCut": 1,
       "punchCut": 0.3,
-      "onlyWhenWinning": true,
-      "acceptChance": 85,
+      "trigger": "late",
+      "lateHp": 40,
+      "lateAfter": 45,
+      "lateFreeCall": true,
+      "acceptChance": 100,
       "point": 1.2,
       "walk": 1.1,
       "gap": 18,
