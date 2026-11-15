@@ -76,11 +76,11 @@ Christian's Claude must not revert, undo or overwrite anything Joe (or Joe's Cla
 
 ## Voice lines Joe wants (for Christian's clip tool)
 
-Joe asked for these real lines. Each one is already wired into the game with this **exact text**, so it plays as soon as its clip is keyed in `voice-clips.js` (silent until then). Christian's Claude: when you're finding voice lines, please cut these.
+Joe asked for these real lines. Christian's Claude: when you're finding voice lines, please cut the ones still marked *wanted* and key them by the **exact text** shown (silent until then). Ones marked *in* already have Joe's own clip; leave their text alone.
 
 | Fighter | Exact text in the code | Where it plays |
 |---|---|---|
-| Nate Diaz | `Who the [BLEEP] knows what a gazelle is?` (the real line: "Who the fuck knows what a gazelle is?", bleeped) | as he summons his lion (`LION_LINE` in `nate-lion.js`) |
+| Nate Diaz | `Who the [BLEEP] knows what a gazelle is?` (the real line: "Who the fuck knows what a gazelle is?", bleeped) | as he summons his lion (`LION_LINE` in `nate-lion.js`). *In*: Joe sent the clip (`nateGazelle`, `nate-lion-art.js`) |
 
 ## Voice lines never overlap (Joe's rule)
 
