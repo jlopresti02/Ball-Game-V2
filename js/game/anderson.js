@@ -792,6 +792,7 @@ function tickAnderson(dt) {
     }
     if (b.cmb && b.cmb.hits >= 2 && b.asCmbSeen !== b.cmb) { b.asCmbSeen = b.cmb; asComboLine(b, cfg); }
     if (b.plum && b.plum.vicId === other.id && b.plum.landed >= 2 && b.asPlumSeen !== b.plum) { b.asPlumSeen = b.plum; asComboLine(b, cfg); }
+    if (b.clin && b.clin.vicId === other.id && b.clin.landed >= 2 && b.asClinSeen !== b.clin) { b.asClinSeen = b.clin; asComboLine(b, cfg); } // the same in his clinch (clinch.js)
     // After a win, every time: it waits as long as it takes for its turn
     // (the knockout call, their last line), never dropped.
     if (over && !b.asSaid.win && b.alive && !other.alive) {

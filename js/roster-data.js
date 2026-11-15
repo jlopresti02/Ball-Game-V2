@@ -348,7 +348,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-anderson-silva",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Anderson Silva",
@@ -439,26 +439,6 @@ var SAVED_ROSTER = [
       "critChance": 30,
       "critMult": 2,
       "knockback": 200,
-      "clinch": {
-        "first": [
-          6,
-          9
-        ],
-        "every": [
-          10,
-          15
-        ],
-        "range": 14,
-        "knees": [
-          2,
-          3
-        ],
-        "damage": 9,
-        "gap": 0.38,
-        "escape": 18,
-        "grapplerEscape": 10,
-        "knockback": 380
-      },
       "flying": {
         "first": [
           12,
@@ -478,6 +458,48 @@ var SAVED_ROSTER = [
         "koLow": 12,
         "readChance": 20,
         "open": 0.8
+      }
+    },
+    "clinch": {
+      "first": [
+        6,
+        9
+      ],
+      "every": [
+        10,
+        14
+      ],
+      "range": 14,
+      "tie": "plum",
+      "reach": 0.26,
+      "evade": 10,
+      "weaverEvade": 10,
+      "strikes": [
+        3,
+        4
+      ],
+      "gap": 0.34,
+      "mix": {
+        "headKnee": 5,
+        "bodyKnee": 2
+      },
+      "knee": {
+        "damage": 6,
+        "headDamage": 7,
+        "critChance": 15,
+        "critMult": 2
+      },
+      "ramp": 15,
+      "escape": 18,
+      "grapplerEscape": 10,
+      "knockback": 380,
+      "open": 0.6,
+      "parting": {
+        "chance": 35,
+        "mix": {
+          "knee": 1,
+          "elbow": 1
+        }
       }
     },
     "anderson": {
@@ -637,12 +659,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-carlos-prates",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "welterweight",
     "name": "Carlos Prates",
     "base": "Kicker",
-    "bio": "\"The Nightmare\". A long, lanky Brazilian kickboxer who smokes on fight day. He fights at the end of the longest punch and the longest kick in the game, in and out: he backs off at an angle, then comes back in on a different entrance every time and fires as he arrives, with a teep to shove them back out. His arms are rubber: now and then his fist shoots across the whole ring (Rubber Pistol) or his leg stretches out and whips round (Rubber Whip). Shots on him mostly catch nothing but air: he steps back out of them and kicks. Up close his elbows and knees crit a lot, and in the clinch his knees crit too. But once a choke or an armbar is on him he's in trouble. His special is the Cigarette: he stops and lights one, and nothing can touch him while the party music plays. Then he goes Super Saiyan: a gold aura, everyone misses him, every miss sets up a counter that crits, and his combinations come back to back.",
+    "bio": "\"The Nightmare\". A long, lanky Brazilian kickboxer who smokes on fight day. He fights at the end of the longest punch and the longest kick in the game, in and out: he backs off at an angle, then comes back in on a different entrance every time and fires as he arrives, with a teep to shove them back out. His arms are rubber: now and then his fist shoots across the whole ring (Rubber Pistol) or his leg stretches out and whips round (Rubber Whip). Shots on him mostly catch nothing but air: he steps back out of them and kicks. Up close his elbows and knees crit a lot, and in the clinch his long knees crit too and he comes off it with an elbow. But once a choke or an armbar is on him he's in trouble. His special is the Cigarette: he stops and lights one, and nothing can touch him while the party music plays. Then he goes Super Saiyan: a gold aura, everyone misses him, every miss sets up a counter that crits, and his combinations come back to back.",
     "color": "#86c232",
     "label": "",
     "imgData": null,
@@ -742,26 +764,47 @@ var SAVED_ROSTER = [
       "reach": 12,
       "critChance": 40,
       "critMult": 2.4,
-      "knockback": 280,
-      "clinch": {
-        "first": [
-          4,
-          7
-        ],
-        "every": [
-          7,
-          11
-        ],
-        "range": 16,
-        "knees": [
-          2,
-          4
-        ],
-        "damage": 8,
-        "gap": 0.38,
-        "escape": 18,
-        "grapplerEscape": 10,
-        "knockback": 420
+      "knockback": 280
+    },
+    "clinch": {
+      "first": [
+        4,
+        7
+      ],
+      "every": [
+        6,
+        9
+      ],
+      "range": 22,
+      "tie": "plum",
+      "reach": 0.26,
+      "evade": 12,
+      "weaverEvade": 10,
+      "strikes": [
+        2,
+        4
+      ],
+      "gap": 0.36,
+      "mix": {
+        "bodyKnee": 3,
+        "headKnee": 3,
+        "elbow": 1
+      },
+      "knee": {
+        "damage": 7,
+        "headDamage": 10,
+        "critChance": 40,
+        "critMult": 2.2
+      },
+      "escape": 18,
+      "grapplerEscape": 10,
+      "knockback": 420,
+      "open": 0.6,
+      "parting": {
+        "chance": 60,
+        "mix": {
+          "elbow": 1
+        }
       }
     },
     "prates": {
@@ -821,30 +864,25 @@ var SAVED_ROSTER = [
       "subDefense": {
         "extraTap": 25
       },
-      "clinchCrit": {
-        "chance": 40,
-        "mult": 2.2,
-        "partingElbow": 60
-      },
       "rubber": {
         "first": [
-          3,
-          6
-        ],
-        "every": [
-          4.5,
+          4,
           7
         ],
+        "every": [
+          7,
+          10.5
+        ],
         "partyEvery": [
-          2.2,
-          3.6
+          3.3,
+          5.4
         ],
         "minGap": 70,
         "maxGap": 320,
         "range": 340,
-        "windup": 0.5,
-        "lock": 0.16,
-        "speed": 1800,
+        "windup": 0.42,
+        "lock": 0.08,
+        "speed": 2600,
         "fist": 15,
         "damage": 22,
         "knockback": 560,
@@ -854,8 +892,8 @@ var SAVED_ROSTER = [
           "chance": 35,
           "damage": 24,
           "knockback": 640,
-          "extend": 0.12,
-          "sweep": 0.24,
+          "extend": 0.1,
+          "sweep": 0.2,
           "arc": 0.9
         }
       },
@@ -2827,12 +2865,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jiri-prochazka",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Ji\u0159\u00ed Proch\u00e1zka",
     "base": "Brawler",
-    "bio": "\"BJP\", \"Denisa\". The Czech samurai. A long, lean Light Heavyweight with his war hair tied up in a topknot and his hands down by his hips. He weaves a lot of what comes at him, but with his hands that low, what does land is often a critical hit. He throws a lot of punches, and hard ones, with elbows and knees up close and the spinning back elbow he knocked Dominick Reyes out with. He reads Miyamoto Musashi's Book of Five Rings: now and then, and always once a fight when he or they get low, he dreams of Musashi, comes back in a samurai's kimono and draws two katanas, and the samurai usually ends it.",
+    "bio": "\"BJP\", \"Denisa\". The Czech samurai. A long, lean Light Heavyweight with his war hair tied up in a topknot and his hands down by his hips. He weaves a lot of what comes at him, but with his hands that low, what does land is often a critical hit. He throws a lot of punches, and hard ones, with elbows and knees up close, wild elbows in the clinch, and the spinning back elbow he knocked Dominick Reyes out with. He reads Miyamoto Musashi's Book of Five Rings: now and then, and always once a fight when he or they get low, he dreams of Musashi, comes back in a samurai's kimono and draws two katanas, and the samurai usually ends it.",
     "color": "#6b8e23",
     "label": "",
     "imgData": null,
@@ -2916,26 +2954,6 @@ var SAVED_ROSTER = [
       "critChance": 30,
       "critMult": 2,
       "knockback": 220,
-      "clinch": {
-        "first": [
-          5,
-          8
-        ],
-        "every": [
-          9,
-          13
-        ],
-        "range": 14,
-        "knees": [
-          2,
-          3
-        ],
-        "damage": 8,
-        "gap": 0.4,
-        "escape": 15,
-        "grapplerEscape": 10,
-        "knockback": 380
-      },
       "flying": {
         "first": [
           8,
@@ -2955,6 +2973,51 @@ var SAVED_ROSTER = [
         "koLow": 12,
         "readChance": 15,
         "open": 0.8
+      }
+    },
+    "clinch": {
+      "first": [
+        5,
+        8
+      ],
+      "every": [
+        7,
+        11
+      ],
+      "range": 16,
+      "tie": "overUnder",
+      "reach": 0.26,
+      "evade": 12,
+      "weaverEvade": 10,
+      "strikes": [
+        2,
+        4
+      ],
+      "gap": 0.3,
+      "mix": {
+        "elbow": 4,
+        "headKnee": 1,
+        "bodyKnee": 1
+      },
+      "knee": {
+        "damage": 7,
+        "headDamage": 9,
+        "critChance": 25,
+        "critMult": 2
+      },
+      "elbow": {
+        "damage": 6
+      },
+      "escape": 15,
+      "grapplerEscape": 10,
+      "knockback": 380,
+      "open": 0.6,
+      "parting": {
+        "chance": 55,
+        "mix": {
+          "spinElbow": 3,
+          "elbow": 1
+        }
       }
     },
     "combos": {

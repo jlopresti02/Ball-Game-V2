@@ -33,6 +33,7 @@ function inOrdinaryMovement(b) {
   if (andersonBusy(b)) return false; // Anderson Silva's front kick, or his hands down (anderson.js)
   if (cormierBusy(b)) return false; // Daniel Cormier dropping his level for the double leg, or shooting it (cormier.js)
   if (jonClinchBusy(b)) return false; // Jon Jones in the clinch or tripping them (jon-clinch.js)
+  if (clinchBusy(b)) return false; // in the clinch, or spinning into the elbow on the break (clinch.js)
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
   return true;

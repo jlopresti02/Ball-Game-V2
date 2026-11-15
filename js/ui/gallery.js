@@ -171,6 +171,7 @@ function galleryMoves(ch) {
   if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
   if (ch.knee) kneeGalleryMoves(ch, add); // knees, the clinch, the flying knee (knees.js)
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
+  if (ch.clinch) clinchGalleryMoves(ch, add); // the clinch and the parting shot on the break (clinch.js)
   if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
   if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)

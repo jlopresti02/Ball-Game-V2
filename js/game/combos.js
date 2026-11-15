@@ -66,7 +66,7 @@ function cbReach(self, step) {
   if (step === "kick") return ch.kick.reach;
   if (step === "elbow" || step === "spin") return ((ch.elbow && ch.elbow.reach) || 14) + CB_STEP_IN;
   if (step === "knee") return kneeNum(self, "reach") + CB_STEP_IN;
-  if (step === "plum") return plumNums(self).range;
+  if (step === "plum") return clinchFromCombos(self) ? clinchRange(self) : plumNums(self).range; // (the shared clinch, clinch.js)
   return 20;
 }
 
@@ -156,7 +156,7 @@ function runCombo(self, other, dt, d, m) {
     self.cmb = null;
     self.cmbT = cbRand(cfg.every);
     if (self.char.hasPunch && self.char.punch) self.punchCd = Math.max(self.punchCd || 0, self.char.punch.cooldown);
-    startPlum(self, other, m);
+    if (clinchFromCombos(self)) startClinch(self, other, m); else startPlum(self, other, m); // a fighter with a clinch block ties up with it (clinch.js)
     return;
   }
   m.cur = cbStart(self, other, m, step);

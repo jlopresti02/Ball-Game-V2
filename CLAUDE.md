@@ -33,6 +33,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Ilia Topuria's 3-4 punch combos ending in a hook (`ilia-combos.js`) and the shared hook punch any fighter can use (`hook-punch.js`, `hooks` block) | Christian's Claude | live on main |
 | Michael Bisping's Broadside is a pirate ship in the middle of the ring with a three-cannon volley | Christian's Claude | live on main |
 | Joshua Van's left hook on the shared hook punch | Christian's Claude | live on main |
+| Shared clinch any fighter can use (`clinch.js`, `clinch` block): tie-up, knees to the body and head, elbows, a parting shot on the break. Carlos Prates, Anderson Silva and Jiří Procházka use it in place of the plum | Christian's Claude | branch `christian/clinch-shared` |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
