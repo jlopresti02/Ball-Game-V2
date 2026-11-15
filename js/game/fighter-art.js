@@ -672,6 +672,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.hachimaki) drawGspHachimaki(c, r, look.hachimaki, line, lw); // GSP's walkout headband (gsp.js)
   if (look.cucuy) drawCucuyHead(c, r, look, line, lw); // Tony Ferguson's moustache and headband (ferguson.js)
   if (look.vanGoatee) drawVanGoatee(c, r, look, line, lw); // Joshua Van's thin moustache and chin beard (van.js)
+  if (look.diazChin) drawDiazChin(c, r, look); // the Diaz brothers' chin beards (diaz-skins.js)
   if (look.glasses === "shades") drawShades(c, r, lw);
   if (look.eyePatch) drawEyePatch(c, r, look.eyePatch, lw); // Michael Bisping's pirate eye patch (bisping.js)
 }
@@ -987,7 +988,7 @@ function drawShades(c, r, lw) {
 function drawArtBody(c, r, look, ink, name, contained) {
   var skin = look.skin, build = look.build;
   var line = shadeHex(skin, -0.38), hi = shadeHex(skin, 0.28);
-  var def = build === "lean" ? 0.65 : build === "stocky" ? 0.55 : 1; // how cut the muscles look
+  var def = look.flat ? 0.12 : build === "lean" ? 0.65 : build === "stocky" ? 0.55 : 1; // how cut the muscles look
   var lw = function (k) { return Math.max(1, r * k); };
 
   c.save();
@@ -1020,7 +1021,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   // Pecs: highlight on top, deep shadow line underneath
   [-1, 1].forEach(function (s) {
-    c.globalAlpha = 0.45;
+    c.globalAlpha = look.flat ? 0.2 : 0.45;  // softer pecs when skinny fat (diaz-skins.js)
     c.fillStyle = hi;
     c.beginPath(); c.ellipse(s * r * 0.3, -r * 0.38, r * pecW * 0.42, r * 0.18, s * 0.15, 0, Math.PI * 2); c.fill();
     c.globalAlpha = 0.35 * def;
@@ -1048,6 +1049,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.globalAlpha = 0.4; c.strokeStyle = line; c.lineWidth = lw(0.04);
     c.beginPath(); c.moveTo(0, -r * 0.05); c.lineTo(0, r * 0.32); c.stroke();
     c.beginPath(); c.arc(0, r * 0.1, r * 0.42, 0.35, Math.PI - 0.35); c.stroke();
+  } else if (look.flat) { drawSkinnyFatCore(c, r, lw, line);  // skinny-fat stomach (diaz-skins.js)
   } else if (look.core === "solid") {
     // Solid, thick core with no six pack: one broad smooth panel, a faint
     // centre line and the obliques framing it
