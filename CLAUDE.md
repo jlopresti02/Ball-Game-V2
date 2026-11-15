@@ -39,6 +39,8 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Sean Strickland's America fires when he's landing or has them cornered; the eagle swoops in on a curve and lands; Chuck Norris tags in | Christian's Claude | live on main |
 | Shared movement styles (`movement.js`, `movement` block): Ilia walks them down, Khabib cuts off the cage with rare side steps | Christian's Claude | live on main |
 | Justin Gaethje's golf club comes out sooner (charge 35) and can't get him stuck in a grab; Max Holloway's Middle comes late in most fights (always accepted); Ilia's bull hits harder (70); an engine watchdog (`watchdog.js`) frees any fighter stuck too long | Christian's Claude | live on main |
+| Uppercuts and body shots as shared punches that set up the bigger shot (`body-shots-uppercuts.js`, `uppercuts` / `bodyShots` blocks, hooks take `afterSetup` and `side`): Max, Ilia, Van, Dustin (body, then the left hook), Pereira, and Gaethje's uppercuts that stuff grabs, shots, clinches and guard pulls | Christian's Claude | live on main |
+| Josh Hokit always walks forward with light combos, stuffs takedowns, shoots now and then, 800 health (`hokit-pressure.js`, `max-hp.js`: only a fighter with `maxHp` over 500 changes) | Christian's Claude | live on main |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
