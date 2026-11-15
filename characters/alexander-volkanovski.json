@@ -1,6 +1,6 @@
 {
   "id": "c-alexander-volkanovski",
-  "rev": 2,
+  "rev": 3,
   "builtin": false,
   "weightClass": "featherweight",
   "name": "Alexander Volkanovski",
@@ -47,13 +47,14 @@
       "card": 2.8,
       "mixedWithin": 12,
       "plans": {
-        "kicks": { "kickCooldown": 0.55, "kickDamage": 1.1, "shotChance": 0, "sprawlBonus": 20, "gap": 50 },
+        "kicks": { "kickCooldown": 0.55, "kickDamage": 1.1, "shotChance": 0, "sprawlBonus": 20, "gap": 50, "stepIn": "kick" },
         "wrestle": { "kickCooldown": 1.6, "shotChance": 50, "reachBonus": 6, "grappleCooldown": 0.8, "gap": 12 },
         "mixed": { "kickCooldown": 1, "shotChance": 25, "gap": 30 }
       },
       "adapt": { "max": 2, "after": 8, "stuffed": 2, "takenDown": 2, "checked": 3, "damageLead": 80 }
     },
     "circle": { "after": 0.6, "switchEvery": [1.0, 2.2], "turn": 9, "sway": 15, "swayEvery": 1.7, "pivot": 0.7, "range": 330 },
+    "angles": { "outMargin": 10, "outMax": 56, "inRange": 90, "ready": 0.1, "inAngle": 0.55, "inSpeed": 1.1, "inTime": 0.5, "outTime": 0.3, "outAngle": 0.95, "outSpeed": 1.2, "cone": 55, "pivotGap": 0.5, "slip": 35 },
     "rivals": { "ilia": { "damageTaken": 1.3 }, "max": { "damage": 1.1 } },
     "walkout": { "keep": 1.6 },
     "lines": { "start": true, "plan": 70, "adapt": true, "rival": true, "nail": 30, "win": true, "gap": 8 }

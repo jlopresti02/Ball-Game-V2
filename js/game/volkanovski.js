@@ -25,7 +25,16 @@
 //             seconds or when the cage gets in the way, with a little plant and
 //             pivot, the distance swaying in and out (`sway`). A dashed arrow on
 //             the mat shows which way he's going round.
-// Durability  (durability) he takes `damageTaken` of the damage (0.88).
+// Angles      (angles) in and out on the angle, on top of the circling.
+//             Between strikes he circles just outside their punch
+//             (`outMargin` past it, at most `outMax`). When his punch or kick
+//             is about ready he steps in off to the side (`inAngle`), so it
+//             goes off as he arrives beside them, then steps straight out
+//             and off to the side (`outAngle`, `outTime`). In front of them
+//             he pivots the way that takes him off their line (`cone`, at
+//             most every `pivotGap`). On the angle (stepping, or off their
+//             line) `slip`% of their strikes go where he was ("ANGLE").
+// Durability (durability) he takes `damageTaken` of the damage (0.88).
 // Rivals      (rivals) Ilia Topuria knocked him out at UFC 298: against Ilia
 //             there's no durability bonus and he takes `ilia.damageTaken`.
 //             He beat Max Holloway three times: against Max (id
@@ -158,7 +167,8 @@ function initVolk(b) {
     own: { kick: vkClone(ch.kick), grapple: vkClone(ch.grapple), hasKick: !!ch.hasKick, hasGrapple: !!ch.hasGrapple },
     dir: Math.random() < 0.5 ? 1 : -1, switchT: ci.switchEvery ? vkRand(ci.switchEvery) : 2, wallCd: 0, pivotFx: 0, lean: 0, circling: false,
     sway: Math.random() * 6.28, gapNow: 30,
-    ev: { stuffed: 0, takenDown: 0, checked: 0 }, was: {},
+    ang: { mode: null, t: 0, ux: 0, uy: 0, pivotCd: 0, seen: null, struck: false, cmb: false }, // (angles) mode "in" or "out"
+    ev:{ stuffed: 0, takenDown: 0, checked: 0 }, was: {},
     taken: { strike: 0, grapple: 0 }, lastSrc: null, hpPrev: MAX_HP,
     said: {}, lineGap: 1.2, winT: 0, rival: null,
     flag: cfg.walkout ? 1 : 0
@@ -304,24 +314,32 @@ function volkAdapt(b, other, cfg) {
 // then with a plant and a pivot. Only in ordinary movement: anything that
 // takes hold of him, sends him flying or winds him up leaves him alone.
 function volkCircle(b, other, cfg, dt) {
-  var c = cfg.circle, v = b.vk;
+  var c = cfg.circle, v = b.vk, an = cfg.angles, ag = v.ang;
   v.circling = false;
   v.wallCd = Math.max(0, v.wallCd - dt);
-  if (!c || !inOrdinaryMovement(b) || b.dizzy || b.angry || b.speedEase || !other.alive || other.invincible || v.t < (c.after || 0)) return;
-  if (other.x < 0 || other.x > W || other.y < 0 || other.y > H) return; // (up in the air, off the screen)
+  ag.pivotCd = Math.max(0, ag.pivotCd - dt);
+  if (!c || !inOrdinaryMovement(b) || b.dizzy || b.angry || b.speedEase || !other.alive || other.invincible || v.t < (c.after || 0)) { ag.mode = null; return; }
+  if (other.x < 0 || other.x > W || other.y < 0 || other.y > H) { ag.mode = null; return; } // (up in the air, off the screen)
   var dx = other.x - b.x, dy = other.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-  if (d > (c.range || 9999)) return;
+  if (d > (c.range || 9999)) { ag.mode = null; return; }
   v.circling = true;
   var ux = dx / d, uy = dy / d, tx = -uy * v.dir, ty = ux * v.dir;
-  // Switching round: on the clock, or when the cage is in the way.
+  // Switching round: on the clock, or when the cage is in the way. In front
+  // of them (angles) he pivots the way that takes him off their line, and
+  // the clock doesn't turn him back into it.
   v.switchT -= dt;
   var ax = b.x + tx * (b.r + 22), ay = b.y + ty * (b.r + 22);
   var walled = ax < b.r || ax > W - b.r || ay < b.r || ay > H - b.r;
-  if (v.switchT <= 0 || (walled && v.wallCd <= 0)) {
+  var off = an ? volkOffSide(b, other, an) : 0;
+  var offOpen = off && vkInCage(b, b.x - uy * off * (b.r + 22), b.y + ux * off * (b.r + 22));
+  if (v.switchT <= 0 && off && v.dir === off && !walled) v.switchT = vkRand(c.switchEvery); // already heading off their line: keeps going
+  var toOff = off && v.dir !== off && offOpen && ag.pivotCd <= 0;
+  if (v.switchT <= 0 || (walled && v.wallCd <= 0) || toOff) {
     v.dir = -v.dir; tx = -tx; ty = -ty;
     v.switchT = vkRand(c.switchEvery);
     v.wallCd = 0.6;
     v.pivotFx = 0.35;
+    if (an) ag.pivotCd = an.pivotGap || 0.5;
     var sp0 = Math.sqrt(b.vx * b.vx + b.vy * b.vy) || (b.baseSpeed || SPEED);
     b.vx = tx * sp0 * (c.pivot || 0.7); b.vy = ty * sp0 * (c.pivot || 0.7);
     volkPivotDust(b);
@@ -330,15 +348,18 @@ function volkCircle(b, other, cfg, dt) {
   var gp = ((cfg.gamePlan || {}).plans || {})[v.plan] || {};
   v.sway += dt * Math.PI * 2 / (c.swayEvery || 1.7);
   var gap = (gp.gap != null ? gp.gap : 30) + (c.sway || 0) * Math.sin(v.sway);
+  if (an && an.outMargin != null) gap = Math.max(gap, volkOutGap(other, an)); // (angles) just outside their reach between strikes
   v.gapNow = gap;
-  var want = b.r + other.r + gap, err = Math.max(-1.3, Math.min(1.3, (d - want) / 40));
-  var wx = tx + ux * err, wy = ty + uy * err;
-  var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-  if (s < 1) return;
-  var cur = Math.atan2(b.vy, b.vx), wantA = Math.atan2(wy, wx);
-  var diff = Math.atan2(Math.sin(wantA - cur), Math.cos(wantA - cur));
-  var turn = Math.max(-(c.turn || 8) * dt, Math.min((c.turn || 8) * dt, diff));
-  b.vx = Math.cos(cur + turn) * s; b.vy = Math.sin(cur + turn) * s;
+  if (!(an && volkAngleStep(b, other, an, gp, ux, uy, tx, ty, d, dt))) { // (angles) stepping in or out sets his heading itself
+    var want = b.r + other.r + gap, err = Math.max(-1.3, Math.min(1.3, (d - want) / 40));
+    var wx = tx + ux * err, wy = ty + uy * err;
+    var s = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+    if (s < 1) return;
+    var cur = Math.atan2(b.vy, b.vx), wantA = Math.atan2(wy, wx);
+    var diff = Math.atan2(Math.sin(wantA - cur), Math.cos(wantA - cur));
+    var turn = Math.max(-(c.turn || 8) * dt, Math.min((c.turn || 8) * dt, diff));
+    b.vx = Math.cos(cur + turn) * s; b.vy = Math.sin(cur + turn) * s;
+  }
   // A lean into the way he's going.
   var lean = Math.max(-1, Math.min(1, b.vx / ((b.baseSpeed || SPEED) || 1)));
   v.lean += (lean - v.lean) * Math.min(1, dt * 8);
@@ -351,6 +372,108 @@ function volkPivotDust(b) {
     particles.push({ x: b.x + (Math.random() - 0.5) * b.r, y: b.y + b.r * 0.9, vx: Math.cos(a) * 110 * (Math.random() < 0.5 ? -1 : 1), vy: -Math.sin(a) * 50,
       life: 0.32, max: 0.32, size: 3.5, color: "rgba(170,150,120,0.7)" });
   }
+}
+
+// ---------------------------------------------------------------- angles
+
+// Their strikes that can go where he was when he's on the angle.
+var VK_SLIP_SRC = { punch: true, jab: true, hook: true, kick: true, elbow: true, knee: true, combo: true, teep: true, swing: true };
+
+function vkInCage(b, x, y) { return x > b.r && x < W - b.r && y > b.r && y < H - b.r; }
+
+// Between strikes he waits `outMargin` px past their punch (edge to edge),
+// at most `outMax` out. Never closer than the plan's own distance.
+function volkOutGap(o, an) {
+  var reach = o.char.punch ? o.char.punch.reach : 0;
+  return Math.min(an.outMax != null ? an.outMax : 999, reach + an.outMargin);
+}
+
+// Off their line: outside `cone` degrees either side of the way they're
+// facing (facingOf, grapple-duel.js: where they're moving, or at him if
+// they're standing still).
+function volkOffLine(o, b, an) {
+  var f = facingOf(o, b), dx = b.x - o.x, dy = b.y - o.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  return (f.x * dx + f.y * dy) / d < Math.cos((an.cone || 55) * Math.PI / 180);
+}
+
+// In front of them: the way round (his v.dir) that takes him off their
+// line, toward the side he's already on. 0 when he's already off it.
+function volkOffSide(b, o, an) {
+  if (volkOffLine(o, b, an)) return 0;
+  var f = facingOf(o, b);
+  return f.x * (b.y - o.y) - f.y * (b.x - o.x) >= 0 ? -1 : 1;
+}
+
+// His shot is ready on a plan that shoots.
+function volkShotReady(b, gp) {
+  var g = b.char.hasGrapple && b.char.grapple;
+  return !!g && gp.stepIn !== "kick" && (b.grappleCd || 0) <= 0 && g.shotChance !== 0;
+}
+
+// In and out on the angle. True while he's stepping (it sets his heading).
+//   in   his punch or kick (or his shot, on a plan that shoots) is `ready`
+//        seconds from going and they're within `inRange`: he steps in
+//        `inAngle` off straight at them, toward the side he's circling to,
+//        so he arrives beside them and it goes off as he gets there.
+//        Called off after `inTime`. On the kicks plan (`stepIn` "kick") he
+//        only steps in for the kick.
+//   out  his strike has gone (landed, slipped or blocked) or a combination
+//        is over: he steps out `outAngle` off straight back, to the side,
+//        for `outTime` at `outSpeed`. With his shot ready he keeps coming
+//        for it first.
+function volkAngleStep(b, other, an, gp, ux, uy, tx, ty, d, dt) {
+  var ag = b.vk.ang, ch = b.char, gap = d - b.r - other.r, base = (b.baseSpeed || SPEED) * slowMult(b);
+  var thrown = b.punch && b.punch.hit ? b.punch : (b.kick && b.kick.hit && !b.kick.counter ? b.kick : null);
+  if (thrown && thrown !== ag.seen) { ag.seen = thrown; ag.struck = true; }
+  if (ag.cmb && !b.cmb) ag.struck = true;
+  ag.cmb = !!b.cmb;
+  if (b.cmb) { ag.mode = null; return false; } // a combination steps in behind its own strikes (combos.js)
+  if (ag.mode === "out") ag.struck = false;
+  else if (ag.struck && !(ag.mode === "in" && volkShotReady(b, gp) && gap > ch.grapple.reach)) { ag.struck = false; volkStepOut(b, an, ux, uy, base); }
+  if (ag.mode === "out") {
+    ag.t += dt;
+    if (ag.t >= an.outTime) { ag.mode = null; setSpeed(b, base); return false; }
+    b.vx = ag.ux * base * (an.outSpeed || 1); b.vy = ag.uy * base * (an.outSpeed || 1);
+    return true;
+  }
+  if (!ag.mode) {
+    var ready = ch.hasKick && (b.kickCd || 0) <= an.ready;
+    if (gp.stepIn !== "kick") ready = ready || (ch.hasPunch && (b.punchCd || 0) <= an.ready) || volkShotReady(b, gp);
+    if (!ready || b.punch || b.kick || gap > an.inRange) return false;
+    ag.mode = "in"; ag.t = 0;
+  }
+  ag.t += dt;
+  if (ag.t > an.inTime) { ag.mode = null; return false; }
+  var ca = Math.cos(an.inAngle), sa = Math.sin(an.inAngle), s = Math.max(Math.sqrt(b.vx * b.vx + b.vy * b.vy), base * (an.inSpeed || 1));
+  b.vx = (ux * ca + tx * sa) * s; b.vy = (uy * ca + ty * sa) * s;
+  return true;
+}
+
+// Out: straight back turned `outAngle` toward his circling side, or toward
+// the other side if the cage is in the way there.
+function volkStepOut(b, an, ux, uy, base) {
+  var v = b.vk, ag = v.ang, dist = base * (an.outSpeed || 1) * an.outTime, ca = Math.cos(an.outAngle), sa = Math.sin(an.outAngle), best = null;
+  [v.dir, -v.dir].forEach(function (dir) {
+    var wx = -ux * ca - uy * dir * sa, wy = -uy * ca + ux * dir * sa;
+    var x = b.x + wx * dist, y = b.y + wy * dist, room = Math.min(x - b.r, W - b.r - x, y - b.r, H - b.r - y);
+    if (!best || room > best.room + 8) best = { x: wx, y: wy, room: room, dir: dir };
+  });
+  v.dir = best.dir;
+  ag.mode = "out"; ag.t = 0; ag.ux = best.x; ag.uy = best.y;
+}
+
+// From hurt (match.js): on the angle (stepping in or out, or off their line)
+// their strike goes where he was `slip`% of the time.
+function volkAngleDodge(b, source, attackerId) {
+  var an = b && b.vk && vkCfg(b) && vkCfg(b).angles;
+  if (!an || !an.slip || !VK_SLIP_SRC[source] || attackerId == null || attackerId === b.id || !b.alive || !b.vk.circling || b.dizzy || !inOrdinaryMovement(b)) return false;
+  var atk = balls[attackerId];
+  if (!atk || !(b.vk.ang.mode || volkOffLine(atk, b, an)) || Math.random() * 100 >= an.slip) return false;
+  b.justDodged = true;
+  b.weaveAnim = { t: 0, dur: 0.26, sign: b.vk.dir };
+  floater(b.x, b.y - b.r - 8, "ANGLE", "dodge");
+  playSlip();
+  return true;
 }
 
 // ---------------------------------------------------------------- durability and rivals
@@ -1434,6 +1557,7 @@ function volkGalleryMoves(ch, add) {
   if (gp) add("🧠", "Fight IQ", secs(gp.readAt) + " in he reads their numbers onto a FIGHT IQ card: how much of a submission threat they are and how much of a striker. Against the submission threat it's KICKS: he stays off the mat, kicks " + Math.round(1 / pl.kicks.kickCooldown * 10) / 10 + "x as often and never shoots. Against the striker it's WRESTLE: he closes in and shoots " + pl.wrestle.shotChance + "% of the times he's close. Too close to call, he mixes it up.");
   if (gp && gp.adapt) add("🔄", "Adapting", "If it isn't working (shots stuffed, taken down, kicks checked, or one kind of damage piling up on him) he switches plans, up to " + gp.adapt.max + " times a fight. \"When they're doing the right stuff, I make the adjustments.\"");
   if (ci) add("🌀", "Circling", "Circles them at the plan's distance, switching between clockwise and counter-clockwise every " + ci.switchEvery[0] + "-" + ci.switchEvery[1] + "s (or when the cage is in the way) with a plant and a pivot. A dashed arrow on the mat shows which way he's going.");
+  if (v.angles) add("📐", "Angles", "In and out: between strikes he circles just outside their punch, steps in off to the side as his punch or kick comes ready, and steps out and off to the side right after. In front of them he pivots off their line. On the angle " + v.angles.slip + "% of their strikes go where he was.");
   if (v.durability) add("🧱", "Durability", "Takes " + Math.round(v.durability.damageTaken * 100) + "% of the damage.");
   if (v.rivals && v.rivals.ilia) add("🇪🇸", "vs Ilia", "Ilia knocked him out at UFC 298: against Ilia he has no durability bonus and takes " + Math.round(v.rivals.ilia.damageTaken * 100) + "% damage.");
   if (v.rivals && v.rivals.max) add("🌺", "vs Max", "He beat Max Holloway three times: against Max he hits " + Math.round((v.rivals.max.damage - 1) * 100) + "% harder.");

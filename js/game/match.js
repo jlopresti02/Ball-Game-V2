@@ -306,6 +306,7 @@ function hurt(b, amount, source, attackerId) {
   if (stricklandShell(b, source, attackerId)) return 0; // Sean Strickland rolling it off his shoulder (strickland.js)
   if (fergusonDodge(b, source, attackerId)) return 0; // Tony Ferguson slipping it on his slide, or it clanks off his turtle shell (ferguson.js)
   if (bispingDodge(b, source, attackerId)) return 0; // Michael Bisping stepping off to the side of a kick (bisping.js)
+  if (volkAngleDodge(b, source, attackerId)) return 0; // Alexander Volkanovski on the angle: it goes where he was (volkanovski.js)
   if (kickSmothered(b, source, attackerId)) return 0; // kicks smothered up close: Josh Hokit (kick-smother.js)
   if (pratesDodge(b, source, attackerId)) return 0; // Carlos Prates partying: nothing touches him (prates.js)
   if (prochazkaParry(b, source, attackerId)) return 0; // Jiří Procházka's katanas meeting a katana, saber or bat (prochazka.js)
