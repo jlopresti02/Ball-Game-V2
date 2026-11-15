@@ -5676,7 +5676,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-sean-strickland",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Sean Strickland",
@@ -5710,7 +5710,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 13,
+      "damage": 15,
       "cooldown": 0.5,
       "speed": 0.2,
       "size": 14,
