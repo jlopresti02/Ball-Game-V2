@@ -6,9 +6,9 @@
 // with his real line "He's a snake in the grass." while his outside glove
 // points across at them, word by word. The other fighter fumes, then does
 // their own taunt once he's said it.
-// Charles ("saiyan"): he flashes in and out of Super Saiyan, quick: blond
-// hair and the golden aura flicker on and off round his portrait with a
-// power-up burst, then a last big flare, then he powers down.
+// Charles ("saiyan"): he powers up into Super Saiyan once (blond hair, the
+// golden aura and lightning round his portrait, with the power-up burst),
+// holds the form, then powers down.
 // Only ever the fighter's own two gloves. The line goes through the talk
 // channel (playTalk), so it never talks over the announcer.
 "use strict";
@@ -18,9 +18,9 @@ var TAPE_PRESSER_LEN = 2.5;  // up, the line, down again
 var TAPE_PRESSER_RISE = 0.3;
 var TAPE_PRESSER_LINE = "He's a snake in the grass.";
 var TAPE_SAIYAN_LEN = 1.45;
-// When he's blond in his flicker (seconds into it): quick flashes, then a
-// longer flare at the end.
-var TAPE_SAIYAN_ON = [[0, 0.09], [0.16, 0.24], [0.3, 0.4], [0.47, 0.53], [0.6, 0.8], [0.88, 0.95], [1.02, 1.32]];
+// When he's blond (seconds into his taunt): one power-up, he holds the form,
+// then powers down (Joe, 2026-11-15: no flickering).
+var TAPE_SAIYAN_ON = [[0, 1.3]];
 
 function tapeTauntKind(ch) {
   if (ch.id === "c-conor-mcgregor") return "presser";
@@ -64,10 +64,7 @@ function tickTapeTaunts(t) {
         else if (playTalk(name, 1)) { snd.line = true; tape.lineAt = t; tape.lineLen = clipBuffers[name].duration; }
       }
     } else if (kind === "saiyan") {
-      [0, 4, 6].forEach(function (j) {
-        var at = TAPE_SAIYAN_ON[j][0], key = "up" + i + "_" + j;
-        if (!snd[key] && st >= at && st < at + 0.2) { snd[key] = true; playClipOnce("saiyanUp", j === 6 ? 0.9 : 0.6); }
-      });
+      if (!snd["up" + i] && st >= 0 && st < 0.2) { snd["up" + i] = true; playClipOnce("saiyanUp", 0.9); }
       var end = TAPE_SAIYAN_ON[TAPE_SAIYAN_ON.length - 1][1];
       if (!snd["down" + i] && st >= end && st < end + 0.3) { snd["down" + i] = true; playClipOnce("saiyanDown", AURA_VOL * 1.1); }
     }
