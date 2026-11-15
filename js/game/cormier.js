@@ -97,7 +97,7 @@ function dcWrap(a) { while (a > Math.PI) a -= Math.PI * 2; while (a < -Math.PI) 
 function dcCall(kind, self, other) { if (typeof commentaryCall === "function") commentaryCall(kind, self, other); }
 
 // From startMatchSeeded.
-function resetCormier() { dcClock = 0; dcCraters = []; dcStamp = null; }
+function resetCormier() { dcClock = 0; dcCraters = []; dcStamp = null; dcCakeCutReset(); /* his music video (cormier-cake-cut.js) */ }
 
 // From makeBall (after applyWeight, so his size and speed are set).
 function initCormier(b) {
@@ -112,6 +112,7 @@ function initCormier(b) {
     must: [], lineGap: 0, tauntT: dcRand((cfg.lineTiming && cfg.lineTiming.tauntEvery) || [12, 20]), jonLeft: null, jonT: 0, lastLock: null
   };
   b.dc.bellyShown = b.dc.belly0;
+  if (cfg.food) dcCakeCutPreload(); // the song for his music video (cormier-cake-cut.js)
 }
 
 // ---------------------------------------------------------------- his lines
@@ -484,15 +485,22 @@ function updateCake(self, other, dt) {
     self.vx = 0; self.vy = 0;
     self.igbb = { move: "dcfood", phase: "plate", t: 0, kind: fd.menu[m.servings % fd.menu.length], bites: 0, side: other.x >= self.x ? 1 : -1, bite: 0 };
     m.eating = true;
-    floater(self.x, self.y - self.r - 30, "SNACK TIME!", "crit");
-    dcMustSay(self, "food"); // every time he eats
-    playDcPlate();
+    if (dcCakeCutWanted(self)) { self.igbb.phase = "cut"; startDcCakeCut(self); } // the first serving is his music video, with the song (cormier-cake-cut.js)
+    else {
+      floater(self.x, self.y - self.r - 30, "SNACK TIME!", "crit");
+      dcMustSay(self, "food"); // every time he eats
+      playDcPlate();
+    }
     crowdReact(0.2);
   }
   var e = self.igbb;
   e.t += dt;
   self.vx = 0; self.vy = 0;
   e.bite = Math.max(0, e.bite - dt);
+  if (e.phase === "cut") { // the fight holds through the video; then it's down
+    if (!dcCakeCutOn()) { e.phase = "swell"; e.t = 0; dcServe(self, e.kind, false); }
+    return true;
+  }
   if (e.phase === "plate") {
     if (e.t >= DC_PLATE) { e.phase = "eat"; e.t = 0; }
     return true;
@@ -1013,7 +1021,7 @@ function drawDcBelly(c, r, look, ink, lw, contained, sTop) {
 // ---------------------------------------------------------------- gallery (gallery.js)
 
 function cormierCakeInfo(sp) {
-  return "His 2015 \"All About That Cake\" video: when the bar's full he stops (\"SNACK TIME!\") and eats a slice of chocolate cake or a fried chicken drumstick, wide open while he does. Then his belly swells and he hits harder for the rest of the fight, stacking with every serving.";
+  return "His 2015 \"All About That Cake\" video: when the bar's full he stops (\"SNACK TIME!\") and eats a slice of chocolate cake or a fried chicken drumstick, wide open while he does. Then his belly swells and he hits harder for the rest of the fight, stacking with every serving. The first one each fight plays his music video as a cutscene, with the real song and the lyrics.";
 }
 
 function cormierGalleryMoves(ch, add) {
@@ -1034,7 +1042,8 @@ function cormierGallerySounds(groups, synth) {
     synth("Super slam", "Slamming them into the middle of the cage.", function () { playDcSuperSlam(); }),
     synth("Snack time", "The plate coming out.", function () { playDcPlate(); }),
     synth("Chomp", "A bite of cake.", function () { playDcChomp(); }),
-    synth("Stronger", "The food kicking in.", function () { playDcPowerUp(); })
+    synth("Stronger", "The food kicking in.", function () { playDcPowerUp(); }),
+    { clip: "dcCakeSong", label: "All About That Cake", info: "His song, under the music video on his first serving (cormier-cake-cut.js).", gain: 0.85 }
   ] });
 }
 

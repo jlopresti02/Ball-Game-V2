@@ -551,4 +551,5 @@ function draw() {
   drawTaleTape(); // the tale of the tape before the whistle, which then starts the fight (tale-tape.js)
   drawIntroMsg(s, ox, oy); // the instruction to the viewer at the start (intro-msg.js)
   drawSendLocSpace(); // cut up to the space station while the fight holds (send-location.js)
+  drawDcCakeCut(); // Daniel Cormier's All About That Cake music video, over everything while the fight holds (cormier-cake-cut.js)
 }

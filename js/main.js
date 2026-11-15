@@ -8,7 +8,7 @@ var TICK = 1 / 60, tickAcc = 0;
 function runTicks(dt) {
   tickAcc = Math.min(tickAcc + dt, TICK * 4);
   withFightRandom(function () {
-    while (tickAcc >= TICK - 1e-9) { update(TICK); tickAcc -= TICK; }
+    while (tickAcc >= TICK - 1e-9 && dcCakeCutTimeScale() > 0) { update(TICK); tickAcc -= TICK; } // stops dead when DC's music video starts (cormier-cake-cut.js)
   });
 }
 function frame(t) {
@@ -18,6 +18,7 @@ function frame(t) {
   if (!screens.game.hidden) {
     var ts = deathTimeScale() * sendLocTimeScale(); // slow motion or a freeze while the loser dies (death.js); held while Khabib's strike is up in orbit (send-location.js)
     ts *= andersonTimeScale(); // bullet time while Anderson Silva leans back in Spider Code (anderson.js)
+    if (started && !gamePaused) advanceDcCakeCut(dt); ts *= dcCakeCutTimeScale(); // held while DC's music video plays, in real time (cormier-cake-cut.js)
     if (started && !gamePaused) advanceSendLocSpace(dt); // the space cut plays out in real time
     if (started && !gamePaused && ts > 0) runTicks(dt * ts); // a gallery demo can be paused (gallery.js)
     updateHud(false);
