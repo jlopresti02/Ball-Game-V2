@@ -9976,7 +9976,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-nate-diaz",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "welterweight",
     "name": "Nate Diaz",
@@ -9986,22 +9986,24 @@ var SAVED_ROSTER = [
     "label": "",
     "imgData": null,
     "look": {
-      "skin": "#ebc5a6",
+      "skin": "#dfab88",
       "build": "lean",
+      "flat": true,
       "bodyHair": "none",
-      "hair": "short",
-      "hairColor": "#2a1e17",
-      "beard": "stubble",
-      "beardAlpha": 0.3,
-      "beardColor": "#2a1e17",
+      "hair": "buzz",
+      "hairColor": "#1e1611",
+      "beard": "none",
+      "beardColor": "#1e1611",
+      "diazChin": 0.15,
       "ears": "normal",
       "tattoos": {},
-      "shorts": "#151515",
-      "trim": "#f2f2f2",
+      "shorts": "#121212",
+      "trim": "#121212",
       "shortsStyle": "stripe",
       "waistText": "209",
       "waistTextColor": "#d9622b",
-      "gloves": "#151515"
+      "gloves": "#151515",
+      "gloveStrap": "#c8202c"
     },
     "hasProjectile": false,
     "proj": {
@@ -42655,8 +42657,9 @@ function playShieldCatch() {
 //             `punch`, one flurry every `flurryEvery`, at most `maxDamage` in
 //             all). His shots slip and block like anything thrown, and he
 //             misses if they got out of `reach`. Nate keeps fighting.
-//             Then Nick hops back out. NICK DIAZ name tag, long hair, full
-//             beard, white shorts: he reads as Nick, not a second Nate.
+//             Then Nick hops back out. NICK DIAZ name tag, messy dark hair,
+//             fuller chin beard, chest hair, grey waistband and blue glove
+//             straps: he reads as Nick, not a second Nate.
 // Iconic finish  (diaz.iconic) a win by rear naked choke gets Bruce Buffer's
 //             UFC 196 call on the lower-third (speech.js announce), and
 //             against Conor, Joe Rogan's question and "I'm not surprised".
@@ -42713,10 +42716,10 @@ var ND_ROGAN = "You just shook up the world. How's that feel?"; // Joe Rogan's f
 // Conor's real lines about Nate (UFC 196 press conference, 2016) come out more against him.
 if (typeof CM_LINES !== "undefined") CM_LINES.vs[ND_ID] = ["Congratulations. You're rich now.", "He makes gang signs with his right hand and animal balloons with his left."];
 
-var NICK_LOOK = {
-  skin: "#e8c0a0", build: "lean", bodyHair: "light", hair: "long", hairColor: "#1f1712",
-  beard: "full", beardColor: "#2a1e17", ears: "normal", tattoos: {},
-  shorts: "#f2f2f2", trim: "#151515", shortsStyle: "stripe", waistText: "209", waistTextColor: "#151515", gloves: "#151515"
+var NICK_LOOK = {  // Joe's skin from his photos, 2026-11-15 (chin beard and skinny-fat body: diaz-skins.js)
+  skin: "#e0ae8b", build: "lean", flat: true, bodyHair: "heavy", hair: "short", hairColor: "#24180f",
+  beard: "none", beardColor: "#24180f", diazChin: 0.2, ears: "normal", tattoos: {},
+  shorts: "#141414", trim: "#9a9a9a", shortsStyle: "stripe", waistText: "209", waistTextColor: "#151515", gloves: "#151515", gloveStrap: "#2f5fc4"
 };
 var NICK_CH = { name: "Nick", color: "#d9622b", look: NICK_LOOK };
 var NICK_R = 36;
@@ -43822,6 +43825,48 @@ function playNickEntrance() {
     caneBurst(ac, t, 700, 0.5, 0.45, 0.7);
     caneTone(ac, t, "sine", 100, 60, 0.3, 0.3);
   });
+}
+
+// The Diaz brothers' skins (Joe, 2026-11-15, from his photos).
+//
+// look.diazChin  a chin beard and nothing else: no moustache, no soul patch,
+//                no cheek stubble. The number is its half-width (a share of r):
+//                0.15 for Nate, 0.2 for Nick's fuller one. Drawn from
+//                drawArtHeadLayer (fighter-art.js).
+// look.flat      a skinny-fat body: barely-there muscle lines, no six pack, a
+//                soft belly curve over the waistband and a belly button. Read
+//                by drawArtBody (fighter-art.js), which calls drawSkinnyFatCore.
+
+function drawDiazChin(c, r, look) {
+  var bc = look.beardColor || look.hairColor, w = r * (typeof look.diazChin === "number" ? look.diazChin : 0.15), rnd = artRand(209);
+  var chin = function () {
+    c.beginPath();
+    c.moveTo(-w, -r * 0.32 - w * 0.1);
+    c.quadraticCurveTo(0, -r * 0.355 - w * 0.1, w, -r * 0.32 - w * 0.1);
+    c.quadraticCurveTo(w, -r * 0.21, 0, -r * 0.19);
+    c.quadraticCurveTo(-w, -r * 0.21, -w, -r * 0.32 - w * 0.1);
+    c.closePath();
+  };
+  c.save();
+  c.globalAlpha = 0.82; c.fillStyle = bc; chin(); c.fill();
+  chin(); c.clip();
+  c.fillStyle = shadeHex(bc, 0.3); c.globalAlpha = 0.45;
+  for (var k = 0; k < 90; k++) c.fillRect((rnd() * 2 - 1) * w * 1.1, -r * 0.38 + rnd() * r * 0.2, r * 0.014, r * 0.014);
+  c.restore();
+}
+
+// Called in drawArtBody's torso space in place of the six pack.
+function drawSkinnyFatCore(c, r, lw, line) {
+  var bg = c.createRadialGradient(0, r * 0.3, r * 0.05, 0, r * 0.28, r * 0.5);
+  bg.addColorStop(0, "rgba(255,255,255,0.16)"); bg.addColorStop(1, "rgba(255,255,255,0)");
+  c.globalAlpha = 1; c.fillStyle = bg;
+  c.beginPath(); c.ellipse(0, r * 0.28, r * 0.5, r * 0.3, 0, 0, Math.PI * 2); c.fill();
+  c.globalAlpha = 0.18; c.strokeStyle = line; c.lineWidth = lw(0.03);
+  c.beginPath(); c.moveTo(0, -r * 0.02); c.lineTo(0, r * 0.16); c.stroke();
+  c.globalAlpha = 0.3; c.lineWidth = lw(0.035);
+  c.beginPath(); c.arc(0, r * 0.05, r * 0.48, 0.55, Math.PI - 0.55); c.stroke();  // soft belly over the waistband
+  c.globalAlpha = 0.2; c.fillStyle = line;
+  c.beginPath(); c.arc(0, r * 0.2, r * 0.025, 0, Math.PI * 2); c.fill();  // belly button
 }
 
 // Chair Shot: Josh Hokit's special move, a WWE style folding chair shot.
@@ -72289,6 +72334,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.hachimaki) drawGspHachimaki(c, r, look.hachimaki, line, lw); // GSP's walkout headband (gsp.js)
   if (look.cucuy) drawCucuyHead(c, r, look, line, lw); // Tony Ferguson's moustache and headband (ferguson.js)
   if (look.vanGoatee) drawVanGoatee(c, r, look, line, lw); // Joshua Van's thin moustache and chin beard (van.js)
+  if (look.diazChin) drawDiazChin(c, r, look); // the Diaz brothers' chin beards (diaz-skins.js)
   if (look.glasses === "shades") drawShades(c, r, lw);
   if (look.eyePatch) drawEyePatch(c, r, look.eyePatch, lw); // Michael Bisping's pirate eye patch (bisping.js)
 }
@@ -72604,7 +72650,7 @@ function drawShades(c, r, lw) {
 function drawArtBody(c, r, look, ink, name, contained) {
   var skin = look.skin, build = look.build;
   var line = shadeHex(skin, -0.38), hi = shadeHex(skin, 0.28);
-  var def = build === "lean" ? 0.65 : build === "stocky" ? 0.55 : 1; // how cut the muscles look
+  var def = look.flat ? 0.12 : build === "lean" ? 0.65 : build === "stocky" ? 0.55 : 1; // how cut the muscles look
   var lw = function (k) { return Math.max(1, r * k); };
 
   c.save();
@@ -72637,7 +72683,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
 
   // Pecs: highlight on top, deep shadow line underneath
   [-1, 1].forEach(function (s) {
-    c.globalAlpha = 0.45;
+    c.globalAlpha = look.flat ? 0.2 : 0.45;  // softer pecs when skinny fat (diaz-skins.js)
     c.fillStyle = hi;
     c.beginPath(); c.ellipse(s * r * 0.3, -r * 0.38, r * pecW * 0.42, r * 0.18, s * 0.15, 0, Math.PI * 2); c.fill();
     c.globalAlpha = 0.35 * def;
@@ -72665,6 +72711,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
     c.globalAlpha = 0.4; c.strokeStyle = line; c.lineWidth = lw(0.04);
     c.beginPath(); c.moveTo(0, -r * 0.05); c.lineTo(0, r * 0.32); c.stroke();
     c.beginPath(); c.arc(0, r * 0.1, r * 0.42, 0.35, Math.PI - 0.35); c.stroke();
+  } else if (look.flat) { drawSkinnyFatCore(c, r, lw, line);  // skinny-fat stomach (diaz-skins.js)
   } else if (look.core === "solid") {
     // Solid, thick core with no six pack: one broad smooth panel, a faint
     // centre line and the obliques framing it
@@ -76463,17 +76510,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115023438"></script>
-  <script src="js/game/tale-tape.js?v=20261115023438"></script>
-<script src="js/game/watchdog.js?v=20261115023438"></script>
-<script src="js/game/update.js?v=20261115023438"></script>
-<script src="js/game/fighter-art.js?v=20261115023438"></script>
-<script src="js/game/draw-attacks.js?v=20261115023438"></script>
-<script src="js/game/wwit-badge.js?v=20261115023438"></script>
-<script src="js/game/stadium.js?v=20261115023438"></script>
-<script src="js/game/draw.js?v=20261115023438"></script>
-<script src="js/ui/gallery.js?v=20261115023438"></script>
-<script src="js/ui/saved-fights.js?v=20261115023438"></script>
-<script src="js/main.js?v=20261115023438"></script>
+  <script src="js/game/intro-msg.js?v=20261115023520"></script>
+  <script src="js/game/tale-tape.js?v=20261115023520"></script>
+<script src="js/game/watchdog.js?v=20261115023520"></script>
+<script src="js/game/update.js?v=20261115023520"></script>
+<script src="js/game/fighter-art.js?v=20261115023520"></script>
+<script src="js/game/draw-attacks.js?v=20261115023520"></script>
+<script src="js/game/wwit-badge.js?v=20261115023520"></script>
+<script src="js/game/stadium.js?v=20261115023520"></script>
+<script src="js/game/draw.js?v=20261115023520"></script>
+<script src="js/ui/gallery.js?v=20261115023520"></script>
+<script src="js/ui/saved-fights.js?v=20261115023520"></script>
+<script src="js/main.js?v=20261115023520"></script>
 </body>
 </html>
