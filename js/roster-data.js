@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
@@ -142,7 +142,12 @@ var SAVED_ROSTER = [
         "hook": 32,
         "hookKnockback": 560,
         "koBase": 15,
-        "koLow": 48
+        "koLow": 48,
+        "miss": 20,
+        "closing": 60,
+        "counterBonus": 10,
+        "counterMult": 1.2,
+        "chaseMalus": 20
       },
       "duckHunt": {
         "chance": 75,
@@ -163,8 +168,12 @@ var SAVED_ROSTER = [
       "reach": 95,
       "landChance": 50,
       "blockShare": 40,
-      "koChance": 60,
-      "damagePct": 50
+      "koChance": 50,
+      "damagePct": 50,
+      "missOpen": 1.3,
+      "missGuard": 100,
+      "missShot": 85,
+      "missReach": 110
     },
     "hasSpecial": true,
     "special": {
@@ -1016,7 +1025,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 18,
+    "rev": 19,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -1105,6 +1114,7 @@ var SAVED_ROSTER = [
       "punchCut": 3,
       "duration": 15,
       "damageMult": 4,
+      "clinchMult": 2,
       "hairColor": "#f4edd2"
     },
     "blockChance": 10,
@@ -1130,8 +1140,8 @@ var SAVED_ROSTER = [
       "evade": 10,
       "weaverEvade": 10,
       "strikes": [
-        3,
-        5
+        2,
+        4
       ],
       "gap": 0.34,
       "mix": {
@@ -1140,13 +1150,13 @@ var SAVED_ROSTER = [
         "elbow": 1
       },
       "knee": {
-        "damage": 8,
-        "headDamage": 11,
-        "critChance": 35,
+        "damage": 7,
+        "headDamage": 9,
+        "critChance": 25,
         "critMult": 2
       },
-      "ramp": 10,
-      "escape": 12,
+      "ramp": 5,
+      "escape": 17,
       "grapplerEscape": 10,
       "knockback": 400,
       "open": 0.6,
@@ -2540,7 +2550,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-francis-ngannou",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Francis Ngannou",
@@ -2647,10 +2657,12 @@ var SAVED_ROSTER = [
         "knockback": 1100,
         "escape": {
           "pointBlank": 25,
+          "pointBlankChance": 10,
           "near": 40,
           "far": 160,
-          "nearChance": 8,
-          "farChance": 75,
+          "nearChance": 68,
+          "farChance": 76,
+          "lighterBonus": 2,
           "slipBonus": 15,
           "slipSpeed": 420
         },
@@ -4263,7 +4275,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 16,
+    "rev": 17,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4329,8 +4341,9 @@ var SAVED_ROSTER = [
       "damageMult": 1.2,
       "critChance": 40,
       "critMult": 1.8,
-      "onGrab": 75,
+      "onGrab": 90,
       "counterGap": 0.6,
+      "counterMult": 1.22,
       "counterKnockback": 260,
       "setupMult": 1.3,
       "setupTime": 1.6,

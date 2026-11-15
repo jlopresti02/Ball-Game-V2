@@ -1,6 +1,6 @@
 {
   "id": "c-justin-gaethje",
-  "rev": 16,
+  "rev": 17,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Justin Gaethje",
@@ -66,8 +66,9 @@
     "damageMult": 1.2,
     "critChance": 40,
     "critMult": 1.8,
-    "onGrab": 75,
+    "onGrab": 90,
     "counterGap": 0.6,
+    "counterMult": 1.22,
     "counterKnockback": 260,
     "setupMult": 1.3,
     "setupTime": 1.6,
