@@ -117,25 +117,31 @@ function dccBall(b, x, y, r, rot, sing) {
 // Where a spot on the ball (in radii) ends up on screen.
 function dccOn(x, y, r, rot, lx, ly) { var p = dccRot(lx * r, ly * r, rot); return { x: x + p.x, y: y + p.y }; }
 // One of his arms (his own two only): out of the side of the ball at the
-// shoulder, bending at the elbow, to the glove. The upper arm tapers a little
-// into the forearm. Returns the glove's angle (along the forearm).
+// shoulder, bending at the elbow, to the glove. Big heavyweight arms (Joe:
+// DC's a big man): a thick upper arm with a soft bulge, a thick forearm.
+// Returns the glove's angle (along the forearm).
 function dccArm(b, sx, sy, ex, ey, hx, hy, r, side) {
-  var w = r * 0.15, col = armColor(b.char, side || 1), out = Math.max(5, r * 0.03);
+  var wU = r * 0.27, wF = r * 0.23, col = armColor(b.char, side || 1), out = Math.max(5, r * 0.03);
+  var mx = sx + (ex - sx) * 0.5, my = sy + (ey - sy) * 0.5, ua = Math.atan2(ey - sy, ex - sx);
+  var ul = Math.sqrt((ex - sx) * (ex - sx) + (ey - sy) * (ey - sy));
+  function shape(extra) {
+    ctx.lineWidth = wU + extra; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.lineWidth = wF + extra; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(mx, my, ul * 0.36 + extra / 2, wU * 0.62 + extra / 2, ua, 0, Math.PI * 2); ctx.fill(); // the meaty upper arm
+  }
   ctx.save();
   ctx.lineCap = "round"; ctx.lineJoin = "round";
-  ctx.strokeStyle = DCC_INK;
-  ctx.lineWidth = w * 1.12 + out * 2; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
-  ctx.lineWidth = w + out * 2; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
-  ctx.strokeStyle = col;
-  ctx.lineWidth = w * 1.12; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
-  ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
-  // a soft highlight down the top of the arm
-  ctx.strokeStyle = "rgba(255,255,255,0.12)"; ctx.lineWidth = w * 0.3;
-  ctx.beginPath(); ctx.moveTo(sx, sy - w * 0.2); ctx.lineTo(ex, ey - w * 0.2); ctx.lineTo(hx, hy - w * 0.2); ctx.stroke();
+  ctx.strokeStyle = DCC_INK; ctx.fillStyle = DCC_INK; shape(out * 2);
+  ctx.strokeStyle = col; ctx.fillStyle = col; shape(0);
+  // shading underneath and a soft highlight along the top
+  ctx.strokeStyle = "rgba(0,0,0,0.16)"; ctx.lineWidth = wF * 0.3;
+  ctx.beginPath(); ctx.moveTo(sx, sy + wU * 0.3); ctx.lineTo(ex, ey + wF * 0.3); ctx.lineTo(hx, hy + wF * 0.3); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.13)"; ctx.lineWidth = wF * 0.25;
+  ctx.beginPath(); ctx.moveTo(sx, sy - wU * 0.28); ctx.lineTo(ex, ey - wF * 0.28); ctx.lineTo(hx, hy - wF * 0.28); ctx.stroke();
   ctx.restore();
   return Math.atan2(hy - ey, hx - ex);
 }
-function dccGlove(b, hx, hy, r, ang) { drawGlove(ctx, hx, hy, r * 0.21, b.char.look, DCC_INK, ang); }
+function dccGlove(b, hx, hy, r, ang) { drawGlove(ctx, hx, hy, r * 0.23, b.char.look, DCC_INK, ang); }
 
 // ---------------------------------------------------------------- the food
 
