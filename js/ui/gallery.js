@@ -363,7 +363,7 @@ function galleryAssets() {
   gspGalleryAssets(list); // GSP's Montreal stadium and the Quebec and Canada flags (gsp.js)
   volkGalleryAssets(list); // Volkanovski's kangaroo and the Australian flag (volkanovski.js)
   stricklandGalleryAssets(list); // Sean Strickland's motorcycle (strickland.js)
-  bispingGalleryAssets(list); // Michael Bisping's pirate cannon and captain's hat (bisping.js)
+  bispingGalleryAssets(list); // Michael Bisping's pirate ship (bisping.js)
   return list;
 }
 

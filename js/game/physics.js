@@ -84,6 +84,7 @@ function step(dt) {
       if (b.slam) onWallImpact(b, wnx, wny);
       else playBounce();
     }
+    bispingShipBlock(b); // bouncing off Michael Bisping's pirate ship in Broadside (bisping.js)
   }
   var a = balls[0], c = balls[1];
   var aSpin = a.powerState && a.powerState.phase === "attack";

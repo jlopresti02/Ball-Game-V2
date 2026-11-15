@@ -110,7 +110,7 @@ function draw() {
   drawConorUnder(); // Conor McGregor's bus lane and the dolly's aim line (conor.js)
   drawStricklandUnder(); // the flag on the mat, Strickland's bike lane, the bike and the wreck (strickland.js)
   drawFergusonUnder(); // Tony Ferguson's slide afterimages (ferguson.js)
-  drawBispingUnder(); // Michael Bisping's cannon and its red aim line (bisping.js)
+  drawBispingUnder(); // Michael Bisping's sea, pirate ship and red aim lines (bisping.js)
   drawAndersonUnder(); // Anderson Silva's weave ghosts, the front kick's yellow line and his shadow (anderson.js)
   if (!allAmericanOn()) drawReferee(); // under the fighters (referee.js)
 
@@ -377,7 +377,7 @@ function draw() {
     drawElbow(b, other); // an elbow being thrown, and a cut bleeding (elbows.js)
     drawFerguson(b, other); // Tony Ferguson's slide, shot, shell, Kaioken glow and katanas (ferguson.js)
     drawFedor(b, other); // Fedor Emelianenko reaching for the clinch, speed lines off his fists, UNFAZED (fedor.js)
-    drawBisping(b, other); // Michael Bisping's captain's hat and his hands at the cannon (bisping.js)
+    drawBisping(b, other); // Michael Bisping's ship's hull in front of him on deck, his hands and captain's hat (bisping.js)
     drawAnderson(b); // Anderson Silva's hands down (anderson.js)
     drawDoBronx(b); // the pose
     drawSaiyanBolts(b); // lightning over Charles while he's blond (dobronx.js)
