@@ -1357,7 +1357,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ciryl-gane",
-    "rev": 8,
+    "rev": 9,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
@@ -1561,10 +1561,12 @@ var SAVED_ROSTER = [
       "chargeTime": 37,
       "hitCut": 3,
       "punchCut": 1,
-      "batDamage": 12,
+      "batDamage": 10,
       "batGap": 0.42,
-      "finisher": 40,
-      "caneDamage": 8
+      "finisher": 34,
+      "caneDamage": 7,
+      "herbJoined": 2,
+      "beatMax": 6
     }
   },
   {
