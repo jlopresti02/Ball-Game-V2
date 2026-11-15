@@ -1599,6 +1599,7 @@ function drawArtBody(c, r, look, ink, name, contained) {
   if (contained && look.gi) drawGspGi(c, r, look, ink, lw); // GSP's walkout karate gi (gsp.js)
   if (contained && look.samurai) drawSamuraiKit(c, r, look, ink, lw); // Jiří Procházka's kimono and hakama (prochazka.js)
   if (contained) drawArtHeadLayer(c, r, look, line, lw, name);
+  if (contained && look.pratesSkin) drawPratesSkinBody(c, r, look); // Carlos Prates's chest script and navel ring (prates-skin.js)
 
   // Overall roundness: rim shadow
   var rg = c.createRadialGradient(-r * 0.2, -r * 0.25, r * 0.6, 0, 0, r);
@@ -1758,10 +1759,14 @@ function drawArmMuscle(c, ch, x0, y0, x1, y1, w, edge) {
   c.restore();
 }
 
-function drawTracedArm(c, ch, x0, y0, x1, y1, w) {
+// `side` (1 his right hand, -1 his left) picks tattoos.armDecalRight /
+// armDecalLeft when a fighter has a different sleeve on each arm.
+function hasTwoSleeves(ch) { var t = ch && ch.look && ch.look.tattoos; return !!(t && t.armInk && t.armDecalRight && t.armDecalLeft); }
+function drawTracedArm(c, ch, x0, y0, x1, y1, w, side) {
   var tat = ch.look && ch.look.tattoos;
   if (!tat || !tat.armInk || !tat.armDecal) return false;
-  var im = artDecalImage(tat.armDecal);
+  var src = hasTwoSleeves(ch) && side ? (side < 0 ? tat.armDecalLeft : tat.armDecalRight) : tat.armDecal;
+  var im = artDecalImage(src);
   if (!im.complete || !im.naturalWidth) return false;
   var dx = x1 - x0, dy = y1 - y0, len = Math.sqrt(dx * dx + dy * dy);
   if (len < 1) return false;

@@ -32,7 +32,7 @@ function drawFist(self, other) {
   ctx.lineWidth = pu.size * 0.6;
   ctx.beginPath(); ctx.moveTo(armX, armY); ctx.lineTo(fistX, fistY); ctx.stroke();
   }
-  if ((self.punch.side || 1) === 1) drawTracedArm(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6); // sleeve on one arm only
+  if ((self.punch.side || 1) === 1 || hasTwoSleeves(self.char)) drawTracedArm(ctx, self.char, armX, armY, fistX, fistY, pu.size * 0.6, self.punch.side || 1); // sleeve on one arm only
   ctx.fillStyle = gloveColor(self.char);
   ctx.strokeStyle = theme.wall;
   ctx.lineWidth = 3;
