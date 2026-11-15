@@ -100,6 +100,7 @@ function tryTddSprawl(attacker, target) {
 // Called by updateSprawl when the sprawler can't grapple.
 function endTddSprawl(self, atk) {
   if (!self.alive || !atk.alive) return;
+  if (tryDarceOffSprawl(self, atk)) return; // snaps on a D'Arce instead (Ilia Topuria, ilia-darce.js)
   floater(self.x, Math.min(self.y, atk.y) - self.r - 30, "STUFFED", "dodge");
   var dx = atk.x - self.x, dy = atk.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   atk.vx = dx / d * 240; atk.vy = dy / d * 240;

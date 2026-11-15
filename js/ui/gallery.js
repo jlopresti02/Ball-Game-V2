@@ -176,6 +176,7 @@ function galleryMoves(ch) {
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
   if (ch.clinch) clinchGalleryMoves(ch, add); // the clinch and the parting shot on the break (clinch.js)
   if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
+  if (ch.darce) iliaDarceGalleryMoves(ch, add); // Ilia Topuria's D'Arce choke (ilia-darce.js)
   if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
   if (ch.legKick) legKickGalleryMoves(ch, add); // calf kicks that leave them limping (leg-kick.js)
   if (ch.headKick) headKickGalleryMoves(ch, add); // the head kick the calf kicks set up (head-kick.js)
