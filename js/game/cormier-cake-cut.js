@@ -118,26 +118,21 @@ function dccBall(b, x, y, r, rot, sing) {
 function dccOn(x, y, r, rot, lx, ly) { var p = dccRot(lx * r, ly * r, rot); return { x: x + p.x, y: y + p.y }; }
 // One of his arms (his own two only): out of the side of the ball at the
 // shoulder, bending at the elbow, to the glove. Big heavyweight arms (Joe:
-// DC's a big man): a thick upper arm with a soft bulge, a thick forearm.
+// fatter arms): smooth and thick all the way, no muscle lumps.
 // Returns the glove's angle (along the forearm).
 function dccArm(b, sx, sy, ex, ey, hx, hy, r, side) {
-  var wU = r * 0.27, wF = r * 0.23, col = armColor(b.char, side || 1), out = Math.max(5, r * 0.03);
-  var mx = sx + (ex - sx) * 0.5, my = sy + (ey - sy) * 0.5, ua = Math.atan2(ey - sy, ex - sx);
-  var ul = Math.sqrt((ex - sx) * (ex - sx) + (ey - sy) * (ey - sy));
+  var wU = r * 0.27, wF = r * 0.26, col = armColor(b.char, side || 1), out = Math.max(5, r * 0.03);
   function shape(extra) {
     ctx.lineWidth = wU + extra; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
     ctx.lineWidth = wF + extra; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(mx, my, ul * 0.36 + extra / 2, wU * 0.62 + extra / 2, ua, 0, Math.PI * 2); ctx.fill(); // the meaty upper arm
   }
   ctx.save();
   ctx.lineCap = "round"; ctx.lineJoin = "round";
   ctx.strokeStyle = DCC_INK; ctx.fillStyle = DCC_INK; shape(out * 2);
   ctx.strokeStyle = col; ctx.fillStyle = col; shape(0);
-  // shading underneath and a soft highlight along the top
-  ctx.strokeStyle = "rgba(0,0,0,0.16)"; ctx.lineWidth = wF * 0.3;
-  ctx.beginPath(); ctx.moveTo(sx, sy + wU * 0.3); ctx.lineTo(ex, ey + wF * 0.3); ctx.lineTo(hx, hy + wF * 0.3); ctx.stroke();
-  ctx.strokeStyle = "rgba(255,255,255,0.13)"; ctx.lineWidth = wF * 0.25;
-  ctx.beginPath(); ctx.moveTo(sx, sy - wU * 0.28); ctx.lineTo(ex, ey - wF * 0.28); ctx.lineTo(hx, hy - wF * 0.28); ctx.stroke();
+  // a soft highlight along the top
+  ctx.strokeStyle = "rgba(255,255,255,0.1)"; ctx.lineWidth = wF * 0.22;
+  ctx.beginPath(); ctx.moveTo(sx, sy - wU * 0.26); ctx.lineTo(ex, ey - wF * 0.26); ctx.lineTo(hx, hy - wF * 0.26); ctx.stroke();
   ctx.restore();
   return Math.atan2(hy - ey, hx - ex);
 }
