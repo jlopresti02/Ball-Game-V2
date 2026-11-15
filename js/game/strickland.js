@@ -99,7 +99,8 @@ SPECIAL_MOVES.america = "America";
 var SK_LINES = {
   start: [
     "Here's the [BLEEP] thing, you guys.", // his catchphrase (1 source: sportskeeda.com, Oct 2023)
-    "I know a lot of you hate me, a lot of you like me." // to Helen Yee before UFC 293, 2023 (1 source: sports.yahoo.com)
+    "I know a lot of you hate me, a lot of you like me.", // to Helen Yee before UFC 293, 2023 (1 source: sports.yahoo.com)
+    "So you want to go have a good first round and wrestle and do some little Peter Pan kicks? Bring it." // UFC Vegas 76 octagon interview, 2023 (youtube.com/watch?v=uKVbYmEZq-U @0:33)
   ],
   // After a shoulder roll and the counter jab.
   roll: [
@@ -108,7 +109,8 @@ var SK_LINES = {
   ],
   // When he stuffs a takedown.
   stuffed: [
-    "Am I fighting an amateur right now?" // UFC 293 presser, 2023 (clutchpoints.com, sherdog.com)
+    "Am I fighting an amateur right now?", // UFC 293 presser, 2023 (clutchpoints.com, sherdog.com)
+    "So you want to go have a good first round and wrestle and do some little Peter Pan kicks? Bring it." // (also a start line: never twice in a fight, skSay)
   ],
   // Taunted.
   triggered: [
@@ -125,11 +127,21 @@ var SK_LINES = {
     "We got five rounds of fun, you guys. I ain't slowing down, ain't stopping." // UFC Vegas 76 octagon interview, 2023 (youtube.com/watch?v=uKVbYmEZq-U @0:29)
   ],
   america: [
-    "Small moments like those bring me the most pride and love for OUR country." // his X post, May 8 2026 (x.com/SStricklandMMA)
+    "Small moments like those bring me the most pride and love for OUR country.", // his X post, May 8 2026 (x.com/SStricklandMMA)
+    "I love this country, so don't get uptight." // UFC Vegas 76 octagon interview, 2023 (youtube.com/watch?v=uKVbYmEZq-U @2:11)
+  ],
+  // Once a fight: his one-two landing (not the first one, which gets the commentator's
+  // call), or Chuck Norris landing on them in America, as soon as nobody's talking.
+  combo: [
+    "I did like watching the blood splatter from his face, so that was kind of nice." // UFC 293 presser, 2023 (youtube.com/watch?v=te0PGcK53hc @12:21)
   ],
   win: [
     "Am I [BLEEP] dreaming? Am I gonna wake up? Somebody hit me.", // UFC 293 octagon interview, 2023 (fightersonly.com, sports.yahoo.com)
     "I think I might prove myself wrong, you know?" // UFC 293 presser (sports.yahoo.com, sherdog.com)
+  ],
+  // When he loses, once the winner's had his say.
+  lose: [
+    "It was a [BLEEP] war. I'm salty. I'm going to say I won that." // UFC 297 octagon interview, 2024 (youtube.com/watch?v=syOqHXMIZfQ @0:17)
   ],
   // Against Alex Pereira, who knocked him out at UFC 276 (2022).
   pereira: [
@@ -183,6 +195,8 @@ var SK_FADE = 2.4;        // the flags and the chant fading out after
 var SK_OH_WIND = 0.2, SK_OH_STRIKE = 0.1, SK_OH_FOLLOW = 0.12, SK_OH_REACH = 30; // the overhand right
 var SK_PEREIRA = "c-alex-pereira";
 var SK_TWO_STRIKE = 0.09, SK_TWO_FOLLOW = 0.14, SK_TWO_KO = 1.4; // the right hand, and standing over them after a knockout
+var SK_LOSE_AT = 1.8, SK_LOSE_WAIT = 8; // his loss line: not before this, and waiting for quiet no longer than this
+var SK_BLOOD_WAIT = 10; // the blood splatter line after Chuck Norris lands: waits this long for quiet, then it's dropped
 var skClock = 0;
 var amShow = null;        // the America show: flags, fireworks, the chant
 var amEagle = null;       // the bald eagle at his side
@@ -213,7 +227,7 @@ function initStrickland(b) {
   b.sk = {
     trauma: 0, tauntCd: 0, hp: b.hp, saw: {}, fx: 0, mult: 1, fightT: 0,
     pace: 0, paceT: 0, speed0: b.baseSpeed, atk0: b.atkRate,
-    side: Math.random() < 0.5 ? -1 : 1, sideT: 2, chargedT: 0, landedAt: [], strikes0: null, rival: null, said: {}, lineCd: 0,
+    side: Math.random() < 0.5 ? -1 : 1, sideT: 2, chargedT: 0, landedAt: [], strikes0: null, rival: null, said: {}, heard: {}, lineCd: 0,
     twoCd: 0, twoWant: false, callAt: null, americaWin: false
   };
   b.skTwo = null;
@@ -255,13 +269,16 @@ function skMeetRival(b, other, cfg) {
 }
 
 // One of his lines from SK_LINES[key], `chance`% of the time, when he's free
-// to talk. True if he said it.
+// to talk (`force`: now, even after he's lost). True if he said it.
 function skSay(b, key, chance, force) {
   var lc = skCfg(b) && skCfg(b).lines, s = b.sk, pool = SK_LINES[key];
-  if (!lc || !s || !pool || !pool.length || !b.alive || !(chance > 0)) return false;
+  if (!lc || !s || !pool || !pool.length || (!b.alive && !force) || !(chance > 0)) return false;
   if (!force && (s.lineCd > 0 || !canSay(b) || b.igbb)) return false;
   if (Math.random() * 100 >= chance) return false;
-  say(b, pickLine(b, pool, key));
+  var line = pickLine(b, pool, key);
+  if (s.heard[line] && pool.length > 1) line = pickLine(b, pool, key); // (a line in two pools, the Peter Pan kicks, isn't heard twice in a fight)
+  s.heard[line] = true;
+  say(b, line);
   s.lineCd = lc.gap || 6;
   return true;
 }
@@ -292,10 +309,24 @@ function skLines(b, other, cfg, dt) {
       if (s.callAt == null || skClock - s.callAt > 4) skCall(b, s.americaWin ? "americaWin" : "win");
     }
   }
+  // Lost: his sore-loser line, once the winner and the commentator are done (or SK_LOSE_WAIT).
+  if (over && !b.alive && other.alive && !s.said.lose) {
+    s.loseT = (s.loseT || 0) + dt;
+    if (s.loseT > SK_LOSE_AT && ((!speaking(other) && !announcer) || s.loseT > SK_LOSE_WAIT)) { s.said.lose = true; skSay(b, "lose", lc.lose, true); }
+  }
   if (over || !b.alive) return;
   // A takedown he just stuffed.
   if (s.wasSprawl && !b.sprawl && !b.grappled) skSay(b, "stuffed", lc.stuffed);
   s.wasSprawl = !!b.sprawl;
+  // Chuck Norris has landed on them (chuck-norris.js): the blood splatter line at the first quiet
+  // moment within SK_BLOOD_WAIT seconds (a shared commentary call doesn't count: say() holds the clip for it).
+  var cn = chuckNorris;
+  if (!s.said.combo && s.bloodT == null && cn && cn.ownerId === b.id && cn.hits > 0) s.bloodT = SK_BLOOD_WAIT;
+  if (s.bloodT > 0 && !s.said.combo) {
+    s.bloodT -= dt;
+    var callUp = announcer && !(typeof commentaryMine === "function" && commentaryMine());
+    if (!speaking(b) && !speaking(other) && !cnSpeech && !callUp && skSay(b, "combo", 100, true)) s.said.combo = true;
+  }
   // A jab that just landed: maybe the right hand behind it, and against
   // Pereira, Pereira's own words about it.
   var ohit = s.ohp != null && other.hp < s.ohp - 0.01, jab = false;
@@ -392,6 +423,7 @@ function landOneTwo(self, other, m, ot) {
     checkEnd();
     if (!other.alive) skCall(self, "ko");
     else if (!s.said.callTwo) { s.said.callTwo = true; skCall(self, "oneTwo"); }
+    else if (!s.said.combo && skSay(self, "combo", skCfg(self).lines && skCfg(self).lines.combo)) s.said.combo = true;
     return;
   }
   checkEnd();

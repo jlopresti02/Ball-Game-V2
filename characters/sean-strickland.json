@@ -1,6 +1,6 @@
 {
   "id": "c-sean-strickland",
-  "rev": 4,
+  "rev": 5,
   "builtin": false,
   "weightClass": "middleweight",
   "name": "Sean Strickland",
@@ -49,7 +49,7 @@
     "shell": { "chance": 32, "kickChance": 14, "projChance": 8, "counter": 50, "angryOff": true },
     "cardio": { "every": 15, "max": 6, "speed": 0.035, "rate": 0.05, "shell": 2, "tiredAt": 2, "tire": 0.04, "tireMin": 0.82, "callAt": 4 },
     "trauma": { "hitFill": 2, "dmgFill": 0.12, "tauntFill": 14, "tauntGap": 1.5, "boost": 1.5, "keep": 0.25 },
-    "lines": { "gap": 6, "start": 100, "roll": 12, "stuffed": 50, "triggered": 35, "hurt": 40, "hurtAt": 28, "pace": 100, "paceAt": 3, "america": 100, "win": 100 },
+    "lines": { "gap": 6, "start": 100, "roll": 12, "stuffed": 50, "triggered": 35, "hurt": 40, "hurtAt": 28, "pace": 100, "paceAt": 3, "america": 100, "combo": 50, "win": 100, "lose": 100 },
     "rivals": { "pereira": { "trauma": 35, "hookKo": 6 } }
   },
   "hasSpecial": true,
