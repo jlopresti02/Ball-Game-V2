@@ -463,7 +463,7 @@ function sgSidestep(other, m) {
 }
 
 // The right hand lands: `damage`, a bigger chance to crit than his punches,
-// and a crit hits harder than theirs (`critMult`, else his normal mult).
+// and a crit is his normal `crit.mult` (or `critMult` if set, opt-in).
 function landSnipe(self, other, sn, m) {
   var cfg = sgCfg(self), sg = cfg.sugar || {}, ux = Math.cos(m.aim), uy = Math.sin(m.aim);
   var crit = !!cfg.crit && Math.random() * 100 < Math.min(sg.maxChance || 95, sugaCritChance(self) + (sn.crit || 0));

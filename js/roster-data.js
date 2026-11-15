@@ -2256,7 +2256,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 17,
+    "rev": 18,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
@@ -2374,7 +2374,7 @@ var SAVED_ROSTER = [
       "move": "igbb",
       "chargeTime": 58,
       "hitCut": 5,
-      "punches": 7,
+      "punches": 9,
       "damage": 20,
       "shellTime": 5
     },
@@ -4305,7 +4305,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 17,
+    "rev": 18,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4357,18 +4357,19 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 25,
+      "damage": 21,
       "cooldown": 1.2,
-      "speed": 0.32,
+      "speed": 0.352,
       "size": 15,
       "knockback": 300,
       "reach": 40,
       "koChance": 5
     },
+    "punchWhiff": 10,
     "uppercuts": {
       "chance": 20,
       "close": 34,
-      "damageMult": 1.2,
+      "damageMult": 1.43,
       "critChance": 40,
       "critMult": 1.8,
       "onGrab": 90,
@@ -4694,12 +4695,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-max-holloway",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Max Holloway",
     "base": "Brawler",
-    "bio": "\"Blessed\". Built on the Brawler base, with the most strikes in the game: combos of quick punches off both hands instead of single shots, and no opening KO Rush. He gets better the longer it goes: his Blessed meter fills with fight time and every punch he lands, and his combos get longer, faster and heavier with it. Sprawls 70% of takedown shots and won't follow anyone down into the guard. Against a striker he's beating he turns to the commentators (\"Count it up!\", \"I'm the best boxer in the UFC, baby!\") and slips what they throw. Once a fight he has a flashback to playing an old fighting game and comes back button mashing. Special move The Middle (\"MEET ME IN THE MIDDLE\"): his real point down, from the Ricardo Lamas fight to the last-second knockout of Justin Gaethje at UFC 300. Featherweight. Inside his combos he digs to the body and comes up with uppercuts, and one that lands sets up the next punch upstairs.",
+    "bio": "\"Blessed\". Built on the Brawler base, with the most strikes in the game: combos of quick punches off both hands instead of single shots, and no opening KO Rush. He gets better the longer it goes: his Blessed meter fills with fight time and every punch he lands, and his combos get longer, faster and heavier with it. Sprawls 70% of takedown shots and won't follow anyone down into the guard. He slips some of what they throw all fight long. Against a striker he's beating he turns to the commentators (\"Count it up!\", \"I'm the best boxer in the UFC, baby!\") and slips what they throw. Once a fight he has a flashback to playing an old fighting game and comes back button mashing. Special move The Middle (\"MEET ME IN THE MIDDLE\"): his real point down, from the Ricardo Lamas fight to the last-second knockout of Justin Gaethje at UFC 300. Featherweight. Inside his combos he digs to the body and comes up with uppercuts, and one that lands sets up the next punch upstairs.",
     "color": "#0f9b8e",
     "label": "",
     "imgData": null,
@@ -4836,6 +4837,9 @@ var SAVED_ROSTER = [
       "unbothered": {
         "chance": 75
       },
+      "slip": {
+        "chance": 15
+      },
       "booth": {
         "after": 14,
         "lead": 50,
@@ -4845,7 +4849,7 @@ var SAVED_ROSTER = [
         "max": 2,
         "count": 1.1,
         "boxer": 1.7,
-        "slip": 70,
+        "slip": 85,
         "counter": 9
       },
       "flashback": {
@@ -5389,12 +5393,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-sean-omalley",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "bantamweight",
     "name": "Sean O'Malley",
     "base": "Kicker",
-    "bio": "\"Suga\". Built on the Kicker base: long kicks from range and a hard punch up close, a lot of them critical hits for 2.6 times the damage. He doesn't throw many combinations. He snipes: from a few steps away he plants, measures them with his lead hand while a laser and a scope settle on them, then fires one long straight right, the single clean shot he's known for, with a much bigger chance to crit, and a sniper crit is triple damage (SNIPED!). Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Candy rains into the ring all fight long and only he goes for it: between exchanges he drifts toward the nearest one, and anything he touches is his. Every candy is more sugar (SUGAR x4 by his health bar), and every sugar is a bigger chance to crit. A golden donut is worth three, and every candy changes his braids to another of his real fight-night hair colours. At ten he is on a sugar high, then he crashes: slow and drowsy for a moment, and most of the sugar is gone. Cotton candy is pure sugar: straight to the high, then the crash. Special move: Sugar Rush, a shower of extra candy he hunts down.",
+    "bio": "\"Suga\". Built on the Kicker base: long kicks from range and a hard punch up close, a lot of them critical hits for double damage. He doesn't throw many combinations. He snipes: from a few steps away he plants, measures them with his lead hand while a laser and a scope settle on them, then fires one long straight right, the single clean shot he's known for, with a much bigger chance to crit (SNIPED!). Every few seconds up close he goes up on one leg with his arms out like wings for the crane kick, then leaps in with a front kick that knocks them into the cage. Candy rains into the ring all fight long and only he goes for it: between exchanges he drifts toward the nearest one, and anything he touches is his. Every candy is more sugar (SUGAR x4 by his health bar), and every sugar is a bigger chance to crit. A golden donut is worth three, and every candy changes his braids to another of his real fight-night hair colours. At ten he is on a sugar high, then he crashes: slow and drowsy for a moment, and most of the sugar is gone. Cotton candy is pure sugar: straight to the high, then the crash. Special move: Sugar Rush, a shower of extra candy he hunts down.",
     "color": "#e75480",
     "label": "",
     "imgData": null,
@@ -5478,7 +5482,7 @@ var SAVED_ROSTER = [
     "suga": {
       "crit": {
         "chance": 40,
-        "mult": 2.6
+        "mult": 2
       },
       "critKo": {
         "base": 20,
@@ -5504,8 +5508,7 @@ var SAVED_ROSTER = [
         "turn": 3,
         "reach": 34,
         "damage": 36,
-        "crit": 25,
-        "critMult": 3,
+        "crit": 15,
         "knockback": 560,
         "miss": 0.35,
         "readChance": 15
