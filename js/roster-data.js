@@ -2801,7 +2801,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 11,
+    "rev": 12,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -3007,7 +3007,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jiri-prochazka",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Ji\u0159\u00ed Proch\u00e1zka",
