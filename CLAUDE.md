@@ -35,6 +35,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Joshua Van's left hook on the shared hook punch | Christian's Claude | live on main |
 | Shared leg kick that slows them down (`leg-kick.js`): Dustin's calf kicks (extra against Conor), Pereira on it, Jon's oblique kick shares the limp; Ciryl Gane fights off the back foot (`gane.js`); the shared hook takes an `over` option | Christian's Claude | live on main |
 | Shared clinch any fighter can use (`clinch.js`, `clinch` block): tie-up, knees to the body and head, elbows, a parting shot on the break. Carlos Prates, Anderson Silva and Jiří Procházka use it in place of the plum | Christian's Claude | branch `christian/clinch-shared` |
+| Balance from watching: Khabib's chin is up (shared `chin.js`, `chin` block, Gane's moved onto it) and 12% of his shots get stuffed (shared `stuffed-shots.js`, `grapple.stuffChance`); Ngannou's rage meter fills a quarter slower; Charles Oliveira 30% stuffed, on the shared clinch with strong knees | Christian's Claude | branch `christian/balance-tweaks-khabib-ngannou-oliveira` |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
