@@ -13,7 +13,8 @@
 //           line of their own: "elbow" (any elbow that lands, opts.crit: a
 //           crit is a big elbow, two close together are "elbows") and
 //           "leftHand" (a right soon after it is "a left and now a right").
-//           An unknown kind is ignored.
+//           An unknown kind is ignored. Big punches are watched from
+//           hurt() (commentaryHit): rightHand and leftRight.
 // attacker  who did it; defender  the other one. opts is optional.
 // Returns true if the moment was taken (it can still wait a beat for a
 // quiet spell, and lose to a bigger moment), false if it was passed over.
@@ -72,6 +73,17 @@ var COMMENTARY_ELBOWS = 3;       // elbows landing this close together are "elbo
 var COMMENTARY_TALK_WAIT = 1.2;  // the talk channel's line ends this soon: ours goes right after it
 var COMMENTARY_HOLLOWAY_AT = [5, 12]; // seconds into a Max Holloway fight for his call
 var COMMENTARY_NEED_CLIP = true; // only lines with a real clip (false: text-only lines count too)
+// Big punches (commentaryHit, from hurt in match.js): a punch, hook, haymaker
+// or power punch that takes COMMENTARY_BIG_PUNCH or more off in one go, or
+// COMMENTARY_BIG_OWN times his own punch (and at least COMMENTARY_BIG_MIN), or
+// a critical hit. A jab in a combination never counts.
+var COMMENTARY_BIG_PUNCH = 18;
+var COMMENTARY_BIG_OWN = 1.35;
+var COMMENTARY_BIG_MIN = 8;
+var COMMENTARY_PUNCHES = { punch: true, kopunch: true, kofinal: true, swing: true, power: true, slugfest: true };
+// Fighters whose big punch is the left: Conor's counter left, Dustin's southpaw left.
+// Everyone else's big punch is the right unless the move says which hand.
+var COMMENTARY_LEFTIES = { "c-conor-mcgregor": true, "c-dustin-poirier": true };
 
 // Every line is the commentator's real words, cut from the broadcast (the
 // clip, its source and timestamps are in the voice-clips manifest; codes are
@@ -323,6 +335,33 @@ function commentaryMine() { return !!(cc && cc.balls === balls && cc.mine && ann
 // outranks ours: ours stops so theirs is heard (announce, speech.js).
 function commentaryYield() {
   if (commentaryTalking()) stopTalk();
+}
+
+// From hurt() (match.js) after every hit: b took `dealt` from attackerId.
+// A big right is "Oh! Big right hand!" ("a left and now a right" when a big
+// left came just before it); a big left is "a left and now a right", said a
+// beat later so a right that follows it is part of the same call.
+function commentaryHit(b, dealt, source, attackerId) {
+  try {
+    if (!COMMENTARY_ON || !(dealt > 0) || attackerId == null || attackerId === b.id || !COMMENTARY_PUNCHES[source] || !started || over) return;
+    var a = balls[attackerId];
+    if (!a || !a.char || ccJab(a)) return;
+    var own = (a.char.punch && a.char.punch.damage) || 0;
+    if (!(dealt >= COMMENTARY_BIG_PUNCH || (own > 0 && dealt >= Math.max(COMMENTARY_BIG_MIN, own * COMMENTARY_BIG_OWN)) || a.sugaCrit)) return;
+    if (ccLeft(a, source)) {
+      ccState().lefts[a.id] = cc.t;
+      commentaryCall("leftRight", a, b, { delay: 0.5 });
+    } else if (source !== "swing") commentaryCall("rightHand", a, b); // a right haymaker: cte.js calls it once the hit has landed (Gaethje's knockdown)
+  } catch (e) { /* never let a call break the fight */ }
+}
+// A jab: in a combination (combos.js), Pereira's CHAMA jab, Max's Button Mash jab.
+function ccJab(a) { var k = a.koPunch; return !!((a.punch && a.punch.cb && a.punch.side === -1) || (k && (k.chama === "jab" || k.mv === "jab"))); }
+// Which hand: the move's own side (1 the right, -1 the left), else his power hand.
+function ccLeft(a, source) {
+  if (source === "swing" && a.swing) return a.swing.side === -1;
+  if (a.punch && a.punch.side) return a.punch.side === -1;
+  if (a.koPunch && a.koPunch.side) return a.koPunch.side === -1;
+  return !!COMMENTARY_LEFTIES[a.char.id];
 }
 
 // What got called this fight (for the test harness): [{ t, kind, line, by }].

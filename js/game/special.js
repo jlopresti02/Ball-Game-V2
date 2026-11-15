@@ -429,6 +429,7 @@ function updateFathersPlan(self, other, m, sp, dt) {
       var last = m.thrown === sp.punches - 1;
       m.gp = { t: 0, wind: last ? FP_WIND_LAST : FP_WIND, hit: false, last: last, side: m.thrown % 2 ? -1 : 1 };
       m.thrown++;
+      fpElbowOn(self, m.gp, m.thrown); // some of them are elbows (khabib-elbows.js)
       playWhoosh();
     }
     if (m.thrown >= sp.punches && !m.gp) {
@@ -452,7 +453,8 @@ function updateFathersPlan(self, other, m, sp, dt) {
 function landFpPunch(self, other, gp) {
   var big = gp.last;
   var dealt = hurt(other, self.char.special.damage, "igbb", self.id);
-  if (dealt > 0) commentaryCall("khabibGroundElbow", self, other, { big: big }); // only Khabib's, the big last one (commentary-calls.js)
+  fpElbowLand(self, other, gp, dealt); // an elbow's crack (khabib-elbows.js)
+  if (dealt > 0) commentaryCall("khabibGroundElbow", self, other, { big: big && gp.elbow }); // only Khabib's big last elbow (commentary-calls.js)
   if (dealt > 0) playPunch(dealt * (big ? 4 : 3));
   if (big) playSlam();
   var cx = other.x, cy = other.y - other.r * 0.45;
@@ -509,6 +511,7 @@ function drawSpecial(b) {
 // trembling (with a target ring closing in on the opponent), then driven
 // straight down with speed lines behind it.
 function drawFpPound(b, gp) {
+  if (gp.elbow) { drawFpElbow(b, gp); return; } // an elbow, not a fist (khabib-elbows.js)
   var o = balls[1 - b.id], r = b.r;
   var size = (b.char.punch.size || 15) * (gp.last ? 1.9 : 1.5);
   var toward = o.x < b.x ? -1 : 1; // which side the opponent is on

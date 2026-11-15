@@ -2520,6 +2520,13 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "hasSpecial": true,
+    "groundElbows": {
+      "on": [
+        2,
+        4,
+        5
+      ]
+    },
     "special": {
       "move": "fathersplan",
       "chargeTime": 82,

@@ -661,6 +661,7 @@ function landFinal(self, other, m, sp) {
     var d = hwDist(self, other), ux = (other.x - self.x) / d, uy = (other.y - self.y) / d;
     playPunch(dealt * 1.8);
     floater(other.x, other.y - other.r - 34, "RIGHT HAND!", "note");
+    commentaryCall("rightHand", self, other); // "Oh! Big right hand!" (commentary-calls.js)
     impacts.push({ x: other.x - ux * other.r, y: other.y - uy * other.r, nx: -ux, ny: -uy, life: 0.45, max: 0.45, color: self.char.color });
     other.squash = { t: 0.18, max: 0.18, nx: -ux, ny: -uy };
     hitStop = Math.max(hitStop, 0.1);
