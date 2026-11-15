@@ -30,7 +30,9 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Shared commentary calls (`commentary-calls.js`), Max's new lines, Khabib ground elbows | Christian's Claude | live on main |
 | Conor's rainbow aims where they're heading (`potOfGold` lock/lead keys) | Christian's Claude | live on main |
 | Tony Ferguson back to light skin and blonde hair (Joe's arm tattoo and headband kept) | Christian's Claude | live on main |
-| Ilia Topuria's combos; Michael Bisping's pirate ship | Christian's Claude | being built |
+| Ilia Topuria's 3-4 punch combos ending in a hook (`ilia-combos.js`) and the shared hook punch any fighter can use (`hook-punch.js`, `hooks` block) | Christian's Claude | live on main |
+| Michael Bisping's Broadside is a pirate ship in the middle of the ring with a three-cannon volley | Christian's Claude | live on main |
+| Joshua Van on the shared hook punch | Christian's Claude | being built |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.

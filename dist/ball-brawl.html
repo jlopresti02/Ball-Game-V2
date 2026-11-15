@@ -7540,12 +7540,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 9,
+    "rev": 10,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
     "base": "Brawler",
-    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He starts patient: single light punches, thrown rarely. The more he's hurt, the more often he throws and the longer his combos get, from 1 punch at full health up to 5 by three-quarter health. After that the combos keep coming faster and every punch hits harder. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm.",
+    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits 4 times as hard, up to 5 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm.",
     "color": "#b3121b",
     "label": "",
     "imgData": null,
@@ -7594,7 +7594,7 @@ var SAVED_ROSTER = [
     "hasPunch": true,
     "punch": {
       "damage": 8,
-      "cooldown": 2.6,
+      "cooldown": 1.0,
       "speed": 0.22,
       "size": 15,
       "knockback": 300,
@@ -7607,11 +7607,41 @@ var SAVED_ROSTER = [
       "cdStart": 2.6,
       "cdFullCombo": 1.5,
       "cdMin": 0.5,
-      "dmgStart": 6,
+      "dmgStart": 8,
       "dmgMax": 9,
       "comboKnockback": 40,
       "comboSlack": 16,
-      "chase": 420
+      "chase": 420,
+      "chain": {
+        "size": [
+          3,
+          4
+        ],
+        "build": 0.3,
+        "finisher": [
+          4,
+          5
+        ],
+        "cooldown": [
+          1.0,
+          0.6
+        ],
+        "knockback": 560,
+        "text": "{n}-PIECE!"
+      }
+    },
+    "hooks": {
+      "finisherChance": 80,
+      "chance": 0,
+      "damageMult": 1.25,
+      "coil": 0.1,
+      "sweep": 0.2,
+      "recover": 0.12,
+      "arc": 1.8,
+      "follow": 0.5,
+      "size": 1.15,
+      "width": 1.1,
+      "color": "#e0281c"
     },
     "tdd": {
       "sprawlChance": 60
@@ -9246,12 +9276,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-michael-bisping",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Michael Bisping",
     "base": "Brawler",
-    "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. His special is Broadside: a pirate cannon rolls in at his side with a Union Jack flying behind it, he puts on a captain's hat, lights the fuse and fires cannonballs down a red line at them.",
+    "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. His special is Broadside: the sea spreads over the mat, a pirate ship with a Union Jack mainsail rises out of it in the middle of the cage, and he hops on deck in a captain's hat while three cannons on the bow fire volleys across the cage at them.",
     "color": "#b3202a",
     "label": "",
     "imgData": null,
@@ -9432,7 +9462,6 @@ var SAVED_ROSTER = [
         ],
         "blindChance": 10,
         "missChance": 4,
-        "cannonMissChance": 60,
         "blindMax": 1,
         "knockdown": [
           "I've always said I had knockout power, for God's sake. Nobody believed it."
@@ -9443,6 +9472,9 @@ var SAVED_ROSTER = [
         ],
         "loss": [
           "It's back to the drawing board. I'm going nowhere, don't you forget it."
+        ],
+        "special": [
+          "I'll knock him out, and I'll knock all you lot out, one by one."
         ],
         "vs": {
           "c-anderson-silva": {
@@ -9460,17 +9492,37 @@ var SAVED_ROSTER = [
       "chargeTime": 45,
       "hitCut": 2,
       "punchCut": 0.5,
-      "roll": 0.45,
-      "aim": 0.9,
-      "reaim": 0.5,
-      "lock": 0.3,
-      "shots": 3,
-      "gap": 0.45,
-      "hold": 0.5,
-      "speed": 900,
-      "size": 9,
-      "damage": 20,
-      "knockback": 520
+      "ship": {
+        "length": 290,
+        "y": 0.6,
+        "rise": 0.75,
+        "board": 0.5,
+        "sink": 0.7,
+        "drift": 12,
+        "bob": 4,
+        "roll": 0.035,
+        "solid": true,
+        "sea": 0.34
+      },
+      "cannons": {
+        "count": 3,
+        "aim": 1,
+        "reaim": 0.75,
+        "lock": 0.35,
+        "lead": 1,
+        "spread": 12,
+        "stagger": 0.14,
+        "speed": 780,
+        "size": 11
+      },
+      "volley": {
+        "volleys": 2,
+        "gap": 0.5,
+        "hold": 0.5
+      },
+      "damage": 16,
+      "knockback": 760,
+      "shove": 0.8
     }
   },
   {
@@ -12545,6 +12597,7 @@ function step(dt) {
       if (b.slam) onWallImpact(b, wnx, wny);
       else playBounce();
     }
+    bispingShipBlock(b); // bouncing off Michael Bisping's pirate ship in Broadside (bisping.js)
   }
   var a = balls[0], c = balls[1];
   var aSpin = a.powerState && a.powerState.phase === "attack";
@@ -12864,28 +12917,26 @@ function updateAbilities(dt) {
       var pu = self.char.punch;
       if (!self.punch && !self.kick && !self.swing && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) { // (one limb at a time when it kicks too)
         self.punch = { t: 0, hit: false };
+        rollHook(self, self.punch, false); // chance% of them come round as a hook (hook-punch.js)
         self.punchCd = pu.cooldown;
       }
       if (self.punch) {
+        var thrown = self.punch; // (a hook's knockback is read off it after hurt())
         self.punch.t += dt;
-        var windup = pu.speed * 0.35;
+        var windup = punchHitAt(self, self.punch); // (pu.speed * 0.35, later for a hook, hook-punch.js)
         if (!self.punch.hit && self.punch.t >= windup) {
           self.punch.hit = true;
           if (other.alive) {
-            var punchDealt = hurt(other, pu.damage * sugaCritRoll(self), "punch", self.id); // (Sean O'Malley's critical hits, omalley.js)
+            var punchDealt = hurt(other, hookDamage(self, thrown, pu.damage * sugaCritRoll(self)), "punch", self.id); // (Sean O'Malley's critical hits, omalley.js; a hook hits harder, hook-punch.js)
             if (punchDealt > 0) sugaCritLanded(self, other); // CRIT! (omalley.js)
             if (punchDealt > 0) { if (bmfJabs(self.char)) playBmfJab(); else playPunch(punchDealt); violentHit(self, other, 0.5); }
-            if (pu.knockback > 0 && !other.justDodged) {
-              var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
-              other.vx += kx / kd * pu.knockback;
-              other.vy += ky / kd * pu.knockback;
-            }
+            if (!other.justDodged) hookShove(self, other, thrown, pu.knockback); // straight back, or sideways for a hook (hook-punch.js)
             // Light, rapid jabs (like the BMF's) only rattle the screen a little.
             if (!reduceMotion) shake = Math.max(shake, Math.min(10, 2 + pu.damage * 0.4));
             checkEnd();
           }
         }
-        if (self.punch && self.punch.t >= pu.speed) self.punch = null; // (a counter-grab can end it early)
+        if (self.punch && self.punch.t >= punchEndAt(self, self.punch)) self.punch = null; // (a counter-grab can end it early; a hook lasts longer)
       }
     }
 
@@ -13788,6 +13839,7 @@ function attemptGrab(attacker, target) {
   // Hokit's Chair Shot blocks everything once it's started, takedowns too, right
   // through his celebration lap, even after their stars wear off (Joe, 2026-11-11).
   if (target.igbb && target.igbb.move === "chairshot" && specialGuarding(target)) return false;
+  if (bispingAboard(target)) return false; // nobody takes Michael Bisping down off his pirate ship (bisping.js)
   if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;
@@ -29563,6 +29615,7 @@ function iliaDamage(b) {
 
 // Runs in place of the normal punch for a fighter with char.ramp.
 function updateRampPunch(self, other, dt, d) {
+  if (iliaChainOn(self)) { iliaChainPunch(self, other, dt, d); return; } // 3-4 punch combos with a 4x finisher instead (ilia-combos.js)
   var pu = self.char.punch, r = self.char.ramp;
   self.punchCd = Math.max(0, self.punchCd - dt * self.atkRate);
   if (!self.punch && !self.kick && !self.swing && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) {
@@ -29629,6 +29682,246 @@ function endTddSprawl(self, atk) {
   self.vx = -dx / d * 60; self.vy = -dy / d * 60;
   if (atk.char.hasGrapple) atk.grappleCd = Math.max(atk.grappleCd, atk.char.grapple.cooldown);
   self.punchCd = 0; // punishes the failed shot
+}
+
+// Ilia Topuria's combos (Christian, 2026-11-14). In place of the punches
+// that built up as he got hurt (Joe's ramp in ilia.js), he throws 3 and 4
+// punch combos all fight, off alternating hands, and every punch that lands
+// sets up the next one. Land the whole combo and the last punch is the
+// finisher. Everything is under "chain" in his ramp block:
+//
+//   "ramp": { "dmgStart": 8, ..., "chain": { "size": [3, 4], "build": 0.3,
+//             "finisher": [4, 5], "cooldown": [1.0, 0.6], "knockback": 560,
+//             "text": "{n}-PIECE!" } }
+//
+// dmgStart   (ramp) the first punch of every combo (8).
+// size       how many punches in a combo, a whole number picked at random
+//            in the range.
+// build      every punch that lands makes the next one hit this share of
+//            dmgStart harder: 8, 10.4, 12.8 ...
+// finisher   land every punch and the last one hits this many times
+//            dmgStart (4x is 32). The first number at full health, the
+//            second at zero: the more hurt he is, the harder it lands (the
+//            flavor of the old ramp). It reads big: the glove swells in a
+//            red and white-hot flare, the frame freezes, a gold ring goes
+//            out from the hit, they're shoved off (`knockback`) and `text`
+//            ({n} is the number of punches) goes up over them.
+// cooldown   seconds between combos, at full health and at zero: the more
+//            hurt he is, the faster they come.
+// A punch that misses (they're out of reach), or is slipped, blocked or
+// parried, breaks the chain: the rest of that combo is off.
+// The last punch is a hook most of the time (his "hooks" block, the shared
+// hook in hook-punch.js: finisherChance 80): it's cocked out wide, comes
+// round from the side and hits damageMult (1.25) times the finisher, with
+// the glove glowing white-hot (p.hookHeat). He keeps walking in while it
+// swings so it reaches.
+// ramp.comboKnockback, ramp.comboSlack and ramp.chase still do what they
+// did (the small shove of the punches before the last, the extra reach,
+// and walking in behind the combo). Take "chain" out and Joe's ramp is back
+// exactly as it was.
+//
+// A finished combo calls commentaryCall("combo") if commentary-calls.js is in
+// the build (not when the finisher is the knockout: that gets its own call).
+"use strict";
+
+var ILC_GOLD = "#ffcc33", ILC_RED = "#e0281c";
+var ilcFx = []; // finisher rings and their text: { x, y, tx, ty, t, max, text, balls }
+
+function ilcCfg(b) { var r = b && b.char && b.char.ramp; return r && r.chain ? r.chain : null; }
+// From ilia.js's updateRampPunch: true when his ramp has a chain block.
+function iliaChainOn(b) { return !!ilcCfg(b); }
+// 0 at full health, 1 at zero health.
+function ilcLost(b) { return 1 - Math.max(0, Math.min(1, b.hp / MAX_HP)); }
+// A [full health, zero health] pair read at k (a plain number is both).
+function ilcAt(v, k) { return Array.isArray(v) ? v[0] + (v[1] - v[0]) * Math.max(0, Math.min(1, k)) : v; }
+function ilcSize(c) {
+  var s = c.size;
+  if (!Array.isArray(s)) return Math.max(1, Math.round(s || 1));
+  return Math.max(1, Math.round(s[0]) + Math.floor(Math.random() * (Math.round(s[1]) - Math.round(s[0]) + 1)));
+}
+function ilcFinishing(p) { return !!(p && p.ilc && p.n > 1 && p.idx === p.n - 1); }
+
+// How hard punch `idx` of an `n`-punch combo hits, with every one before it landed.
+function ilcDamage(self, c, idx, n) {
+  var base = self.char.ramp.dmgStart;
+  if (n > 1 && idx === n - 1) return base * ilcAt(c.finisher, ilcLost(self));
+  return base * (1 + (c.build || 0) * idx);
+}
+
+// From ilia.js's updateRampPunch, in place of the ramp.
+function iliaChainPunch(self, other, dt, d) {
+  var pu = self.char.punch, r = self.char.ramp, c = r.chain, reach = self.r + other.r + pu.reach;
+  self.punchCd = Math.max(0, self.punchCd - dt * self.atkRate);
+  if (!self.punch && !self.kick && !self.swing && self.punchCd === 0 && other.alive && d < reach) {
+    var n = ilcSize(c);
+    self.punch = ilcPunch(self, { t: 0, hit: false, side: 1, left: n - 1, n: n, idx: 0, ilc: true });
+    self.punchCd = ilcAt(c.cooldown, ilcLost(self));
+  }
+  var p = self.punch;
+  if (!p) return;
+  p.t += dt;
+  // Mid combo (and while a hook swings in) he keeps walking into range so it reaches.
+  if ((p.left > 0 || (p.hook && !p.hit)) && other.alive) {
+    var gap = d - self.r - other.r;
+    if (gap > pu.reach * 0.5) {
+      var sp = Math.min(r.chase, (gap - pu.reach * 0.5) * 20);
+      self.vx = (other.x - self.x) / d * sp; self.vy = (other.y - self.y) / d * sp;
+    }
+  }
+  if (!p.hit && p.t >= punchHitAt(self, p)) {
+    p.hit = true;
+    var fin = ilcFinishing(p), landed = false;
+    if (other.alive && d < reach + r.comboSlack) {
+      var dealt = hurt(other, hookDamage(self, p, ilcDamage(self, c, p.idx, p.n)), "punch", self.id); // (a hook hits harder, hook-punch.js)
+      landed = dealt > 0;
+      if (landed) { playPunch(dealt); if (!fin) violentHit(self, other, p.left === 0 ? 0.5 : 0.25); }
+      var kb = fin ? (c.knockback != null ? c.knockback : pu.knockback) : (p.left === 0 ? pu.knockback : r.comboKnockback);
+      if (!other.justDodged && ilcKnockable(other)) hookShove(self, other, p, kb); // (a hook shoves them sideways)
+      if (landed && fin) ilcFinisher(self, other, p.n);
+      else if (!reduceMotion) shake = Math.max(shake, Math.min(8, 2 + dealt * 0.3));
+      checkEnd();
+    }
+    if (!landed) p.broke = true; // missed, slipped, blocked or parried: the chain breaks
+  }
+  if (self.punch === p && p.t >= punchEndAt(self, p)) {
+    if (!p.broke && p.left > 0 && other.alive && self.alive && d < reach + r.comboSlack * 2) {
+      // The next punch, off the other hand.
+      self.punch = ilcPunch(self, { t: 0, hit: false, side: -p.side, left: p.left - 1, n: p.n, idx: p.idx + 1, ilc: true });
+    } else {
+      self.punch = null;
+    }
+  }
+}
+
+// A new punch of the combo: the last one is a hook finisherChance% of the
+// time (his "hooks" block, hook-punch.js), glowing white-hot.
+function ilcPunch(self, p) {
+  if (rollHook(self, p, p.left === 0 && p.n > 1) && p.n > 1) p.hookHeat = p.idx / (p.n - 1);
+  return p;
+}
+
+function ilcKnockable(o) { return o.alive && !o.grappled && !o.grapple && !o.slam && !subLocked(o) && !o.koOut; }
+
+// The whole combo landed: the finisher's freeze frame, ring, text and sound.
+function ilcFinisher(self, other, n) {
+  var c = ilcCfg(self), nx = other.x - self.x, ny = other.y - self.y, nd = Math.sqrt(nx * nx + ny * ny) || 1;
+  nx /= nd; ny /= nd;
+  var hx = other.x - nx * other.r * 0.7, hy = other.y - ny * other.r * 0.7;
+  // The text goes over them, or under them if that's further from him (or
+  // they're against the top of the cage), so it doesn't cover his hook.
+  var above = other.y - other.r - 62, below = other.y + other.r + 46;
+  var up = above > 34 && (below > H - 30 || Math.abs(above - self.y) >= Math.abs(below - self.y));
+  ilcFx.push({ x: hx, y: hy, tx: other.x, ty: up ? above : below, t: 0, max: 1.2,
+    text: String((c && c.text) || "{n}-PIECE!").replace("{n}", n), balls: balls });
+  impacts.push({ x: hx, y: hy, nx: nx, ny: ny, life: 0.5, max: 0.5, color: ILC_GOLD });
+  if (other.alive) { other.squash = { t: 0.26, max: 0.26, nx: nx, ny: ny }; other.flash = 0.2; }
+  playIliaFinisher();
+  crowdReact(0.45);
+  if (!reduceMotion) {
+    shake = Math.max(shake, 16);
+    hitStop = Math.max(hitStop, 0.09);
+    for (var i = 0; i < 14; i++) {
+      var a = Math.atan2(ny, nx) + (Math.random() - 0.5) * 2, s = 220 + Math.random() * 320;
+      particles.push({ x: hx, y: hy, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 40, life: 0.4, max: 0.4, size: 3 + Math.random() * 3, color: i % 3 ? ILC_GOLD : ILC_RED });
+    }
+  }
+  if (other.alive && typeof commentaryCall === "function") commentaryCall("combo", self, other); // (commentary-calls.js, when it's merged)
+}
+
+// ---------------------------------------------------------------- every frame
+
+// From update.js.
+function tickIliaCombos(dt) {
+  if (!ilcFx.length) return;
+  ilcFx = ilcFx.filter(function (f) { f.t += dt; return f.balls === balls && f.t < f.max; });
+}
+
+// ---------------------------------------------------------------- drawing
+
+// From drawFist (draw-attacks.js): the glove heats up through the combo, and
+// the finisher is a bigger glove in a red and white-hot flare.
+function iliaFistOver(self, x, y, size) {
+  var p = self.punch;
+  if (!p || !p.ilc || p.n < 2 || p.idx === 0) return;
+  ctx.save();
+  if (ilcFinishing(p)) {
+    var R = size * 2.5, g = ctx.createRadialGradient(x, y, size * 0.4, x, y, R);
+    g.addColorStop(0, "rgba(255,246,214,0.95)");
+    g.addColorStop(0.45, "rgba(255,110,40,0.6)");
+    g.addColorStop(1, "rgba(224,40,28,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = ILC_RED; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(x, y, size * 1.35, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  } else {
+    ctx.globalAlpha = 0.3 + 0.5 * p.idx / (p.n - 1);
+    ctx.strokeStyle = ILC_RED; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(x, y, size + 4, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// From draw.js, over the hit numbers: the ring going out from the finisher
+// and its text popping in over them.
+function drawIliaCombos() {
+  if (!ilcFx.length) return;
+  ctx.save();
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+  ilcFx.forEach(function (f) {
+    if (f.balls !== balls) return;
+    var rk = Math.min(1, f.t / 0.42), ease = 1 - (1 - rk) * (1 - rk);
+    if (rk < 1) {
+      ctx.globalAlpha = 1 - rk;
+      ctx.strokeStyle = ILC_GOLD; ctx.lineWidth = 11 * (1 - rk) + 2;
+      ctx.beginPath(); ctx.arc(f.x, f.y, 16 + 96 * ease, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = ILC_RED; ctx.lineWidth = 6 * (1 - rk) + 1;
+      ctx.beginPath(); ctx.arc(f.x, f.y, 10 + 62 * ease, 0, Math.PI * 2); ctx.stroke();
+    }
+    var k = f.t / f.max, pop = f.t < 0.14 ? 1.45 - 0.45 * f.t / 0.14 : 1;
+    ctx.globalAlpha = k > 0.72 ? Math.max(0, (1 - k) / 0.28) : 1;
+    var size = Math.round(48 * pop);
+    ctx.font = "800 " + size + 'px "Barlow Condensed", "Arial Narrow", sans-serif';
+    var halfW = ctx.measureText(f.text).width / 2 + 8;
+    var x = Math.min(W - halfW, Math.max(halfW, f.tx)), y = Math.max(30, f.ty - 18 * k);
+    ctx.lineWidth = 10; ctx.strokeStyle = "#2a0705"; ctx.strokeText(f.text, x, y);
+    var gr = ctx.createLinearGradient(0, y - size / 2, 0, y + size / 2);
+    gr.addColorStop(0, "#fff2b0"); gr.addColorStop(0.5, ILC_GOLD); gr.addColorStop(1, "#e8741c");
+    ctx.fillStyle = gr; ctx.fillText(f.text, x, y);
+  });
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------- sound
+
+// The finisher: a deep thud under a sharp crack.
+function playIliaFinisher() {
+  try {
+    var ac = getAudioCtx();
+    if (!ac) return;
+    if (ac.state === "suspended") ac.resume();
+    var t = ac.currentTime;
+    caneTone(ac, t, "sine", 150, 42, 0.55, 0.38);
+    caneBurst(ac, t, 1900, 0.9, 0.42, 0.08);
+    caneBurst(ac, t + 0.015, 420, 0.7, 0.4, 0.24);
+  } catch (e) { /* never let audio break the game */ }
+}
+
+// ---------------------------------------------------------------- gallery
+
+// The fighter card's move list (gallery.js).
+function iliaComboGalleryMoves(ch, add) {
+  var r = ch.ramp, c = r && r.chain;
+  if (!c) return;
+  var b = r.dmgStart, size = Array.isArray(c.size) ? c.size[0] + "-" + c.size[1] : c.size;
+  var fin = Array.isArray(c.finisher) ? c.finisher : [c.finisher, c.finisher];
+  var cd = Array.isArray(c.cooldown) ? c.cooldown : [c.cooldown, c.cooldown];
+  var dm = function (k) { return Math.round(b * k * 10) / 10; };
+  add("🥊", "Combos", size + "-punch combos off both hands, one every " + secs(cd[0]) + " at full health, down to " + secs(cd[1]) + " as he's hurt. Every punch that lands sets up the next (" +
+    dm(1) + ", " + dm(1 + c.build) + ", " + dm(1 + 2 * c.build) + "...). A miss, a slip or a block breaks the chain.");
+  var hk = ch.hooks && ch.hooks.finisherChance > 0 ? ch.hooks : null, hm = hk ? (hk.damageMult || 1) : 1;
+  add("💥", "The finisher", "Land the whole combo and the last punch hits " + fin[0] + "x (" + dm(fin[0]) + ")" + (fin[1] !== fin[0] ? ", up to " + fin[1] + "x (" + dm(fin[1]) + ") the more hurt he is" : "") +
+    (hk ? ". " + hk.finisherChance + "% of the time it's a hook that comes round from the side, " + hm + "x on top (" + dm(fin[0] * hm) + ")" : "") +
+    ": a freeze frame, a gold ring and " + String(c.text || "{n}-PIECE!").replace("{n}", "4") + " over them.");
 }
 
 // Joe's bull picture for the Aura Farm special (aurafarm.js), facing
@@ -46539,6 +46832,260 @@ function comboGalleryMoves(ch, add) {
     ". Each one lands or misses on its own; land them all for an N-HIT COMBO!");
 }
 
+// Hooks (Christian, 2026-11-14): what a hook is, for every fighter. A hook
+// COMES ROUND: the glove is cocked out wide to the side (the tell, a dashed
+// arc showing the path), sweeps round into them in a curve (the right hand
+// from the right, the left from the left), carries through past them and
+// comes back to guard. A bold swoosh trails it along the curve, so it reads
+// at phone size the way the KO Rush hook does (korush.js). It hits harder
+// than a straight punch and shoves them sideways, the way the glove was going.
+//
+// A fighter opts in with a "hooks" block in its character file (every key
+// can be left out; the defaults are in HOOK_DEFAULTS):
+//
+//   "hooks": { "finisherChance": 80, "chance": 0, "damageMult": 1.25,
+//              "knockback": 420, "coil": 0.1, "sweep": 0.2, "recover": 0.12,
+//              "arc": 1.8, "follow": 0.5, "size": 1.15, "width": 1.1,
+//              "color": "#e0281c" }
+//
+// finisherChance  % of combo finishers (the last punch of a combo) thrown as a hook.
+// chance          % of every other punch thrown as a hook.
+// damageMult      a hook does this many times the punch's damage.
+// knockback       the sideways shove of a hook. Left out, the hook uses the
+//                 knockback the punch would have had (Ilia's finisher: 560).
+// coil            seconds cocking it out wide before it swings (the tell).
+// sweep           seconds of the swing, from out wide to the follow-through.
+// recover         seconds back to guard.
+// arc, follow     how far round to the side it starts, and how far it
+//                 carries on past them (radians).
+// size            the glove is this much bigger in a hook.
+// width, color    the swoosh: times the glove, and its colour.
+//
+// Joe's plain punch (abilities.js) is wired in: a fighter with a plain punch
+// and a "hooks" block throws `chance`% of its punches as hooks. A fighter
+// with no "hooks" block punches exactly as before (no extra random rolls).
+//
+// The API, for any punch routine (the plain punch and Ilia's combos in
+// ilia-combos.js use it):
+//   rollHook(b, p, last)       when a punch object `p` starts: rolls
+//                              finisherChance (last = true) or chance, and if
+//                              it hits sets p.hook = true. Returns p.hook.
+//   punchHitAt(b, p)           seconds into `p` when it lands (a straight
+//                              punch: punch.speed * 0.35).
+//   punchEndAt(b, p)           seconds into `p` when it's over (punch.speed).
+//   hookDamage(b, p, dmg)      dmg, times damageMult if it's a hook.
+//   hookShove(b, o, p, kb)     knockback kb: sideways along the sweep for a
+//                              hook, straight back for a straight punch.
+//   hookGlove(b, o)            where a hook's glove is right now:
+//                              { x, y, r, phase: "coil" | "sweep" | "recover", k }.
+// Fields on the punch: p.hook (true when it's a hook), p.side (which hand,
+// 1 or -1, the same field drawFist uses), and optional p.hookHeat (0 to 1:
+// the glove glows white-hot and swells, for a fighter's big one).
+// Drawing needs nothing from the routine: drawFist (draw-attacks.js) hands
+// any punch with p.hook to drawHookFist. The fighter card gets a "Hooks"
+// line from hookGalleryMoves (gallery.js).
+"use strict";
+
+var HOOK_DEFAULTS = { finisherChance: 0, chance: 0, damageMult: 1.3, knockback: null, coil: 0.1, sweep: 0.2, recover: 0.12,
+  arc: 1.7, follow: 0.5, size: 1.15, width: 1, color: "#ffd21f" };
+
+function hookCfg(b) { return b && b.char && b.char.hooks ? b.char.hooks : null; }
+function hookVal(c, k) { return c && c[k] != null ? c[k] : HOOK_DEFAULTS[k]; }
+// How far through the sweep it reaches them (the glove straight at them).
+function hookKHit(c) { var o = hookVal(c, "arc"), f = hookVal(c, "follow"); return o / Math.max(0.01, o + f); }
+
+function rollHook(b, p, last) {
+  var c = hookCfg(b);
+  if (!c || !p) return false;
+  var pct = last ? hookVal(c, "finisherChance") : hookVal(c, "chance");
+  if (pct > 0 && Math.random() * 100 < pct) { p.hook = true; if (p.side == null) p.side = 1; }
+  return !!p.hook;
+}
+
+function punchHitAt(b, p) {
+  if (p && p.hook) { var c = hookCfg(b); return hookVal(c, "coil") + hookVal(c, "sweep") * hookKHit(c); }
+  return b.char.punch.speed * 0.35;
+}
+
+function punchEndAt(b, p) {
+  if (p && p.hook) { var c = hookCfg(b); return hookVal(c, "coil") + hookVal(c, "sweep") + hookVal(c, "recover"); }
+  return b.char.punch.speed;
+}
+
+function hookDamage(b, p, dmg) { return p && p.hook ? dmg * hookVal(hookCfg(b), "damageMult") : dmg; }
+
+function hookShove(b, o, p, kb) {
+  if (p && p.hook) { var hk = hookVal(hookCfg(b), "knockback"); if (hk != null) kb = hk; }
+  if (!(kb > 0)) return;
+  var dx = o.x - b.x, dy = o.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, nx = dx / d, ny = dy / d;
+  if (p && p.hook) {
+    var s = p.side || 1; // the way the glove is travelling as it lands, and a little back
+    o.vx += (s * ny * 0.8 + nx * 0.6) * kb; o.vy += (-s * nx * 0.8 + ny * 0.6) * kb;
+  } else { o.vx += nx * kb; o.vy += ny * kb; }
+}
+
+// The glove on the curve, `k` of the way through the sweep (0 out wide, at
+// hookKHit straight at them and touching, 1 the end of the follow-through).
+function hookPath(b, o, c, k, s) {
+  var dx = o.x - b.x, dy = o.y - b.y, qd = Math.sqrt(dx * dx + dy * dy) || 1, a = Math.atan2(dy, dx);
+  var open = hookVal(c, "arc"), fol = hookVal(c, "follow"), kHit = hookKHit(c);
+  var reachR = Math.max(b.r + 6, qd - o.r + 4), r0 = b.r * 1.3;
+  var ang = a + s * (open - (open + fol) * k);
+  var kk = Math.min(1, k / kHit);
+  // (k < 0: back where it was cocked) it swings out wide on the way, even up close
+  var rr = k <= 0 ? r0 : r0 + (reachR - r0) * Math.sin(kk * Math.PI / 2) + b.r * 0.22 * Math.sin(kk * Math.PI);
+  return { x: b.x + Math.cos(ang) * rr, y: b.y + Math.sin(ang) * rr };
+}
+
+function hookGlove(b, o) {
+  var p = b.punch;
+  if (!p || !p.hook || !o) return null;
+  var c = hookCfg(b), s = p.side || 1, coil = hookVal(c, "coil"), sweep = hookVal(c, "sweep"), rec = hookVal(c, "recover");
+  var a = Math.atan2(o.y - b.y, o.x - b.x), r = b.r;
+  var gr = b.char.punch.size * hookVal(c, "size") * (1 + 0.12 * (p.hookHeat || 0));
+  // the guard slot the hand comes from and goes back to (drawHands' spot)
+  var gx = b.x + Math.cos(a) * r * 0.8 - Math.sin(a) * r * 0.4 * s, gy = b.y + Math.sin(a) * r * 0.8 + Math.cos(a) * r * 0.4 * s;
+  if (p.t < coil) {
+    var w = p.t / coil, e = w * (2 - w), ca = a + s * (hookVal(c, "arc") + 0.3 * w);
+    var cx = b.x + Math.cos(ca) * r * 1.3, cy = b.y + Math.sin(ca) * r * 1.3;
+    return { x: gx + (cx - gx) * e, y: gy + (cy - gy) * e, r: gr, phase: "coil", k: 0, w: w };
+  }
+  var k = sweep > 0 ? (p.t - coil) / sweep : 1;
+  if (k < 1) { var h = hookPath(b, o, c, k, s); return { x: h.x, y: h.y, r: gr, phase: "sweep", k: k, w: 1 }; }
+  var end = hookPath(b, o, c, 1, s), q = Math.min(1, (p.t - coil - sweep) / Math.max(0.01, rec));
+  return { x: end.x + (gx - end.x) * q, y: end.y + (gy - end.y) * q, r: gr, phase: "recover", k: 1, q: q, w: 1 };
+}
+
+// ---------------------------------------------------------------- drawing
+
+// From drawFist (draw-attacks.js), in place of the straight punch: the tell,
+// the swoosh with speed lines and ghost gloves, the arm from the shoulder and
+// the glove.
+function drawHookFist(self, other) {
+  var p = self.punch;
+  if (!p || !p.hook || !other.alive) return false;
+  var f = hookGlove(self, other);
+  if (!f) return false;
+  var c = hookCfg(self), s = p.side || 1, pu = self.char.punch, col = hookVal(c, "color"), heat = p.hookHeat || 0;
+  var open = hookVal(c, "arc"), fol = hookVal(c, "follow");
+  var a = Math.atan2(other.y - self.y, other.x - self.x), qd = Math.sqrt(Math.pow(other.x - self.x, 2) + Math.pow(other.y - self.y, 2)) || 1;
+  var shA = a + s * Math.PI / 2, sx = self.x + Math.cos(shA) * self.r * 0.55, sy = self.y + Math.sin(shA) * self.r * 0.55;
+  ctx.save();
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  if (heat > 0) {
+    // a hot glove (p.hookHeat): a glow under everything else
+    var R = f.r * (1.3 + 0.5 * heat), g = ctx.createRadialGradient(f.x, f.y, f.r * 0.5, f.x, f.y, R);
+    g.addColorStop(0, "rgba(255,240,200," + (0.8 * heat) + ")");
+    g.addColorStop(0.5, "rgba(255,110,40," + (0.45 * heat) + ")");
+    g.addColorStop(1, "rgba(224,40,28,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(f.x, f.y, R, 0, Math.PI * 2); ctx.fill();
+  }
+  if (f.phase === "coil") {
+    // the tell: the arc it's about to sweep through
+    var reachR = Math.max(self.r + 6, qd - other.r + 4), a0 = a + s * open, a1 = a - s * fol;
+    ctx.setLineDash([8, 6]);
+    ctx.globalAlpha = 0.3 + 0.55 * f.w;
+    ctx.strokeStyle = "#1a1208"; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(self.x, self.y, reachR, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+    ctx.strokeStyle = col; ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.arc(self.x, self.y, reachR, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+    ctx.setLineDash([]);
+  } else {
+    // the swoosh along the curve behind the glove, from where it was cocked
+    // (fading on the way back to guard), and speed lines either side of it
+    var al = f.phase === "recover" ? 1 - f.q : 1, k1 = f.phase === "sweep" ? f.k : 1;
+    var k0 = Math.max(-0.3 / (open + fol), k1 - 0.75), w = f.r * 1.2 * hookVal(c, "width");
+    if (al > 0.02 && k1 - k0 > 0.03) {
+      ctx.globalAlpha = al;
+      hookSwoosh(self, other, c, s, k0, k1, w + 6, "#1a1208");
+      hookSwoosh(self, other, c, s, k0, k1, w, col);
+      hookSwoosh(self, other, c, s, k0 + (k1 - k0) * 0.35, k1, w * 0.4, "#fff6cf");
+      [1, -1].forEach(function (side) {
+        var u0 = Math.max(k0, k1 - 0.45), u1 = k1 - 0.12;
+        if (u1 - u0 < 0.05) return;
+        hookLine(self, other, c, s, u0, u1, side * (w * 0.5 + 7), "#1a1208", 6);
+        hookLine(self, other, c, s, u0, u1, side * (w * 0.5 + 7), col, 3);
+      });
+    }
+    if (f.phase === "sweep") {
+      // ghost gloves along the path, like the KO Rush hook
+      [0.12, 0.24].forEach(function (back, i) {
+        if (f.k - back <= k0) return;
+        var gh = hookPath(self, other, c, f.k - back, s);
+        ctx.globalAlpha = 0.45 - i * 0.15; ctx.fillStyle = gloveColor(self.char);
+        ctx.beginPath(); ctx.arc(gh.x, gh.y, f.r * 0.92, 0, Math.PI * 2); ctx.fill();
+      });
+    }
+  }
+  ctx.globalAlpha = 1;
+  // the arm, from the shoulder on that side
+  if (hasArmMuscle(self.char)) drawArmMuscle(ctx, self.char, sx, sy, f.x, f.y, pu.size * 0.6, theme.wall);
+  else {
+    ctx.strokeStyle = theme.wall; ctx.lineWidth = pu.size * 0.9 + 6;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(f.x, f.y); ctx.stroke();
+    ctx.strokeStyle = armColor(self.char); ctx.lineWidth = pu.size * 0.6;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(f.x, f.y); ctx.stroke();
+  }
+  if (s === 1) drawTracedArm(ctx, self.char, sx, sy, f.x, f.y, pu.size * 0.6); // sleeve on one arm only (as drawFist)
+  ctx.fillStyle = gloveColor(self.char); ctx.strokeStyle = heat > 0 ? "#e0281c" : theme.wall; ctx.lineWidth = heat > 0 ? 4 : 3;
+  ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  if (f.phase === "coil") {
+    // the cocked glove flickers: it's coming
+    ctx.globalAlpha = 0.45 + 0.3 * Math.sin(performance.now() / 45);
+    ctx.strokeStyle = col; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.r + 5, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+  return true;
+}
+
+// A line along the hook's curve from k0 to k1, `off` out from it (a speed line).
+function hookLine(b, o, c, s, k0, k1, off, color, width) {
+  var N = 10, pts = [], i;
+  for (i = 0; i <= N; i++) pts.push(hookPath(b, o, c, k0 + (k1 - k0) * i / N, s));
+  ctx.strokeStyle = color; ctx.lineWidth = width;
+  ctx.beginPath();
+  for (i = 0; i <= N; i++) {
+    var p0 = pts[Math.max(0, i - 1)], p1 = pts[Math.min(N, i + 1)], tx = p1.x - p0.x, ty = p1.y - p0.y, tl = Math.sqrt(tx * tx + ty * ty) || 1;
+    var x = pts[i].x - ty / tl * off, y = pts[i].y + tx / tl * off;
+    if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+  }
+  ctx.stroke();
+}
+
+// A crescent along the hook's curve from k0 (a point) to k1 (wMax wide,
+// rounded off at the glove end).
+function hookSwoosh(b, o, c, s, k0, k1, wMax, color) {
+  var N = 16, pts = [], i;
+  for (i = 0; i <= N; i++) pts.push(hookPath(b, o, c, k0 + (k1 - k0) * i / N, s));
+  var side1 = [], side2 = [];
+  for (i = 0; i <= N; i++) {
+    var p0 = pts[Math.max(0, i - 1)], p1 = pts[Math.min(N, i + 1)], tx = p1.x - p0.x, ty = p1.y - p0.y, tl = Math.sqrt(tx * tx + ty * ty) || 1;
+    var f = i / N, h = wMax * (0.06 + 0.94 * f * (2 - f)) / 2;
+    side1.push([pts[i].x - ty / tl * h, pts[i].y + tx / tl * h]);
+    side2.push([pts[i].x + ty / tl * h, pts[i].y - tx / tl * h]);
+  }
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(side1[0][0], side1[0][1]);
+  for (i = 1; i <= N; i++) ctx.lineTo(side1[i][0], side1[i][1]);
+  for (i = N; i >= 0; i--) ctx.lineTo(side2[i][0], side2[i][1]);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.arc(pts[N].x, pts[N].y, wMax / 2, 0, Math.PI * 2); ctx.fill();
+}
+
+// ---------------------------------------------------------------- gallery
+
+// The fighter card's move list (gallery.js).
+function hookGalleryMoves(ch, add) {
+  var c = ch.hooks, fin = hookVal(c, "finisherChance"), any = hookVal(c, "chance"), parts = [];
+  if (fin > 0) parts.push(fin + "% of his combos end in one");
+  if (any > 0) parts.push(any + "% of his other punches are one");
+  add("↪️", "Hooks", "The glove comes round from the side in a wide sweep instead of straight, hits " + hookVal(c, "damageMult") +
+    "x as hard and knocks them sideways." + (parts.length ? " " + parts.join(", and ") + "." : ""));
+}
+
 // Tony Ferguson, "El Cucuy" (Christian, 2026-11-13). Lightweight.
 // Everything is set under `ferguson` in his character file (leave a block out
 // and that part is off), plus his `elbow` block (elbows.js) and `guard`.
@@ -62301,20 +62848,30 @@ SOUND_CLIPS.pratesParty = "data:audio/mpeg;base64,SUQzBAAAAAAAIlRTU0UAAAAOAAADTG
 //             `tauntEvery` seconds (at most `tauntMax`), `takedown` when he
 //             sprawls on a shot, `clinch` as the clinch starts, `combo` after
 //             a combination where every strike landed, `blind` when a hit
-//             lands from his blind side (the patched eye, screen left) or he
-//             misses (a punch or kick, `missChance`%; a cannonball,
-//             `cannonMissChance`%), at most `blindMax` a fight.
-// Broadside   his special (special.move "broadside"): a pirate cannon rolls
-//             in at his side with a Union Jack on a pole planted behind it,
-//             and he puts on a captain's tricorne. He holds a lit linstock to
-//             the fuse while a red line shows where it's aimed (it follows
-//             them, then locks for the last `lock` seconds: the tell), then
-//             BOOM: a cannonball flies down the line at `speed`. `shots`
-//             shots, `gap` seconds apart, the first aimed for `aim` seconds
-//             and the rest for `reaim`. A cannonball that hits does `damage`
-//             (can't be slipped or blocked) and knocks them back `knockback`;
-//             one that misses smashes into the cage. Nothing lands on him
-//             while he's at the cannon (like the other specials).
+//             lands from his blind side (the patched eye, screen left,
+//             `blindChance`%) or he misses a punch or kick (`missChance`%),
+//             at most `blindMax` a fight. `special` every time the ship comes
+//             in, waiting its turn (up to BS_LINE_WAIT) if anyone's talking.
+// Broadside   his special (special.move "broadside"), a pirate ship in the
+//             middle of the cage. The sea spreads over the mat and the ship
+//             rises out of it (`ship.rise`), and he hops up onto the deck
+//             (`ship.board`) and puts on a captain's tricorne. Union Jack
+//             mainsail, a black foresail with a skull and crossbones, a Union
+//             Jack flying off the stern, his red stripe down the hull. It
+//             bobs and drifts a little (`ship.drift`, `ship.bob`, `ship.roll`)
+//             and turns its bow to face them. Three cannons on the bow
+//             (`cannons`) each lead them for the moment it fires, the three
+//             fanned `spread` degrees apart along the way they're rolling, on
+//             red dashed lines that lock and flash for the last `lock` seconds
+//             (the tell). Then the volley, `stagger` seconds between shots.
+//             `volley.volleys` volleys, `volley.gap` seconds apart. A
+//             cannonball that hits does `damage` (can't be slipped or
+//             blocked): splinters, smoke, and it shoves them across the cage
+//             at `knockback`, easing back over `shove` seconds. One that
+//             misses smashes into the cage. With `ship.solid` the hull and
+//             he on deck are solid: they bounce off. Then it sinks back into
+//             the sea (`ship.sink`) and leaves him on the mat. Nothing lands
+//             on him while he's aboard (like the other specials).
 // The special runs on b.igbb (move "broadside"), like every special.
 "use strict";
 
@@ -62322,7 +62879,6 @@ SOUND_CLIPS.pratesParty = "data:audio/mpeg;base64,SUQzBAAAAAAAIlRTU0UAAAAOAAADTG
 SPECIAL_MOVES.broadside = "Broadside";
 
 var BS_CARD_T = 1.3;     // how long a 10-9 card stays up
-var BS_CANNON_OFF = 36;  // the cannon's gap from his side
 var BS_FLIGHT = 1.6;     // a cannonball's longest flight (seconds)
 var BS_GOLD = "#d9a43a";
 var BS_DODGE_LATE = 0.4; // a side step still covers the kick this long after it ends
@@ -62333,7 +62889,8 @@ var BS_BLIND_MIN = 4;    // a hit that takes this much off counts (not a cut ble
 var BS_LINE_WAIT = 30;   // a defining moment's line waits up to this long for quiet before it goes anyway
 
 var bsShots = [];   // cannonballs in flight: { x, y, vx, vy, r, owner, t, trail, dodged }
-var bsSmoke = [];   // smoke puffs off the cannon and the cannonballs: { x, y, vx, vy, t, max, r }
+var bsSmoke = [];   // smoke puffs off the cannons and the cannonballs: { x, y, vx, vy, t, max, r }
+var bsSplinters = []; // wooden shards off a cannonball landing: { x, y, vx, vy, rot, spin, len, t, max, color }
 var bsGhosts = [];  // the faint trail of a side step: { x, y, r, t, max, color }
 var bsClock = 0;    // drawing clock
 
@@ -62347,7 +62904,7 @@ function broadsideOn(b) { return !!(b && b.igbb && b.igbb.move === "broadside");
 function bsKnockable(o) { return o.alive && !o.grappled && !o.grapple && !o.slam && !subLocked(o) && !o.igbb && !o.koOut; }
 
 // From startMatchSeeded.
-function resetBisping() { bsShots = []; bsSmoke = []; bsGhosts = []; bsClock = 0; }
+function resetBisping() { bsShots = []; bsSmoke = []; bsSplinters = []; bsGhosts = []; bsClock = 0; bsShip = null; }
 // From makeBall.
 function initBisping(b) {
   b.bs = null; b.bsElbow = null;
@@ -62358,7 +62915,7 @@ function initBisping(b) {
     side: Math.random() < 0.5 ? -1 : 1, sideT: 0, outT: 0, wasSprawl: false, wasCmb: false,
     fightT: 0, lineCd: 0, startAt: bsRand(lc.startAt || [1, 2.5]), talkT: null, taunts: 0, said: {}, endT: 0, endWait: 0, onceT: 0, blindN: 0,
     nextCard: cfg.scorecard ? cfg.scorecard.every : 0, cards: 0, card: null, elSide: 1,
-    step: null, dodge: null, seenKick: null, angled: false, angledT: 0, ghostT: 0, hpPrev: null, lastN: 0, cmbRef: null
+    step: null, dodge: null, seenKick: null, angled: false, angledT: 0, ghostT: 0, hpPrev: null, lastN: 0, cmbRef: null, shipLine: null
   };
 }
 
@@ -62680,8 +63237,14 @@ function bsQuiet(b) { return !speaking(b) && !bsTalkBusy(); }
 function bsLines(b, other, cfg, dt) {
   var lc = cfg.lines, s = b.bs;
   if (!lc || !started) return;
-  if (over) { bsEndLines(b, other, lc, dt); return; }
+  if (over) { s.shipLine = null; bsEndLines(b, other, lc, dt); return; }
   if (!b.alive) return;
+  // Every time the ship comes in: "I'll knock him out, and I'll knock all you
+  // lot out, one by one." Waits its turn if anyone's talking.
+  if (s.shipLine != null) {
+    s.shipLine += dt;
+    if (bsQuiet(b) || s.shipLine > BS_LINE_WAIT) { s.shipLine = null; bsSay(b, "special", 100, true); }
+  }
   // Every fight: "I started fighting when I came out of my mother, really." or
   // "I'm fighting myself in this fight." (always that one against himself).
   if (!s.said.start) {
@@ -62738,92 +63301,239 @@ function bsEndLines(b, other, lc, dt) {
 
 // ---------------------------------------------------------------- Broadside
 
-// Where the cannon stands: at his side, its barrel turned toward them. The
-// side (whichever has more room) is picked once; as the barrel turns to
-// follow them the cannon swings round him with it, so it's never behind him.
-function bsPlaceCannon(self, m) {
-  var ux = Math.cos(m.aim), uy = Math.sin(m.aim), off = self.r + BS_CANNON_OFF;
-  var at = function (s) { return { x: self.x - uy * s * off + ux * self.r * 0.2, y: self.y + ux * s * off + uy * self.r * 0.2 }; };
-  if (m.side == null) {
-    var a = at(-1), c = at(1);
-    m.side = Math.min(a.x, W - a.x, a.y, H - a.y) > Math.min(c.x, W - c.x, c.y, H - c.y) ? -1 : 1;
-  }
-  var p = at(m.side), pad = self.r * 0.75;
-  m.cx = Math.min(W - pad, Math.max(pad, p.x));
-  m.cy = Math.min(H - pad, Math.max(pad, p.y));
+// The ship's own frame: x along the hull (+ toward the bow), y down the
+// screen, the waterline at 0. Sizes are fractions of `ship.length`.
+var BS_DECK = 0.1;    // the deck amidships, above the waterline
+var BS_SHEER = 0.07;  // how much higher the deck sweeps up at the bow and stern
+var BS_HOP = 64;      // how high he hops up onto the deck
+var BS_TURN = 0.35;   // the ship coming about to face them
+var BS_SHIP_DEF = { length: 290, y: 0.6, rise: 0.75, board: 0.5, sink: 0.7, drift: 12, bob: 4, roll: 0.035, solid: true, sea: 0.34 };
+var BS_CANNON_DEF = { count: 3, aim: 1, reaim: 0.75, lock: 0.35, lead: 1, spread: 12, stagger: 0.14, speed: 780, size: 11 };
+var BS_VOLLEY_DEF = { volleys: 2, gap: 0.5, hold: 0.5 };
+
+var bsShip = null;    // the ship in the cage right now (its owner's igbb), for the collisions
+
+// One config block with every key filled in (the JSON's value, else the default).
+function bsDef(cfg, def) { var o = {}; for (var k in def) o[k] = cfg && cfg[k] != null ? cfg[k] : def[k]; return o; }
+function bsDeckY(L, lx) { var u = lx / (L / 2); return -L * (BS_DECK + BS_SHEER * u * u); }
+
+// A point in the ship's frame (pixels) out in the cage, as it drifts, rolls,
+// rises or sinks, and faces its bow at them (`face` squashes through 0 as it
+// comes about).
+function bsShipPt(m, lx, ly) {
+  var fx = lx * m.face, c = Math.cos(m.rot), s = Math.sin(m.rot);
+  return { x: m.sx + fx * c - ly * s, y: m.sy + m.depth + fx * s + ly * c };
 }
-function bsCannonLen(b) { return b.r * 1.45; }
-// The muzzle and the touch hole (where the fuse is lit), along the barrel.
-function bsMuzzle(b, m) { var L = bsCannonLen(b); return { x: m.cx + Math.cos(m.aim) * L * 0.62, y: m.cy + Math.sin(m.aim) * L * 0.62 }; }
-function bsTouchHole(b, m) { var L = bsCannonLen(b), k = L * 0.3 + m.recoil * L * 0.16; return { x: m.cx - Math.cos(m.aim) * k, y: m.cy - Math.sin(m.aim) * k }; }
+// Where he stands: on the deck amidships, behind the rail.
+function bsDeckSpot(m, b) { var lx = -m.L * 0.02; return bsShipPt(m, lx, bsDeckY(m.L, lx) - b.r * 0.5); }
+// The three cannons on the bow: where each one swivels, and its muzzle.
+function bsCannonLen(m) { return m.L * 0.16; }
+function bsPivot(m, i) {
+  var n = m.cn.count, lx = m.L / 2 * (0.34 + 0.56 * (n > 1 ? i / (n - 1) : 0.5));
+  return bsShipPt(m, lx, bsDeckY(m.L, lx) - 4);
+}
+function bsMuzzle(m, i) {
+  var p = bsPivot(m, i), a = m.aims[i], k = bsCannonLen(m) * (0.62 - (m.recoil[i] || 0) * 0.16);
+  return { x: p.x + Math.cos(a) * k, y: p.y + Math.sin(a) * k };
+}
+
+// The ship's place this frame: the middle of the cage, drifting a little
+// and bobbing on the swell. `k` is how far it's risen out of the sea (0..1).
+function bsShipMove(m, dt) {
+  var sh = m.sh;
+  m.clock += dt;
+  m.sx = W / 2 + Math.sin(m.clock * 0.55) * sh.drift;
+  m.sy = H * sh.y + Math.sin(m.clock * 0.8 + 1) * sh.drift * 0.35 + Math.sin(m.clock * 2.2) * sh.bob;
+  m.rot = Math.sin(m.clock * 1.6) * sh.roll;
+  m.depth = (1 - m.k) * m.L * 0.75;
+  if (m.turnT > 0) {
+    m.turnT = Math.max(0, m.turnT - dt);
+    var u = 1 - m.turnT / BS_TURN;
+    m.face = m.dir * Math.cos(Math.PI * u);
+    if (m.turnT <= 0) { m.dir = -m.dir; m.face = m.dir; }
+  } else m.face = m.dir;
+}
+
+// Where they'll be in `t` seconds if they keep rolling the way they're going,
+// bouncing off the cage and the hull. (What it can't see coming, a change of
+// direction of their own, is how they dodge it.)
+function bsPredict(o, t, m) {
+  var x = o.x, y = o.y, vx = o.vx, vy = o.vy, n = Math.max(1, Math.ceil(t / 0.02)), h = t / n;
+  var hull = m && m.sh.solid ? bsHull(m, o) : null;
+  for (var i = 0; i < n; i++) {
+    x += vx * h; y += vy * h;
+    if (x < o.r) { x = 2 * o.r - x; vx = -vx; } else if (x > W - o.r) { x = 2 * (W - o.r) - x; vx = -vx; }
+    if (y < o.r) { y = 2 * o.r - y; vy = -vy; } else if (y > H - o.r) { y = 2 * (H - o.r) - y; vy = -vy; }
+    if (hull) {
+      var dx = x - hull.cx, dy = y - hull.cy, q = dx * dx / (hull.ax * hull.ax) + dy * dy / (hull.ay * hull.ay);
+      if (q < 1 && q > 1e-6) {
+        var s = 1 / Math.sqrt(q), nx = dx / (hull.ax * hull.ax), ny = dy / (hull.ay * hull.ay), nd = Math.sqrt(nx * nx + ny * ny);
+        nx /= nd; ny /= nd; x = hull.cx + dx * s; y = hull.cy + dy * s;
+        var vn = vx * nx + vy * ny;
+        if (vn < 0) { vx -= 2 * vn * nx; vy -= 2 * vn * ny; }
+      }
+    }
+  }
+  return { x: x, y: y };
+}
+// The hull as `b` bounces off it: an ellipse round the middle of the ship,
+// grown by their size (and by how far it's risen).
+function bsHull(m, b) {
+  return { cx: m.sx, cy: m.sy + m.depth - m.L * 0.06, ax: m.L * 0.46 * m.k + b.r, ay: m.L * 0.1 * m.k + b.r };
+}
+
+// Each cannon leads them for its own moment: fired `fireIn` seconds from now
+// (plus its place in the stagger), at `speed`, `lead` of the way to where
+// they'll be. Then the spread fans the three out across their path, the last
+// shot furthest along the way they're rolling. `ramp` (0..1) eases the lead
+// in: the lines start on them and swing out ahead of them as the lock nears.
+function bsAimCannons(m, other, fireIn, ramp) {
+  var cn = m.cn, sweep = m.sweep;
+  for (var i = 0; i < cn.count; i++) {
+    var mz = bsMuzzle(m, i), wait = fireIn + i * cn.stagger, P = { x: other.x, y: other.y };
+    for (var it = 0; it < 3; it++) {
+      var fl = Math.sqrt((P.x - mz.x) * (P.x - mz.x) + (P.y - mz.y) * (P.y - mz.y)) / cn.speed;
+      P = bsPredict(other, (wait + fl) * cn.lead * ramp, m);
+    }
+    var off = cn.count > 1 ? (i / (cn.count - 1) - 0.5) * 2 * cn.spread * Math.PI / 180 * sweep : 0;
+    var want = Math.atan2(P.y - mz.y, P.x - mz.x) + off;
+    m.aims[i] = m.aims[i] == null ? want : bsTurn(m.aims[i], want, 0.35);
+  }
+}
+// The sweep runs the way they're rolling across the line of fire.
+function bsSweep(m, other) {
+  var dx = other.x - m.sx, dy = other.y - m.sy;
+  return dx * other.vy - dy * other.vx >= 0 ? 1 : -1;
+}
 
 // From updateSpecial (special.js) for special.move "broadside".
 function updateBroadside(self, other, dt) {
   var sp = self.char.special;
   if (!self.igbb) {
-    if (self.specialT < sp.chargeTime || !canStartIgbb(self, other) || swordDuelActive() || self.plum || self.fknee || self.cmb) return false;
+    if (over || self.specialT < sp.chargeTime || !canStartIgbb(self, other) || swordDuelActive() || self.plum || self.fknee || self.cmb) return false;
     clearActions(self);
     self.bsElbow = null; self.kneeAnim = null;
-    self.igbb = { move: "broadside", phase: "roll", t: 0, aim: Math.atan2(other.y - self.y, other.x - self.x), shot: 0, locked: false, recoil: 0, fuseT: 0, side: null };
-    bsPlaceCannon(self, self.igbb);
-    floater(self.x, self.y - self.r - 34, "BROADSIDE!", "crit");
-    playBsRoll();
-    crowdReact(0.6);
-    bsSay(self, "special", 100, true);
+    var sh = bsDef(sp.ship, BS_SHIP_DEF), cn = bsDef(sp.cannons, BS_CANNON_DEF);
+    var nm = self.igbb = { move: "broadside", phase: "rise", t: 0, owner: self.id, sh: sh, cn: cn, vo: bsDef(sp.volley, BS_VOLLEY_DEF),
+      L: sh.length, clock: 0, k: 0, sx: W / 2, sy: H * sh.y, rot: 0, depth: sh.length * 0.75, dir: other.x >= W / 2 ? 1 : -1, face: 1, turnT: 0,
+      from: { x: self.x, y: self.y }, lift: 0, volley: 0, shot: 0, locked: false, sweep: 1, aims: [], recoil: [], flash: [], fuseT: 0, splashT: 0 };
+    bsShipMove(nm, 0);
+    for (var i = 0; i < cn.count; i++) { nm.aims.push(null); nm.recoil.push(0); nm.flash.push(0); }
+    bsAimCannons(nm, other, cn.aim, 0);
+    bsShip = nm;
+    floater(W / 2, H * sh.y - sh.length * 0.7, "BROADSIDE!", "crit");
+    playBsSplash(true);
+    crowdReact(0.7);
+    if (self.bs) self.bs.shipLine = 0; // "I'll knock him out...", every time the ship comes in (bsLines)
   }
   var m = self.igbb;
   if (m.move !== "broadside") return false;
+  if (!self.alive) { endBroadside(self); return false; }
   m.t += dt;
   self.vx = 0; self.vy = 0;
-  if (over) { endBroadside(self); return false; }
-  m.recoil = Math.max(0, m.recoil - dt * 3.2);
-  if (m.flash > 0) m.flash = Math.max(0, m.flash - dt);
-  var want = Math.atan2(other.y - m.cy, other.x - m.cx), aimFor = m.shot === 0 ? sp.aim : sp.reaim;
-  if (m.phase === "roll") {
-    m.aim = bsTurn(m.aim, want, dt * 6);
-    bsPlaceCannon(self, m);
-    if (m.t >= sp.roll) { m.phase = "aim"; m.t = 0; m.locked = false; }
-  } else if (m.phase === "aim") {
-    if (m.t < aimFor - sp.lock) { m.aim = bsTurn(m.aim, want, dt * 5); bsPlaceCannon(self, m); }
-    else if (!m.locked) { m.locked = true; playBsLock(); }
+  if (over && m.phase !== "sink") bsStartSink(self, m); // the fight's over: it goes back down
+  for (var j = 0; j < m.cn.count; j++) { m.recoil[j] = Math.max(0, m.recoil[j] - dt * 3.2); m.flash[j] = Math.max(0, m.flash[j] - dt); }
+  var shc = m.sh, cnc = m.cn, vo = m.vo;
+  if (m.phase === "rise") {
+    m.k = easeOut(m.t / shc.rise);
+    bsShipMove(m, dt);
+    bsSplash(m, dt);
+    // He hops on board over the last `board` seconds of it coming up.
+    var h = Math.max(0, Math.min(1, (m.t - (shc.rise - shc.board)) / shc.board)), e = h * h * (3 - 2 * h), d = bsDeckSpot(m, self);
+    m.lift = Math.sin(Math.PI * h) * BS_HOP;
+    self.x = m.from.x + (d.x - m.from.x) * e;
+    self.y = m.from.y + (d.y - m.from.y) * e - m.lift;
+    m.hop = h;
+    if (m.k > 0.25) bsMaybeTurn(m, other);
+    bsAimCannons(m, other, shc.rise - m.t + cnc.aim, 0);
+    if (m.t >= shc.rise) { m.phase = "aim"; m.t = 0; m.k = 1; m.lift = 0; m.sweep = bsSweep(m, other); }
+    return true;
+  }
+  bsShipMove(m, dt);
+  if (m.phase === "sink") {
+    m.k = m.k0 * (1 - easeOut(m.t / shc.sink));
+    bsSplash(m, dt);
+    // The deck drops out from under him and he hops down onto the mat.
+    var hs = Math.min(1, m.t / shc.sink);
+    m.lift = Math.sin(Math.PI * hs) * BS_HOP * 0.45;
+    self.x = m.land.x; self.y = m.land.y - m.lift;
+    if (m.t >= shc.sink) { self.y = m.land.y; endBroadside(self); return false; }
+    return true;
+  }
+  var spot = bsDeckSpot(m, self);
+  self.x = spot.x; self.y = spot.y;
+  if (m.phase === "aim") {
+    var aimFor = m.volley === 0 ? cnc.aim : cnc.reaim, lockAt = aimFor - cnc.lock;
+    if (m.turnT > 0) m.t = Math.min(m.t, lockAt - 0.02); // no lock until it's come about
+    if (m.t < lockAt) {
+      bsMaybeTurn(m, other);
+      m.sweep = bsSweep(m, other);
+      bsAimCannons(m, other, aimFor - m.t, Math.min(1, m.t / Math.max(0.05, lockAt)));
+    } else if (!m.locked) {
+      m.locked = true; playBsLock();
+      bsAimCannons(m, other, aimFor - m.t, 1);
+    }
     m.fuseT -= dt;
     if (m.fuseT <= 0) { m.fuseT = 0.09; playBsFuse(); }
-    if (m.t >= aimFor) { fireBsCannon(self, m, sp); m.shot++; m.phase = "fire"; m.t = 0; }
-  } else if (m.phase === "fire") {
-    if (m.t >= sp.gap) {
-      if (m.shot < sp.shots && other.alive && !other.koOut) { m.phase = "aim"; m.t = 0; m.locked = false; }
-      else { m.phase = "done"; m.t = 0; }
+    // The volley: each cannon `stagger` seconds after the last.
+    while (m.shot < cnc.count && m.t >= aimFor + m.shot * cnc.stagger) { fireBsCannon(self, m, sp, m.shot); m.shot++; }
+    if (m.shot >= cnc.count) { m.phase = "reload"; m.t = 0; m.volley++; }
+  } else if (m.phase === "reload") {
+    if (m.t >= vo.gap) {
+      if (m.volley < vo.volleys && other.alive && !other.koOut) { m.phase = "aim"; m.t = 0; m.shot = 0; m.locked = false; }
+      else { m.phase = "hold"; m.t = 0; }
     }
-  } else if (m.t >= sp.hold) {
-    endBroadside(self);
-    return false;
-  }
+  } else if (m.phase === "hold" && m.t >= vo.hold) bsStartSink(self, m);
   return true;
 }
 
+// They've gone round to the stern: the ship comes about to face them.
+function bsMaybeTurn(m, other) {
+  if (m.turnT <= 0 && (other.x - m.sx) * m.dir < -40) { m.turnT = BS_TURN; playBsCreak(); }
+}
+
+function bsStartSink(self, m) {
+  m.phase = "sink"; m.t = 0; m.locked = false; m.k0 = m.k;
+  m.land = { x: self.x, y: self.y + m.lift }; // where his feet come down (mid-hop if it's cut short)
+  playBsSplash(false);
+}
+
 function endBroadside(self) {
+  if (bsShip === self.igbb) bsShip = null;
   self.igbb = null;
   self.specialT = 0;
   if (self.alive) setSpeed(self, self.baseSpeed || SPEED);
 }
 
-function fireBsCannon(self, m, sp) {
-  var ux = Math.cos(m.aim), uy = Math.sin(m.aim), mz = bsMuzzle(self, m);
-  bsShots.push({ x: mz.x, y: mz.y, vx: ux * sp.speed, vy: uy * sp.speed, r: sp.size, owner: self.id, t: 0, trail: [], dodged: false, puffT: 0 });
-  m.recoil = 1;
-  m.flash = 0.12;
-  for (var i = 0; i < 9 && !reduceMotion; i++) {
-    var a = m.aim + (Math.random() - 0.5) * 1.2, s = 40 + Math.random() * 140;
-    bsSmoke.push({ x: mz.x, y: mz.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 20, t: 0, max: 0.7 + Math.random() * 0.5, r: 8 + Math.random() * 9 });
+// Water thrown up round the hull while it rises out of the sea or goes back down.
+function bsSplash(m, dt) {
+  m.splashT -= dt;
+  if (m.splashT > 0 || reduceMotion) return;
+  m.splashT = 0.03;
+  for (var i = 0; i < 3; i++) {
+    var lx = (Math.random() - 0.5) * m.L * 1.05, p = bsShipPt(m, lx, 0), up = 120 + Math.random() * 220;
+    particles.push({ x: p.x, y: m.sy + 4, vx: (Math.random() - 0.5) * 140, vy: -up, life: 0.45, max: 0.45, size: 2.5 + Math.random() * 3.5, color: i % 2 ? "#e8f6ff" : "#7cc4ec" });
   }
-  for (var j = 0; j < 12 && !reduceMotion; j++) {
-    var a2 = m.aim + (Math.random() - 0.5) * 0.9, s2 = 200 + Math.random() * 300;
+}
+
+// One cannon going off: the muzzle flash, smoke, the barrel kicking back and
+// a cannonball down its line. The first of each volley: BOOM.
+function fireBsCannon(self, m, sp, i) {
+  var a = m.aims[i], ux = Math.cos(a), uy = Math.sin(a), mz = bsMuzzle(m, i), cn = m.cn;
+  bsShots.push({ x: mz.x, y: mz.y, vx: ux * cn.speed, vy: uy * cn.speed, r: cn.size, owner: self.id, t: 0, trail: [], dodged: false, puffT: 0 });
+  m.recoil[i] = 1;
+  m.flash[i] = 0.12;
+  for (var k = 0; k < 8 && !reduceMotion; k++) {
+    var sa = a + (Math.random() - 0.5) * 1.3, s = 40 + Math.random() * 150;
+    bsSmoke.push({ x: mz.x, y: mz.y, vx: Math.cos(sa) * s, vy: Math.sin(sa) * s - 20, t: 0, max: 0.7 + Math.random() * 0.6, r: 9 + Math.random() * 10 });
+  }
+  for (var j = 0; j < 10 && !reduceMotion; j++) {
+    var a2 = a + (Math.random() - 0.5) * 0.9, s2 = 200 + Math.random() * 300;
     particles.push({ x: mz.x, y: mz.y, vx: Math.cos(a2) * s2, vy: Math.sin(a2) * s2, life: 0.2, max: 0.2, size: 2 + Math.random() * 2.5, color: j % 2 ? "#ffd27a" : "#ff8a2a" });
   }
-  floater(mz.x, mz.y - 24, "BOOM!", "crit");
-  if (!reduceMotion) shake = Math.max(shake, 10);
+  if (i === 0) { var bow = bsPivot(m, 1); floater(bow.x, Math.max(30, m.sy - m.L * 0.36), "BOOM!", "crit"); crowdReact(0.5); } // up over the bow, clear of the hits
+  if (!reduceMotion) shake = Math.max(shake, 9 + i * 2);
   playBsBoom();
-  crowdReact(0.45);
 }
 
 function tickBsShots(dt) {
@@ -62845,66 +63555,130 @@ function tickBsShots(dt) {
           return false;
         }
       }
-      if (c.x < c.r || c.x > W - c.r || c.y < c.r || c.y > H - c.r) {
-        bsShotWall(c);
-        if (owner.alive && owner.bs && !over) bsBlindLine(owner, (bsCfg(owner).lines || {}).cannonMissChance); // a miss: "I can't look two places at once, guys."
-        return false;
-      }
+      if (c.x < c.r || c.x > W - c.r || c.y < c.r || c.y > H - c.r) { bsShotWall(c, ux, uy); return false; }
     }
     c.trail.push({ x: c.x, y: c.y });
-    if (c.trail.length > 6) c.trail.shift();
+    if (c.trail.length > 7) c.trail.shift();
     c.puffT -= dt;
     if (c.puffT <= 0 && !reduceMotion) { c.puffT = 0.035; bsSmoke.push({ x: c.x - ux * c.r, y: c.y - uy * c.r, vx: -ux * 30, vy: -uy * 30 - 10, t: 0, max: 0.4, r: c.r * 0.7 }); }
     return c.t < BS_FLIGHT;
   });
 }
 
+// A cannonball landing: splinters, smoke, a shockwave, and it shoves them
+// across the cage (`knockback`, easing back to their own speed over `shove`).
 function bsShotHit(c, other, sp, ux, uy, dealt) {
   floater(other.x, other.y - other.r - 30, "DIRECT HIT!", "crit");
-  if (bsKnockable(other)) { other.vx += ux * sp.knockback; other.vy += uy * sp.knockback; }
-  other.squash = { t: 0.16, max: 0.16, nx: -ux, ny: -uy };
-  impacts.push({ x: other.x - ux * other.r, y: other.y - uy * other.r, nx: -ux, ny: -uy, life: 0.4, max: 0.4, color: "#222222" });
-  for (var i = 0; i < 14 && !reduceMotion; i++) {
-    var a = Math.atan2(-uy, -ux) + (Math.random() - 0.5) * 2.4, s = 140 + Math.random() * 260;
-    particles.push({ x: c.x, y: c.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.3, max: 0.3, size: 2 + Math.random() * 2.5, color: i % 3 ? "#ffd27a" : "#555555" });
+  if (bsKnockable(other)) {
+    other.vx = ux * sp.knockback; other.vy = uy * sp.knockback;
+    other.speedEase = { t: 0, dur: sp.shove || 0.8, v0: sp.knockback };
   }
-  hitStop = Math.max(hitStop, 0.08);
-  if (!reduceMotion) shake = Math.max(shake, 14);
+  other.squash = { t: 0.18, max: 0.18, nx: -ux, ny: -uy };
+  impacts.push({ x: other.x - ux * other.r, y: other.y - uy * other.r, nx: -ux, ny: -uy, life: 0.45, max: 0.45, color: "#222222" });
+  bsBurst(c.x, c.y, Math.atan2(-uy, -ux), 2.6, 16, 10);
+  hitStop = Math.max(hitStop, 0.09);
+  if (!reduceMotion) shake = Math.max(shake, 16);
   playBsHit(dealt);
-  crowdReact(0.6);
+  crowdReact(0.7);
 }
 
-function bsShotWall(c) {
+// One that missed smashes into the cage.
+function bsShotWall(c, ux, uy) {
   var x = Math.min(W - 6, Math.max(6, c.x)), y = Math.min(H - 6, Math.max(6, c.y));
-  for (var i = 0; i < 6 && !reduceMotion; i++) bsSmoke.push({ x: x, y: y, vx: (Math.random() - 0.5) * 120, vy: (Math.random() - 0.5) * 120 - 20, t: 0, max: 0.6, r: 7 + Math.random() * 7 });
-  for (var j = 0; j < 10 && !reduceMotion; j++) {
-    var a = Math.random() * Math.PI * 2, s = 100 + Math.random() * 200;
-    particles.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.3, max: 0.3, size: 2 + Math.random() * 2, color: j % 2 ? "#8a5a2b" : "#cfcfcf" });
-  }
+  bsBurst(x, y, Math.atan2(-uy, -ux), 2.2, 10, 6);
   floater(Math.min(W - 40, Math.max(40, x)), Math.min(H - 20, Math.max(30, y)), "THUD", "note");
-  if (!reduceMotion) shake = Math.max(shake, 5);
+  if (!reduceMotion) shake = Math.max(shake, 6);
   playBsWall();
 }
 
+// Splinters (`n` wooden shards spinning off), smoke and sparks thrown back
+// along `ang`, `wide` radians across.
+function bsBurst(x, y, ang, wide, n, puffs) {
+  if (reduceMotion) return;
+  for (var i = 0; i < n; i++) {
+    var a = ang + (Math.random() - 0.5) * wide, s = 160 + Math.random() * 300;
+    bsSplinters.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, rot: Math.random() * 6.3, spin: (Math.random() - 0.5) * 30,
+      len: 7 + Math.random() * 9, t: 0, max: 0.45 + Math.random() * 0.3, color: i % 3 ? "#9a6a35" : "#d9b27a" });
+  }
+  for (var j = 0; j < puffs; j++) {
+    var a2 = ang + (Math.random() - 0.5) * 3, s2 = 40 + Math.random() * 120;
+    bsSmoke.push({ x: x, y: y, vx: Math.cos(a2) * s2, vy: Math.sin(a2) * s2 - 20, t: 0, max: 0.6 + Math.random() * 0.5, r: 8 + Math.random() * 9 });
+  }
+  for (var k = 0; k < 8; k++) {
+    var a3 = ang + (Math.random() - 0.5) * wide, s3 = 150 + Math.random() * 250;
+    particles.push({ x: x, y: y, vx: Math.cos(a3) * s3, vy: Math.sin(a3) * s3, life: 0.25, max: 0.25, size: 2 + Math.random() * 2.5, color: k % 2 ? "#ffd27a" : "#555555" });
+  }
+}
+
 function tickBsSmoke(dt) {
-  if (!bsSmoke.length) return;
-  bsSmoke = bsSmoke.filter(function (p) {
+  if (bsSmoke.length) bsSmoke = bsSmoke.filter(function (p) {
     p.t += dt;
     var damp = Math.exp(-2.5 * dt);
     p.vx *= damp; p.vy *= damp;
     p.x += p.vx * dt; p.y += p.vy * dt;
     return p.t < p.max;
   });
+  if (bsSplinters.length) bsSplinters = bsSplinters.filter(function (p) {
+    p.t += dt;
+    var damp = Math.exp(-3 * dt);
+    p.vx *= damp; p.vy = p.vy * damp + 260 * dt;
+    p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.spin * dt;
+    return p.t < p.max;
+  });
+}
+
+// From step() (physics.js), for each fighter rolling free: the hull is solid
+// (`ship.solid`), so they bounce off it like the cage, and off him on deck.
+function bispingShipBlock(b) {
+  var m = bsShipNow();
+  if (!m || !m.sh.solid || b.id === m.owner || m.k <= 0.05) return;
+  var hl = bsHull(m, b), cx = hl.cx, cy = hl.cy, ax = hl.ax, ay = hl.ay;
+  var dx = b.x - cx, dy = b.y - cy, q = (dx * dx) / (ax * ax) + (dy * dy) / (ay * ay);
+  if (q < 1) {
+    if (q < 1e-6) { dx = 0; dy = 1; q = 1 / (ay * ay); }
+    var s = 1 / Math.sqrt(q);
+    bsBounceOff(b, cx + dx * s, cy + dy * s, dx / (ax * ax), dy / (ay * ay));
+  }
+  var o = balls[m.owner];
+  if (o && o.alive) {
+    var ex = b.x - o.x, ey = b.y - o.y, ed = Math.sqrt(ex * ex + ey * ey), min = b.r + o.r + 6;
+    if (ed < min && ed > 0) bsBounceOff(b, o.x + ex / ed * min, o.y + ey / ed * min, ex, ey);
+  }
+}
+// From attemptGrab (grapple-duel.js): nobody takes him down off his own ship.
+function bispingAboard(b) { return broadsideOn(b) && b.igbb === bsShip; }
+function bsBounceOff(b, x, y, nx, ny) {
+  var nd = Math.sqrt(nx * nx + ny * ny) || 1;
+  nx /= nd; ny /= nd;
+  b.x = Math.min(W - b.r, Math.max(b.r, x));
+  b.y = Math.min(H - b.r, Math.max(b.r, y));
+  var vn = b.vx * nx + b.vy * ny;
+  if (vn < 0) { b.vx -= 2 * vn * nx; b.vy -= 2 * vn * ny; playBounce(); }
 }
 
 // ---------------------------------------------------------------- drawing
 
-// Both hands are drawn by drawBisping at the cannon (drawHands skips them,
+// His hands are drawn by drawBisping on deck (drawHands skips them,
 // draw-attacks.js).
 function bispingHandsBusy(b) { return broadsideOn(b) && b.alive; }
 
+// The ship in the cage, if its captain is still aboard.
+function bsShipNow() {
+  var m = bsShip, o = m && balls && balls[m.owner];
+  if (m && (!o || o.igbb !== m)) { bsShip = null; return null; }
+  return m;
+}
+// Once he's on deck the hull goes over him, so he stands behind the rail;
+// while he hops on or off it goes under him, with the masts.
+function bsHullOverHim(m) {
+  if (m.phase === "rise") return m.hop > 0.8;
+  if (m.phase === "sink") return m.t < m.sh.sink * 0.2;
+  return true;
+}
+
 // From draw(), under the fighters: the trail of a side step, and in
-// Broadside the cannon on the mat, the Union Jack behind it and the red aim line.
+// Broadside the sea spreading over the mat, the ship's masts and sails (and
+// its hull while he isn't on deck), the red aim lines and his shadow as he hops.
 function drawBispingUnder() {
   bsGhosts.forEach(function (g) {
     var k = g.t / g.max;
@@ -62914,49 +63688,211 @@ function drawBispingUnder() {
     ctx.beginPath(); ctx.arc(g.x, g.y, g.r * (1 - 0.15 * k), 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   });
-  balls.forEach(function (b) {
-    var m = b.igbb;
-    if (!b.alive || !broadsideOn(b)) return;
-    var sp = b.char.special;
-    if (m.phase === "roll" || m.phase === "aim") drawBsAimLine(b, m, sp);
-    var roll = m.phase === "roll" ? easeOut(m.t / sp.roll) : 1;
-    var fade = m.phase === "done" ? Math.max(0, 1 - m.t / sp.hold) : 1;
+  var m = bsShipNow();
+  if (!m) return;
+  var o = balls[m.owner];
+  drawBsSea(m);
+  drawBsShipRig(m);
+  if (!bsHullOverHim(m)) drawBsShipHull(m);
+  if (m.phase === "rise" || m.phase === "aim") drawBsAimLines(m);
+  if (m.lift > 1) {
     ctx.save();
-    ctx.globalAlpha = fade;
-    drawBsFlagPole(b, m, 1 - roll);
-    drawBsCannon(m.cx, m.cy, m.aim, bsCannonLen(b), m.recoil, (1 - roll), m.phase === "aim" ? Math.min(1, m.t / (m.shot === 0 ? sp.aim : sp.reaim)) : (m.phase === "roll" ? 0 : 1), m.flash > 0);
+    ctx.globalAlpha = 0.28 * (1 - 0.4 * m.lift / BS_HOP);
+    ctx.fillStyle = "#000000";
+    ctx.beginPath(); ctx.ellipse(o.x, o.y + m.lift + o.r * 0.75, o.r * 0.8, o.r * 0.28, 0, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
+  }
+}
+
+// How far the sea has spread over the mat (0..1): out from the ship as it
+// rises, back in as it sinks.
+function bsSeaK(m) {
+  if (m.phase === "rise") return Math.min(1, m.t / (m.sh.rise * 0.6));
+  if (m.phase === "sink") return 1 - Math.min(1, m.t / m.sh.sink);
+  return 1;
+}
+// The sea over the whole cage: a blue wash (`ship.sea`, how strong) with
+// wave crests rolling across it, and foam round the hull.
+function drawBsSea(m) {
+  var k = bsSeaK(m), a = m.sh.sea;
+  if (k <= 0 || a <= 0) return;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(m.sx, m.sy, 30 + easeOut(k) * Math.sqrt(W * W + H * H), 0, Math.PI * 2); ctx.clip();
+  ctx.globalAlpha = a;
+  ctx.fillStyle = "#1d6fa5"; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = Math.min(1, a * 1.6);
+  ctx.strokeStyle = "#cdeeff"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
+  var t = reduceMotion ? 0 : bsClock;
+  for (var row = 0; row < 11; row++) {
+    var y0 = 18 + row * 46, shift = (t * (row % 2 ? 26 : -22)) % 90;
+    for (var x0 = -90 + (row % 2) * 45 + shift; x0 < W + 30; x0 += 90) {
+      ctx.beginPath();
+      for (var i = 0; i <= 8; i++) { var px = x0 + i * 4, py = y0 - Math.sin(i / 8 * Math.PI) * 5; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+  // Darker water and a ring of foam where the hull sits.
+  var L = m.L, fk = Math.min(1, m.k * 1.3);
+  ctx.save();
+  ctx.globalAlpha = 0.35 * fk;
+  ctx.fillStyle = "#0c3f63";
+  ctx.beginPath(); ctx.ellipse(m.sx, m.sy + L * 0.04, L * 0.6, L * 0.09, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 0.7 * fk;
+  ctx.strokeStyle = "#f2fbff"; ctx.lineWidth = 3; ctx.setLineDash([14, 8]); ctx.lineDashOffset = -t * 30;
+  ctx.beginPath(); ctx.ellipse(m.sx, m.sy + L * 0.04, L * 0.6, L * 0.09, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+
+// The ship's own frame (call between ctx.save() and ctx.restore()): only
+// what's above the waterline shows, so it rises out of the sea and sinks back.
+function bsShipClip(m) {
+  ctx.beginPath(); ctx.rect(m.sx - m.L * 1.5, -H, m.L * 3, m.sy + m.L * 0.035 + H); ctx.clip();
+}
+function bsShipXform(m) {
+  var f = Math.abs(m.face) < 0.03 ? (m.face < 0 ? -0.03 : 0.03) : m.face;
+  ctx.translate(m.sx, m.sy + m.depth); ctx.rotate(m.rot); ctx.scale(f, 1);
+}
+function bsSpar(x0, y0, x1, y1, w) {
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = w + 3;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  ctx.strokeStyle = "#7a4a22"; ctx.lineWidth = w;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+}
+
+// The masts, the rigging, a Union Jack mainsail, a black foresail with a
+// skull and crossbones, the crow's nest, a red pennant, and a Union Jack
+// flying off the stern.
+function drawBsShipRig(m) {
+  var L = m.L, HL = L / 2, t = m.clock;
+  var mainX = -L * 0.2, foreX = L * 0.13, mainTop = -L * 0.67, foreTop = -L * 0.56, sternX = -HL * 0.97;
+  var sternTop = bsDeckY(L, sternX) - L * 0.075;
+  ctx.save();
+  bsShipClip(m); bsShipXform(m);
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  // The rigging.
+  ctx.strokeStyle = theme.wall; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(mainX, mainTop); ctx.lineTo(sternX + 6, sternTop);
+  ctx.moveTo(mainX, mainTop); ctx.lineTo(foreX, foreTop);
+  ctx.moveTo(foreX, foreTop); ctx.lineTo(HL * 1.26, bsDeckY(L, HL) - L * 0.1);
+  ctx.moveTo(mainX, mainTop + L * 0.05); ctx.lineTo(-HL * 0.55, bsDeckY(L, -HL * 0.55) - L * 0.035);
+  ctx.moveTo(foreX, foreTop + L * 0.05); ctx.lineTo(HL * 0.7, bsDeckY(L, HL * 0.7) - L * 0.035);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  // The masts.
+  bsSpar(mainX, bsDeckY(L, mainX), mainX, mainTop, 5);
+  bsSpar(foreX, bsDeckY(L, foreX), foreX, foreTop, 4.5);
+  // The sails, bellied out by the wind.
+  drawBsSail(mainX, -L * 0.6, L * 0.33, L * 0.27, L * 0.045, t, bsUnionJack(), null);
+  drawBsSail(foreX, -L * 0.5, L * 0.25, L * 0.21, L * 0.035, t + 1.3, null, "#18181b");
+  drawSkullAndBones(ctx, foreX, -L * 0.5 + L * 0.115, L * 0.036);
+  // The crow's nest and a red pennant streaming off the top of the mainmast.
+  ctx.fillStyle = "#8a5a2b"; ctx.strokeStyle = theme.wall; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.rect(mainX - L * 0.035, -L * 0.645, L * 0.07, L * 0.03); ctx.fill(); ctx.stroke();
+  var pw = Math.sin(t * 6) * 3;
+  ctx.fillStyle = "#b3202a";
+  ctx.beginPath(); ctx.moveTo(mainX, mainTop); ctx.quadraticCurveTo(mainX - L * 0.07, mainTop + pw, mainX - L * 0.14, mainTop + 5 + pw * 1.6); ctx.lineTo(mainX, mainTop + 11); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // The ensign: a Union Jack on a staff over the stern, flying aft.
+  var staffTop = sternTop - L * 0.17;
+  bsSpar(sternX + 4, sternTop, sternX - 4, staffTop, 2.5);
+  drawUnionJack(ctx, sternX - 4, staffTop + 1, L * 0.18, -1, t);
+  ctx.restore();
+}
+
+// A sail `w` wide hanging `h` from a yard at `top`, its foot bellied out
+// `belly` and rippling. Drawn in strips: the image (`img`) or a plain `fill`.
+function drawBsSail(x, top, w, h, belly, t, img, fill) {
+  var N = 20, left = x - w / 2;
+  var foot = function (u) { return h + belly * Math.sin(Math.PI * u) * (1 + 0.15 * Math.sin(t * 3 + u * 4)); };
+  ctx.save();
+  for (var i = 0; i < N; i++) {
+    var u0 = i / N, bh = foot(u0 + 0.5 / N);
+    if (img) ctx.drawImage(img, i * img.width / N, 0, img.width / N, img.height, left + u0 * w, top, w / N + 0.7, bh);
+    else { ctx.fillStyle = fill; ctx.fillRect(left + u0 * w, top, w / N + 0.7, bh); }
+  }
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(left, top);
+  for (var j = 0; j <= N; j++) ctx.lineTo(left + j / N * w, top + foot(j / N));
+  ctx.lineTo(left + w, top); ctx.closePath(); ctx.stroke();
+  ctx.restore();
+  bsSpar(left - 5, top, left + w + 5, top, 4); // the yard
+}
+
+// The hull: a stern castle, the rail sweeping up to the bow, a stripe in his
+// red, gun ports, the bowsprit, then the three cannons on the bow and the sea
+// lapping along the waterline.
+function drawBsShipHull(m) {
+  var L = m.L, HL = L / 2, dk = function (x) { return bsDeckY(L, x); }, rail = L * 0.035, wl = L * 0.06, castle = L * 0.075;
+  ctx.save();
+  bsShipClip(m);
+  ctx.save();
+  bsShipXform(m);
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  bsSpar(HL * 0.8, dk(HL * 0.8) - rail, HL * 1.28, dk(HL) - L * 0.1, 5); // the bowsprit
+  ctx.beginPath();
+  ctx.moveTo(-HL, dk(-HL) - castle);
+  ctx.lineTo(-HL * 0.62, dk(-HL * 0.62) - castle);
+  ctx.lineTo(-HL * 0.6, dk(-HL * 0.6) - rail);
+  for (var x = -HL * 0.6; x < HL * 0.96; x += HL * 0.06) ctx.lineTo(x, dk(x) - rail);
+  ctx.lineTo(HL * 1.05, dk(HL) - L * 0.055);
+  ctx.quadraticCurveTo(HL * 0.98, wl * 0.3, HL * 0.7, wl);
+  ctx.lineTo(-HL * 0.86, wl);
+  ctx.quadraticCurveTo(-HL * 1.03, wl * 0.2, -HL * 1.04, dk(-HL) - castle);
+  ctx.closePath();
+  ctx.fillStyle = "#6b3f1f"; ctx.fill();
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = 3; ctx.stroke();
+  // Planks, following the sweep of the deck.
+  ctx.strokeStyle = "rgba(0,0,0,0.28)"; ctx.lineWidth = 1.5;
+  [0.06, 0.09].forEach(function (d) {
+    ctx.beginPath();
+    for (var x2 = -HL * 0.92; x2 <= HL * 0.85; x2 += HL * 0.08) { var y2 = dk(x2) + L * d; if (x2 === -HL * 0.92) ctx.moveTo(x2, y2); else ctx.lineTo(x2, y2); }
+    ctx.stroke();
   });
+  // His red stripe under the rail, and a gold cap rail along the top.
+  ctx.strokeStyle = "#b3202a"; ctx.lineWidth = L * 0.022;
+  ctx.beginPath();
+  for (var x3 = -HL * 0.95; x3 <= HL * 0.98; x3 += HL * 0.06) { var y3 = dk(x3) + L * 0.002; if (x3 === -HL * 0.95) ctx.moveTo(x3, y3); else ctx.lineTo(x3, y3); }
+  ctx.stroke();
+  ctx.strokeStyle = BS_GOLD; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(-HL * 0.6, dk(-HL * 0.6) - rail);
+  for (var x4 = -HL * 0.6; x4 < HL * 0.96; x4 += HL * 0.06) ctx.lineTo(x4, dk(x4) - rail);
+  ctx.lineTo(HL * 1.05, dk(HL) - L * 0.055);
+  ctx.moveTo(-HL * 1.02, dk(-HL) - castle); ctx.lineTo(-HL * 0.62, dk(-HL * 0.62) - castle);
+  ctx.stroke();
+  // Gun ports, and the stern windows.
+  [-0.5, -0.25, 0, 0.25].forEach(function (u) {
+    var gx = HL * u, gy = dk(gx) + L * 0.032, s = L * 0.032;
+    ctx.fillStyle = "#151515"; ctx.strokeStyle = BS_GOLD; ctx.lineWidth = 1.8;
+    ctx.beginPath(); ctx.rect(gx - s / 2, gy - s / 2, s, s); ctx.fill(); ctx.stroke();
+  });
+  [-0.92, -0.78].forEach(function (u) {
+    var wx = HL * u, wy = dk(wx) - castle * 0.45;
+    ctx.fillStyle = "#ffd98a"; ctx.strokeStyle = theme.wall; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.rect(wx - L * 0.018, wy - L * 0.014, L * 0.036, L * 0.028); ctx.fill(); ctx.stroke();
+  });
+  ctx.restore();
+  // The cannons on the bow, each turned to its own line.
+  var burn = bsBurn(m);
+  for (var i = 0; i < m.cn.count; i++) {
+    var p = bsPivot(m, i);
+    if (m.aims[i] != null) drawBsCannon(p.x, p.y, m.aims[i], bsCannonLen(m), m.recoil[i], 0, m.phase === "aim" && i < m.shot ? 1 : burn, m.flash[i] > 0);
+  }
+  // The sea along the waterline.
+  var wy2 = m.sy + L * 0.035, t = reduceMotion ? 0 : bsClock;
+  ctx.fillStyle = "#1d6fa5";
+  ctx.beginPath(); ctx.ellipse(m.sx, wy2 + 2, L * 0.62, L * 0.035, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#f2fbff"; ctx.lineWidth = 4;
+  ctx.beginPath();
+  for (var k = 0; k <= 30; k++) { var fx = m.sx - L * 0.58 + k / 30 * L * 1.16, fy = wy2 + Math.sin(k * 1.3 + t * 6) * 2.2; if (k) ctx.lineTo(fx, fy); else ctx.moveTo(fx, fy); }
+  ctx.stroke();
+  ctx.restore();
 }
 
-// The Union Jack on a pole planted behind the cannon, on the side away from
-// him, flying away from him (or back in, if the cage is in the way).
-function drawBsFlagPole(b, m, drop) {
-  var L = bsCannonLen(b), ax = m.cx - b.x, ay = m.cy - b.y, ad = Math.sqrt(ax * ax + ay * ay) || 1;
-  ax /= ad; ay /= ad;
-  var bx = m.cx + ax * L * 0.45 - Math.cos(m.aim) * L * 0.3, by = m.cy + ay * L * 0.45 - Math.sin(m.aim) * L * 0.3 + drop * 30;
-  var fw = L * 0.82, poleH = Math.max(L * 0.6, Math.min(L * 1.15, by - 6));
-  var dir = ax >= 0 ? 1 : -1;
-  if (bx + dir * fw > W - 4) dir = -1;
-  else if (bx + dir * fw < 4) dir = 1;
-  drawFlagOnPole(ctx, bx, by, poleH, fw, dir, bsClock);
-}
-
-// A flagpole standing at x, y (its foot) `poleH` tall, flying a Union Jack
-// `w` wide toward `dir` (1 right, -1 left), waving with clock `t`.
-function drawFlagOnPole(c, x, y, poleH, w, dir, t) {
-  c.save();
-  c.lineCap = "round";
-  c.fillStyle = "rgba(0,0,0,0.2)"; // its foot in the mat
-  c.beginPath(); c.ellipse(x, y, 7, 3, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = theme.wall; c.lineWidth = 5.5;
-  c.beginPath(); c.moveTo(x, y); c.lineTo(x, y - poleH); c.stroke();
-  c.strokeStyle = "#8a5a2b"; c.lineWidth = 3;
-  c.beginPath(); c.moveTo(x, y); c.lineTo(x, y - poleH); c.stroke();
-  c.fillStyle = BS_GOLD; c.strokeStyle = theme.wall; c.lineWidth = 1.5;
-  c.beginPath(); c.arc(x, y - poleH - 2, 3.6, 0, Math.PI * 2); c.fill(); c.stroke();
-  drawUnionJack(c, x + dir * 1.5, y - poleH + 1, w, dir, t);
-  c.restore();
+// How far the fuses have burned down: over the aim, then spent.
+function bsBurn(m) {
+  if (m.phase === "aim") return Math.min(1, m.t / (m.volley === 0 ? m.cn.aim : m.cn.reaim));
+  return m.phase === "rise" ? 0 : 1;
 }
 
 // A Union Jack `w` wide (half as tall), its hoist (the edge on the pole) at
@@ -63007,26 +63943,29 @@ function bsUnionJack() {
   return cv;
 }
 
-// A red dashed line from the muzzle out to the cage, flashing once it locks.
-function drawBsAimLine(b, m, sp) {
-  var mz = bsMuzzle(b, m), ux = Math.cos(m.aim), uy = Math.sin(m.aim);
-  var tx = ux > 0 ? (W - mz.x) / ux : (ux < 0 ? -mz.x / ux : Infinity), ty = uy > 0 ? (H - mz.y) / uy : (uy < 0 ? -mz.y / uy : Infinity);
-  var len = Math.max(0, Math.min(tx, ty));
-  var on = m.phase === "roll" ? 0.35 * Math.min(1, m.t / sp.roll) : 1;
-  var flash = m.locked ? 0.55 + 0.45 * Math.sin(bsClock * 40) : 0.8;
+// The red dashed lines from the cannons' muzzles out to the cage: they
+// follow them, then lock and flash for the last `lock` seconds (the tell).
+function drawBsAimLines(m) {
+  var on = m.phase === "rise" ? 0.3 * m.k : 1, flash = m.locked ? 0.55 + 0.45 * Math.sin(bsClock * 40) : 0.8;
   ctx.save();
   ctx.lineCap = "round";
   ctx.setLineDash([12, 9]); ctx.lineDashOffset = -bsClock * 90;
-  ctx.globalAlpha = on * flash;
   ctx.strokeStyle = "#e0221b"; ctx.lineWidth = m.locked ? 5 : 3.5;
-  ctx.beginPath(); ctx.moveTo(mz.x, mz.y); ctx.lineTo(mz.x + ux * len, mz.y + uy * len); ctx.stroke();
+  ctx.globalAlpha = on * flash;
+  for (var i = 0; i < m.cn.count; i++) {
+    if (m.aims[i] == null || (m.phase === "aim" && i < m.shot)) continue; // that one's gone
+    var mz = bsMuzzle(m, i), ux = Math.cos(m.aims[i]), uy = Math.sin(m.aims[i]);
+    var tx = ux > 0 ? (W - mz.x) / ux : (ux < 0 ? -mz.x / ux : Infinity), ty = uy > 0 ? (H - mz.y) / uy : (uy < 0 ? -mz.y / uy : Infinity);
+    var len = Math.max(0, Math.min(tx, ty));
+    ctx.beginPath(); ctx.moveTo(mz.x, mz.y); ctx.lineTo(mz.x + ux * len, mz.y + uy * len); ctx.stroke();
+  }
   ctx.restore();
 }
 
-// A pirate's cannon on a wooden carriage, barrel along `ang`, `len` long.
-// `recoil` 0..1 slides the barrel back, `drop` 0..1 sinks it in from below
-// as it rolls in, `burn` 0..1 is how far the fuse has burned down, `flash`
-// lights the muzzle.
+// A pirate's cannon on a wooden carriage, barrel along `ang`, `len` long
+// (three of them on the ship's bow). `recoil` 0..1 slides the barrel back,
+// `drop` 0..1 sinks it in from below, `burn` 0..1 is how far the fuse has
+// burned down, `flash` lights the muzzle.
 function drawBsCannon(x, y, ang, len, recoil, drop, burn, flash) {
   var ux = Math.cos(ang), uy = Math.sin(ang), px = -uy, py = ux;
   ctx.save();
@@ -63090,44 +64029,32 @@ function drawBsCannon(x, y, ang, len, recoil, drop, burn, flash) {
   ctx.restore();
 }
 
-// From draw(), per fighter after his body: the captain's hat and his arms at
-// the cannon during Broadside.
+// From draw(), per fighter after his body: on deck, the hull in front of him
+// (he stands behind the rail), one arm pointing them out to the cannons and
+// a fist up, and the captain's hat.
 function drawBisping(b, other) {
   if (!b.alive || !broadsideOn(b)) return;
-  var m = b.igbb, sp = b.char.special, r = b.r;
-  var hatIn = m.phase === "roll" ? easeOut(m.t / sp.roll) : (m.phase === "done" ? Math.max(0, 1 - m.t / sp.hold) : 1);
-  // The near arm holds the lit linstock to the fuse; the other points at them.
-  var near = { x: m.cx - b.x, y: m.cy - b.y }, nd = Math.sqrt(near.x * near.x + near.y * near.y) || 1;
-  var nx = near.x / nd, ny = near.y / nd, size = (b.char.punch && b.char.punch.size) || 13, limb = size * 0.62;
-  var th = bsTouchHole(b, m), aiming = m.phase === "aim";
-  var reachK = aiming ? Math.min(1, m.t / 0.25) : (m.phase === "roll" ? 0.3 : 0.5);
-  var sh = { x: b.x + nx * r * 0.62, y: b.y + ny * r * 0.62 };
-  var rest = { x: b.x + nx * r * 1.05, y: b.y + ny * r * 1.05 - r * 0.25 };
-  var hand = { x: rest.x + (th.x - 6 - rest.x) * reachK, y: rest.y + (th.y - r * 0.5 - rest.y) * reachK };
-  strokeLimb(limb, armColor(b.char, 0), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
-  // The linstock: a short stick with a glowing match at its tip.
-  var tip = { x: hand.x + (th.x - hand.x) * 0.9, y: hand.y + (th.y - r * 0.18 - hand.y) * 0.9 };
-  ctx.save();
-  ctx.lineCap = "round"; ctx.strokeStyle = "#5a3a1a"; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(hand.x, hand.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
-  var glow = 3.5 + 1.5 * Math.sin(bsClock * 30);
-  ctx.fillStyle = "#ff6a1a"; ctx.beginPath(); ctx.arc(tip.x, tip.y, glow + 1.5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#ffe08a"; ctx.beginPath(); ctx.arc(tip.x, tip.y, glow * 0.55, 0, Math.PI * 2); ctx.fill();
+  var m = b.igbb, sp = m.sh, r = b.r;
+  if (m === bsShipNow() && bsHullOverHim(m)) drawBsShipHull(m);
+  var hatIn = m.phase === "rise" ? easeOut(m.t / sp.rise) : (m.phase === "sink" ? Math.max(0, 1 - m.t / sp.sink) : 1);
+  var size = (b.char.punch && b.char.punch.size) || 13, limb = size * 0.62;
+  var ang = Math.atan2(other.y - b.y, other.x - b.x), fx = Math.cos(ang) >= 0 ? 1 : -1;
+  // The pointing arm, toward them.
+  var sh1 = { x: b.x + Math.cos(ang) * r * 0.62, y: b.y + Math.sin(ang) * r * 0.62 };
+  var h1 = { x: b.x + Math.cos(ang) * r * 1.35, y: b.y + Math.sin(ang) * r * 1.35 };
+  strokeLimb(limb, armColor(b.char, 0), function () { ctx.moveTo(sh1.x, sh1.y); ctx.lineTo(h1.x, h1.y); });
+  drawGloveAt(h1.x, h1.y, size * 0.7, b.char, ang);
+  ctx.save(); ctx.lineCap = "round";
+  var px = h1.x + Math.cos(ang) * size * 1.15, py = h1.y + Math.sin(ang) * size * 1.15;
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(h1.x, h1.y); ctx.lineTo(px, py); ctx.stroke();
+  ctx.strokeStyle = b.char.look ? b.char.look.gloves : "#151515"; ctx.lineWidth = 4.5; ctx.beginPath(); ctx.moveTo(h1.x, h1.y); ctx.lineTo(px, py); ctx.stroke();
   ctx.restore();
-  drawGloveAt(hand.x, hand.y, size * 0.7, b.char, Math.atan2(tip.y - hand.y, tip.x - hand.x));
-  // The other hand: pointing at them while he aims, a fist up after a hit.
-  var ang = Math.atan2(other.y - b.y, other.x - b.x), fx = -nx, fy = -ny;
-  var sh2 = { x: b.x + fx * r * 0.62, y: b.y + fy * r * 0.62 };
-  var h2 = m.phase === "done" ? { x: b.x + fx * r * 0.8, y: b.y - r * 1.25 } : { x: b.x + Math.cos(ang) * r * 1.35 + fx * r * 0.2, y: b.y + Math.sin(ang) * r * 1.35 + fy * r * 0.2 };
+  // The other fist up over his head, pumping as the volley goes.
+  var pump = m.phase === "aim" && m.locked ? Math.abs(Math.sin(bsClock * 14)) * r * 0.15 : 0;
+  var sh2 = { x: b.x - fx * r * 0.62, y: b.y - r * 0.1 };
+  var h2 = { x: b.x - fx * r * 0.85, y: b.y - r * 1.25 - pump };
   strokeLimb(limb, armColor(b.char, 0), function () { ctx.moveTo(sh2.x, sh2.y); ctx.lineTo(h2.x, h2.y); });
-  drawGloveAt(h2.x, h2.y, size * 0.7, b.char, m.phase === "done" ? -Math.PI / 2 : ang);
-  if (m.phase !== "done") { // a pointing finger off the glove
-    ctx.save(); ctx.lineCap = "round";
-    var fx2 = h2.x + Math.cos(ang) * size * 1.15, fy2 = h2.y + Math.sin(ang) * size * 1.15;
-    ctx.strokeStyle = theme.wall; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(h2.x, h2.y); ctx.lineTo(fx2, fy2); ctx.stroke();
-    ctx.strokeStyle = b.char.look ? b.char.look.gloves : "#151515"; ctx.lineWidth = 4.5; ctx.beginPath(); ctx.moveTo(h2.x, h2.y); ctx.lineTo(fx2, fy2); ctx.stroke();
-    ctx.restore();
-  }
+  drawGloveAt(h2.x, h2.y, size * 0.7, b.char, -Math.PI / 2);
   drawTricorne(b.x, b.y - r * (0.8 + 0.5 * (1 - hatIn)), r * 0.82, hatIn);
 }
 
@@ -63191,7 +64118,7 @@ function drawSkullAndBones(c, x, y, s) {
 }
 
 // From draw(), over both fighters (after the clinch, knees.js): the elbow
-// thrown in the clinch, the cannonballs and their smoke, the 10-9 cards.
+// thrown in the clinch, the cannonballs, their smoke and splinters, the 10-9 cards.
 function drawBispingOver() {
   balls.forEach(function (b) {
     var e = b.bsElbow;
@@ -63207,6 +64134,15 @@ function drawBispingOver() {
     ctx.globalAlpha = 0.55 * (1 - k);
     ctx.fillStyle = k < 0.15 ? "#e8e2d6" : "#b9b5ad";
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (0.7 + k * 0.9), 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
+  bsSplinters.forEach(function (p) {
+    var k = p.t / p.max;
+    ctx.save();
+    ctx.globalAlpha = k > 0.7 ? (1 - k) / 0.3 : 1;
+    ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+    ctx.fillStyle = p.color; ctx.strokeStyle = theme.wall; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(-p.len / 2, -1.5); ctx.lineTo(p.len / 2, 0); ctx.lineTo(-p.len / 2, 2); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
   });
   bsShots.forEach(function (c) {
@@ -63291,23 +64227,32 @@ function bispingGalleryMoves(ch, add) {
 }
 
 function bispingSpecialInfo(sp) {
-  return "A pirate cannon rolls in at his side with a Union Jack flying behind it, and he puts on a captain's tricorne. He holds a lit match to the fuse while a red line shows where it's aimed (it follows them, then locks), then BOOM: " + sp.shots + " cannonballs, " + secs(sp.gap) +
-    " apart, each re-aimed. One that hits does " + sp.damage + " (can't be slipped or blocked) and knocks them back; one that misses smashes into the cage. Nothing lands on him while he's at the cannon.";
+  var sh = bsDef(sp.ship, BS_SHIP_DEF), cn = bsDef(sp.cannons, BS_CANNON_DEF), vo = bsDef(sp.volley, BS_VOLLEY_DEF);
+  return "The sea spreads over the mat and a pirate ship rises out of it in the middle of the cage: a Union Jack mainsail, a black skull-and-crossbones foresail, a Union Jack off the stern. He hops on deck in a captain's hat and it bobs and drifts while " + cn.count +
+    " cannons on the bow lead them, fanned out along the way they're rolling. The red lines lock and flash, then the volley: " + vo.volleys + " of them, " + cn.count + " cannonballs each. A hit does " + sp.damage +
+    " (can't be slipped or blocked) and shoves them across the cage; a miss smashes into the cage." + (sh.solid ? " The hull is solid, so they bounce off it." : "") + " Then the ship sinks back into the sea. Nothing lands on him while he's aboard.";
 }
 
 function bispingGalleryAssets(list) {
-  list.push({ name: "Pirate cannon", info: "Michael Bisping's Broadside, and the Union Jack behind it.", w: 300, h: 200, draw: function (c, w, h) {
-    withCtx(c, function () { drawFlagOnPole(ctx, w * 0.1, h * 0.9, 150, 84, 1, 0.6); drawBsCannon(w * 0.55, h * 0.64, -0.15, 120, 0, 0, 0.4, false); drawTricorne(w * 0.86, h * 0.26, 34, 1); });
+  list.push({ name: "Pirate ship", info: "Michael Bisping's Broadside: Union Jack mainsail, three cannons on the bow.", w: 340, h: 260, draw: function (c, w, h) {
+    withCtx(c, function () {
+      var L = 215, m = { L: L, sx: w * 0.53, sy: h * 0.84, depth: 0, rot: -0.02, face: 1, clock: 0.6, k: 1, phase: "aim", t: 0.55, volley: 0, shot: 0,
+        sh: BS_SHIP_DEF, cn: { count: 3, aim: 1, reaim: 0.75 }, aims: [-0.55, -0.3, -0.05], recoil: [0, 0, 0.6], flash: [0, 0, 0.1] };
+      ctx.fillStyle = "#1d6fa5"; ctx.fillRect(0, m.sy - 4, w, h - m.sy + 4);
+      drawBsShipRig(m); drawBsShipHull(m);
+    });
   } });
 }
 
 function bispingGallerySounds(groups, synth) {
   groups.push({ title: "Michael Bisping", items: [
-    synth("Cannon rolls in", "Broadside starting.", function () { playBsRoll(); }),
-    synth("Fuse", "The fuse burning while he aims.", function () { playBsFuse(); }),
-    synth("Cannon fire", "BOOM.", function () { playBsBoom(); }),
+    synth("Ship rises", "Broadside: the ship coming up out of the sea, and the bell.", function () { playBsSplash(true); }),
+    synth("Ship comes about", "Turning its bow to face them.", function () { playBsCreak(); }),
+    synth("Fuse", "The fuses burning while he aims.", function () { playBsFuse(); }),
+    synth("Cannon fire", "BOOM, one cannon of the volley.", function () { playBsBoom(); }),
     synth("Cannonball hit", "A cannonball hitting them.", function () { lastPunchSound = 0; playBsHit(16); }),
     synth("Cannonball on the cage", "A cannonball that missed.", function () { playBsWall(); }),
+    synth("Ship sinks", "Going back down into the sea.", function () { playBsSplash(false); }),
     synth("Side step", "Stepping off to the side of a kick, or to an angle for his own.", function () { playBsStep(); }),
     synth("Scorecard", "A 10-9 card popping up.", function () { playBsCard(); })
   ] });
@@ -63323,13 +64268,22 @@ function bsAudio(fn) {
     fn(ac, ac.currentTime);
   } catch (e) { /* never let audio break the game */ }
 }
-// Wooden wheels rumbling over the mat.
-function playBsRoll() {
+// The ship surging up out of the sea (a wash of water, the timbers groaning
+// and the ship's bell), or going back down (`up` false: just the water).
+function playBsSplash(up) {
   bsAudio(function (ac, t) {
-    for (var i = 0; i < 5; i++) caneBurst(ac, t + i * 0.07, 260 + i * 15, 1.4, 0.28, 0.07);
-    caneTone(ac, t + 0.36, "triangle", 190, 120, 0.18, 0.1);
+    caneBurst(ac, t, 520, 0.6, 0.55, 0.7);
+    caneBurst(ac, t + 0.08, 1500, 0.8, 0.3, 0.5);
+    caneTone(ac, t, "sine", up ? 70 : 110, up ? 120 : 50, 0.35, 0.6);
+    if (up) {
+      caneTone(ac, t + 0.25, "sawtooth", 150, 120, 0.05, 0.4);
+      caneTone(ac, t + 0.5, "sine", 1240, 1236, 0.3, 1.1);
+      caneTone(ac, t + 0.5, "sine", 2480, 2470, 0.08, 0.6);
+    }
   });
 }
+// The hull creaking round as it comes about.
+function playBsCreak() { bsAudio(function (ac, t) { caneTone(ac, t, "sawtooth", 170, 120, 0.06, 0.35); caneTone(ac, t + 0.12, "sawtooth", 140, 100, 0.05, 0.25); }); }
 // The fuse fizzing.
 function playBsFuse() { bsAudio(function (ac, t) { caneBurst(ac, t, 5200 + Math.random() * 1500, 0.8, 0.08, 0.08); }); }
 // The aim locking: a sharp click of the carriage.
@@ -66918,6 +67872,7 @@ function update(dt) {
   tickHelmetCharge(dt); // the 67'ers ad's clock (hokit-helmet.js)
   tickRingBear(dt); // Khabib's bear wandering the ring (khabib-bear.js)
   tickIliaTornado(dt); // roses from Ilia's Rose Tornado (ilia-tornado.js)
+  tickIliaCombos(dt); // Ilia's combo finisher: the ring and its text (ilia-combos.js)
   tickSendLocation(dt); // Khabib's Send Me Location: sparks, rings, the crater cooling (send-location.js)
   tickHotSauce(dt); // Dustin's Hot Sauce Fire Breath: flames, steam, whoever's burning (hot-sauce.js)
   tickPereira(dt); // Alex Pereira's step, his arrow, the crowd's CHAMA (pereira.js)
@@ -69272,6 +70227,7 @@ function drawTigerStomach(c, r, look, lw, contained) {
 
 function drawFist(self, other) {
   if (!self.punch || !other.alive || self.taunt || self.flow || self.combo) return;
+  if (drawHookFist(self, other)) return; // a hook comes round instead of straight (hook-punch.js)
   var pu = self.char.punch;
   var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var qnx = qx / qd, qny = qy / qd;
@@ -69306,6 +70262,7 @@ function drawFist(self, other) {
   ctx.beginPath(); ctx.arc(fistX, fistY, pu.size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   stoneFistOver(self.char, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // Alex Pereira's stone fists (fighter-art.js)
   frostFistOver(self, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // ice from punching Chuck Liddell (liddell.js)
+  iliaFistOver(self, fistX, fistY, pu.size); // Ilia's glove heating up through a combo, and the finisher (ilia-combos.js)
   ctx.restore();
 }
 
@@ -70546,7 +71503,7 @@ function draw() {
   drawConorUnder(); // Conor McGregor's bus lane and the dolly's aim line (conor.js)
   drawStricklandUnder(); // the flag on the mat, Strickland's bike lane, the bike and the wreck (strickland.js)
   drawFergusonUnder(); // Tony Ferguson's slide afterimages (ferguson.js)
-  drawBispingUnder(); // Michael Bisping's cannon and its red aim line (bisping.js)
+  drawBispingUnder(); // Michael Bisping's sea, pirate ship and red aim lines (bisping.js)
   drawAndersonUnder(); // Anderson Silva's weave ghosts, the front kick's yellow line and his shadow (anderson.js)
   drawCormierUnder(); // Daniel Cormier's double-leg lane and the dents his super slams leave (cormier.js)
   drawPratesUnder(); // Carlos Prates's Rubber Pistol aim line, cigarette butts on the mat (prates.js)
@@ -70822,7 +71779,7 @@ function draw() {
     drawElbow(b, other); // an elbow being thrown, and a cut bleeding (elbows.js)
     drawFerguson(b, other); // Tony Ferguson's slide, shot, shell, Kaioken glow and katanas (ferguson.js)
     drawFedor(b, other); // Fedor Emelianenko reaching for the clinch, speed lines off his fists, UNFAZED (fedor.js)
-    drawBisping(b, other); // Michael Bisping's captain's hat and his hands at the cannon (bisping.js)
+    drawBisping(b, other); // Michael Bisping's ship's hull in front of him on deck, his hands and captain's hat (bisping.js)
     drawAnderson(b); // Anderson Silva's hands down (anderson.js)
     drawCormier(b, other); // Daniel Cormier's arms in the shot and the carry, the cake, his cake pips; whoever he's carrying kicking (cormier.js)
     drawPrates(b, other); // Carlos Prates's gold hair, the cigarette, lighting up, the rubber arm and leg (prates.js)
@@ -70947,6 +71904,7 @@ function draw() {
     ctx.fillStyle = f.kind === "note" ? theme.ink : ((f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit); ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
+  drawIliaCombos(); // Ilia's combo finisher: the gold ring and 4-PIECE! over them (ilia-combos.js)
 
   if (stadium) drawJumbotron(px);
   drawLadderSky(s, ox, oy); // Hokit up the ladder and diving off it (hokit-ladder.js)
@@ -71145,6 +72103,8 @@ function galleryMoves(ch) {
   if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
   if (ch.knee) kneeGalleryMoves(ch, add); // knees, the clinch, the flying knee (knees.js)
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
+  if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
+  if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
   if (ch.anderson) andersonGalleryMoves(ch, add); // Anderson Silva (anderson.js)
   if (ch.cormier) cormierGalleryMoves(ch, add); // Daniel Cormier (cormier.js)
@@ -71346,7 +72306,7 @@ function galleryAssets() {
   gspGalleryAssets(list); // GSP's Montreal stadium and the Quebec and Canada flags (gsp.js)
   volkGalleryAssets(list); // Volkanovski's kangaroo and the Australian flag (volkanovski.js)
   stricklandGalleryAssets(list); // Sean Strickland's motorcycle (strickland.js)
-  bispingGalleryAssets(list); // Michael Bisping's pirate cannon and captain's hat (bisping.js)
+  bispingGalleryAssets(list); // Michael Bisping's pirate ship (bisping.js)
   return list;
 }
 
@@ -71880,16 +72840,16 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261114195838"></script>
-  <script src="js/game/tale-tape.js?v=20261114195838"></script>
-<script src="js/game/update.js?v=20261114195838"></script>
-<script src="js/game/fighter-art.js?v=20261114195838"></script>
-<script src="js/game/draw-attacks.js?v=20261114195838"></script>
-<script src="js/game/wwit-badge.js?v=20261114195838"></script>
-<script src="js/game/stadium.js?v=20261114195838"></script>
-<script src="js/game/draw.js?v=20261114195838"></script>
-<script src="js/ui/gallery.js?v=20261114195838"></script>
-<script src="js/ui/saved-fights.js?v=20261114195838"></script>
-<script src="js/main.js?v=20261114195838"></script>
+  <script src="js/game/intro-msg.js?v=20261114202351"></script>
+  <script src="js/game/tale-tape.js?v=20261114202351"></script>
+<script src="js/game/update.js?v=20261114202351"></script>
+<script src="js/game/fighter-art.js?v=20261114202351"></script>
+<script src="js/game/draw-attacks.js?v=20261114202351"></script>
+<script src="js/game/wwit-badge.js?v=20261114202351"></script>
+<script src="js/game/stadium.js?v=20261114202351"></script>
+<script src="js/game/draw.js?v=20261114202351"></script>
+<script src="js/ui/gallery.js?v=20261114202351"></script>
+<script src="js/ui/saved-fights.js?v=20261114202351"></script>
+<script src="js/main.js?v=20261114202351"></script>
 </body>
 </html>
