@@ -228,6 +228,7 @@ function draw() {
     applyDiazPose(b); // Nate Diaz leaning into the slap, the level change, the taunt (diaz.js)
     applyFergusonPose(b); // Tony Ferguson on his back in a hold, leaning into his slide, and whoever he's got (ferguson.js)
     applyFedorPose(b); // Fedor Emelianenko dropping his level, turning into the throw, and whoever he throws (fedor.js)
+    applyIliaDarcePose(b); // Ilia leaning over a D'Arce, and them bent over head first under his arm (ilia-darce.js)
     applyPratesPose(b); // Carlos Prates long and lanky, bouncing on the beat in the party (prates.js)
     applyKneePose(b); // pulled down into the clinch, crouching for and flying in with a flying knee (knees.js)
     applyComboPose(b); // turning his back for a spinning back elbow (combos.js)
@@ -430,6 +431,7 @@ function draw() {
   drawSprawls();
   drawGuillotines();
   drawRncs();
+  drawIliaDarce(); // Ilia's D'Arce: his arm under their neck, and the tug-of-war bar (ilia-darce.js)
   drawArmbars();
   drawChairDebris();
   drawLadderDebris(); // the ladder he threw (hokit-ladder.js)

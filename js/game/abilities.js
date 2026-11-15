@@ -181,6 +181,7 @@ function updateAbilities(dt) {
     if (bearOn(self)) continue; // Khabib fighting, lifting or throwing the bear (khabib-bear.js)
     if (updateRapierLunge(self, other, dt)) continue; // Ilia's rapier lunge (rapier.js)
     if (updateIliaTornado(self, other, dt)) continue; // Ilia's Rose Tornado (ilia-tornado.js)
+    if (updateIliaDarce(self, other, dt)) continue; // Ilia's D'Arce: the hold, or lunging in for a front headlock (ilia-darce.js)
     if (!darkSideBlocks(self) && updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
     if (updateKamehameha(self, other, dt)) continue; // Charles's Kamehameha (kamehameha.js)
     if (updateRainbow(self, other, dt)) continue; // Conor's Pot o' Gold rainbow beam (rainbow-beam.js)
