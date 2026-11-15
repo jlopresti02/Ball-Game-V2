@@ -204,6 +204,7 @@ function legKickLimp(v, c, from, shout) {
     crowdReact(0.4);
     if (!reduceMotion) shake = Math.max(shake, 12);
   }
+  headKickSetup(from, v); // a calf kick landed: maybe the head kick next (head-kick.js)
   return n;
 }
 

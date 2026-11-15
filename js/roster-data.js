@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
@@ -153,6 +153,18 @@ var SAVED_ROSTER = [
       "onKick": true,
       "slow": 0.6,
       "time": 3
+    },
+    "headKick": {
+      "setup": 1,
+      "chance": 85,
+      "window": 2.5,
+      "cooldown": 12,
+      "range": 60,
+      "reach": 95,
+      "landChance": 50,
+      "blockShare": 40,
+      "koChance": 60,
+      "damagePct": 50
     },
     "hasSpecial": true,
     "special": {
@@ -2528,7 +2540,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-francis-ngannou",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Francis Ngannou",
@@ -2629,12 +2641,22 @@ var SAVED_ROSTER = [
         "range": 120,
         "windup": 1.0,
         "lock": 0.35,
-        "readChance": 30,
-        "readWeave": 20,
         "lunge": 1250,
         "lungeDist": 280,
         "damage": 75,
         "knockback": 1100,
+        "escape": {
+          "pointBlank": 25,
+          "near": 40,
+          "far": 160,
+          "nearChance": 8,
+          "farChance": 75,
+          "slipBonus": 15,
+          "slipSpeed": 420
+        },
+        "homing": 8,
+        "chase": 400,
+        "overshoot": 0.32,
         "wallSlams": 3,
         "slamDamage": 8,
         "koBase": 45,
@@ -2860,7 +2882,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 14,
+    "rev": 15,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -2978,7 +3000,7 @@ var SAVED_ROSTER = [
       "guardDrop": 15
     },
     "tdd": {
-      "sprawlChance": 60
+      "sprawlChance": 68
     },
     "kickCheck": 40,
     "hasKick": false,
@@ -4241,7 +4263,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 15,
+    "rev": 16,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4315,6 +4337,30 @@ var SAVED_ROSTER = [
       "guardDrop": 10
     },
     "hasKick": false,
+    "legKick": {
+      "first": [
+        1,
+        2
+      ],
+      "every": [
+        2,
+        3.5
+      ],
+      "range": 64,
+      "reach": 95,
+      "damage": 11,
+      "slow": 0.72,
+      "time": 5,
+      "stack": 0.12,
+      "maxStacks": 3,
+      "minSlow": 0.45,
+      "size": 1.15,
+      "buckle": {
+        "at": 3,
+        "slow": 0.25,
+        "time": 1.2
+      }
+    },
     "hasGrapple": true,
     "grapple": {
       "damage": 35,
@@ -5648,12 +5694,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-sean-strickland",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Sean Strickland",
     "base": "Brawler",
-    "bio": "Built on the Brawler base, and his offense is mostly two things: a long, stiff jab and the teep, a front push kick that shoves them back when they come in. He fights at the end of that jab, backing out at an angle when they get close and circling, in the Philly shell: lead hand low across his stomach, rear glove by his chin, rolling punches off his shoulder and jabbing straight back. Takedowns mostly get stuffed. He never gets tired: every few seconds his pace goes up, and late in the fight they're the ones sweating. The bar under his health is his trauma meter. Every hit and every taunt (any line of theirs, a thumbs down, a celebration) fills it, he gets TRIGGERED, and the fuller it is the faster his special charges. His special is America: when he's landing on them or has them cornered, a bald eagle swoops in and hits them, the crowd chants U-S-A under flags and fireworks, and Chuck Norris drops in to beat them up with him while he chases them into a corner throwing overhand rights.",
+    "bio": "Built on the Brawler base, and his offense is mostly two things: a long, stiff jab and the teep, a front push kick that shoves them back when they come in. He fights at the end of that jab: he hovers just outside their reach, steps in behind the jab and straight back out, and backs out at an angle or circles off the cage when they come in, in the Philly shell: lead hand low across his stomach, rear glove by his chin, rolling punches off his shoulder and jabbing straight back. Takedowns mostly get stuffed. He never gets tired: every few seconds his pace goes up, and late in the fight they're the ones sweating. The bar under his health is his trauma meter. Every hit and every taunt (any line of theirs, a thumbs down, a celebration) fills it, he gets TRIGGERED, and the fuller it is the faster his special charges. His special is America: when he's landing on them or has them cornered, a bald eagle swoops in and hits them, the crowd chants U-S-A under flags and fireworks, and Chuck Norris drops in to beat them up with him while he chases them into a corner throwing overhand rights. It's all one way: rocked by the talons, they can't grab him or throw anything back until it's over.",
     "color": "#3c3b6e",
     "label": "",
     "imgData": null,
@@ -5700,7 +5746,7 @@ var SAVED_ROSTER = [
     "hasForget": false,
     "blockChance": 14,
     "tdd": {
-      "sprawlChance": 72
+      "sprawlChance": 80
     },
     "hasTeep": true,
     "teep": {
@@ -5718,6 +5764,28 @@ var SAVED_ROSTER = [
       "onlyClosing": true,
       "size": 15
     },
+    "movement": {
+      "spacing": {
+        "margin": 14,
+        "min": 30,
+        "max": 96,
+        "kicks": true,
+        "band": 10,
+        "turn": 14,
+        "turnIn": 18,
+        "angle": 0.6,
+        "jabEvery": [
+          0.25,
+          0.7
+        ],
+        "stepIn": 0.45,
+        "switch": [
+          1.5,
+          3.5
+        ],
+        "read": 0.12
+      }
+    },
     "strickland": {
       "oneTwo": {
         "chance": 22,
@@ -5731,14 +5799,6 @@ var SAVED_ROSTER = [
         "koAfter": 10
       },
       "range": {
-        "keep": 26,
-        "press": 55,
-        "angle": 0.7,
-        "rate": 4.2,
-        "switch": [
-          1.5,
-          3.5
-        ],
         "squaredUp": true
       },
       "shell": {
@@ -5858,7 +5918,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
@@ -5868,12 +5928,12 @@ var SAVED_ROSTER = [
     "label": "",
     "imgData": null,
     "look": {
-      "skin": "#dfae8e",
+      "skin": "#c49a6c",
       "build": "lean",
       "face": "angular",
       "bodyHair": "none",
       "hair": "receding",
-      "hairColor": "#d6b05a",
+      "hairColor": "#17130f",
       "beard": "none",
       "ears": "normal",
       "tattoos": {
@@ -5888,7 +5948,7 @@ var SAVED_ROSTER = [
       "gloves": "#141414",
       "cucuy": {
         "stubble": {
-          "color": "#7a5a30",
+          "color": "#2a211a",
           "alpha": 0.16
         },
         "headband": {

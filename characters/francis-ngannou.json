@@ -1,6 +1,6 @@
 {
   "id": "c-francis-ngannou",
-  "rev": 5,
+  "rev": 6,
   "builtin": false,
   "weightClass": "heavyweight",
   "name": "Francis Ngannou",
@@ -85,7 +85,9 @@
   "getUp": {"size": 95, "wrestling": 25, "max": 60, "cut": 0.5, "shove": 420},
   "ngannou": {
     "rage": { "hitFill": 8, "dmgFill": 0.18, "missFill": 16, "first": 8, "grow": 1.22, "stalk": 3, "stalkSpeed": 1.3, "range": 120,
-      "windup": 1.0, "lock": 0.35, "readChance": 30, "readWeave": 20, "lunge": 1250, "lungeDist": 280, "damage": 75, "knockback": 1100,
+      "windup": 1.0, "lock": 0.35, "lunge": 1250, "lungeDist": 280, "damage": 75, "knockback": 1100,
+      "escape": { "pointBlank": 25, "near": 40, "far": 160, "nearChance": 8, "farChance": 75, "slipBonus": 15, "slipSpeed": 420 },
+      "homing": 8, "chase": 400, "overshoot": 0.32,
       "wallSlams": 3, "slamDamage": 8, "koBase": 45, "koLow": 50, "gasSlow": 0.55, "gasTime": 1.6, "keep": 0 },
     "dana": { "first": [14, 26], "every": [45, 60], "max": 1, "fill": 30 },
     "koReading": { "units": 129161 },
