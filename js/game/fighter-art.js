@@ -424,6 +424,8 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.fillRect(cgx, cgy, r * 0.016, r * 0.016);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "fedor") {
+    drawFedorHair(c, r, look, lw); c.fillStyle = hc;  // Fedor Emelianenko's close shave and receding temples (fedor-skin.js)
   } else if (look.hair === "receding") {
     drawRecedingHair(c, r, look, lw); c.fillStyle = hc;  // Tony Ferguson's receding hairline (ferguson.js)
   } else if (look.hair === "slick") {
