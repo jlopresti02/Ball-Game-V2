@@ -1,7 +1,20 @@
 // GSP's Maple Shield (Joe, 2026-11-13). A round steel shield in Canada's
 // colours (red bands either side of a white middle, the red maple leaf, a
-// steel rim with rivets), slung on his back. Set in his character file under
-// "gsp.shield"; leave it out and he has no shield.
+// steel rim with rivets). Set in his character file under "gsp.shield";
+// leave it out and he has no shield.
+//
+// When    (Joe, 2026-11-15) it only comes out when he needs it: the
+//         opponent has a weapon out (a lightsaber, katanas, a bat, a club, a
+//         sword), a Dragon Ball style power-up (Charles blond in Do Bronx or
+//         charging a Kamehameha, Tony Ferguson's Kaioken, Conor's Pot o'
+//         Gold), or a big projectile attack (Bisping's pirate ship and its
+//         cannons). It pops onto his back ("SHIELD UP!") and goes away
+//         `linger` seconds after the threat's over. Only while it's out does
+//         he block with it (below). Plus `throws` throws a fight (one), the
+//         toss below, whatever's going on.
+// Projectiles  while it's out, a special's projectile that reaches him
+//         (Bisping's cannonballs, Gaethje's eagles, Jon's goats, Khabib's
+//         bear...) is blocked ("BLOCKED!"); a cannonball glances off it.
 //
 // Toss    every `every` seconds (`chantEvery` while the crowd chants), when
 //         they're `minGap`..`maxGap` away, he pulls it off his back and throws
@@ -38,7 +51,17 @@ var GSP_SH_BLOCK = 0.38;   // shield up on the lead arm after a block
 var GSP_SH_MELEE = { punch: true, kick: true, elbow: true, teep: true, swing: true, jab: true, combo: true, bat: true, poke: true };
 
 function gspShCfg(b) { var g = gspCfg(b); return g && g.shield; }
-function gspShieldHome(b) { return !!(gspShCfg(b) && !b.gspDisc && !b.gspThrow); } // on his back
+function gspShieldHome(b) { return !!(gspShCfg(b) && !b.gspDisc && !b.gspThrow && b.gspOut); } // out, on his back
+// Something on them that calls for the shield.
+function gspThreat(o) {
+  if (!o || !o.alive) return false;
+  if (gspWeaponOut(o) || gspBeamOn(o)) return true;
+  if (typeof charlesBlond === "function" && o.dbBaseLook && charlesBlond(o)) return true; // Super Saiyan
+  if (o.tfKaio || o.tfPower) return true; // Kaioken
+  if (typeof broadsideOn === "function" && broadsideOn(o)) return true; // the pirate ship's cannons
+  if (typeof bladeHost === "function" && bladeHost(o) && bladeHost(o).sword) return true; // a sword out
+  return false;
+}
 function gspShieldR(b) { return b.r * (gspShCfg(b).size || 0.62); }
 var GSP_SH_DEFLECT = 0.6; // how far off the beam's line the shield is angled (radians); it glances off at twice this
 // A weapon out on them (a lightsaber, a bat or a club in Cheater mode, or Tony Ferguson's katanas).
@@ -58,7 +81,33 @@ function gspShieldSpecial(b, source, attackerId) {
   var a = balls[attackerId];
   if (source === "igbb" && typeof itProjHit !== "undefined" && itProjHit && gspBeamOn(a) && a.igbb.phase === "fire") return gspDeflect(b, a);
   if (gspWeaponHit(a, source) && gspShieldUp(b)) { gspShieldTake(b, a); return true; }
+  if (source === "igbb" && typeof itProjHit !== "undefined" && itProjHit && !gspBeamOn(a) && gspShieldUp(b)) { gspShieldProjectile(b, a, itProjHit); return true; }
   return false;
+}
+// A special's projectile blocked: clang, and a cannonball glances off the shield.
+function gspShieldProjectile(b, a, hit) {
+  var dx = hit.dx || (b.x - a.x), dy = hit.dy || (b.y - a.y), dl = Math.sqrt(dx * dx + dy * dy) || 1;
+  dx /= dl; dy /= dl;
+  if (b.gspSp) endSupermanPunch(b);
+  b.gspTaunt = null;
+  b.gspBlock = { t: 0, ux: -dx, uy: -dy };
+  b.justDodged = true;
+  floater(b.x - dx * b.r, b.y - b.r - 30, "BLOCKED!", "dodge");
+  var cx = b.x - dx * b.r * 1.05, cy = b.y - dy * b.r * 1.05;
+  impacts.push({ x: cx, y: cy, nx: -dx, ny: -dy, life: 0.35, max: 0.35, color: "#ffffff" });
+  igbbSparks(cx, cy, -dx, -dy, "#ffe08a", 14, 380);
+  if (!reduceMotion) shake = Math.max(shake, 10);
+  playShieldBlock(); playShieldPing();
+  if (typeof bsShots !== "undefined") { // Bisping's cannonball: off the shield at an angle, into the cage
+    var best = null, bd = 1e9;
+    bsShots.forEach(function (c) { var d2 = (c.x - b.x) * (c.x - b.x) + (c.y - b.y) * (c.y - b.y); if (d2 < bd) { bd = d2; best = c; } });
+    if (best && bd < (b.r * 2.5) * (b.r * 2.5)) {
+      var sp = Math.sqrt(best.vx * best.vx + best.vy * best.vy), sg = Math.random() < 0.5 ? -1 : 1, t2 = Math.PI + sg * 1.1;
+      var rx = dx * Math.cos(t2) - dy * Math.sin(t2), ry = dx * Math.sin(t2) + dy * Math.cos(t2);
+      best.vx = rx * sp; best.vy = ry * sp;
+      best.x = b.x + rx * (b.r + best.r + 4); best.y = b.y + ry * (b.r + best.r + 4);
+    }
+  }
 }
 
 // From initGsp.
@@ -67,6 +116,7 @@ function initGspShield(b) {
   b.gspBackSide = b.id === 0 ? -1 : 1;
   var sh = gspShCfg(b);
   b.gspShT = sh ? gspRand(sh.first) : Infinity;
+  b.gspShN = 0; b.gspOut = false; b.gspOutHold = 0; b.gspOutK = 0;
 }
 
 // ---------------------------------------------------------------- the block
@@ -193,7 +243,7 @@ function updateGspShield(self, other, cfg, dt, full) {
     if (gspInterrupted(self) || over) { self.gspThrow = null; return false; } // (if it hadn't left his hand, it's back on his back)
     return runShieldThrow(self, other, sh, m, dt);
   }
-  if (self.gspDisc || !started || over || self.igbb || !other.alive || gspWeaponOut(other) || gspBeamOn(other)) return false; // (keeps it on him for those)
+  if (self.gspDisc || !started || over || self.igbb || !other.alive || self.gspShN >= (sh.throws == null ? Infinity : sh.throws) || gspThreat(other)) return false; // (keeps it on him for those)
   self.gspShT -= dt;
   if (self.gspShT > 0 || full || !canStartIgbb(self, other) || swordDuelActive()) return false;
   var dx = other.x - self.x, dy = other.y - self.y, gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;
@@ -203,6 +253,7 @@ function updateGspShield(self, other, cfg, dt, full) {
   self.vx = 0; self.vy = 0;
   self.gspBlock = null;
   self.gspThrow = { phase: "wind", t: 0, aim: Math.atan2(dy, dx), thrown: false };
+  self.gspShN++;
   floater(self.x, self.y - self.r - 30, "MAPLE SHIELD!", "crit");
   playShieldWind();
   return true;
@@ -275,6 +326,25 @@ function gspShieldHand(b, m, k) {
 
 // From tickGsp, every frame, whatever he's doing.
 function tickGspShield(b, dt) {
+  var sh0 = gspShCfg(b), foe = balls[1 - b.id];
+  if (gspThreat(foe) && b.alive && !over) {
+    b.gspOutHold = sh0.linger == null ? 1.5 : sh0.linger;
+    if (!b.gspOut) { // pulls it out
+      b.gspOut = true;
+      if (!b.gspDisc && !b.gspThrow) {
+        floater(b.x, b.y - b.r - 30, "SHIELD UP!", "crit");
+        playShieldWind();
+        for (var gi = 0; gi < 10 && !reduceMotion; gi++) {
+          var ga = Math.random() * Math.PI * 2, gv = 80 + Math.random() * 160;
+          particles.push({ x: b.x + b.gspBackSide * b.r * 0.62, y: b.y - b.r * 0.55, vx: Math.cos(ga) * gv, vy: Math.sin(ga) * gv, life: 0.35, max: 0.35, size: 2 + Math.random() * 2, color: gi % 2 ? "#ffffff" : MTL.red });
+        }
+      }
+    }
+  } else if (b.gspOut && !b.gspBrace && !b.gspBlock) {
+    b.gspOutHold -= dt;
+    if (b.gspOutHold <= 0) b.gspOut = false; // put away
+  }
+  b.gspOutK += ((b.gspOut || b.gspThrow || b.gspDisc ? 1 : 0) - b.gspOutK) * Math.min(1, dt * 10);
   if (b.gspBlock) { b.gspBlock.t += dt; if (b.gspBlock.t >= GSP_SH_BLOCK) b.gspBlock = null; }
   if (b.gspBlockHit != null) { // the blocked attacker, bounced off the shield
     var a = balls[b.gspBlockHit], sh = gspShCfg(b);
@@ -367,6 +437,7 @@ function shieldHit(b, s, sh, o, nx, ny) {
 
 function catchShield(b) {
   b.gspDisc = null;
+  b.gspOut = true; b.gspOutHold = Math.max(b.gspOutHold, 0.8); // on his back a moment, then put away
   b.gspShT = gspRand(b.gspChant && gspShCfg(b).chantEvery ? gspShCfg(b).chantEvery : gspShCfg(b).every);
   playShieldCatch();
 }
@@ -409,11 +480,12 @@ function drawMapleShield(c, x, y, R, rot, alpha) {
 // Behind his body (drawGspBehind): slung on his back, peeking out over the
 // shoulder away from them.
 function drawGspShieldBack(b) {
-  if (!gspShCfg(b) || !gspShieldHome(b) || b.gspBlock || b.gspBrace || gspDiveOn(b) || b.gspSp) return;
+  if (!gspShCfg(b) || b.gspDisc || b.gspThrow || b.gspOutK < 0.02 || b.gspBlock || b.gspBrace || gspDiveOn(b) || b.gspSp) return;
   var o = balls[1 - b.id], want = o && o.x > b.x ? -1 : 1;
   b.gspBackSide += (want - b.gspBackSide) * 0.08;
   var l = gspLift(b), r = b.r * l.s, side = b.gspBackSide;
-  drawMapleShield(ctx, b.x + side * r * 0.62, b.y + l.dy - r * 0.55, gspShieldR(b) * l.s * 1.05, side * 0.35);
+  var k = b.gspOutK, pop = 0.6 + 0.4 * k; // grows in as it comes out, shrinks away as it's put away
+  drawMapleShield(ctx, b.x + side * r * 0.62, b.y + l.dy - r * 0.55, gspShieldR(b) * l.s * 1.05 * pop, side * 0.35, k);
 }
 
 // Over his body (drawGsp): his arms throwing it, or holding it up to block.
@@ -458,7 +530,7 @@ function drawGspShieldArms(b) {
 }
 // For the gallery (gspGalleryMoves).
 function gspShieldGalleryMove(sh, add) {
-  add("🛡️", "Maple Shield", "A steel shield in Canada's colours on his back. Every " + sh.every[0] + "-" + sh.every[1] + "s (" + sh.chantEvery[0] + "-" + sh.chantEvery[1] + "s while they chant) he throws it backhand, banked off the cage into them; it turns back at them off every wall it hits, up to " + sh.hits + " hits, then flies back to him. " + sh.damage + " damage a hit (" + sh.chantDamage + " while they chant). With it on his back he blocks " + sh.block + "% of the strikes he doesn't slip, knocking the attacker back.");
+  add("🛡️", "Maple Shield", "A steel shield in Canada's colours. It comes out when he needs it: a weapon on them, a Dragon Ball power-up (Super Saiyan, Kamehameha, Kaioken, the Pot o' Gold) or a big projectile attack like Bisping's cannons. While it's out he blocks " + sh.block + "% of the strikes he doesn't slip, every weapon swing and a special's projectiles, and deflects beams into the cage. " + (sh.throws == null ? "Every few seconds" : sh.throws === 1 ? "Once a fight" : sh.throws + " times a fight") + " he throws it backhand, banked off the cage into them; it turns back at them off every wall, up to " + sh.hits + " hits of " + sh.damage + " (" + sh.chantDamage + " while they chant), then flies back to him.");
 }
 function gspShieldHandsBusy(b) { return !!(b && (b.gspThrow || b.gspBlock || b.gspBrace)); }
 
