@@ -67,7 +67,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Ciryl Gane's first real voice lines (in `chatter.js`): "It's really hard to be under my skin" (start, and on a weave), "I don't have the good word in English" (rattled: a crit on his chin, a big hit, or his kick/overhand slipped or checked), "I got a good footwork and I moved very well" (backing out). New chatter moments `weave`, `rattled`, `backOut` and an opt-in `after` key; `chin.js` counts `b.chinCrits` | Christian's Claude | live on main |
 | Ilia Topuria sprawls 75% (was 68), his regular strikes do about 10% more, rounded (punch 9, combo punches 9 / `dmgMax` 10, get-up shot 9), and his combo's final punch lands 50% heavier (`ramp.chain.finisher` [5.45, 6.82], was [4, 5]). His specials are unchanged: the bull and throw 70, rapier slash 40 / lunge 24 / slam 3, tornado 10 / slam 6 | Christian's Claude | live on main |
 | Justin Gaethje's regular punch about 10% lighter again (19, rounded; uppercuts stay about 30 via `uppercuts.damageMult` 1.579) and a few more calf kicks (`legKick.every` [1.82, 3.18], was [2, 3.5]: about 6% more a minute, which Christian said is fine) | Christian's Claude | live on main |
-| Fedor's special: The Unmoving Man (`fedor-unmoving.js`, `special.move` "unmoving"): slips every punch hands down, catches the last one, one overhand right into the cage | Joe | pull request open |
+| Fedor's special: The Unmoving Man (`fedor-unmoving.js`, `special.move` "unmoving"): slips every punch hands down, catches the last one, one overhand right into the cage | Joe | live on main |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
 
@@ -79,6 +79,8 @@ Christian's Claude must not revert, undo or overwrite anything Joe (or Joe's Cla
 
 - **Tony Ferguson** (Joe, 2026-11-15): olive skin `#c49a6c`, black hair `#17130f`, dark stubble `#2a211a`, with his real arm tattoo and the higher headband (PR #92). Joe asked for this look; please don't switch him back to light skin or blonde hair. Ask Joe first if you think a look should change.
 - **Carlos Prates** (Joe, 2026-11-15): Joe's look from four photos (`prates-skin.js`, turned on by `look.pratesSkin` in characters/carlos-prates.json). His tattoos are mapped to the real body parts; arm ink shows only on his arms, the chest script only on his chest. Please leave his hair, face, tattoos and decals as they are and ask Joe first. His special's transformation is Joe's Gear 5 (`prates-gear5.js`): please don't switch it back to the gold Super Saiyan look, and keep the smoke coming off the tip of the cigarette.
+
+- **Fedor Emelianenko** (Joe, 2026-11-15): his haircut from Joe's photos: shaved close all over with a faint light-brown stubble shadow and the hairline gone back at the temples (`look.hair` "fedor", hairColor `#9a7a5c`, drawn by `fedor-skin.js`). Please don't switch him back to the short brown hair.
 
 ### Joe's calls on moves and sound (don't change these back)
 
