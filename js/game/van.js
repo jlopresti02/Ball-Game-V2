@@ -20,12 +20,19 @@
 //             `critMult` times). A punch that's blocked, slipped or misses
 //             breaks the chain back to 0. The chain is counted under him,
 //             "x5", bigger and hotter with every one that lands.
-// Left hook   (van.hook) a left thrown with the chain at `from` or more swings
-//             in wide as a hook. One that crits is a big left hook: "LEFT
-//             HOOK!", the commentator's call (vanLeftHook, no more than one
-//             every `callGap` seconds) and, `down`% of the time, they're
-//             knocked down for `downTime` seconds (knockDown, ngannou.js).
-//             He ends the combo there and lets them get up.
+// Left hook   (hooks, the shared hook in hook-punch.js) `finisherChance`% of
+//             his combos end in a hook, always off his left: it comes round
+//             from the side the way every hook in the game does and hits
+//             `damageMult` times harder, on top of the chain. He walks in
+//             only to arm's length while it comes round (room for the arc
+//             to read), and it reaches half his `punch.reach` further than
+//             a straight one. While his gloves burn the hook glove glows
+//             white-hot (p.hookHeat).
+//             (van.hook) one that crits is a big left hook: "LEFT HOOK!", the
+//             commentator's call (vanLeftHook, no more than one every
+//             `callGap` seconds), a `knockback` shove and, `down`% of the
+//             time, they're knocked down for `downTime` seconds (knockDown,
+//             ngannou.js). He ends the combo there and lets them get up.
 // Hands level (van.level) across the fight his hands get better: every punch
 //             he lands adds `hitFill`, and a clean combo (every punch in it
 //             landed, `cleanMin` or more) adds `cleanFill` for each punch
@@ -117,7 +124,7 @@ function initVan(b) {
   b.vn = null; b.vnFire = null; b.vnFlag = null;
   if (!vnCfg(b)) return;
   b.vn = { L: 0, chain: 0, best: 0, combo: null, cleanN: 0, crits: 0, cnt: null, t: 0, kept: null, keptN: 0, keptBest: 0, carried: 0,
-    fires: 0, fireDmg: 0, hooks: 0, downs: 0, hookCallT: -99, hookCalls: 0, lineT: 99, lineAt: {}, said: {}, saidN: 0, q: null,
+    fires: 0, fireDmg: 0, hooks: 0, hookN: 0, hookLanded: 0, downs: 0, hookCallT: -99, hookCalls: 0, lineT: 99, lineAt: {}, said: {}, saidN: 0, q: null,
     hp: null, taken: [], landed: [], wasShot: false, thrownN: 0, landedN: 0 };
 }
 
@@ -140,11 +147,16 @@ function vnChase(self, other, d, reach, speed) {
   }
 }
 
-// One punch of a combo. side -1 is his left hand; a left with the chain at
-// hook.from or more is thrown as a hook.
+// One punch of a combo. side -1 is his left hand. The last one rolls the
+// shared hook (hook-punch.js); a hook is always his left.
 function vnNewPunch(self, cfg, side, left, n) {
-  var hk = cfg.hook;
-  return { t: 0, hit: false, side: side, left: left, n: n, vn: true, hook: !!(hk && side === -1 && self.vn.chain >= (hk.from || 0)) };
+  var p = { t: 0, hit: false, side: side, left: left, n: n, vn: true };
+  if (rollHook(self, p, left === 0)) {
+    p.side = -1;
+    if (vnBurning(self)) p.hookHeat = 1; // white-hot on fire
+    self.vn.hookN++;
+  }
+  return p;
 }
 
 function vnComboPunch(self, other, dt, d, cfg) {
@@ -163,12 +175,12 @@ function vnComboPunch(self, other, dt, d, cfg) {
   if (!p || !p.vn) return;
   p.t += dt;
   var fs = (vnBurning(self) || v.kept) && vnFireSp(self);
-  if (p.left > 0 && other.alive) vnChase(self, other, d, pu.reach, cb.chase * (fs && fs.chase || 1)); // walks in behind the combo
-  if (!p.hit && p.t >= pu.speed * 0.35) {
+  if ((p.left > 0 || (p.hook && !p.hit)) && other.alive) vnChase(self, other, d, p.hook ? pu.reach * 2 : pu.reach, cb.chase * (fs && fs.chase || 1)); // walks in behind the combo (a hook: only as far as arm's length, so it has room to come round)
+  if (!p.hit && p.t >= punchHitAt(self, p)) { // (later for a hook, hook-punch.js)
     p.hit = true;
-    vnStrike(self, other, d < reach + slack, cfg, p.left === 0, p);
+    vnStrike(self, other, d < reach + slack + (p.hook ? pu.reach * 0.5 : 0), cfg, p.left === 0, p); // (a hook comes round wide: it reaches a little further)
   }
-  if (self.punch === p && p.t >= pu.speed) {
+  if (self.punch === p && p.t >= punchEndAt(self, p)) {
     if (p.left > 0 && other.alive && self.alive && d < reach + slack * 2 && !other.ngDown) {
       self.punch = vnNewPunch(self, cfg, -p.side, p.left - 1, p.n); // the next one, off the other hand
     } else {
@@ -190,13 +202,14 @@ function vnStrike(self, other, inRange, cfg, last, p) {
   var mult = hh ? Math.min(cap, 1 + vnLerp(hh.step, lv) * k) : 1;
   var critP = hh ? Math.min(hh.critMax, hh.critBase + vnLerp(hh.critStep, lv) * k) : 0;
   var crit = Math.random() * 100 < critP;
-  var dmg = self.char.punch.damage * mult * (crit ? hh.critMult : 1);
+  var dmg = hookDamage(self, p, self.char.punch.damage * mult * (crit ? hh.critMult : 1)); // (a hook hits harder, hook-punch.js)
   // His hands find the gaps: their block chance drops against his punches.
   var pierce = (lvc && lvc.pierce ? vnLerp(lvc.pierce, lv) : 0) + (vnBurning(self) && fsp && fsp.pierce ? fsp.pierce : 0), bb = other.blockBonus || 0, dealt = 0;
   other.blockBonus = bb - pierce;
   try { dealt = hurt(other, dmg, "punch", self.id); } finally { other.blockBonus = bb; }
   if (!(dealt > 0)) { vnBreak(self); checkEnd(); return false; }
   v.chain++; v.landedN++;
+  if (p && p.hook) v.hookLanded++;
   if (cb) cb.landed++;
   if (v.chain > v.best) v.best = v.chain;
   if (vnBurning(self)) v.fireDmg += dealt;
@@ -207,22 +220,22 @@ function vnStrike(self, other, inRange, cfg, last, p) {
   if (v.chain >= 3) playVnChain(v.chain);
   var ux = (other.x - self.x) / vnDist(self, other), uy = (other.y - self.y) / vnDist(self, other);
   var kb = last && !vnBurning(self) ? self.char.punch.knockback : cfg.combos.comboKnockback; // (on fire he keeps them close for the next one)
-  if (kb > 0 && !other.justDodged && vnKnockable(other)) { other.vx += ux * kb; other.vy += uy * kb; }
+  if (!other.justDodged && vnKnockable(other)) hookShove(self, other, p, kb); // straight back, or sideways for a hook (hook-punch.js)
   var bigHook = crit && p && p.hook && cfg.hook;
   if (crit) vnCrit(self, other, ux, uy, bigHook);
   if (!reduceMotion) shake = Math.max(shake, crit ? 9 : (last ? 5 : 3));
   checkEnd();
-  if (bigHook) vnBigHook(self, other, cfg, ux, uy);
+  if (bigHook) vnBigHook(self, other, cfg, ux, uy, p);
   return true;
 }
 
 // A big left hook: a hook that crits.
-function vnBigHook(self, other, cfg, ux, uy) {
+function vnBigHook(self, other, cfg, ux, uy, p) {
   var hk = cfg.hook, v = self.vn;
   v.hooks++;
   crowdReact(0.35);
   playVnHook();
-  if (hk.knockback && !other.justDodged && vnKnockable(other)) { other.vx += ux * hk.knockback; other.vy += uy * hk.knockback; }
+  if (hk.knockback && !other.justDodged && vnKnockable(other)) hookShove(self, other, p, hk.knockback); // more of the sideways shove
   if (!other.alive || over) return; // a knockout gets its own call
   if (v.t - v.hookCallT >= (hk.callGap || 0) && !announcer) {
     v.hookCallT = v.t; v.hookCalls++;
@@ -507,10 +520,15 @@ function vnFacing(b, o) {
   return { x: b.id === 0 ? 1 : -1, y: 0 };
 }
 
-// The punching glove, where drawFist puts it.
+// The punching glove, where drawFist puts it (a hook: where hook-punch.js
+// has it on its curve).
 function vnFist(b, o) {
   var p = b.punch, pu = b.char.punch;
   if (!p || !o.alive || b.taunt || b.flow || b.combo) return null;
+  if (p.hook) {
+    var h = hookGlove(b, o), s = p.side || 1, ha = Math.atan2(o.y - b.y, o.x - b.x) + s * Math.PI / 2;
+    return h && { x: h.x, y: h.y, r: h.r, fist: true, side: s, pt: 1, ax: b.x + Math.cos(ha) * b.r * 0.55, ay: b.y + Math.sin(ha) * b.r * 0.55 };
+  }
   var qx = o.x - b.x, qy = o.y - b.y, qd = Math.sqrt(qx * qx + qy * qy) || 1, nx = qx / qd, ny = qy / qd;
   var windup = pu.speed * 0.35, pt = p.t < windup ? p.t / windup : 1 - (p.t - windup) / (pu.speed - windup);
   pt = Math.max(0, Math.min(1, pt));
@@ -549,7 +567,7 @@ function vnGloves(b, o, guard) {
 }
 
 // From draw(), per fighter, after its hands: the hands bar, his high guard,
-// a hook swinging in, his gloves glowing or on fire, the flag.
+// his gloves glowing or on fire, the flag.
 function drawVan(b) {
   var cfg = vnCfg(b), v = b.vn;
   if (!cfg || !v || !b.alive) return;
@@ -558,8 +576,7 @@ function drawVan(b) {
   if (b.vnFlag) { drawVnFlagUp(b); return; }
   var guard = vnGuardStance(b);
   if (!guard && (b.koOut || b.kick || b.grappled || b.grapple || b.sprawl || subLocked(b) || b.combo || b.swing || b.ngDown)) return; // hands not out
-  var gl = vnGloves(b, o, guard), fire = vnFireHeat(b);
-  if (b.punch && b.punch.vn && b.punch.hook) drawVnHookArc(b, gl[0], fire);
+  var gl = vnGloves(b, o, guard), fire = vnFireHeat(b); // (a hook is drawn by drawFist, hook-punch.js)
   if (fire > 0) {
     gl.forEach(function (g, i) { drawVnFlame(g.x, g.y, g.r, fire, i, false); });
     if (guard) drawVnGuard(b, gl);
@@ -581,20 +598,6 @@ function vnArm(b, sx, sy, hx, hy, gr, ang, side) {
 // The high guard: forearms up from his shoulders, gloves by his head.
 function drawVnGuard(b, gl) {
   gl.forEach(function (g) { if (!g.fist && g.sx != null) vnArm(b, g.sx, g.sy, g.x, g.y, g.r, g.ang, g.s); });
-}
-
-// A left hook: the glove swings in round the side instead of straight, a
-// swoosh sweeping round him into the punch (it reads even up close).
-function drawVnHookArc(b, fist, fire) {
-  if (!fist || !fist.fist || fist.pt < 0.15) return;
-  var dx = fist.x - b.x, dy = fist.y - b.y, R = Math.max(b.r * 1.08, Math.sqrt(dx * dx + dy * dy)), a1 = Math.atan2(dy, dx), a0 = a1 + fist.side * 1.4;
-  var path = function () { ctx.beginPath(); ctx.arc(b.x, b.y, R, a0, a1, fist.side > 0); };
-  ctx.save();
-  ctx.lineCap = "round";
-  ctx.globalAlpha = 0.65 * fist.pt; // (on the light mat a white swoosh vanishes: a dark edge and a hot colour)
-  ctx.strokeStyle = theme.wall; ctx.lineWidth = fist.r * 0.7 + 4; path(); ctx.stroke();
-  ctx.strokeStyle = fire > 0 ? "#ff7a1a" : "#ffc21f"; ctx.lineWidth = fist.r * 0.7; path(); ctx.stroke();
-  ctx.restore();
 }
 
 // A glove heating up with his hands level: a hot halo, and flames licking
@@ -970,7 +973,7 @@ function vanGalleryMoves(ch, add) {
   if (v.highGuard) add("🛡️", "High guard", "His hands are always up by his head. The one that isn't punching stays up there.");
   if (cb) add("👊", "Combos", "Long combinations off both hands instead of single punches, " + Math.round(cb.punches[0]) + " to " + Math.round(cb.punches[1]) + " at a time (" + ch.punch.damage + " a punch to start), walking in behind them. They get longer as his hands get better.");
   if (hh) add("🔥", "Hot hands", "Every punch that lands in a combo makes the next one hit harder (+" + Math.round(hh.step[0] * 100) + "% to +" + Math.round(hh.step[1] * 100) + "% each, up to " + hh.maxMult + "x) and more likely to crit (" + hh.critBase + "% plus " + hh.critStep[0] + "-" + hh.critStep[1] + "% each, up to " + hh.critMax + "%, " + hh.critMult + "x). One blocked, slipped or missed breaks the chain. The count goes up under him: x5, x7...");
-  if (hk) add("🪝", "Left hook", "Once the chain is at x" + hk.from + ", his left swings in as a hook. A hook that crits is a big LEFT HOOK, the commentator calls it, and " + hk.down + "% of the time it knocks them down for " + secs(hk.downTime) + ". He lets them get up.");
+  if (hk) add("🪝", "Left hook", (ch.hooks && ch.hooks.finisherChance ? ch.hooks.finisherChance + "% of his combos end in a left hook that comes round from the side. " : "") + "A hook that crits is a big LEFT HOOK, the commentator calls it, and " + hk.down + "% of the time it knocks them down for " + secs(hk.downTime) + ". He lets them get up.");
   if (lv) add("🥊", "Hands level", "His hands get better through the fight: every punch he lands, and much more every clean combo (all of it landed, \"CLEAN x7!\"). It makes his combos longer and truer and takes up to " + lv.pierce[1] + " points off their block chance. His gloves glow hotter as it climbs, \"HOT HANDS!\" at half and \"MAX HANDS!\" when it's full.");
   if (v.durable) add("🧱", "Durable", "Hard to hurt: a single strike of " + v.durable.over + " or more does " + Math.round(v.durable.mult * 100) + "% of its damage.");
   if (ch.tdd) add("🤼", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots (\"STUFFED\") and punches straight back.");

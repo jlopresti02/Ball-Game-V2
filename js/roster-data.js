@@ -3667,12 +3667,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-joshua-van",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "flyweight",
     "name": "Joshua Van",
     "base": "Brawler",
-    "bio": "\"The Fearless\". UFC flyweight champion, born in Myanmar, fights out of Houston. Built on the Brawler base: a flyweight, but not as quick on his feet as the other small guys, with his hands always up in a high guard and long combinations of punches off both hands instead of single shots, and no opening KO Rush. Hot hands: every punch that lands in a combo makes the next one hit harder and crit more often, and the count goes up under him (x5, x7...) until one gets blocked or misses. Once the chain is going his left swings in as a hook, and a big left hook can drop them. His hands get better through the fight, most of all with clean combos. Sprawls 70% of takedown shots and is hard to hurt. Special move Hands on Fire: his gloves catch fire, and while they burn he keeps the chain he built at the end of each combo for a moment instead of losing it. Holds the Myanmar flag up when he wins. Flyweight.",
+    "bio": "\"The Fearless\". UFC flyweight champion, born in Myanmar, fights out of Houston. Built on the Brawler base: a flyweight, but not as quick on his feet as the other small guys, with his hands always up in a high guard and long combinations of punches off both hands instead of single shots, and no opening KO Rush. Hot hands: every punch that lands in a combo makes the next one hit harder and crit more often, and the count goes up under him (x5, x7...) until one gets blocked or misses. Most of his combos end in a left hook that comes round from the side and hits harder, and a big left hook can drop them. His hands get better through the fight, most of all with clean combos. Sprawls 70% of takedown shots and is hard to hurt. Special move Hands on Fire: his gloves catch fire, and while they burn he keeps the chain he built at the end of each combo for a moment instead of losing it. Holds the Myanmar flag up when he wins. Flyweight.",
     "color": "#fecb00",
     "label": "",
     "imgData": null,
@@ -3728,6 +3728,19 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "blockChance": 25,
+    "hooks": {
+      "finisherChance": 80,
+      "chance": 0,
+      "damageMult": 1.25,
+      "coil": 0.1,
+      "sweep": 0.2,
+      "recover": 0.12,
+      "arc": 1.8,
+      "follow": 0.5,
+      "size": 1.15,
+      "width": 1.1,
+      "color": "#ffd21f"
+    },
     "tdd": {
       "sprawlChance": 70
     },
@@ -3765,7 +3778,6 @@ var SAVED_ROSTER = [
         "critMult": 1.8
       },
       "hook": {
-        "from": 3,
         "down": 30,
         "downTime": 1.0,
         "knockback": 90,
