@@ -274,6 +274,9 @@ function cnBrawl(n, owner, vic, cfg, dt) {
   // never on top of Strickland
   var ox = n.x - owner.x, oy = n.y - owner.y, od = Math.sqrt(ox * ox + oy * oy) || 1, omin = CN_R + owner.r + 4;
   if (od < omin) { n.x = owner.x + ox / od * omin; n.y = owner.y + oy / od * omin; cnClamp(n); gap = cnGap(n, vic); }
+  // nor on top of them (rocked, they stagger into him): they stay in sight between the two
+  var vx = n.x - vic.x, vy = n.y - vic.y, vd = Math.sqrt(vx * vx + vy * vy) || 1, vmin = CN_R + vic.r + 2;
+  if (vd < vmin) { n.x = vic.x + vx / vd * vmin; n.y = vic.y + vy / vd * vmin; cnClamp(n); gap = cnGap(n, vic); }
   if (gap > reach + 6 || n.cd > 0) return;
   var every = cnNum(cfg.kickEvery, 4), kick = every > 0 && (n.strikes + 1) % every === 0;
   n.strikes++;

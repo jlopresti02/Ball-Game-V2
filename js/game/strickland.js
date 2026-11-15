@@ -15,11 +15,13 @@
 //           `knockback`. After `koAfter` seconds it's a knockout `koBase`% of
 //           the time, up to koBase + koLow% the more hurt they are. One every
 //           `cooldown` seconds at most.
-// Range     (strickland.range) he fights at the end of his jab: inside `keep`
-//           (edge to edge) he backs out at an angle, past `press` he walks
-//           them down, and in between he circles, switching direction every
-//           `switch` seconds. With `squaredUp` he does it facing them, so a
-//           shot while he's backing off isn't a grab from behind.
+// Range     his feet are the shared spacing mode (movement.js, his
+//           "movement.spacing" block): he hovers just outside their reach,
+//           steps in behind the jab and straight back out, and backs off or
+//           circles off the cage when they come in. (strickland.range) with
+//           `squaredUp` he does it facing them, so a shot while he's backing
+//           off isn't a grab from behind. The old `keep` / `press` / `angle` /
+//           `rate` / `switch` keys still work if the spacing block is left out.
 // Philly shell  (strickland.shell) lead hand low across his stomach, rear
 //           glove up by his chin. He rolls `chance`% of punches off his
 //           shoulder ("SHOULDER ROLL"), `kickChance`% of kicks and
@@ -67,6 +69,12 @@
 //           the other side. Caught in a corner, the punch does `cornerBonus`
 //           times the damage ("CORNERED!"). Up to `time` seconds of it, then
 //           arms up while the crowd chants and the eagle flies off.
+//           It's all his way: it waits until they're free (not mid-move),
+//           and from the trigger to the end they throw nothing at all
+//           (americaOverwhelmed, abilities.js) and nothing can grab, shoot
+//           on or clinch him (americaUngrabbable, grapple-duel.js). They back
+//           off from the eagle, and from the talons on they're rocked (the
+//           dizzy stars, gaethje.js) until it's over.
 // Rivals    (strickland.rivals) vs Alex Pereira, who knocked him out with a
 //           left hook at UFC 276 (2022): his trauma starts at `trauma`, he
 //           can't roll anything thrown in Pereira's CHAMA combo, and
@@ -169,6 +177,8 @@ var SK_NO_ROLL = { laser: true, slam: true, grapple: true, finisher: true, flow:
 var SK_KICKS = { kick: true, teep: true };
 var SK_HOP = 0.32;        // hopping off the bike
 var SK_END = 0.9;         // arms up at the end
+var SK_ROCKED = 0.4;      // rocked (dizzy) this long after America's over
+var SK_BACK_TURN = 8;     // how hard they turn away from him while the eagle dives
 var SK_FADE = 2.4;        // the flags and the chant fading out after
 var SK_OH_WIND = 0.2, SK_OH_STRIKE = 0.1, SK_OH_FOLLOW = 0.12, SK_OH_REACH = 30; // the overhand right
 var SK_PEREIRA = "c-alex-pereira";
@@ -226,6 +236,7 @@ function tickStrickland(dt) {
     if (s.fx > 0) s.fx = Math.max(0, s.fx - dt);
     if (s.rival === null) skMeetRival(b, other, cfg);
     skLines(b, other, cfg, dt);
+    skOverwhelm(b, other, dt);
     if (!started || over || !b.alive) { s.hp = b.hp; return; }
     s.fightT += dt;
     skTrackLanded(b, s);
@@ -466,7 +477,8 @@ function skPace(b, other, cfg, dt) {
 // walks them down when they're far, circles in between.
 function skSteer(b, other, cfg, dt) {
   var rc = cfg.range, s = b.sk;
-  if (!rc || !inOrdinaryMovement(b) || b.dizzy || b.angry || !other.alive || other.koOut) return;
+  if (!rc || rc.keep == null || (b.char.movement && b.char.movement.spacing)) return; // (the shared spacing mode has his feet, movement.js)
+  if (!inOrdinaryMovement(b) || b.dizzy || b.angry || !other.alive || other.koOut) return;
   s.sideT -= dt;
   if (s.sideT <= 0) { s.side = -s.side; s.sideT = skRand(rc.switch); }
   var dx = other.x - b.x, dy = other.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, gap = d - b.r - other.r;
@@ -523,6 +535,39 @@ function stricklandRematchKo(attacker, vic) {
 
 // ---------------------------------------------------------------- America
 
+// Free to take it: not in the middle of a move of their own (so nothing of
+// theirs is left hanging while they're overwhelmed).
+function skFree(o) {
+  return (inOrdinaryMovement(o) || !!o.dizzy) && !tornadoOn(o) && !bearOn(o) && !o.bearHeld && !o.torHeld;
+}
+
+// From the abilities loop (abilities.js), for each fighter: true while Sean
+// Strickland's America is running on him, so he throws nothing at all: no
+// punches, kicks, shots, clinches or specials. It's all one way.
+function americaOverwhelmed(b) {
+  if (!b || !b.alive || b.slam || !balls || balls.length < 2) return false;
+  var o = balls[1 - b.id];
+  return !!(o && o.alive && americaOn(o));
+}
+
+// From attemptGrab (grapple-duel.js): nobody grabs, shoots on or clinches him
+// during America (a counter-grab off one of his overhands, say).
+function americaUngrabbable(target) { return !!(target && target.alive && americaOn(target)); }
+
+// Every frame while it runs: before the eagle hits they're on the back foot,
+// turning away from him; from the talons on they stay rocked (the dizzy stars
+// and stagger) until it's over, then shake it off SK_ROCKED seconds later.
+function skOverwhelm(b, other, dt) {
+  if (!americaOn(b) || !other || !other.alive || other.koOut) return;
+  var dz = other.dizzy;
+  if (dz && dz.sk) { dz.t = Math.max(dz.t, SK_ROCKED); return; }
+  if (b.igbb.phase !== "eagle" || !inOrdinaryMovement(other) || dz) return;
+  var s = Math.sqrt(other.vx * other.vx + other.vy * other.vy);
+  if (s < 1) return;
+  var away = Math.atan2(other.y - b.y, other.x - b.x), cur = Math.atan2(other.vy, other.vx), nu = skTurn(cur, away, SK_BACK_TURN * dt);
+  other.vx = Math.cos(nu) * s; other.vy = Math.sin(nu) * s;
+}
+
 // His strikes that land (the fight's stats, stadium.js), kept for the last
 // `trigger.window` seconds.
 function skTrackLanded(b, s) {
@@ -537,6 +582,7 @@ function skTrackLanded(b, s) {
 // landing, or he has them cornered, or he's waited long enough.
 function skTrigger(self, other, sp) {
   if (skDemo()) return "demo";
+  if (!skFree(other)) return null; // not while they're in the middle of something of their own
   var tg = sp.trigger || {}, s = self.sk;
   var dx = other.x - self.x, dy = other.y - self.y, gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;
   var near = gap <= (tg.near != null ? tg.near : 60);
@@ -561,6 +607,7 @@ function updateAmerica(self, other, dt) {
     if (self.sk) { self.sk.chargedT = 0; self.sk.landedAt = []; }
     floater(other.x, other.y - other.r - 30, "!", "crit");
     floater(self.x, self.y - self.r - 30, why === "cornered" ? "CORNERED!" : why === "landing" ? "ON A ROLL!" : "SEES WEAKNESS", "crit");
+    other.punch = null; other.kick = null; other.swing = null; other.throwAnim = null; other.jabAnim = null; // (whatever they were throwing, they pull it)
     skEagleDive(self, other, eg);
   }
   if (m.move !== "america") return false;
@@ -945,6 +992,7 @@ function skEagleStrike(self, other, e) {
   var held = other.grapple || other.grappled || subLocked(other) || other.sprawl || other.sprawled;
   if (!held && !other.justDodged && teepPushable(other)) { other.vx = ux * kb; other.vy = uy * kb; other.knockFly = 0.2; }
   if (!held && eg.stun) other.checkStun = Math.max(other.checkStun || 0, eg.stun);
+  if (!held && !other.invincible && !other.dizzy) other.dizzy = { t: SK_ROCKED, ang: Math.atan2(other.vy, other.vx) || 0, phase: Math.random() * 6, sk: true }; // rocked till America's over (skOverwhelm)
   var cx = other.x - ux * other.r * 0.6, cy = other.y - uy * other.r * 0.6;
   other.flash = 0.22;
   other.squash = { t: 0.26, max: 0.26, nx: -ux, ny: -uy };
@@ -1470,7 +1518,7 @@ function teepGalleryInfo(tc) {
 function stricklandGalleryMoves(ch, add) {
   var g = ch.strickland, sh = g.shell, cc = g.cardio, tr = g.trauma, rv = g.rivals || {};
   if (ch.hasPunch) add("👊", "Jab", "His main weapon: a long, stiff jab (" + ch.punch.damage + " damage, " + ch.punch.reach + " reach) every " + secs(ch.punch.cooldown) + ".");
-  if (g.range) add("📏", "Range", "Fights at the end of his jab: backs out at an angle when they get close, walks them down when they're far, and circles in between.");
+  if (g.range && g.range.keep != null) add("📏", "Range", "Fights at the end of his jab: backs out at an angle when they get close, walks them down when they're far, and circles in between.");
   if (sh) add("🛡️", "Philly shell", "Lead hand low across his stomach, rear glove up by his chin. Rolls " + sh.chance + "% of punches off his shoulder (" + sh.kickChance + "% of kicks, " + sh.projChance + "% of anything thrown)" + (sh.counter ? ", and " + (sh.counter === true ? "always" : sh.counter + "% of the time") + " comes straight back with the jab" : "") + (sh.angryOff ? ". Not while he's triggered." : "."));
   if (ch.tdd) add("🧱", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots (\"STUFFED\") and jabs straight back.");
   if (cc) add("🫁", "Cardio", "Every " + secs(cc.every) + " (up to " + cc.max + " times) his pace goes up: " + Math.round(cc.speed * 100) + "% faster, attacks " + Math.round(cc.rate * 100) + "% faster, rolls " + cc.shell + "% more. From the " + cc.tiredAt + "th step they're tired and sweating, slower each time.");
