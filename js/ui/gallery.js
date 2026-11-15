@@ -176,6 +176,7 @@ function galleryMoves(ch) {
   if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
   if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
   if (ch.legKick) legKickGalleryMoves(ch, add); // calf kicks that leave them limping (leg-kick.js)
+  if (ch.headKick) headKickGalleryMoves(ch, add); // the head kick the calf kicks set up (head-kick.js)
   if (ch.gane) ganeGalleryMoves(ch, add); // Ciryl Gane: hands down, back foot, weak up close (gane.js)
   if (ch.getUp) getUpGalleryMoves(ch, add); // getting back up off the mat (get-up.js)
   if (ch.uppercuts || ch.bodyShots) punchTypeGalleryMoves(ch, add); // uppercuts and body shots (body-shots-uppercuts.js)
