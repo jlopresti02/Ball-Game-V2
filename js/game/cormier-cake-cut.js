@@ -10,8 +10,8 @@
 //   0.00  a star spins open on the pink backdrop, his face inside it
 //   0.40  close-up, head tilted, a chocolate snack cake in his glove, up by
 //         his cheek on the beat
-//   3.32  wide: DC in the middle bopping, a whole cake (slice out) on the
-//         left, a big piece of fried chicken on the right
+//   3.32  wide: DC in the middle bopping, a chocolate cookie ice cream cake
+//         (slice out) on the left, a big piece of fried chicken on the right
 //   7.00  medium: a drumstick in each glove, waving them, rubbing them together
 //  11.35  medium close: swaying and singing to the camera, music notes
 //  13.84  extreme close-up: a Twinkie in its wrapper up to his mouth, CHOMP
@@ -139,43 +139,170 @@ function dccGlove(b, hx, hy, r, ang) { drawGlove(ctx, hx, hy, r * 0.21, b.char.l
 
 // ---------------------------------------------------------------- the food
 
-// A chocolate snack cake with a bite out of it, showing the cream.
+// A bumpy outline round a centre: rx, ry the size, `bumps` how many lumps,
+// `amp` how big, `seed` to vary it. Returns the points.
+function dccLumpy(rx, ry, n, amp, seed, shape) {
+  var pts = [];
+  for (var i = 0; i < n; i++) {
+    var a = i / n * Math.PI * 2, k = 1 + amp * (dccRand(seed + i * 1.37) - 0.5) * 2 + 0.06 * Math.sin(a * 3 + seed);
+    var w = shape ? shape(a) : 1;
+    pts.push({ x: Math.cos(a) * rx * k * w, y: Math.sin(a) * ry * k * w });
+  }
+  return pts;
+}
+// A smooth closed path through points (midpoint curves), so lumps look soft.
+function dccBlobPath(pts) {
+  var n = pts.length;
+  ctx.beginPath();
+  ctx.moveTo((pts[n - 1].x + pts[0].x) / 2, (pts[n - 1].y + pts[0].y) / 2);
+  for (var i = 0; i < n; i++) {
+    var p = pts[i], q = pts[(i + 1) % n];
+    ctx.quadraticCurveTo(p.x, p.y, (p.x + q.x) / 2, (p.y + q.y) / 2);
+  }
+  ctx.closePath();
+}
+// Cartoon fried chicken breading: a scalloped, cloud-like outline, the
+// inside built up from overlapping golden lumps (lit on top, a dark crevice
+// under each), then fine crunchy specks. s is the piece's size, n how many lumps.
+function dccScallopPath(pts) {
+  var n = pts.length;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (var i = 0; i < n; i++) {
+    var p = pts[i], q = pts[(i + 1) % n], mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2, d = Math.sqrt(mx * mx + my * my) || 1;
+    var bulge = Math.sqrt((q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y)) * 0.42;
+    ctx.quadraticCurveTo(mx + mx / d * bulge, my + my / d * bulge, q.x, q.y);
+  }
+  ctx.closePath();
+}
+function dccCrust(pts, s, n, seed) {
+  var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  pts.forEach(function (p) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); });
+  var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2, hw = (maxX - minX) / 2, hh = (maxY - minY) / 2;
+  dccScallopPath(pts);
+  var g = ctx.createRadialGradient(cx - hw * 0.35, cy - hh * 0.45, s * 0.05, cx, cy, Math.max(hw, hh) * 1.2);
+  g.addColorStop(0, "#f0b45a"); g.addColorStop(0.65, "#c87a2c"); g.addColorStop(1, "#8a4614");
+  ctx.fillStyle = g; ctx.fill();
+  ctx.save(); ctx.clip();
+  var lumps = [];
+  for (var i = 0; i < n; i++) {
+    var a = dccRand(seed + i * 3.3) * Math.PI * 2, rr = Math.sqrt(dccRand(seed + i * 5.9 + 2)) * 1.05;
+    lumps.push({ x: cx + Math.cos(a) * hw * rr, y: cy + Math.sin(a) * hh * rr, r: s * (0.13 + 0.12 * dccRand(seed + i * 7.1)), k: i });
+  }
+  lumps.sort(function (p, q) { return p.y - q.y; });
+  lumps.forEach(function (L) {
+    var shade = ((L.x - cx) / hw + (L.y - cy) / hh) * 0.5; // down-right is in shadow
+    var pts2 = [];
+    for (var j = 0; j < 8; j++) { var an = j / 8 * Math.PI * 2, q = L.r * (0.8 + 0.3 * dccRand(L.k * 9.1 + j)); pts2.push({ x: L.x + Math.cos(an) * q, y: L.y + Math.sin(an) * q * 0.8 }); }
+    // crevice: a dark rim under the lump
+    ctx.save(); ctx.translate(L.r * 0.12, L.r * 0.16);
+    dccBlobPath(pts2); ctx.fillStyle = "rgba(92,38,8,0.75)"; ctx.fill();
+    ctx.restore();
+    dccBlobPath(pts2);
+    var lg = ctx.createRadialGradient(L.x - L.r * 0.35, L.y - L.r * 0.4, L.r * 0.05, L.x, L.y, L.r * 1.1);
+    var base = shade > 0.3 ? "#c9792c" : shade < -0.3 ? "#eaa94f" : "#da9038";
+    lg.addColorStop(0, shadeHex(base, 0.35)); lg.addColorStop(0.7, base); lg.addColorStop(1, shadeHex(base, -0.18));
+    ctx.fillStyle = lg; ctx.fill();
+    ctx.strokeStyle = "rgba(255,230,170,0.55)"; ctx.lineWidth = Math.max(1.5, L.r * 0.1); ctx.lineCap = "round";
+    ctx.beginPath(); ctx.arc(L.x, L.y, L.r * 0.62, Math.PI * 1.08, Math.PI * 1.55); ctx.stroke();
+  });
+  // crunchy specks
+  for (var k = 0; k < n * 4; k++) {
+    var sx = cx + (dccRand(seed + k * 1.9) * 2 - 1) * hw, sy = cy + (dccRand(seed + k * 2.7 + 4) * 2 - 1) * hh;
+    ctx.fillStyle = k % 2 ? "rgba(255,226,160,0.7)" : "rgba(110,48,10,0.55)";
+    ctx.beginPath(); ctx.arc(sx, sy, s * (0.01 + 0.012 * dccRand(k)), 0, Math.PI * 2); ctx.fill();
+  }
+  var sh = ctx.createLinearGradient(cx - hw, cy - hh, cx + hw, cy + hh);
+  sh.addColorStop(0, "rgba(255,240,200,0.15)"); sh.addColorStop(0.55, "rgba(0,0,0,0)"); sh.addColorStop(1, "rgba(70,25,0,0.3)");
+  ctx.fillStyle = sh; ctx.fillRect(minX - s, minY - s, hw * 2 + 2 * s, hh * 2 + 2 * s);
+  ctx.restore();
+  dccScallopPath(pts);
+  ctx.strokeStyle = DCC_INK; ctx.lineWidth = Math.max(3, s * 0.03); ctx.lineJoin = "round"; ctx.stroke();
+}
+// A soft crinkly flake of breading: a lumpy, flattened blob.
+function dccFlakeSoft(x, y, s, a, seed) {
+  var pts = [];
+  for (var i = 0; i < 7; i++) {
+    var an = i / 7 * Math.PI * 2, rr = s * (0.65 + 0.45 * dccRand(seed * 3.1 + i));
+    var px = Math.cos(an) * rr, py = Math.sin(an) * rr * 0.55, c = Math.cos(a), sn = Math.sin(a);
+    pts.push({ x: x + px * c - py * sn, y: y + px * sn + py * c });
+  }
+  dccBlobPath(pts);
+}
+// One craggy chunk (cookie bits).
+function dccFlake(x, y, s, a, seed) {
+  ctx.beginPath();
+  for (var i = 0; i < 6; i++) {
+    var an = a + i / 6 * Math.PI * 2, rr = s * (0.6 + 0.5 * dccRand(seed * 3.1 + i));
+    var px = x + Math.cos(an) * rr, py = y + Math.sin(an) * rr * 0.75;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
+// A chocolate cake bite with glossy fudge frosting dripping down it, a white
+// icing squiggle, and a bite out of the corner showing the cream and crumb.
 function dccSnack(x, y, s, rot) {
   ctx.save();
   ctx.translate(x, y); ctx.rotate(rot);
-  ctx.lineJoin = "round"; ctx.lineWidth = Math.max(3, s * 0.06); ctx.strokeStyle = DCC_INK;
-  var g = ctx.createLinearGradient(0, -s, 0, s);
-  g.addColorStop(0, "#5a2e1b"); g.addColorStop(1, "#2a140c");
-  ctx.fillStyle = g;
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  var lw = Math.max(3, s * 0.055);
+  function body() {
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.8, s * 0.5);
+    ctx.quadraticCurveTo(-s * 0.88, -s * 0.45, -s * 0.35, -s * 0.62);
+    ctx.lineTo(s * 0.02, -s * 0.66);
+    ctx.quadraticCurveTo(s * 0.06, -s * 0.38, s * 0.3, -s * 0.42);   // the bite
+    ctx.quadraticCurveTo(s * 0.38, -s * 0.16, s * 0.6, -s * 0.18);
+    ctx.quadraticCurveTo(s * 0.56, s * 0.06, s * 0.8, s * 0.1);
+    ctx.quadraticCurveTo(s * 0.86, s * 0.58, s * 0.6, s * 0.62);
+    ctx.quadraticCurveTo(0, s * 0.72, -s * 0.8, s * 0.5);
+    ctx.closePath();
+  }
+  // the sponge
+  body();
+  var sp = ctx.createLinearGradient(0, -s * 0.6, 0, s * 0.7);
+  sp.addColorStop(0, "#6b3b22"); sp.addColorStop(1, "#3c1f12");
+  ctx.fillStyle = sp; ctx.fill();
+  ctx.save(); ctx.clip();
+  // fudge frosting over the top half, dripping
+  var fr = ctx.createLinearGradient(-s, -s * 0.7, s * 0.4, s * 0.3);
+  fr.addColorStop(0, "#4a2414"); fr.addColorStop(1, "#1f0c06");
+  ctx.fillStyle = fr;
   ctx.beginPath();
-  ctx.moveTo(-s * 0.75, s * 0.55);
-  ctx.quadraticCurveTo(-s * 0.85, -s * 0.55, -s * 0.2, -s * 0.72);
-  ctx.lineTo(s * 0.05, -s * 0.74);
-  // the bite: three scallops out of the top right corner
-  ctx.quadraticCurveTo(s * 0.1, -s * 0.42, s * 0.32, -s * 0.48);
-  ctx.quadraticCurveTo(s * 0.42, -s * 0.22, s * 0.64, -s * 0.24);
-  ctx.quadraticCurveTo(s * 0.6, s * 0.02, s * 0.8, s * 0.06);
-  ctx.quadraticCurveTo(s * 0.85, s * 0.6, s * 0.65, s * 0.62);
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  // cream inside the bite
-  ctx.fillStyle = "#fbf1e4";
+  ctx.moveTo(-s, -s); ctx.lineTo(s, -s); ctx.lineTo(s, -s * 0.05);
+  var drips = [[0.62, 0.12], [0.35, 0.28], [0.08, 0.05], [-0.2, 0.34], [-0.48, 0.1], [-0.75, 0.24]];
+  drips.forEach(function (d) { ctx.quadraticCurveTo(d[0] * s + s * 0.1, d[1] * s + s * 0.12, d[0] * s, d[1] * s); ctx.quadraticCurveTo(d[0] * s - s * 0.08, d[1] * s - s * 0.2, d[0] * s - s * 0.14, -s * 0.05); });
+  ctx.lineTo(-s, -s * 0.05); ctx.closePath(); ctx.fill();
+  // crumb texture on the sponge
+  ctx.fillStyle = "rgba(30,12,5,0.35)";
+  for (var i = 0; i < 26; i++) { ctx.beginPath(); ctx.arc((dccRand(i * 2.1) * 1.6 - 0.8) * s, (0.1 + dccRand(i * 3.7) * 0.55) * s, s * (0.02 + 0.02 * dccRand(i)), 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  // inside the bite: cream and crumb
+  ctx.fillStyle = "#fbf3e6";
   ctx.beginPath();
-  ctx.moveTo(s * 0.12, -s * 0.36); ctx.quadraticCurveTo(s * 0.34, -s * 0.38, s * 0.4, -s * 0.16);
-  ctx.quadraticCurveTo(s * 0.56, -s * 0.12, s * 0.62, s * 0.08);
-  ctx.quadraticCurveTo(s * 0.3, s * 0.12, s * 0.12, -s * 0.36);
+  ctx.moveTo(s * 0.06, -s * 0.34); ctx.quadraticCurveTo(s * 0.3, -s * 0.36, s * 0.36, -s * 0.12);
+  ctx.quadraticCurveTo(s * 0.52, -s * 0.08, s * 0.6, s * 0.1);
+  ctx.quadraticCurveTo(s * 0.32, s * 0.16, s * 0.06, -s * 0.34);
   ctx.fill();
-  // glossy coating and a squiggle on top
-  ctx.fillStyle = "rgba(255,255,255,0.22)";
-  ctx.beginPath(); ctx.ellipse(-s * 0.42, -s * 0.3, s * 0.14, s * 0.28, 0.4, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = "#f4e6d4"; ctx.lineWidth = Math.max(2, s * 0.05);
-  ctx.beginPath(); ctx.moveTo(-s * 0.6, -s * 0.5);
-  for (var i = 1; i <= 5; i++) ctx.quadraticCurveTo(-s * 0.6 + (i - 0.5) * s * 0.13, -s * (i % 2 ? 0.66 : 0.46), -s * 0.6 + i * s * 0.13, -s * 0.56);
+  ctx.fillStyle = "#7a4528";
+  [[0.14, -0.22], [0.26, -0.05], [0.44, 0.06], [0.2, -0.3]].forEach(function (c) { ctx.beginPath(); ctx.arc(c[0] * s, c[1] * s, s * 0.035, 0, Math.PI * 2); ctx.fill(); });
+  body(); ctx.strokeStyle = DCC_INK; ctx.lineWidth = lw; ctx.stroke();
+  // gloss on the frosting and the white squiggle
+  ctx.fillStyle = "rgba(255,255,255,0.28)";
+  ctx.beginPath(); ctx.ellipse(-s * 0.45, -s * 0.38, s * 0.22, s * 0.08, -0.25, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#f8efe2"; ctx.lineWidth = Math.max(2, s * 0.055);
+  ctx.beginPath(); ctx.moveTo(-s * 0.66, -s * 0.36);
+  for (var j = 1; j <= 6; j++) ctx.quadraticCurveTo(-s * 0.66 + (j - 0.5) * s * 0.11, -s * (j % 2 ? 0.56 : 0.24), -s * 0.66 + j * s * 0.11, -s * 0.4);
   ctx.stroke();
   ctx.restore();
 }
 
-// A whole round cake on a plate with a slice cut out of the front: pink
-// frosted sides with cookie bits, chocolate crumble on top, layers inside.
+// A whole chocolate ice cream cake on a plate (like the one in his video):
+// mocha frosted sides, a ring of piped chocolate rosettes, the top heaped
+// with crushed chocolate sandwich cookies, and a slice cut out of the front
+// showing the layers: chocolate ice cream with cookie bits, the fudge crunch,
+// then darker chocolate.
 function dccCake(x, y, R) {
   var ry = R * 0.38, h = R * 0.62, a1 = 1.0, a2 = 2.1, lw = Math.max(3, R * 0.025);
   function P(a, dy) { return { x: R * Math.cos(a), y: ry * Math.sin(a) + (dy || 0) }; }
@@ -190,9 +317,9 @@ function dccCake(x, y, R) {
   ctx.strokeStyle = "rgba(0,0,0,0.12)"; ctx.lineWidth = lw * 0.8;
   ctx.beginPath(); ctx.ellipse(0, h + ry * 0.2, R * 1.12, ry * 1.12, 0, 0, Math.PI * 2); ctx.stroke();
   ctx.strokeStyle = DCC_INK; ctx.lineWidth = lw;
-  // the frosted walls either side of the gap
+  // the frosted walls either side of the gap, with comb lines
   var wall = ctx.createLinearGradient(-R, 0, R, 0);
-  wall.addColorStop(0, "#c45f8c"); wall.addColorStop(0.35, "#f19bbf"); wall.addColorStop(0.7, "#e886b0"); wall.addColorStop(1, "#b9527f");
+  wall.addColorStop(0, "#8a5e57"); wall.addColorStop(0.35, "#c79a92"); wall.addColorStop(0.7, "#b8887f"); wall.addColorStop(1, "#7c5049");
   [[0, a1], [a2, Math.PI]].forEach(function (seg) {
     ctx.beginPath();
     ctx.ellipse(0, 0, R, ry, 0, seg[0], seg[1], false);
@@ -201,87 +328,100 @@ function dccCake(x, y, R) {
     ctx.closePath();
     ctx.fillStyle = wall; ctx.fill();
     ctx.save(); ctx.clip();
-    ctx.fillStyle = "#4a2416";
-    for (var i = 0; i < 40; i++) {
-      var a = seg[0] + dccRand(i + seg[0] * 10) * (seg[1] - seg[0]), q = P(a, h * (0.15 + 0.75 * dccRand(i * 3.1 + 7)));
-      ctx.beginPath(); ctx.ellipse(q.x, q.y, R * 0.035, R * 0.022, dccRand(i) * 3, 0, Math.PI * 2); ctx.fill();
-    }
+    ctx.strokeStyle = "rgba(255,255,255,0.14)"; ctx.lineWidth = R * 0.012;
+    for (var c = 1; c < 6; c++) { ctx.beginPath(); ctx.ellipse(0, h * c / 6, R, ry, 0, seg[0], seg[1], false); ctx.stroke(); }
     ctx.restore();
+    ctx.strokeStyle = DCC_INK; ctx.lineWidth = lw;
     ctx.stroke();
   });
-  // the two cut faces: frosting, sponge, cream, sponge, cream, sponge
-  var bands = [[0, 0.1, "#f19bbf"], [0.1, 0.36, "#4b2818"], [0.36, 0.46, "#f9dce7"], [0.46, 0.72, "#4b2818"], [0.72, 0.8, "#f9dce7"], [0.8, 1, "#3f2014"]];
+  // the two cut faces
+  var bands = [[0, 0.07, "#b98c84"], [0.07, 0.46, "#a8766a"], [0.46, 0.58, "#3a1e13"], [0.58, 1, "#734536"]];
   [a2, a1].forEach(function (a) {
     var p = P(a);
-    bands.forEach(function (bd) {
-      ctx.fillStyle = bd[2];
-      ctx.beginPath();
-      ctx.moveTo(0, bd[0] * h); ctx.lineTo(p.x, p.y + bd[0] * h); ctx.lineTo(p.x, p.y + bd[1] * h); ctx.lineTo(0, bd[1] * h);
-      ctx.closePath(); ctx.fill();
-    });
-    ctx.fillStyle = a === a1 ? "rgba(0,0,0,0.16)" : "rgba(255,255,255,0.06)"; // light from the left
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(p.x, p.y); ctx.lineTo(p.x, p.y + h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill(); ctx.stroke();
+    function quad(f0, f1) { ctx.beginPath(); ctx.moveTo(0, f0 * h); ctx.lineTo(p.x, p.y + f0 * h); ctx.lineTo(p.x, p.y + f1 * h); ctx.lineTo(0, f1 * h); ctx.closePath(); }
+    bands.forEach(function (bd) { ctx.fillStyle = bd[2]; quad(bd[0], bd[1]); ctx.fill(); });
+    // cookie bits in the ice cream, specks in the crunch
+    ctx.save(); quad(0.07, 0.58); ctx.clip();
+    for (var i = 0; i < 26; i++) {
+      var k = dccRand(i * 4.3 + a), f = 0.1 + 0.46 * dccRand(i * 2.9 + a * 3);
+      ctx.fillStyle = f > 0.46 ? "#c9a07a" : "#2a150d";
+      ctx.beginPath(); ctx.arc(p.x * k, p.y * k + f * h, R * (0.015 + 0.02 * dccRand(i + 5)), 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+    ctx.fillStyle = a === a1 ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.05)"; // light from the left
+    quad(0, 1); ctx.fill(); ctx.stroke();
   });
   // the top, minus the slice
   var q2 = P(a2);
-  ctx.beginPath();
-  ctx.moveTo(0, 0); ctx.lineTo(q2.x, q2.y);
-  ctx.ellipse(0, 0, R, ry, 0, a2, a1 + Math.PI * 2, false);
-  ctx.closePath();
-  var top = ctx.createRadialGradient(-R * 0.3, -ry * 0.4, R * 0.1, 0, 0, R);
-  top.addColorStop(0, "#6b3a22"); top.addColorStop(1, "#3a1d11");
-  ctx.fillStyle = top; ctx.fill();
-  ctx.save(); ctx.clip();
-  for (var j = 0; j < 60; j++) { // crumble
-    var ca = dccRand(j * 1.7) * Math.PI * 2, cr = Math.sqrt(dccRand(j * 2.3 + 1)) * 0.95;
-    ctx.fillStyle = j % 3 ? "#2b140b" : "#f2a6c6";
-    ctx.beginPath(); ctx.arc(Math.cos(ca) * R * cr, Math.sin(ca) * ry * cr, R * (0.02 + 0.025 * dccRand(j + 9)), 0, Math.PI * 2); ctx.fill();
+  function topPath() {
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(q2.x, q2.y);
+    ctx.ellipse(0, 0, R, ry, 0, a2, a1 + Math.PI * 2, false);
+    ctx.closePath();
+  }
+  topPath();
+  ctx.fillStyle = "#5a3328"; ctx.fill();
+  ctx.save(); topPath(); ctx.clip();
+  // crushed cookies heaped on top: dark chunks, a few with their cream showing
+  for (var j = 0; j < 70; j++) {
+    var ca = dccRand(j * 1.7) * Math.PI * 2, cr = Math.sqrt(dccRand(j * 2.3 + 1)) * 0.92;
+    var px = Math.cos(ca) * R * cr, py = Math.sin(ca) * ry * cr - R * 0.02, cs = R * (0.05 + 0.05 * dccRand(j + 9));
+    ctx.fillStyle = "rgba(20,8,4,0.5)";
+    dccFlake(px + cs * 0.2, py + cs * 0.25, cs, dccRand(j) * 6, j + 40); ctx.fill();
+    ctx.fillStyle = j % 7 === 0 ? "#efe4d2" : (j % 3 ? "#24120b" : "#3a2016");
+    dccFlake(px, py, cs, dccRand(j) * 6, j + 40); ctx.fill();
+    if (j % 7 !== 0) { ctx.fillStyle = "rgba(255,255,255,0.16)"; ctx.beginPath(); ctx.arc(px - cs * 0.25, py - cs * 0.25, cs * 0.25, 0, Math.PI * 2); ctx.fill(); }
   }
   ctx.restore();
-  ctx.stroke();
-  // a piped pink rim round the top edge
-  ctx.strokeStyle = "#f6b6d0"; ctx.lineWidth = R * 0.05; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.ellipse(0, 0, R * 0.97, ry * 0.95, 0, a2 + 0.06, a1 + Math.PI * 2 - 0.06, false); ctx.stroke();
+  topPath(); ctx.stroke();
+  // piped chocolate rosettes round the edge, skipping the cut
+  for (var r2 = 0; r2 < 26; r2++) {
+    var ra = a2 + 0.14 + r2 / 25 * (a1 + Math.PI * 2 - a2 - 0.28), rp = { x: R * 0.94 * Math.cos(ra), y: ry * 0.94 * Math.sin(ra) };
+    var rs = R * 0.075 * (0.85 + 0.15 * Math.sin(ra)); // the near ones a touch bigger
+    ctx.fillStyle = "#6e4136"; ctx.strokeStyle = DCC_INK; ctx.lineWidth = lw * 0.6;
+    ctx.beginPath(); ctx.arc(rp.x, rp.y, rs, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = "#a6766a"; ctx.lineWidth = rs * 0.28;
+    ctx.beginPath(); ctx.arc(rp.x, rp.y, rs * 0.5, ra, ra + 4.4); ctx.stroke();
+  }
   ctx.restore();
 }
 
-// A big piece of fried chicken: a lumpy golden crust.
+// A big piece of fried chicken (a breast, like the one in his video): a
+// lumpy shape covered in craggy golden breading.
 function dccChicken(x, y, s, rot) {
   ctx.save();
   ctx.translate(x, y); ctx.rotate(rot);
-  ctx.lineJoin = "round";
   ctx.fillStyle = "rgba(60,0,40,0.16)";
-  ctx.beginPath(); ctx.ellipse(s * 0.1, s * 0.16, s * 1.3, s * 0.82, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath();
-  for (var i = 0; i <= 30; i++) {
-    var a = i / 30 * Math.PI * 2, k = 1 + 0.1 * Math.sin(a * 5 + 1) + 0.07 * Math.sin(a * 9 + 2) + 0.05 * (dccRand(i % 30) - 0.5);
-    var px = Math.cos(a) * s * 1.25 * k, py = Math.sin(a) * s * 0.78 * k;
-    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-  var g = ctx.createRadialGradient(-s * 0.3, -s * 0.3, s * 0.1, 0, 0, s * 1.3);
-  g.addColorStop(0, "#f6c174"); g.addColorStop(0.55, "#d98c3c"); g.addColorStop(1, "#94511d");
-  ctx.fillStyle = g; ctx.fill();
-  ctx.strokeStyle = DCC_INK; ctx.lineWidth = Math.max(3, s * 0.035); ctx.stroke();
-  ctx.save(); ctx.clip();
-  for (var j = 0; j < 46; j++) { // the crunchy bits
-    var ba = dccRand(j * 4.1) * Math.PI * 2, br = Math.sqrt(dccRand(j * 1.3 + 5)) * 1.05;
-    var bx = Math.cos(ba) * s * 1.2 * br, by = Math.sin(ba) * s * 0.75 * br, bs = s * (0.06 + 0.07 * dccRand(j + 2));
-    ctx.fillStyle = j % 2 ? "rgba(255,226,160,0.55)" : "rgba(110,52,14,0.45)";
-    ctx.beginPath(); ctx.ellipse(bx, by, bs, bs * 0.7, dccRand(j) * 3, 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.restore();
+  ctx.beginPath(); ctx.ellipse(s * 0.12, s * 0.2, s * 1.3, s * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+  var pts = dccLumpy(s * 1.2, s * 0.72, 20, 0.12, 11, function (a) { return 1 + 0.16 * Math.cos(a) - 0.08 * Math.cos(2 * a); });
+  dccCrust(pts, s, 46, 17);
   ctx.restore();
 }
 
-// A fried chicken drumstick (cormier.js draws it), pointing `ang`, the bone
-// in his glove at (x, y), `s` long-ish.
+// A fried chicken drumstick, the bone in his glove at (x, y) and the meat
+// pointing `ang`: a knobbly bone end poking out under the glove, then the
+// fat craggy drumstick, `s` about its length.
 function dccDrumstick(x, y, s, ang) {
   ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(ang - (Math.PI + 0.6)); // the meat end points along ang
-  ctx.scale(s / 40, s / 40);
-  drawDcDrumstick(0, 0, 40, 1, 1);
+  ctx.translate(x, y); ctx.rotate(ang + Math.PI / 2); // up the stick is -y
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  var lw = Math.max(3, s * 0.035);
+  // the bone, through the glove and out the bottom
+  ctx.strokeStyle = DCC_INK; ctx.lineWidth = s * 0.2 + lw * 2;
+  ctx.beginPath(); ctx.moveTo(0, s * 0.9); ctx.lineTo(0, -s * 0.35); ctx.stroke();
+  var bone = ctx.createLinearGradient(-s * 0.1, 0, s * 0.1, 0);
+  bone.addColorStop(0, "#efe6d2"); bone.addColorStop(0.5, "#fffaf0"); bone.addColorStop(1, "#d4c7ac");
+  ctx.strokeStyle = bone; ctx.lineWidth = s * 0.2;
+  ctx.beginPath(); ctx.moveTo(0, s * 0.9); ctx.lineTo(0, -s * 0.35); ctx.stroke();
+  ctx.fillStyle = "#fbf4e6"; ctx.strokeStyle = DCC_INK; ctx.lineWidth = lw;
+  [-1, 1].forEach(function (k) { ctx.beginPath(); ctx.arc(k * s * 0.1, s * 0.95, s * 0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+  ctx.fillStyle = "#fbf4e6";
+  ctx.fillRect(-s * 0.1, s * 0.85, s * 0.2, s * 0.1);
+  // the meat: narrow where it meets the bone, round and fat at the top
+  var pts = dccLumpy(s * 0.4, s * 0.64, 14, 0.1, 3, function (a) { var sn = Math.sin(a); return sn > 0 ? 1 - 0.62 * Math.pow(sn, 3) : 1 + 0.06 * sn * sn; });
+  ctx.save(); ctx.translate(0, -s * 0.75);
+  dccCrust(pts, s * 0.9, 22, 29);
+  ctx.restore();
   ctx.restore();
 }
 
@@ -345,7 +485,7 @@ function dccShotClose(b, u) {
   // the upper arm hangs off his right side, the forearm comes up to his cheek
   var sh = dccOn(x, y, r, rot, 0.84, -0.38), el = { x: Math.min(1025, sh.x + 150), y: hy + 270 };
   var ang = dccArm(b, sh.x, sh.y, el.x, el.y, hx, hy, r, 1);
-  dccSnack(hx + 4, hy - r * 0.21 - 70, 100, -0.25 + 0.1 * near);
+  dccSnack(hx + 4, hy - r * 0.21 - 90, 135, -0.25 + 0.1 * near);
   dccGlove(b, hx, hy, r, ang);
   ctx.restore();
 }
@@ -370,7 +510,7 @@ function dccShotWide(b, u) {
   ctx.fillStyle = "rgba(60,0,40,0.18)";
   ctx.beginPath(); ctx.ellipse(540, 1010 + r * 1.02, r * (0.95 - 0.08 * bo), r * 0.16, 0, 0, Math.PI * 2); ctx.fill();
   dccCake(165, 1170 + 6 * Math.sin(u * 2.2), 128);
-  dccChicken(880, 800 + 8 * Math.sin(u * 2 + 1), 140, -0.22 + 0.04 * Math.sin(u * 1.7));
+  dccChicken(870, 800 + 8 * Math.sin(u * 2 + 1), 155, -0.22 + 0.04 * Math.sin(u * 1.7));
   var rot = 0.05 * dccSway(u);
   dccBall(b, x, y, r, rot, dccEnv(u));
   [-1, 1].forEach(function (sd) {
@@ -399,7 +539,7 @@ function dccShotDrumsticks(b, u) {
     var sh = dccOn(x, y, r, rot, sd * 0.94, 0.05), el = dccOn(x, y, r, rot, sd * 1.08, 0.5 - 0.12 * show);
     var ang = dccArm(b, sh.x, sh.y, el.x, el.y, gx, gy, r, sd);
     var meat = -Math.PI / 2 + sd * (0.5 - 0.2 * rub) + 0.12 * wave * (1 - rub);
-    dccDrumstick(gx, gy, 150, meat);
+    dccDrumstick(gx, gy, 215, meat);
     dccGlove(b, gx, gy, r, ang);
   });
 }
