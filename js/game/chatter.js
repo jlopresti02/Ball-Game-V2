@@ -27,9 +27,13 @@
 //
 // Moments are watched from here, so the fighter's own file isn't touched:
 // goatMode / evilMode (Jon Jones swapping modes, jon.js), eyePoke (his eye
-// poke, or Gane's), kick (he throws a kick or one comes at him). A moment's
+// poke, or Gane's), kick (he throws a kick or one comes at him), weave (he
+// slips a shot), rattled (a crit on his chin, a big hit on him, or his kick or
+// hook slipped or checked) and backOut (Ciryl Gane's footwork backing out of
+// range, gane.js). A moment's
 // line plays `chance`% of the times it happens (100), at most one every `gap`
-// seconds (0). If he's talking when it happens, it waits up to `wait` seconds
+// seconds (0), and not before `after` seconds into the fight (0, so it never
+// steps on his opener). If he's talking when it happens, it waits up to `wait` seconds
 // (CHATTER_WAIT; 0 = only if he's quiet right then) for him to finish, and
 // nothing else of his starts while it waits. A `must` moment (Jon's mode
 // swaps) is never dropped: like the opener, it waits for as long as it takes
@@ -127,6 +131,20 @@ var CHATTER = {
       eyePoke: { lines: ["It's a great technique. It keeps my opponents at bay."] },
       kick: { lines: ["If he keeps his body back, there's no way I can reach him with a punch."], chance: 25, gap: 20, wait: 1 }
     }
+  },
+  // Ciryl Gane (chatter only, gane.js has no lines of its own): UFC's own uploads,
+  // his UFC 285 media day and his full interview with John Gooden. Christian's
+  // picks (2026-11-15): "under my skin" opens every fight and comes back now and
+  // then when he weaves a shot; "the good word in English" when he's rattled (a
+  // crit on his hands-down chin, a big hit, or his kick or overhand slipped or
+  // checked); "good footwork" now and then as he backs out of range.
+  "c-ciryl-gane": {
+    start: ["It's really hard to be under my skin."],
+    moments: {
+      weave: { lines: ["It's really hard to be under my skin."], chance: 35, gap: 30, after: 20, wait: 1 },
+      rattled: { lines: ["I don't have the good word in English."], chance: 50, gap: 20, after: 4, wait: 1.5 },
+      backOut: { lines: ["I got a good footwork and I moved very well."], chance: 30, gap: 30, after: 6, wait: 0.5 }
+    }
   }
 };
 var CHATTER_EVERY = [9, 14];
@@ -180,7 +198,25 @@ var CHATTER_MOMENTS = {
     var fell = chatterSeen(c, "odown", down) && down;
     c.seen.ohp = hp;
     return o.alive && (fell || (was != null && was - hp >= CHATTER_BIG_HIT));
-  }
+  },
+  // He slips a shot: a new WEAVE or FLOW (weave.js).
+  weave: function (b, o, c) { return chatterSeen(c, "weave", b.weaveAnim || null) && !!b.weaveAnim; },
+  // He's rattled: a crit on his chin (chin.js counts them in b.chinCrits), one
+  // hit of CHATTER_BIG_HIT or more on him, or his kick or hook / overhand slipped
+  // or checked (they dodged it, or their shin came up for it).
+  rattled: function (b, o, c) {
+    var crit = chatterSeen(c, "crits", b.chinCrits || 0);
+    var hp = b.hp, was = c.seen.myhp;
+    c.seen.myhp = hp;
+    var big = was != null && was - hp >= CHATTER_BIG_HIT;
+    var shot = b.kick && !b.kick.counter ? b.kick : (b.punch && b.punch.hook ? b.punch : null);
+    var fired = shot && shot.hit ? shot : null, prev = c.seen.shot;
+    c.seen.shot = fired;
+    var whiff = !!(fired && fired !== prev && o && (o.justDodged || (o.checkAnim && o.checkAnim.towardId === b.id)));
+    return crit || big || whiff;
+  },
+  // He starts backing out of range on his footwork (b.gn.mode "out", gane.js).
+  backOut: function (b, o, c) { var out = !!(b.gn && b.gn.mode === "out"); return chatterSeen(c, "out", out) && out; }
 };
 var CHATTER_LOW = 0.3;        // lowHealth: under this share of his health
 var CHATTER_BURST = 3;        // combo: strikes landed in a row
@@ -205,7 +241,7 @@ function chatterMoment(b, o, c, cfg) {
   for (var k in cfg.moments) {
     var mo = cfg.moments[k], det = CHATTER_MOMENTS[k];
     if (c.gaps[k] > 0) c.gaps[k] -= c.dt;
-    if (!det || !det(b, o, c) || c.gaps[k] > 0) continue;
+    if (!det || !det(b, o, c) || c.gaps[k] > 0 || (mo.after && c.t < mo.after)) continue;
     if (Math.random() * 100 >= (mo.chance != null ? mo.chance : 100)) continue;
     var have = (mo.lines || []).filter(function (t) { return SPEECH_CLIPS[t]; });
     if (!have.length) continue;

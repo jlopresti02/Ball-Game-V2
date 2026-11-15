@@ -30,6 +30,7 @@ function chinCritMult(b, source, attackerId) {
   b.squash = { t: 0.12, max: 0.12, nx: -ux, ny: -uy };
   hitStop = Math.max(hitStop, 0.04);
   if (!reduceMotion) shake = Math.max(shake, 9);
+  b.chinCrits = (b.chinCrits || 0) + 1; // counted for the "rattled" voice line moment (chatter.js)
   return ch.critMult;
 }
 

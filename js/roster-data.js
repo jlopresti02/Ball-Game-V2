@@ -1389,7 +1389,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ciryl-gane",
-    "rev": 10,
+    "rev": 11,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
