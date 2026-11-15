@@ -5913,7 +5913,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 9,
+    "rev": 10,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
@@ -6178,10 +6178,10 @@ var SAVED_ROSTER = [
           "every": 0.06,
           "spread": 0.16,
           "speed": 900,
-          "damage": 1,
-          "bigDamage": 14,
+          "damage": 3,
+          "bigDamage": 42,
           "bigKnockback": 800,
-          "bigSlamDamage": 4
+          "bigSlamDamage": 12
         },
         "shellStrike": {
           "comboAt": 3,
