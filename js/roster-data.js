@@ -1004,7 +1004,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 17,
+    "rev": 18,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -2528,7 +2528,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-francis-ngannou",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Francis Ngannou",
@@ -4421,7 +4421,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 10,
+    "rev": 11,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
