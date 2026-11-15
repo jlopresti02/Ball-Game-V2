@@ -5389,7 +5389,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-sean-omalley",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "bantamweight",
     "name": "Sean O'Malley",
@@ -5433,7 +5433,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 25,
+      "damage": 21.25,
       "cooldown": 1.25,
       "speed": 0.26,
       "size": 13,
@@ -5443,7 +5443,7 @@ var SAVED_ROSTER = [
     },
     "hasKick": true,
     "kick": {
-      "damage": 36,
+      "damage": 30.6,
       "cooldown": 2.6,
       "speed": 0.45,
       "size": 15,
@@ -5503,7 +5503,7 @@ var SAVED_ROSTER = [
         "speed": 1150,
         "turn": 3,
         "reach": 34,
-        "damage": 36,
+        "damage": 30.6,
         "crit": 15,
         "knockback": 560,
         "miss": 0.35,
@@ -5523,10 +5523,10 @@ var SAVED_ROSTER = [
         "leap": 0.22,
         "lunge": 760,
         "reach": 34,
-        "damage": 45,
+        "damage": 38.25,
         "knockback": 900,
         "wallSlams": 1,
-        "slamDamage": 6,
+        "slamDamage": 5.1,
         "readChance": 25
       },
       "candy": {
