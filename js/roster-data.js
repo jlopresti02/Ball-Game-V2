@@ -2319,7 +2319,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-francis-ngannou",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Francis Ngannou",
@@ -2401,6 +2401,13 @@ var SAVED_ROSTER = [
     },
     "hasForget": false,
     "blockChance": 10,
+    "getUp": {
+      "size": 95,
+      "wrestling": 25,
+      "max": 60,
+      "cut": 0.5,
+      "shove": 420
+    },
     "ngannou": {
       "rage": {
         "hitFill": 8,
@@ -2642,7 +2649,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 10,
+    "rev": 11,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -2758,6 +2765,13 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "blockChance": 10,
+    "getUp": {
+      "size": 20,
+      "wrestling": 85,
+      "cut": 0.7,
+      "reset": 2,
+      "shot": 8
+    },
     "hasSpecial": true,
     "special": {
       "move": "aurafarm",
@@ -2827,7 +2841,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jiri-prochazka",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Ji\u0159\u00ed Proch\u00e1zka",
@@ -2894,6 +2908,13 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "blockChance": 0,
+    "getUp": {
+      "size": 55,
+      "wrestling": 30,
+      "cut": 0.55,
+      "shot": 12,
+      "style": "scramble"
+    },
     "elbow": {
       "damage": 8,
       "cooldown": 1.6,

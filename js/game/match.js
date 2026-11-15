@@ -101,6 +101,7 @@ function startMatchSeeded(ch0, ch1) {
   impacts = []; hitStop = 0; koDuel = null; winBy = null;
   resetDoBronx();
   resetDeathFx(); resetIntroMsg(); resetToss();
+  resetGetUp(); // (get-up.js)
   resetReferee(); // only when Ciryl Gane's in the fight (referee.js)
   resetChairShot();
   resetAllAmerican();

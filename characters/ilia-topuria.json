@@ -1,6 +1,6 @@
 {
   "id": "c-ilia-topuria",
-  "rev": 10,
+  "rev": 11,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Ilia Topuria",
@@ -116,6 +116,7 @@
   "hasSwing": false,
   "hasForget": false,
   "blockChance": 10,
+  "getUp": {"size": 20, "wrestling": 85, "cut": 0.7, "reset": 2, "shot": 8},
   "hasSpecial": true,
   "special": {
     "move": "aurafarm",
