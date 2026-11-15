@@ -4904,7 +4904,7 @@ function getImg(dataURL) {
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
@@ -5051,6 +5051,18 @@ var SAVED_ROSTER = [
       "onKick": true,
       "slow": 0.6,
       "time": 3
+    },
+    "headKick": {
+      "setup": 1,
+      "chance": 85,
+      "window": 2.5,
+      "cooldown": 12,
+      "range": 60,
+      "reach": 95,
+      "landChance": 50,
+      "blockShare": 40,
+      "koChance": 60,
+      "damagePct": 50
     },
     "hasSpecial": true,
     "special": {
@@ -7426,7 +7438,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-francis-ngannou",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Francis Ngannou",
@@ -7527,12 +7539,22 @@ var SAVED_ROSTER = [
         "range": 120,
         "windup": 1.0,
         "lock": 0.35,
-        "readChance": 30,
-        "readWeave": 20,
         "lunge": 1250,
         "lungeDist": 280,
         "damage": 75,
         "knockback": 1100,
+        "escape": {
+          "pointBlank": 25,
+          "near": 40,
+          "far": 160,
+          "nearChance": 8,
+          "farChance": 75,
+          "slipBonus": 15,
+          "slipSpeed": 420
+        },
+        "homing": 8,
+        "chase": 400,
+        "overshoot": 0.32,
         "wallSlams": 3,
         "slamDamage": 8,
         "koBase": 45,
@@ -9139,7 +9161,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 15,
+    "rev": 16,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -9213,6 +9235,30 @@ var SAVED_ROSTER = [
       "guardDrop": 10
     },
     "hasKick": false,
+    "legKick": {
+      "first": [
+        1,
+        2
+      ],
+      "every": [
+        2,
+        3.5
+      ],
+      "range": 64,
+      "reach": 95,
+      "damage": 11,
+      "slow": 0.72,
+      "time": 5,
+      "stack": 0.12,
+      "maxStacks": 3,
+      "minSlow": 0.45,
+      "size": 1.15,
+      "buckle": {
+        "at": 3,
+        "slow": 0.25,
+        "time": 1.2
+      }
+    },
     "hasGrapple": true,
     "grapple": {
       "damage": 35,
@@ -13011,6 +13057,7 @@ function inOrdinaryMovement(b) {
   if (vanBusy(b)) return false; // Joshua Van stopped while his gloves catch fire (van.js)
   if (teepBusy(b) || stricklandBusy(b)) return false; // planted for a teep (teep.js), or Sean Strickland's one-two (strickland.js)
   if (legKickBusy(b)) return false; // planted for a leg kick (leg-kick.js)
+  if (headKickBusy(b)) return false; // planted for a head kick, off balance after a miss, or over them out cold (head-kick.js)
   if (diazBusy(b)) return false; // Nate Diaz slapping, diving for the neck, or arms out (diaz.js)
   if (fergusonBusy(b)) return false; // Tony Ferguson sliding, shooting, in a hold or his shell (ferguson.js)
   if (fedorBusy(b)) return false; // Fedor Emelianenko reaching for the clinch or throwing (fedor.js)
@@ -13325,6 +13372,7 @@ function updateAbilities(dt) {
     if (updatePrates(self, other, dt)) continue; // Carlos Prates lighting up, and his Rubber Pistol (prates.js)
     if (updateClinch(self, other, dt)) continue; // the clinch: knees, elbows and a parting shot on the break (before the teep, so a teep can't cut it off) (clinch.js)
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
+    if (updateHeadKick(self, other, dt)) continue; // the head kick his calf kicks set up (head-kick.js)
     if (updateLegKick(self, other, dt)) continue; // a leg kick into the calf that leaves them limping (leg-kick.js)
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)
     if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
@@ -24273,15 +24321,23 @@ function playOverhandIce() {
 // Rage punch   when it's full he turns green, grows (grow) and says "I'm going
 //              to connect, and you know what happen when I connect." He stalks
 //              in, then plants and cocks his right hand back for `windup`
-//              seconds while a green line shows where it's going. The line
-//              follows them, then locks for the last `lock` seconds. That's
-//              the tell: some read it and back off (readChance, plus readWeave
-//              for a weaver). Then he lunges down the line. It can miss
-//              ("MISSED!", and he's gassed for a moment) or land: `damage` and
-//              a pinball off the walls, and a knockout koBase% of the time at
-//              full health, up to koBase + koLow% the more hurt they are
-//              (always if it would finish them). Once it lands it can't be
-//              slipped or blocked: the dodge is reading the wind-up.
+//              seconds: a flash, a big "!" over his head and a green line
+//              showing where it's going. The line follows them, then locks
+//              (and the "!" flashes red) for the last `lock` seconds. That's
+//              the tell (Christian, 2026-11-15): how far apart they are when
+//              the "!" goes up decides whether they can get out of the way
+//              (`escape`): none from `pointBlank` in, nearChance% out to
+//              `near`, rising to farChance% at `far` and beyond, plus
+//              slipBonus for a weaver or a footwork fighter. One who reads it
+//              sidesteps off the line once it locks (at `slipSpeed`) and he
+//              lunges straight past them ("SLIPPED IT!"), skidding on for
+//              `overshoot` seconds before he's gassed. One who doesn't gets
+//              chased down: the lunge steers after them (`homing`) up to
+//              `chase` units. It lands for `damage` and a pinball off the
+//              walls, and a knockout koBase% of the time at full health, up
+//              to koBase + koLow% the more hurt they are (always if it would
+//              finish them). Once it lands it can't be slipped or blocked: the
+//              dodge is reading the wind-up.
 // Smash        his special (special.move "smash"): "In this fight, I'm just
 //              looking to smash." He crouches and leaps, a red circle showing
 //              where he'll come down (where they're heading), and smashes the
@@ -24298,7 +24354,7 @@ function playOverhandIce() {
 //              his real record on the punch-power machine.
 // Voice lines  (ngannou.lines) speech bubbles (speech.js): the rage line; a
 //              taunt after a big shot lands; "Of course, he's really
-//              intimidated." when they back off and he misses; vs Jon Jones
+//              intimidated." when they slip the rage punch; vs Jon Jones
 //              only, at the start: "This time I am the champ. He is coming up
 //              and looking for me."
 // The rage punch runs on b.ngSt, the walk over to Dana on b.ngAct, and the
@@ -24451,21 +24507,32 @@ function updateNgannou(self, other, dt) {
   if (st.phase === "windup") {
     self.vx = 0; self.vy = 0;
     if (st.t < rc.windup - rc.lock) st.aim = ngTurn(st.aim, Math.atan2(dy, dx), dt * 6);
-    else if (!st.locked) { st.locked = true; playNgLock(); }
-    if (st.read) ngBackOff(self, other);
+    else if (!st.locked) { st.locked = true; st.side = ngSlipSide(st, other); playNgLock(); }
+    if (st.escape && st.locked) ngSlip(other, st, rc);
     if (st.t >= rc.windup) { st.phase = "lunge"; st.t = 0; st.went = 0; playWhoosh(); playNgSwing(); }
     return true;
   }
   if (st.phase === "lunge") {
+    // They read it: straight down the locked line while they slip off it.
+    // They didn't: it steers after them, and goes further.
+    if (st.escape) ngSlip(other, st, rc);
+    else if (rc.homing) st.aim = ngTurn(st.aim, Math.atan2(dy, dx), dt * rc.homing);
     var ux = Math.cos(st.aim), uy = Math.sin(st.aim);
     self.vx = ux * rc.lunge; self.vy = uy * rc.lunge;
     st.went += rc.lunge * dt;
-    if (st.read) ngBackOff(self, other);
     var fr = ngFistR(self), reach = self.r + fr * 0.6;
     var ox = other.x - (self.x + ux * reach), oy = other.y - (self.y + uy * reach);
     if (other.alive && !other.koOut && ox * ox + oy * oy < (other.r + fr) * (other.r + fr)) { landRage(self, other, rc, ux, uy); return !!self.ngSt; }
-    if (st.went >= rc.lungeDist) { rageMiss(self, rc); return false; }
+    if (st.went >= (st.escape ? rc.lungeDist : (rc.chase || rc.lungeDist))) { rageMiss(self, other, rc); return true; }
     if (!reduceMotion) particles.push({ x: self.x, y: self.y, vx: -self.vx * 0.1, vy: -self.vy * 0.1, life: 0.22, max: 0.22, size: self.r * 0.6, color: "#58c94a" });
+    return true;
+  }
+  if (st.phase === "whiff") {
+    // Missed: he overshoots, skidding on down the line with the arm out.
+    var k = Math.max(0, 1 - st.t / (rc.overshoot || 0.3)), wx = Math.cos(st.aim), wy = Math.sin(st.aim);
+    self.vx = wx * rc.lunge * 0.55 * k; self.vy = wy * rc.lunge * 0.55 * k;
+    if (!reduceMotion && Math.random() < dt * 30) particles.push({ x: self.x - wx * self.r * 0.8 + (Math.random() - 0.5) * self.r, y: self.y - wy * self.r * 0.8 + self.r * 0.5, vx: -wx * 40 + (Math.random() - 0.5) * 60, vy: -wy * 40 - 30, life: 0.4, max: 0.4, size: 4 + Math.random() * 5, color: "rgba(200,190,170,0.75)" });
+    if (st.t >= (rc.overshoot || 0.3)) { endRage(self); return false; }
     return true;
   }
   // "ko": flexing over them while they're out cold.
@@ -24491,18 +24558,47 @@ function startRage(self, other) {
 function beginRageWindup(self, other, rc, dx, dy) {
   var st = self.ngSt;
   st.phase = "windup"; st.t = 0; st.aim = Math.atan2(dy, dx); st.locked = false;
-  st.read = Math.random() * 100 < rc.readChance + (other.char.hasWeave ? rc.readWeave : 0);
-  if (st.read) floater(other.x, other.y - other.r - 30, "!", "crit");
+  // The "!" goes up now: how far away they are decides if they can get out.
+  st.gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;
+  st.escape = Math.random() * 100 < ngEscapeChance(rc.escape, st.gap, other);
+  st.side = 1; st.slipped = false;
   playNgWindup(rc.windup);
 }
 
-// Backing off from a punch they saw coming (only while they're rolling about
-// on their own).
-function ngBackOff(self, other) {
+// The chance (in %) they read it and get out of the way, by the gap between
+// them when the "!" goes up.
+function ngEscapeChance(ec, gap, o) {
+  if (!ec || gap <= ec.pointBlank) return 0;
+  var k = Math.max(0, Math.min(1, (gap - ec.near) / Math.max(1, ec.far - ec.near)));
+  var c = ec.nearChance + (ec.farChance - ec.nearChance) * k;
+  var oc = o.char || {};
+  if (oc.hasWeave || (oc.gane && oc.gane.footwork) || (oc.bisping && oc.bisping.footwork)) c += ec.slipBonus || 0;
+  return Math.min(95, c);
+}
+
+// Which way they slip once the line locks: the side with more room before
+// the cage.
+function ngSlipSide(st, o) {
+  var px = -Math.sin(st.aim), py = Math.cos(st.aim);
+  function room(s) {
+    var x = o.x + px * s * 110, y = o.y + py * s * 110;
+    return Math.min(x - o.r, W - o.r - x, y - o.r, H - o.r - y);
+  }
+  var a = room(1), b = room(-1);
+  if (Math.abs(a - b) < 15) return (o.vx * px + o.vy * py) >= 0 ? 1 : -1; // the way they were already drifting
+  return a > b ? 1 : -1;
+}
+
+// Sidestepping off the locked line (only while they're rolling about on
+// their own). A weaver or a footwork fighter shows a slip as they go.
+function ngSlip(other, st, rc) {
   if (!other.alive || !inOrdinaryMovement(other) || other.angry) return;
-  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-  var sp = Math.max(Math.sqrt(other.vx * other.vx + other.vy * other.vy), 260);
-  other.vx = dx / d * sp; other.vy = dy / d * sp;
+  var sp = Math.max(Math.sqrt(other.vx * other.vx + other.vy * other.vy), (rc.escape && rc.escape.slipSpeed) || 400);
+  other.vx = -Math.sin(st.aim) * st.side * sp; other.vy = Math.cos(st.aim) * st.side * sp;
+  if (!st.slipped) {
+    st.slipped = true;
+    if (other.char.hasWeave && !other.weaveAnim) other.weaveAnim = { t: 0, dur: 0.3, sign: st.side };
+  }
 }
 
 function ngKnockable(o) { return o.alive && !o.grappled && !o.grapple && !o.slam && !subLocked(o) && !o.igbb && !o.koOut; }
@@ -24519,10 +24615,10 @@ function landRage(self, other, rc, ux, uy) {
       crowdReact(1);
       return;
     }
-    if (other.justDodged) { rageMiss(self, rc); return; }
+    if (other.justDodged) { rageMiss(self, other, rc); return; }
   }
   var dealt = hurt(other, rc.damage, "igbb", self.id); // can't be slipped or blocked once it lands
-  if (other.justDodged) { rageMiss(self, rc); return; }
+  if (other.justDodged) { rageMiss(self, other, rc); return; }
   if (dealt > 0) {
     ngPunchFx(self, other, ux, uy);
     floater(other.x, other.y - other.r - 34, "CONNECTED!", "crit");
@@ -24565,13 +24661,16 @@ function ngPunchFx(self, other, ux, uy) {
   crowdReact(0.9);
 }
 
-function rageMiss(self, rc) {
-  var st = self.ngSt;
-  floater(self.x + Math.cos(st.aim) * self.r * 1.6, self.y + Math.sin(st.aim) * self.r * 1.6 - 20, "MISSED!", "dodge");
+// A whiff: he skids on past (the "whiff" phase in updateNgannou), then he's
+// gassed (the slow's clock is already running while he skids).
+function rageMiss(self, other, rc) {
+  var st = self.ngSt, slipped = st.escape && st.slipped && other.alive;
+  if (slipped) floater(other.x, other.y - other.r - 30, "SLIPPED IT!", "dodge");
+  else floater(self.x + Math.cos(st.aim) * self.r * 1.6, self.y + Math.sin(st.aim) * self.r * 1.6 - 20, "MISSED!", "dodge");
   playNgWhiff();
   addSlow(self, rc.gasSlow, rc.gasTime, "gassed");
-  if (st.read && ngCfg(self).lines) say(self, NG_LINES.backOff); // they saw it coming and backed off
-  endRage(self);
+  if (slipped && ngCfg(self).lines) say(self, NG_LINES.backOff); // they saw it coming and got out of the way
+  st.phase = "whiff"; st.t = 0;
 }
 
 function endRage(self) {
@@ -24822,7 +24921,7 @@ function tickNgannou(dt) {
     // vs Jon Jones only, right at the start.
     if (b.ngJon === undefined) b.ngJon = cfg.lines && isJon(other) ? 1.2 : null;
     if (b.ngJon != null && started && b.alive) { b.ngJon -= dt; if (b.ngJon <= 0) { b.ngJon = null; say(b, NG_LINES.jon); } }
-    if (b.ngSt && b.ngSt.phase !== "ko" && ngInterrupted(b)) cancelRage(b);
+    if (b.ngSt && b.ngSt.phase !== "ko" && ngInterrupted(b)) { if (b.ngSt.phase === "whiff") endRage(b); else cancelRage(b); }
     if (b.ngSt && b.ngSt.phase === "ko" && !b.alive) { b.ngSt = null; finishKnockedOut(other); checkEnd(); }
     if (cfg.rage && b.alive && !b.ngSt) watchFrustration(b, other, cfg.rage);
     // Green and bigger while the rage is on (and while it's full, waiting to go).
@@ -24932,6 +25031,12 @@ function drawNgannou(b, other) {
       ctx.beginPath(); ctx.arc(hxR, hyR, fr * (1.35 + 0.25 * k), 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
       ngArm(b, b.x + px * r * 0.5, b.y + py * r * 0.5, b.x + ux * r * 0.85 + px * r * 0.4, b.y + uy * r * 0.85 + py * r * 0.4, gr, ang);
+      drawNgTell(b, st, cfg.rage);
+    } else if (st.phase === "whiff") { // overshot: the arm flung on past where they were, the left one flailing
+      var wk = easeOut(Math.min(1, st.t / 0.2)), wa = ang + 0.55 * wk, fr3 = ngFistR(b);
+      var wux = Math.cos(wa), wuy = Math.sin(wa);
+      ngArm(b, b.x - px * r * 0.35, b.y - py * r * 0.35, b.x + wux * (r + fr3 * 0.7), b.y + wuy * (r + fr3 * 0.7), fr3, wa);
+      ngArm(b, b.x + px * r * 0.5, b.y + py * r * 0.5, b.x - ux * r * 0.35 + px * r * (0.95 + 0.15 * Math.sin(ngClock * 22)), b.y - uy * r * 0.35 + py * r * (0.95 + 0.15 * Math.sin(ngClock * 22)), gr, ang);
     } else if (st.phase === "lunge") { // thrown: arm out straight down the line
       var fr2 = ngFistR(b);
       ngArm(b, b.x - px * r * 0.35, b.y - py * r * 0.35, b.x + ux * (r + fr2 * 0.6), b.y + uy * (r + fr2 * 0.6), fr2, ang);
@@ -24969,6 +25074,36 @@ function drawNgannou(b, other) {
       [-1, 1].forEach(function (s) { ngArm(b, b.x + s * r * 0.62, b.y + r * 0.05, b.x + s * r * (0.95 - 0.15 * dn), b.y + r * (0.55 + 0.45 * dn), gr * 1.05, Math.PI / 2); });
     }
   }
+}
+
+// The tell over him during the wind-up: a white flash on him and a ring when
+// the "!" goes up, and again when the line locks; the "!" pops in yellow,
+// then flashes red and white once it's locked.
+function drawNgTell(b, st, rc) {
+  if (!rc) return;
+  var r = b.r, tl = st.t - (rc.windup - rc.lock);
+  ctx.save();
+  [st.t, tl].forEach(function (t) {
+    if (!(t >= 0 && t < 0.3)) return;
+    ctx.globalAlpha = 0.55 * Math.max(0, 1 - t / 0.14); ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(b.x, b.y, r * 1.02, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.9 * (1 - t / 0.3); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(b.x, b.y, r * (1.05 + 1.3 * easeOut(t / 0.3)), 0, Math.PI * 2); ctx.stroke();
+  });
+  var pop = st.t < 0.16 ? 1.6 - 0.6 * (st.t / 0.16) : 1;
+  var sc = pop * (st.locked ? 1 + 0.14 * Math.sin(ngClock * 34) : 1);
+  // Over his bars; under him instead when that's up against the top of the
+  // cage or behind the test arena's banner (still-ads.js, drawn over this).
+  var ey = b.y - r - 56, top = (typeof stillShow !== "undefined" && stillShow > 0 && !stadiumOn()) ? 146 : 28;
+  if (ey < top) ey = b.y + r + 46;
+  ctx.globalAlpha = 1;
+  ctx.translate(b.x, ey); ctx.scale(sc, sc);
+  ctx.font = "900 58px Impact, 'Arial Black', 'Helvetica Neue', Arial, sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+  ctx.lineWidth = 9; ctx.strokeStyle = "#111111"; ctx.strokeText("!", 0, 0);
+  ctx.fillStyle = st.locked ? (Math.sin(ngClock * 34) > 0 ? "#ff3b2f" : "#ffffff") : "#ffe14a";
+  ctx.fillText("!", 0, 0);
+  ctx.restore();
 }
 
 function drawNgFlex(b, gr) {
@@ -55886,6 +56021,7 @@ function legKickLimp(v, c, from, shout) {
     crowdReact(0.4);
     if (!reduceMotion) shake = Math.max(shake, 12);
   }
+  headKickSetup(from, v); // a calf kick landed: maybe the head kick next (head-kick.js)
   return n;
 }
 
@@ -56105,6 +56241,335 @@ function legKickGalleryMoves(ch, add) {
     var o = c.vs[id], foe = typeof findChar === "function" ? findChar(id) : null, ev2 = v(o, "every");
     add("🦵", "vs " + (foe ? foe.name : id), "Every " + ev2[0] + "-" + ev2[1] + "s, " + v(o, "damage") + " damage, " + limp(o) + ".");
   });
+}
+
+// Head kick (Christian, 2026-11-15): Alex Pereira's knockout head kick, set
+// up by his calf kicks. "It should be set up after landing repeated calf
+// kicks. Every once in a while he throws it, and he should miss it a decent
+// amount of the time, because it's basically a one-hit KO or half their
+// health."
+//
+// A fighter opts in with a "headKick" block in its character file (every key
+// can be left out; the defaults are in HEAD_KICK_DEFAULTS). It needs a leg
+// kick ("legKick", leg-kick.js) to set it up:
+//
+//  - Setup: once he's landed `setup` calf kicks (counted since his last head
+//    kick, or since the bell), every calf kick that lands is a chance:
+//    `chance`% of the time he goes high next. Not within `cooldown` seconds
+//    of his last head kick.
+//  - Then, within `window` seconds (while they're still limping), as soon as
+//    they're inside `range` (edge to edge) and he's free: he plants and loads
+//    up (`chamber` seconds: the tell, a red dashed arc up to their head),
+//    whips the leg up and round high (`sweep`, a big red swoosh) into their
+//    head. If the window runs out first, the chance is gone; the next calf
+//    kick is a new one.
+//  - It lands `landChance`% of the time. Otherwise they duck under it
+//    ("DUCKED!": they drop, the leg sails over their head and carries him
+//    round) or get a glove up ("BLOCKED!"); `blockShare`% of the misses are
+//    blocks. If they're further than `reach` away when the foot gets there:
+//    "WHIFF". A miss leaves him off balance and open for `missRecover`
+//    seconds. That one roll is the only defence: no weave, block or kick
+//    check on top (it hurts as a "finisher").
+//  - When it lands: "HEAD KICK!", a big star on their head, a freeze-frame.
+//    `koChance`% of the time they're out cold (the knockout, then the fight's
+//    called); otherwise it takes `damagePct`% of their full health.
+//
+// The API: headKickSetup(self, v) from legKickLimp (leg-kick.js), every calf
+// kick that lands; updateHeadKick from the abilities loop; headKickBusy from
+// physics.js (planted while it's out); tickHeadKicks from update();
+// drawHeadKicksOver from draw.js (over both fighters); headKickGalleryMoves.
+// A fighter with no "headKick" block is untouched (no extra random rolls).
+// The kick runs on b.hkk: { t, out, hit, res, side, vicId, frame }; the
+// knockout on b.hkKo.
+"use strict";
+
+var HEAD_KICK_DEFAULTS = { setup: 2, chance: 40, window: 2.5, cooldown: 12, range: 60, reach: 95,
+  landChance: 50, blockShare: 40, koChance: 60, damagePct: 50,
+  chamber: 0.26, sweep: 0.13, recover: 0.3, missRecover: 0.6,
+  text: "HEAD KICK!", color: "#ff3b30", size: 1.35 };
+var HK_KO_HOLD = 1.5;  // standing over them, out cold, before it's called
+var HK_STAR = 0.42;    // how long the star stays on their head
+var hkFrame = 0, hkClock = 0;
+
+function headKickCfg(b) {
+  var c = b && b.char && b.char.headKick;
+  if (!c) return null;
+  if (b.hkc && b.hkc.src === c) return b.hkc.cfg;
+  var out = {}, k;
+  for (k in HEAD_KICK_DEFAULTS) out[k] = HEAD_KICK_DEFAULTS[k];
+  for (k in c) out[k] = c[k];
+  b.hkc = { src: c, cfg: out };
+  return out;
+}
+function headKickBusy(b) { return !!(b && (b.hkk || b.hkKo)); }
+
+// From legKickLimp (leg-kick.js): a calf kick of his landed on v.
+function headKickSetup(self, v) {
+  var c = headKickCfg(self);
+  if (!c || !v || v === self || self.hkk || self.hkKo) return;
+  self.hkSet = (self.hkSet || 0) + 1;
+  if (self.hkArm > 0 || self.hkSet < c.setup || self.hkCd > 0) return;
+  if (Math.random() * 100 < c.chance) self.hkArm = c.window; // going high next
+}
+
+// From the abilities loop. True while the kick's out, he's off balance
+// after a miss, or standing over them out cold (he throws nothing else).
+function updateHeadKick(self, other, dt) {
+  var c = headKickCfg(self);
+  if (!c) return false;
+  var k = self.hkk;
+  if (!k && !self.hkKo) {
+    if (!(self.hkArm > 0) || !started || over) return false;
+    if (lkGap(self, other) > c.range || !lkCanStart(self, other)) return false;
+    k = self.hkk = { t: 0, out: null, hit: false, res: null, side: Math.random() < 0.5 ? -1 : 1, vicId: other.id, frame: hkFrame };
+    self.hkArm = 0; self.hkSet = 0; self.hkCd = c.cooldown;
+    playWhoosh();
+  }
+  if (k) {
+    if (!self.hkKo && (over || !self.alive || self.koOut || self.grappled || self.slam || self.shocked || self.dazed || self.dizzy || self.checkStun > 0)) {
+      endHeadKick(self);
+      return false;
+    }
+    k.frame = hkFrame;
+    k.t += dt;
+    if (!k.hit) {
+      var damp = Math.exp(-14 * dt); self.vx *= damp; self.vy *= damp; // planted on the standing leg
+      if (!k.out && k.t >= c.chamber) hkSwing(self, other, c, k);
+      if (k.t >= c.chamber + c.sweep) { k.hit = true; hkResolve(self, other, c, k); }
+    } else if (!self.hkKo) {
+      var d2 = Math.exp(-(hkLanded(k) ? 10 : 3) * dt); self.vx *= d2; self.vy *= d2; // a miss carries him round
+    }
+    if (k.hit && k.t >= c.chamber + c.sweep + (hkLanded(k) ? c.recover : c.missRecover)) {
+      self.hkk = null;
+      if (!self.hkKo) { endHeadKick(self); return false; }
+    }
+  }
+  if (self.hkKo) { var d3 = Math.exp(-6 * dt); self.vx *= d3; self.vy *= d3; return true; }
+  return true;
+}
+function hkLanded(k) { return k.res === "hit" || k.res === "ko"; }
+function endHeadKick(b) {
+  b.hkk = null;
+  if (b.alive && !b.koOut && inOrdinaryMovement(b)) setSpeed(b, (b.baseSpeed || SPEED) * slowMult(b)); // rolling again
+}
+
+// The leg comes up: whether it lands, or they duck it or block it, is
+// decided now (so they can be seen dropping under it).
+function hkSwing(self, other, c, k) {
+  k.out = Math.random() * 100 < c.landChance ? "land" : (Math.random() * 100 < c.blockShare ? "block" : "duck");
+  if (k.out === "duck" && other.alive && !other.koOut) other.squash = { t: 0.42, max: 0.42, nx: 0, ny: -1 }; // dropping under it
+  playWhoosh();
+}
+
+// The foot gets there. Returns what happened: "ko", "hit", "duck", "block",
+// "whiff", "slipped" (some fighter's own dodge took it) or "gone".
+function hkResolve(self, other, c, k) {
+  var res;
+  if (!other.alive || other.koOut || other.igbb || specialBusy(other)) res = "gone";
+  else if (lkGap(self, other) > c.reach) res = "whiff";
+  else res = k.out;
+  var L = hkLegAt(self, other, c, k, res);
+  if (res === "land") res = hkLand(self, other, c, L);
+  else if (res === "duck") {
+    floater(other.x, other.y - other.r - 30, "DUCKED!", "dodge");
+    self.vx = L.ex * 170 + L.qx * 60; self.vy = L.ey * 170 + L.qy * 60; // the kick carries him round
+  } else if (res === "block") {
+    floater(other.x, other.y - other.r - 30, "BLOCKED!", "dodge");
+    other.flash = 0.1;
+    impacts.push({ x: L.foot.x, y: L.foot.y, nx: -L.ex, ny: -L.ey, life: 0.3, max: 0.3, color: "#ffffff" });
+    playKick();
+    if (!reduceMotion) shake = Math.max(shake, 6);
+  } else if (res === "whiff") floater(other.x, other.y - other.r - 8, "WHIFF", "dodge");
+  k.res = res;
+  return res;
+}
+
+// It lands: a knockout, or half their health.
+function hkLand(self, other, c, L) {
+  var free = !other.holdAtOne && !other.guard && !other.sprawl && !other.sprawled && !other.grappled && !other.grapple && !other.slam && !subLocked(other);
+  if (free && Math.random() * 100 < c.koChance) {
+    // Out cold (as throwKoPunch, korush.js, but no slip or block: the land roll was that).
+    var was = other.holdAtOne;
+    other.holdAtOne = true;
+    var got = hurt(other, Math.ceil(other.hp / incomingMultiplier(other)), "finisher", self.id);
+    other.holdAtOne = was;
+    if (!(got > 0)) return "slipped";
+    other.hp = 0; other.koOut = true;
+    other.punch = null; other.kick = null; other.swing = null; other.throwAnim = null; other.jabAnim = null;
+    other.vx = L.ex * 320; other.vy = L.ey * 320;
+    hkImpact(self, other, c, L, true);
+    knockoutFx(self, other); // (the commentators call a one-shot knockout off koOut, commentary-calls.js)
+    self.hkKo = { t: 0, vicId: other.id };
+    self.vx = 0; self.vy = 0;
+    return "ko";
+  }
+  var dealt = hurt(other, MAX_HP * c.damagePct / 100, "finisher", self.id);
+  if (!(dealt > 0)) { checkEnd(); return "slipped"; }
+  hkImpact(self, other, c, L, false);
+  if (other.alive && !other.grappled && !other.grapple && !other.slam && !subLocked(other)) {
+    other.vx += L.ex * 520; other.vy += L.ey * 520;
+    other.knockFly = Math.max(other.knockFly || 0, 0.2);
+  }
+  checkEnd();
+  return "hit";
+}
+
+function hkImpact(self, other, c, L, ko) {
+  var x = L.foot.x, y = L.foot.y;
+  floater(other.x, other.y - other.r - (ko ? 74 : 34), c.text, "crit");
+  other.flash = 0.2;
+  other.squash = { t: 0.24, max: 0.24, nx: -L.ex, ny: -L.ey };
+  impacts.push({ x: x, y: y, nx: -L.ex, ny: -L.ey, life: 0.55, max: 0.55, color: c.color });
+  igbbSparks(x, y, L.ex, L.ey, c.color, ko ? 28 : 20, ko ? 640 : 500);
+  if (self.hkk) self.hkk.star = { x: x, y: y, t: self.hkk.t, ang: Math.random() * Math.PI };
+  hitStop = Math.max(hitStop, 0.16);
+  if (!reduceMotion) shake = Math.max(shake, 20);
+  playKick();
+  playImpactClip(2, 1.3, 60);
+  crowdReact(1);
+}
+
+// From update(), every frame: the window and cooldown running down, a kick
+// the abilities loop didn't get to this frame dropped, the knockout called.
+function tickHeadKicks(dt) {
+  hkClock += dt;
+  balls.forEach(function (b) {
+    if (!b.char || !b.char.headKick) return;
+    if (b.hkCd > 0) b.hkCd -= dt;
+    if (b.hkArm > 0) b.hkArm -= dt;
+    var m = b.hkKo;
+    if (m) {
+      var o = balls[m.vicId];
+      m.t += dt;
+      if (o.koOut) { var damp = Math.exp(-5 * dt); o.vx *= damp; o.vy *= damp; }
+      if (m.t >= HK_KO_HOLD || !o.koOut || !b.alive) { b.hkKo = null; b.hkk = null; finishKnockedOut(o); checkEnd(); }
+    } else if (b.hkk && b.hkk.frame !== hkFrame) endHeadKick(b);
+  });
+  hkFrame++;
+}
+
+// ---------------------------------------------------------------- drawing
+
+// Where the kick is: his hip, the leg drawn back low (cock), the top of the
+// high arc (ctrl) and where the foot ends up: the near side of their head
+// ("land", "block"), over the top of it and out the far side ("duck"), or
+// short of them ("whiff", capped at `reach`). The arc goes up the screen
+// (with one of them above the other, out to the kick's side).
+function hkLegAt(b, o, c, k, res) {
+  var dx = o.x - b.x, dy = o.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d;
+  var flat = Math.abs(ux) > 0.4, sx = flat ? (ux > 0 ? 1 : -1) : k.side, r = b.r;
+  // His hip on the kicking side; their head: the top of them, on the side
+  // facing him (side by side) or the side it comes round (one above the other).
+  var hip = { x: b.x + sx * r * (flat ? 0.55 : 0.72), y: b.y + r * (flat ? 0.45 : 0.3) };
+  var head = { x: o.x + (flat ? -sx : sx) * o.r * 0.6, y: o.y - o.r * 0.5 };
+  var hx = head.x - hip.x, hy = head.y - hip.y, hl = Math.sqrt(hx * hx + hy * hy) || 1;
+  var ex = hx / hl, ey = hy / hl, qx = -ey, qy = ex;
+  if (qx * (flat ? 0 : sx) + qy * (flat ? -1 : -0.3) < 0) { qx = -qx; qy = -qy; }
+  var foot = head;
+  if (res === "duck") foot = { x: o.x + (flat ? sx : -sx * 0.3) * o.r * 0.9, y: o.y - o.r * 1.3 }; // over the top of them, out the far side
+  var fx = foot.x - hip.x, fy = foot.y - hip.y, fl = Math.sqrt(fx * fx + fy * fy) || 1, max = r * 0.6 + (c.reach || 95) + 14;
+  if (fl > max) { foot = { x: hip.x + fx / fl * max, y: hip.y + fy / fl * max }; fl = max; }
+  // Drawn back low, then a wide arc up and round (wide even up close).
+  var cock = { x: hip.x - ex * r * 0.9 - qx * r * 0.35, y: hip.y - ey * r * 0.9 - qy * r * 0.35 }, bow = Math.max(fl * 1.1, r * 3.4);
+  var ctrl = { x: (cock.x + foot.x) / 2 + qx * bow, y: (cock.y + foot.y) / 2 + qy * bow };
+  return { hip: hip, head: head, foot: foot, cock: cock, ctrl: ctrl, rest: { x: hip.x, y: hip.y + r * 0.3 }, ex: ex, ey: ey, qx: qx, qy: qy, len: fl };
+}
+function hkCurve(L, u) {
+  var a = 1 - u;
+  return { x: a * a * L.cock.x + 2 * a * u * L.ctrl.x + u * u * L.foot.x, y: a * a * L.cock.y + 2 * a * u * L.ctrl.y + u * u * L.foot.y };
+}
+
+// From draw.js, over both fighters: every head kick that's out.
+function drawHeadKicksOver() {
+  balls.forEach(function (b) {
+    var k = b.hkk, c = headKickCfg(b), o = k && balls[k.vicId];
+    if (!k || !c || !b.alive || !o) return;
+    hkDrawKick(b, o, k, c);
+  });
+}
+
+function hkDrawKick(b, o, k, c) {
+  var res = k.res || (k.out === "land" ? "land" : k.out) || "land";
+  var L = hkLegAt(b, o, c, k, res), r = b.r, t = k.t, ch = c.chamber, sw = c.sweep, sc = c.size || 1;
+  var rc = hkLanded(k) ? c.recover : c.missRecover, foot, s = 0, phase;
+  var lerp = function (p, q, u) { return { x: p.x + (q.x - p.x) * u, y: p.y + (q.y - p.y) * u }; };
+  if (t < ch) { phase = "chamber"; foot = lerp(L.rest, L.cock, easeOut(t / ch)); }
+  else if (t < ch + sw) { phase = "sweep"; var u = (t - ch) / sw; s = u * u * 0.5 + u * 0.5; foot = hkCurve(L, s); }
+  else {
+    phase = "recover";
+    var e = (t - ch - sw) / Math.max(0.01, rc);
+    foot = e < 0.35 ? L.foot : lerp(L.foot, L.rest, easeOut((e - 0.35) / 0.65));
+  }
+  ctx.save();
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  if (phase === "chamber") {
+    // The tell: the high arc it's about to take, dashed red, up to their head.
+    var T = hkLegAt(b, o, c, k, "land");
+    ctx.globalAlpha = 0.85 * Math.min(1, t / (ch * 0.4));
+    ctx.setLineDash([10, 7]); ctx.strokeStyle = c.color; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(T.cock.x, T.cock.y); ctx.quadraticCurveTo(T.ctrl.x, T.ctrl.y, T.foot.x, T.foot.y); ctx.stroke();
+    ctx.setLineDash([]);
+    // and a ring on the head it's aimed at
+    ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(T.head.x, T.head.y, o.r * (0.5 - 0.15 * (t / ch)), 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  var tail = phase === "sweep" ? s : (phase === "recover" && t - ch - sw < 0.12 ? 1 : -1);
+  if (tail > 0) {
+    // The swoosh behind the foot, all the way round the arc.
+    var fade = phase === "recover" ? 1 - (t - ch - sw) / 0.12 : 1, s0 = Math.max(0, tail - 0.75), N = 14;
+    var col = (k.out && k.out !== "land") || (k.res && !hkLanded(k)) ? "#8f99a3" : c.color; // a miss: a grey whoosh
+    for (var i = 1; i <= N; i++) {
+      var p0 = hkCurve(L, s0 + (tail - s0) * (i - 1) / N), p1 = hkCurve(L, s0 + (tail - s0) * i / N), kk = i / N;
+      ctx.globalAlpha = (0.15 + 0.65 * kk) * fade;
+      ctx.strokeStyle = col; ctx.lineWidth = (4 + 20 * kk) * sc;
+      ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+    }
+    ctx.globalAlpha = 0.9 * fade; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (var j = 0; j <= 6; j++) { var pw = hkCurve(L, Math.max(0, tail - 0.35) + Math.min(0.35, tail) * j / 6); if (j) ctx.lineTo(pw.x, pw.y); else ctx.moveTo(pw.x, pw.y); }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  // The leg: hip, the knee turned over, the foot (the shin's what lands).
+  var knee = { x: (L.hip.x + foot.x) / 2 + L.qx * r * 0.32, y: (L.hip.y + foot.y) / 2 + L.qy * r * 0.32 };
+  drawBjjLeg(b.char, L.hip, knee, foot, r * 0.16 * sc, 0.5 * k.side, r * 0.24 * sc);
+  // The star on their head.
+  var st = k.star;
+  if (st && t - st.t < HK_STAR) hkDrawStar(st.x, st.y, (t - st.t) / HK_STAR, c.color, o.r / 40, st.ang);
+  ctx.restore();
+}
+
+// A big star burst where the shin meets their head, and a ring going out.
+function hkDrawStar(x, y, e, color, sc, ang) {
+  var R = (34 + 40 * easeOut(e)) * sc;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.globalAlpha = 1 - e * e;
+  ctx.strokeStyle = color; ctx.lineWidth = 6 * (1 - e) + 1;
+  ctx.beginPath(); ctx.arc(0, 0, R * 1.25, 0, Math.PI * 2); ctx.stroke();
+  ctx.rotate(ang);
+  ctx.beginPath();
+  for (var i = 0; i < 20; i++) {
+    var rr = i % 2 ? R * 0.4 : R * (i % 4 ? 0.85 : 1), a = i * Math.PI / 10;
+    if (i) ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); else ctx.moveTo(rr, 0);
+  }
+  ctx.closePath();
+  ctx.fillStyle = "#ffffff"; ctx.fill();
+  ctx.lineWidth = 4; ctx.strokeStyle = color; ctx.stroke();
+  ctx.fillStyle = "#ffe14d";
+  ctx.beginPath(); ctx.arc(0, 0, R * 0.28, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------- the fighter card
+
+function headKickGalleryMoves(ch, add) {
+  var c = ch.headKick;
+  if (!c) return;
+  var v = function (k) { return c[k] != null ? c[k] : HEAD_KICK_DEFAULTS[k]; };
+  add("💥", "Head kick", "Once he's landed " + v("setup") + " calf kicks, each one that lands is a " + v("chance") + "% chance he goes high next: a head kick that lands " +
+    v("landChance") + "% of the time (they duck it or block it, and he's left open). When it lands it's a knockout " + v("koChance") + "% of the time, otherwise " +
+    v("damagePct") + "% of their health. At most one every " + secs(v("cooldown")) + ".");
 }
 
 // Ciryl Gane, "Bon Gamin" (Christian, 2026-11-15): a back-foot kickboxer
@@ -71537,6 +72002,7 @@ function update(dt) {
   tickGetUp(dt); // a striker with a getUp block getting back up off the mat (get-up.js)
   tickSlows(dt); // limps wearing off (slowdown.js)
   tickLegKicks(dt); // a leg kick let go if something else takes over, the limping step (leg-kick.js)
+  tickHeadKicks(dt); // the head kick's window and cooldown, a head kick knockout called (head-kick.js)
   tickGane(dt); // Ciryl Gane's back-foot footwork, grabs coming round faster on him (gane.js)
   tickChatter(dt); // extra real voice lines for any fighter, by id (chatter.js)
   tickCommentaryCalls(dt); // the commentators' calls on big moments, knockouts, the end of the fight (commentary-calls.js)
@@ -75507,6 +75973,7 @@ function draw() {
   drawPratesOver(); // Carlos Prates's smoke, music notes and the disco lights (prates.js)
   drawKneesOver(); // knees coming up, the clinch, the flying knee and its red line (knees.js)
   drawLegKicksOver(); // leg kicks whipping round low into the calf, the hit mark on it (leg-kick.js)
+  drawHeadKicksOver(); // a head kick whipping up high into the head, the star on it (head-kick.js)
   drawFedorOver(); // Fedor Emelianenko's arms locked round them in the clinch and the throw (fedor.js)
   drawBispingOver(); // Michael Bisping's clinch elbows, cannonballs, smoke and 10-9 cards (bisping.js)
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)
@@ -75771,6 +76238,7 @@ function galleryMoves(ch) {
   if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
   if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
   if (ch.legKick) legKickGalleryMoves(ch, add); // calf kicks that leave them limping (leg-kick.js)
+  if (ch.headKick) headKickGalleryMoves(ch, add); // the head kick the calf kicks set up (head-kick.js)
   if (ch.gane) ganeGalleryMoves(ch, add); // Ciryl Gane: hands down, back foot, weak up close (gane.js)
   if (ch.getUp) getUpGalleryMoves(ch, add); // getting back up off the mat (get-up.js)
   if (ch.uppercuts || ch.bodyShots) punchTypeGalleryMoves(ch, add); // uppercuts and body shots (body-shots-uppercuts.js)
@@ -76510,17 +76978,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115074151"></script>
-  <script src="js/game/tale-tape.js?v=20261115074151"></script>
-<script src="js/game/watchdog.js?v=20261115074151"></script>
-<script src="js/game/update.js?v=20261115074151"></script>
-<script src="js/game/fighter-art.js?v=20261115074151"></script>
-<script src="js/game/draw-attacks.js?v=20261115074151"></script>
-<script src="js/game/wwit-badge.js?v=20261115074151"></script>
-<script src="js/game/stadium.js?v=20261115074151"></script>
-<script src="js/game/draw.js?v=20261115074151"></script>
-<script src="js/ui/gallery.js?v=20261115074151"></script>
-<script src="js/ui/saved-fights.js?v=20261115074151"></script>
-<script src="js/main.js?v=20261115074151"></script>
+  <script src="js/game/intro-msg.js?v=20261115024831"></script>
+  <script src="js/game/tale-tape.js?v=20261115024831"></script>
+<script src="js/game/watchdog.js?v=20261115024831"></script>
+<script src="js/game/update.js?v=20261115024831"></script>
+<script src="js/game/fighter-art.js?v=20261115024831"></script>
+<script src="js/game/draw-attacks.js?v=20261115024831"></script>
+<script src="js/game/wwit-badge.js?v=20261115024831"></script>
+<script src="js/game/stadium.js?v=20261115024831"></script>
+<script src="js/game/draw.js?v=20261115024831"></script>
+<script src="js/ui/gallery.js?v=20261115024831"></script>
+<script src="js/ui/saved-fights.js?v=20261115024831"></script>
+<script src="js/main.js?v=20261115024831"></script>
 </body>
 </html>
