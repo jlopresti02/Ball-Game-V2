@@ -1390,7 +1390,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ciryl-gane",
-    "rev": 10,
+    "rev": 11,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Ciryl Gane",
@@ -2949,12 +2949,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 16,
+    "rev": 19,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
     "base": "Brawler",
-    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits 4 times as hard, up to 5 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm. He goes to the body right before the finisher, so the hook that ends the combo lands bigger, and comes up with uppercuts up close. Now and then, and much more once he's hurt, he snaps on a D'Arce choke: when they shoot and he sprawls on it, or lunging in for a front headlock up close.",
+    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits about 5 and a half times as hard, up to nearly 7 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm. He goes to the body right before the finisher, so the hook that ends the combo lands bigger, and comes up with uppercuts up close. Now and then, and much more once he's hurt, he snaps on a D'Arce choke: when they shoot and he sprawls on it, or lunging in for a front headlock up close.",
     "color": "#b3121b",
     "label": "",
     "imgData": null,
@@ -3002,7 +3002,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 8,
+      "damage": 9,
       "cooldown": 1.0,
       "speed": 0.22,
       "size": 15,
@@ -3016,8 +3016,8 @@ var SAVED_ROSTER = [
       "cdStart": 2.6,
       "cdFullCombo": 1.5,
       "cdMin": 0.5,
-      "dmgStart": 8,
-      "dmgMax": 9,
+      "dmgStart": 9,
+      "dmgMax": 10,
       "comboKnockback": 40,
       "comboSlack": 16,
       "chase": 420,
@@ -3028,8 +3028,8 @@ var SAVED_ROSTER = [
         ],
         "build": 0.3,
         "finisher": [
-          4,
-          5
+          5.45,
+          6.82
         ],
         "cooldown": [
           1.0,
@@ -3067,7 +3067,7 @@ var SAVED_ROSTER = [
       "guardDrop": 15
     },
     "tdd": {
-      "sprawlChance": 68
+      "sprawlChance": 75
     },
     "darce": {
       "chance": 5,
@@ -3115,7 +3115,7 @@ var SAVED_ROSTER = [
       "wrestling": 85,
       "cut": 0.7,
       "reset": 2,
-      "shot": 8
+      "shot": 9
     },
     "hasSpecial": true,
     "special": {
@@ -4343,7 +4343,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 18,
+    "rev": 20,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4395,7 +4395,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 21,
+      "damage": 19,
       "cooldown": 1.2,
       "speed": 0.352,
       "size": 15,
@@ -4407,7 +4407,7 @@ var SAVED_ROSTER = [
     "uppercuts": {
       "chance": 20,
       "close": 34,
-      "damageMult": 1.43,
+      "damageMult": 1.579,
       "critChance": 40,
       "critMult": 1.8,
       "onGrab": 90,
@@ -4425,8 +4425,8 @@ var SAVED_ROSTER = [
         2
       ],
       "every": [
-        2,
-        3.5
+        1.82,
+        3.18
       ],
       "range": 64,
       "reach": 95,
