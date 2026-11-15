@@ -46,6 +46,14 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
 
+## Never undo Joe's changes (Joe's rule, 2026-11-15)
+
+Christian's Claude must not revert, undo or overwrite anything Joe (or Joe's Claude) put into the game (looks, moves, numbers, sounds, anything) **unless Christian specifically asked for that exact change**. "Restoring an older look" or "tidying up" is not a reason. Before touching something Joe changed, check `git log` on the file: if the last change to it came from a `claude/project-thread-*` branch or Joe's PR, leave it alone and ask Joe (or Christian) first. When you merge Joe's main into your work, keep Joe's version of anything that conflicts.
+
+### Joe's calls on looks (don't change these back)
+
+- **Tony Ferguson** (Joe, 2026-11-15): olive skin `#c49a6c`, black hair `#17130f`, dark stubble `#2a211a`, with his real arm tattoo and the higher headband (PR #92). Joe asked for this look; please don't switch him back to light skin or blonde hair. Ask Joe first if you think a look should change.
+
 ## Working in the same files
 
 - Every new fighter or move gets its own file in `js/game/`. Hooks into shared files (`match.js`, `abilities.js`, `update.js`, `physics.js`, `draw.js`, `draw-attacks.js`, `special.js`) stay one line each, with a comment naming the file they call into, the same way the existing ones do.
