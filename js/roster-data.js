@@ -6,12 +6,12 @@
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
     "base": "Brawler",
-    "bio": "\"Poatan\" (stone hands). Built on the Brawler base, with fists of stone and red war paint. He stalks slowly on a bouncing 1-2, 1-2 step, but his hands are fast. Every few seconds up close he plants and shouts \"CHAMA!\", the crowd shouts it back, and he throws left-right-left, ending in the left hook. The shout is the tell: back off and it whiffs. Let the hook land clean and it's often a knockout, and he shoots an arrow into the sky. His kicks go for the calf: you limp for a few seconds. Against Jon Jones, he shoots Jon's duck out of the sky. Special move: Bow and Arrow, a big red arrow that bings off the cage and hits whoever's in its path.",
+    "bio": "\"Poatan\" (stone hands). Built on the Brawler base, with fists of stone and red war paint. He stalks slowly on a bouncing 1-2, 1-2 step, but his hands are fast. Every few seconds up close he plants and shouts \"CHAMA!\", the crowd shouts it back, and he throws left-right-left, ending in the left hook. The shout is the tell: back off and it whiffs. Let the hook land clean and it's often a knockout, and he shoots an arrow into the sky. His kicks go for the calf: you limp for a few seconds. Against Jon Jones, he shoots Jon's duck out of the sky. Special move: Bow and Arrow, a big red arrow that bings off the cage and hits whoever's in its path. He mixes in body shots and uppercuts up close, and one that lands sets up a bigger punch upstairs.",
     "color": "#c8102e",
     "label": "",
     "imgData": null,
@@ -56,6 +56,20 @@ var SAVED_ROSTER = [
       "knockback": 260,
       "reach": 42,
       "koChance": 0
+    },
+    "bodyShots": {
+      "chance": 15,
+      "knockback": 110,
+      "setupMult": 1.35,
+      "setupTime": 1.6,
+      "guardDrop": 10
+    },
+    "uppercuts": {
+      "chance": 12,
+      "close": 34,
+      "setupMult": 1.35,
+      "setupTime": 1.6,
+      "guardDrop": 10
     },
     "hasKick": true,
     "kick": {
@@ -2047,12 +2061,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-dustin-poirier",
-    "rev": 15,
+    "rev": 16,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Dustin Poirier",
     "base": "Brawler",
-    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage. If you pull a bat on him, he pulls out a diamond sword and parries 9 of every 10 swings. Every third parry locks you into a sword duel that ends with him disarming you or cutting straight through. Once a fight he chugs a bottle of hot sauce (dodging or blocking anything you throw while he does), turns red with steam pouring out, and runs around the ring breathing fire in a panic: get caught in it and you burn.",
+    "bio": "\"The Diamond\". A pressure boxer built on the Brawler base: faster, higher-volume hands than the stock Brawler with a little less on each shot, a tighter guard, and the Brawler's opening KO Rush. Special move: IGBB. Catches shots in his trademark guillotine. Below half health he turns into Diamond Guard: diamond armor, 5% more blocks, and an occasional diamond thrown at you for a punch's worth of damage. If you pull a bat on him, he pulls out a diamond sword and parries 9 of every 10 swings. Every third parry locks you into a sword duel that ends with him disarming you or cutting straight through. Once a fight he chugs a bottle of hot sauce (dodging or blocking anything you throw while he does), turns red with steam pouring out, and runs around the ring breathing fire in a panic: get caught in it and you burn. He goes to the body and comes up with uppercuts, and his famous left hook comes round from the side; once a body shot or uppercut lands, the next one is usually that left hook.",
     "color": "#1e3a8a",
     "look": {
       "skin": "#d9a07a",
@@ -2095,6 +2109,27 @@ var SAVED_ROSTER = [
       "knockback": 280,
       "reach": 42,
       "koChance": 5
+    },
+    "hooks": {
+      "chance": 35,
+      "afterSetup": 80,
+      "side": -1,
+      "damageMult": 1.3,
+      "width": 1.1
+    },
+    "bodyShots": {
+      "chance": 25,
+      "knockback": 110,
+      "setupMult": 1.4,
+      "setupTime": 1.6,
+      "guardDrop": 10
+    },
+    "uppercuts": {
+      "chance": 10,
+      "close": 34,
+      "setupMult": 1.4,
+      "setupTime": 1.6,
+      "guardDrop": 10
     },
     "hasKick": false,
     "hasGrapple": false,
@@ -2642,12 +2677,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 10,
+    "rev": 11,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
     "base": "Brawler",
-    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits 4 times as hard, up to 5 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm.",
+    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits 4 times as hard, up to 5 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm. He goes to the body right before the finisher, so the hook that ends the combo lands bigger, and comes up with uppercuts up close.",
     "color": "#b3121b",
     "label": "",
     "imgData": null,
@@ -2744,6 +2779,20 @@ var SAVED_ROSTER = [
       "size": 1.15,
       "width": 1.1,
       "color": "#e0281c"
+    },
+    "bodyShots": {
+      "chance": 15,
+      "beforeFinisher": 60,
+      "setupMult": 1.3,
+      "setupTime": 1.2,
+      "guardDrop": 15
+    },
+    "uppercuts": {
+      "chance": 15,
+      "close": 32,
+      "setupMult": 1.3,
+      "setupTime": 1.2,
+      "guardDrop": 15
     },
     "tdd": {
       "sprawlChance": 60
@@ -3667,12 +3716,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-joshua-van",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "flyweight",
     "name": "Joshua Van",
     "base": "Brawler",
-    "bio": "\"The Fearless\". UFC flyweight champion, born in Myanmar, fights out of Houston. Built on the Brawler base: a flyweight, but not as quick on his feet as the other small guys, with his hands always up in a high guard and long combinations of punches off both hands instead of single shots, and no opening KO Rush. Hot hands: every punch that lands in a combo makes the next one hit harder and crit more often, and the count goes up under him (x5, x7...) until one gets blocked or misses. Most of his combos end in a left hook that comes round from the side and hits harder, and a big left hook can drop them. His hands get better through the fight, most of all with clean combos. Sprawls 70% of takedown shots and is hard to hurt. Special move Hands on Fire: his gloves catch fire, and while they burn he keeps the chain he built at the end of each combo for a moment instead of losing it. Holds the Myanmar flag up when he wins. Flyweight.",
+    "bio": "\"The Fearless\". UFC flyweight champion, born in Myanmar, fights out of Houston. Built on the Brawler base: a flyweight, but not as quick on his feet as the other small guys, with his hands always up in a high guard and long combinations of punches off both hands instead of single shots, and no opening KO Rush. Hot hands: every punch that lands in a combo makes the next one hit harder and crit more often, and the count goes up under him (x5, x7...) until one gets blocked or misses. Most of his combos end in a left hook that comes round from the side and hits harder, and a big left hook can drop them. His hands get better through the fight, most of all with clean combos. Sprawls 70% of takedown shots and is hard to hurt. Special move Hands on Fire: his gloves catch fire, and while they burn he keeps the chain he built at the end of each combo for a moment instead of losing it. Holds the Myanmar flag up when he wins. Flyweight. He mixes body shots and uppercuts into his combos, often a body shot right before the left hook, and one that lands sets up a bigger punch upstairs.",
     "color": "#fecb00",
     "label": "",
     "imgData": null,
@@ -3740,6 +3789,27 @@ var SAVED_ROSTER = [
       "size": 1.15,
       "width": 1.1,
       "color": "#ffd21f"
+    },
+    "bodyShots": {
+      "chance": 18,
+      "beforeFinisher": 50,
+      "knockback": 20,
+      "dip": 0.05,
+      "drive": 0.1,
+      "recover": 0.07,
+      "setupMult": 1.4,
+      "setupTime": 1.0,
+      "guardDrop": 10
+    },
+    "uppercuts": {
+      "chance": 12,
+      "close": 30,
+      "dip": 0.06,
+      "drive": 0.12,
+      "recover": 0.07,
+      "setupMult": 1.4,
+      "setupTime": 1.0,
+      "guardDrop": 10
     },
     "tdd": {
       "sprawlChance": 70
@@ -3890,12 +3960,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 13,
+    "rev": 14,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
     "base": "Brawler",
-    "bio": "\"The Highlight\". Built on the Brawler base with the Brawler's heavy hands and opening KO Rush. Every few seconds he loads up one CTE-style haymaker; if it lands, the opponent is left dizzy, staggering about unable to fight back. The old wrestler in him shoots a double leg now and then for a slam into the cage, sprawls on takedowns and reattacks. Everything he lands looks like it hurts. A few times a fight a bald eagle screams, a red path cuts across the ring and the eagle swoops through it, raking anyone but him caught in it (Eagle Strike). If it catches him instead, it carries him off the screen and he drops back into the middle of the ring (knocking them back) in his trucker hat with a golf club: he swings it like a bat and stops to drive golf balls at them. An eagle also comes for him when Dustin goes Diamond Guard or Gane pulls his bat. Special move: All American.",
+    "bio": "\"The Highlight\". Built on the Brawler base with the Brawler's heavy hands and opening KO Rush. Every few seconds he loads up one CTE-style haymaker; if it lands, the opponent is left dizzy, staggering about unable to fight back. The old wrestler in him shoots a double leg now and then for a slam into the cage, sprawls on takedowns and reattacks. Everything he lands looks like it hurts. A few times a fight a bald eagle screams, a red path cuts across the ring and the eagle swoops through it, raking anyone but him caught in it (Eagle Strike). If it catches him instead, it carries him off the screen and he drops back into the middle of the ring (knocking them back) in his trucker hat with a golf club: he swings it like a bat and stops to drive golf balls at them. An eagle also comes for him when Dustin goes Diamond Guard or Gane pulls his bat. Special move: All American. Up close he comes up with short uppercuts that crit hard, and when someone grabs him, shoots on him, ties him up or tries to pull him into guard, he usually answers with one: land it and the grab is stuffed.",
     "color": "#1c2f6e",
     "label": "",
     "imgData": null,
@@ -3949,6 +4019,19 @@ var SAVED_ROSTER = [
       "knockback": 300,
       "reach": 40,
       "koChance": 5
+    },
+    "uppercuts": {
+      "chance": 20,
+      "close": 34,
+      "damageMult": 1.2,
+      "critChance": 40,
+      "critMult": 1.8,
+      "onGrab": 75,
+      "counterGap": 0.6,
+      "counterKnockback": 260,
+      "setupMult": 1.3,
+      "setupTime": 1.6,
+      "guardDrop": 10
     },
     "hasKick": false,
     "hasGrapple": true,
@@ -4203,12 +4286,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-max-holloway",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Max Holloway",
     "base": "Brawler",
-    "bio": "\"Blessed\". Built on the Brawler base, with the most strikes in the game: combos of quick punches off both hands instead of single shots, and no opening KO Rush. He gets better the longer it goes: his Blessed meter fills with fight time and every punch he lands, and his combos get longer, faster and heavier with it. Sprawls 70% of takedown shots and won't follow anyone down into the guard. Against a striker he's beating he turns to the commentators (\"Count it up!\", \"I'm the best boxer in the UFC, baby!\") and slips what they throw. Once a fight he has a flashback to playing an old fighting game and comes back button mashing. Special move The Middle (\"MEET ME IN THE MIDDLE\"): his real point down, from the Ricardo Lamas fight to the last-second knockout of Justin Gaethje at UFC 300. Featherweight.",
+    "bio": "\"Blessed\". Built on the Brawler base, with the most strikes in the game: combos of quick punches off both hands instead of single shots, and no opening KO Rush. He gets better the longer it goes: his Blessed meter fills with fight time and every punch he lands, and his combos get longer, faster and heavier with it. Sprawls 70% of takedown shots and won't follow anyone down into the guard. Against a striker he's beating he turns to the commentators (\"Count it up!\", \"I'm the best boxer in the UFC, baby!\") and slips what they throw. Once a fight he has a flashback to playing an old fighting game and comes back button mashing. Special move The Middle (\"MEET ME IN THE MIDDLE\"): his real point down, from the Ricardo Lamas fight to the last-second knockout of Justin Gaethje at UFC 300. Featherweight. Inside his combos he digs to the body and comes up with uppercuts, and one that lands sets up the next punch upstairs.",
     "color": "#0f9b8e",
     "label": "",
     "imgData": null,
@@ -4264,6 +4347,28 @@ var SAVED_ROSTER = [
       "knockback": 150,
       "reach": 38,
       "koChance": 0
+    },
+    "bodyShots": {
+      "chance": 30,
+      "damageMult": 1.2,
+      "knockback": 20,
+      "dip": 0.04,
+      "drive": 0.09,
+      "recover": 0.06,
+      "setupMult": 1.7,
+      "setupTime": 1.0,
+      "guardDrop": 10
+    },
+    "uppercuts": {
+      "chance": 12,
+      "close": 32,
+      "damageMult": 1.3,
+      "dip": 0.05,
+      "drive": 0.11,
+      "recover": 0.07,
+      "setupMult": 1.6,
+      "setupTime": 1.0,
+      "guardDrop": 10
     },
     "hasKick": false,
     "hasGrapple": false,

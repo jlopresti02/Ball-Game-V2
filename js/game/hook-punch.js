@@ -26,10 +26,19 @@
 //                 carries on past them (radians).
 // size            the glove is this much bigger in a hook.
 // width, color    the swoosh: times the glove, and its colour.
+// afterSetup      % of the punches he throws into a setup (a body shot or an
+//                 uppercut of his that just landed, body-shots-uppercuts.js)
+//                 that come as a hook (Dustin: body, then the left hook).
+// side            1 or -1: every hook is off that hand (Dustin's left: -1).
+//                 Left out, the punch's own hand.
 //
 // Joe's plain punch (abilities.js) is wired in: a fighter with a plain punch
 // and a "hooks" block throws `chance`% of its punches as hooks. A fighter
 // with no "hooks" block punches exactly as before (no extra random rolls).
+//
+// Uppercuts and body shots (body-shots-uppercuts.js) are the same family:
+// rollPunchType there picks hook, uppercut, body shot or straight in one
+// roll, and punchHitAt, punchEndAt and hookShove below cover all of them.
 //
 // The API, for any punch routine (the plain punch and Ilia's combos in
 // ilia-combos.js use it):
@@ -53,7 +62,7 @@
 "use strict";
 
 var HOOK_DEFAULTS = { finisherChance: 0, chance: 0, damageMult: 1.3, knockback: null, coil: 0.1, sweep: 0.2, recover: 0.12,
-  arc: 1.7, follow: 0.5, size: 1.15, width: 1, color: "#ffd21f" };
+  arc: 1.7, follow: 0.5, size: 1.15, width: 1, color: "#ffd21f", afterSetup: 0, side: 0 };
 
 function hookCfg(b) { return b && b.char && b.char.hooks ? b.char.hooks : null; }
 function hookVal(c, k) { return c && c[k] != null ? c[k] : HOOK_DEFAULTS[k]; }
@@ -63,17 +72,36 @@ function hookKHit(c) { var o = hookVal(c, "arc"), f = hookVal(c, "follow"); retu
 function rollHook(b, p, last) {
   var c = hookCfg(b);
   if (!c || !p) return false;
-  var pct = last ? hookVal(c, "finisherChance") : hookVal(c, "chance");
-  if (pct > 0 && Math.random() * 100 < pct) { p.hook = true; if (p.side == null) p.side = 1; }
+  var pct = hookPct(b, last);
+  if (pct > 0 && Math.random() * 100 < pct) makeHook(b, p);
   return !!p.hook;
 }
 
+// The % chance a punch is a hook: finisherChance (last) or chance, or
+// afterSetup if that's higher and they're set up (body-shots-uppercuts.js).
+function hookPct(b, last) {
+  var c = hookCfg(b);
+  if (!c) return 0;
+  var pct = last ? hookVal(c, "finisherChance") : hookVal(c, "chance"), as = hookVal(c, "afterSetup");
+  if (as > pct && typeof punchSetUp === "function" && punchSetUp(b)) pct = as;
+  return pct;
+}
+
+function makeHook(b, p) {
+  p.hook = true;
+  if (p.side == null) p.side = 1;
+  var sd = hookVal(hookCfg(b), "side");
+  if (sd) p.side = sd; // always off that hand
+}
+
 function punchHitAt(b, p) {
+  if (p && (p.upper || p.body)) return ptHitAt(b, p); // an uppercut or a body shot (body-shots-uppercuts.js)
   if (p && p.hook) { var c = hookCfg(b); return hookVal(c, "coil") + hookVal(c, "sweep") * hookKHit(c); }
   return b.char.punch.speed * 0.35;
 }
 
 function punchEndAt(b, p) {
+  if (p && (p.upper || p.body)) return ptEndAt(b, p); // (body-shots-uppercuts.js)
   if (p && p.hook) { var c = hookCfg(b); return hookVal(c, "coil") + hookVal(c, "sweep") + hookVal(c, "recover"); }
   return b.char.punch.speed;
 }
@@ -82,6 +110,7 @@ function hookDamage(b, p, dmg) { return p && p.hook ? dmg * hookVal(hookCfg(b), 
 
 function hookShove(b, o, p, kb) {
   if (p && p.hook) { var hk = hookVal(hookCfg(b), "knockback"); if (hk != null) kb = hk; }
+  if (p && (p.upper || p.body)) kb = ptKnockback(b, p, kb); // its own, straight back (body-shots-uppercuts.js)
   if (!(kb > 0)) return;
   var dx = o.x - b.x, dy = o.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, nx = dx / d, ny = dy / d;
   if (p && p.hook) {
@@ -248,6 +277,7 @@ function hookGalleryMoves(ch, add) {
   var c = ch.hooks, fin = hookVal(c, "finisherChance"), any = hookVal(c, "chance"), parts = [];
   if (fin > 0) parts.push(fin + "% of his combos end in one");
   if (any > 0) parts.push(any + "% of his other punches are one");
+  if (hookVal(c, "afterSetup") > 0) parts.push(hookVal(c, "afterSetup") + "% of the punches he throws once a body shot or uppercut has set them up are one");
   add("↪️", "Hooks", "The glove comes round from the side in a wide sweep instead of straight, hits " + hookVal(c, "damageMult") +
     "x as hard and knocks them sideways." + (parts.length ? " " + parts.join(", and ") + "." : ""));
 }

@@ -86,7 +86,7 @@ function iliaChainPunch(self, other, dt, d) {
     p.hit = true;
     var fin = ilcFinishing(p), landed = false;
     if (other.alive && d < reach + r.comboSlack) {
-      var dealt = hurt(other, hookDamage(self, p, ilcDamage(self, c, p.idx, p.n)), "punch", self.id); // (a hook hits harder, hook-punch.js)
+      var dealt = punchHurt(self, other, p, ilcDamage(self, c, p.idx, p.n)); // hurt() (a hook hits harder, hook-punch.js; a setup, body-shots-uppercuts.js)
       landed = dealt > 0;
       if (landed) { playPunch(dealt); if (!fin) violentHit(self, other, p.left === 0 ? 0.5 : 0.25); }
       var kb = fin ? (c.knockback != null ? c.knockback : pu.knockback) : (p.left === 0 ? pu.knockback : r.comboKnockback);
@@ -110,7 +110,7 @@ function iliaChainPunch(self, other, dt, d) {
 // A new punch of the combo: the last one is a hook finisherChance% of the
 // time (his "hooks" block, hook-punch.js), glowing white-hot.
 function ilcPunch(self, p) {
-  if (rollHook(self, p, p.left === 0 && p.n > 1) && p.n > 1) p.hookHeat = p.idx / (p.n - 1);
+  if (rollPunchType(self, p, p.left === 0 && p.n > 1) === "hook" && p.n > 1) p.hookHeat = p.idx / (p.n - 1); // (or an uppercut or a body shot, body-shots-uppercuts.js)
   return p;
 }
 

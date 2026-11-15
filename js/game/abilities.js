@@ -270,7 +270,7 @@ function updateAbilities(dt) {
       var pu = self.char.punch;
       if (!self.punch && !self.kick && !self.swing && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) { // (one limb at a time when it kicks too)
         self.punch = { t: 0, hit: false };
-        rollHook(self, self.punch, false); // chance% of them come round as a hook (hook-punch.js)
+        rollPunchType(self, self.punch, false); // chance% of them come round as a hook (hook-punch.js), come up as an uppercut or go to the body (body-shots-uppercuts.js)
         self.punchCd = pu.cooldown;
       }
       if (self.punch) {
@@ -280,7 +280,7 @@ function updateAbilities(dt) {
         if (!self.punch.hit && self.punch.t >= windup) {
           self.punch.hit = true;
           if (other.alive) {
-            var punchDealt = hurt(other, hookDamage(self, thrown, pu.damage * sugaCritRoll(self)), "punch", self.id); // (Sean O'Malley's critical hits, omalley.js; a hook hits harder, hook-punch.js)
+            var punchDealt = punchHurt(self, other, thrown, pu.damage * sugaCritRoll(self)); // hurt() (Sean O'Malley's critical hits, omalley.js; a hook hits harder, hook-punch.js; a setup, body-shots-uppercuts.js)
             if (punchDealt > 0) sugaCritLanded(self, other); // CRIT! (omalley.js)
             if (punchDealt > 0) { if (bmfJabs(self.char)) playBmfJab(); else playPunch(punchDealt); violentHit(self, other, 0.5); }
             if (!other.justDodged) hookShove(self, other, thrown, pu.knockback); // straight back, or sideways for a hook (hook-punch.js)

@@ -235,6 +235,7 @@ function draw() {
     applyCormierPose(b); // Daniel Cormier dropping his level, carrying, chewing; whoever he's got lying across over his head (cormier.js)
     applyProchazkaPose(b); // Jiří Procházka twisting into a katana cut (prochazka.js)
     applyJonClinchPose(b); // Jon Jones leaning into the clinch, and whoever he's tripping (jon-clinch.js)
+    applyPunchTypePose(b); // dipping into an uppercut or a body shot, folding over one, chin snapping up (body-shots-uppercuts.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -371,6 +372,7 @@ function draw() {
     drawJab(b);
     drawDiamondSword(b, other); // Dustin's diamond sword, under his guard glove (diamond.js)
     drawHands(b, other);
+    drawPunchSetup(b); // set up by a body shot or uppercut: the ring, the dent, the snap, the big shot (body-shots-uppercuts.js)
     drawPereira(b); // Alex Pereira's CHAMA fists and bow, and a calf-kick limp (pereira.js)
     drawOmalley(b); // Sean O'Malley's crane kick, sugar boost, pips and crash (omalley.js)
     drawGsp(b); // GSP's Superman fists, hands down for "not impressed" (gsp.js)
@@ -416,6 +418,7 @@ function draw() {
   drawWatcherLasers();
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
+  balls.forEach(drawPunchTypesOver); // uppercuts and body shots go over the opponent (body-shots-uppercuts.js)
   drawDiamondSwordsTop(); // Dustin's sword slashing into a bat, over both fighters (sword.js)
   drawDarkSideTop(); // Hokit's saber flying loose, the Force push, a saber lock (hokit-darkside.js)
   drawDuelVignette(); // the duel's dark edges and impact flash (sword.js)

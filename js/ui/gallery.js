@@ -173,6 +173,7 @@ function galleryMoves(ch) {
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
   if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
   if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
+  if (ch.uppercuts || ch.bodyShots) punchTypeGalleryMoves(ch, add); // uppercuts and body shots (body-shots-uppercuts.js)
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
   if (ch.anderson) andersonGalleryMoves(ch, add); // Anderson Silva (anderson.js)
   if (ch.cormier) cormierGalleryMoves(ch, add); // Daniel Cormier (cormier.js)

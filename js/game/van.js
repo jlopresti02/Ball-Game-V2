@@ -151,7 +151,7 @@ function vnChase(self, other, d, reach, speed) {
 // shared hook (hook-punch.js); a hook is always his left.
 function vnNewPunch(self, cfg, side, left, n) {
   var p = { t: 0, hit: false, side: side, left: left, n: n, vn: true };
-  if (rollHook(self, p, left === 0)) {
+  if (rollPunchType(self, p, left === 0) === "hook") { // (or an uppercut or a body shot, body-shots-uppercuts.js)
     p.side = -1;
     if (vnBurning(self)) p.hookHeat = 1; // white-hot on fire
     self.vn.hookN++;
@@ -202,11 +202,11 @@ function vnStrike(self, other, inRange, cfg, last, p) {
   var mult = hh ? Math.min(cap, 1 + vnLerp(hh.step, lv) * k) : 1;
   var critP = hh ? Math.min(hh.critMax, hh.critBase + vnLerp(hh.critStep, lv) * k) : 0;
   var crit = Math.random() * 100 < critP;
-  var dmg = hookDamage(self, p, self.char.punch.damage * mult * (crit ? hh.critMult : 1)); // (a hook hits harder, hook-punch.js)
+  var dmg = self.char.punch.damage * mult * (crit ? hh.critMult : 1); // (punchHurt below: a hook hits harder, hook-punch.js; a setup, body-shots-uppercuts.js)
   // His hands find the gaps: their block chance drops against his punches.
   var pierce = (lvc && lvc.pierce ? vnLerp(lvc.pierce, lv) : 0) + (vnBurning(self) && fsp && fsp.pierce ? fsp.pierce : 0), bb = other.blockBonus || 0, dealt = 0;
   other.blockBonus = bb - pierce;
-  try { dealt = hurt(other, dmg, "punch", self.id); } finally { other.blockBonus = bb; }
+  try { dealt = punchHurt(self, other, p, dmg); } finally { other.blockBonus = bb; }
   if (!(dealt > 0)) { vnBreak(self); checkEnd(); return false; }
   v.chain++; v.landedN++;
   if (p && p.hook) v.hookLanded++;
@@ -525,8 +525,8 @@ function vnFacing(b, o) {
 function vnFist(b, o) {
   var p = b.punch, pu = b.char.punch;
   if (!p || !o.alive || b.taunt || b.flow || b.combo) return null;
-  if (p.hook) {
-    var h = hookGlove(b, o), s = p.side || 1, ha = Math.atan2(o.y - b.y, o.x - b.x) + s * Math.PI / 2;
+  if (p.hook || p.upper || p.body) {
+    var h = p.hook ? hookGlove(b, o) : punchTypeGlove(b, o), s = p.side || 1, ha = Math.atan2(o.y - b.y, o.x - b.x) + s * Math.PI / 2; // (an uppercut or body shot, body-shots-uppercuts.js)
     return h && { x: h.x, y: h.y, r: h.r, fist: true, side: s, pt: 1, ax: b.x + Math.cos(ha) * b.r * 0.55, ay: b.y + Math.sin(ha) * b.r * 0.55 };
   }
   var qx = o.x - b.x, qy = o.y - b.y, qd = Math.sqrt(qx * qx + qy * qy) || 1, nx = qx / qd, ny = qy / qd;

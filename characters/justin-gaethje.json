@@ -1,11 +1,11 @@
 {
   "id": "c-justin-gaethje",
-  "rev": 13,
+  "rev": 14,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Justin Gaethje",
   "base": "Brawler",
-  "bio": "\"The Highlight\". Built on the Brawler base with the Brawler's heavy hands and opening KO Rush. Every few seconds he loads up one CTE-style haymaker; if it lands, the opponent is left dizzy, staggering about unable to fight back. The old wrestler in him shoots a double leg now and then for a slam into the cage, sprawls on takedowns and reattacks. Everything he lands looks like it hurts. A few times a fight a bald eagle screams, a red path cuts across the ring and the eagle swoops through it, raking anyone but him caught in it (Eagle Strike). If it catches him instead, it carries him off the screen and he drops back into the middle of the ring (knocking them back) in his trucker hat with a golf club: he swings it like a bat and stops to drive golf balls at them. An eagle also comes for him when Dustin goes Diamond Guard or Gane pulls his bat. Special move: All American.",
+  "bio": "\"The Highlight\". Built on the Brawler base with the Brawler's heavy hands and opening KO Rush. Every few seconds he loads up one CTE-style haymaker; if it lands, the opponent is left dizzy, staggering about unable to fight back. The old wrestler in him shoots a double leg now and then for a slam into the cage, sprawls on takedowns and reattacks. Everything he lands looks like it hurts. A few times a fight a bald eagle screams, a red path cuts across the ring and the eagle swoops through it, raking anyone but him caught in it (Eagle Strike). If it catches him instead, it carries him off the screen and he drops back into the middle of the ring (knocking them back) in his trucker hat with a golf club: he swings it like a bat and stops to drive golf balls at them. An eagle also comes for him when Dustin goes Diamond Guard or Gane pulls his bat. Special move: All American. Up close he comes up with short uppercuts that crit hard, and when someone grabs him, shoots on him, ties him up or tries to pull him into guard, he usually answers with one: land it and the grab is stuffed.",
   "color": "#1c2f6e",
   "label": "",
   "imgData": null,
@@ -59,6 +59,19 @@
     "knockback": 300,
     "reach": 40,
     "koChance": 5
+  },
+  "uppercuts": {
+    "chance": 20,
+    "close": 34,
+    "damageMult": 1.2,
+    "critChance": 40,
+    "critMult": 1.8,
+    "onGrab": 75,
+    "counterGap": 0.6,
+    "counterKnockback": 260,
+    "setupMult": 1.3,
+    "setupTime": 1.6,
+    "guardDrop": 10
   },
   "hasKick": false,
   "hasGrapple": true,
