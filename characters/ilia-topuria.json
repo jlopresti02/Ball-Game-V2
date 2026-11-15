@@ -1,6 +1,6 @@
 {
   "id": "c-ilia-topuria",
-  "rev": 10,
+  "rev": 11,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Ilia Topuria",
@@ -121,7 +121,7 @@
     "move": "aurafarm",
     "chargeTime": 85,
     "hitCut": 4,
-    "bullDamage": 60,
+    "bullDamage": 70,
     "throwDamage": 70
   },
   "rapier": {
