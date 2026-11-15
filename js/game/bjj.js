@@ -65,6 +65,7 @@ function beginGuillotine(def, atk) {
     b.punch = null; b.kick = null; b.throwAnim = null; b.swing = null; b.checkAnim = null;
   });
   floater(def.x, Math.min(atk.y, def.y) - def.r - 30, "GUILLOTINE", "crit");
+  commentaryCall("choke", def, atk); // "It's under the neck!" (commentary-calls.js)
   playPunch(20);
   if (!reduceMotion) shake = Math.max(shake, 8);
 }

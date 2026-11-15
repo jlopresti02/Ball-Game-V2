@@ -104,6 +104,7 @@ function updateSwing(self, other, dt) {
           if (!reduceMotion) shake = Math.max(shake, 10);
           violentHit(self, other, 1);
           if (sw.dizzy && other.alive && !other.justDodged) makeDizzy(other, sw.dizzy);
+          commentaryCall(st.side === 1 ? "rightHand" : "leftHand", self, other); // "Big right hand!", Gaethje's knockdown (commentary-calls.js)
         }
         checkEnd();
       }

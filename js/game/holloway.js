@@ -480,6 +480,7 @@ function hwMashLand(self, other, kp, cfg) {
 function hwComboDone(self, ms, mc) {
   if (ms.hits >= 3) {
     floater(self.x, self.y - self.r - 34, ms.hits + " HIT COMBO!", ms.hits >= 6 ? "crit" : "note");
+    commentaryCall("combo", self, balls[1 - self.id], { hits: ms.hits }); // "What a combination!" (commentary-calls.js)
     playHwCombo(ms.hits);
     crowdReact(0.2 + ms.hits * 0.05);
   }
@@ -660,6 +661,7 @@ function landFinal(self, other, m, sp) {
     var d = hwDist(self, other), ux = (other.x - self.x) / d, uy = (other.y - self.y) / d;
     playPunch(dealt * 1.8);
     floater(other.x, other.y - other.r - 34, "RIGHT HAND!", "note");
+    commentaryCall("rightHand", self, other); // "Oh! Big right hand!" (commentary-calls.js)
     impacts.push({ x: other.x - ux * other.r, y: other.y - uy * other.r, nx: -ux, ny: -uy, life: 0.45, max: 0.45, color: self.char.color });
     other.squash = { t: 0.18, max: 0.18, nx: -ux, ny: -uy };
     hitStop = Math.max(hitStop, 0.1);

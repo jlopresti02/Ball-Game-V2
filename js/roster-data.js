@@ -2642,7 +2642,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 8,
+    "rev": 9,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -4015,7 +4015,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 8,
+    "rev": 9,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
@@ -4083,6 +4083,13 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "hasSpecial": true,
+    "groundElbows": {
+      "on": [
+        2,
+        4,
+        5
+      ]
+    },
     "special": {
       "move": "fathersplan",
       "chargeTime": 82,
@@ -4154,7 +4161,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-max-holloway",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Max Holloway",

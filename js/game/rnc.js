@@ -38,6 +38,7 @@ function beginRnc(self, vic) {
   var edge = vic.r * RNC_OFF_X + self.r + 4;
   vic.x = Math.max(edge, Math.min(W - edge, vic.x));
   floater(vic.x, vic.y - vic.r - 60, "REAR NAKED CHOKE", "crit");
+  commentaryCall("choke", self, vic); // "It's under the neck!" (commentary-calls.js)
   playPunch(20);
   if (!reduceMotion) shake = Math.max(shake, 8);
 }

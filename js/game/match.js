@@ -383,6 +383,7 @@ function hurt(b, amount, source, attackerId) {
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
   recordHit(b, hpBefore - b.hp, source, attackerId); // jumbotron stats
+  commentaryHit(b, hpBefore - b.hp, source, attackerId); // a big punch gets the commentator's call (commentary-calls.js)
   icemanHit(b, hpBefore - b.hp, source, attackerId); // punches on Chuck Liddell frost their gloves (liddell.js)
   ngannouHurt(b, hpBefore - b.hp, source, attackerId); // Francis Ngannou's rage meter and punch-power reading (ngannou.js)
   crowdReact((hpBefore - b.hp) / MAX_HP * 4); // a 50 HP shot lifts the crowd 40%
