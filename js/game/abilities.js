@@ -174,6 +174,7 @@ function updateAbilities(dt) {
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
     if (self.beamPin) continue; // pinned to the cage by a beam (beam-clash.js)
     if (self.shocked || self.koOut || self.shelled || self.dazed || self.dizzy) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
+    if (americaOverwhelmed(self)) continue; // overwhelmed by Sean Strickland's America: throws nothing till it's over (strickland.js)
     if (updateDarkSide(self, other, dt)) continue; // Josh Hokit's Dark Side form change (hokit-darkside.js)
     if (saberLockHeld(self)) continue; // locked up blade on bat with him
     if (updateDuckDrop(self, other, dt)) continue; // Jon Jones's Duck Drop (jon-duck.js)

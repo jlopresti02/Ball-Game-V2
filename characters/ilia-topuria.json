@@ -1,6 +1,6 @@
 {
   "id": "c-ilia-topuria",
-  "rev": 14,
+  "rev": 15,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Ilia Topuria",
@@ -118,7 +118,7 @@
     "guardDrop": 15
   },
   "tdd": {
-    "sprawlChance": 60
+    "sprawlChance": 68
   },
   "kickCheck": 40,
   "hasKick": false,
