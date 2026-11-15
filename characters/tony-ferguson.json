@@ -1,6 +1,6 @@
 {
   "id": "c-tony-ferguson",
-  "rev": 7,
+  "rev": 9,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Tony Ferguson",
@@ -55,7 +55,7 @@
   "ferguson": {
     "durability": { "damageTaken": 0.82 },
     "wontTap": { "chances": [65, 40], "cost": 18, "vsCharlesArmbar": true },
-    "slide": { "first": [3, 5], "every": [4.5, 7], "minGap": 20, "maxGap": 200, "hops": 3, "hopTime": 0.24, "speed": 560, "dodge": 70, "react": 60, "shoot": 65, "shootRange": 90, "level": 0.16, "shotSpeed": 980, "shotMax": 0.45 },
+    "slide": { "first": [3, 5], "every": [4.5, 7], "minGap": 20, "maxGap": 200, "hops": 3, "hopTime": 0.24, "speed": 560, "dodge": 70, "react": 60, "chance": 85, "close": 0.7, "attack": { "elbow": 30, "spin": 15, "kick": 20, "shot": 35 }, "range": 70, "tell": 0.16, "lunge": 480, "shootRange": 90, "level": 0.16, "shotSpeed": 980, "shotMax": 0.45 },
     "takedown": { "damage": 14, "finish": { "buggy": 35, "darce": 35, "elbows": 30 } },
     "buggy": { "tapBase": 15, "tapLowHp": 55 },
     "darce": { "tapBase": 20, "tapLowHp": 55 },
@@ -99,5 +99,5 @@
     }
   },
   "hasSpecial": true,
-  "special": { "move": "katana", "chargeTime": 55, "hitCut": 3, "punchCut": 2, "draw": 0.8, "time": 4.5, "speed": 1.35, "gap": 0.42, "reach": 16, "damage": 6, "critChance": 55, "critMult": 3.5, "finisher": 16, "readChance": 25, "cycloneChance": 15, "cycloneTime": 0.65, "cycloneHits": 2, "flashChance": 15, "flashRange": 150, "clash": { "parry": { "blade": 55, "saber": 50, "bat": 40 }, "lockAfter": 2, "win": 40, "hurt": 30, "disarm": 30, "winDamage": 26, "hurtDamage": 18 }, "cut": { "chance": 60, "time": 4, "dps": 2.5 } }
+  "special": { "move": "katana", "chargeTime": 55, "hitCut": 3, "punchCut": 2, "draw": 0.8, "time": 4.5, "speed": 1.35, "gap": 0.42, "reach": 16, "damage": 7, "critChance": 55, "critMult": 3.5, "finisher": 18, "readChance": 25, "cycloneChance": 15, "cycloneTime": 0.65, "cycloneHits": 2, "flashChance": 15, "flashRange": 150, "clash": { "parry": { "blade": 55, "saber": 50, "bat": 40 }, "lockAfter": 2, "win": 40, "hurt": 30, "disarm": 30, "winDamage": 30, "hurtDamage": 18 }, "cut": { "chance": 60, "time": 4, "dps": 2.5 } }
 }

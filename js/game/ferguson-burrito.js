@@ -355,7 +355,7 @@ function tfTrySurf(b, atk, bc) {
   if (!b.tfMas && Math.random() * 100 >= sc.chance) return false;
   var dx = itProjHit.dx || (b.x - atk.x), dy = itProjHit.dy || (b.y - atk.y), d = Math.sqrt(dx * dx + dy * dy) || 1;
   clearActions(b);
-  b.tfMasMove = null; b.tfShell = null; b.tfSlide = null; b.tfShot = null;
+  b.tfMasMove = null; b.tfShell = null; b.tfSlide = null; b.tfOff = null; b.tfShot = null;
   b.vx = 0; b.vy = 0;
   b.tfSurf = { phase: "hop", t: 0, hold: true /* their beam keeps firing till his lands (tfHoldBeam) */, owner: atk.id, dx: dx / d, dy: dy / d, trail: 0, roll: 0, ang: Math.atan2(-dy, -dx) };
   b.justDodged = true;
