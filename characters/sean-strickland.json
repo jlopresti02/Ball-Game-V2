@@ -1,6 +1,6 @@
 {
   "id": "c-sean-strickland",
-  "rev": 3,
+  "rev": 4,
   "builtin": false,
   "weightClass": "middleweight",
   "name": "Sean Strickland",
@@ -27,7 +27,7 @@
   "hasProjectile": false,
   "proj": { "size": 7, "speed": 460, "damage": 10, "cooldown": 1.6, "imgData": null },
   "hasPunch": true,
-  "punch": { "damage": 13, "cooldown": 0.5, "speed": 0.2, "size": 14, "knockback": 150, "reach": 46, "koChance": 0 },
+  "punch": { "damage": 15, "cooldown": 0.5, "speed": 0.2, "size": 14, "knockback": 150, "reach": 46, "koChance": 0 },
   "hasKick": false,
   "hasGrapple": false,
   "hasPowerPunch": false,

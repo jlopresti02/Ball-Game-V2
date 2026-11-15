@@ -1,9 +1,10 @@
 // Tony Ferguson's Burrito Bell power-up (Joe, 2026-11-13). Set under
 // `ferguson.burrito` in his character file.
 //
-// Once a fight, a few seconds after his first Kaioken burns out (the
-// Burrito Bell ad is on the jumbotron by then), or when he's hurt badly
-// (`lowHp`), he pulls a Burrito Bell burrito out and eats it: three big
+// Once a fight, as his FIRST Kaioken (Joe, 2026-11-15): when it's due (or
+// he's hurt badly), the Burrito Bell ad comes up on the jumbotron and he
+// says his Taco Bell line, then he pulls a Burrito Bell burrito out and eats
+// it (the old timer, `first`/`lowHp`, is still a fallback): three big
 // bites, then the foil goes flying. While he's eating, a strike at him is
 // BLOCKED (his free left glove snaps out and knocks them back) or DODGED
 // (he slips it and sways back). Then the red aura explodes: KAIOKEN x10,
@@ -55,6 +56,20 @@ function initTfBurrito(b, cfg) {
 function tfBurritoAfterKaioken(b, cfg) {
   var bc = cfg.burrito;
   if (bc && !b.tfBurDone && bc.after) b.tfBurT = Math.min(b.tfBurT, tfRand(bc.after));
+}
+// From updateFerguson (ferguson.js) when a Kaioken is due: the first one is
+// the burrito. True if it started.
+function tfBurritoFirstKaioken(self, cfg) {
+  if (!cfg.burrito || self.tfBurDone || self.tfKaioN > 0) return false;
+  self.tfKaioN++; // (counts as his first Kaioken; the next one's an ordinary one)
+  if (!self.tfAdDone) { // he's starving: the Burrito Bell ad, and his line
+    self.tfAdDone = true;
+    var bl = cfg.lines && cfg.lines.bell;
+    if (bl && bl.on && bl.text) say(self, bl.text);
+    if (cfg.bellAd) startBurritoBellAd(self);
+  }
+  startTfBurrito(self);
+  return true;
 }
 function tfWantBurrito(self, cfg) {
   var bc = cfg.burrito;
@@ -189,6 +204,7 @@ function tickTfMas(b, cfg, dt) {
   if (!held) m.t -= dt;
   if (m.t > 0 && b.alive && !over) return;
   b.tfMas = null;
+  if (cfg.kaioken && cfg.kaioken.every) b.tfKaioT = tfRand(cfg.kaioken.every); // (the next, ordinary Kaioken waits its turn)
   b.baseSpeed = b.tfBase.speed; b.atkRate = b.tfBase.atk;
   if (b.alive && inOrdinaryMovement(b)) setSpeed(b, b.baseSpeed);
   if (b.alive && !over) playKaiokenDown();
