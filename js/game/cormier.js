@@ -41,8 +41,10 @@
 //              "All About That Cake" video: when the bar's full he stops
 //              ("SNACK TIME!"), pulls out a plate and eats (`eatTime`, `bites`
 //              bites), the next thing on the `menu` (a slice of chocolate cake
-//              with a cherry on top, or a fried chicken drumstick). He's wide
-//              open while he eats (they can hit him; he doesn't drop it). Then
+//              with a cherry on top, or a fried chicken drumstick). With
+//              food.defend on (Joe) he stays solid and blocks or slips
+//              everything until he's done (dcDefend); without it he's wide
+//              open (they can hit him; he doesn't drop it). Then
 //              his belly swells (`belly` bigger, `grow` wider) and for the
 //              rest of the fight everything he lands does `damage` times as
 //              much and he takes `take` times as much, stacking with every
@@ -192,7 +194,11 @@ function cormierHandsBusy(b) {
   return !!(b.dc && (b.dc.shot || dcSlamOn(b) || dcFoodOn(b)));
 }
 // He can be hit while he eats (special.js specialGuarding).
-function cormierOpen(b) { return dcFoodOn(b); }
+function cormierOpen(b) { return dcFoodOn(b) && !cormierEatSafe(b); }
+// Joe (2026-11-15): with food.defend on he stays solid while he eats and
+// blocks or slips everything until he's done (dcDefend). Grabs too
+// (attemptGrab, grapple-duel.js).
+function cormierEatSafe(b) { var fd = dcCfg(b) && dcCfg(b).food; return !!(fd && fd.defend && dcFoodOn(b) && b.igbb.phase !== "cut"); }
 
 // ---------------------------------------------------------------- hurt (match.js)
 
@@ -497,6 +503,7 @@ function updateCake(self, other, dt) {
   e.t += dt;
   self.vx = 0; self.vy = 0;
   e.bite = Math.max(0, e.bite - dt);
+  if (fd.defend && e.phase !== "cut") dcDefend(self, other, m, dt); // solid, and blocks or slips everything while he eats
   if (e.phase === "cut") { // the fight holds through the video; then it's down
     if (!dcCakeCutOn()) { e.phase = "swell"; e.t = 0; dcServe(self, e.kind, false); }
     return true;
@@ -516,6 +523,56 @@ function updateCake(self, other, dt) {
   }
   if (e.t >= DC_SWELL) { self.igbb = null; self.specialT = 0; m.eating = false; return false; }
   return true;
+}
+
+// Eating with food.defend on (Joe, 2026-11-15), like Chuck Liddell's Snow Day
+// (icDefend, liddell.js): walking into him just eases them out of his space,
+// no bounce, and every strike, shot or grab they start on him is either
+// BLOCKED! (he turns his shoulder into it, they're knocked back) or DODGED!
+// (he slips out to the side and sways back). Anything that still lands is
+// blocked by the special's guard (specialGuarding, special.js).
+function dcAttacking(o) { return !!(o.punch || o.kick || o.swing || o.jabAnim || o.throwAnim || o.combo || o.flow || o.grapple); }
+function dcDefend(self, other, m, dt) {
+  if (m.def) { m.def.t += dt; if (m.def.t > 0.35) m.def = null; }
+  if (m.dodge) {
+    var dg = m.dodge; dg.t += dt;
+    var k = Math.min(1, dg.t / 0.4), cur = Math.sin(k * Math.PI), step = (cur - dg.done) * 55; // slips out, then sways back
+    dg.done = cur;
+    self.x = Math.min(W - self.r, Math.max(self.r, self.x + dg.x * step));
+    self.y = Math.min(H - self.r, Math.max(self.r, self.y + dg.y * step));
+    if (dg.t > 0.4) m.dodge = null;
+  }
+  var atk = dcAttacking(other);
+  if (!other.alive) { m.prevAtk = atk; return; }
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+  if (d < self.r + other.r + 4) { // they walk into him: eased out of his space, no bounce
+    var push = self.r + other.r + 4 - d;
+    other.x = Math.min(W - other.r, Math.max(other.r, other.x + ux * push));
+    other.y = Math.min(H - other.r, Math.max(other.r, other.y + uy * push));
+  }
+  if (atk && !m.prevAtk && d < self.r + other.r + 90 && !m.dodge && !m.def) {
+    if (Math.random() < 0.5) {
+      m.def = { t: 0, x: ux, y: uy };
+      other.punch = null; other.kick = null; other.swing = null; other.jabAnim = null; other.combo = null; other.flow = null; other.grapple = null;
+      other.vx = ux * 380; other.vy = uy * 380;
+      floater(self.x + ux * self.r, self.y - self.r - 30, "BLOCKED!", "dodge");
+      playHotSauce("block");
+      for (var i = 0; i < 10 && !reduceMotion; i++) {
+        var a = Math.atan2(uy, ux) + (Math.random() - 0.5) * 1.8, v = 160 + Math.random() * 160;
+        particles.push({ x: self.x + ux * self.r * 1.05, y: self.y + uy * self.r * 1.05, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.25, max: 0.25, size: 2 + Math.random() * 2, color: i % 2 ? "#ffffff" : DC_GOLD });
+      }
+    } else {
+      var sd = Math.random() < 0.5 ? 1 : -1, px = -uy * sd, py = ux * sd;
+      if (self.x + px * 70 < self.r || self.x + px * 70 > W - self.r || self.y + py * 70 < self.r || self.y + py * 70 > H - self.r) { px = -px; py = -py; }
+      px -= ux * 0.4; py -= uy * 0.4;
+      var pl = Math.sqrt(px * px + py * py) || 1;
+      m.dodge = { t: 0, done: 0, x: px / pl, y: py / pl };
+      if (other.grapple) other.grapple = null;
+      floater(self.x, self.y - self.r - 30, "DODGED!", "dodge");
+      playHotSauce("dodge");
+    }
+  }
+  m.prevAtk = atk;
 }
 
 // A serving goes down: stronger for the rest of the fight, and a bigger belly.
@@ -625,7 +682,8 @@ function applyCormierPose(b) {
   if (dcFoodOn(b)) {
     var chew = g.phase === "eat" ? Math.sin(dcClock * 22) * 0.025 : 0;
     var swell = g.phase === "swell" ? Math.sin(Math.PI * Math.min(1, g.t / DC_SWELL)) * 0.06 : 0;
-    ctx.translate(ax, ay); ctx.scale(1 + chew + swell, 1 - chew + swell * 0.5); ctx.translate(-ax, -ay);
+    var turn = m.def ? Math.sin(Math.PI * Math.min(1, m.def.t / 0.35)) * 0.22 * (m.def.x >= 0 ? 1 : -1) : 0; // shoulder into the blocked shot
+    ctx.translate(ax, ay); ctx.rotate(turn); ctx.scale(1 + chew + swell, 1 - chew + swell * 0.5); ctx.translate(-ax, -ay);
   }
 }
 
@@ -1021,7 +1079,7 @@ function drawDcBelly(c, r, look, ink, lw, contained, sTop) {
 // ---------------------------------------------------------------- gallery (gallery.js)
 
 function cormierCakeInfo(sp) {
-  return "His 2015 \"All About That Cake\" video: when the bar's full he stops (\"SNACK TIME!\") and eats a slice of chocolate cake or a fried chicken drumstick, wide open while he does. Then his belly swells and he hits harder for the rest of the fight, stacking with every serving. The first one each fight plays his music video as a cutscene, with the real song and the lyrics.";
+  return "His 2015 \"All About That Cake\" video: when the bar's full he stops (\"SNACK TIME!\") and eats a slice of chocolate cake or a fried chicken drumstick. He stays solid and blocks or slips everything until he's done eating. Then his belly swells and he hits harder for the rest of the fight, stacking with every serving. The first one each fight plays his music video as a cutscene, with the real song and the lyrics.";
 }
 
 function cormierGalleryMoves(ch, add) {

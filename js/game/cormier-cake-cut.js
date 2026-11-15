@@ -408,15 +408,15 @@ function dccDrumstick(x, y, s, ang) {
   var lw = Math.max(3, s * 0.035);
   // the bone, through the glove and out the bottom
   ctx.strokeStyle = DCC_INK; ctx.lineWidth = s * 0.2 + lw * 2;
-  ctx.beginPath(); ctx.moveTo(0, s * 0.9); ctx.lineTo(0, -s * 0.35); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, s * 0.42); ctx.lineTo(0, -s * 0.35); ctx.stroke();
   var bone = ctx.createLinearGradient(-s * 0.1, 0, s * 0.1, 0);
   bone.addColorStop(0, "#efe6d2"); bone.addColorStop(0.5, "#fffaf0"); bone.addColorStop(1, "#d4c7ac");
   ctx.strokeStyle = bone; ctx.lineWidth = s * 0.2;
-  ctx.beginPath(); ctx.moveTo(0, s * 0.9); ctx.lineTo(0, -s * 0.35); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, s * 0.42); ctx.lineTo(0, -s * 0.35); ctx.stroke();
   ctx.fillStyle = "#fbf4e6"; ctx.strokeStyle = DCC_INK; ctx.lineWidth = lw;
-  [-1, 1].forEach(function (k) { ctx.beginPath(); ctx.arc(k * s * 0.1, s * 0.95, s * 0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+  [-1, 1].forEach(function (k) { ctx.beginPath(); ctx.arc(k * s * 0.09, s * 0.47, s * 0.1, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
   ctx.fillStyle = "#fbf4e6";
-  ctx.fillRect(-s * 0.1, s * 0.85, s * 0.2, s * 0.1);
+  ctx.fillRect(-s * 0.09, s * 0.37, s * 0.18, s * 0.1);
   // the meat: narrow where it meets the bone, round and fat at the top
   var pts = dccLumpy(s * 0.4, s * 0.64, 14, 0.1, 3, function (a) { var sn = Math.sin(a); return sn > 0 ? 1 - 0.62 * Math.pow(sn, 3) : 1 + 0.06 * sn * sn; });
   ctx.save(); ctx.translate(0, -s * 0.75);
