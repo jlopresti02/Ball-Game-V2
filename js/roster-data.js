@@ -5913,7 +5913,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 8,
+    "rev": 9,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
