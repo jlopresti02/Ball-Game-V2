@@ -8,7 +8,8 @@
 // more on top of the beam's, which can't be slipped or blocked. It sits on
 // them for `hold` seconds, then tips off and is gone. If they got out of the
 // way, it sinks back into the mat once the rainbow's done.
-// In a beam clash with Charles it only comes up once the rainbow has won.
+// In a beam clash with Charles it only comes up once the rainbow has won,
+// and lands once the rainbow's done its damage (Joe, 2026-11-15).
 // Set under potOfGold.endPot in his character file (`on` false, or leave the
 // block out, and it's off).
 "use strict";
@@ -75,6 +76,9 @@ function pgTick(p, dt) {
     // Blasted into it: driven back by the rainbow to within `radius` of it.
     var v = balls[1 - p.owner];
     var settled = p.m.phase !== "fire" || p.m.t >= PG_WAIT;
+    // Joe (2026-11-15): after a beam clash it waits for the rainbow to finish
+    // its damage, then lands on them as the beam lets go.
+    if (p.m.pair && v && v.beamPin) settled = v.beamPin.t >= v.beamPin.dur - PG_FLIP;
     if (settled && v && v.alive && v.beamPin && v.beamPin.owner === owner.id && Math.hypot(v.x - p.x, v.y - p.y) < cfg.radius) {
       p.phase = "flip"; p.t = 0; p.victim = v.id; p.x0 = p.x; p.y0 = p.y;
     }
