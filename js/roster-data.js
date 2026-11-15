@@ -2540,7 +2540,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-francis-ngannou",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Francis Ngannou",
