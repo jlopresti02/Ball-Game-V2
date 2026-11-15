@@ -58,6 +58,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Alexander Volkanovski steps in on an angle as his strike goes off, steps out on an angle after it, and pivots off their line; on the angle 35% of strikes go where he was ("ANGLE", one opt-in line in match.js hurt() before Hokit's kick smother) (`volk.angles`, `plans.kicks.stepIn`, volkanovski.js) | Christian's Claude | live on main |
 | Sean O'Malley: the Sniper hits harder (snipe damage 36, they read it 15% of the time); crits back to where they were (crit chance +15 on the snipe, every crit 2x; `suga.snipe.critMult` removed, landSnipe() still honors it if set) | Christian's Claude | live on main |
 | Max Holloway slips 15% of what they throw all fight (new `holloway.slip.chance`, in his own `hollowayDodge`, no counter, never in The Middle); at the booth he slips 85% (was 70), still countered for 9 | Christian's Claude | live on main |
+| Justin Gaethje's regular punch is a bit weaker (21), 10% slower (`punch.speed` 0.352) and whiffs 10% of the time (`punchWhiff`, top level, one opt-in line in punchHurt in body-shots-uppercuts.js); his uppercuts (damageMult 1.43, still 30) and big right are unchanged | Christian's Claude | live on main |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
