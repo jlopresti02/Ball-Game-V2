@@ -544,6 +544,7 @@ function draw() {
   drawSendLocation(s, ox, oy); // Khabib's phone call, the target circle and the beam (send-location.js)
   drawRingBearSky(s, ox, oy); // Khabib's thrown bear flying off the screen (khabib-bear.js)
   drawScreenFlash(); // the crowd's cameras going off (Do Bronx)
+  fedorScreenCam(ox, oy, s); // the cinematic camera, letterbox and impact frame of Fedor's The Unmoving Man (fedor-unmoving.js)
   swordScreenZoom(ox, oy, s); // the whole screen pushing in on a sword duel (sword.js)
   tossScreenZoom(ox, oy, s); // the camera punching in on a takedown landing (toss.js)
   deathScreenZoom(ox, oy, s); // the camera riding in on a K.O. flight (death.js)

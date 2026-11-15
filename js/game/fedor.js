@@ -58,7 +58,7 @@
 // Voice lines (fedor.lines) empty named slots read with say(): `start`,
 //             `win`, `unfazed`, `armbar`. A line with no clip is silent, so
 //             empty slots are safe; Christian picks the real lines.
-// No special move yet: Christian is choosing one (hasSpecial false).
+// Special     The Unmoving Man (Joe, 2026-11-15): fedor-unmoving.js.
 //
 // The throw runs on b.fd.act, the ground and pound on the opponent's guillo.
 "use strict";
@@ -401,6 +401,7 @@ function fedorDamageMult(b, source, attackerId) {
 // He drops his level reaching for the clinch, turns into the throw, and the
 // one thrown flips over head first. From draw() with the canvas set up for b.
 function applyFedorPose(b) {
+  applyUnmovingPose(b); // his slips and their lean in The Unmoving Man (fedor-unmoving.js)
   var a, angle = 0;
   if (b.fd && b.fd.act) {
     a = b.fd.act;
@@ -476,6 +477,7 @@ function fdDrawStreaks(b, other) {
 
 // Over both fighters: his arms locked round them through the clinch and the throw.
 function drawFedorOver() {
+  drawUnmovingOver(); // The Unmoving Man: both fighters' arms, the shadow over his eyes, the manga marks (fedor-unmoving.js)
   balls.forEach(function (b) {
     var a = b.fd && b.fd.act;
     if (!a || (a.phase !== "lock" && a.phase !== "throw")) return;

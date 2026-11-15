@@ -80,6 +80,7 @@ SPECIAL_INFO.broadside = function (sp) { return bispingSpecialInfo(sp); }; // Mi
 SPECIAL_INFO.cake = function (sp) { return cormierCakeInfo(sp); }; // Daniel Cormier (cormier.js)
 SPECIAL_INFO.cigarette = function (sp) { return pratesCigaretteInfo(sp); }; // Carlos Prates (prates.js)
 SPECIAL_INFO.samurai = function (sp) { return samuraiSpecialInfo(sp); }; // Jiří Procházka (prochazka.js)
+SPECIAL_INFO.unmoving = function (sp) { return unmovingSpecialInfo(sp); }; // Fedor Emelianenko (fedor-unmoving.js)
 
 // Every move a fighter has, as { icon, name, info }, built from its stats.
 function galleryMoves(ch) {
