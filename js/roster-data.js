@@ -5317,7 +5317,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
@@ -5327,12 +5327,12 @@ var SAVED_ROSTER = [
     "label": "",
     "imgData": null,
     "look": {
-      "skin": "#c49a6c",
+      "skin": "#dfae8e",
       "build": "lean",
       "face": "angular",
       "bodyHair": "none",
       "hair": "receding",
-      "hairColor": "#17130f",
+      "hairColor": "#d6b05a",
       "beard": "none",
       "ears": "normal",
       "tattoos": {
@@ -5347,7 +5347,7 @@ var SAVED_ROSTER = [
       "gloves": "#141414",
       "cucuy": {
         "stubble": {
-          "color": "#2a211a",
+          "color": "#7a5a30",
           "alpha": 0.16
         },
         "headband": {
