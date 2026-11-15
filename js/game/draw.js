@@ -234,6 +234,7 @@ function draw() {
     applyAndersonPose(b); // Anderson Silva bent back in a weave, crouched for and flying in with the front kick (anderson.js)
     applyCormierPose(b); // Daniel Cormier dropping his level, carrying, chewing; whoever he's got lying across over his head (cormier.js)
     applyProchazkaPose(b); // Jiří Procházka twisting into a katana cut (prochazka.js)
+    applyJonClinchPose(b); // Jon Jones leaning into the clinch, and whoever he's tripping (jon-clinch.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -456,6 +457,7 @@ function draw() {
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)
   drawCormierOver(); // SUPER SLAM! (cormier.js)
   drawProchazkaOver(); // the cuts Jiří Procházka's katanas leave (prochazka.js)
+  drawJonClinch(); // Jon Jones's arms locked over-under, his clinch knees and elbows, the trip's leg and red arrow (jon-clinch.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
