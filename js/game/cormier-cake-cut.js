@@ -116,18 +116,26 @@ function dccBall(b, x, y, r, rot, sing) {
 }
 // Where a spot on the ball (in radii) ends up on screen.
 function dccOn(x, y, r, rot, lx, ly) { var p = dccRot(lx * r, ly * r, rot); return { x: x + p.x, y: y + p.y }; }
-// One of his arms, shoulder to glove (his own two only).
-function dccArm(b, sx, sy, hx, hy, r) {
-  var look = b.char.look, w = r * 0.2;
+// One of his arms (his own two only): out of the side of the ball at the
+// shoulder, bending at the elbow, to the glove. The upper arm tapers a little
+// into the forearm. Returns the glove's angle (along the forearm).
+function dccArm(b, sx, sy, ex, ey, hx, hy, r, side) {
+  var w = r * 0.15, col = armColor(b.char, side || 1), out = Math.max(5, r * 0.03);
   ctx.save();
   ctx.lineCap = "round"; ctx.lineJoin = "round";
-  ctx.strokeStyle = DCC_INK; ctx.lineWidth = w + Math.max(6, r * 0.035);
-  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
-  ctx.strokeStyle = look.skin; ctx.lineWidth = w;
-  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
+  ctx.strokeStyle = DCC_INK;
+  ctx.lineWidth = w * 1.12 + out * 2; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+  ctx.lineWidth = w + out * 2; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
+  ctx.strokeStyle = col;
+  ctx.lineWidth = w * 1.12; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+  ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
+  // a soft highlight down the top of the arm
+  ctx.strokeStyle = "rgba(255,255,255,0.12)"; ctx.lineWidth = w * 0.3;
+  ctx.beginPath(); ctx.moveTo(sx, sy - w * 0.2); ctx.lineTo(ex, ey - w * 0.2); ctx.lineTo(hx, hy - w * 0.2); ctx.stroke();
   ctx.restore();
+  return Math.atan2(hy - ey, hx - ex);
 }
-function dccGlove(b, hx, hy, r, ang) { drawGlove(ctx, hx, hy, r * 0.31, b.char.look, DCC_INK, ang); }
+function dccGlove(b, hx, hy, r, ang) { drawGlove(ctx, hx, hy, r * 0.21, b.char.look, DCC_INK, ang); }
 
 // ---------------------------------------------------------------- the food
 
@@ -333,11 +341,12 @@ function dccShotClose(b, u) {
   var r = 560, x = 330, y = 1010 - 10 * dccBounce(u), rot = 0.2 + 0.04 * dccSway(u);
   dccBall(b, x, y, r, rot, dccEnv(u));
   var near = Math.max(dccBump(u, 1.55, 0.35), dccBump(u, 3.05, 0.35));
-  var hx = 740 - 90 * near, hy = 930 - 40 * near - 16 * dccBounce(u);
-  var sh = dccOn(x, y, r, rot, 0.55, 0.35), ang = Math.atan2(hy - sh.y, hx - sh.x);
-  dccArm(b, sh.x, sh.y, hx, hy, r * 0.62);
-  dccSnack(hx + 6, hy - r * 0.62 * 0.5, 100, -0.25 + 0.1 * near);
-  dccGlove(b, hx, hy, r * 0.62, ang);
+  var hx = 760 - 90 * near, hy = 900 - 40 * near - 16 * dccBounce(u);
+  // the upper arm hangs off his right side, the forearm comes up to his cheek
+  var sh = dccOn(x, y, r, rot, 0.84, -0.38), el = { x: Math.min(1025, sh.x + 150), y: hy + 270 };
+  var ang = dccArm(b, sh.x, sh.y, el.x, el.y, hx, hy, r, 1);
+  dccSnack(hx + 4, hy - r * 0.21 - 70, 100, -0.25 + 0.1 * near);
+  dccGlove(b, hx, hy, r, ang);
   ctx.restore();
 }
 
@@ -366,9 +375,9 @@ function dccShotWide(b, u) {
   dccBall(b, x, y, r, rot, dccEnv(u));
   [-1, 1].forEach(function (sd) {
     var sw = 0.12 * Math.sin(Math.PI * (u - DCC.beat0) / DCC.beat + (sd > 0 ? 0 : Math.PI));
-    var sh = dccOn(x, y, r, rot, sd * 0.6, -0.3), g = dccOn(x, y, r, rot, sd * (1.0 + sw * 0.4), 0.42 - sw);
-    dccArm(b, sh.x, sh.y, g.x, g.y, r);
-    dccGlove(b, g.x, g.y, r, Math.atan2(g.y - sh.y, g.x - sh.x));
+    var sh = dccOn(x, y, r, rot, sd * 0.92, -0.12), el = dccOn(x, y, r, rot, sd * 1.2, 0.3 + sw * 0.5), g = dccOn(x, y, r, rot, sd * (1.08 + sw * 0.3), 0.72 - sw);
+    var ang = dccArm(b, sh.x, sh.y, el.x, el.y, g.x, g.y, r, sd);
+    dccGlove(b, g.x, g.y, r, ang);
   });
   ctx.restore();
 }
@@ -376,33 +385,34 @@ function dccShotWide(b, u) {
 // 7.00-11.35: a drumstick in each glove: waving them, then rubbing them
 // together, then holding them up.
 function dccShotDrumsticks(b, u) {
-  var t = u - 7, r = 470, x = 540, y = 1300 - 8 * dccBounce(u), rot = 0.04 * dccSway(u);
+  var t = u - 7, r = 470, x = 540, y = 1330 - 8 * dccBounce(u), rot = 0.04 * dccSway(u);
   dccBall(b, x, y, r, rot, dccEnv(u) * 0.6);
   var rub = dccEase((t - 1.55) / 0.5) * (1 - dccEase((t - 3.55) / 0.45));
   var show = dccEase((t - 3.6) / 0.4);
   [-1, 1].forEach(function (sd) {
     var wave = Math.sin(Math.PI * (u - DCC.beat0) / (DCC.beat / 2) + (sd > 0 ? Math.PI : 0));
-    var gx = 540 + sd * 230, gy = 1410 - 45 * Math.max(0, wave);
+    var gx = 540 + sd * 240, gy = 1450 - 45 * Math.max(0, wave);
     // together in the middle, rubbing
-    var rx = 540 + sd * 120 + sd * 22 * Math.sin(u * 30), ry = 1370 + 10 * Math.cos(u * 30);
+    var rx = 540 + sd * 110 + sd * 22 * Math.sin(u * 30), ry = 1440 + 10 * Math.cos(u * 30);
     gx += (rx - gx) * rub; gy += (ry - gy) * rub;
     gy -= 70 * show; gx += sd * 40 * show;
-    var sh = dccOn(x, y, r, rot, sd * 0.6, -0.3);
-    dccArm(b, sh.x, sh.y, gx, gy, r);
-    var meat = -Math.PI / 2 + sd * (0.38 - 0.3 * rub) + 0.12 * wave * (1 - rub);
-    dccDrumstick(gx, gy, 165, meat);
-    dccGlove(b, gx, gy, r, Math.atan2(gy - sh.y, gx - sh.x));
+    var sh = dccOn(x, y, r, rot, sd * 0.94, 0.05), el = dccOn(x, y, r, rot, sd * 1.08, 0.5 - 0.12 * show);
+    var ang = dccArm(b, sh.x, sh.y, el.x, el.y, gx, gy, r, sd);
+    var meat = -Math.PI / 2 + sd * (0.5 - 0.2 * rub) + 0.12 * wave * (1 - rub);
+    dccDrumstick(gx, gy, 150, meat);
+    dccGlove(b, gx, gy, r, ang);
   });
 }
 
 // 11.35-13.84: swaying and singing straight down the camera.
 function dccShotSing(b, u) {
-  var t = u - 11.35, r = 545, sw = dccSway(u), x = 540 + 46 * sw, y = 1330 - 16 * dccBounce(u), rot = 0.07 * sw;
+  var t = u - 11.35, r = 470, sw = dccSway(u), x = 540 + 46 * sw, y = 1300 - 16 * dccBounce(u), rot = 0.07 * sw;
   dccBall(b, x, y, r, rot, dccEnv(u) * 1.2);
   [-1, 1].forEach(function (sd) {
-    var sh = dccOn(x, y, r, rot, sd * 0.6, -0.3), g = dccOn(x, y, r, rot, sd * 0.8, 0.62 + 0.04 * Math.sin(u * 7 + sd));
-    dccArm(b, sh.x, sh.y, g.x, g.y, r);
-    dccGlove(b, g.x, g.y, r, Math.atan2(g.y - sh.y, g.x - sh.x));
+    var bob = 0.05 * Math.sin(Math.PI * (u - DCC.beat0) / (DCC.beat / 2) + (sd > 0 ? 0 : Math.PI));
+    var sh = dccOn(x, y, r, rot, sd * 0.94, 0.0), el = dccOn(x, y, r, rot, sd * 1.1, 0.34), g = dccOn(x, y, r, rot, sd * 0.86, 0.68 - bob);
+    var ang = dccArm(b, sh.x, sh.y, el.x, el.y, g.x, g.y, r, sd);
+    dccGlove(b, g.x, g.y, r, ang);
   });
   // music notes floating up out of his mouth
   var m = dccOn(x, y, r, rot, 0, -0.36);
@@ -431,10 +441,10 @@ function dccShotTwinkie(b, u) {
   dccBall(b, mx, my + 0.36 * r, r, 0, chew * 1.5);
   var up = dccEase(t / 0.36), bite = t >= 0.5 ? 1 : 0;
   var len = 520, gx = 580 - 20 * up, gy = 2500 + (1350 - 2500) * up + (t > 0.5 ? 70 * dccEase((t - 0.5) / 0.25) : 0);
-  var shx = 760, shy = 2700; // his arm coming up from below the frame
-  dccArm(b, shx, shy, gx, gy, r * 0.34);
-  dccTwinkie(gx + 4, gy - 30, len, 175, -0.06, bite);
-  dccGlove(b, gx, gy, r * 0.34, Math.atan2(gy - shy, gx - shx));
+  // his right arm coming up from below the frame, bent at the elbow
+  var ar = 520, ang = dccArm(b, 900, 2900, 860 + 40 * up, 2050 + 120 * up, gx, gy, ar, 1);
+  dccTwinkie(gx + 4, gy - ar * 0.12, len, 175, -0.06, bite);
+  dccGlove(b, gx, gy, ar, ang);
   // crumbs off the bite
   if (t >= 0.5) {
     var a = t - 0.5;
