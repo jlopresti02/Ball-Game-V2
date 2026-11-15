@@ -1,6 +1,6 @@
 {
   "id": "c-justin-gaethje",
-  "rev": 19,
+  "rev": 20,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Justin Gaethje",
@@ -52,7 +52,7 @@
   },
   "hasPunch": true,
   "punch": {
-    "damage": 18.9,
+    "damage": 19,
     "cooldown": 1.2,
     "speed": 0.352,
     "size": 15,
@@ -64,7 +64,7 @@
   "uppercuts": {
     "chance": 20,
     "close": 34,
-    "damageMult": 1.587,
+    "damageMult": 1.579,
     "critChance": 40,
     "critMult": 1.8,
     "onGrab": 90,
