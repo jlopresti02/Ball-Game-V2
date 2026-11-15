@@ -16,9 +16,12 @@
 //              (and the "!" flashes red) for the last `lock` seconds. That's
 //              the tell (Christian, 2026-11-15): how far apart they are when
 //              the "!" goes up decides whether they can get out of the way
-//              (`escape`): none from `pointBlank` in, nearChance% out to
-//              `near`, rising to farChance% at `far` and beyond, plus
-//              slipBonus for a weaver or a footwork fighter. One who reads it
+//              (`escape`): pointBlankChance% (default none) from
+//              `pointBlank` in, nearChance% out to `near`, rising to
+//              farChance% at `far` and beyond, plus lighterBonus% for every
+//              weight class they're lighter than him (he's huge, so the
+//              smaller fighters see it coming), plus slipBonus for a weaver
+//              or a footwork fighter (95% at most). One who reads it
 //              sidesteps off the line once it locks (at `slipSpeed`) and he
 //              lunges straight past them ("SLIPPED IT!"), skidding on for
 //              `overshoot` seconds before he's gassed. One who doesn't gets
@@ -250,18 +253,20 @@ function beginRageWindup(self, other, rc, dx, dy) {
   st.phase = "windup"; st.t = 0; st.aim = Math.atan2(dy, dx); st.locked = false;
   // The "!" goes up now: how far away they are decides if they can get out.
   st.gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;
-  st.escape = Math.random() * 100 < ngEscapeChance(rc.escape, st.gap, other);
+  st.escape = Math.random() * 100 < ngEscapeChance(rc.escape, st.gap, other, self);
   st.side = 1; st.slipped = false;
   playNgWindup(rc.windup);
 }
 
 // The chance (in %) they read it and get out of the way, by the gap between
-// them when the "!" goes up.
-function ngEscapeChance(ec, gap, o) {
-  if (!ec || gap <= ec.pointBlank) return 0;
+// them when the "!" goes up, and how much smaller than him they are.
+function ngEscapeChance(ec, gap, o, self) {
+  if (!ec) return 0;
+  if (gap <= ec.pointBlank) return ec.pointBlankChance || 0; // touching: it (nearly) always lands
   var k = Math.max(0, Math.min(1, (gap - ec.near) / Math.max(1, ec.far - ec.near)));
   var c = ec.nearChance + (ec.farChance - ec.nearChance) * k;
   var oc = o.char || {};
+  if (ec.lighterBonus && self) c += ec.lighterBonus * Math.max(0, weightIndex(self.char) - weightIndex(oc)); // (weight.js)
   if (oc.hasWeave || (oc.gane && oc.gane.footwork) || (oc.bisping && oc.bisping.footwork)) c += ec.slipBonus || 0;
   return Math.min(95, c);
 }

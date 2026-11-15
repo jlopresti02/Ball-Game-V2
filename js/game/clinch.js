@@ -60,6 +60,10 @@
 //             "SPINNING BACK ELBOW!"). Each reaches `reach` further, lands or
 //             misses on its own (they can slip or block it) and shoves them
 //             off (`knockback`).
+// Do Bronx    (special.clinchMult, Charles Oliveira's special block) in the
+//             Do Bronx state his clinch knees and elbows do clinchMult times,
+//             not the full special.damageMult every other hit gets
+//             (clDoBronxScale). Left out: the full damageMult, as before.
 // combos      true (the default): the clinch step in his combinations
 //             ("punch-clinch", "double-collar", combos.js) ties up with this
 //             clinch instead of the plum, and the combination's count goes on
@@ -97,6 +101,14 @@ function clMerge(def, c) {
 // His numbers, worked out once a fight (makeBall gives every fight new balls).
 function clN(b) { return b.clN || (b.clN = clMerge(CLINCH_DEF, clinchCfg(b))); }
 function clKnee(n) { return clMerge(CLINCH_KNEE, n.knee); }
+// In Do Bronx (dobronx.js) every hit he lands does special.damageMult times;
+// special.clinchMult (if set) caps his clinch strikes at that instead, so
+// this scales them from the one to the other (1 for everyone else).
+function clDoBronxScale(b) {
+  var sp = b && b.doBronx && b.char.special;
+  if (!sp || sp.clinchMult == null) return 1;
+  return sp.clinchMult / (sp.damageMult || 2);
+}
 function clElbow(ch, n) {
   var e = clMerge({ damage: 6, critChance: ELBOW_CRIT, critMult: 2 }, ch.elbow);
   return clMerge(e, n.elbow);
@@ -289,7 +301,7 @@ function holdClinch(self, v, m, n, dt) {
 function landClinchStrike(self, v, m, n, s) {
   var sd = m.side, head = s.kind !== "bodyKnee";
   var ux = sd * (head ? 0.75 : 1), uy = head ? 0.66 : -0.15; // (where it lands: their head, or their middle)
-  var more = 1 + (n.ramp || 0) / 100 * m.row, crit, dealt, name;
+  var more = (1 + (n.ramp || 0) / 100 * m.row) * clDoBronxScale(self), crit, dealt, name; // (Do Bronx: clinchMult, not the full damageMult)
   if (s.kind === "elbow") {
     var el = clElbow(self.char, n);
     crit = el.critChance > 0 && Math.random() * 100 < el.critChance;
