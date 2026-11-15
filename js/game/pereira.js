@@ -3,6 +3,9 @@
 // Step       he stalks slowly (char.speedMult) on a bouncing 1-2, 1-2 step
 //            that dips his level (applyPoatanStep). Stone fists
 //            (look.stoneFists, fighter-art.js): "Poatan" means "stone hands".
+// Center     he holds the middle of the ring and lets them come to him
+//            (Christian, 2026-11-15: "mostly cover in the center of the ring
+//            more instead of bouncing around"): movement.center, movement.js.
 // CHAMA      every few seconds when he's close (poatan.chama): he plants and
 //            shouts "CHAMA!" (his real screamed takes, poChamaShout), and the
 //            crowd shouts it back; he screams it again on a knockout. The shout is the
@@ -18,6 +21,12 @@
 //            counterMult times the damage ("COUNTER!" on the first one that
 //            lands); if he was the one walking forward into them, chaseMalus%
 //            more misses. Left out, the punches land exactly as before.
+//            Only late or when they're hurt (Christian, 2026-11-15: "Every
+//            once in a while if someone's hurt or near the end, you could
+//            try a chama"): with `whenHurt` / `whenLate` set he calls it only
+//            once they're under whenHurt% of a full bar or the fight is
+//            whenLate seconds old (there's no fight clock, so it counts from
+//            the bell, b.poT). Both left out: any time, as before.
 // Calf kicks his kicks are leg kicks (legKick, onKick): drawn low into the
 //            calf, and they limp at `slow` speed for `time` seconds (leg-kick.js).
 // Bow and Arrow  his special (special.move "bow"): he draws a big red bow,
@@ -58,7 +67,7 @@ function resetPereira() { poArrow = null; poSkyArrows = []; poFeathers = []; poE
 // From makeBall.
 function initPereira(b) {
   var cfg = poCfg(b);
-  b.chama = null; b.stepPhase = 0;
+  b.chama = null; b.stepPhase = 0; b.poT = 0;
   b.chamaT = cfg && cfg.chama ? poRand(cfg.chama.first) : Infinity;
 }
 
@@ -87,7 +96,7 @@ function updateChama(self, other, dt) {
   if (!m) {
     if (!started || over || self.igbb) return false;
     self.chamaT -= dt;
-    if (self.chamaT > 0 || d > self.r + other.r + cc.range || !canStartIgbb(self, other) || swordDuelActive()) return false;
+    if (self.chamaT > 0 || d > self.r + other.r + cc.range || !chamaGateOpen(self, other, cc) || !canStartIgbb(self, other) || swordDuelActive()) return false;
     startChama(self, other, cc);
     m = self.chama;
   }
@@ -124,6 +133,12 @@ function updateChama(self, other, dt) {
   return true;
 }
 
+// Whether he'll call it at all right now: they're hurt, or it's late.
+function chamaGateOpen(self, other, cc) {
+  if (cc.whenHurt == null && cc.whenLate == null) return true;
+  if (cc.whenHurt != null && other.hp < MAX_HP * cc.whenHurt / 100) return true;
+  return cc.whenLate != null && (self.poT || 0) >= cc.whenLate;
+}
 // Who was closing the distance as he called it: "counter" (they were
 // coming at him), "chase" (he was walking forward into them) or "even".
 function chamaDir(self, other, cc) {
@@ -499,6 +514,7 @@ function tickPereira(dt) {
   balls.forEach(function (b) {
     var cfg = poCfg(b);
     if (cfg && cfg.step) b.stepPhase = (b.stepPhase || 0) + dt * cfg.step.rate;
+    if (cfg && started && !over) b.poT = (b.poT || 0) + dt; // seconds since the bell (CHAMA's whenLate)
   });
   tickArrow(dt);
   poSkyArrows.forEach(function (s) {

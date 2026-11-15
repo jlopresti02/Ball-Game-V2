@@ -6,12 +6,12 @@
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
     "base": "Brawler",
-    "bio": "\"Poatan\" (stone hands). Built on the Brawler base, with fists of stone and red war paint. He stalks slowly on a bouncing 1-2, 1-2 step, but his hands are fast. Every few seconds up close he plants and shouts \"CHAMA!\", the crowd shouts it back, and he throws left-right-left, ending in the left hook. The shout is the tell: back off and it whiffs. Let the hook land clean and it's often a knockout, and he shoots an arrow into the sky. His kicks go for the calf: you limp for a few seconds. Against Jon Jones, he shoots Jon's duck out of the sky. Special move: Bow and Arrow, a big red arrow that bings off the cage and hits whoever's in its path. He mixes in body shots and uppercuts up close, and one that lands sets up a bigger punch upstairs.",
+    "bio": "\"Poatan\" (stone hands). Built on the Brawler base, with fists of stone and red war paint. He holds the middle of the ring on a bouncing 1-2, 1-2 step and lets them come to him, but his hands are fast. When they're hurt or the fight runs long, he plants up close and shouts \"CHAMA!\", the crowd shouts it back, and he throws left-right-left, ending in the left hook. The shout is the tell: back off and it whiffs. Let the hook land clean and it's often a knockout, and he shoots an arrow into the sky. His kicks go for the calf: you limp for a few seconds. Against Jon Jones, he shoots Jon's duck out of the sky. Special move: Bow and Arrow, a big red arrow that bings off the cage and hits whoever's in its path. He mixes in body shots and uppercuts up close, and one that lands sets up a bigger punch upstairs.",
     "color": "#c8102e",
     "label": "",
     "imgData": null,
@@ -147,11 +147,23 @@ var SAVED_ROSTER = [
         "closing": 60,
         "counterBonus": 10,
         "counterMult": 1.2,
-        "chaseMalus": 20
+        "chaseMalus": 20,
+        "whenHurt": 35,
+        "whenLate": 40
       },
       "duckHunt": {
         "chance": 75,
         "damage": 25
+      }
+    },
+    "movement": {
+      "after": 0.6,
+      "center": {
+        "radius": 40,
+        "turn": 9,
+        "stepIn": 70,
+        "leash": 110,
+        "turnIn": 9
       }
     },
     "legKick": {
@@ -166,10 +178,11 @@ var SAVED_ROSTER = [
       "cooldown": 12,
       "range": 60,
       "reach": 95,
-      "landChance": 50,
+      "landChance": 40,
       "blockShare": 40,
-      "koChance": 50,
+      "koChance": 8,
       "damagePct": 50,
+      "damageHp": 100,
       "missOpen": 1.3,
       "missGuard": 100,
       "missShot": 85,
