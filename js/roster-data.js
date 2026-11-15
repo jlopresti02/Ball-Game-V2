@@ -4305,7 +4305,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 17,
+    "rev": 18,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4357,18 +4357,19 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 25,
+      "damage": 21,
       "cooldown": 1.2,
-      "speed": 0.32,
+      "speed": 0.352,
       "size": 15,
       "knockback": 300,
       "reach": 40,
       "koChance": 5
     },
+    "punchWhiff": 10,
     "uppercuts": {
       "chance": 20,
       "close": 34,
-      "damageMult": 1.2,
+      "damageMult": 1.43,
       "critChance": 40,
       "critMult": 1.8,
       "onGrab": 90,

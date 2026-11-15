@@ -58,6 +58,11 @@
 // counterMult     (uppercuts) the uppercut that answers a grab does this many
 //                 times the usual uppercut damage (1: the same).
 //
+// "punchWhiff": 10 (top level of the character file, not in the punch block
+// so Mighty Mouse's copycat doesn't pick it up): % of his straight punches
+// that miss ("WHIFF", no damage, no shove; ptWhiff below). Hooks, uppercuts
+// and body shots never whiff from it. Justin Gaethje.
+//
 // One roll picks the punch type: rollPunchType(b, p, last) in place of
 // rollHook, when punch `p` starts (hook first, then uppercut, then body
 // shot; a fighter with none of the three blocks makes no roll at all). It
@@ -167,6 +172,7 @@ function ptKnockback(b, p, kb) { var k = ptKind(p), v = k ? ptVal(ptCfg(b, k), k
 // setup on them and no uppercut or body shot, it's exactly that.
 function punchHurt(b, o, p, dmg) {
   var kind = ptKind(p), s = o.ptSetup, big = !!(s && s.by === b.id && s.t > 0 && kind !== "body"); // a head shot into a setup
+  if (!kind && !(p && p.hook) && ptWhiff(b, o)) return 0; // a straight punch that misses (punchWhiff, below)
   if (kind) {
     var pc = ptCfg(b, kind), cc = ptVal(pc, kind, "critChance");
     dmg *= ptVal(pc, kind, "damageMult");
@@ -179,6 +185,19 @@ function punchHurt(b, o, p, dmg) {
   try { dealt = hurt(o, dmg, "punch", b.id); } finally { if (drop) o.blockBonus = bb; }
   if (kind || big || b.ptN) ptLanded(b, o, p, kind, dealt, big ? s : null);
   return dealt;
+}
+
+// A straight punch that misses (punchWhiff, % of them): "WHIFF" over them,
+// no damage and, through justDodged, no shove (like the weight whiff,
+// weight.js). A fighter without punchWhiff rolls nothing.
+function ptWhiff(b, o) {
+  var w = b && b.char ? b.char.punchWhiff : 0;
+  if (!(w > 0) || !o || !o.alive || o.koOut || Math.random() * 100 >= w) return false;
+  o.justDodged = true; // (the caller skips the shove)
+  var n = ptStats(b);
+  if (n) n.whiffs = (n.whiffs || 0) + 1;
+  floater(o.x, o.y - o.r - 8, "WHIFF", "dodge");
+  return true;
 }
 
 function ptLanded(b, o, p, kind, dealt, used) {
