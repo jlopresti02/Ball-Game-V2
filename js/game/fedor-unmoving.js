@@ -149,7 +149,7 @@ function umImpact(self, other, m) {
   var sp = self.char.special, s = m.s;
   var J = umJaw(self, other, m);
   other.shelled = false;
-  var dealt = hurt(other, sp.damage || 65, "igbb", self.id);
+  var dealt = hurt(other, sp.damage || 150, "igbb", self.id);
   if (!reduceMotion) { hitStop = Math.max(hitStop, UM_FREEZE); shake = Math.max(shake, 34); }
   other.flash = 0.2;
   other.squash = { t: 0.22, max: 0.22, nx: s, ny: 0 };
