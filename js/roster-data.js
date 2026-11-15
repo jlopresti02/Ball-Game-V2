@@ -2771,7 +2771,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-georges-st-pierre",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "welterweight",
     "name": "Georges St-Pierre",
@@ -2860,16 +2860,16 @@ var SAVED_ROSTER = [
       },
       "superman": {
         "first": [
-          3,
-          5
+          2.4,
+          4
         ],
         "every": [
-          4,
-          7
+          3.2,
+          5.6
         ],
         "chantEvery": [
-          2.5,
-          4.5
+          2,
+          3.6
         ],
         "minGap": 25,
         "maxGap": 190,
