@@ -1371,7 +1371,12 @@ function drawArtBody(c, r, look, ink, name, contained) {
   // units (x, y, w, h as fractions of r), kept between the jaw and the shorts
   if (tat.decals && contained) {
     c.save();
-    c.beginPath(); c.rect(-r, -r * 0.28, r * 2, r * 0.64); c.clip();
+    c.beginPath();
+    if (tat.decalNeck) { // follow the neck line under the jaw instead of a flat top (Max Holloway's chest piece)
+      c.moveTo(-r, -r * 0.44); c.lineTo(-r * 0.66, -r * 0.44); c.quadraticCurveTo(-r * 0.5, -r * 0.2, 0, -r * 0.2);
+      c.quadraticCurveTo(r * 0.5, -r * 0.2, r * 0.66, -r * 0.44); c.lineTo(r, -r * 0.44); c.lineTo(r, r * 0.36); c.lineTo(-r, r * 0.36); c.closePath();
+    } else c.rect(-r, -r * 0.28, r * 2, r * 0.64);
+    c.clip();
     tat.decals.forEach(function (d) {
       var im = artDecalImage(d.img);
       if (!im.complete || !im.naturalWidth) return;
