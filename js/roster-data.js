@@ -2642,12 +2642,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 8,
+    "rev": 10,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
     "base": "Brawler",
-    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He starts patient: single light punches, thrown rarely. The more he's hurt, the more often he throws and the longer his combos get, from 1 punch at full health up to 5 by three-quarter health. After that the combos keep coming faster and every punch hits harder. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm.",
+    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits 4 times as hard, up to 5 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm.",
     "color": "#b3121b",
     "label": "",
     "imgData": null,
@@ -2696,7 +2696,7 @@ var SAVED_ROSTER = [
     "hasPunch": true,
     "punch": {
       "damage": 8,
-      "cooldown": 2.6,
+      "cooldown": 1.0,
       "speed": 0.22,
       "size": 15,
       "knockback": 300,
@@ -2709,11 +2709,41 @@ var SAVED_ROSTER = [
       "cdStart": 2.6,
       "cdFullCombo": 1.5,
       "cdMin": 0.5,
-      "dmgStart": 6,
+      "dmgStart": 8,
       "dmgMax": 9,
       "comboKnockback": 40,
       "comboSlack": 16,
-      "chase": 420
+      "chase": 420,
+      "chain": {
+        "size": [
+          3,
+          4
+        ],
+        "build": 0.3,
+        "finisher": [
+          4,
+          5
+        ],
+        "cooldown": [
+          1.0,
+          0.6
+        ],
+        "knockback": 560,
+        "text": "{n}-PIECE!"
+      }
+    },
+    "hooks": {
+      "finisherChance": 80,
+      "chance": 0,
+      "damageMult": 1.25,
+      "coil": 0.1,
+      "sweep": 0.2,
+      "recover": 0.12,
+      "arc": 1.8,
+      "follow": 0.5,
+      "size": 1.15,
+      "width": 1.1,
+      "color": "#e0281c"
     },
     "tdd": {
       "sprawlChance": 60
@@ -3089,12 +3119,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 8,
+    "rev": 9,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
     "base": "Kicker",
-    "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 12 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): switches from kicks to punches, with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination. A few times a fight, at random, his tattoo flashes gold and red, he poofs into a duck and flies off the top of the screen, a red circle comes up in the middle of the ring, and he crashes down into it with his tattoo blazing red (Duck Drop: 45 damage and a big knockback, only to whoever's in the circle). Special move: GOAT Stampede.",
+    "bio": "\"Bones\". Built on the Kicker base, and fights in two modes, swapping every 15 seconds. GOAT mode (tattoo glowing gold): kicks, normal punches and wrestling, a suplex from behind, and 5% of his takedowns go to the back for a rear naked choke while another 5% go into ground and pound. Every defense except the guard pull and the weaves: blocks, kick checks, sprawls and reattacks, grab counters and the guillotine. EVIL mode (tattoo glowing red): switches from kicks to punches, with grappling defense and the BMF's weave, but a critical weave is an eye poke into a brutal combination. A few times a fight, at random, his tattoo flashes gold and red, he poofs into a duck and flies off the top of the screen, a red circle comes up in the middle of the ring, and he crashes down into it with his tattoo blazing red (Duck Drop: 40 damage and a big knockback, only to whoever's in the circle). Special move: GOAT Stampede.",
     "color": "#c9a227",
     "label": "",
     "imgData": null,
@@ -3108,7 +3138,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 18,
+      "damage": 16,
       "cooldown": 1.2,
       "speed": 0.32,
       "size": 15,
@@ -3224,8 +3254,112 @@ var SAVED_ROSTER = [
         "jab-cross-elbow": 1
       }
     },
+    "jonClinch": {
+      "first": [
+        3,
+        5
+      ],
+      "every": [
+        5.5,
+        8
+      ],
+      "range": 22,
+      "reach": 0.26,
+      "evade": 18,
+      "weaverEvade": 12,
+      "strikes": [
+        1,
+        2
+      ],
+      "gap": 0.32,
+      "escape": 25,
+      "grapplerEscape": 10,
+      "knockback": 360,
+      "open": 0.7,
+      "knee": {
+        "damage": 5,
+        "critChance": 25,
+        "critMult": 2
+      },
+      "elbow": {
+        "critChance": 20,
+        "critMult": 2
+      },
+      "goat": {
+        "on": true,
+        "knees": 55,
+        "trip": 55,
+        "spinElbow": true,
+        "oblique": false
+      },
+      "evil": {
+        "on": true,
+        "knees": 35,
+        "trip": 35,
+        "spinElbow": true,
+        "oblique": true,
+        "elbowCooldown": 1.6
+      },
+      "trip": {
+        "tell": 0.34,
+        "defend": 28,
+        "grapplerDefend": 15,
+        "tddMult": 0.5,
+        "damage": 12,
+        "fall": 0.36,
+        "down": 0.5
+      },
+      "guillotine": {
+        "lowHp": 40,
+        "bonus": 35,
+        "clinch": 40,
+        "outcomes": {
+          "escape": 60,
+          "gnp": 5,
+          "resink": 25,
+          "slam": 10
+        }
+      },
+      "spinElbow": {
+        "first": [
+          5,
+          9
+        ],
+        "every": [
+          10,
+          15
+        ],
+        "range": 26,
+        "afterClinch": 30,
+        "breakShove": 80,
+        "turn": 0.22,
+        "step": 380,
+        "speed": 0.24,
+        "damage": 8,
+        "critChance": 25,
+        "critMult": 2,
+        "knockback": 380
+      },
+      "oblique": {
+        "first": [
+          1.5,
+          3
+        ],
+        "every": [
+          5,
+          8
+        ],
+        "range": 46,
+        "chamber": 0.2,
+        "dur": 0.42,
+        "damage": 5,
+        "knockback": 200,
+        "slow": 0.85,
+        "slowTime": 1.5
+      }
+    },
     "jon": {
-      "swapEvery": 12,
+      "swapEvery": 15,
       "rncChance": 5,
       "gnpChance": 5,
       "gnp": [
@@ -3288,17 +3422,17 @@ var SAVED_ROSTER = [
       },
       "duck": {
         "first": [
-          10,
-          16
+          12,
+          20
         ],
         "every": [
-          16,
-          26
+          20,
+          32
         ],
         "max": 3,
         "radius": 130,
         "warn": 1.6,
-        "damage": 45,
+        "damage": 40,
         "knockback": 1700,
         "wallSlams": 2,
         "slamDamage": 5
@@ -3339,7 +3473,7 @@ var SAVED_ROSTER = [
       "hitCut": 4,
       "goats": 8,
       "goatGap": 0.7,
-      "goatDamage": 22,
+      "goatDamage": 20,
       "ramSpeed": 1900,
       "ramWalls": 3,
       "ramWallDamage": 4
@@ -3532,6 +3666,229 @@ var SAVED_ROSTER = [
     "blockChance": 0
   },
   {
+    "id": "c-joshua-van",
+    "rev": 2,
+    "builtin": false,
+    "weightClass": "flyweight",
+    "name": "Joshua Van",
+    "base": "Brawler",
+    "bio": "\"The Fearless\". UFC flyweight champion, born in Myanmar, fights out of Houston. Built on the Brawler base: a flyweight, but not as quick on his feet as the other small guys, with his hands always up in a high guard and long combinations of punches off both hands instead of single shots, and no opening KO Rush. Hot hands: every punch that lands in a combo makes the next one hit harder and crit more often, and the count goes up under him (x5, x7...) until one gets blocked or misses. Most of his combos end in a left hook that comes round from the side and hits harder, and a big left hook can drop them. His hands get better through the fight, most of all with clean combos. Sprawls 70% of takedown shots and is hard to hurt. Special move Hands on Fire: his gloves catch fire, and while they burn he keeps the chain he built at the end of each combo for a moment instead of losing it. Holds the Myanmar flag up when he wins. Flyweight.",
+    "color": "#fecb00",
+    "label": "",
+    "imgData": null,
+    "speedMult": 0.85,
+    "look": {
+      "skin": "#c08460",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "crop",
+      "hairColor": "#141110",
+      "beard": "stubble",
+      "beardAlpha": 0.16,
+      "beardColor": "#161210",
+      "vanGoatee": true,
+      "ears": "normal",
+      "tattoos": {
+        "blessed": true,
+        "rightArm": true,
+        "armInk": true,
+        "armInkSide": "right"
+      },
+      "shorts": "#b3132a",
+      "trim": "#7a0c1c",
+      "accent": "#e8b923",
+      "shortsStyle": "acheik",
+      "legPatch": false,
+      "gloves": "#151515"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 9,
+      "cooldown": 0.8,
+      "speed": 0.13,
+      "size": 12,
+      "knockback": 130,
+      "reach": 36,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 25,
+    "hooks": {
+      "finisherChance": 80,
+      "chance": 0,
+      "damageMult": 1.25,
+      "coil": 0.1,
+      "sweep": 0.2,
+      "recover": 0.12,
+      "arc": 1.8,
+      "follow": 0.5,
+      "size": 1.15,
+      "width": 1.1,
+      "color": "#ffd21f"
+    },
+    "tdd": {
+      "sprawlChance": 70
+    },
+    "van": {
+      "highGuard": true,
+      "combos": {
+        "punches": [
+          5,
+          8.5
+        ],
+        "spread": 1.6,
+        "cooldown": [
+          0.6,
+          0.4
+        ],
+        "chase": 250,
+        "slack": [
+          12,
+          22
+        ],
+        "comboKnockback": 25
+      },
+      "hotHands": {
+        "step": [
+          0.13,
+          0.2
+        ],
+        "maxMult": 2.5,
+        "critBase": 3,
+        "critStep": [
+          4,
+          6
+        ],
+        "critMax": 50,
+        "critMult": 1.8
+      },
+      "hook": {
+        "down": 30,
+        "downTime": 1.0,
+        "knockback": 90,
+        "callGap": 25
+      },
+      "level": {
+        "hitFill": 0.012,
+        "cleanFill": 0.035,
+        "cleanMin": 3,
+        "pierce": [
+          0,
+          10
+        ],
+        "marks": [
+          0.5,
+          1
+        ]
+      },
+      "durable": {
+        "over": 10,
+        "mult": 0.74,
+        "sources": [
+          "punch",
+          "kick",
+          "kickback",
+          "swing",
+          "power",
+          "combo",
+          "flow"
+        ]
+      },
+      "winFlag": true,
+      "voice": {
+        "minGap": 6,
+        "start": {
+          "at": 1.2,
+          "wait": 12,
+          "always": true
+        },
+        "combo": {
+          "landed": 5,
+          "chance": 50,
+          "gap": 15,
+          "wait": 1
+        },
+        "knockdown": {
+          "chance": 75,
+          "gap": 15,
+          "wait": 3.5
+        },
+        "shot": {
+          "chance": 75,
+          "gap": 20,
+          "wait": 1.5
+        },
+        "trading": {
+          "after": 5,
+          "window": 2.5,
+          "took": 2,
+          "landed": 3,
+          "chance": 45,
+          "gap": 30,
+          "wait": 0.5
+        },
+        "win": {
+          "chance": 50,
+          "otherwise": "knockdown",
+          "wait": 10,
+          "always": true
+        }
+      },
+      "lines": {
+        "start": [
+          "I know my, my striking will stand out.",
+          "Whoever y'all got in front of me, I'll fight."
+        ],
+        "combo": [
+          "What can I say, man? I'm just that good, you know.",
+          "Doubt me now!"
+        ],
+        "knockdown": [
+          "Doubt me now!"
+        ],
+        "shot": [
+          "This is MMA fight, you know. This is not a jiu-jitsu match."
+        ],
+        "trading": [
+          "We knew we was in here for a war."
+        ],
+        "win": [
+          "Look at me, Joe, I'm so blessed."
+        ]
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "vanfire",
+      "chargeTime": 32,
+      "hitCut": 1,
+      "punchCut": 0.3,
+      "range": 240,
+      "call": 0.45,
+      "time": 8,
+      "keep": 2.5,
+      "keepMin": 2,
+      "maxMult": 3,
+      "pierce": 20,
+      "chase": 1.3
+    }
+  },
+  {
     "id": "c-justin-gaethje",
     "rev": 13,
     "builtin": false,
@@ -3700,7 +4057,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-khabib-nurmagomedov",
-    "rev": 8,
+    "rev": 9,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Khabib Nurmagomedov",
@@ -3768,6 +4125,13 @@ var SAVED_ROSTER = [
     "hasSwing": false,
     "hasForget": false,
     "hasSpecial": true,
+    "groundElbows": {
+      "on": [
+        2,
+        4,
+        5
+      ]
+    },
     "special": {
       "move": "fathersplan",
       "chargeTime": 82,
@@ -4036,12 +4400,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-michael-bisping",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Michael Bisping",
     "base": "Brawler",
-    "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. His special is Broadside: a pirate cannon rolls in at his side with a Union Jack flying behind it, he puts on a captain's hat, lights the fuse and fires cannonballs down a red line at them.",
+    "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. His special is Broadside: the sea spreads over the mat, a pirate ship with a Union Jack mainsail rises out of it in the middle of the cage, and he hops on deck in a captain's hat while three cannons on the bow fire volleys across the cage at them.",
     "color": "#b3202a",
     "label": "",
     "imgData": null,
@@ -4222,7 +4586,6 @@ var SAVED_ROSTER = [
         ],
         "blindChance": 10,
         "missChance": 4,
-        "cannonMissChance": 60,
         "blindMax": 1,
         "knockdown": [
           "I've always said I had knockout power, for God's sake. Nobody believed it."
@@ -4233,6 +4596,9 @@ var SAVED_ROSTER = [
         ],
         "loss": [
           "It's back to the drawing board. I'm going nowhere, don't you forget it."
+        ],
+        "special": [
+          "I'll knock him out, and I'll knock all you lot out, one by one."
         ],
         "vs": {
           "c-anderson-silva": {
@@ -4250,17 +4616,37 @@ var SAVED_ROSTER = [
       "chargeTime": 45,
       "hitCut": 2,
       "punchCut": 0.5,
-      "roll": 0.45,
-      "aim": 0.9,
-      "reaim": 0.5,
-      "lock": 0.3,
-      "shots": 3,
-      "gap": 0.45,
-      "hold": 0.5,
-      "speed": 900,
-      "size": 9,
-      "damage": 20,
-      "knockback": 520
+      "ship": {
+        "length": 290,
+        "y": 0.6,
+        "rise": 0.75,
+        "board": 0.5,
+        "sink": 0.7,
+        "drift": 12,
+        "bob": 4,
+        "roll": 0.035,
+        "solid": true,
+        "sea": 0.34
+      },
+      "cannons": {
+        "count": 3,
+        "aim": 1,
+        "reaim": 0.75,
+        "lock": 0.35,
+        "lead": 1,
+        "spread": 12,
+        "stagger": 0.14,
+        "speed": 780,
+        "size": 11
+      },
+      "volley": {
+        "volleys": 2,
+        "gap": 0.5,
+        "hold": 0.5
+      },
+      "damage": 16,
+      "knockback": 760,
+      "shove": 0.8
     }
   },
   {
@@ -5005,7 +5391,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
@@ -5015,12 +5401,12 @@ var SAVED_ROSTER = [
     "label": "",
     "imgData": null,
     "look": {
-      "skin": "#c49a6c",
+      "skin": "#dfae8e",
       "build": "lean",
       "face": "angular",
       "bodyHair": "none",
       "hair": "receding",
-      "hairColor": "#17130f",
+      "hairColor": "#d6b05a",
       "beard": "none",
       "ears": "normal",
       "tattoos": {
@@ -5035,7 +5421,7 @@ var SAVED_ROSTER = [
       "gloves": "#141414",
       "cucuy": {
         "stubble": {
-          "color": "#2a211a",
+          "color": "#7a5a30",
           "alpha": 0.16
         },
         "headband": {

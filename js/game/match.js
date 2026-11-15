@@ -67,6 +67,7 @@ function makeBall(id, ch) {
   initNgannou(b); // Francis Ngannou's rage meter, and his own copy to turn green (ngannou.js)
   initVolk(b); // Alexander Volkanovski's fight IQ, circling and walkout flag (volkanovski.js)
   initHolloway(b); // Max Holloway's Blessed meter, the booth, his flashback (holloway.js)
+  initVan(b); // Joshua Van's combos, hot hands, hands level and lines (van.js)
   initChatter(b); // extra real voice lines for any fighter, by id (chatter.js)
   initStrickland(b); // Sean Strickland's range, shell, pace and trauma meter (strickland.js)
   initDiaz(b); // Nate Diaz's slap, sub hunt, chin and Stockton surge (diaz.js)
@@ -119,6 +120,7 @@ function startMatchSeeded(ch0, ch1) {
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
   resetVolk(); // the kangaroo and the green and gold arena (volkanovski.js)
   resetHolloway(); // Max Holloway's ring in the middle, the clock, the flashback TV (holloway.js)
+  resetVan(); // Joshua Van's drawing clock (van.js)
   resetStrickland(); // the America show, the eagle and the bike (strickland.js)
   resetDiaz(); // Nick Diaz and his banner (diaz.js)
   resetFerguson(); // Tony Ferguson's stamps, afterimages, the Burrito Bell ad (ferguson.js)
@@ -368,6 +370,7 @@ function hurt(b, amount, source, attackerId) {
   amount *= icemanDamageMult(b, attackerId, source); // frosted gloves hit softer, Chuck Liddell hits harder (liddell.js)
   amount *= volkDamageMult(b, source, attackerId); // Alexander Volkanovski's durability, Ilia and Max (volkanovski.js)
   amount *= hollowayChin(b, amount, source, attackerId); // Max Holloway's chin, and Ilia's edge on him (holloway.js)
+  amount *= vanDurable(b, amount, source, attackerId); // Joshua Van walking through the big ones (van.js)
   amount *= diazDamageMult(b, source, attackerId); // Nate Diaz's durability, and his Stockton surge (diaz.js)
   amount *= fergusonDamageMult(b, source, attackerId); // Tony Ferguson's chin, and his Kaioken (ferguson.js)
   amount *= fedorDamageMult(b, source, attackerId); // Fedor Emelianenko's chin (fedor.js)
@@ -380,6 +383,7 @@ function hurt(b, amount, source, attackerId) {
   if (b.holdAtOne && b.hp < 1) b.hp = 1; // pinned by a finisher: the last punch ends it
   if (b.hp < 0.001) b.hp = 0;
   recordHit(b, hpBefore - b.hp, source, attackerId); // jumbotron stats
+  commentaryHit(b, hpBefore - b.hp, source, attackerId); // a big punch gets the commentator's call (commentary-calls.js)
   icemanHit(b, hpBefore - b.hp, source, attackerId); // punches on Chuck Liddell frost their gloves (liddell.js)
   ngannouHurt(b, hpBefore - b.hp, source, attackerId); // Francis Ngannou's rage meter and punch-power reading (ngannou.js)
   crowdReact((hpBefore - b.hp) / MAX_HP * 4); // a 50 HP shot lifts the crowd 40%

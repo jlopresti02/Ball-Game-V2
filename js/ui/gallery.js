@@ -73,6 +73,7 @@ SPECIAL_INFO.katana = function (sp) { return fergusonKatanaInfo(sp); }; SUB_NAME
 SPECIAL_INFO.mranderson = function (sp) { return andersonSpecialInfo(sp); }; SUB_NAMES.triangle = "triangle choke"; // Anderson Silva (anderson.js)
 SPECIAL_INFO.presser = function (sp) { return "A podium rises out of the mat and the mic squeals. He says a press-conference line and they get FURIOUS for " + sp.anger + "s, then he throws " + sp.bottles + " water bottles at them (" + sp.bottleDamage + " each) as they come, and steps out into the counter left with " + sp.koBonus + "% more knockout chance."; }; // Conor McGregor (conor.js)
 SPECIAL_INFO.middle = function (sp) { return hollowaySpecialInfo(sp); }; // Max Holloway (holloway.js)
+SPECIAL_INFO.vanfire = function (sp) { return vanSpecialInfo(sp); }; // Joshua Van (van.js)
 SPECIAL_INFO.buscrew = function (sp) { return busCrewInfo(sp); }; // Conor McGregor (conor.js)
 SPECIAL_INFO.america = function (sp) { return stricklandSpecialInfo(sp); }; // Sean Strickland (strickland.js)
 SPECIAL_INFO.broadside = function (sp) { return bispingSpecialInfo(sp); }; // Michael Bisping (bisping.js)
@@ -161,6 +162,7 @@ function galleryMoves(ch) {
   if (ch.gsp) gspGalleryMoves(ch, add); // Georges St-Pierre (gsp.js)
   if (ch.volk) volkGalleryMoves(ch, add); // Alexander Volkanovski (volkanovski.js)
   if (ch.holloway) hollowayGalleryMoves(ch, add); // Max Holloway (holloway.js)
+  if (ch.van) vanGalleryMoves(ch, add); // Joshua Van (van.js)
   if (ch.strickland) stricklandGalleryMoves(ch, add); // Sean Strickland (strickland.js)
   if (ch.bisping) bispingGalleryMoves(ch, add); // Michael Bisping (bisping.js)
   if (ch.hasTeep) add("🦶", "Teep", teepGalleryInfo(ch.teep)); // the front push kick (teep.js)
@@ -169,6 +171,8 @@ function galleryMoves(ch) {
   if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
   if (ch.knee) kneeGalleryMoves(ch, add); // knees, the clinch, the flying knee (knees.js)
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
+  if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
+  if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
   if (ch.ferguson) fergusonGalleryMoves(ch, add); // Tony Ferguson (ferguson.js)
   if (ch.anderson) andersonGalleryMoves(ch, add); // Anderson Silva (anderson.js)
   if (ch.cormier) cormierGalleryMoves(ch, add); // Daniel Cormier (cormier.js)
@@ -208,6 +212,7 @@ function galleryMoves(ch) {
     add("🐐", "GOAT mode", "Everything above, with his chest tattoo glowing gold. " + j.rncChance + "% of his takedowns go to the back for a rear naked choke and " + j.gnpChance + "% into ground and pound (" + j.gnp.length + " punches, " + gnpTotal + " total). Swaps modes every " + secs(j.swapEvery) + ".");
     add("😈", "EVIL mode", "Tattoo glowing red. Switches from kicks to punches, sprawls " + (j.evil.tdd ? j.evil.tdd.sprawlChance : 0) + "% of shots and slips " + ch.weave.dodgeChance + "% of attacks. " + ch.weave.critChance + "% of slips are an eye poke into a " + pk.combo.length + "-punch combination (" + pkTotal + " total).");
   }
+  if (ch.jonClinch) jonClinchGalleryMoves(ch, add); // Jon Jones's clinch, inside trip and guillotine (jon-clinch.js)
   if (ch.diamond) {
     // Dustin Poirier's Diamond Guard (diamond.js).
     var dm = ch.diamond, gemDmg = dm.gemDamage != null ? dm.gemDamage : ch.punch.damage;
@@ -369,7 +374,7 @@ function galleryAssets() {
   gspGalleryAssets(list); // GSP's Montreal stadium and the Quebec and Canada flags (gsp.js)
   volkGalleryAssets(list); // Volkanovski's kangaroo and the Australian flag (volkanovski.js)
   stricklandGalleryAssets(list); // Sean Strickland's motorcycle (strickland.js)
-  bispingGalleryAssets(list); // Michael Bisping's pirate cannon and captain's hat (bisping.js)
+  bispingGalleryAssets(list); // Michael Bisping's pirate ship (bisping.js)
   return list;
 }
 
@@ -450,6 +455,7 @@ function gallerySounds() {
   gspGallerySounds(groups, synth); // GSP's sounds (gsp.js)
   volkGallerySounds(groups, synth); // Volkanovski's sounds (volkanovski.js)
   hollowayGallerySounds(groups, synth); // Max Holloway's sounds (holloway.js)
+  vanGallerySounds(groups, synth); // Joshua Van's sounds (van.js)
   stricklandGallerySounds(groups, synth); // Sean Strickland's and the teep's sounds (strickland.js)
   bispingGallerySounds(groups, synth); // Michael Bisping's Broadside and scorecard sounds (bisping.js)
   diazGallerySounds(groups, synth); // Nate Diaz's sounds (diaz.js)

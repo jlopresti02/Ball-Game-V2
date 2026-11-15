@@ -23,6 +23,7 @@ function inOrdinaryMovement(b) {
   if (conorBusy(b)) return false; // strutting, or planted for the counter left (conor.js)
   if (ngannouBusy(b)) return false; // Francis Ngannou's rage punch, or off to rip up Dana's contract (ngannou.js)
   if (hollowayBusy(b)) return false; // Max Holloway at the booth or in his flashback (holloway.js)
+  if (vanBusy(b)) return false; // Joshua Van stopped while his gloves catch fire (van.js)
   if (teepBusy(b) || stricklandBusy(b)) return false; // planted for a teep (teep.js), or Sean Strickland's one-two (strickland.js)
   if (diazBusy(b)) return false; // Nate Diaz slapping, diving for the neck, or arms out (diaz.js)
   if (fergusonBusy(b)) return false; // Tony Ferguson sliding, shooting, in a hold or his shell (ferguson.js)
@@ -31,6 +32,7 @@ function inOrdinaryMovement(b) {
   if (kneesBusy(b)) return false; // in the clinch, or crouching for, flying in with or landing off a flying knee (knees.js)
   if (andersonBusy(b)) return false; // Anderson Silva's front kick, or his hands down (anderson.js)
   if (cormierBusy(b)) return false; // Daniel Cormier dropping his level for the double leg, or shooting it (cormier.js)
+  if (jonClinchBusy(b)) return false; // Jon Jones in the clinch or tripping them (jon-clinch.js)
   if (b.swing && b.swing.phase !== "recover") return false; // shuffling through a swing
   if (b.watcherState) return false; // heading to a corner seat, or sitting in one
   return true;
@@ -86,6 +88,7 @@ function step(dt) {
       if (b.slam) onWallImpact(b, wnx, wny);
       else playBounce();
     }
+    bispingShipBlock(b); // bouncing off Michael Bisping's pirate ship in Broadside (bisping.js)
   }
   var a = balls[0], c = balls[1];
   var aSpin = a.powerState && a.powerState.phase === "attack";

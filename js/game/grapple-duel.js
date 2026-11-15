@@ -175,12 +175,14 @@ function attemptGrab(attacker, target) {
   // Hokit's Chair Shot blocks everything once it's started, takedowns too, right
   // through his celebration lap, even after their stars wear off (Joe, 2026-11-11).
   if (target.igbb && target.igbb.move === "chairshot" && specialGuarding(target)) return false;
+  if (bispingAboard(target)) return false; // nobody takes Michael Bisping down off his pirate ship (bisping.js)
   if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;
   }
   var ag = attacker.char.grapple;
   if (ag && ag.shotName) floater(attacker.x, attacker.y - attacker.r - 44, ag.shotName, "crit"); // calls the shot (Gaethje's DOUBLE LEG)
+  commentaryCall("shot", attacker, target); // the commentator, once it's clear what came of it: takedown, sprawl or just the shot (commentary-calls.js)
   if (doBronxPosing(target)) {
     // Slips the grab mid pose (dobronx.js).
     doBronxDodge(target);
@@ -193,6 +195,7 @@ function attemptGrab(attacker, target) {
   if (grabEscaped(attacker, target)) return false;
   if (trySuplex(attacker, target)) return false; // suplexed from behind (suplex.js)
   if (cheaterFenceGrab(attacker, target)) return false; // cheating: grabs the cage (cheater.js); suplexes still land
+  if (tryJonGuillotine(attacker, target)) return false; // GOAT Jon Jones catches it more the more hurt they are (jon-clinch.js)
   if (tryGuillotine(attacker, target)) return false; // caught in a guillotine (bjj.js)
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.

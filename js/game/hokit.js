@@ -63,6 +63,7 @@ function beginShot(self, vic) {
   vic.choked = true; // held: it can't do anything until it's out of the armbar
   self.vx = 0; self.vy = 0; vic.vx = 0; vic.vy = 0;
   floater((self.x + vic.x) / 2, Math.min(self.y, vic.y) - self.r - 30, "DOUBLE LEG", "crit");
+  commentaryCall("takedown", self, vic); // "Fast double leg!" (commentary-calls.js)
   playWhoosh();
 }
 

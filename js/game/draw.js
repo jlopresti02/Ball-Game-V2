@@ -110,7 +110,7 @@ function draw() {
   drawConorUnder(); // Conor McGregor's bus lane and the dolly's aim line (conor.js)
   drawStricklandUnder(); // the flag on the mat, Strickland's bike lane, the bike and the wreck (strickland.js)
   drawFergusonUnder(); // Tony Ferguson's slide afterimages (ferguson.js)
-  drawBispingUnder(); // Michael Bisping's cannon and its red aim line (bisping.js)
+  drawBispingUnder(); // Michael Bisping's sea, pirate ship and red aim lines (bisping.js)
   drawAndersonUnder(); // Anderson Silva's weave ghosts, the front kick's yellow line and his shadow (anderson.js)
   drawCormierUnder(); // Daniel Cormier's double-leg lane and the dents his super slams leave (cormier.js)
   drawPratesUnder(); // Carlos Prates's Rubber Pistol aim line, cigarette butts on the mat (prates.js)
@@ -234,6 +234,7 @@ function draw() {
     applyAndersonPose(b); // Anderson Silva bent back in a weave, crouched for and flying in with the front kick (anderson.js)
     applyCormierPose(b); // Daniel Cormier dropping his level, carrying, chewing; whoever he's got lying across over his head (cormier.js)
     applyProchazkaPose(b); // Jiří Procházka twisting into a katana cut (prochazka.js)
+    applyJonClinchPose(b); // Jon Jones leaning into the clinch, and whoever he's tripping (jon-clinch.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
@@ -379,12 +380,13 @@ function draw() {
     drawNgannou(b, other); // Ngannou's rage meter, going green, his rage punch, the Smash, the contract (ngannou.js)
     drawVolk(b); // Volkanovski's arms up, punching out of the pouch (volkanovski.js)
     drawHolloway(b); // Max Holloway's Blessed meter, pointing, the flashback pose, the BMF belt (holloway.js)
+    drawVan(b); // Joshua Van's hands bar, his high guard, his gloves glowing or on fire, the flag (van.js)
     drawStrickland(b, other); // Sean Strickland's Philly shell, the bike, his overhands, the trauma meter (strickland.js)
     drawDiaz(b); // Nate Diaz's slap, arms out, the 209 surge, a handprint on whoever he slapped (diaz.js)
     drawElbow(b, other); // an elbow being thrown, and a cut bleeding (elbows.js)
     drawFerguson(b, other); // Tony Ferguson's slide, shot, shell, Kaioken glow and katanas (ferguson.js)
     drawFedor(b, other); // Fedor Emelianenko reaching for the clinch, speed lines off his fists, UNFAZED (fedor.js)
-    drawBisping(b, other); // Michael Bisping's captain's hat and his hands at the cannon (bisping.js)
+    drawBisping(b, other); // Michael Bisping's ship's hull in front of him on deck, his hands and captain's hat (bisping.js)
     drawAnderson(b); // Anderson Silva's hands down (anderson.js)
     drawCormier(b, other); // Daniel Cormier's arms in the shot and the carry, the cake, his cake pips; whoever he's carrying kicking (cormier.js)
     drawPrates(b, other); // Carlos Prates's gold hair, the cigarette, lighting up, the rubber arm and leg (prates.js)
@@ -456,6 +458,8 @@ function draw() {
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)
   drawCormierOver(); // SUPER SLAM! (cormier.js)
   drawProchazkaOver(); // the cuts Jiří Procházka's katanas leave (prochazka.js)
+  drawJonClinch(); // Jon Jones's arms locked over-under, his clinch knees and elbows, the trip's leg and red arrow (jon-clinch.js)
+  drawVanOver(); // Joshua Van's chain counter under him, lit while he keeps it (van.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);
@@ -507,6 +511,7 @@ function draw() {
     ctx.fillStyle = f.kind === "note" ? theme.ink : ((f.kind === "dodge" || f.kind === "crit" || f.kind === "heal") ? theme.dodge : theme.hit); ctx.fillText(f.text, fx, fy);
   });
   ctx.globalAlpha = 1;
+  drawIliaCombos(); // Ilia's combo finisher: the gold ring and 4-PIECE! over them (ilia-combos.js)
 
   if (stadium) drawJumbotron(px);
   drawLadderSky(s, ox, oy); // Hokit up the ladder and diving off it (hokit-ladder.js)

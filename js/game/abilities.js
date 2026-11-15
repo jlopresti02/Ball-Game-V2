@@ -202,6 +202,7 @@ function updateAbilities(dt) {
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)
     if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
     if (updateFedor(self, other, dt)) continue; // Fedor Emelianenko's Sambo throw (fedor.js)
+    if (updateJonClinch(self, other, dt)) continue; // Jon Jones's clinch, its elbows and knees, the inside trip (jon-clinch.js)
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
     if (updateAnderson(self, other, dt)) continue; // Anderson Silva's front kick, hands down, counter, triangle off ground and pound (anderson.js)
     if (updateCormier(self, other, dt)) continue; // Daniel Cormier's double leg and super slam (cormier.js)
@@ -228,6 +229,7 @@ function updateAbilities(dt) {
     // Josh Hokit's armbar shot and thumbs down (hokit.js).
     if ((self.char.hasArmbarShot || self.char.hasThumbsDown) && updateHokit(self, other, dt, d)) continue;
     if (updateHollowayHands(self, other, dt, d)) continue; // Max Holloway's volume combos and Button Mash, in place of the punch (holloway.js)
+    if (updateVanHands(self, other, dt, d)) continue; // Joshua Van's combos and hot hands, in place of the punch (van.js)
 
     if (self.throwAnim) {
       var ta = self.throwAnim;
@@ -268,28 +270,26 @@ function updateAbilities(dt) {
       var pu = self.char.punch;
       if (!self.punch && !self.kick && !self.swing && self.punchCd === 0 && other.alive && d < self.r + other.r + pu.reach) { // (one limb at a time when it kicks too)
         self.punch = { t: 0, hit: false };
+        rollHook(self, self.punch, false); // chance% of them come round as a hook (hook-punch.js)
         self.punchCd = pu.cooldown;
       }
       if (self.punch) {
+        var thrown = self.punch; // (a hook's knockback is read off it after hurt())
         self.punch.t += dt;
-        var windup = pu.speed * 0.35;
+        var windup = punchHitAt(self, self.punch); // (pu.speed * 0.35, later for a hook, hook-punch.js)
         if (!self.punch.hit && self.punch.t >= windup) {
           self.punch.hit = true;
           if (other.alive) {
-            var punchDealt = hurt(other, pu.damage * sugaCritRoll(self), "punch", self.id); // (Sean O'Malley's critical hits, omalley.js)
+            var punchDealt = hurt(other, hookDamage(self, thrown, pu.damage * sugaCritRoll(self)), "punch", self.id); // (Sean O'Malley's critical hits, omalley.js; a hook hits harder, hook-punch.js)
             if (punchDealt > 0) sugaCritLanded(self, other); // CRIT! (omalley.js)
             if (punchDealt > 0) { if (bmfJabs(self.char)) playBmfJab(); else playPunch(punchDealt); violentHit(self, other, 0.5); }
-            if (pu.knockback > 0 && !other.justDodged) {
-              var kx = other.x - self.x, ky = other.y - self.y, kd = Math.sqrt(kx * kx + ky * ky) || 1;
-              other.vx += kx / kd * pu.knockback;
-              other.vy += ky / kd * pu.knockback;
-            }
+            if (!other.justDodged) hookShove(self, other, thrown, pu.knockback); // straight back, or sideways for a hook (hook-punch.js)
             // Light, rapid jabs (like the BMF's) only rattle the screen a little.
             if (!reduceMotion) shake = Math.max(shake, Math.min(10, 2 + pu.damage * 0.4));
             checkEnd();
           }
         }
-        if (self.punch && self.punch.t >= pu.speed) self.punch = null; // (a counter-grab can end it early)
+        if (self.punch && self.punch.t >= punchEndAt(self, self.punch)) self.punch = null; // (a counter-grab can end it early; a hook lasts longer)
       }
     }
 

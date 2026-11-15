@@ -262,6 +262,7 @@ function cbSpinElbow(self, other, s, side) {
       s.landed = dealt > 0;
       if (dealt > 0) {
         floater(other.x, other.y - other.r - 56, "SPINNING BACK ELBOW!", "note");
+        commentaryCall("spinElbow", self, other); // "Spinning elbow! Wow!" (commentary-calls.js)
         var d = cbDist(self, other), ux = (other.x - self.x) / d, uy = (other.y - self.y) / d;
         impacts.push({ x: other.x - ux * other.r, y: other.y - uy * other.r, nx: -ux, ny: -uy, life: 0.35, max: 0.35, color: self.char.color });
         hitStop = Math.max(hitStop, 0.06);
@@ -282,13 +283,14 @@ function endCombo(self, finished) {
   if (cfg) self.cmbT = cbRand(cfg.every);
   // It takes the place of his next punch, rather than coming on top of it.
   if (self.char.hasPunch && self.char.punch) self.punchCd = Math.max(self.punchCd || 0, self.char.punch.cooldown);
-  if (finished) comboCounter(self, m.hits, m.n);
+  if (finished) comboCounter(self, m.hits, m.n, m.steps);
 }
 
 // "3-HIT COMBO!" when every strike landed (the clinch knees count too, knees.js).
-function comboCounter(self, hits, n) {
+function comboCounter(self, hits, n, steps) {
   if (n < 2 || hits < n || !self.alive) return;
   floater(self.x, self.y - self.r - 34, hits + "-HIT COMBO!", "crit");
+  commentaryCall("combo", self, balls[1 - self.id], { hits: hits, steps: steps }); // "What a combination!" (commentary-calls.js)
   crowdReact(0.15 + hits * 0.07);
   playComboChime(hits);
 }

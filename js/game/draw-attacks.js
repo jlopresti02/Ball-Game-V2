@@ -3,6 +3,7 @@
 
 function drawFist(self, other) {
   if (!self.punch || !other.alive || self.taunt || self.flow || self.combo) return;
+  if (drawHookFist(self, other)) return; // a hook comes round instead of straight (hook-punch.js)
   var pu = self.char.punch;
   var qx = other.x - self.x, qy = other.y - self.y, qd = Math.sqrt(qx * qx + qy * qy) || 1;
   var qnx = qx / qd, qny = qy / qd;
@@ -37,6 +38,7 @@ function drawFist(self, other) {
   ctx.beginPath(); ctx.arc(fistX, fistY, pu.size, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   stoneFistOver(self.char, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // Alex Pereira's stone fists (fighter-art.js)
   frostFistOver(self, fistX, fistY, pu.size, Math.atan2(qny, qnx)); // ice from punching Chuck Liddell (liddell.js)
+  iliaFistOver(self, fistX, fistY, pu.size); // Ilia's glove heating up through a combo, and the finisher (ilia-combos.js)
   ctx.restore();
 }
 
@@ -133,6 +135,7 @@ function drawHands(b, other) {
   if (ngannouHandsBusy(b)) return; // the rage punch, the Smash, the contract (drawNgannou, ngannou.js)
   if (volkHandsBusy(b)) return; // arms up, or punching out of the kangaroo's pouch (drawVolk, volkanovski.js)
   if (hollowayHandsBusy(b)) return; // pointing at the booth or the middle, the flashback, the celebration (drawHolloway, holloway.js)
+  if (vanHandsBusy(b)) return; // Joshua Van's high guard, or holding the flag up (drawVan, van.js)
   if (diazHandsBusy(b)) return; // the slap, the lunge, arms out, a bottle (drawDiaz, diaz.js)
   if (elbowHandsBusy(b) || fergusonHandsBusy(b)) return; // an elbow (drawElbow, elbows.js), Tony Ferguson's moves (drawFerguson, ferguson.js)
   if (prochazkaHandsBusy(b)) return; // Jiří Procházka's hands down by his hips, or on his katanas (drawProchazka, prochazka.js)
@@ -142,6 +145,7 @@ function drawHands(b, other) {
   if (andersonHandsBusy(b)) return; // hands down by his sides (drawAnderson, anderson.js)
   if (cormierHandsBusy(b)) return; // the double leg, the carry, the cake, and whoever he's carrying (drawCormier, cormier.js)
   if (pratesHandsBusy(b)) return; // lighting up, or the Rubber Pistol (drawPrates, prates.js)
+  if (jonClinchHandsBusy(b)) return; // Jon Jones's arms locked round them (drawJonClinch, jon-clinch.js)
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)

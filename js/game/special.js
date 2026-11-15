@@ -101,6 +101,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "smash") return updateSmash(self, other, dt); // ngannou.js
   if (sp.move === "kangaroo") return updateKangaroo(self, other, dt); // volkanovski.js
   if (sp.move === "middle") return updateMiddle(self, other, dt); // Max Holloway (holloway.js)
+  if (sp.move === "vanfire") return updateVanFire(self, other, dt); // Joshua Van's Hands on Fire (van.js)
   if (sp.move === "america") return updateAmerica(self, other, dt); // Sean Strickland (strickland.js)
   if (sp.move === "nickdiaz") return updateNickDiaz(self, other, dt); // diaz.js
   if (sp.move === "katana") return updateKatanas(self, other, dt); // Tony Ferguson (ferguson-katanas.js)
@@ -252,6 +253,7 @@ function flurrySchedule(n, total) {
 
 function landIgbbPunch(self, other, kp) {
   var dealt = hurt(other, self.char.special.damage, "igbb", self.id);
+  if (dealt > 0) commentaryCall("dustinBigLeft", self, other, { last: kp.last }); // only Dustin's, the last one (commentary-calls.js)
   if (dealt > 0) playPunch(dealt * (kp.last ? 3 : 1.8));
   // Smashed back into the corner behind the shell: the body caves in, a
   // shockwave and a spray of sparks fly off the contact point.
@@ -435,6 +437,7 @@ function updateFathersPlan(self, other, m, sp, dt) {
       var last = m.thrown === sp.punches - 1;
       m.gp = { t: 0, wind: last ? FP_WIND_LAST : FP_WIND, hit: false, last: last, side: m.thrown % 2 ? -1 : 1 };
       m.thrown++;
+      fpElbowOn(self, m.gp, m.thrown); // some of them are elbows (khabib-elbows.js)
       playWhoosh();
     }
     if (m.thrown >= sp.punches && !m.gp) {
@@ -458,6 +461,8 @@ function updateFathersPlan(self, other, m, sp, dt) {
 function landFpPunch(self, other, gp) {
   var big = gp.last;
   var dealt = hurt(other, self.char.special.damage, "igbb", self.id);
+  fpElbowLand(self, other, gp, dealt); // an elbow's crack (khabib-elbows.js)
+  if (dealt > 0) commentaryCall("khabibGroundElbow", self, other, { big: big && gp.elbow }); // only Khabib's big last elbow (commentary-calls.js)
   if (dealt > 0) playPunch(dealt * (big ? 4 : 3));
   if (big) playSlam();
   var cx = other.x, cy = other.y - other.r * 0.45;
@@ -514,6 +519,7 @@ function drawSpecial(b) {
 // trembling (with a target ring closing in on the opponent), then driven
 // straight down with speed lines behind it.
 function drawFpPound(b, gp) {
+  if (gp.elbow) { drawFpElbow(b, gp); return; } // an elbow, not a fist (khabib-elbows.js)
   var o = balls[1 - b.id], r = b.r;
   var size = (b.char.punch.size || 15) * (gp.last ? 1.9 : 1.5);
   var toward = o.x < b.x ? -1 : 1; // which side the opponent is on

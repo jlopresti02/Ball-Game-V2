@@ -17,18 +17,22 @@ Every change from Christian comes in as a pull request with Joe tagged as review
 
 ## In progress
 
-Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean O'Malley, Chuck Liddell, Georges St-Pierre, Demetrious "Mighty Mouse" Johnson, Alexander Volkanovski, Max Holloway, Nate Diaz, Sean Strickland, Tony Ferguson, and new today Fedor Emelianenko, Michael Bisping, Anderson Silva, Daniel Cormier, Carlos Prates and Jiří Procházka. Christian's Claude has also added real voice lines to some of yours (chatter.js, below). Francis Ngannou is Joe's (pull request #70); Christian's rage extras went on top of it.
+Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean O'Malley, Chuck Liddell, Georges St-Pierre, Demetrious "Mighty Mouse" Johnson, Alexander Volkanovski, Max Holloway, Nate Diaz, Sean Strickland, Tony Ferguson, and new today Fedor Emelianenko, Michael Bisping, Anderson Silva, Daniel Cormier, Carlos Prates, Jiří Procházka and Joshua Van. Christian's Claude has also added real voice lines to some of yours (chatter.js, below). Francis Ngannou is Joe's (pull request #70); Christian's rage extras went on top of it.
 
 | Fighter or move | Who | Status |
 |---|---|---|
 | Carlos Prates | Christian's Claude | live on main |
 | Jiří Procházka | Christian's Claude | live on main |
 | Daniel Cormier | Christian's Claude | live on main |
-| Joshua Van | Christian's Claude | being built |
-| Jon Jones: clinch, inside trip, spinning elbow, EVIL oblique kicks (new file `jon-clinch.js`, one-line hooks) | Christian's Claude | being built |
+| Joshua Van | Christian's Claude | live on main |
+| Jon Jones: clinch, inside trip, spinning elbow, EVIL oblique kicks (new file `jon-clinch.js`, one-line hooks) | Christian's Claude | live on main |
 | Max Holloway hits harder (volume punches 8-12, punch 8) and Ilia Topuria hits harder (punch 8) | Christian's Claude | live on main |
-| Shared commentary calls (`commentary-calls.js`), Max's new lines, Khabib ground elbows | Christian's Claude | built, ships next |
+| Shared commentary calls (`commentary-calls.js`), Max's new lines, Khabib ground elbows | Christian's Claude | live on main |
 | Conor's rainbow aims where they're heading (`potOfGold` lock/lead keys) | Christian's Claude | live on main |
+| Tony Ferguson back to light skin and blonde hair (Joe's arm tattoo and headband kept) | Christian's Claude | live on main |
+| Ilia Topuria's 3-4 punch combos ending in a hook (`ilia-combos.js`) and the shared hook punch any fighter can use (`hook-punch.js`, `hooks` block) | Christian's Claude | live on main |
+| Michael Bisping's Broadside is a pirate ship in the middle of the ring with a three-cannon volley | Christian's Claude | live on main |
+| Joshua Van's left hook on the shared hook punch | Christian's Claude | live on main |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
@@ -43,7 +47,8 @@ Christian's Claude updates this table with each change it ships. Joe's Claude: i
 ## What Christian's Claude added that touches everyone
 
 - **Voice clips** (`js/game/voice-clips.js`, `SPEECH_CLIPS`): every line is the real person's real voice, cut from real footage by Christian's clip tool (it lives outside this repo and writes this file; don't edit it by hand). A clip is keyed by the line's **exact text**, so if you change a line's wording in the code it goes silent until the clip is re-keyed. A line with no clip is silent: no bubble. Swears are bleeped in the audio.
-- **Chatter** (`js/game/chatter.js`): extra real lines for any fighter by id, yours included. Jon Jones's lines live here so `jon.js` stays yours. Its `moments` read fighter state to know when something happens: `b.jonMode` (GOAT/EVIL swaps), `b.chAct.kind === "poke"` (eye pokes) and `b.kick`. If you rename those in your code, Jon's moment lines go quiet: update `CHATTER_MOMENTS` in chatter.js too.
+- **Chatter** (`js/game/chatter.js`): extra real lines for any fighter by id, yours included. Jon Jones's lines live here so `jon.js` stays yours. Its `moments` read fighter state to know when something happens: `b.jonMode` (GOAT/EVIL swaps), `b.chAct.kind === "poke"` (eye pokes) and `b.kick`. If you rename those in your code, Jon's moment lines go quiet: update `CHATTER_MOMENTS` in chatter.js too. Max Holloway's moments (`lowHealth`, `combo`, `knockdown`) read `b.hp`, the jumbotron's strikes landed (`statsFor`) and the opponent's `guard` / `dizzy` / `dazed`.
+- **Commentary calls** (`js/game/commentary-calls.js`): `commentaryCall(kind, attacker, defender)` puts the commentator's real call on the lower-third when a big moment happens (combos, elbows, the spinning elbow, takedown shots, sprawls, suplexes, chokes, knockouts, close fights). One-line hooks in combos.js, elbows.js, grapple-duel.js, cte.js, suplex.js, bjj.js, rnc.js, special.js and a few fighter files call it. It decides by itself whether to talk (a chance, gaps, nobody else talking), so calling it from your own move is safe: `if (typeof commentaryCall === "function") commentaryCall("suplex", self, other);`. Knockouts and big punches are watched from there (a one-line hook in `hurt()`), no other hook needed.
 - **Never name an absent opponent**: a line or commentator call that names a real fighter only plays when that fighter is the one in the cage (`vs` lines). Everything else names only the speaker or nobody.
 - **Strikes any fighter can have**: `teep.js`, `knees.js` (knee, clinch knees, flying knee), `combos.js`, `elbows.js`. Elbows crit 35% of the time unless a fighter's `elbow` block sets `critChance`; knees crit 30%. Jon Jones throws elbows and knees.
 - **Chuck Norris** (`js/game/chuck-norris.js`) is a guest in Sean Strickland's America (`special.norris` in Strickland's file), not a fighter.
