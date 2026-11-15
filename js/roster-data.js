@@ -2948,7 +2948,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 17,
+    "rev": 18,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
@@ -3121,8 +3121,8 @@ var SAVED_ROSTER = [
       "move": "aurafarm",
       "chargeTime": 85,
       "hitCut": 4,
-      "bullDamage": 77,
-      "throwDamage": 77
+      "bullDamage": 70,
+      "throwDamage": 70
     },
     "rapier": {
       "enabled": true,
@@ -3138,7 +3138,7 @@ var SAVED_ROSTER = [
         "clashes": 6,
         "gap": 80,
         "disarmChance": 50,
-        "slashDamage": 44,
+        "slashDamage": 40,
         "slashKnockback": 1500,
         "slashText": "RAPIER SLASH!"
       },
@@ -3154,10 +3154,10 @@ var SAVED_ROSTER = [
         "warn": 0.5,
         "range": 330,
         "speed": 1500,
-        "damage": 26.4,
+        "damage": 24,
         "knockback": 1000,
         "wallSlams": 1,
-        "slamDamage": 3.3
+        "slamDamage": 3
       }
     },
     "tornado": {
@@ -3176,10 +3176,10 @@ var SAVED_ROSTER = [
       "radius": 1.8,
       "pull": 520,
       "orbit": 1.1,
-      "damage": 11,
+      "damage": 10,
       "spitSpeed": 1700,
       "wallSlams": 3,
-      "slamDamage": 6.6,
+      "slamDamage": 6,
       "roseEvery": 0.05
     }
   },
