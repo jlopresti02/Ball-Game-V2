@@ -170,6 +170,7 @@ function galleryMoves(ch) {
   if (ch.fedor) fedorGalleryMoves(ch, add); // Fedor Emelianenko (fedor.js)
   if (ch.elbow) elbowGalleryMoves(ch, add); // elbows (elbows.js)
   if (ch.knee) kneeGalleryMoves(ch, add); // knees, the clinch, the flying knee (knees.js)
+  if (ch.chin) chinGalleryMoves(ch, add); // a chin that gets cracked (chin.js)
   if (ch.combos) comboGalleryMoves(ch, add); // combinations (combos.js)
   if (ch.clinch) clinchGalleryMoves(ch, add); // the clinch and the parting shot on the break (clinch.js)
   if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)

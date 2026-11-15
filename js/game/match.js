@@ -380,7 +380,8 @@ function hurt(b, amount, source, attackerId) {
   amount *= cormierDamageMult(b, source, attackerId); // Daniel Cormier full of cake, and harder on Jon Jones (cormier.js)
   amount *= pratesDamageMult(b, source, attackerId); // Carlos Prates wide open lighting up, and his knees crit in the clinch (prates.js)
   amount *= prochazkaChin(b, source, attackerId); // Jiří Procházka's hands low: what lands is often a crit (prochazka.js)
-  amount *= ganeDamageMult(b, source, attackerId); // Ciryl Gane's hands down: crits, and strikes up close hurt more (gane.js)
+  amount *= ganeDamageMult(b, source, attackerId); // Ciryl Gane's hands down: strikes up close hurt more (gane.js)
+  amount *= chinCritMult(b, source, attackerId); // a chin that gets cracked: Khabib's chin up, Gane's hands down (chin.js)
   amount *= hokitChin(b, source, attackerId); // Josh Hokit walking onto shots: some land as crits (hokit-pressure.js)
   var hpBefore = b.hp;
   b.hp = Math.max(0, b.hp - amount);

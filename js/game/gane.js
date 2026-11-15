@@ -115,22 +115,13 @@ function ganeWeaveMult(b, attackerId) {
 }
 
 // From hurt() (match.js), with the damage multipliers: up close strikes hurt
-// more, and with his hands down a strike that lands is often a crit.
+// more. (With his hands down a strike that lands is often a crit: his
+// `chin` runs through the shared chin, chin.js, right after this.)
 function ganeDamageMult(b, source, attackerId) {
   var c = ganeCfg(b);
   if (!c || attackerId == null || attackerId === b.id || !b.alive) return 1;
   var a = balls[attackerId], m = 1;
   if (c.closeHurt && GN_STRIKES[source] && gnGap(b, a) < (c.close || 30)) m *= c.closeHurt;
-  var ch = c.chin;
-  if (ch && (ch.sources || []).indexOf(source) >= 0 && Math.random() * 100 < ch.critChance) {
-    var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
-    floater(b.x, b.y - b.r - 34, "CRIT!", "crit");
-    impacts.push({ x: b.x - ux * b.r, y: b.y - uy * b.r, nx: -ux, ny: -uy, life: 0.3, max: 0.3, color: "#ffffff" });
-    b.squash = { t: 0.12, max: 0.12, nx: -ux, ny: -uy };
-    hitStop = Math.max(hitStop, 0.04);
-    if (!reduceMotion) shake = Math.max(shake, 9);
-    m *= ch.critMult;
-  }
   return m;
 }
 

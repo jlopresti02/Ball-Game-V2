@@ -1004,7 +1004,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 16,
+    "rev": 17,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -1063,7 +1063,8 @@ var SAVED_ROSTER = [
       "finPunchDamage": 10,
       "sprawlChance": 30,
       "reattackChance": 50,
-      "vsGrapplerChance": 50
+      "vsGrapplerChance": 50,
+      "stuffChance": 30
     },
     "hasPowerPunch": false,
     "hasRage": false,
@@ -1100,26 +1101,49 @@ var SAVED_ROSTER = [
       "cooldown": 3.4,
       "speed": 0.3,
       "reach": 12,
-      "knockback": 180,
-      "clinch": {
-        "first": [
-          4,
-          7
-        ],
-        "every": [
-          8,
-          12
-        ],
-        "range": 16,
-        "knees": [
-          2,
-          4
-        ],
+      "knockback": 180
+    },
+    "clinch": {
+      "first": [
+        4,
+        7
+      ],
+      "every": [
+        7,
+        10
+      ],
+      "range": 16,
+      "tie": "plum",
+      "reach": 0.26,
+      "evade": 10,
+      "weaverEvade": 10,
+      "strikes": [
+        3,
+        5
+      ],
+      "gap": 0.34,
+      "mix": {
+        "bodyKnee": 3,
+        "headKnee": 3,
+        "elbow": 1
+      },
+      "knee": {
         "damage": 8,
-        "gap": 0.4,
-        "escape": 15,
-        "grapplerEscape": 10,
-        "knockback": 380
+        "headDamage": 11,
+        "critChance": 35,
+        "critMult": 2
+      },
+      "ramp": 10,
+      "escape": 12,
+      "grapplerEscape": 10,
+      "knockback": 400,
+      "open": 0.6,
+      "parting": {
+        "chance": 40,
+        "mix": {
+          "knee": 2,
+          "elbow": 1
+        }
       }
     },
     "kamehameha": {
@@ -2595,9 +2619,9 @@ var SAVED_ROSTER = [
     },
     "ngannou": {
       "rage": {
-        "hitFill": 8,
-        "dmgFill": 0.18,
-        "missFill": 16,
+        "hitFill": 6,
+        "dmgFill": 0.135,
+        "missFill": 12,
         "first": 8,
         "grow": 1.22,
         "stalk": 3,
@@ -4450,7 +4474,8 @@ var SAVED_ROSTER = [
       "finPunches": 3,
       "finPunchDamage": 10,
       "sprawlChance": 30,
-      "reattackChance": 50
+      "reattackChance": 50,
+      "stuffChance": 12
     },
     "hasSuplex": true,
     "suplex": {
@@ -4517,6 +4542,11 @@ var SAVED_ROSTER = [
       "shellTime": 5
     },
     "blockChance": 10,
+    "chin": {
+      "critChance": 15,
+      "critMult": 1.5,
+      "text": "CHIN UP! CRIT!"
+    },
     "knee": {
       "clinch": {
         "first": [
