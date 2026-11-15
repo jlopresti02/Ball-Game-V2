@@ -52,5 +52,5 @@
     "lines": { "start": [], "win": [], "unfazed": [], "armbar": [], "startAt": [0.8, 2], "startChance": 100 }
   },
   "hasSpecial": true,
-  "special": { "move": "unmoving", "chargeTime": 45, "hitCut": 1.5, "punchCut": 1, "range": 140, "waitMax": 2.5, "damage": 65, "launch": 1300, "slamDamage": 10 }
+  "special": { "move": "unmoving", "chargeTime": 45, "hitCut": 1.5, "punchCut": 1, "range": 140, "waitMax": 2.5, "damage": 150, "launch": 1300, "slamDamage": 10 }
 }

@@ -12,7 +12,7 @@
 // It starts when his special bar is full, they're within `special.range` of
 // him (edge to edge) and they're throwing something at him (or he's waited
 // `special.waitMax` seconds with them close). Numbers in `special`:
-//   damage      the overhand right (an IGBB-type hit: no block, no weave)
+//   damage      the overhand right, 150 (an IGBB-type hit: no block, no weave)
 //   launch      how fast it sends them into the cage (the wall slam's speed);
 //               they lie there dazed against it until the move ends
 //   slamDamage  what the cage does to them when they hit it
@@ -801,5 +801,5 @@ function playUmStep(v) { fdAudio(function (ac, t) { umTone(ac, t, "sine", 90, 50
 
 function unmovingSpecialInfo(sp) {
   return "Hands down, feet still, he slips everything they throw: a hook, another hook, an uppercut, straights, the last one in slow motion past his eye. Then he catches their final punch in one glove and puts them through the cage with one overhand right for " +
-    (sp.damage || 65) + " (and " + (sp.slamDamage != null ? sp.slamDamage : 10) + " off the cage). Goes off when the bar's full and they're in front of him throwing.";
+    (sp.damage || 150) + " (and " + (sp.slamDamage != null ? sp.slamDamage : 10) + " off the cage). Goes off when the bar's full and they're in front of him throwing.";
 }

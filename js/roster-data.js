@@ -2609,7 +2609,7 @@ var SAVED_ROSTER = [
       "punchCut": 1,
       "range": 140,
       "waitMax": 2.5,
-      "damage": 65,
+      "damage": 150,
       "launch": 1300,
       "slamDamage": 10
     }
