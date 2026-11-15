@@ -29,7 +29,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Max Holloway hits harder (volume punches 8-12, punch 8) and Ilia Topuria hits harder (punch 8) | Christian's Claude | live on main |
 | Shared commentary calls (`commentary-calls.js`), Max's new lines, Khabib ground elbows | Christian's Claude | live on main |
 | Conor's rainbow aims where they're heading (`potOfGold` lock/lead keys) | Christian's Claude | live on main |
-| Tony Ferguson back to light skin and blonde hair (Joe's arm tattoo and headband kept) | Christian's Claude | live on main |
+| Tony Ferguson: Joe's look (olive skin, black hair, arm tattoo, higher headband, PR #96), see Joe's calls on looks below | Joe | live on main |
 | Ilia Topuria's 3-4 punch combos ending in a hook (`ilia-combos.js`) and the shared hook punch any fighter can use (`hook-punch.js`, `hooks` block) | Christian's Claude | live on main |
 | Michael Bisping's Broadside is a pirate ship in the middle of the ring with a three-cannon volley | Christian's Claude | live on main |
 | Joshua Van's left hook on the shared hook punch | Christian's Claude | live on main |
@@ -45,6 +45,14 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
+
+## Never undo Joe's changes (Joe's rule, 2026-11-15)
+
+Christian's Claude must not revert, undo or overwrite anything Joe (or Joe's Claude) put into the game (looks, moves, numbers, sounds, anything) **unless Christian specifically asked for that exact change**. "Restoring an older look" or "tidying up" is not a reason. Before touching something Joe changed, check `git log` on the file: if the last change to it came from a `claude/project-thread-*` branch or Joe's PR, leave it alone and ask Joe (or Christian) first. When you merge Joe's main into your work, keep Joe's version of anything that conflicts.
+
+### Joe's calls on looks (don't change these back)
+
+- **Tony Ferguson** (Joe, 2026-11-15): olive skin `#c49a6c`, black hair `#17130f`, dark stubble `#2a211a`, with his real arm tattoo and the higher headband (PR #92). Joe asked for this look; please don't switch him back to light skin or blonde hair. Ask Joe first if you think a look should change.
 
 ## Working in the same files
 

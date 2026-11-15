@@ -1,6 +1,6 @@
 {
   "id": "c-tony-ferguson",
-  "rev": 6,
+  "rev": 7,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Tony Ferguson",
@@ -10,12 +10,12 @@
   "label": "",
   "imgData": null,
   "look": {
-    "skin": "#dfae8e",
+    "skin": "#c49a6c",
     "build": "lean",
     "face": "angular",
     "bodyHair": "none",
     "hair": "receding",
-    "hairColor": "#d6b05a",
+    "hairColor": "#17130f",
     "beard": "none",
     "ears": "normal",
     "tattoos": {
@@ -29,7 +29,7 @@
     "shortsStyle": "stripe",
     "gloves": "#141414",
     "cucuy": {
-      "stubble": { "color": "#7a5a30", "alpha": 0.16 },
+      "stubble": { "color": "#2a211a", "alpha": 0.16 },
       "headband": { "color": "#c41e1e", "drop": 0.07 }
     }
   },
