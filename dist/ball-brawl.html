@@ -4904,12 +4904,12 @@ function getImg(dataURL) {
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
     "base": "Brawler",
-    "bio": "\"Poatan\" (stone hands). Built on the Brawler base, with fists of stone and red war paint. He stalks slowly on a bouncing 1-2, 1-2 step, but his hands are fast. Every few seconds up close he plants and shouts \"CHAMA!\", the crowd shouts it back, and he throws left-right-left, ending in the left hook. The shout is the tell: back off and it whiffs. Let the hook land clean and it's often a knockout, and he shoots an arrow into the sky. His kicks go for the calf: you limp for a few seconds. Against Jon Jones, he shoots Jon's duck out of the sky. Special move: Bow and Arrow, a big red arrow that bings off the cage and hits whoever's in its path. He mixes in body shots and uppercuts up close, and one that lands sets up a bigger punch upstairs.",
+    "bio": "\"Poatan\" (stone hands). Built on the Brawler base, with fists of stone and red war paint. He holds the middle of the ring on a bouncing 1-2, 1-2 step and lets them come to him, but his hands are fast. When they're hurt or the fight runs long, he plants up close and shouts \"CHAMA!\", the crowd shouts it back, and he throws left-right-left, ending in the left hook. The shout is the tell: back off and it whiffs. Let the hook land clean and it's often a knockout, and he shoots an arrow into the sky. His kicks go for the calf: you limp for a few seconds. Against Jon Jones, he shoots Jon's duck out of the sky. Special move: Bow and Arrow, a big red arrow that bings off the cage and hits whoever's in its path. He mixes in body shots and uppercuts up close, and one that lands sets up a bigger punch upstairs.",
     "color": "#c8102e",
     "label": "",
     "imgData": null,
@@ -5045,11 +5045,23 @@ var SAVED_ROSTER = [
         "closing": 60,
         "counterBonus": 10,
         "counterMult": 1.2,
-        "chaseMalus": 20
+        "chaseMalus": 20,
+        "whenHurt": 35,
+        "whenLate": 40
       },
       "duckHunt": {
         "chance": 75,
         "damage": 25
+      }
+    },
+    "movement": {
+      "after": 0.6,
+      "center": {
+        "radius": 40,
+        "turn": 9,
+        "stepIn": 70,
+        "leash": 110,
+        "turnIn": 9
       }
     },
     "legKick": {
@@ -5064,10 +5076,11 @@ var SAVED_ROSTER = [
       "cooldown": 12,
       "range": 60,
       "reach": 95,
-      "landChance": 50,
+      "landChance": 40,
       "blockShare": 40,
-      "koChance": 50,
+      "koChance": 8,
       "damagePct": 50,
+      "damageHp": 100,
       "missOpen": 1.3,
       "missGuard": 100,
       "missShot": 85,
@@ -18976,6 +18989,9 @@ function commentaryLog() { return cc && cc.balls === balls ? cc.log.slice() : []
 // Step       he stalks slowly (char.speedMult) on a bouncing 1-2, 1-2 step
 //            that dips his level (applyPoatanStep). Stone fists
 //            (look.stoneFists, fighter-art.js): "Poatan" means "stone hands".
+// Center     he holds the middle of the ring and lets them come to him
+//            (Christian, 2026-11-15: "mostly cover in the center of the ring
+//            more instead of bouncing around"): movement.center, movement.js.
 // CHAMA      every few seconds when he's close (poatan.chama): he plants and
 //            shouts "CHAMA!" (his real screamed takes, poChamaShout), and the
 //            crowd shouts it back; he screams it again on a knockout. The shout is the
@@ -18991,6 +19007,12 @@ function commentaryLog() { return cc && cc.balls === balls ? cc.log.slice() : []
 //            counterMult times the damage ("COUNTER!" on the first one that
 //            lands); if he was the one walking forward into them, chaseMalus%
 //            more misses. Left out, the punches land exactly as before.
+//            Only late or when they're hurt (Christian, 2026-11-15: "Every
+//            once in a while if someone's hurt or near the end, you could
+//            try a chama"): with `whenHurt` / `whenLate` set he calls it only
+//            once they're under whenHurt% of a full bar or the fight is
+//            whenLate seconds old (there's no fight clock, so it counts from
+//            the bell, b.poT). Both left out: any time, as before.
 // Calf kicks his kicks are leg kicks (legKick, onKick): drawn low into the
 //            calf, and they limp at `slow` speed for `time` seconds (leg-kick.js).
 // Bow and Arrow  his special (special.move "bow"): he draws a big red bow,
@@ -19031,7 +19053,7 @@ function resetPereira() { poArrow = null; poSkyArrows = []; poFeathers = []; poE
 // From makeBall.
 function initPereira(b) {
   var cfg = poCfg(b);
-  b.chama = null; b.stepPhase = 0;
+  b.chama = null; b.stepPhase = 0; b.poT = 0;
   b.chamaT = cfg && cfg.chama ? poRand(cfg.chama.first) : Infinity;
 }
 
@@ -19060,7 +19082,7 @@ function updateChama(self, other, dt) {
   if (!m) {
     if (!started || over || self.igbb) return false;
     self.chamaT -= dt;
-    if (self.chamaT > 0 || d > self.r + other.r + cc.range || !canStartIgbb(self, other) || swordDuelActive()) return false;
+    if (self.chamaT > 0 || d > self.r + other.r + cc.range || !chamaGateOpen(self, other, cc) || !canStartIgbb(self, other) || swordDuelActive()) return false;
     startChama(self, other, cc);
     m = self.chama;
   }
@@ -19097,6 +19119,12 @@ function updateChama(self, other, dt) {
   return true;
 }
 
+// Whether he'll call it at all right now: they're hurt, or it's late.
+function chamaGateOpen(self, other, cc) {
+  if (cc.whenHurt == null && cc.whenLate == null) return true;
+  if (cc.whenHurt != null && other.hp < MAX_HP * cc.whenHurt / 100) return true;
+  return cc.whenLate != null && (self.poT || 0) >= cc.whenLate;
+}
 // Who was closing the distance as he called it: "counter" (they were
 // coming at him), "chase" (he was walking forward into them) or "even".
 function chamaDir(self, other, cc) {
@@ -19472,6 +19500,7 @@ function tickPereira(dt) {
   balls.forEach(function (b) {
     var cfg = poCfg(b);
     if (cfg && cfg.step) b.stepPhase = (b.stepPhase || 0) + dt * cfg.step.rate;
+    if (cfg && started && !over) b.poT = (b.poT || 0) + dt; // seconds since the bell (CHAMA's whenLate)
   });
   tickArrow(dt);
   poSkyArrows.forEach(function (s) {
@@ -56508,7 +56537,11 @@ function legKickGalleryMoves(ch, add) {
 //    default): a miss is as it always was.
 //  - When it lands: "HEAD KICK!", a big star on their head, a freeze-frame.
 //    `koChance`% of the time they're out cold (the knockout, then the fight's
-//    called); otherwise it takes `damagePct`% of their full health.
+//    called); otherwise it takes exactly `damageHp` health off them, whatever
+//    their weight (Christian, 2026-11-15: "it should just do a tremendous
+//    amount of damage, like maybe 100 HP", then "100 is fine with a 5% or
+//    10% chance (maybe an 8% in between) of it being a straight knockout").
+//    `damageHp` 0 (the default): `damagePct`% of their full health instead.
 //
 // The API: headKickSetup(self, v) from legKickLimp (leg-kick.js), every calf
 // kick that lands; updateHeadKick from the abilities loop; headKickBusy from
@@ -56520,7 +56553,7 @@ function legKickGalleryMoves(ch, add) {
 "use strict";
 
 var HEAD_KICK_DEFAULTS = { setup: 2, chance: 40, window: 2.5, cooldown: 12, range: 60, reach: 95,
-  landChance: 50, blockShare: 40, koChance: 60, damagePct: 50,
+  landChance: 50, blockShare: 40, koChance: 60, damagePct: 50, damageHp: 0,
   chamber: 0.26, sweep: 0.13, recover: 0.3, missRecover: 0.6,
   missOpen: 0, missGuard: 100, missShot: 85, missReach: 110,
   text: "HEAD KICK!", color: "#ff3b30", size: 1.35 };
@@ -56669,7 +56702,7 @@ function hkCanShoot(o, b) {
   return !grabBlockedByImpunity(o, b);
 }
 
-// It lands: a knockout, or half their health.
+// It lands: a knockout, or a big hit (damageHp, or damagePct% of a full bar).
 function hkLand(self, other, c, L) {
   var free = !other.holdAtOne && !other.guard && !other.sprawl && !other.sprawled && !other.grappled && !other.grapple && !other.slam && !subLocked(other);
   if (free && Math.random() * 100 < c.koChance) {
@@ -56688,7 +56721,9 @@ function hkLand(self, other, c, L) {
     self.vx = 0; self.vy = 0;
     return "ko";
   }
-  var dealt = hurt(other, MAX_HP * c.damagePct / 100, "finisher", self.id);
+  // damageHp is exactly that much off their bar: like the knockout above, it
+  // comes in already divided by what weight (or anything else) would scale it by.
+  var dealt = hurt(other, c.damageHp > 0 ? c.damageHp / incomingMultiplier(other) : MAX_HP * c.damagePct / 100, "finisher", self.id);
   if (!(dealt > 0)) { checkEnd(); return "slipped"; }
   hkImpact(self, other, c, L, false);
   if (other.alive && !other.grappled && !other.grapple && !other.slam && !subLocked(other)) {
@@ -56855,7 +56890,7 @@ function headKickGalleryMoves(ch, add) {
   var v = function (k) { return c[k] != null ? c[k] : HEAD_KICK_DEFAULTS[k]; };
   add("💥", "Head kick", "Once he's landed " + v("setup") + " calf kicks, each one that lands is a " + v("chance") + "% chance he goes high next: a head kick that lands " +
     v("landChance") + "% of the time (they duck it or block it, and he's left open). When it lands it's a knockout " + v("koChance") + "% of the time, otherwise " +
-    v("damagePct") + "% of their health. At most one every " + secs(v("cooldown")) + "." +
+    (v("damageHp") > 0 ? v("damageHp") + " damage" : v("damagePct") + "% of their health") + ". At most one every " + secs(v("cooldown")) + "." +
     (v("missOpen") > 0 ? " A miss leaves him off balance for " + secs(v("missOpen")) + ": his guard drops, they rush him, and a wrestler shoots on him " + v("missShot") + "% of the time." : ""));
 }
 
@@ -62526,8 +62561,8 @@ SOUND_CLIPS.downUnder = "data:audio/mpeg;base64,SUQzBAAAAAAAIlRTU0UAAAAOAAADTGF2
 // Shared movement styles (Christian, 2026-11-15). Any fighter can opt in
 // with a "movement" block in his character file; a fighter without one
 // moves exactly as before (nothing here runs for him, and nothing here draws
-// a random number for him). Ilia Topuria, Khabib Nurmagomedov and Sean
-// Strickland (spacing) use it.
+// a random number for him). Ilia Topuria, Khabib Nurmagomedov, Sean
+// Strickland (spacing) and Alex Pereira (center) use it.
 //
 // Every part is its own block; take a block out and that part is off.
 // It only steers which way he's heading, never how fast (the speed
@@ -62580,7 +62615,17 @@ SOUND_CLIPS.downUnder = "data:audio/mpeg;base64,SUQzBAAAAAAAIlRTU0UAAAAOAAADTGF2
 //       "switch": [1.5, 3.5],at `turnIn`) and the jab goes as soon as they're
 //       "read": 0.12         in reach; then straight back out. A step in
 //     }                      that hasn't reached them in `stepIn` s is called
-//   }                        off. He reads them coming `read` seconds ahead.
+//                            off. He reads them coming `read` seconds ahead.
+//     "center": {            HOLDS THE CENTER (Alex Pereira): he lets them
+//       "radius": 40,        come to him. Once he's drifted more than `radius`
+//       "turn": 9,           px from the middle of the ring he turns back
+//       "stepIn": 70,        toward it at `turn` (he loops through the middle
+//       "leash": 110,        instead of bouncing off the cage). With them
+//       "turnIn": 9          within `stepIn` px (edge to edge) while he's
+//     }                      within `leash` px of the middle, or his head
+//   }                        kick armed (b.hkArm, head-kick.js), he steps in
+//                            at them instead, turning at `turnIn`, to throw.
+//                            Past `leash` he heads back to the middle first.
 //
 // State is on b.mv: { t, step, stepT, reset, lastPunch, cutSide, sp }.
 // The fighter card lists each part (movementGalleryMoves, gallery.js).
@@ -62625,8 +62670,8 @@ function mvCageShots(b, other, cfg, dt) {
 }
 
 function mvSteer(b, other, mv, cfg, dt) {
-  var pr = cfg.press, ss = cfg.sideStep, sc = cfg.spacing;
-  if (!pr && !ss && !sc) return;
+  var pr = cfg.press, ss = cfg.sideStep, sc = cfg.spacing, ce = cfg.center;
+  if (!pr && !ss && !sc && !ce) return;
   if (!inOrdinaryMovement(b) || b.dizzy || b.angry || b.speedEase || b.knockFly > 0) {
     mv.step = null;
     if (mv.sp && mv.sp.mode === "in") mvSpMode(mv.sp, "out"); // threw something (a teep, a one-two) or got hit: back out after it
@@ -62648,6 +62693,7 @@ function mvSteer(b, other, mv, cfg, dt) {
   if (cfg.cutCage) { var c = mvCut(b, other, mv, cfg.cutCage, ax, ay); ax = c[0]; ay = c[1]; }
   var want = Math.atan2(ay, ax), turn = (pr && pr.turn) || 0;
   if (sc) { var w = mvSpacing(b, other, mv, sc, dt, dx, dy, gap); want = w[0]; turn = w[1]; }
+  if (ce) { var hc = mvCenter(b, ce, gap, Math.atan2(dy, dx)); if (hc) { want = hc[0]; turn = hc[1]; } }
   // The side step.
   if (ss) {
     if (mv.step) {
@@ -62682,6 +62728,15 @@ function mvCut(b, other, mv, cc, ux, uy) {
   if (dot < -0.85) { qx = -uy * mv.cutSide; qy = ux * mv.cutSide; } // right behind them: pick a way round
   var k = (cc.weight || 0) * Math.min(1, cd / (cc.fade || 80));
   return [ux + qx * k, uy + qy * k];
+}
+
+// Holding the center: [heading, turn], or null while he's in the middle
+// with nothing to step in on (he just rolls on, no steering).
+function mvCenter(b, ce, gap, to) {
+  var cx = W / 2 - b.x, cy = H / 2 - b.y, d2 = cx * cx + cy * cy, r = ce.radius || 50, lr = ce.leash || 9999;
+  if (b.hkArm > 0 || (gap <= (ce.stepIn || 0) && d2 <= lr * lr)) return [to, ce.turnIn || ce.turn || 5];
+  if (d2 <= r * r) return null;
+  return [Math.atan2(cy, cx), ce.turn || 5];
 }
 
 // ---------------------------------------------------------------- spacing
@@ -62772,11 +62827,12 @@ function playMvStep() {
 
 // The fighter card's move list (gallery.js).
 function movementGalleryMoves(ch, add) {
-  var m = ch.movement, pr = m.press, rc = m.reset, cc = m.cutCage, ss = m.sideStep, cs = m.cageShots;
+  var m = ch.movement, pr = m.press, rc = m.reset, cc = m.cutCage, ss = m.sideStep, cs = m.cageShots, ce = m.center;
   if (pr) add("👣", "Walks them down", "Keeps turning back toward them, aiming where they're going, so he's always coming forward." +
     (rc ? " After a combination he takes a short reset (" + rc.time[0] + "-" + rc.time[1] + "s), then walks straight back in." : ""));
   if (cc) add("🧱", "Cuts the cage", "Works round to the middle-of-the-ring side of them before he comes in, so every collision pushes them back toward the cage.");
   if (ss) add("↔️", "Side step", "Every " + ss.every[0] + "-" + ss.every[1] + "s a small step to one side, then straight back in.");
+  if (ce) add("🎯", "Holds the center", "Stays in the middle of the ring and lets them come to him. Once they're within " + (ce.stepIn || 0) + "px he steps in to throw, but he won't follow them out to the cage.");
   if (cs) add("🤼", "Against the cage", "With them on the cage and him right on them, his takedown attempts come " + cs.rate + "x as often.");
   if (m.spacing) add("📏", "Spacing", "Hovers just outside their reach (their longest punch, grab" + (m.spacing.kicks !== false ? " or kick" : "") + ", plus " + (m.spacing.margin != null ? m.spacing.margin : 14) +
     "px), steps straight in behind the jab and straight back out, and backs off at an angle or circles off the cage when they come in.");
@@ -76632,7 +76688,7 @@ function galleryMoves(ch) {
   if (ch.poatan) {
     // Alex Pereira (pereira.js).
     var pc = ch.poatan.chama;
-    if (pc) add("📣", "CHAMA", "Every " + pc.every[0] + "-" + pc.every[1] + "s up close he plants and shouts \"CHAMA!\", and the crowd shouts it back. That's the tell: they back off " + pc.readChance + "% of the time. Then left-right-left (" + pc.jab + ", " + pc.cross + ", then a " + pc.hook + "-damage left hook). A clean hook knocks them out " + pc.koBase + "% of the time at full health, up to " + (pc.koBase + pc.koLow) + "% the more hurt they are, and he shoots an arrow into the sky." +
+    if (pc) add("📣", "CHAMA", (pc.whenHurt != null || pc.whenLate != null ? "Only when " + [pc.whenHurt != null ? "they're under " + pc.whenHurt + "% health" : "", pc.whenLate != null ? "the fight's past " + pc.whenLate + "s" : ""].filter(Boolean).join(" or ") + ": every " : "Every ") + pc.every[0] + "-" + pc.every[1] + "s up close he plants and shouts \"CHAMA!\", and the crowd shouts it back. That's the tell: they back off " + pc.readChance + "% of the time. Then left-right-left (" + pc.jab + ", " + pc.cross + ", then a " + pc.hook + "-damage left hook). A clean hook knocks them out " + pc.koBase + "% of the time at full health, up to " + (pc.koBase + pc.koLow) + "% the more hurt they are, and he shoots an arrow into the sky." +
       (pc.miss ? " Each punch misses " + pc.miss + "% of the time; as a counter (they were coming at him) " + Math.max(0, pc.miss - (pc.counterBonus || 0)) + "% and " + (pc.counterMult || 1) + "x the damage, walking forward into them " + (pc.miss + (pc.chaseMalus || 0)) + "%." : ""));
     if (ch.poatan.duckHunt) add("🦆", "Duck season", "Against Jon Jones: when Jon turns into a duck and flies off, " + ch.poatan.duckHunt.chance + "% of the time he shoots it out of the sky. Jon still drops in, but he's the one who gets hurt (" + ch.poatan.duckHunt.damage + ").");
   }
@@ -77406,17 +77462,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115032611"></script>
-  <script src="js/game/tale-tape.js?v=20261115032611"></script>
-<script src="js/game/watchdog.js?v=20261115032611"></script>
-<script src="js/game/update.js?v=20261115032611"></script>
-<script src="js/game/fighter-art.js?v=20261115032611"></script>
-<script src="js/game/draw-attacks.js?v=20261115032611"></script>
-<script src="js/game/wwit-badge.js?v=20261115032611"></script>
-<script src="js/game/stadium.js?v=20261115032611"></script>
-<script src="js/game/draw.js?v=20261115032611"></script>
-<script src="js/ui/gallery.js?v=20261115032611"></script>
-<script src="js/ui/saved-fights.js?v=20261115032611"></script>
-<script src="js/main.js?v=20261115032611"></script>
+  <script src="js/game/intro-msg.js?v=20261115032835"></script>
+  <script src="js/game/tale-tape.js?v=20261115032835"></script>
+<script src="js/game/watchdog.js?v=20261115032835"></script>
+<script src="js/game/update.js?v=20261115032835"></script>
+<script src="js/game/fighter-art.js?v=20261115032835"></script>
+<script src="js/game/draw-attacks.js?v=20261115032835"></script>
+<script src="js/game/wwit-badge.js?v=20261115032835"></script>
+<script src="js/game/stadium.js?v=20261115032835"></script>
+<script src="js/game/draw.js?v=20261115032835"></script>
+<script src="js/ui/gallery.js?v=20261115032835"></script>
+<script src="js/ui/saved-fights.js?v=20261115032835"></script>
+<script src="js/main.js?v=20261115032835"></script>
 </body>
 </html>
