@@ -17,18 +17,20 @@ Every change from Christian comes in as a pull request with Joe tagged as review
 
 ## In progress
 
-Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean O'Malley, Chuck Liddell, Georges St-Pierre, Demetrious "Mighty Mouse" Johnson, Alexander Volkanovski, Max Holloway, Nate Diaz, Sean Strickland, Tony Ferguson, and new today Fedor Emelianenko, Michael Bisping, Anderson Silva, Daniel Cormier, Carlos Prates and Jiří Procházka. Christian's Claude has also added real voice lines to some of yours (chatter.js, below). Francis Ngannou is Joe's (pull request #70); Christian's rage extras went on top of it.
+Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean O'Malley, Chuck Liddell, Georges St-Pierre, Demetrious "Mighty Mouse" Johnson, Alexander Volkanovski, Max Holloway, Nate Diaz, Sean Strickland, Tony Ferguson, and new today Fedor Emelianenko, Michael Bisping, Anderson Silva, Daniel Cormier, Carlos Prates, Jiří Procházka and Joshua Van. Christian's Claude has also added real voice lines to some of yours (chatter.js, below). Francis Ngannou is Joe's (pull request #70); Christian's rage extras went on top of it.
 
 | Fighter or move | Who | Status |
 |---|---|---|
 | Carlos Prates | Christian's Claude | live on main |
 | Jiří Procházka | Christian's Claude | live on main |
 | Daniel Cormier | Christian's Claude | live on main |
-| Joshua Van | Christian's Claude | being built |
-| Jon Jones: clinch, inside trip, spinning elbow, EVIL oblique kicks (new file `jon-clinch.js`, one-line hooks) | Christian's Claude | being built |
+| Joshua Van | Christian's Claude | live on main |
+| Jon Jones: clinch, inside trip, spinning elbow, EVIL oblique kicks (new file `jon-clinch.js`, one-line hooks) | Christian's Claude | live on main |
 | Max Holloway hits harder (volume punches 8-12, punch 8) and Ilia Topuria hits harder (punch 8) | Christian's Claude | live on main |
-| Shared commentary calls (`commentary-calls.js`), Max's new lines, Khabib ground elbows | Christian's Claude | built, ships next |
+| Shared commentary calls (`commentary-calls.js`), Max's new lines, Khabib ground elbows | Christian's Claude | live on main |
 | Conor's rainbow aims where they're heading (`potOfGold` lock/lead keys) | Christian's Claude | live on main |
+| Tony Ferguson back to light skin and blonde hair (Joe's arm tattoo and headband kept) | Christian's Claude | live on main |
+| Ilia Topuria's combos; Michael Bisping's pirate ship | Christian's Claude | being built |
 | Fedor's special | Christian | not picked yet |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
