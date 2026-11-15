@@ -6,7 +6,7 @@
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
@@ -139,6 +139,18 @@ var SAVED_ROSTER = [
       "onKick": true,
       "slow": 0.6,
       "time": 3
+    },
+    "headKick": {
+      "setup": 2,
+      "chance": 60,
+      "window": 2.5,
+      "cooldown": 12,
+      "range": 60,
+      "reach": 95,
+      "landChance": 50,
+      "blockShare": 40,
+      "koChance": 60,
+      "damagePct": 50
     },
     "hasSpecial": true,
     "special": {
@@ -4004,7 +4016,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 13,
+    "rev": 14,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -4065,6 +4077,30 @@ var SAVED_ROSTER = [
       "koChance": 5
     },
     "hasKick": false,
+    "legKick": {
+      "first": [
+        1,
+        2
+      ],
+      "every": [
+        2,
+        3.5
+      ],
+      "range": 64,
+      "reach": 95,
+      "damage": 11,
+      "slow": 0.72,
+      "time": 5,
+      "stack": 0.12,
+      "maxStacks": 3,
+      "minSlow": 0.45,
+      "size": 1.15,
+      "buckle": {
+        "at": 3,
+        "slow": 0.25,
+        "time": 1.2
+      }
+    },
     "hasGrapple": true,
     "grapple": {
       "damage": 35,

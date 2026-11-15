@@ -1,6 +1,6 @@
 {
   "id": "c-justin-gaethje",
-  "rev": 13,
+  "rev": 14,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Justin Gaethje",
@@ -61,6 +61,7 @@
     "koChance": 5
   },
   "hasKick": false,
+  "legKick": { "first": [1, 2], "every": [2, 3.5], "range": 64, "reach": 95, "damage": 11, "slow": 0.72, "time": 5, "stack": 0.12, "maxStacks": 3, "minSlow": 0.45, "size": 1.15, "buckle": { "at": 3, "slow": 0.25, "time": 1.2 } },
   "hasGrapple": true,
   "grapple": {
     "damage": 35,

@@ -1,6 +1,6 @@
 {
   "id": "c-alex-pereira",
-  "rev": 3,
+  "rev": 4,
   "builtin": false,
   "weightClass": "lightheavyweight",
   "name": "Alex Pereira",
@@ -53,6 +53,7 @@
     "duckHunt": { "chance": 75, "damage": 25 }
   },
   "legKick": { "onKick": true, "slow": 0.6, "time": 3 },
+  "headKick": { "setup": 2, "chance": 60, "window": 2.5, "cooldown": 12, "range": 60, "reach": 95, "landChance": 50, "blockShare": 40, "koChance": 60, "damagePct": 50 },
   "hasSpecial": true,
   "special": { "move": "bow", "chargeTime": 78, "hitCut": 4, "punchCut": 3, "damage": 35, "secondHit": 25, "hits": 2, "bounces": 5, "speed": 900, "flight": 3.2, "knockback": 900 }
 }

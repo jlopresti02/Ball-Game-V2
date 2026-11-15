@@ -456,6 +456,7 @@ function draw() {
   drawPratesOver(); // Carlos Prates's smoke, music notes and the disco lights (prates.js)
   drawKneesOver(); // knees coming up, the clinch, the flying knee and its red line (knees.js)
   drawLegKicksOver(); // leg kicks whipping round low into the calf, the hit mark on it (leg-kick.js)
+  drawHeadKicksOver(); // a head kick whipping up high into the head, the star on it (head-kick.js)
   drawFedorOver(); // Fedor Emelianenko's arms locked round them in the clinch and the throw (fedor.js)
   drawBispingOver(); // Michael Bisping's clinch elbows, cannonballs, smoke and 10-9 cards (bisping.js)
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)

@@ -80,6 +80,7 @@ function update(dt) {
   tickAnderson(dt); // Anderson Silva's lean, front kick knockout, triangle off a takedown, lines (anderson.js)
   tickSlows(dt); // limps wearing off (slowdown.js)
   tickLegKicks(dt); // a leg kick let go if something else takes over, the limping step (leg-kick.js)
+  tickHeadKicks(dt); // the head kick's window and cooldown, a head kick knockout called (head-kick.js)
   tickGane(dt); // Ciryl Gane's back-foot footwork, grabs coming round faster on him (gane.js)
   tickChatter(dt); // extra real voice lines for any fighter, by id (chatter.js)
   tickCommentaryCalls(dt); // the commentators' calls on big moments, knockouts, the end of the fight (commentary-calls.js)
