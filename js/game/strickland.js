@@ -40,23 +40,33 @@
 //           seconds of charge a second, shown as the "x" number by the bar.
 //           America takes it back down to `keep` of where it was.
 // America   his special (special.move "america"). Not before `notBefore`
-//           seconds; once the bar is full he waits until he sees weakness
-//           (them under `weakHp` of their health, limping, tired, dizzy, or
-//           `weakWait` seconds anyway): "SEES WEAKNESS". A bald eagle swoops
-//           in to his side (Gaethje's eagle, Joe's picture and screech,
-//           allamerican.js), the cameras flash and it gets very America: the
+//           seconds; once the bar is full it goes when he's on them
+//           (special.trigger): `landed` of his strikes landing inside
+//           `window` seconds ("ON A ROLL!"), or them cornered or pinned on
+//           the cage with him within `near` ("CORNERED!"); after `wait`
+//           seconds of a full bar it goes anyway ("SEES WEAKNESS"). He points
+//           at them and a bald eagle (Gaethje's eagle, Joe's picture and
+//           screech, allamerican.js) dives in from high up beyond them, then
+//           sweeps in low at them along a curve that keeps bending after
+//           them (special.eagle): `dive` seconds to get there, `damage` (with
+//           `unblockable` it can't be slipped or blocked), a `knockback`
+//           along its swoop and `stun` seconds rocked ("TALONS!"). `after`
+//           seconds later the cameras flash and it gets very America: the
 //           U-S-A chant (Joe's clip), flags all over the stands and the mat,
-//           fireworks. He gets on a motorcycle and revs it while a red lane
-//           shows where he'll ride (it follows them, then locks for `lock`
-//           seconds), then rides down it at `speed`: run them over for
-//           `bikeDamage` (can't be slipped or blocked) and a knockback into
-//           the cage (`walls` wall slams of `wallDamage`), or crash it into
-//           the cage. Then he hops off and chases them throwing up to
+//           fireworks, while he pumps a fist for `flags` seconds and Chuck
+//           Norris drops in (chuck-norris.js). With `bike` he then gets on a
+//           motorcycle and revs it while a red lane shows where he'll ride
+//           (it follows them, then locks for `lock` seconds), then rides down
+//           it at `speed`: run them over for `bikeDamage` (can't be slipped
+//           or blocked) and a knockback into the cage (`walls` wall slams of
+//           `wallDamage`), or crash it into the cage. Then (straight after
+//           the flags without the bike) he chases them throwing up to
 //           `overhands` overhand rights (`overhandDamage` each, they can be
 //           slipped and blocked), each one knocking them toward the nearest
-//           corner (`overhandKnock`). Caught in a corner, the punch does
-//           `cornerBonus` times the damage ("CORNERED!"). Up to `time`
-//           seconds of it, then arms up while the crowd chants.
+//           corner (`overhandKnock`), while Chuck Norris works them over from
+//           the other side. Caught in a corner, the punch does `cornerBonus`
+//           times the damage ("CORNERED!"). Up to `time` seconds of it, then
+//           arms up while the crowd chants and the eagle flies off.
 // Rivals    (strickland.rivals) vs Alex Pereira, who knocked him out with a
 //           left hook at UFC 276 (2022): his trauma starts at `trauma`, he
 //           can't roll anything thrown in Pereira's CHAMA combo, and
@@ -193,7 +203,7 @@ function initStrickland(b) {
   b.sk = {
     trauma: 0, tauntCd: 0, hp: b.hp, saw: {}, fx: 0, mult: 1, fightT: 0,
     pace: 0, paceT: 0, speed0: b.baseSpeed, atk0: b.atkRate,
-    side: Math.random() < 0.5 ? -1 : 1, sideT: 2, weakT: 0, rival: null, said: {}, lineCd: 0,
+    side: Math.random() < 0.5 ? -1 : 1, sideT: 2, chargedT: 0, landedAt: [], strikes0: null, rival: null, said: {}, lineCd: 0,
     twoCd: 0, twoWant: false, callAt: null, americaWin: false
   };
   b.skTwo = null;
@@ -218,6 +228,7 @@ function tickStrickland(dt) {
     skLines(b, other, cfg, dt);
     if (!started || over || !b.alive) { s.hp = b.hp; return; }
     s.fightT += dt;
+    skTrackLanded(b, s);
     skTrauma(b, other, cfg, dt);
     skPace(b, other, cfg, dt);
     skSteer(b, other, cfg, dt);
@@ -512,30 +523,45 @@ function stricklandRematchKo(attacker, vic) {
 
 // ---------------------------------------------------------------- America
 
-function skWeak(self, other, sp) {
+// His strikes that land (the fight's stats, stadium.js), kept for the last
+// `trigger.window` seconds.
+function skTrackLanded(b, s) {
+  var n = statsFor(b.id).strikes, tg = b.char.special && b.char.special.trigger;
+  if (s.strikes0 == null || n < s.strikes0) s.strikes0 = n;
+  for (; s.strikes0 < n; s.strikes0++) s.landedAt.push(s.fightT);
+  var win = tg && tg.window != null ? tg.window : 4;
+  while (s.landedAt.length && s.fightT - s.landedAt[0] > win) s.landedAt.shift();
+}
+
+// What sets the eagle loose once the bar is full (special.trigger): he's
+// landing, or he has them cornered, or he's waited long enough.
+function skTrigger(self, other, sp) {
   if (skDemo()) return "demo";
-  if (other.hp <= sp.weakHp * MAX_HP) return "hurt";
-  if (other.dizzy || other.dazed || slowMult(other) < 0.97) return "slow";
-  return self.sk && self.sk.weakT >= sp.weakWait ? "wait" : null;
+  var tg = sp.trigger || {}, s = self.sk;
+  var dx = other.x - self.x, dy = other.y - self.y, gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;
+  var near = gap <= (tg.near != null ? tg.near : 60);
+  if (s && tg.landed > 0 && near && s.landedAt.length >= tg.landed) return "landing";
+  if (tg.cornered !== false && near && skCornered(other)) return "cornered";
+  return s && tg.wait > 0 && s.chargedT >= tg.wait ? "wait" : null;
 }
 
 // From updateSpecial (special.js) for special.move "america".
 function updateAmerica(self, other, dt) {
-  var sp = self.char.special, m = self.igbb;
+  var sp = self.char.special, m = self.igbb, eg = sp.eagle || {};
   if (!m) {
     if (self.specialT < sp.chargeTime) return false;
     if (!skDemo() && (self.sk ? self.sk.fightT : 99) < sp.notBefore) return false;
-    if (self.sk) self.sk.weakT += dt;
-    if (!canStartIgbb(self, other) || teepBusy(self) || swordDuelActive() || !skWeak(self, other, sp)) return false;
+    if (self.sk) self.sk.chargedT += dt;
+    if (!canStartIgbb(self, other) || teepBusy(self) || swordDuelActive()) return false;
+    var why = skTrigger(self, other, sp);
+    if (!why) return false;
     clearActions(self);
     self.teep = null;
     m = self.igbb = { move: "america", phase: "eagle", t: 0, aim: Math.atan2(other.y - self.y, other.x - self.x), locked: false };
-    if (self.sk) self.sk.weakT = 0;
+    if (self.sk) { self.sk.chargedT = 0; self.sk.landedAt = []; }
     floater(other.x, other.y - other.r - 30, "!", "crit");
-    floater(self.x, self.y - self.r - 30, "SEES WEAKNESS", "crit");
-    amEagle = { x: self.x + 260, y: -260, t: 0, flap: 0, mode: "in", owner: self.id, k: 1 };
-    playEagleScreech(); // Joe's screech (audio.js)
-    crowdReact(0.8);
+    floater(self.x, self.y - self.r - 30, why === "cornered" ? "CORNERED!" : why === "landing" ? "ON A ROLL!" : "SEES WEAKNESS", "crit");
+    skEagleDive(self, other, eg);
   }
   if (m.move !== "america") return false;
   if (self.sprawl || self.sprawled || self.grappled || self.grapple || subLocked(self)) {
@@ -547,11 +573,12 @@ function updateAmerica(self, other, dt) {
   m.t += dt;
   if (over && m.phase !== "end") { endAmerica(self); return false; }
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, want = Math.atan2(dy, dx);
+  if (m.phase !== "ride") skKeepApart(self, other, dx, dy, d);
   if (m.phase === "eagle" || m.phase === "flags" || m.phase === "rev") {
     self.vx = 0; self.vy = 0;
     if (m.phase !== "rev" || m.t < sp.rev - sp.lock) m.aim = skTurn(m.aim, want, dt * 6);
     m.face = skFace(m.aim, m.face);
-    if (m.phase === "eagle" && m.t >= sp.eagle) {
+    if (m.phase === "eagle" && skEagleDone(m, eg)) {
       m.phase = "flags"; m.t = 0;
       startAmericaShow(self);
       chuckNorrisArrives(self, other); // Chuck Norris rappels in (chuck-norris.js)
@@ -559,6 +586,7 @@ function updateAmerica(self, other, dt) {
       var lc = skCfg(self) && skCfg(self).lines;
       if (lc) skSay(self, self.sk && self.sk.rival === "pereira" ? "pereiraAmerica" : "america", lc.america, true);
     } else if (m.phase === "flags" && m.t >= sp.flags) {
+      if (!sp.bike) { skStartOverhands(m, want); return true; } // no bike: straight into them with Chuck Norris
       m.phase = "rev"; m.t = 0; m.bikeK = 0;
       floater(self.x, self.y - self.r - 30, "VROOM VROOM!", "note");
       playSkRev(sp.rev);
@@ -574,7 +602,7 @@ function updateAmerica(self, other, dt) {
   if (m.phase === "ride") return rideAmerica(self, other, m, sp, dt);
   if (m.phase === "hop") {
     self.vx = 0; self.vy = 0;
-    if (m.t >= SK_HOP) { m.phase = "overhands"; m.t = 0; m.oh = { n: 0, state: "chase", t: 0, ang: want, landed: 0 }; m.ohT = 0; }
+    if (m.t >= SK_HOP) skStartOverhands(m, want);
     return true;
   }
   if (m.phase === "overhands") return overhandsAmerica(self, other, m, sp, dt);
@@ -584,6 +612,25 @@ function updateAmerica(self, other, dt) {
     return true;
   }
   return false;
+}
+
+// Nothing bumps into a fighter in a special (physics.js), so he keeps them
+// off himself by hand; otherwise they end up hidden under him.
+function skKeepApart(self, other, dx, dy, d) {
+  var min = self.r + other.r;
+  if (d >= min || !other.alive || other.grappled || other.grapple || subLocked(other) || other.igbb) return;
+  other.x = Math.min(W - other.r, Math.max(other.r, self.x + dx / d * min));
+  other.y = Math.min(H - other.r, Math.max(other.r, self.y + dy / d * min));
+}
+
+function skStartOverhands(m, want) { m.phase = "overhands"; m.t = 0; m.oh = { n: 0, state: "chase", t: 0, ang: want, landed: 0 }; m.ohT = 0; }
+
+// The eagle has hit (or swooped past) and had `after` seconds for it to
+// sink in. (Never waits on it for long: a lost eagle can't stall America.)
+function skEagleDone(m, eg) {
+  var e = amEagle;
+  if (m.t > (eg.dive || 0.8) + 1.2 || !e) return true;
+  return e.mode !== "dive" && e.t >= (eg.after != null ? eg.after : 0.3);
 }
 
 // Moves him by hand (the physics leaves a fighter in a special alone),
@@ -676,7 +723,7 @@ function overhandsAmerica(self, other, m, sp, dt) {
     if (gap > SK_OH_REACH) skRollBack(self, ux, uy, Math.min(step, gap - SK_OH_REACH + 2));
     if (gap <= SK_OH_REACH + 4 && !other.slam) {
       o.state = "wind"; o.t = 0; o.ang = Math.atan2(dy, dx); o.hit = false;
-      if (o.n === 0) floater(self.x, self.y - self.r - 30, "OVERHANDS!", "crit");
+      if (o.n === 0 && !(chuckNorris && chuckNorris.ownerId === self.id)) floater(self.x, self.y - self.r - 30, "OVERHANDS!", "crit"); // (with Chuck Norris it's "TAG TEAM!", chuck-norris.js)
       playSkWindup();
     }
     return true;
@@ -750,7 +797,9 @@ function endAmerica(self) {
   if (self.alive) setSpeed(self, self.baseSpeed || SPEED);
 }
 
-function skEagleLeaves() { if (amEagle) { amEagle.mode = "out"; amEagle.t = 0; } }
+// (Once it's diving it finishes the swoop: called off by a scramble, America
+// waits with the bar still full, but the eagle still gets there.)
+function skEagleLeaves() { if (amEagle && amEagle.mode !== "dive") { amEagle.mode = "out"; amEagle.t = 0; } }
 
 // ---------------------------------------------------------------- the show
 
@@ -817,38 +866,106 @@ function skChantSpots() {
   return spots;
 }
 
-// The eagle: in from the sky to his side, along beside the bike, overhead
-// for the overhands, then off up into the sky.
+// The eagle's dive. It comes in from high up behind him, straight down at
+// first, then sweeping in low and level over his shoulder at them: a curve
+// from where it started, through a bend level with them, to them. The bend
+// and the end follow them every frame, so the curve keeps bending after them
+// and it gets there unless something stops the hit.
+function skEagleDive(self, other, eg) {
+  var side = other.x > self.x + 4 ? 1 : other.x < self.x - 4 ? -1 : (other.x < W / 2 ? 1 : -1);
+  var x0 = Math.max(-80, Math.min(W + 80, other.x - side * 240)), y0 = -170;
+  amEagle = { mode: "dive", t: 0, dur: eg.dive || 0.8, owner: self.id, x0: x0, y0: y0, x: x0, y: y0, ux: 0, uy: 1, flap: 0, trail: [], hit: false };
+  playEagleScreech(); // Joe's screech (audio.js)
+  crowdReact(0.8);
+}
+
+// Then up off them and circling high over his shoulder while it's America,
+// then off up into the sky.
 function tickSkEagle(dt) {
   var e = amEagle;
   if (!e) return;
-  e.t += dt; e.flap += dt * 14;
+  e.t += dt; e.flap += dt * (e.mode === "dive" ? 22 : 14);
+  if (e.slash > 0) e.slash -= dt;
   var b = balls && balls[e.owner];
   if (!b) { amEagle = null; return; }
-  var m = b.igbb, tx, ty, k;
+  var other = balls[1 - b.id], px = e.x, py = e.y, tx, ty, k;
+  if (e.trail.length || e.mode === "dive") {
+    e.trail.forEach(function (p) { p.t += dt; });
+    while (e.trail.length && e.trail[0].t > 0.32) e.trail.shift();
+  }
+  if (e.mode === "dive") {
+    var u = Math.min(1, e.t / e.dur), q = u * u * (1.6 - 0.6 * u); // slow up high, fast at the end
+    var bx = e.x0, by = other.y, ex = other.x, ey = other.y;
+    e.x = (1 - q) * (1 - q) * e.x0 + 2 * q * (1 - q) * bx + q * q * ex;
+    e.y = (1 - q) * (1 - q) * e.y0 + 2 * q * (1 - q) * by + q * q * ey;
+    skEagleHeading(e, px, py);
+    e.trail.push({ x: e.x, y: e.y, t: 0 });
+    if (u >= 1 || (u > 0.5 && Math.hypot(other.x - e.x, other.y - e.y) < other.r * 0.5)) skEagleStrike(b, other, e);
+    return;
+  }
+  if (e.mode === "rise") {
+    // Carries on along its swoop, pulling up and away.
+    e.x += e.sx * 520 * dt; e.y += (e.sy * 520 - 900 * Math.min(1, e.t * 2.5)) * dt;
+    e.trail.push({ x: e.x, y: e.y, t: 0 });
+    skEagleHeading(e, px, py);
+    if (e.t >= 0.45) { e.mode = americaOn(b) ? "circle" : "out"; e.t = 0; }
+    return;
+  }
   if (e.mode === "out" || !americaOn(b)) {
-    e.mode = "out";
+    if (e.mode !== "out") { e.mode = "out"; e.t = 0; }
     tx = e.x + 420; ty = e.y - 700; k = Math.min(1, dt * 1.6);
     e.x += (tx - e.x) * k; e.y += (ty - e.y) * k;
+    skEagleHeading(e, px, py);
     if (e.t > 2) amEagle = null;
     return;
   }
-  var other = balls[1 - b.id], face = other.x >= b.x ? 1 : -1;
-  var bob = Math.sin(skClock * 5) * b.r * 0.08;
-  if (m.phase === "ride") {
-    var ux = Math.cos(m.aim), uy = Math.sin(m.aim);
-    tx = b.x + ux * b.r * 1.1 - uy * b.r * 1.3; ty = b.y + uy * b.r * 1.1 + ux * b.r * 1.3 * 0 - b.r * 1.5;
-    k = Math.min(1, dt * 14);
-  } else if (m.phase === "overhands" || m.phase === "end") {
-    // Circling high over his shoulder, on the far side from them.
-    tx = b.x - face * b.r * 1.5 + Math.cos(skClock * 2.4) * b.r * 0.5; ty = b.y - b.r * 2.5 + Math.sin(skClock * 2.4) * b.r * 0.3;
-    k = Math.min(1, dt * 6);
-  } else {
-    tx = b.x - face * b.r * 1.35; ty = b.y - b.r * 1.35 + bob;
-    k = Math.min(1, dt * (e.mode === "in" ? 3.2 : 9));
-    if (e.mode === "in" && Math.abs(e.x - tx) + Math.abs(e.y - ty) < 20) e.mode = "side";
+  // Circling high over his shoulder, on the far side from them.
+  var face = other.x >= b.x ? 1 : -1;
+  tx = b.x - face * b.r * 1.5 + Math.cos(skClock * 2.4) * b.r * 0.5; ty = b.y - b.r * 2.5 + Math.sin(skClock * 2.4) * b.r * 0.3;
+  k = Math.min(1, dt * 6);
+  e.x += (tx - e.x) * k; e.y += (ty - e.y) * k;
+  e.face = face;
+}
+
+function skEagleHeading(e, px, py) {
+  var mx = e.x - px, my = e.y - py, ml = Math.sqrt(mx * mx + my * my);
+  if (ml > 0.01) { e.ux = mx / ml; e.uy = my / ml; }
+}
+
+// The talons land: `damage`, a shove along its swoop (away from him, toward
+// where Chuck Norris drops in), rocked for `stun`.
+function skEagleStrike(self, other, e) {
+  var eg = (self.char.special && self.char.special.eagle) || {};
+  e.mode = "rise"; e.t = 0; e.sx = e.ux; e.sy = e.uy;
+  if (over || !other.alive || other.koOut) return;
+  var dealt = hurt(other, eg.damage != null ? eg.damage : 18, eg.unblockable === false ? "kick" : "igbb", self.id);
+  if (dealt <= 0) return; // slipped, blocked or untouchable (hurt says so): it swoops on past
+  e.hit = true;
+  var ux = e.ux, uy = e.uy, kb = eg.knockback != null ? eg.knockback : 300;
+  var held = other.grapple || other.grappled || subLocked(other) || other.sprawl || other.sprawled;
+  if (!held && !other.justDodged && teepPushable(other)) { other.vx = ux * kb; other.vy = uy * kb; other.knockFly = 0.2; }
+  if (!held && eg.stun) other.checkStun = Math.max(other.checkStun || 0, eg.stun);
+  var cx = other.x - ux * other.r * 0.6, cy = other.y - uy * other.r * 0.6;
+  other.flash = 0.22;
+  other.squash = { t: 0.26, max: 0.26, nx: -ux, ny: -uy };
+  impacts.push({ x: cx, y: cy, nx: -ux, ny: -uy, life: 0.55, max: 0.55, color: "#ffffff" });
+  impacts.push({ x: cx, y: cy, nx: -ux, ny: -uy, life: 0.75, max: 0.75, color: SK_USA.red });
+  igbbSparks(cx, cy, -ux, -uy, "#ffe9a8", 18, 520);
+  if (!reduceMotion) {
+    for (var i = 0; i < 18; i++) { // feathers
+      var a = Math.random() * Math.PI * 2, s = 90 + Math.random() * 260;
+      particles.push({ x: other.x, y: other.y - other.r * 0.3, vx: Math.cos(a) * s + ux * 120, vy: Math.sin(a) * s - 60, life: 0.5 + Math.random() * 0.4, max: 0.9, size: 3 + Math.random() * 4, color: i % 3 ? "#5a3a1e" : "#f4f1ea" });
+    }
+    shake = Math.max(shake, 18);
   }
-  e.dx = tx - e.x; e.x += (tx - e.x) * k; e.y += (ty - e.y) * k;
+  e.slash = 0.35; // the talon marks
+  hitStop = Math.max(hitStop, 0.14);
+  floater(other.x, other.y - other.r - 34, "TALONS!", "crit");
+  playEagleScreech();
+  playPunch(Math.max(30, dealt * 1.6));
+  crowdReact(1);
+  checkEnd();
+  if (!other.alive && self.sk) self.sk.americaWin = true;
 }
 
 // ---------------------------------------------------------------- drawing
@@ -861,7 +978,7 @@ function stricklandShellStance(b) {
 // (drawHands skips them, draw-attacks.js).
 function stricklandHandsBusy(b) {
   if (!b.sk || !b.alive) return false;
-  if (americaOn(b)) return b.igbb.phase !== "eagle";
+  if (americaOn(b)) return true;
   return !!b.skTwo || stricklandShellStance(b);
 }
 
@@ -875,6 +992,7 @@ function drawStricklandUnder() {
     ctx.save(); ctx.globalAlpha = 0.35 * (1 - k); ctx.fillStyle = "#8d8d8d";
     ctx.beginPath(); ctx.arc(p.x, p.y, 6 + 16 * k, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   });
+  if (amEagle && amEagle.mode === "dive") drawSkEagleTarget(amEagle);
   if (amWreck) drawSkBike(amWreck.x, amWreck.y, amWreck.ang, RADIUS, amWreck.wheel, Math.max(0, Math.min(1, (1.6 - amWreck.t) / 0.4)), false, amWreck.face);
   if (!balls) return;
   balls.forEach(function (b) {
@@ -1043,7 +1161,8 @@ function drawStrickland(b, other) {
   if (!b.sk || !b.alive) return;
   var m = b.igbb;
   if (americaOn(b)) {
-    if (m.phase === "flags") drawSkFistPump(b, m.t);
+    if (m.phase === "eagle") drawSkPoint(b, other);
+    else if (m.phase === "flags") drawSkFistPump(b, m.t);
     else if (m.phase === "rev" || m.phase === "ride") drawSkOnBars(b, m);
     else if (m.phase === "hop") drawSkShell(b, other, true);
     else if (m.phase === "overhands") drawSkOverhand(b, other, m);
@@ -1121,6 +1240,17 @@ function drawSkOnBars(b, m) {
     strokeLimb(size * 0.7, armColor(b.char, s), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
     drawGloveAt(hand.x, hand.y, size * 0.85, b.char, Math.atan2(hand.y - sh.y, hand.x - sh.x));
   });
+}
+
+// Pointing the eagle at them, the other glove up by his chin.
+function drawSkPoint(b, other) {
+  var r = b.r, size = (b.char.punch && b.char.punch.size) || 14, a = Math.atan2(other.y - b.y, other.x - b.x);
+  var ux = Math.cos(a), uy = Math.sin(a), px = -uy, py = ux;
+  var sh = { x: b.x + ux * r * 0.5 + px * r * 0.5, y: b.y + uy * r * 0.5 + py * r * 0.5 }, hand = { x: b.x + ux * r * 1.55 + px * r * 0.35, y: b.y + uy * r * 1.55 + py * r * 0.35 };
+  strokeLimb(size * 0.7, armColor(b.char, 1), function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(hand.x, hand.y); });
+  drawGloveAt(hand.x, hand.y, size * 0.85, b.char, a);
+  var g = { x: b.x + ux * r * 0.7 - px * r * 0.35, y: b.y + uy * r * 0.7 - py * r * 0.35 - r * 0.2 };
+  drawGloveAt(g.x, g.y, size * 0.9, b.char, a);
 }
 
 // One fist pumping while the flags go up.
@@ -1212,9 +1342,51 @@ function drawStricklandOver() {
   if (!e) return;
   var b = balls && balls[e.owner], other = b && balls[1 - b.id];
   if (!b) return;
-  var ang = e.mode === "out" ? -0.6 : (b.igbb && b.igbb.phase === "ride" ? b.igbb.aim : Math.atan2((other ? other.y : b.y) - e.y, (other ? other.x : b.x + 1) - e.x));
-  var sc = e.mode === "in" ? 0.75 : 0.5;
-  drawEagle(e.x, e.y, ang, sc, e.flap, !!(b.igbb && b.igbb.phase === "ride")); // Joe's eagle (allamerican.js)
+  // the streak it leaves along its curve
+  if (e.trail.length > 1) {
+    ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
+    [["rgba(40,22,8,0.5)", 13], ["rgba(255,255,255,0.95)", 7], [SK_USA.red, 2.5]].forEach(function (st) {
+      for (var i = 1; i < e.trail.length; i++) {
+        var p0 = e.trail[i - 1], p1 = e.trail[i];
+        ctx.globalAlpha = Math.max(0, 1 - p1.t / 0.32) * (i / e.trail.length);
+        ctx.strokeStyle = st[0]; ctx.lineWidth = st[1] * (0.4 + 0.6 * i / e.trail.length);
+        ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+      }
+    });
+    ctx.restore();
+  }
+  // the talon marks on them
+  if (e.slash > 0 && other && other.alive) {
+    ctx.save(); ctx.globalAlpha = Math.min(1, e.slash / 0.15); ctx.lineCap = "round";
+    for (var c = -1; c <= 1; c++) {
+      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(other.x - other.r * 0.55 + c * 12, other.y - other.r * 0.55); ctx.lineTo(other.x + other.r * 0.25 + c * 12, other.y + other.r * 0.5); ctx.stroke();
+      ctx.strokeStyle = SK_USA.red; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(other.x - other.r * 0.55 + c * 12, other.y - other.r * 0.55); ctx.lineTo(other.x + other.r * 0.25 + c * 12, other.y + other.r * 0.5); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  var ux = e.mode === "circle" ? (e.face || 1) * 0.3 : e.ux, uy = e.mode === "circle" ? 0 : e.uy;
+  var tilt = Math.max(-0.9, Math.min(0.9, (ux >= 0 ? 1 : -1) * Math.atan2(uy, Math.abs(ux) + 0.001) * 0.6));
+  var sc = e.mode === "dive" ? 0.8 : e.mode === "rise" ? 0.7 : 0.5;
+  ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(tilt);
+  drawEagle(0, 0, Math.atan2(uy, ux), sc, e.flap, e.mode === "dive"); // Joe's eagle (allamerican.js)
+  ctx.restore();
+}
+
+// Under them while it dives: where it's going.
+function drawSkEagleTarget(e) {
+  var b = balls && balls[e.owner], o = b && balls[1 - b.id];
+  if (!o || !o.alive) return;
+  var k = Math.min(1, e.t / e.dur), pulse = 0.5 + 0.5 * Math.sin(skClock * 30), rr = o.r + 14 + (1 - k) * 26;
+  ctx.save();
+  ctx.globalAlpha = 0.45 + 0.4 * pulse; ctx.strokeStyle = "#e0221b"; ctx.lineWidth = 4;
+  ctx.setLineDash([10, 7]); ctx.lineDashOffset = -skClock * 90;
+  ctx.beginPath(); ctx.arc(o.x, o.y, rr, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 0.18 + 0.2 * k; ctx.fillStyle = "#000000";
+  ctx.beginPath(); ctx.ellipse(o.x, o.y + o.r * 0.7, o.r * (0.4 + 0.6 * k), o.r * (0.15 + 0.2 * k), 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }
 
 function drawSkFireworks(s) {
@@ -1281,10 +1453,12 @@ function drawStricklandSky(sc, ox, oy) {
 // ---------------------------------------------------------------- gallery
 
 function stricklandSpecialInfo(sp) {
-  return "Once the bar is full (and not before " + sp.notBefore + "s) he waits until he sees weakness: them under " + Math.round(sp.weakHp * 100) +
-    "% health, limping, tired or dizzy. A bald eagle swoops in to his side, the cameras flash and it gets very America: the U-S-A chant, flags all over the stands and the mat, fireworks. " +
-    "He gets on a motorcycle and revs it while a red lane shows where he'll ride, then rides down it: " + sp.bikeDamage + " if he runs them over (can't be slipped or blocked) and a knockback into the cage (" +
-    sp.walls + " wall slams of " + sp.wallDamage + "), or he crashes it into the cage. Then he hops off and chases them with up to " + sp.overhands + " overhand rights (" + sp.overhandDamage +
+  var tg = sp.trigger || {}, eg = sp.eagle || {};
+  return "Once the bar is full (and not before " + sp.notBefore + "s) it goes when he's on them: " + tg.landed + " of his strikes landing inside " + tg.window + "s, or them cornered or pinned on the cage" +
+    (tg.wait ? " (after " + tg.wait + "s it goes anyway)" : "") + ". He points and a bald eagle dives in from high up, then sweeps in low at them on a curve that bends after them wherever they go: " +
+    eg.damage + (eg.unblockable === false ? "" : " (can't be slipped or blocked)") + ", shoving them back into him and rocking them. Then it gets very America: the U-S-A chant, flags all over the stands and the mat, fireworks. " +
+    (sp.bike ? "He gets on a motorcycle and revs it while a red lane shows where he'll ride, then rides down it: " + sp.bikeDamage + " if he runs them over (can't be slipped or blocked) and a knockback into the cage (" +
+    sp.walls + " wall slams of " + sp.wallDamage + "), or he crashes it into the cage. Then he hops off and chases" : "He chases") + " them with up to " + sp.overhands + " overhand rights (" + sp.overhandDamage +
     " each), each one knocking them toward a corner; caught in a corner it's " + sp.cornerBonus + "x." + chuckNorrisSpecialInfo(sp); // (chuck-norris.js)
 }
 

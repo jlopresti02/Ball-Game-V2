@@ -3,30 +3,36 @@
 // special.norris; leave the block out (or "on": false) and America plays
 // exactly as before.
 //
-// Rappel     when America hits ("AMERICA!", strickland.js) Chuck Norris slides
-//            down a rope from the rafters in `rappel` seconds, a stars and
-//            stripes streaming over him, and lands at Strickland's side:
-//            "CHUCK NORRIS!", a thud, the crowd pops, and he plants the flag
-//            in the mat next to him (`flag`). Cowboy hat, reddish-brown hair
-//            and a full beard, the denim shirt with a Ranger's star, a flag
-//            bandana, jeans with a big buckle: Walker, Texas Ranger. A name
-//            tag over his head. `chance`% of Americas.
-// Stand      arms crossed while Strickland revs the bike and rides it.
-// Roundhouse once the bike's done (Strickland hopping off into his
-//            overhands), he walks them down at `speed`, coming round to their
-//            far side from Strickland. Within `reach` (edge to edge) he
-//            plants and winds up for `windup` seconds (a red, white and blue
-//            ring: the tell), edging in, then spins a full turn, the spin
-//            carrying him in, and the boot comes round: `roundhouseDamage`
-//            (with `unblockable` it can't be slipped or blocked, like the
-//            bike; the only way out is to get away during the wind-up;
-//            false makes it a plain kick that slips and blocks) and a
-//            `roundhouseKnock` that sends them flying back into Strickland's
-//            overhands ("ROUNDHOUSE!", and "TAG TEAM!" over Strickland). Out
-//            of reach it's a "WHIFF". One kick. With him there Strickland
-//            throws `overhandsCut` fewer overhands, so it's the same special
-//            with a big kick in it, not a longer one. He gives up after
-//            `time` seconds of walking them down.
+// Rappel     when America hits ("AMERICA!", strickland.js, right after the
+//            eagle) Chuck Norris slides down a rope from the rafters in
+//            `rappel` seconds, a stars and stripes streaming over him, and
+//            lands on the far side of them from Strickland (at Strickland's
+//            side when the bike is on, special.bike): "CHUCK NORRIS!", a
+//            thud, the crowd pops, and he plants the flag in the mat next to
+//            him (`flag`). Cowboy hat, reddish-brown hair and a full beard,
+//            the denim shirt with a Ranger's star, a flag bandana, jeans with
+//            a big buckle: Walker, Texas Ranger. A name tag over his head.
+//            `chance`% of Americas.
+// Stand      (only with the bike) arms crossed while Strickland revs the bike
+//            and rides it.
+// Tag team   then he goes to work on them with Strickland ("TAG TEAM!"): for
+//            `time` seconds he stays on them (`speed`, round on their far side
+//            from Strickland) and within `reach` (edge to edge) throws a
+//            strike every `punchEvery` seconds, bare-knuckle punches, left
+//            right, for `punchDamage`, and every `kickEvery`th one a
+//            roundhouse kick for `kickDamage`. Each one rocks them for `stun`
+//            seconds and shoves them (`punchKnock`, `kickKnock`) back toward
+//            Strickland. With `unblockable` none of it can be slipped or
+//            blocked (false: punches and kicks like anyone's).
+// Roundhouse to finish it he winds up for `windup` seconds (a red, white and
+//            blue ring: the tell), edging in, then spins a full turn, the
+//            spin carrying him in, and the boot comes round:
+//            `roundhouseDamage` (`unblockable` too; the only way out is to
+//            get away during the wind-up) and a `roundhouseKnock` that sends
+//            them flying back into Strickland's overhands ("ROUNDHOUSE!").
+//            Out of reach it's a "WHIFF". He gives up on it after CN_HUNT
+//            seconds. With him there Strickland throws `overhandsCut` fewer
+//            overhands.
 // Exit       he salutes, then walks off toward the camera and never looks back
 //            while something explodes behind him (`boom`, no damage), and
 //            hops the fence on his way out.
@@ -61,6 +67,7 @@ var CN_LINES = {
 };
 
 var CN_R = 36;
+var CN_HUNT = 1.5;     // walking them down for the closing roundhouse, at most
 var CN_SPIN = 0.2;     // the full turn before the boot lands
 var CN_HOLD = 0.3;     // the leg out, the hero frame
 var CN_LUNGE = 650;    // how fast the spin carries him in
@@ -102,19 +109,36 @@ function resetChuckNorris() { chuckNorris = null; cnFlag = null; cnBoom = null; 
 function chuckNorrisArrives(self, other) {
   var cfg = cnCfg(self);
   if (!cfg || chuckNorris || Math.random() * 100 >= cnNum(cfg.chance, 100)) return;
-  // At his side, square to the way the bike will go, on whichever side has more room.
-  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-  var px = -dy / d, py = dx / d, off = self.r + CN_R + 18, best = null;
-  [1, -1].forEach(function (s) {
-    var x = self.x + px * off * s, y = self.y + py * off * s;
-    var cx = Math.min(W - CN_R - 6, Math.max(CN_R + 6, x)), cy = Math.min(H - CN_R - 6, Math.max(CN_R + 30, y));
-    var cost = Math.abs(cx - x) + Math.abs(cy - y);
-    if (!best || cost < best.cost) best = { x: cx, y: cy, cost: cost };
-  });
+  var best;
+  if (self.char.special.bike) {
+    // At his side, square to the way the bike will go, on whichever side has more room.
+    var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var px = -dy / d, py = dx / d, off = self.r + CN_R + 18;
+    [1, -1].forEach(function (s) {
+      var x = self.x + px * off * s, y = self.y + py * off * s;
+      var cx = Math.min(W - CN_R - 6, Math.max(CN_R + 6, x)), cy = Math.min(H - CN_R - 6, Math.max(CN_R + 30, y));
+      var cost = Math.abs(cx - x) + Math.abs(cy - y);
+      if (!best || cost < best.cost) best = { x: cx, y: cy, cost: cost };
+    });
+  } else best = cnSpot(self, other, 22); // right on them, the far side from Strickland
   chuckNorris = { ownerId: self.id, phase: "rappel", t: 0, x: best.x, y0: stadiumOn() ? -420 : -CN_R * 4, y: -CN_R * 4, landY: best.y,
-    rode: false, huntT: 0, aim: Math.atan2(other.y - best.y, other.x - best.x), say: 0, sayKey: null, landed: false, hop: 0, alpha: 1 };
+    rode: false, huntT: 0, aim: Math.atan2(other.y - best.y, other.x - best.x), say: 0, sayKey: null, touched: false, hop: 0, alpha: 1 };
   chuckNorris.y = chuckNorris.y0;
   playCnZip(cnNum(cfg.rappel, 0.9));
+}
+
+// Where he wants to be: `gap` off them (edge to edge) on their far side from
+// Strickland, or round the side when the cage is in the way.
+function cnSpot(owner, vic, gap) {
+  var sx = vic.x - owner.x, sy = vic.y - owner.y, sl = Math.sqrt(sx * sx + sy * sy) || 1, ux = sx / sl, uy = sy / sl;
+  var d = vic.r + CN_R + gap, best = null;
+  [[ux, uy], [-uy, ux], [uy, -ux]].forEach(function (v, i) {
+    var x = vic.x + v[0] * d, y = vic.y + v[1] * d;
+    var cx = Math.min(W - CN_R - 6, Math.max(CN_R + 6, x)), cy = Math.min(H - CN_R - 6, Math.max(CN_R + 30, y));
+    var cost = Math.abs(cx - x) + Math.abs(cy - y) + i * 14;
+    if (!best || cost < best.cost) best = { x: cx, y: cy, cost: cost };
+  });
+  return best;
 }
 
 // From overhandsAmerica (strickland.js): his roundhouse takes the place of
@@ -144,7 +168,8 @@ function tickChuckNorris(dt) {
   if (!owner || !vic || !cfg) { chuckNorris = null; return; }
   n.t += dt;
   if (n.sayKey && (n.say -= dt) <= 0) { cnLine(cfg, n.sayKey); n.sayKey = null; }
-  if (n.tagT > 0 && (n.tagT -= dt) <= 0 && owner.alive) floater(owner.x, owner.y - owner.r - 30, "TAG TEAM!", "crit");
+  if (n.hitA) { n.hitA.t += dt; if (n.hitA.t >= n.hitA.dur) n.hitA = null; }
+  if (n.tagT > 0 && (n.tagT -= dt) <= 0 && owner.alive && !over) floater(owner.x, owner.y - owner.r - 30, "TAG TEAM!", "crit");
   var am = americaOn(owner) ? owner.igbb : null;
   if (am && (am.phase === "ride" || am.phase === "hop" || am.phase === "overhands" || am.phase === "end")) n.rode = true;
   var bikeDone = n.rode && (!am || am.phase !== "ride");
@@ -159,13 +184,14 @@ function tickChuckNorris(dt) {
   if (n.phase === "stand") {
     // Arms crossed while the bike goes. Called off before the ride: he leaves.
     if (over || !owner.alive || (!am && !n.rode)) return cnPhase(n, "salute");
-    if (bikeDone || n.t > 4) { cnPhase(n, "hunt"); n.huntT = 0; return; }
+    if (bikeDone || n.t > 4) return cnTagIn(n, owner);
     if (am && (am.phase === "rev" || am.phase === "ride")) cnClearLane(n, owner, am, dt);
     return;
   }
+  if (n.phase === "brawl") return cnBrawl(n, owner, vic, cfg, dt);
   if (n.phase === "hunt") {
     n.huntT += dt;
-    if (over || !owner.alive || n.huntT > cnNum(cfg.time, 4.5)) return cnPhase(n, "salute");
+    if (over || !owner.alive || n.huntT > CN_HUNT) return cnPhase(n, "salute");
     if (!cnCanHit(vic)) return;
     // Round to their far side from Strickland, so the kick sends them back into him.
     var sx = vic.x - owner.x, sy = vic.y - owner.y, sl = Math.sqrt(sx * sx + sy * sy) || 1;
@@ -221,6 +247,73 @@ function tickChuckNorris(dt) {
 }
 
 function cnPhase(n, phase) { n.phase = phase; n.t = 0; }
+
+// Into them with Strickland.
+function cnTagIn(n, owner) {
+  cnPhase(n, "brawl");
+  n.cd = 0.05; n.strikes = 0; n.hits = 0;
+  n.tagT = 0.5; // a beat after "CHUCK NORRIS!", so the two don't stack
+}
+
+// Tag team: on them, punches and kicks as fast as he can throw them, for
+// `time` seconds; then the closing roundhouse.
+function cnBrawl(n, owner, vic, cfg, dt) {
+  if (over || !owner.alive) return cnPhase(n, "salute");
+  if (n.t >= cnNum(cfg.time, 2.6)) { cnPhase(n, "hunt"); n.huntT = 0; return; }
+  n.cd -= dt;
+  if (!cnCanHit(vic)) return;
+  var reach = cnNum(cfg.reach, 30), gap = cnGap(n, vic), spd = cnNum(cfg.speed, 560);
+  if (gap > reach) {
+    // Close in: straight at them when they're far, round to the far side when near.
+    var sp = gap > 70 ? { x: vic.x, y: vic.y } : cnSpot(owner, vic, reach * 0.4);
+    var mx = sp.x - n.x, my = sp.y - n.y, ml = Math.sqrt(mx * mx + my * my) || 1, step = Math.min(ml, spd * dt);
+    n.x += mx / ml * step; n.y += my / ml * step;
+    cnClamp(n);
+    gap = cnGap(n, vic);
+  } else cnStepIn(n, vic, spd * 0.3 * dt, reach * 0.35); // stays right on them
+  // never on top of Strickland
+  var ox = n.x - owner.x, oy = n.y - owner.y, od = Math.sqrt(ox * ox + oy * oy) || 1, omin = CN_R + owner.r + 4;
+  if (od < omin) { n.x = owner.x + ox / od * omin; n.y = owner.y + oy / od * omin; cnClamp(n); gap = cnGap(n, vic); }
+  if (gap > reach + 6 || n.cd > 0) return;
+  var every = cnNum(cfg.kickEvery, 4), kick = every > 0 && (n.strikes + 1) % every === 0;
+  n.strikes++;
+  n.cd = cnNum(cfg.punchEvery, 0.14) * (kick ? 1.8 : 1);
+  cnStrike(n, owner, vic, cfg, kick);
+}
+
+// One punch or kick in the flurry.
+function cnStrike(n, owner, vic, cfg, kick) {
+  var dx = vic.x - n.x, dy = vic.y - n.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+  n.hitA = { kick: kick, t: 0, dur: kick ? 0.22 : 0.13, side: n.strikes % 2 ? 1 : -1, ang: Math.atan2(dy, dx), len: kick ? cnLegLen(d, vic) : Math.max(CN_R * 1.05, d - vic.r * 0.6) };
+  if (kick) playCnSpin(); else playWhoosh();
+  var src = cfg.unblockable === false ? (kick ? "kick" : "punch") : "igbb";
+  var dealt = hurt(vic, cnNum(kick ? cfg.kickDamage : cfg.punchDamage, kick ? 9 : 4), src, owner.id);
+  if (dealt <= 0) return; // slipped or blocked (hurt says so)
+  n.hits++;
+  // Shoved back toward Strickland: the two of them, either side.
+  var kx = ux, ky = uy, am = americaOn(owner) ? owner.igbb : null;
+  if (owner.alive && am) {
+    var sx = owner.x - vic.x, sy = owner.y - vic.y, sl = Math.sqrt(sx * sx + sy * sy) || 1;
+    if (sl > owner.r + vic.r + 10) { kx = sx / sl * 0.7 + ux * 0.3; ky = sy / sl * 0.7 + uy * 0.3; }
+  }
+  var kl = Math.sqrt(kx * kx + ky * ky) || 1, kb = cnNum(kick ? cfg.kickKnock : cfg.punchKnock, kick ? 300 : 140);
+  if (!vic.justDodged && teepPushable(vic)) { vic.vx = kx / kl * kb; vic.vy = ky / kl * kb; vic.knockFly = kick ? 0.16 : 0.08; }
+  if (cfg.stun) vic.checkStun = Math.max(vic.checkStun || 0, cfg.stun);
+  var cx = vic.x - ux * vic.r, cy = vic.y - uy * vic.r;
+  vic.squash = { t: 0.14, max: 0.14, nx: -ux, ny: -uy };
+  impacts.push({ x: cx, y: cy, nx: -ux, ny: -uy, life: kick ? 0.45 : 0.28, max: kick ? 0.45 : 0.28, color: kick ? CN_USA.red : "#ffffff" });
+  if (kick) {
+    igbbSparks(cx, cy, -ux, -uy, "#ffe9a8", 14, 480);
+    cnStar = { x: vic.x - ux * vic.r * 0.15, y: vic.y - uy * vic.r * 0.15, t: 0, ang: Math.random() * 6 };
+  }
+  hitStop = Math.max(hitStop, kick ? 0.07 : 0.025);
+  if (!reduceMotion) shake = Math.max(shake, kick ? 11 : 5);
+  if (kick) playCnRoundhouse(dealt); else playPunch(Math.max(12, dealt * 2));
+  crowdReact(kick ? 0.6 : 0.3);
+  if (amShow) amShow.cheer = 0.4;
+  checkEnd();
+  if (!vic.alive && owner.sk) owner.sk.americaWin = true;
+}
 // Toward them by up to `step`, stopping `keep` short (edge to edge).
 function cnStepIn(n, vic, step, keep) {
   var dx = vic.x - n.x, dy = vic.y - n.y, d = Math.sqrt(dx * dx + dy * dy) || 1, gap = d - CN_R - vic.r;
@@ -249,8 +342,9 @@ function cnClamp(n) { n.x = Math.max(CN_R + 2, Math.min(W - CN_R - 2, n.x)); n.y
 
 // On the mat: the thud, his name, the flag planted next to him.
 function cnLand(n, cfg) {
-  n.y = n.landY; n.landed = true;
-  cnPhase(n, "stand");
+  n.y = n.landY; n.touched = true;
+  var owner0 = balls[n.ownerId];
+  if (owner0 && owner0.char.special.bike) cnPhase(n, "stand"); else cnTagIn(n, owner0);
   floater(n.x, n.y - CN_R - 52, "CHUCK NORRIS!", "crit");
   impacts.push({ x: n.x, y: n.y + CN_R * 0.7, nx: 0, ny: -1, life: 0.5, max: 0.5, color: "#ffffff" });
   if (!reduceMotion) {
@@ -278,10 +372,10 @@ function cnRoundhouse(n, owner, vic, cfg) {
   if (dealt <= 0) return; // slipped or blocked (hurt says so)
   n.kicked = true; n.kickAng = Math.atan2(dy, dx); n.kickLen = cnLegLen(d, vic);
   // Sent back into Strickland's overhands: the tag.
-  var kx = ux, ky = uy, tag = false, am = americaOn(owner) ? owner.igbb : null;
+  var kx = ux, ky = uy, am = americaOn(owner) ? owner.igbb : null;
   if (owner.alive && am && (am.phase === "overhands" || am.phase === "hop")) {
     var sx = owner.x - vic.x, sy = owner.y - vic.y, sl = Math.sqrt(sx * sx + sy * sy) || 1;
-    if (sl > owner.r + vic.r + 8) { kx = sx / sl * 0.75 + ux * 0.25; ky = sy / sl * 0.75 + uy * 0.25; tag = true; }
+    if (sl > owner.r + vic.r + 8) { kx = sx / sl * 0.75 + ux * 0.25; ky = sy / sl * 0.75 + uy * 0.25; }
   }
   var kl = Math.sqrt(kx * kx + ky * ky) || 1;
   if (!vic.justDodged && teepPushable(vic)) { vic.vx = kx / kl * cnNum(cfg.roundhouseKnock, 700); vic.vy = ky / kl * cnNum(cfg.roundhouseKnock, 700); vic.knockFly = 0.3; }
@@ -299,7 +393,6 @@ function cnRoundhouse(n, owner, vic, cfg) {
   crowdReact(1);
   if (amShow) { amShow.burst = 3; amShow.cheer = 1; }
   floater(vic.x, vic.y - vic.r - 34, "ROUNDHOUSE!", "crit");
-  if (tag) n.tagT = 0.35; // a beat after ROUNDHOUSE!, so the two don't stack
   checkEnd();
   if (!vic.alive && owner.sk) owner.sk.americaWin = true;
   if (Math.random() * 100 < cnNum(cfg.kickLine, 50)) { n.sayKey = "roundhouse"; n.say = 0.35; n.talked = true; }
@@ -379,7 +472,7 @@ function drawChuckNorris() {
 }
 
 function drawCnChuck(n) {
-  var r = CN_R, walking = n.phase === "walk" || n.phase === "hunt";
+  var r = CN_R, walking = n.phase === "walk" || n.phase === "hunt" || (n.phase === "brawl" && !n.hitA);
   var bob = walking ? Math.abs(Math.sin(cnClock * (n.phase === "walk" ? 8 : 14))) * 3 : 0;
   var lift = n.phase === "hop" ? Math.sin(n.hop * Math.PI) : 0;
   var x = n.x, y = n.y - bob - lift * r * 0.5, sc = 1 + lift * 0.15;
@@ -410,10 +503,13 @@ function drawCnChuck(n) {
   var spin = 0;
   if (n.phase === "spin") spin = -(2 * Math.PI + 0.35) * (1 - n.t / CN_SPIN) * (Math.cos(aim) >= 0 ? 1 : -1);
   if (n.phase === "wind") spin = -0.35 * Math.min(1, n.t / 0.15) * (Math.cos(aim) >= 0 ? 1 : -1);
-  var kicking = n.phase === "spin" || n.phase === "hold";
+  var hit = n.phase === "brawl" ? n.hitA : null, hk = hit ? Math.min(1, hit.t / hit.dur) : 0;
+  if (hit && hit.kick) spin = -1.3 * (1 - Math.min(1, hk * 2.2)) * (Math.cos(hit.ang) >= 0 ? 1 : -1); // a quick turn into it
+  var kicking = n.phase === "spin" || n.phase === "hold" || (hit && hit.kick);
   // under the body: arms that reach out from behind it
-  if (n.phase === "hunt" || n.phase === "wind") cnGuardArms(r, ux, uy);
-  else if (kicking) cnBalanceArms(r, n.phase === "hold" && n.kicked ? n.kickAng : aim + spin);
+  if (hit && !hit.kick) cnPunchArms(r, hit, ux, uy);
+  else if (n.phase === "hunt" || n.phase === "wind" || n.phase === "brawl" && !hit) cnGuardArms(r, ux, uy);
+  else if (kicking) cnBalanceArms(r, n.phase === "hold" && n.kicked ? n.kickAng : hit ? hit.ang : aim + spin);
   if (n.phase === "wind") {
     var p = 0.5 + 0.5 * Math.sin(cnClock * 26);
     [CN_USA.red, "#ffffff", CN_USA.blue].forEach(function (c, i) {
@@ -433,6 +529,7 @@ function drawCnChuck(n) {
     var vic = balls[1 - n.ownerId], vd = Math.sqrt((vic.x - n.x) * (vic.x - n.x) + (vic.y - n.y) * (vic.y - n.y)) || 1;
     cnLeg(r, aim + spin, cnLegLen(vd, vic) * (0.55 + 0.45 * n.t / CN_SPIN), true);
   } else if (n.phase === "hold") cnLeg(r, n.kicked ? n.kickAng : aim, n.kicked ? n.kickLen : r * 1.6, false); // held out where they were
+  else if (hit && hit.kick) cnLeg(r, hit.ang, hit.len * (hk < 0.35 ? 0.5 + 0.5 * hk / 0.35 : 1 - Math.max(0, hk - 0.7) / 0.3 * 0.45), hk < 0.5);
   if (n.phase === "rappel") cnRappelArms(r);
   else if (n.phase === "stand") cnCrossedArms(r);
   else if (n.phase === "salute") cnSalute(r, n.t);
@@ -479,6 +576,18 @@ function cnGuardArms(r, ux, uy) {
   [-1, 1].forEach(function (s) {
     cnArm(px * s * r * 0.55, py * s * r * 0.55, ux * r * 1.05 + px * s * r * 0.4, uy * r * 1.05 + py * s * r * 0.4, 13);
   });
+}
+// A bare-knuckle punch out to them (`a.side` hand), the other hand up.
+function cnPunchArms(r, a, ux, uy) {
+  var px = -uy, py = ux, s = a.side, k = a.t / a.dur, ext = k < 0.3 ? k / 0.3 : 1 - (k - 0.3) / 0.7;
+  cnArm(-px * s * r * 0.55, -py * s * r * 0.55, ux * r * 1.05 - px * s * r * 0.4, uy * r * 1.05 - py * s * r * 0.4, 13); // the guard
+  var reach = r * 0.95 + (a.len - r * 0.95) * Math.max(0, ext);
+  if (ext > 0.5) {
+    ctx.save(); ctx.globalAlpha = 0.45 * ext; ctx.strokeStyle = "#ffffff"; ctx.lineCap = "round"; ctx.lineWidth = 16;
+    ctx.beginPath(); ctx.moveTo(ux * r * 0.9 + px * s * r * 0.25, uy * r * 0.9 + py * s * r * 0.25); ctx.lineTo(ux * reach + px * s * r * 0.12, uy * reach + py * s * r * 0.12); ctx.stroke();
+    ctx.restore();
+  }
+  cnArm(px * s * r * 0.55, py * s * r * 0.55, ux * reach + px * s * r * 0.12, uy * reach + py * s * r * 0.12, 13);
 }
 function cnBalanceArms(r, ang) {
   var ux = Math.cos(ang), uy = Math.sin(ang), px = -uy, py = ux;
@@ -670,15 +779,16 @@ function drawCnSpeech(n) {
 function chuckNorrisSpecialInfo(sp) {
   var c = sp && sp.norris;
   if (!c || c.on === false) return "";
-  return " Chuck Norris rappels down from the rafters when it turns America, plants a flag at his side and waits arms crossed while the bike goes; then he walks them down, winds up (the tell) and spins into his roundhouse kick: " +
-    cnNum(c.roundhouseDamage, 40) + (c.unblockable === false ? " (it slips and blocks like any kick)" : " (it can't be slipped or blocked: get away during the wind-up)") + ", sending them flying back into Strickland's overhands (" + cnNum(c.overhandsCut, 0) +
-    " fewer of those with him there). Then he salutes and walks off without looking back while something explodes behind him.";
+  return " Then Chuck Norris rappels down from the rafters right by them" + (sp.bike ? " (at Strickland's side, arms crossed while the bike goes)" : "") + " and plants a flag: tag team. For " + cnNum(c.time, 2.6) +
+    "s he stays on them throwing bare-knuckle punches (" + cnNum(c.punchDamage, 4) + ") every " + cnNum(c.punchEvery, 0.14) + "s, every " + cnNum(c.kickEvery, 4) + "th one a roundhouse kick (" + cnNum(c.kickDamage, 9) +
+    "), each one shoving them back into Strickland" + (c.unblockable === false ? "" : ", none of it can be slipped or blocked") + ". To finish he winds up (the tell) and spins into his big roundhouse: " + cnNum(c.roundhouseDamage, 40) +
+    ", sending them flying back into Strickland's overhands (" + cnNum(c.overhandsCut, 0) + " fewer of those with him there). Then he salutes and walks off without looking back while something explodes behind him.";
 }
 
 function chuckNorrisGalleryMove(ch, add) {
   var c = ch.special && ch.special.move === "america" && ch.special.norris;
   if (!c || c.on === false) return;
-  add("🤠", "Chuck Norris", "In America, Chuck Norris rappels in, then his spinning roundhouse kick (" + cnNum(c.roundhouseDamage, 40) + ") sends them back into Strickland's overhands. Tag team.");
+  add("🤠", "Chuck Norris", "In America, Chuck Norris rappels in right after the eagle and gangs up on them with Strickland: rapid punches (" + cnNum(c.punchDamage, 4) + ") and roundhouse kicks (" + cnNum(c.kickDamage, 9) + ") for " + cnNum(c.time, 2.6) + "s, then a big spinning roundhouse (" + cnNum(c.roundhouseDamage, 40) + "). Tag team.");
 }
 
 function chuckNorrisGalleryAssets(list) {
@@ -698,6 +808,7 @@ function chuckNorrisGallerySounds(groups, synth) {
   groups.push({ title: "Chuck Norris (in America)", items: [
     synth("Rappel", "Sliding down the rope from the rafters.", function () { playCnZip(0.9); }),
     synth("Landing", "Hitting the mat at Strickland's side.", function () { playCnLand(); }),
+    synth("Tag team punch", "One of his bare-knuckle punches in the flurry.", function () { lastPunchSound = 0; playWhoosh(); playPunch(10); }),
     synth("Roundhouse wind-up", "The tell before the spin.", function () { playCnWind(0.3); }),
     synth("Roundhouse", "The spin and the boot landing.", function () { playCnSpin(); setTimeout(function () { lastPunchSound = 0; playCnRoundhouse(40); }, 200); }),
     synth("Explosion", "Going off behind him as he walks away.", function () { playCnBoom(); })
