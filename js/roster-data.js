@@ -192,7 +192,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-alexander-volkanovski",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Alexander Volkanovski",
@@ -298,7 +298,8 @@ var SAVED_ROSTER = [
             "kickDamage": 1.1,
             "shotChance": 0,
             "sprawlBonus": 20,
-            "gap": 50
+            "gap": 50,
+            "stepIn": "kick"
           },
           "wrestle": {
             "kickCooldown": 1.6,
@@ -333,6 +334,21 @@ var SAVED_ROSTER = [
         "swayEvery": 1.7,
         "pivot": 0.7,
         "range": 330
+      },
+      "angles": {
+        "outMargin": 10,
+        "outMax": 56,
+        "inRange": 90,
+        "ready": 0.1,
+        "inAngle": 0.55,
+        "inSpeed": 1.1,
+        "inTime": 0.5,
+        "outTime": 0.3,
+        "outAngle": 0.95,
+        "outSpeed": 1.2,
+        "cone": 55,
+        "pivotGap": 0.5,
+        "slip": 35
       },
       "rivals": {
         "ilia": {
