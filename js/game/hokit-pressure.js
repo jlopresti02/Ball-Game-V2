@@ -20,7 +20,10 @@
 //           COMBOS below, so any fighter can use them.
 // The shot  his armbar shot (hokit.js): armbarShot.chance on every bump,
 //           and `shotChance`% of the moments a combination is due he shoots
-//           the double leg instead (pressure.shotChance).
+//           the double leg instead (pressure.shotChance), waiting up to
+//           `shotWait` seconds to get on them first.
+// Takedown defense  the plain `tdd` block in his file (ilia.js): he
+//           sprawls `tdd.sprawlChance`% of shots and grabs ("STUFFED").
 // Walking onto shots (pressure.chin)  coming forward he's wide open:
 //           `critChance`% of the strikes in `sources` that land on him while
 //           he's free and pressing (not in a shot, an armbar, a thumbs down or
@@ -65,9 +68,8 @@ function hokitPress(self, other, dt, d) {
 // combos.js only starts a combination between two punches, and his jab
 // comes back so fast there's hardly ever a gap, so when one's due his single
 // jab waits a frame. `shotChance`% of the time the moment goes to the shot
-// instead: he holds the combination back (up to SHOT_WAIT seconds) until
-// he's on them, then shoots the double leg (hokit.js).
-var SHOT_WAIT = 1.2;
+// instead: he holds the combination back (up to `shotWait` seconds, 1.2 if
+// left out) until he's on them, then shoots the double leg (hokit.js).
 function hokitComboOrShot(self, other, dt, d, pc) {
   var cc = self.char.combos;
   if (!cc) return false;
@@ -75,7 +77,7 @@ function hokitComboOrShot(self, other, dt, d, pc) {
   if (self.punch) return false;
   var due = self.hkDue || (self.hkDue = { t: 0, shot: !!(pc.shotChance && self.char.hasArmbarShot && Math.random() * 100 < pc.shotChance) });
   due.t += dt;
-  if (due.shot && due.t < SHOT_WAIT) {
+  if (due.shot && due.t < (pc.shotWait || 1.2)) {
     if (d < self.r + other.r + 6 && !specialBusy(self) && !specialBusy(other) && !other.invincible) {
       self.hkDue = null;
       self.cmbT = cbRand(cc.every); // the shot takes the combination's turn
@@ -123,5 +125,6 @@ function hokitPressureGalleryMoves(ch, add) {
   if (!pc) return;
   if (pc.turn) add("➡️", "Always coming forward", "Walks them down all fight and turns straight back at them after every bounce. Up close it's combinations of light punches" +
     (pc.shotChance ? ", or (" + pc.shotChance + "% of the time) the double leg" : "") + ".");
+  if (ch.tdd) add("🧱", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots and grabs (\"STUFFED\") and comes straight back with punches.");
   if (pc.chin) add("💥", "Walks onto shots", pc.chin.critChance + "% of the strikes that land on him while he's coming forward are crits, " + pc.chin.critMult + "x the damage.");
 }
