@@ -25,6 +25,16 @@
 //    "WHIFF". A miss leaves him off balance and open for `missRecover`
 //    seconds. That one roll is the only defence: no weave, block or kick
 //    check on top (it hurts as a "finisher").
+//  - The punish (Christian, 2026-11-15: "half the time it misses and he's
+//    open to a takedown shot"): after any miss he's "OFF BALANCE!" for
+//    `missOpen` seconds. His guard drops by `missGuard`% (blocking strikes
+//    and grabs), their punch and kick are ready at once, and from up to
+//    `missReach` away (edge to edge) they come straight at him. One with a
+//    takedown (a Grappler) shoots on him `missShot`% of the time: the shot
+//    goes through attemptGrab (grapple-duel.js), the same shot and the same
+//    defences as any other. Everyone else gets a free shot at him:
+//    "PUNISHED!" on the first thing that lands. `missOpen` 0 (the
+//    default): a miss is as it always was.
 //  - When it lands: "HEAD KICK!", a big star on their head, a freeze-frame.
 //    `koChance`% of the time they're out cold (the knockout, then the fight's
 //    called); otherwise it takes `damagePct`% of their full health.
@@ -41,9 +51,11 @@
 var HEAD_KICK_DEFAULTS = { setup: 2, chance: 40, window: 2.5, cooldown: 12, range: 60, reach: 95,
   landChance: 50, blockShare: 40, koChance: 60, damagePct: 50,
   chamber: 0.26, sweep: 0.13, recover: 0.3, missRecover: 0.6,
+  missOpen: 0, missGuard: 100, missShot: 85, missReach: 110,
   text: "HEAD KICK!", color: "#ff3b30", size: 1.35 };
 var HK_KO_HOLD = 1.5;  // standing over them, out cold, before it's called
 var HK_STAR = 0.42;    // how long the star stays on their head
+var HK_RUSH = 560;     // how fast they come at him when he's off balance
 var hkFrame = 0, hkClock = 0;
 
 function headKickCfg(b) {
@@ -136,7 +148,54 @@ function hkResolve(self, other, c, k) {
     if (!reduceMotion) shake = Math.max(shake, 6);
   } else if (res === "whiff") floater(other.x, other.y - other.r - 8, "WHIFF", "dodge");
   k.res = res;
+  if (res === "duck" || res === "block" || res === "whiff") hkMissOpen(self, other, c);
   return res;
+}
+
+// He missed: off balance, and they come for him (the punish, above).
+function hkMissOpen(self, other, c) {
+  if (!(c.missOpen > 0) || self.hkOpen || !other.alive || other.koOut || over) return;
+  var gr = other.char.hasGrapple && other.char.grapple;
+  var op = self.hkOpen = { t: c.missOpen, by: other.id, hp: self.hp, guard: c.missGuard || 0,
+    shoot: !!gr && Math.random() * 100 < c.missShot, shot: false, hit: false };
+  self.blockBonus = (self.blockBonus || 0) - op.guard; // (given back when it's over)
+  floater(self.x, self.y - self.r - 54, "OFF BALANCE!", "note");
+  if (other.punchCd > 0) other.punchCd = 0;
+  if (other.kickCd > 0) other.kickCd = 0;
+  if (op.shoot) other.grappleCd = 0;
+}
+
+// Every frame he's off balance (tickHeadKicks): they rush him, a wrestler
+// shoots once he's in reach, and the first thing that lands is called.
+function hkTickOpen(b, dt) {
+  var op = b.hkOpen, o = balls[op.by], c = headKickCfg(b);
+  op.t -= dt;
+  if (b.grappled || b.slam) op.hit = true; // taken down: that's the punish
+  else if (!op.hit && b.hp < op.hp - 0.01) {
+    op.hit = true;
+    if (b.alive && !b.koOut) floater(b.x, b.y - b.r - 30, "PUNISHED!", "crit");
+  }
+  if (op.t <= 0 || !c || !b.alive || !o || !o.alive || o.koOut || over) {
+    b.blockBonus = (b.blockBonus || 0) + op.guard;
+    b.hkOpen = null;
+    return;
+  }
+  if (op.hit || !inOrdinaryMovement(o)) return;
+  var gap = lkGap(o, b);
+  if (op.shoot && !op.shot && gap <= (o.char.grapple.reach || 0) + 8) {
+    if (hkCanShoot(o, b)) { op.shot = true; attemptGrab(o, b); } // (grapple-duel.js)
+    return;
+  }
+  if (gap > c.missReach || gap < 4) return;
+  var dx = b.x - o.x, dy = b.y - o.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var sp = Math.max(Math.sqrt(o.vx * o.vx + o.vy * o.vy), HK_RUSH);
+  o.vx = dx / d * sp; o.vy = dy / d * sp;
+}
+function hkCanShoot(o, b) {
+  if (o.grapple || o.grabHold || o.swing || o.grappled || o.sprawl || o.sprawled || specialBusy(o)) return false;
+  if (b.grappled || b.grapple || b.sprawl || b.sprawled || b.slam || b.invincible || b.koOut || subLocked(b) || specialBusy(b)) return false;
+  if (typeof clinchBusy === "function" && (clinchBusy(o) || clinchBusy(b))) return false;
+  return !grabBlockedByImpunity(o, b);
 }
 
 // It lands: a knockout, or half their health.
@@ -192,6 +251,7 @@ function tickHeadKicks(dt) {
     if (!b.char || !b.char.headKick) return;
     if (b.hkCd > 0) b.hkCd -= dt;
     if (b.hkArm > 0) b.hkArm -= dt;
+    if (b.hkOpen) hkTickOpen(b, dt);
     var m = b.hkKo;
     if (m) {
       var o = balls[m.vicId];
@@ -324,5 +384,6 @@ function headKickGalleryMoves(ch, add) {
   var v = function (k) { return c[k] != null ? c[k] : HEAD_KICK_DEFAULTS[k]; };
   add("💥", "Head kick", "Once he's landed " + v("setup") + " calf kicks, each one that lands is a " + v("chance") + "% chance he goes high next: a head kick that lands " +
     v("landChance") + "% of the time (they duck it or block it, and he's left open). When it lands it's a knockout " + v("koChance") + "% of the time, otherwise " +
-    v("damagePct") + "% of their health. At most one every " + secs(v("cooldown")) + ".");
+    v("damagePct") + "% of their health. At most one every " + secs(v("cooldown")) + "." +
+    (v("missOpen") > 0 ? " A miss leaves him off balance for " + secs(v("missOpen")) + ": his guard drops, they rush him, and a wrestler shoots on him " + v("missShot") + "% of the time." : ""));
 }

@@ -1,6 +1,6 @@
 {
   "id": "c-alex-pereira",
-  "rev": 5,
+  "rev": 6,
   "builtin": false,
   "weightClass": "lightheavyweight",
   "name": "Alex Pereira",
@@ -51,11 +51,13 @@
     "flying": { "first": [6, 10], "every": [12, 17], "minGap": 70, "maxGap": 220, "load": 0.4, "speed": 950, "damage": 24, "knockback": 600, "koBase": 4, "koLow": 16, "readChance": 20, "open": 0.8 } },
   "poatan": {
     "step": { "rate": 1.15, "dip": 0.07 },
-    "chama": { "first": [6, 9], "every": [6, 9], "range": 120, "reach": 48, "call": 0.7, "echo": 0.25, "readChance": 30, "readWeave": 25, "lunge": 430, "jab": 12, "cross": 16, "hook": 32, "hookKnockback": 560, "koBase": 15, "koLow": 48 },
+    "chama": { "first": [6, 9], "every": [6, 9], "range": 120, "reach": 48, "call": 0.7, "echo": 0.25, "readChance": 30, "readWeave": 25, "lunge": 430, "jab": 12, "cross": 16, "hook": 32, "hookKnockback": 560, "koBase": 15, "koLow": 48,
+      "miss": 20, "closing": 60, "counterBonus": 10, "counterMult": 1.2, "chaseMalus": 20 },
     "duckHunt": { "chance": 75, "damage": 25 }
   },
   "legKick": { "onKick": true, "slow": 0.6, "time": 3 },
-  "headKick": { "setup": 1, "chance": 85, "window": 2.5, "cooldown": 12, "range": 60, "reach": 95, "landChance": 50, "blockShare": 40, "koChance": 60, "damagePct": 50 },
+  "headKick": { "setup": 1, "chance": 85, "window": 2.5, "cooldown": 12, "range": 60, "reach": 95, "landChance": 50, "blockShare": 40, "koChance": 50, "damagePct": 50,
+    "missOpen": 1.3, "missGuard": 100, "missShot": 85, "missReach": 110 },
   "hasSpecial": true,
   "special": { "move": "bow", "chargeTime": 78, "hitCut": 4, "punchCut": 3, "damage": 35, "secondHit": 25, "hits": 2, "bounces": 5, "speed": 900, "flight": 3.2, "knockback": 900 }
 }

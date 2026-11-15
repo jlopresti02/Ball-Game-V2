@@ -4904,7 +4904,7 @@ function getImg(dataURL) {
 var SAVED_ROSTER = [
   {
     "id": "c-alex-pereira",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Alex Pereira",
@@ -5040,7 +5040,12 @@ var SAVED_ROSTER = [
         "hook": 32,
         "hookKnockback": 560,
         "koBase": 15,
-        "koLow": 48
+        "koLow": 48,
+        "miss": 20,
+        "closing": 60,
+        "counterBonus": 10,
+        "counterMult": 1.2,
+        "chaseMalus": 20
       },
       "duckHunt": {
         "chance": 75,
@@ -5061,8 +5066,12 @@ var SAVED_ROSTER = [
       "reach": 95,
       "landChance": 50,
       "blockShare": 40,
-      "koChance": 60,
-      "damagePct": 50
+      "koChance": 50,
+      "damagePct": 50,
+      "missOpen": 1.3,
+      "missGuard": 100,
+      "missShot": 85,
+      "missReach": 110
     },
     "hasSpecial": true,
     "special": {
@@ -5914,7 +5923,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 18,
+    "rev": 19,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -6003,6 +6012,7 @@ var SAVED_ROSTER = [
       "punchCut": 3,
       "duration": 15,
       "damageMult": 4,
+      "clinchMult": 2,
       "hairColor": "#f4edd2"
     },
     "blockChance": 10,
@@ -6028,8 +6038,8 @@ var SAVED_ROSTER = [
       "evade": 10,
       "weaverEvade": 10,
       "strikes": [
-        3,
-        5
+        2,
+        4
       ],
       "gap": 0.34,
       "mix": {
@@ -6038,13 +6048,13 @@ var SAVED_ROSTER = [
         "elbow": 1
       },
       "knee": {
-        "damage": 8,
-        "headDamage": 11,
-        "critChance": 35,
+        "damage": 7,
+        "headDamage": 9,
+        "critChance": 25,
         "critMult": 2
       },
-      "ramp": 10,
-      "escape": 12,
+      "ramp": 5,
+      "escape": 17,
       "grapplerEscape": 10,
       "knockback": 400,
       "open": 0.6,
@@ -7438,7 +7448,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-francis-ngannou",
-    "rev": 6,
+    "rev": 7,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Francis Ngannou",
@@ -7545,10 +7555,12 @@ var SAVED_ROSTER = [
         "knockback": 1100,
         "escape": {
           "pointBlank": 25,
+          "pointBlankChance": 10,
           "near": 40,
           "far": 160,
-          "nearChance": 8,
-          "farChance": 75,
+          "nearChance": 68,
+          "farChance": 76,
+          "lighterBonus": 2,
           "slipBonus": 15,
           "slipSpeed": 420
         },
@@ -9161,7 +9173,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-justin-gaethje",
-    "rev": 16,
+    "rev": 17,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Justin Gaethje",
@@ -9227,8 +9239,9 @@ var SAVED_ROSTER = [
       "damageMult": 1.2,
       "critChance": 40,
       "critMult": 1.8,
-      "onGrab": 75,
+      "onGrab": 90,
       "counterGap": 0.6,
+      "counterMult": 1.22,
       "counterKnockback": 260,
       "setupMult": 1.3,
       "setupTime": 1.6,
@@ -18959,6 +18972,13 @@ function commentaryLog() { return cc && cc.balls === balls ? cc.log.slice() : []
 //            the left hook. A clean hook is a knockout koBase% of the time at
 //            full health, up to koBase + koLow% the more hurt they are; then
 //            he shoots an arrow into the sky. Otherwise it's a big shot.
+//            Who's coming at who when he calls it matters (Christian,
+//            2026-11-15): each punch misses `miss`% of the time on top of
+//            their defences; if they were closing in on him (at `closing`
+//            px/s or more) it's a counter: counterBonus% fewer misses and
+//            counterMult times the damage ("COUNTER!" on the first one that
+//            lands); if he was the one walking forward into them, chaseMalus%
+//            more misses. Left out, the punches land exactly as before.
 // Calf kicks his kicks are leg kicks (legKick, onKick): drawn low into the
 //            calf, and they limp at `slow` speed for `time` seconds (leg-kick.js).
 // Bow and Arrow  his special (special.move "bow"): he draws a big red bow,
@@ -19065,11 +19085,29 @@ function updateChama(self, other, dt) {
   return true;
 }
 
+// Who was closing the distance as he called it: "counter" (they were
+// coming at him), "chase" (he was walking forward into them) or "even".
+function chamaDir(self, other, cc) {
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+  var vin = -(other.vx * ux + other.vy * uy), vout = self.vx * ux + self.vy * uy, th = cc.closing != null ? cc.closing : 60;
+  if (vin >= th && vin >= vout) return "counter";
+  return vout >= th ? "chase" : "even";
+}
+// The % a punch of this CHAMA misses outright, and what it does (times).
+function chamaMiss(m, cc) {
+  var p = cc.miss || 0;
+  if (m.dir === "counter") p -= cc.counterBonus || 0;
+  else if (m.dir === "chase") p += cc.chaseMalus || 0;
+  return Math.max(0, p);
+}
+function chamaMult(m, cc) { return m.dir === "counter" && cc.counterMult ? cc.counterMult : 1; }
+
 function startChama(self, other, cc) {
+  var dir = chamaDir(self, other, cc); // (before he plants)
   clearActions(self);
   self.vx = 0; self.vy = 0;
   var readP = cc.readChance + (other.char.hasWeave ? cc.readWeave : 0);
-  self.chama = { phase: "call", t: 0, read: Math.random() * 100 < readP, n: 0, next: 0 };
+  self.chama = { phase: "call", t: 0, read: Math.random() * 100 < readP, n: 0, next: 0, dir: dir };
   floater(self.x, self.y - self.r - 30, "CHAMA!", "crit");
   if (self.chama.read) floater(other.x, other.y - other.r - 30, "!", "crit");
   poEcho = { t: -cc.echo, spots: chamaEchoSpots() };
@@ -19102,6 +19140,11 @@ function landChamaPunch(self, other, m, cc, kp) {
     floater(other.x, other.y - other.r - 8, "WHIFF", "dodge"); // they read it and got out of range
     return false;
   }
+  var mp = chamaMiss(m, cc), mult = chamaMult(m, cc);
+  if (mp > 0 && Math.random() * 100 < mp) {
+    floater(other.x, other.y - other.r - 8, "WHIFF", "dodge"); // just missed
+    return false;
+  }
   if (kp.chama === "hook") {
     var ko = Math.random() * 100 < cc.koBase + cc.koLow * (1 - other.hp / MAX_HP);
     if (!ko) ko = stricklandRematchKo(self, other); // UFC 276: the left hook that knocked out Sean Strickland (strickland.js)
@@ -19110,8 +19153,9 @@ function landChamaPunch(self, other, m, cc, kp) {
       if (throwKoPunch(self, other)) { beginChamaKo(self, other, m); return true; }
       return false;
     }
-    var dealt = hurt(other, cc.hook, "punch", self.id);
+    var dealt = hurt(other, cc.hook * mult, "punch", self.id);
     if (dealt > 0) {
+      chamaCounterCall(other, m, mult);
       playPunch(dealt * 1.6);
       stoneHit(self, other, true);
       floater(other.x, other.y - other.r - 34, "LEFT HOOK!", "note");
@@ -19120,14 +19164,21 @@ function landChamaPunch(self, other, m, cc, kp) {
     checkEnd();
     return false;
   }
-  var got = hurt(other, kp.chama === "jab" ? cc.jab : cc.cross, "punch", self.id);
+  var got = hurt(other, (kp.chama === "jab" ? cc.jab : cc.cross) * mult, "punch", self.id);
   if (got > 0) {
+    chamaCounterCall(other, m, mult);
     playPunch(got);
     stoneHit(self, other, false);
     if (!other.justDodged && poKnockable(other)) { other.vx += dx / d * 120; other.vy += dy / d * 120; }
   }
   checkEnd();
   return false;
+}
+// "COUNTER!" over them on the first punch of a counter CHAMA that lands.
+function chamaCounterCall(other, m, mult) {
+  if (mult === 1 || m.called) return;
+  m.called = true;
+  floater(other.x, other.y - other.r - 56, "COUNTER!", "note");
 }
 function poKnockable(o) { return o.alive && !o.grappled && !o.grapple && !o.slam && !subLocked(o) && !o.igbb && !o.koOut; }
 
@@ -24342,9 +24393,12 @@ function playOverhandIce() {
 //              (and the "!" flashes red) for the last `lock` seconds. That's
 //              the tell (Christian, 2026-11-15): how far apart they are when
 //              the "!" goes up decides whether they can get out of the way
-//              (`escape`): none from `pointBlank` in, nearChance% out to
-//              `near`, rising to farChance% at `far` and beyond, plus
-//              slipBonus for a weaver or a footwork fighter. One who reads it
+//              (`escape`): pointBlankChance% (default none) from
+//              `pointBlank` in, nearChance% out to `near`, rising to
+//              farChance% at `far` and beyond, plus lighterBonus% for every
+//              weight class they're lighter than him (he's huge, so the
+//              smaller fighters see it coming), plus slipBonus for a weaver
+//              or a footwork fighter (95% at most). One who reads it
 //              sidesteps off the line once it locks (at `slipSpeed`) and he
 //              lunges straight past them ("SLIPPED IT!"), skidding on for
 //              `overshoot` seconds before he's gassed. One who doesn't gets
@@ -24576,18 +24630,20 @@ function beginRageWindup(self, other, rc, dx, dy) {
   st.phase = "windup"; st.t = 0; st.aim = Math.atan2(dy, dx); st.locked = false;
   // The "!" goes up now: how far away they are decides if they can get out.
   st.gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;
-  st.escape = Math.random() * 100 < ngEscapeChance(rc.escape, st.gap, other);
+  st.escape = Math.random() * 100 < ngEscapeChance(rc.escape, st.gap, other, self);
   st.side = 1; st.slipped = false;
   playNgWindup(rc.windup);
 }
 
 // The chance (in %) they read it and get out of the way, by the gap between
-// them when the "!" goes up.
-function ngEscapeChance(ec, gap, o) {
-  if (!ec || gap <= ec.pointBlank) return 0;
+// them when the "!" goes up, and how much smaller than him they are.
+function ngEscapeChance(ec, gap, o, self) {
+  if (!ec) return 0;
+  if (gap <= ec.pointBlank) return ec.pointBlankChance || 0; // touching: it (nearly) always lands
   var k = Math.max(0, Math.min(1, (gap - ec.near) / Math.max(1, ec.far - ec.near)));
   var c = ec.nearChance + (ec.farChance - ec.nearChance) * k;
   var oc = o.char || {};
+  if (ec.lighterBonus && self) c += ec.lighterBonus * Math.max(0, weightIndex(self.char) - weightIndex(oc)); // (weight.js)
   if (oc.hasWeave || (oc.gane && oc.gane.footwork) || (oc.bisping && oc.bisping.footwork)) c += ec.slipBonus || 0;
   return Math.min(95, c);
 }
@@ -32268,6 +32324,10 @@ function jonClinchGalleryMoves(ch, add) {
 //             "SPINNING BACK ELBOW!"). Each reaches `reach` further, lands or
 //             misses on its own (they can slip or block it) and shoves them
 //             off (`knockback`).
+// Do Bronx    (special.clinchMult, Charles Oliveira's special block) in the
+//             Do Bronx state his clinch knees and elbows do clinchMult times,
+//             not the full special.damageMult every other hit gets
+//             (clDoBronxScale). Left out: the full damageMult, as before.
 // combos      true (the default): the clinch step in his combinations
 //             ("punch-clinch", "double-collar", combos.js) ties up with this
 //             clinch instead of the plum, and the combination's count goes on
@@ -32305,6 +32365,14 @@ function clMerge(def, c) {
 // His numbers, worked out once a fight (makeBall gives every fight new balls).
 function clN(b) { return b.clN || (b.clN = clMerge(CLINCH_DEF, clinchCfg(b))); }
 function clKnee(n) { return clMerge(CLINCH_KNEE, n.knee); }
+// In Do Bronx (dobronx.js) every hit he lands does special.damageMult times;
+// special.clinchMult (if set) caps his clinch strikes at that instead, so
+// this scales them from the one to the other (1 for everyone else).
+function clDoBronxScale(b) {
+  var sp = b && b.doBronx && b.char.special;
+  if (!sp || sp.clinchMult == null) return 1;
+  return sp.clinchMult / (sp.damageMult || 2);
+}
 function clElbow(ch, n) {
   var e = clMerge({ damage: 6, critChance: ELBOW_CRIT, critMult: 2 }, ch.elbow);
   return clMerge(e, n.elbow);
@@ -32497,7 +32565,7 @@ function holdClinch(self, v, m, n, dt) {
 function landClinchStrike(self, v, m, n, s) {
   var sd = m.side, head = s.kind !== "bodyKnee";
   var ux = sd * (head ? 0.75 : 1), uy = head ? 0.66 : -0.15; // (where it lands: their head, or their middle)
-  var more = 1 + (n.ramp || 0) / 100 * m.row, crit, dealt, name;
+  var more = (1 + (n.ramp || 0) / 100 * m.row) * clDoBronxScale(self), crit, dealt, name; // (Do Bronx: clinchMult, not the full damageMult)
   if (s.kind === "elbow") {
     var el = clElbow(self.char, n);
     crit = el.critChance > 0 && Math.random() * 100 < el.critChance;
@@ -48672,6 +48740,8 @@ function hookGalleryMoves(ch, add) {
 //                 it lands the grab is stuffed (counterText "STUFFED!") and
 //                 they're shoved off (counterKnockback). At most one every
 //                 counterGap seconds. Justin Gaethje's clinch uppercuts.
+// counterMult     (uppercuts) the uppercut that answers a grab does this many
+//                 times the usual uppercut damage (1: the same).
 //
 // One roll picks the punch type: rollPunchType(b, p, last) in place of
 // rollHook, when punch `p` starts (hook first, then uppercut, then body
@@ -48699,11 +48769,11 @@ var PT_DEFAULTS = {
   upper: { chance: 0, finisherChance: 0, beforeFinisher: null, close: 32, damageMult: 1.2, knockback: null,
     dip: 0.09, drive: 0.16, recover: 0.1, size: 1.12, width: 1, color: "#3fd0ff",
     setupMult: 1.4, setupTime: 1.2, guardDrop: 10, text: "SET UP!", tell: 0.45,
-    critChance: 0, critMult: 1.6, critText: null, onGrab: 0, counterGap: 0.6, counterKnockback: 260, counterText: "STUFFED!" },
+    critChance: 0, critMult: 1.6, critText: null, onGrab: 0, counterGap: 0.6, counterKnockback: 260, counterText: "STUFFED!", counterMult: 1 },
   body: { chance: 0, finisherChance: 0, beforeFinisher: null, close: null, damageMult: 1, knockback: null,
     dip: 0.07, drive: 0.13, recover: 0.1, size: 1.08, width: 1, color: "#ff7a1a",
     setupMult: 1.4, setupTime: 1.2, guardDrop: 10, text: "SET UP!", tell: 0.45,
-    critChance: 0, critMult: 1.6, critText: null, onGrab: 0, counterGap: 0.6, counterKnockback: 260, counterText: "STUFFED!" }
+    critChance: 0, critMult: 1.6, critText: null, onGrab: 0, counterGap: 0.6, counterKnockback: 260, counterText: "STUFFED!", counterMult: 1 }
 };
 // The uppercut: the first PT_UP_SPLIT of the drive scoops in under them
 // (to their radius below their chin, on his side of them), the rest goes
@@ -48890,7 +48960,7 @@ function uppercutCounter(b, atk, back) {
   b.punch = p; b.kick = null; b.swing = null; b.throwAnim = null;
   b.punchCd = Math.max(b.punchCd || 0, b.char.punch.cooldown * 0.5);
   if (n) { n.counters++; n.uppers++; }
-  var dealt = punchHurt(b, atk, p, b.char.punch.damage);
+  var dealt = punchHurt(b, atk, p, b.char.punch.damage * ptVal(c, "upper", "counterMult"));
   if (!(dealt > 0)) return false; // blocked or slipped: the grab goes on
   if (n) n.stuffed++;
   var dx = atk.x - b.x, dy = atk.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, kb = ptVal(c, "upper", "counterKnockback");
@@ -56302,6 +56372,16 @@ function legKickGalleryMoves(ch, add) {
 //    "WHIFF". A miss leaves him off balance and open for `missRecover`
 //    seconds. That one roll is the only defence: no weave, block or kick
 //    check on top (it hurts as a "finisher").
+//  - The punish (Christian, 2026-11-15: "half the time it misses and he's
+//    open to a takedown shot"): after any miss he's "OFF BALANCE!" for
+//    `missOpen` seconds. His guard drops by `missGuard`% (blocking strikes
+//    and grabs), their punch and kick are ready at once, and from up to
+//    `missReach` away (edge to edge) they come straight at him. One with a
+//    takedown (a Grappler) shoots on him `missShot`% of the time: the shot
+//    goes through attemptGrab (grapple-duel.js), the same shot and the same
+//    defences as any other. Everyone else gets a free shot at him:
+//    "PUNISHED!" on the first thing that lands. `missOpen` 0 (the
+//    default): a miss is as it always was.
 //  - When it lands: "HEAD KICK!", a big star on their head, a freeze-frame.
 //    `koChance`% of the time they're out cold (the knockout, then the fight's
 //    called); otherwise it takes `damagePct`% of their full health.
@@ -56318,9 +56398,11 @@ function legKickGalleryMoves(ch, add) {
 var HEAD_KICK_DEFAULTS = { setup: 2, chance: 40, window: 2.5, cooldown: 12, range: 60, reach: 95,
   landChance: 50, blockShare: 40, koChance: 60, damagePct: 50,
   chamber: 0.26, sweep: 0.13, recover: 0.3, missRecover: 0.6,
+  missOpen: 0, missGuard: 100, missShot: 85, missReach: 110,
   text: "HEAD KICK!", color: "#ff3b30", size: 1.35 };
 var HK_KO_HOLD = 1.5;  // standing over them, out cold, before it's called
 var HK_STAR = 0.42;    // how long the star stays on their head
+var HK_RUSH = 560;     // how fast they come at him when he's off balance
 var hkFrame = 0, hkClock = 0;
 
 function headKickCfg(b) {
@@ -56413,7 +56495,54 @@ function hkResolve(self, other, c, k) {
     if (!reduceMotion) shake = Math.max(shake, 6);
   } else if (res === "whiff") floater(other.x, other.y - other.r - 8, "WHIFF", "dodge");
   k.res = res;
+  if (res === "duck" || res === "block" || res === "whiff") hkMissOpen(self, other, c);
   return res;
+}
+
+// He missed: off balance, and they come for him (the punish, above).
+function hkMissOpen(self, other, c) {
+  if (!(c.missOpen > 0) || self.hkOpen || !other.alive || other.koOut || over) return;
+  var gr = other.char.hasGrapple && other.char.grapple;
+  var op = self.hkOpen = { t: c.missOpen, by: other.id, hp: self.hp, guard: c.missGuard || 0,
+    shoot: !!gr && Math.random() * 100 < c.missShot, shot: false, hit: false };
+  self.blockBonus = (self.blockBonus || 0) - op.guard; // (given back when it's over)
+  floater(self.x, self.y - self.r - 54, "OFF BALANCE!", "note");
+  if (other.punchCd > 0) other.punchCd = 0;
+  if (other.kickCd > 0) other.kickCd = 0;
+  if (op.shoot) other.grappleCd = 0;
+}
+
+// Every frame he's off balance (tickHeadKicks): they rush him, a wrestler
+// shoots once he's in reach, and the first thing that lands is called.
+function hkTickOpen(b, dt) {
+  var op = b.hkOpen, o = balls[op.by], c = headKickCfg(b);
+  op.t -= dt;
+  if (b.grappled || b.slam) op.hit = true; // taken down: that's the punish
+  else if (!op.hit && b.hp < op.hp - 0.01) {
+    op.hit = true;
+    if (b.alive && !b.koOut) floater(b.x, b.y - b.r - 30, "PUNISHED!", "crit");
+  }
+  if (op.t <= 0 || !c || !b.alive || !o || !o.alive || o.koOut || over) {
+    b.blockBonus = (b.blockBonus || 0) + op.guard;
+    b.hkOpen = null;
+    return;
+  }
+  if (op.hit || !inOrdinaryMovement(o)) return;
+  var gap = lkGap(o, b);
+  if (op.shoot && !op.shot && gap <= (o.char.grapple.reach || 0) + 8) {
+    if (hkCanShoot(o, b)) { op.shot = true; attemptGrab(o, b); } // (grapple-duel.js)
+    return;
+  }
+  if (gap > c.missReach || gap < 4) return;
+  var dx = b.x - o.x, dy = b.y - o.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var sp = Math.max(Math.sqrt(o.vx * o.vx + o.vy * o.vy), HK_RUSH);
+  o.vx = dx / d * sp; o.vy = dy / d * sp;
+}
+function hkCanShoot(o, b) {
+  if (o.grapple || o.grabHold || o.swing || o.grappled || o.sprawl || o.sprawled || specialBusy(o)) return false;
+  if (b.grappled || b.grapple || b.sprawl || b.sprawled || b.slam || b.invincible || b.koOut || subLocked(b) || specialBusy(b)) return false;
+  if (typeof clinchBusy === "function" && (clinchBusy(o) || clinchBusy(b))) return false;
+  return !grabBlockedByImpunity(o, b);
 }
 
 // It lands: a knockout, or half their health.
@@ -56469,6 +56598,7 @@ function tickHeadKicks(dt) {
     if (!b.char || !b.char.headKick) return;
     if (b.hkCd > 0) b.hkCd -= dt;
     if (b.hkArm > 0) b.hkArm -= dt;
+    if (b.hkOpen) hkTickOpen(b, dt);
     var m = b.hkKo;
     if (m) {
       var o = balls[m.vicId];
@@ -56601,7 +56731,8 @@ function headKickGalleryMoves(ch, add) {
   var v = function (k) { return c[k] != null ? c[k] : HEAD_KICK_DEFAULTS[k]; };
   add("💥", "Head kick", "Once he's landed " + v("setup") + " calf kicks, each one that lands is a " + v("chance") + "% chance he goes high next: a head kick that lands " +
     v("landChance") + "% of the time (they duck it or block it, and he's left open). When it lands it's a knockout " + v("koChance") + "% of the time, otherwise " +
-    v("damagePct") + "% of their health. At most one every " + secs(v("cooldown")) + ".");
+    v("damagePct") + "% of their health. At most one every " + secs(v("cooldown")) + "." +
+    (v("missOpen") > 0 ? " A miss leaves him off balance for " + secs(v("missOpen")) + ": his guard drops, they rush him, and a wrestler shoots on him " + v("missShot") + "% of the time." : ""));
 }
 
 // Ciryl Gane, "Bon Gamin" (Christian, 2026-11-15): a back-foot kickboxer
@@ -76377,7 +76508,8 @@ function galleryMoves(ch) {
   if (ch.poatan) {
     // Alex Pereira (pereira.js).
     var pc = ch.poatan.chama;
-    if (pc) add("📣", "CHAMA", "Every " + pc.every[0] + "-" + pc.every[1] + "s up close he plants and shouts \"CHAMA!\", and the crowd shouts it back. That's the tell: they back off " + pc.readChance + "% of the time. Then left-right-left (" + pc.jab + ", " + pc.cross + ", then a " + pc.hook + "-damage left hook). A clean hook knocks them out " + pc.koBase + "% of the time at full health, up to " + (pc.koBase + pc.koLow) + "% the more hurt they are, and he shoots an arrow into the sky.");
+    if (pc) add("📣", "CHAMA", "Every " + pc.every[0] + "-" + pc.every[1] + "s up close he plants and shouts \"CHAMA!\", and the crowd shouts it back. That's the tell: they back off " + pc.readChance + "% of the time. Then left-right-left (" + pc.jab + ", " + pc.cross + ", then a " + pc.hook + "-damage left hook). A clean hook knocks them out " + pc.koBase + "% of the time at full health, up to " + (pc.koBase + pc.koLow) + "% the more hurt they are, and he shoots an arrow into the sky." +
+      (pc.miss ? " Each punch misses " + pc.miss + "% of the time; as a counter (they were coming at him) " + Math.max(0, pc.miss - (pc.counterBonus || 0)) + "% and " + (pc.counterMult || 1) + "x the damage, walking forward into them " + (pc.miss + (pc.chaseMalus || 0)) + "%." : ""));
     if (ch.poatan.duckHunt) add("🦆", "Duck season", "Against Jon Jones: when Jon turns into a duck and flies off, " + ch.poatan.duckHunt.chance + "% of the time he shoots it out of the sky. Jon still drops in, but he's the one who gets hurt (" + ch.poatan.duckHunt.damage + ").");
   }
   if (ch.suga) {
@@ -77150,17 +77282,17 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261115080319"></script>
-  <script src="js/game/tale-tape.js?v=20261115080319"></script>
-<script src="js/game/watchdog.js?v=20261115080319"></script>
-<script src="js/game/update.js?v=20261115080319"></script>
-<script src="js/game/fighter-art.js?v=20261115080319"></script>
-<script src="js/game/draw-attacks.js?v=20261115080319"></script>
-<script src="js/game/wwit-badge.js?v=20261115080319"></script>
-<script src="js/game/stadium.js?v=20261115080319"></script>
-<script src="js/game/draw.js?v=20261115080319"></script>
-<script src="js/ui/gallery.js?v=20261115080319"></script>
-<script src="js/ui/saved-fights.js?v=20261115080319"></script>
-<script src="js/main.js?v=20261115080319"></script>
+  <script src="js/game/intro-msg.js?v=20261115031243"></script>
+  <script src="js/game/tale-tape.js?v=20261115031243"></script>
+<script src="js/game/watchdog.js?v=20261115031243"></script>
+<script src="js/game/update.js?v=20261115031243"></script>
+<script src="js/game/fighter-art.js?v=20261115031243"></script>
+<script src="js/game/draw-attacks.js?v=20261115031243"></script>
+<script src="js/game/wwit-badge.js?v=20261115031243"></script>
+<script src="js/game/stadium.js?v=20261115031243"></script>
+<script src="js/game/draw.js?v=20261115031243"></script>
+<script src="js/ui/gallery.js?v=20261115031243"></script>
+<script src="js/ui/saved-fights.js?v=20261115031243"></script>
+<script src="js/main.js?v=20261115031243"></script>
 </body>
 </html>

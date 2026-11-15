@@ -11,6 +11,13 @@
 //            the left hook. A clean hook is a knockout koBase% of the time at
 //            full health, up to koBase + koLow% the more hurt they are; then
 //            he shoots an arrow into the sky. Otherwise it's a big shot.
+//            Who's coming at who when he calls it matters (Christian,
+//            2026-11-15): each punch misses `miss`% of the time on top of
+//            their defences; if they were closing in on him (at `closing`
+//            px/s or more) it's a counter: counterBonus% fewer misses and
+//            counterMult times the damage ("COUNTER!" on the first one that
+//            lands); if he was the one walking forward into them, chaseMalus%
+//            more misses. Left out, the punches land exactly as before.
 // Calf kicks his kicks are leg kicks (legKick, onKick): drawn low into the
 //            calf, and they limp at `slow` speed for `time` seconds (leg-kick.js).
 // Bow and Arrow  his special (special.move "bow"): he draws a big red bow,
@@ -117,11 +124,29 @@ function updateChama(self, other, dt) {
   return true;
 }
 
+// Who was closing the distance as he called it: "counter" (they were
+// coming at him), "chase" (he was walking forward into them) or "even".
+function chamaDir(self, other, cc) {
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+  var vin = -(other.vx * ux + other.vy * uy), vout = self.vx * ux + self.vy * uy, th = cc.closing != null ? cc.closing : 60;
+  if (vin >= th && vin >= vout) return "counter";
+  return vout >= th ? "chase" : "even";
+}
+// The % a punch of this CHAMA misses outright, and what it does (times).
+function chamaMiss(m, cc) {
+  var p = cc.miss || 0;
+  if (m.dir === "counter") p -= cc.counterBonus || 0;
+  else if (m.dir === "chase") p += cc.chaseMalus || 0;
+  return Math.max(0, p);
+}
+function chamaMult(m, cc) { return m.dir === "counter" && cc.counterMult ? cc.counterMult : 1; }
+
 function startChama(self, other, cc) {
+  var dir = chamaDir(self, other, cc); // (before he plants)
   clearActions(self);
   self.vx = 0; self.vy = 0;
   var readP = cc.readChance + (other.char.hasWeave ? cc.readWeave : 0);
-  self.chama = { phase: "call", t: 0, read: Math.random() * 100 < readP, n: 0, next: 0 };
+  self.chama = { phase: "call", t: 0, read: Math.random() * 100 < readP, n: 0, next: 0, dir: dir };
   floater(self.x, self.y - self.r - 30, "CHAMA!", "crit");
   if (self.chama.read) floater(other.x, other.y - other.r - 30, "!", "crit");
   poEcho = { t: -cc.echo, spots: chamaEchoSpots() };
@@ -154,6 +179,11 @@ function landChamaPunch(self, other, m, cc, kp) {
     floater(other.x, other.y - other.r - 8, "WHIFF", "dodge"); // they read it and got out of range
     return false;
   }
+  var mp = chamaMiss(m, cc), mult = chamaMult(m, cc);
+  if (mp > 0 && Math.random() * 100 < mp) {
+    floater(other.x, other.y - other.r - 8, "WHIFF", "dodge"); // just missed
+    return false;
+  }
   if (kp.chama === "hook") {
     var ko = Math.random() * 100 < cc.koBase + cc.koLow * (1 - other.hp / MAX_HP);
     if (!ko) ko = stricklandRematchKo(self, other); // UFC 276: the left hook that knocked out Sean Strickland (strickland.js)
@@ -162,8 +192,9 @@ function landChamaPunch(self, other, m, cc, kp) {
       if (throwKoPunch(self, other)) { beginChamaKo(self, other, m); return true; }
       return false;
     }
-    var dealt = hurt(other, cc.hook, "punch", self.id);
+    var dealt = hurt(other, cc.hook * mult, "punch", self.id);
     if (dealt > 0) {
+      chamaCounterCall(other, m, mult);
       playPunch(dealt * 1.6);
       stoneHit(self, other, true);
       floater(other.x, other.y - other.r - 34, "LEFT HOOK!", "note");
@@ -172,14 +203,21 @@ function landChamaPunch(self, other, m, cc, kp) {
     checkEnd();
     return false;
   }
-  var got = hurt(other, kp.chama === "jab" ? cc.jab : cc.cross, "punch", self.id);
+  var got = hurt(other, (kp.chama === "jab" ? cc.jab : cc.cross) * mult, "punch", self.id);
   if (got > 0) {
+    chamaCounterCall(other, m, mult);
     playPunch(got);
     stoneHit(self, other, false);
     if (!other.justDodged && poKnockable(other)) { other.vx += dx / d * 120; other.vy += dy / d * 120; }
   }
   checkEnd();
   return false;
+}
+// "COUNTER!" over them on the first punch of a counter CHAMA that lands.
+function chamaCounterCall(other, m, mult) {
+  if (mult === 1 || m.called) return;
+  m.called = true;
+  floater(other.x, other.y - other.r - 56, "COUNTER!", "note");
 }
 function poKnockable(o) { return o.alive && !o.grappled && !o.grapple && !o.slam && !subLocked(o) && !o.igbb && !o.koOut; }
 

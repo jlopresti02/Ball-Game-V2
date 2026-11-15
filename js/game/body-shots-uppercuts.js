@@ -55,6 +55,8 @@
 //                 it lands the grab is stuffed (counterText "STUFFED!") and
 //                 they're shoved off (counterKnockback). At most one every
 //                 counterGap seconds. Justin Gaethje's clinch uppercuts.
+// counterMult     (uppercuts) the uppercut that answers a grab does this many
+//                 times the usual uppercut damage (1: the same).
 //
 // One roll picks the punch type: rollPunchType(b, p, last) in place of
 // rollHook, when punch `p` starts (hook first, then uppercut, then body
@@ -82,11 +84,11 @@ var PT_DEFAULTS = {
   upper: { chance: 0, finisherChance: 0, beforeFinisher: null, close: 32, damageMult: 1.2, knockback: null,
     dip: 0.09, drive: 0.16, recover: 0.1, size: 1.12, width: 1, color: "#3fd0ff",
     setupMult: 1.4, setupTime: 1.2, guardDrop: 10, text: "SET UP!", tell: 0.45,
-    critChance: 0, critMult: 1.6, critText: null, onGrab: 0, counterGap: 0.6, counterKnockback: 260, counterText: "STUFFED!" },
+    critChance: 0, critMult: 1.6, critText: null, onGrab: 0, counterGap: 0.6, counterKnockback: 260, counterText: "STUFFED!", counterMult: 1 },
   body: { chance: 0, finisherChance: 0, beforeFinisher: null, close: null, damageMult: 1, knockback: null,
     dip: 0.07, drive: 0.13, recover: 0.1, size: 1.08, width: 1, color: "#ff7a1a",
     setupMult: 1.4, setupTime: 1.2, guardDrop: 10, text: "SET UP!", tell: 0.45,
-    critChance: 0, critMult: 1.6, critText: null, onGrab: 0, counterGap: 0.6, counterKnockback: 260, counterText: "STUFFED!" }
+    critChance: 0, critMult: 1.6, critText: null, onGrab: 0, counterGap: 0.6, counterKnockback: 260, counterText: "STUFFED!", counterMult: 1 }
 };
 // The uppercut: the first PT_UP_SPLIT of the drive scoops in under them
 // (to their radius below their chin, on his side of them), the rest goes
@@ -273,7 +275,7 @@ function uppercutCounter(b, atk, back) {
   b.punch = p; b.kick = null; b.swing = null; b.throwAnim = null;
   b.punchCd = Math.max(b.punchCd || 0, b.char.punch.cooldown * 0.5);
   if (n) { n.counters++; n.uppers++; }
-  var dealt = punchHurt(b, atk, p, b.char.punch.damage);
+  var dealt = punchHurt(b, atk, p, b.char.punch.damage * ptVal(c, "upper", "counterMult"));
   if (!(dealt > 0)) return false; // blocked or slipped: the grab goes on
   if (n) n.stuffed++;
   var dx = atk.x - b.x, dy = atk.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, kb = ptVal(c, "upper", "counterKnockback");
