@@ -197,12 +197,14 @@ function updateAbilities(dt) {
     if (updateNgannou(self, other, dt)) continue; // Francis Ngannou's rage punch and Dana White (ngannou.js)
     if (updateHolloway(self, other, dt)) continue; // Max Holloway at the booth, his flashback, staying out of the guard (holloway.js)
     if (updateStrickland(self, other, dt)) continue; // Sean Strickland's one-two (strickland.js)
+    if (updatePrates(self, other, dt)) continue; // Carlos Prates lighting up, and his Rubber Pistol (prates.js)
     if (updateTeep(self, other, dt)) continue; // the teep, a front push kick (teep.js)
     if (updateDiaz(self, other, dt)) continue; // Nate Diaz's Stockton Slap, sub hunt and surge (diaz.js)
     if (updateFerguson(self, other, dt)) continue; // Tony Ferguson's slide, shot, holds, shell and Kaioken (ferguson.js)
     if (updateFedor(self, other, dt)) continue; // Fedor Emelianenko's Sambo throw (fedor.js)
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
     if (updateAnderson(self, other, dt)) continue; // Anderson Silva's front kick, hands down, counter, triangle off ground and pound (anderson.js)
+    if (updateCormier(self, other, dt)) continue; // Daniel Cormier's double leg and super slam (cormier.js)
     if (!darkSideBlocks(self) && updateSpecial(self, other, dt)) continue; // a created character's special move
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }

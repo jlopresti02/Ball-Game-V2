@@ -636,6 +636,320 @@ var SAVED_ROSTER = [
     }
   },
   {
+    "id": "c-carlos-prates",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "welterweight",
+    "name": "Carlos Prates",
+    "base": "Kicker",
+    "bio": "\"The Nightmare\". A long, lanky Brazilian kickboxer who smokes on fight day. He fights at the end of the longest punch and the longest kick in the game, in and out: he backs off at an angle, then comes back in on a different entrance every time and fires as he arrives, with a teep to shove them back out. His arms are rubber: now and then his fist shoots across the whole ring (Rubber Pistol) or his leg stretches out and whips round (Rubber Whip). Shots on him mostly catch nothing but air: he steps back out of them and kicks. Up close his elbows and knees crit a lot, and in the clinch his knees crit too. But once a choke or an armbar is on him he's in trouble. His special is the Cigarette: he stops and lights one, and nothing can touch him while the party music plays. Then he goes Super Saiyan: a gold aura, everyone misses him, every miss sets up a counter that crits, and his combinations come back to back.",
+    "color": "#86c232",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#b47f5a",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "buzz",
+      "hairColor": "#1b1512",
+      "beard": "stubble",
+      "beardColor": "#1b1512",
+      "beardAlpha": 0.45,
+      "ears": "normal",
+      "tattoos": {
+        "leftArm": true,
+        "rightArm": true,
+        "armInk": true
+      },
+      "nightmare": true,
+      "cigarette": true,
+      "cigWisp": 0.35,
+      "shorts": "#141414",
+      "trim": "#86c232",
+      "shortsStyle": "stripe",
+      "gloves": "#141414"
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 15,
+      "cooldown": 0.65,
+      "speed": 0.24,
+      "size": 13,
+      "knockback": 220,
+      "reach": 52,
+      "koChance": 0
+    },
+    "hasKick": true,
+    "kick": {
+      "damage": 25,
+      "cooldown": 1.35,
+      "speed": 0.42,
+      "size": 14,
+      "knockback": 420,
+      "reach": 84,
+      "checkChance": 35
+    },
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 12,
+    "hasTeep": true,
+    "teep": {
+      "cooldown": 3.2,
+      "range": 30,
+      "reach": 58,
+      "chamber": 0.13,
+      "extend": 0.08,
+      "hold": 0.12,
+      "recover": 0.16,
+      "damage": 9,
+      "push": 660,
+      "blockPush": 0.5,
+      "stuff": true,
+      "onlyClosing": true,
+      "size": 14
+    },
+    "elbow": {
+      "damage": 7,
+      "cooldown": 1.3,
+      "speed": 0.24,
+      "reach": 14,
+      "critChance": 45,
+      "critMult": 2.6,
+      "knockback": 180,
+      "cut": {
+        "chance": 35,
+        "time": 4,
+        "dps": 2
+      }
+    },
+    "knee": {
+      "damage": 10,
+      "cooldown": 2.4,
+      "speed": 0.3,
+      "reach": 12,
+      "critChance": 40,
+      "critMult": 2.4,
+      "knockback": 280,
+      "clinch": {
+        "first": [
+          4,
+          7
+        ],
+        "every": [
+          7,
+          11
+        ],
+        "range": 16,
+        "knees": [
+          2,
+          4
+        ],
+        "damage": 8,
+        "gap": 0.38,
+        "escape": 18,
+        "grapplerEscape": 10,
+        "knockback": 420
+      }
+    },
+    "prates": {
+      "lanky": {
+        "wide": 0.93,
+        "tall": 1.07
+      },
+      "range": {
+        "keep": 30,
+        "outGap": [
+          70,
+          95
+        ],
+        "outTime": [
+          0.45,
+          0.85
+        ],
+        "outAngle": [
+          0.35,
+          0.9
+        ],
+        "set": [
+          0.15,
+          0.45
+        ],
+        "inTime": 1.4,
+        "press": 150,
+        "entries": {
+          "left": 1,
+          "right": 1,
+          "straight": 1,
+          "wide": 1,
+          "switch": 1
+        },
+        "fireIn": true,
+        "rate": 5.5,
+        "wall": 70,
+        "closing": 140,
+        "counterCd": 1.1,
+        "counterReady": 0.3,
+        "squaredUp": true
+      },
+      "backOff": {
+        "chance": 68,
+        "step": 460,
+        "window": 1.0,
+        "counter": {
+          "kick": 50,
+          "punch": 30,
+          "teep": 20
+        }
+      },
+      "guardAvoid": {
+        "chance": 85,
+        "margin": 8
+      },
+      "subDefense": {
+        "extraTap": 25
+      },
+      "clinchCrit": {
+        "chance": 40,
+        "mult": 2.2,
+        "partingElbow": 60
+      },
+      "rubber": {
+        "first": [
+          3,
+          6
+        ],
+        "every": [
+          4.5,
+          7
+        ],
+        "partyEvery": [
+          2.2,
+          3.6
+        ],
+        "minGap": 70,
+        "maxGap": 320,
+        "range": 340,
+        "windup": 0.5,
+        "lock": 0.16,
+        "speed": 1800,
+        "fist": 15,
+        "damage": 22,
+        "knockback": 560,
+        "snap": 0.22,
+        "readChance": 12,
+        "whip": {
+          "chance": 35,
+          "damage": 24,
+          "knockback": 640,
+          "extend": 0.12,
+          "sweep": 0.24,
+          "arc": 0.9
+        }
+      },
+      "lines": {
+        "start": [
+          "I'm fighter. I like to fight, I like to make money, and that's it.",
+          "Brazil never had the champion the welterweight division. I will be the first.",
+          "I can punch, I can knee, I can kick, so I'm better now."
+        ],
+        "taunt": [
+          "I can punch, I can knee, I can kick, so I'm better now."
+        ],
+        "punches": [
+          "I'm not here to play, you know."
+        ],
+        "smoke": [
+          "I can be a champ still smoking, still party, still drinking whiskey."
+        ],
+        "party": [
+          "Time to party, let's go!"
+        ],
+        "win": []
+      },
+      "lineOdds": {
+        "gap": 6,
+        "start": 100,
+        "taunt": 45,
+        "punches": 30,
+        "smoke": 100,
+        "party": 100,
+        "win": 100
+      },
+      "lineTiming": {
+        "tauntEvery": [
+          16,
+          26
+        ],
+        "punchRun": 3,
+        "punchWin": 4,
+        "bigWait": 8
+      }
+    },
+    "combos": {
+      "first": [
+        6,
+        9
+      ],
+      "every": [
+        8,
+        12
+      ],
+      "list": {
+        "one-two-kick": 3,
+        "jab-cross-knee": 2,
+        "jab-cross-elbow": 2,
+        "cross-hook-knee": 1,
+        "elbow-elbow-knee": 1,
+        "punch-clinch": 1
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "cigarette",
+      "chargeTime": 44,
+      "hitCut": 2,
+      "punchCut": 1,
+      "notBefore": 10,
+      "light": 1.4,
+      "smoke": 2.2,
+      "theyCome": true,
+      "party": 5,
+      "speed": 1.15,
+      "attack": 1.2,
+      "damage": 1.1,
+      "critChance": 25,
+      "critMult": 1.8,
+      "counter": {
+        "window": 0.8,
+        "mult": 1.9,
+        "lunge": 1.3,
+        "cd": 0.6
+      },
+      "comboEvery": [
+        0.9,
+        1.6
+      ],
+      "out": 0.7,
+      "missFloat": 3,
+      "music": true,
+      "song": true,
+      "musicLevel": 0.22
+    }
+  },
+  {
     "id": "c-charles-oliveira",
     "rev": 16,
     "builtin": false,
@@ -1064,7 +1378,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-conor-mcgregor",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Conor McGregor",
@@ -1288,6 +1602,8 @@ var SAVED_ROSTER = [
       "charge": 3.0,
       "beamTime": 1.5,
       "width": 60,
+      "lock": 1.0,
+      "lead": 1.2,
       "damage": 35,
       "knockback": 1500,
       "wallSlams": 2,
@@ -1322,6 +1638,209 @@ var SAVED_ROSTER = [
       "dollyDamage": 24,
       "dollySpeed": 640,
       "dollyKnockback": 420
+    }
+  },
+  {
+    "id": "c-daniel-cormier",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "heavyweight",
+    "speedMult": 1.12,
+    "name": "Daniel Cormier",
+    "base": "Brawler",
+    "bio": "\"DC\". Olympic wrestler, two-division UFC champion, and a man who loves his food. A heavyweight with a big round belly who still rolls faster than the other big men. He mostly punches: heavy 20-damage hands every 0.75 seconds and jab-cross-hook combinations, plus a body lock that slams them into the cage (a quarter of them can't be stopped) and a suplex if he gets behind them. Every few seconds up close he drops his level while a red lane shows where he's going, then shoots a double leg. Sprawl on it or get out of the way; if it gets through he picks you up over his head, carries you to the middle of the cage while the crowd gets to its feet, and SUPER SLAMS you into the mat there. Special move: All About That Cake, after his 2015 video. When the bar fills he stops for a snack, a slice of chocolate cake or a fried chicken drumstick, wide open while he eats, then his belly gets bigger and he hits harder for the rest of the fight. Jon Jones is his rival: he hits Jon harder and shoots on him more.",
+    "color": "#b0703c",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#5a3826",
+      "build": "stocky",
+      "core": "solid",
+      "belly": 1,
+      "bodyHair": "none",
+      "hair": "bald",
+      "hairColor": "#141010",
+      "beard": "boxed",
+      "beardColor": "#1a1412",
+      "beardChin": 0.04,
+      "ears": "cauliflower",
+      "tattoos": {},
+      "shorts": "#151515",
+      "trim": "#c9a13b",
+      "shortsStyle": "stripe",
+      "gloves": "#151515",
+      "legPatch": false
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 20,
+      "cooldown": 0.75,
+      "speed": 0.26,
+      "size": 15,
+      "knockback": 160,
+      "reach": 40,
+      "koChance": 3
+    },
+    "hasKick": false,
+    "hasGrapple": true,
+    "grapple": {
+      "damage": 32,
+      "cooldown": 1.6,
+      "speed": 0.45,
+      "reach": 6,
+      "counterChance": 15,
+      "finSlamDamage": 20,
+      "finPunches": 3,
+      "finPunchDamage": 10,
+      "sprawlChance": 55,
+      "reattackChance": 70,
+      "vsGrapplerChance": 100,
+      "shotChance": 20,
+      "shotName": "BODY LOCK"
+    },
+    "hasSuplex": true,
+    "suplex": {
+      "chance": 35,
+      "damage": 45,
+      "cooldown": 4
+    },
+    "combos": {
+      "first": [
+        4,
+        6
+      ],
+      "every": [
+        5,
+        8
+      ],
+      "list": {
+        "jab-cross-hook": 3
+      }
+    },
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": false,
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 10,
+    "cormier": {
+      "doubleLeg": {
+        "first": [
+          5,
+          9
+        ],
+        "every": [
+          11,
+          16
+        ],
+        "retry": [
+          4,
+          7
+        ],
+        "range": 170,
+        "tell": 0.5,
+        "readChance": 15,
+        "shootSpeed": 950,
+        "shootTime": 0.34,
+        "turn": 6,
+        "whiffStun": 0.5,
+        "sprawlScale": 0.45,
+        "minStuff": 8,
+        "carrySpeed": 320,
+        "minCarry": 0.9,
+        "crowd": 0.5,
+        "hoist": 0.35,
+        "damage": 62,
+        "downTime": 1.2
+      },
+      "bodyLock": {
+        "through": 25
+      },
+      "food": {
+        "menu": [
+          "cake",
+          "chicken",
+          "cake"
+        ],
+        "max": 3,
+        "eatTime": 1.5,
+        "bites": 3,
+        "damage": 1.17,
+        "take": 0.94,
+        "belly": 0.28,
+        "grow": 0.035
+      },
+      "vsJon": {
+        "damage": 1.12,
+        "every": [
+          9,
+          14
+        ]
+      },
+      "lines": {
+        "start": [
+          "Good thing about our job is we get to punch each other in the face. So I'm gonna keep talking, and it's his job to shut me up."
+        ],
+        "food": [
+          "I'm all about that cake, 'bout that cake, and chicken!"
+        ],
+        "slam": [
+          "Take a seat right here, champ.",
+          "Sit down, young man. Sit down."
+        ],
+        "clinch": [
+          "I know nobody can wrestle me."
+        ],
+        "taunt": [
+          "You can't beat me, you know it. Don't lie to yourself.",
+          "I could give two [BLEEP] about his feelings, you know."
+        ],
+        "win": [
+          "This is my octagon. I'm the man."
+        ],
+        "winVsJon": [
+          "Two belts, one on each shoulder, baby!"
+        ],
+        "vsJon": [
+          "I wish they would let me next door so I could spit in your [BLEEP] face.",
+          "Then you should try, Jon. You really should try, Jon."
+        ]
+      },
+      "lineTiming": {
+        "slamChance": 60,
+        "clinchChance": 40,
+        "tauntEvery": [
+          12,
+          20
+        ],
+        "tauntChance": 60,
+        "gap": 8,
+        "jonFirst": [
+          8,
+          14
+        ],
+        "jonGap": [
+          12,
+          18
+        ],
+        "wait": 8
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "cake",
+      "chargeTime": 32,
+      "hitCut": 2.5,
+      "punchCut": 1.2
     }
   },
   {
@@ -2176,7 +2695,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 6,
+      "damage": 8,
       "cooldown": 2.6,
       "speed": 0.22,
       "size": 15,
@@ -2274,6 +2793,298 @@ var SAVED_ROSTER = [
       "wallSlams": 3,
       "slamDamage": 6,
       "roseEvery": 0.05
+    }
+  },
+  {
+    "id": "c-jiri-prochazka",
+    "rev": 1,
+    "builtin": false,
+    "weightClass": "lightheavyweight",
+    "name": "Ji\u0159\u00ed Proch\u00e1zka",
+    "base": "Brawler",
+    "bio": "\"BJP\", \"Denisa\". The Czech samurai. A long, lean Light Heavyweight with his war hair tied up in a topknot and his hands down by his hips. He weaves a lot of what comes at him, but with his hands that low, what does land is often a critical hit. He throws a lot of punches, and hard ones, with elbows and knees up close and the spinning back elbow he knocked Dominick Reyes out with. He reads Miyamoto Musashi's Book of Five Rings: now and then, and always once a fight when he or they get low, he dreams of Musashi, comes back in a samurai's kimono and draws two katanas, and the samurai usually ends it.",
+    "color": "#6b8e23",
+    "label": "",
+    "imgData": null,
+    "look": {
+      "skin": "#e2b493",
+      "build": "lean",
+      "bodyHair": "none",
+      "hair": "buzz",
+      "hairColor": "#2a1d15",
+      "beard": "short",
+      "beardColor": "#2a1d15",
+      "ears": "normal",
+      "tattoos": {},
+      "shorts": "#151515",
+      "trim": "#c8102e",
+      "shortsStyle": "stripe",
+      "gloves": "#141414",
+      "warHair": {
+        "tie": "#c8102e",
+        "height": 0.42
+      }
+    },
+    "hasProjectile": false,
+    "proj": {
+      "size": 7,
+      "speed": 460,
+      "damage": 10,
+      "cooldown": 1.6,
+      "imgData": null
+    },
+    "hasPunch": true,
+    "punch": {
+      "damage": 16,
+      "cooldown": 0.72,
+      "speed": 0.26,
+      "size": 15,
+      "knockback": 220,
+      "reach": 40,
+      "koChance": 0
+    },
+    "hasKick": false,
+    "hasGrapple": false,
+    "hasPowerPunch": false,
+    "hasRage": false,
+    "hasWatcher": false,
+    "hasWeave": true,
+    "weave": {
+      "dodgeChance": 52,
+      "critChance": 22,
+      "comboHits": 5,
+      "comboDamage": 5,
+      "finalDamage": 12,
+      "finalKnockback": 950,
+      "tauntDur": 1.3,
+      "tauntVuln": 1.25,
+      "flowChance": 25,
+      "flowDamage": 15
+    },
+    "hasSwing": false,
+    "hasForget": false,
+    "blockChance": 0,
+    "elbow": {
+      "damage": 8,
+      "cooldown": 1.6,
+      "speed": 0.26,
+      "reach": 14,
+      "critChance": 35,
+      "critMult": 2.5,
+      "knockback": 160,
+      "cut": {
+        "chance": 35,
+        "time": 3.5,
+        "dps": 2
+      }
+    },
+    "knee": {
+      "damage": 11,
+      "cooldown": 2.4,
+      "speed": 0.3,
+      "reach": 12,
+      "critChance": 30,
+      "critMult": 2,
+      "knockback": 220,
+      "clinch": {
+        "first": [
+          5,
+          8
+        ],
+        "every": [
+          9,
+          13
+        ],
+        "range": 14,
+        "knees": [
+          2,
+          3
+        ],
+        "damage": 8,
+        "gap": 0.4,
+        "escape": 15,
+        "grapplerEscape": 10,
+        "knockback": 380
+      },
+      "flying": {
+        "first": [
+          8,
+          12
+        ],
+        "every": [
+          12,
+          18
+        ],
+        "minGap": 70,
+        "maxGap": 210,
+        "load": 0.4,
+        "speed": 950,
+        "damage": 22,
+        "knockback": 560,
+        "koBase": 3,
+        "koLow": 12,
+        "readChance": 15,
+        "open": 0.8
+      }
+    },
+    "combos": {
+      "first": [
+        3,
+        5
+      ],
+      "every": [
+        4,
+        6.5
+      ],
+      "list": {
+        "jab-cross-hook": 3,
+        "cross-hook-knee": 3,
+        "jab-spin-elbow": 5,
+        "spin-back-elbow": 3,
+        "elbow-elbow-knee": 2,
+        "punch-clinch": 1
+      }
+    },
+    "prochazka": {
+      "handsLow": true,
+      "chin": {
+        "critChance": 48,
+        "critMult": 1.6,
+        "sources": [
+          "punch",
+          "jab",
+          "kick",
+          "kickback",
+          "elbow",
+          "knee",
+          "combo",
+          "swing",
+          "teep",
+          "flow",
+          "bat",
+          "poke"
+        ]
+      },
+      "samurai": {
+        "lowHp": 0.4,
+        "oppLowHp": 0.4,
+        "lowBoost": 1.5,
+        "max": 2,
+        "minGap": 8,
+        "dream": 2.0,
+        "outfit": 0.7,
+        "draw": 0.6,
+        "time": 5,
+        "speed": 1.3,
+        "reach": 34,
+        "tell": 0.32,
+        "swing": 0.13,
+        "recover": 0.12,
+        "damage": 24,
+        "critChance": 30,
+        "critMult": 2,
+        "xEvery": 3,
+        "xMult": 1.5,
+        "arc": 1.25,
+        "readChance": 20,
+        "cut": {
+          "chance": 50,
+          "time": 3.5,
+          "dps": 2.5
+        },
+        "ko": {
+          "below": 0.5,
+          "chance": 60
+        },
+        "iai": {
+          "hold": 0.45,
+          "sheathe": 0.45
+        },
+        "petals": 26,
+        "finisher": {
+          "damage": 45,
+          "tell": 0.6,
+          "lock": 0.2,
+          "dash": 2400,
+          "reach": 46,
+          "knockback": 1100,
+          "wallSlams": 1,
+          "slamDamage": 4
+        },
+        "keepOutfit": false,
+        "look": {
+          "sleeves": "#1c2232",
+          "samurai": {
+            "kimono": "#1c2232",
+            "under": "#efe9dc",
+            "obi": "#b3202a",
+            "hakama": "#3b3f4a",
+            "mon": "#efe9dc"
+          },
+          "hachimaki": {
+            "color": "#f6f4ee",
+            "sun": "#c8102e"
+          }
+        },
+        "clash": {
+          "parry": {
+            "blade": 55,
+            "katana": 50,
+            "saber": 45,
+            "bat": 40
+          },
+          "lockAfter": 2,
+          "win": 45,
+          "hurt": 30,
+          "disarm": 25,
+          "winDamage": 24,
+          "hurtDamage": 16
+        },
+        "vsTony": {
+          "answerChance": 100
+        }
+      },
+      "lines": {
+        "start": [
+          "I just want to show the beauty of the art."
+        ],
+        "samurai": [
+          "I am samurai, and you will die for the, for what you say, man."
+        ],
+        "hurt": [
+          "Sometimes I need to catch some punches to release, to release the true Jirka."
+        ],
+        "comeback": [
+          "I will never stop, I will never stop. If I will be die, my body will still work."
+        ],
+        "win": [
+          "It was not the perfect, but it was a storm."
+        ],
+        "loss": [
+          "I'll be back. I'll be back."
+        ]
+      },
+      "talk": {
+        "start": [
+          1,
+          3
+        ],
+        "hurtChance": 35,
+        "hurtGap": 15,
+        "comebackBehind": 60,
+        "comebackRun": 40,
+        "comebackChance": 70,
+        "comebackMax": 1,
+        "lossDelay": 1.5,
+        "wait": 12
+      }
+    },
+    "hasSpecial": true,
+    "special": {
+      "move": "samurai",
+      "chargeTime": 50,
+      "hitCut": 2,
+      "punchCut": 1
     }
   },
   {
@@ -3082,7 +3893,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 7,
+      "damage": 8,
       "cooldown": 0.8,
       "speed": 0.13,
       "size": 13,
@@ -3109,8 +3920,8 @@ var SAVED_ROSTER = [
           6
         ],
         "damage": [
-          6,
-          9
+          8,
+          12
         ],
         "cooldown": [
           0.75,
