@@ -2582,9 +2582,11 @@ var SAVED_ROSTER = [
         "through": 45
       },
       "shield": {
+        "throws": 1,
+        "linger": 1.5,
         "first": [
-          4,
-          7
+          8,
+          16
         ],
         "every": [
           8,
