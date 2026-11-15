@@ -175,6 +175,7 @@ function attemptGrab(attacker, target) {
   // Hokit's Chair Shot blocks everything once it's started, takedowns too, right
   // through his celebration lap, even after their stars wear off (Joe, 2026-11-11).
   if (target.igbb && target.igbb.move === "chairshot" && specialGuarding(target)) return false;
+  if (bispingAboard(target)) return false; // nobody takes Michael Bisping down off his pirate ship (bisping.js)
   if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;

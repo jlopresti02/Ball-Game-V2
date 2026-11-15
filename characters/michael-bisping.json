@@ -5,7 +5,7 @@
   "weightClass": "middleweight",
   "name": "Michael Bisping",
   "base": "Brawler",
-  "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. His special is Broadside: a pirate cannon rolls in at his side with a Union Jack flying behind it, he puts on a captain's hat, lights the fuse and fires cannonballs down a red line at them.",
+  "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. His special is Broadside: the sea spreads over the mat, a pirate ship with a Union Jack mainsail rises out of it in the middle of the cage, and he hops on deck in a captain's hat while three cannons on the bow fire volleys across the cage at them.",
   "color": "#b3202a",
   "label": "",
   "imgData": null,
@@ -65,12 +65,12 @@
       "blind": ["I can't look two places at once, guys."],
       "blindChance": 10,
       "missChance": 4,
-      "cannonMissChance": 60,
       "blindMax": 1,
       "knockdown": ["I've always said I had knockout power, for God's sake. Nobody believed it."],
       "knockdownChance": 100,
       "win": ["Everybody, everybody that doubted me, kiss my [BLEEP]."],
       "loss": ["It's back to the drawing board. I'm going nowhere, don't you forget it."],
+      "special": ["I'll knock him out, and I'll knock all you lot out, one by one."],
       "vs": {
         "c-anderson-silva": { "once": ["I worship this guy. This guy is the greatest martial artist of all time."] }
       },
@@ -80,7 +80,9 @@
   "hasSpecial": true,
   "special": {
     "move": "broadside", "chargeTime": 45, "hitCut": 2, "punchCut": 0.5,
-    "roll": 0.45, "aim": 0.9, "reaim": 0.5, "lock": 0.3, "shots": 3, "gap": 0.45, "hold": 0.5,
-    "speed": 900, "size": 9, "damage": 20, "knockback": 520
+    "ship": { "length": 290, "y": 0.6, "rise": 0.75, "board": 0.5, "sink": 0.7, "drift": 12, "bob": 4, "roll": 0.035, "solid": true, "sea": 0.34 },
+    "cannons": { "count": 3, "aim": 1, "reaim": 0.75, "lock": 0.35, "lead": 1, "spread": 12, "stagger": 0.14, "speed": 780, "size": 11 },
+    "volley": { "volleys": 2, "gap": 0.5, "hold": 0.5 },
+    "damage": 16, "knockback": 760, "shove": 0.8
   }
 }
