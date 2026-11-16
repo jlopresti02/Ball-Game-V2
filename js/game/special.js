@@ -110,6 +110,7 @@ function updateSpecial(self, other, dt) {
   if (sp.move === "cake") return updateCake(self, other, dt); // Daniel Cormier's All About That Cake (cormier.js)
   if (sp.move === "cigarette") return updateCigarette(self, other, dt); // Carlos Prates (prates.js)
   if (sp.move === "samurai") return updateSamurai(self, other, dt); // Jiří Procházka (prochazka.js)
+  if (sp.move === "unmoving") return updateUnmoving(self, other, dt); // Fedor Emelianenko's The Unmoving Man (fedor-unmoving.js)
   if (!self.igbb) {
     if (self.specialT < sp.chargeTime || !canStartIgbb(self, other)) return false;
     self.igbb = { phase: "close", t: 0, move: sp.move };

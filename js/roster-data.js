@@ -2462,7 +2462,7 @@ var SAVED_ROSTER = [
     "weightClass": "heavyweight",
     "name": "Fedor Emelianenko",
     "base": "Brawler",
-    "bio": "\"The Last Emperor\". The PRIDE heavyweight champion, a Combat Sambo world champion from Stary Oskol, Russia, with a soft, everyman heavyweight build and no expression on his face. Slow on his feet, but his hands are the fastest heavy hands in the game: hard punches off alternating hands, strung into jab, cross, hook. Shoot on him and he sprawls on almost everything. Every so often he drops his level, reaches out with both arms and clinches: break free or he throws you over his hip, follows you down and rains punches from on top, the PRIDE flurry, sometimes switching to the armbar that finished Mark Coleman twice. He barely reacts to being hit: big shots barely move him, a dizzy wears off fast, and a low church bell rings when he walks through one. A quiet Russian Orthodox-style choir hums under every fight he's in. Special move: not picked yet.",
+    "bio": "\"The Last Emperor\". The PRIDE heavyweight champion, a Combat Sambo world champion from Stary Oskol, Russia, with a soft, everyman heavyweight build and no expression on his face. Slow on his feet, but his hands are the fastest heavy hands in the game: hard punches off alternating hands, strung into jab, cross, hook. Shoot on him and he sprawls on almost everything. Every so often he drops his level, reaches out with both arms and clinches: break free or he throws you over his hip, follows you down and rains punches from on top, the PRIDE flurry, sometimes switching to the armbar that finished Mark Coleman twice. He barely reacts to being hit: big shots barely move him, a dizzy wears off fast, and a low church bell rings when he walks through one. A quiet Russian Orthodox-style choir hums under every fight he's in. Special move: The Unmoving Man. Hands down, feet still, he slips everything they throw without changing a thing, catches their last punch in one glove and puts them through the cage with one overhand right.",
     "color": "#7d93b2",
     "label": "",
     "imgData": null,
@@ -2471,8 +2471,8 @@ var SAVED_ROSTER = [
       "skin": "#e8c3a4",
       "build": "stocky",
       "bodyHair": "light",
-      "hair": "short",
-      "hairColor": "#5b4330",
+      "hair": "fedor",
+      "hairColor": "#9a7a5c",
       "beard": "none",
       "ears": "normal",
       "tattoos": {},
@@ -2601,7 +2601,18 @@ var SAVED_ROSTER = [
         "startChance": 100
       }
     },
-    "hasSpecial": false
+    "hasSpecial": true,
+    "special": {
+      "move": "unmoving",
+      "chargeTime": 45,
+      "hitCut": 1.5,
+      "punchCut": 1,
+      "range": 140,
+      "waitMax": 2.5,
+      "damage": 150,
+      "launch": 1300,
+      "slamDamage": 10
+    }
   },
   {
     "id": "c-francis-ngannou",

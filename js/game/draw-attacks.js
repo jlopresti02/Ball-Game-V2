@@ -143,6 +143,7 @@ function drawHands(b, other) {
   if (prochazkaHandsBusy(b)) return; // Jiří Procházka's hands down by his hips, or on his katanas (drawProchazka, prochazka.js)
   if (kneeHandsBusy(b)) return; // both hands round their head in the clinch (drawKneesOver, knees.js)
   if (fedorHandsBusy(b)) return; // reaching for the clinch, arms round them in the throw (drawFedor, fedor.js)
+  if (unmovingHandsBusy(b)) return; // both fighters in The Unmoving Man (drawUnmovingOver, fedor-unmoving.js)
   if (bispingHandsBusy(b)) return; // the linstock and pointing at them in Broadside (drawBisping, bisping.js)
   if (andersonHandsBusy(b)) return; // hands down by his sides (drawAnderson, anderson.js)
   if (ganeHandsBusy(b)) return; // Ciryl Gane's hands down by his hips (drawGane, gane.js)

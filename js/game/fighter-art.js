@@ -424,6 +424,8 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
       c.fillRect(cgx, cgy, r * 0.016, r * 0.016);
     }
     c.globalAlpha = 1; c.fillStyle = hc;
+  } else if (look.hair === "fedor") {
+    drawFedorHair(c, r, look, lw); c.fillStyle = hc;  // Fedor Emelianenko's close shave and receding temples (fedor-skin.js)
   } else if (look.hair === "receding") {
     drawRecedingHair(c, r, look, lw); c.fillStyle = hc;  // Tony Ferguson's receding hairline (ferguson.js)
   } else if (look.hair === "slick") {
@@ -528,7 +530,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
     c.fillStyle = "rgba(255,255,255,0.35)";
     c.beginPath(); c.ellipse(-r * 0.25, -r * 0.82, r * 0.18, r * 0.06, -0.2, 0, Math.PI * 2); c.fill();
   }
-  if (look.hair !== "bald" && look.hair !== "crop" && look.hair !== "coils" && look.hair !== "receding") {  // these outline their own shape
+  if (look.hair !== "bald" && look.hair !== "crop" && look.hair !== "coils" && look.hair !== "receding" && look.hair !== "fedor") {  // these outline their own shape (Fedor: no line, Joe)
     c.strokeStyle = shadeHex(hc, -0.3); c.lineWidth = lw(0.03); c.globalAlpha = look.hair === "buzz" || look.hair === "stubble" || look.hair === "mohawk" ? 0.3 : 0.8;
     hairline(); c.stroke(); c.globalAlpha = 1;
   }
