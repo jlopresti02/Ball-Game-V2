@@ -17,6 +17,20 @@ var TAPE_PRESSER_AT = 4.9;   // the podium comes up (a beat before the last row)
 var TAPE_PRESSER_LEN = 2.5;  // up, the line, down again
 var TAPE_PRESSER_RISE = 0.3;
 var TAPE_PRESSER_LINE = "He's a snake in the grass.";
+
+// His line: his own line for that opponent if he has one with a clip (vs
+// Dustin: "A gust of wind and he does the chicken dance.", conor.js), else
+// the snake in the grass.
+function tapePresserLine() {
+  var b = balls && balls[0] && balls[1] ? (tapeSigKind(balls[0].char) === "presser" ? balls[1] : balls[0]) : null;
+  var vs = b && typeof CM_LINES !== "undefined" && CM_LINES.vs && CM_LINES.vs[b.char.id];
+  return vs && vs[0] && SPEECH_CLIPS[vs[0]] ? vs[0] : TAPE_PRESSER_LINE;
+}
+// How long his part runs: long enough for the line (Joe, 2026-11-16).
+function tapePresserLen() {
+  var name = SPEECH_CLIPS[tapePresserLine()], d = name && clipBuffers[name] ? clipBuffers[name].duration : 1.5;
+  return Math.max(TAPE_PRESSER_LEN, TAPE_PRESSER_RISE + 0.1 + d + 0.55);
+}
 var TAPE_SAIYAN_LEN = 1.45;
 // When he's blond (seconds into his taunt): one power-up, he holds the form,
 // then powers down (Joe, 2026-11-15: no flickering).
@@ -28,7 +42,7 @@ function tapeTauntKind(ch) {
   return null;
 }
 function tapeSigLen(kind) {
-  if (kind === "presser") return TAPE_PRESSER_LEN;
+  if (kind === "presser") return tapePresserLen();
   if (kind === "saiyan") return TAPE_SAIYAN_LEN;
   return TAPE_SIG_LEN;
 }
@@ -39,7 +53,7 @@ function tapeTauntTimes(A, B, sg) {
   for (var i = 0; i < 2; i++) {
     if (k[i] !== "presser" || k[1 - i] === "presser") continue;
     s[i] = TAPE_PRESSER_AT;
-    s[1 - i] = TAPE_PRESSER_AT + TAPE_PRESSER_LEN - 0.85;
+    s[1 - i] = TAPE_PRESSER_AT + tapePresserLen() - 0.85;
     if (k[1 - i] === "saiyan") s[1 - i] = Math.min(s[1 - i], TAPE_HIT.out - TAPE_SAIYAN_LEN + 0.05);
   }
   return s;
@@ -58,8 +72,9 @@ function tickTapeTaunts(t) {
     var kind = tapeSigKind(ch), st = t - sg[i];
     if (kind === "presser") {
       if (!snd.mic && st >= 0) { snd.mic = true; if (typeof playMicFeedback === "function") playMicFeedback(); }
-      if (!snd.line && st >= TAPE_PRESSER_RISE + 0.1 && st < TAPE_PRESSER_LEN - 0.6) {
-        var name = SPEECH_CLIPS[TAPE_PRESSER_LINE];
+      if (!snd.line && st >= TAPE_PRESSER_RISE + 0.1 && st < tapePresserLen() - 0.6) {
+        tape.line = tapePresserLine();
+        var name = SPEECH_CLIPS[tape.line];
         if (!name || !clipBuffers[name]) { snd.line = true; tape.lineAt = t; tape.lineLen = 1.5; }
         else if (playTalk(name, 1)) { snd.line = true; tape.lineAt = t; tape.lineLen = clipBuffers[name].duration; }
       }
@@ -154,7 +169,7 @@ function tapeSaiyanGloves(g, pr, sig) {
 // Conor's podium in front of his portrait (his own podium art, conor.js).
 function drawTapePodium(x, y, pr, sig) {
   if (sig < 0 || typeof drawPodium !== "function") return;
-  var sink = TAPE_PRESSER_LEN - 0.35, keep = cmPodium;
+  var sink = tapePresserLen() - 0.35, keep = cmPodium;
   cmPodium = { id: -1, x: x, y: y + pr * 0.14, t: sig, sink: sig > sink ? sink : null };
   try { drawPodium({ r: pr * 0.64 }); } catch (e) {}
   cmPodium = keep;
@@ -162,7 +177,7 @@ function drawTapePodium(x, y, pr, sig) {
 // His gloves at the podium: the inside one resting on it, the outside one
 // pointing across at the other fighter, jabbing on the words.
 function tapePresserGloves(g, pr, sig, side) {
-  var up = Math.min(1, sig / TAPE_PRESSER_RISE) * Math.min(1, Math.max(0, (TAPE_PRESSER_LEN - 0.3 - sig) / 0.25));
+  var up = Math.min(1, sig / TAPE_PRESSER_RISE) * Math.min(1, Math.max(0, (tapePresserLen() - 0.3 - sig) / 0.25));
   var out = side < 0 ? 0 : 1, inn = 1 - out, talk = tape && tape.lineAt != null ? (performance.now() - tape.t0) / 1000 - tape.lineAt : -1;
   var jab = talk >= 0 && talk < (tape.lineLen || 1.5) ? Math.abs(Math.sin(talk * 9)) : 0;
   g[out].y += pr * 0.12 * up; g[out].x -= side * pr * 0.12 * up; // resting on the podium
@@ -177,7 +192,7 @@ function drawTapePresserBubble(t, w, py, pr, px) {
   var st = t - tape.lineAt, len = (tape.lineLen || 1.5) + 0.35;
   if (st < 0 || st > len) return;
   var a = Math.min(1, st / 0.12) * Math.min(1, (len - st) / 0.2), pop = tapePop(Math.min(1, st / 0.2));
-  var bw = 430, bh = 92, bx = w / 2, by = py - pr * 0.95;
+  var bw = 430, bh = 92, bx = w / 2, by = Math.max(bh / 2 + 10, py - pr * 0.95); // (kept inside the card)
   var dir = px > bx ? 1 : -1;
   ctx.save();
   ctx.globalAlpha *= a;
@@ -191,7 +206,11 @@ function drawTapePresserBubble(t, w, py, pr, px) {
   ctx.fill(); ctx.stroke();
   ctx.fillStyle = "#ffffff"; ctx.fillRect(dir > 0 ? bw / 2 - 66 : -bw / 2 + 24, bh / 2 - 9, 42, 12); // (no line where the tail meets it)
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  tapeFont(TAPE_PRESSER_LINE.toUpperCase(), 40, bw - 40, "900", TAPE_IMPACT);
-  ctx.fillStyle = "#0b0f12"; ctx.fillText(TAPE_PRESSER_LINE.toUpperCase(), 0, 2);
+  var words = (tape.line || TAPE_PRESSER_LINE).toUpperCase().split(" "), lines = [words.join(" ")];
+  if (lines[0].length > 28) { var half = Math.ceil(words.length / 2); lines = [words.slice(0, half).join(" "), words.slice(half).join(" ")]; }
+  ctx.fillStyle = "#0b0f12";
+  var longest = lines.reduce(function (m, ln) { return ln.length > m.length ? ln : m; }, "");
+  tapeFont(longest, lines.length > 1 ? 34 : 40, bw - 40, "900", TAPE_IMPACT); // one size for both lines
+  lines.forEach(function (ln, k) { ctx.fillText(ln, 0, 2 + (k - (lines.length - 1) / 2) * 38); });
   ctx.restore();
 }

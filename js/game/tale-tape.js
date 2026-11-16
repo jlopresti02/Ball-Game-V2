@@ -447,7 +447,7 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   // Reacting to the other fighter's taunt
   if (oppSig >= 0 && oppKind === "thumbs" && ost > 0.25) drawTapeAnger(x + pr * 0.62, y - pr * 0.72, ost);
   if (oppSig >= 0 && oppKind === "poke" && ost > 0.35) drawTapeStars(x, y - pr * 0.82, pr, ost);
-  if (oppSig >= 0 && oppKind === "presser" && ost > 0.6 && sig < 0) drawTapeAnger(x - side * pr * 0.62, y - pr * 0.72, ost); // fuming at the press conference (on the side away from his speech bubble)
+  if (oppSig >= 0 && oppKind === "presser" && ost > 0.6 && sig < 0) drawTapeAnger(x + side * pr * 0.62, y - pr * 0.72, ost); // fuming at the press conference (on the outside, away from his speech bubble)
   if (kind === "saiyan") drawTapeSaiyanFront(x, y + bob, pr, sig); // (tape-taunts.js)
 }
 
