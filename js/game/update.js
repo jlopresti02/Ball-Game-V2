@@ -62,7 +62,8 @@ function update(dt) {
   tickGsp(dt); // GSP's walkout, the Montreal chant, his slip run (gsp.js)
   tickMightyMouse(dt); // Mighty Mouse's game film, copycat, cardio, voice lines (mighty-mouse.js)
   tickConor(dt); // Conor McGregor's gas tank, his lines, 13 SECONDS (conor.js)
-  tickRainbow(dt); tickBeamClash(dt); tickBeamPins(dt); // the Pot o' Gold's coins, and a beam clash (rainbow-beam.js, beam-clash.js)
+  tickRainbow(dt); tickBeamClash(dt); tickBeamPins(dt);
+  tickConorGuard(dt); // Conor blocks or slips everything during the Bus Crew and the presser (conor-guard.js) // the Pot o' Gold's coins, and a beam clash (rainbow-beam.js, beam-clash.js)
   tickLiddell(dt); // frost melting, the snow, Chuck Liddell's all-out attack (liddell.js)
   tickNgannou(dt); // Francis Ngannou's rage meter, knockdowns, Dana White (ngannou.js)
   tickVolk(dt); // Alexander Volkanovski's fight IQ, circling, the green and gold arena (volkanovski.js)
@@ -98,6 +99,7 @@ function update(dt) {
   tickGolf(dt);         // and his golf mode running out (gaethje-golf.js)
   tickDiamond(dt);  // Dustin turning into Diamond Guard and throwing diamonds (diamond.js)
   updateHerb(dt);   // Herb Dean wandering the cage (herbdean.js)
+  tickSpecialSolid(dt); // solid through a special: eased out of his space, strikes BLOCKED! or DODGED! (special-solid.js)
   tickWatchdog(dt); // a fighter stuck in one state far too long gets let go (watchdog.js)
 
   balls.forEach(function (b) {

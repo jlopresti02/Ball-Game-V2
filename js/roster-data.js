@@ -2007,7 +2007,8 @@ var SAVED_ROSTER = [
         "damage": 1.17,
         "take": 0.94,
         "belly": 0.28,
-        "grow": 0.035
+        "grow": 0.035,
+        "defend": true
       },
       "vsJon": {
         "damage": 1.12,

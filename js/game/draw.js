@@ -102,6 +102,7 @@ function draw() {
   drawEagleStrikeUnder(); // Eagle Strike: the red path and the eagle's shadow (gaethje-eagle.js)
   drawPereiraUnder(); // Bow and Arrow: the red ricochet path (pereira.js)
   drawOmalleyUnder(); // sweets on the mat, the race lines, the crane kick's path (omalley.js)
+  drawOmalleyAuraUnder(); // O'Malley's Sugar Rush swirl, flames and rings under him (omalley-aura.js)
   drawGspUnder(); // GSP's shadow in the air and the Superman Dive's red lane (gsp.js)
   drawLiddellUnder(); // snow on the mat, Chuck Liddell's ice flames (liddell.js)
   drawNgannouUnder(); // Ngannou's rage punch line, the Smash circle and crater, Dana at the cage (ngannou.js)
@@ -147,6 +148,7 @@ function draw() {
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
     var kmo = kameOffset(b); wox += kmo.x; woy += kmo.y; // leaning back to charge, lunging into the Kamehameha (kamehameha.js)
     var bpo = beamPinOffset(b); wox += bpo.x; woy += bpo.y; // shaking, pinned to the cage by a beam (beam-clash.js)
+    var cgo = conorGuardOffset(b); wox += cgo.x; woy += cgo.y; // Conor's shoulder into a blocked shot (conor-guard.js)
     var rbo = rainbowOffset(b); wox += rbo.x; woy += rbo.y; // leaning over the pot of gold (rainbow-beam.js)
     var ngo = ngannouOffset(b); wox += ngo.x; woy += ngo.y; // up in the air for Ngannou's Smash (ngannou.js)
     var aso = andersonOffset(b); wox += aso.x; woy += aso.y; // Anderson Silva leaning back out of a shot, swaying with his hands down (anderson.js)
@@ -220,6 +222,7 @@ function draw() {
     applyHotSaucePose(b); // Dustin swelling up, gulping and flailing in Hot Sauce Fire Breath (hot-sauce.js)
     applyPoatanStep(b); // Alex Pereira dipping his level on his 1-2 step (pereira.js)
     applyOmalleyPose(b); // Sean O'Malley up on one leg, leaping, buzzing or crashed (omalley.js)
+    applyOmalleyAuraPose(b); // O'Malley's Sugar Rush jitter (omalley-aura.js)
     applyGspPose(b); // GSP crouching to load, up in the air for the leap and the dive (gsp.js)
     applyConorPose(b); // Conor McGregor rocking on his strut, planted, or gassed (conor.js)
     applyNgannouPose(b); // Ngannou crouching and leaping for the Smash, or knocked flat by it (ngannou.js)
@@ -381,6 +384,7 @@ function draw() {
     drawPereira(b); // Alex Pereira's CHAMA fists and bow (pereira.js)
     drawGane(b, other); // Ciryl Gane's gloves down by his hips (gane.js)
     drawOmalley(b); // Sean O'Malley's crane kick, sugar boost, pips and crash (omalley.js)
+    drawOmalleyAuraOver(b); // O'Malley's Sugar Rush candies, ghost rims and burst (omalley-aura.js)
     drawGsp(b); // GSP's Superman fists, hands down for "not impressed" (gsp.js)
     drawMightyMouse(b); // Mighty Mouse's mimic aura and crouch (mighty-mouse.js)
     drawConor(b); // Conor McGregor's strut, counter stance, podium and gas tank (conor.js)
@@ -424,6 +428,7 @@ function draw() {
   drawWatcherLasers();
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
+  drawSpecialSolid(); // a guard snapping up as a special blocks a strike (special-solid.js)
   balls.forEach(drawPunchTypesOver); // uppercuts and body shots go over the opponent (body-shots-uppercuts.js)
   drawDiamondSwordsTop(); // Dustin's sword slashing into a bat, over both fighters (sword.js)
   drawDarkSideTop(); // Hokit's saber flying loose, the Force push, a saber lock (hokit-darkside.js)
@@ -551,4 +556,5 @@ function draw() {
   drawTaleTape(); // the tale of the tape before the whistle, which then starts the fight (tale-tape.js)
   drawIntroMsg(s, ox, oy); // the instruction to the viewer at the start (intro-msg.js)
   drawSendLocSpace(); // cut up to the space station while the fight holds (send-location.js)
+  drawDcCakeCut(); // Daniel Cormier's All About That Cake music video, over everything while the fight holds (cormier-cake-cut.js)
 }

@@ -177,6 +177,8 @@ function attemptGrab(attacker, target) {
   if (target.igbb && target.igbb.move === "chairshot" && specialGuarding(target)) return false;
   if (americaUngrabbable(target)) return false; // nobody grabs Sean Strickland during America (strickland.js)
   if (bispingAboard(target)) return false; // nobody takes Michael Bisping down off his pirate ship (bisping.js)
+  if (cormierEatSafe(target)) return false; // Daniel Cormier blocks or slips everything while he eats (cormier.js)
+  if (conorGuardSafe(target)) return false; // Conor blocks or slips everything during the Bus Crew and the presser (conor-guard.js)
   if (golfSwinging(target)) return false; // or Gaethje mid swing with his golf club (gaethje-golf.js)
   if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;

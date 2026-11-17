@@ -1087,6 +1087,7 @@ function tickCrew(bus, owner, opp, sp, dt) {
       c.x += (c.tx - c.x) * ek; c.y += (c.ty - c.y) * ek;
       if (c.t >= 0.2) { c.st = "chase"; c.t = 0; }
     } else if (c.st === "chase") {
+      if (!opp.cmBrawl && !crewCanGrab(opp)) { crewWait(bus, c, owner, opp, sp, dt); return; } // (Joe: they circle round a submission or a combo, not stack on it)
       crewRun(c, opp.x + opp.vx * 0.12, opp.y + opp.vy * 0.12, sp.crewSpeed, dt);
       var dd = Math.sqrt((opp.x - c.x) * (opp.x - c.x) + (opp.y - c.y) * (opp.y - c.y));
       if (dd < opp.r + CM_CREW_R + 2 && (opp.cmBrawl || crewCanGrab(opp))) joinBrawl(c, opp, sp);
@@ -1099,6 +1100,30 @@ function tickCrew(bus, owner, opp, sp, dt) {
     }
   });
   tickBrawl(bus, owner, opp, sp, dt);
+}
+// Joe (2026-11-17): while they're tied up (a submission, a combo, a grab,
+// anything that means they can't be jumped yet) the lads don't pile on top of
+// the fighters. They spread out in a ring round the pair, a step back,
+// bouncing on their toes, and wait; their chase clock doesn't run while they
+// wait. The moment the opponent's free they're straight in.
+function crewWait(bus, c, owner, opp, sp, dt) {
+  var cx = opp.x, cy = opp.y, rad = opp.r;
+  if (owner.alive) {
+    var ox = owner.x - opp.x, oy = owner.y - opp.y, od = Math.sqrt(ox * ox + oy * oy);
+    if (od < owner.r + opp.r + 40) { cx = (owner.x + opp.x) / 2; cy = (owner.y + opp.y) / 2; rad = od / 2 + Math.max(owner.r, opp.r); } // tangled up together: round the both of them
+  }
+  rad += CM_CREW_R + 24;
+  var waiting = bus.crew.filter(function (q) { return q.st === "chase"; }), k = Math.max(0, waiting.indexOf(c)), n = Math.max(1, waiting.length);
+  var a = (k / n) * Math.PI * 2 + (bus.waitA || 0);
+  var tx = cx + Math.cos(a) * rad, ty = cy + Math.sin(a) * rad;
+  tx = Math.max(CM_CREW_R, Math.min(W - CM_CREW_R, tx)); ty = Math.max(CM_CREW_R, Math.min(H - CM_CREW_R, ty));
+  crewRun(c, tx, ty, sp.crewSpeed, dt);
+  c.face = cx > c.x ? 1 : -1; // facing in, watching
+  c.t = Math.max(0, c.t - dt); // the chase clock holds while they wait
+  if (k === 0) bus.waitA = (bus.waitA || 0) + dt * 0.35; // the ring drifts round slowly
+  // Bounce on their toes so nobody blends together.
+  var dx = c.x - cx, dy = c.y - cy, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  if (d < rad - 4) { c.x = cx + dx / d * (rad - 4); c.y = cy + dy / d * (rad - 4); }
 }
 function joinBrawl(c, opp, sp) {
   c.st = "brawl"; c.t = 0; c.hitT = sp.hitGap * Math.random();
@@ -1929,35 +1954,71 @@ function drawBrawlCloud(o, bus) {
   ctx.restore();
 }
 
-// The dolly (a hand truck): two steel rails with a handle at the top, a
-// nose plate at the bottom, two wheels. `s` scales it.
+// The dolly (a red two-wheel hand truck, from Joe's photo), seen from the
+// front: a red tube frame with a black grip across the handle loop, cross
+// braces, small casters up top and two big air tyres edge-on beside the
+// frame, and a wide red nose plate with bolts. `s` scales it.
 function drawDolly(x, y, ang, s) {
-  var hgt = 46 * s, w = 18 * s, ink = theme.wall;
+  var hgt = 58 * s, w = 16 * s, ink = theme.wall;
+  var red = "#d32f2f", redDk = "#8e1b1b", top = -hgt / 2, bot = hgt / 2;
   ctx.save();
   ctx.translate(x, y); ctx.rotate(ang);
   ctx.lineCap = "round"; ctx.lineJoin = "round";
-  // rails
-  [-1, 1].forEach(function (q) {
-    ctx.strokeStyle = ink; ctx.lineWidth = 6 * s;
-    ctx.beginPath(); ctx.moveTo(q * w / 2, -hgt / 2); ctx.lineTo(q * w / 2, hgt / 2 - 4 * s); ctx.stroke();
-    ctx.strokeStyle = "#c62828"; ctx.lineWidth = 3.4 * s;
-    ctx.beginPath(); ctx.moveTo(q * w / 2, -hgt / 2); ctx.lineTo(q * w / 2, hgt / 2 - 4 * s); ctx.stroke();
-  });
-  // handle loop and cross bars
-  ctx.strokeStyle = ink; ctx.lineWidth = 6 * s;
-  ctx.beginPath(); ctx.moveTo(-w / 2, -hgt / 2); ctx.quadraticCurveTo(0, -hgt / 2 - 9 * s, w / 2, -hgt / 2); ctx.stroke();
-  ctx.strokeStyle = "#c62828"; ctx.lineWidth = 3.4 * s; ctx.stroke();
-  ctx.strokeStyle = "#8d99a6"; ctx.lineWidth = 2.5 * s;
-  [-0.15, 0.15].forEach(function (f) { ctx.beginPath(); ctx.moveTo(-w / 2, hgt * f); ctx.lineTo(w / 2, hgt * f); ctx.stroke(); });
-  // nose plate
-  ctx.fillStyle = "#b0b8c0"; ctx.strokeStyle = ink; ctx.lineWidth = 2 * s;
-  ctx.fillRect(-w / 2 - 3 * s, hgt / 2 - 6 * s, w + 6 * s, 5 * s); ctx.strokeRect(-w / 2 - 3 * s, hgt / 2 - 6 * s, w + 6 * s, 5 * s);
-  // wheels
-  [-1, 1].forEach(function (q) {
-    ctx.fillStyle = "#1a1a1a"; ctx.strokeStyle = ink; ctx.lineWidth = 2 * s;
-    ctx.beginPath(); ctx.arc(q * (w / 2 + 2 * s), hgt / 2 - 10 * s, 6 * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#9aa0a6"; ctx.beginPath(); ctx.arc(q * (w / 2 + 2 * s), hgt / 2 - 10 * s, 2.4 * s, 0, Math.PI * 2); ctx.fill();
-  });
+  function tube(path, wd) {
+    ctx.strokeStyle = ink; ctx.lineWidth = (wd + 2.6) * s; ctx.beginPath(); path(); ctx.stroke();
+    ctx.strokeStyle = red; ctx.lineWidth = wd * s; ctx.beginPath(); path(); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = wd * 0.3 * s; ctx.beginPath(); path(); ctx.stroke();
+  }
+  // Seen from the front the wheels are edge-on: a tyre is a tall, narrow
+  // rounded strip of tread tucked in beside the frame, with just the end
+  // of its axle cap showing on the outside.
+  function tyre(cx, cy, tw, th, q) {
+    var x0 = cx - tw / 2, y0 = cy - th / 2, rr = tw / 2;
+    ctx.fillStyle = "#2b2b2b"; ctx.strokeStyle = ink; ctx.lineWidth = 1.8 * s;
+    ctx.beginPath();
+    ctx.moveTo(x0 + rr, y0); ctx.lineTo(x0 + tw - rr, y0); ctx.quadraticCurveTo(x0 + tw, y0, x0 + tw, y0 + rr);
+    ctx.lineTo(x0 + tw, y0 + th - rr); ctx.quadraticCurveTo(x0 + tw, y0 + th, x0 + tw - rr, y0 + th);
+    ctx.lineTo(x0 + rr, y0 + th); ctx.quadraticCurveTo(x0, y0 + th, x0, y0 + th - rr);
+    ctx.lineTo(x0, y0 + rr); ctx.quadraticCurveTo(x0, y0, x0 + rr, y0);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = "#4a4a4a"; ctx.lineWidth = 0.9 * s;           // tread
+    for (var k = 1; k < 6; k++) { var ty = y0 + th * k / 6; ctx.beginPath(); ctx.moveTo(x0 + tw * 0.2, ty); ctx.lineTo(x0 + tw * 0.8, ty); ctx.stroke(); }
+    ctx.fillStyle = "#c3c8cd"; ctx.strokeStyle = ink; ctx.lineWidth = 1 * s;   // axle cap
+    ctx.beginPath(); ctx.ellipse(cx + q * tw * 0.55, cy, tw * 0.22, th * 0.13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+  // the little casters up near the handle, edge-on beside the rails
+  var cy = top + hgt * 0.2;
+  [-1, 1].forEach(function (q) { tyre(q * (w / 2 + 3 * s), cy, 3 * s, 8 * s, q); });
+  // the big air tyres down at the foot, mostly behind the nose plate
+  var wy = bot - 10 * s;
+  [-1, 1].forEach(function (q) { tyre(q * (w / 2 + 4.2 * s), wy, 5.6 * s, 17 * s, q); });
+  // the frame: two rails up into the handle loop
+  tube(function () {
+    ctx.moveTo(-w / 2, bot - 5 * s); ctx.lineTo(-w / 2, top + 5 * s);
+    ctx.quadraticCurveTo(-w / 2, top, -w / 2 + 5 * s, top);
+    ctx.lineTo(w / 2 - 5 * s, top);
+    ctx.quadraticCurveTo(w / 2, top, w / 2, top + 5 * s);
+    ctx.lineTo(w / 2, bot - 5 * s);
+  }, 3);
+  // cross braces and the lower struts that splay out to the axle
+  tube(function () {
+    [0.3, 0.5].forEach(function (f) { ctx.moveTo(-w / 2, top + hgt * f); ctx.lineTo(w / 2, top + hgt * f); });
+    ctx.moveTo(-w / 2, top + hgt * 0.5); ctx.lineTo(w / 2, wy - 3 * s);
+    ctx.moveTo(w / 2, top + hgt * 0.5); ctx.lineTo(-w / 2, wy - 3 * s);
+  }, 1.9);
+  // black grip across the top of the handle
+  ctx.strokeStyle = "#111111"; ctx.lineWidth = 4.4 * s;
+  ctx.beginPath(); ctx.moveTo(-w / 2 + 3.5 * s, top); ctx.lineTo(w / 2 - 3.5 * s, top); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = 1.2 * s;
+  ctx.beginPath(); ctx.moveTo(-w / 2 + 4 * s, top - 1.2 * s); ctx.lineTo(w / 2 - 4 * s, top - 1.2 * s); ctx.stroke();
+  // the nose plate, wider than the frame, with its bolts
+  ctx.fillStyle = red; ctx.strokeStyle = ink; ctx.lineWidth = 2 * s;
+  ctx.beginPath();
+  ctx.moveTo(-w / 2 - 1 * s, bot - 6 * s); ctx.lineTo(w / 2 + 1 * s, bot - 6 * s);
+  ctx.lineTo(w / 2 + 4 * s, bot); ctx.lineTo(-w / 2 - 4 * s, bot); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = redDk;
+  [-0.28, 0, 0.28].forEach(function (f) { ctx.beginPath(); ctx.arc(f * w, bot - 2.8 * s, 0.9 * s, 0, Math.PI * 2); ctx.fill(); });
   ctx.restore();
 }
 
