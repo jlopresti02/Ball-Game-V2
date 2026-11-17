@@ -399,46 +399,92 @@ function cncShotPhone(c, u) {
   cncText("THE RED PHONE", 540, 330, 58, "#ffffff", "#c8101e");
 }
 
-// 2b. Sean on the red phone, a giant flag behind him: "GET ME CHUCK NORRIS."
+// 2b. Sean on the red phone under a giant flag, lit red from one side and
+// blue from the other. He rocks with each word as he says it (the words pop
+// up one by one), the handset pressed to the side of his head, the coiled
+// cord running down to the phone on the desk in front of him. Story seconds
+// 0-0.85 (played out over about 2.3 real seconds).
+var CNC_CALL_WORDS = ["“GET", "ME", "CHUCK", "NORRIS.”"];
 function cncShotSean(c, u) {
   var b = cncOwner();
   var bg = ctx.createLinearGradient(0, 0, 0, 1920);
   bg.addColorStop(0, "#0a1230"); bg.addColorStop(1, "#02040c");
   ctx.fillStyle = bg; ctx.fillRect(0, 0, 1080, 1920);
-  var z = 1 + 0.06 * u, rot = reduceMotion ? 0 : -0.04;
+  var z = 1.02 + 0.08 * u, rot = reduceMotion ? 0 : -0.03 + 0.02 * u;
+  // which word he's on, and how hard he's leaning into it
+  var w = -1, wk = 0;
+  for (var i = 0; i < CNC_CALL_WORDS.length; i++) { var at = 0.16 + i * 0.13; if (u >= at) { w = i; wk = u - at; } }
+  var beat = w >= 0 ? Math.exp(-wk * 22) : 0, nod = reduceMotion ? 0 : beat;
   ctx.save();
   ctx.translate(540, 960); ctx.rotate(rot); ctx.scale(z, z); ctx.translate(-540, -960);
-  ctx.globalAlpha = 0.85;
-  cncFlag(-60, 260, 1200, 760, u * 5, 30);
+  ctx.globalAlpha = 0.8;
+  cncFlag(-80, 230, 1240, 780, u * 4, 30);
   ctx.globalAlpha = 1;
-  // a spotlight from above
-  ctx.save(); ctx.globalCompositeOperation = "lighter";
-  var sp = ctx.createRadialGradient(520, 820, 40, 520, 820, 520);
-  sp.addColorStop(0, "rgba(255,240,210,0.35)"); sp.addColorStop(1, "rgba(255,240,210,0)");
-  ctx.fillStyle = sp; ctx.fillRect(0, 300, 1080, 1100);
-  ctx.restore();
-  var dk = ctx.createLinearGradient(0, 900, 0, 1500);
-  dk.addColorStop(0, "rgba(2,4,12,0)"); dk.addColorStop(1, "rgba(2,4,12,0.95)");
-  ctx.fillStyle = dk; ctx.fillRect(0, 900, 1080, 1100);
+  var dk = ctx.createLinearGradient(0, 800, 0, 1400);
+  dk.addColorStop(0, "rgba(2,4,12,0)"); dk.addColorStop(1, "rgba(2,4,12,0.97)");
+  ctx.fillStyle = dk; ctx.fillRect(-100, 700, 1280, 1300);
+  // the desk and the phone on it
+  ctx.fillStyle = "#3b2414"; ctx.fillRect(-100, 1180, 1280, 800);
+  ctx.fillStyle = "rgba(255,200,140,0.18)"; ctx.fillRect(-100, 1180, 1280, 8);
+  cncRedPhone(820, 1160, 0.55, 0, 0);
   if (b && b.char) {
-    var x = 500, y = 860, r = 250;
-    // the cord, from the handset down out of the frame
-    ctx.strokeStyle = "#8e0a14"; ctx.lineWidth = 10;
-    ctx.beginPath(); ctx.moveTo(x + r * 1.1, y - r * 0.05);
-    for (var i = 0; i <= 24; i++) { var k = i / 24; ctx.lineTo(cncLerp(x + r * 1.1, 980, k) + Math.sin(k * 44) * 12, cncLerp(y - r * 0.05, 1500, k)); }
+    var r = 255, x = 520, y = 840 + nod * 10;
+    // a red key light from the left, blue from the right, behind him
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    [[x - r * 0.9, "rgba(255,40,60,0.45)"], [x + r * 0.9, "rgba(70,120,255,0.45)"]].forEach(function (L) {
+      var g = ctx.createRadialGradient(L[0], y, r * 0.5, L[0], y, r * 1.5);
+      g.addColorStop(0, L[1]); g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(L[0], y, r * 1.5, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+    var lean = nod * 0.06, ca = Math.cos(lean), sa = Math.sin(lean);
+    function on(lx, ly) { return { x: x + lx * ca - ly * sa, y: y + lx * sa + ly * ca }; }
+    // the handset, along the upper right of his head: the earpiece up at
+    // his ear, the mouthpiece down by his jaw
+    var hs = on(r * 0.86, -r * 0.5), ha = 1.05 + lean;
+    // the coiled cord, from the mouthpiece end down to the desk phone
+    var mp = { x: hs.x + Math.cos(ha) * 150 * 0.85, y: hs.y + Math.sin(ha) * 150 * 0.85 };
+    ctx.strokeStyle = "#8e0a14"; ctx.lineWidth = 9; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(mp.x, mp.y);
+    for (var k = 1; k <= 40; k++) {
+      var t = k / 40, cx = cncLerp(mp.x, 900, t) + Math.sin(t * Math.PI) * 120, cy = cncLerp(mp.y, 1130, t);
+      ctx.lineTo(cx + Math.cos(t * 70) * 13, cy + Math.sin(t * 70) * 7);
+    }
     ctx.stroke();
-    cncFighter(b, x, y, r);
-    // his lead hand low across his stomach (the Philly shell), the rear
-    // hand holding the red handset up to the side of his head
-    cncArm(b, -1, x - r * 0.75, y + r * 0.25, x - r * 0.6, y + r * 0.9, x + r * 0.05, y + r * 0.72, r, 0.2);
-    // the handset along the side of his head: earpiece up by his ear, mouthpiece by his jaw
-    var hx = x + r * 0.86, hy = y - r * 0.42, ha = 1.2;
-    cncHandset(hx, hy, 0.95, ha);
-    cncArm(b, 1, x + r * 0.8, y + r * 0.25, x + r * 1.45, y + r * 0.35, hx + r * 0.18, hy + r * 0.05, r, -2.2);
+    // his lead hand low across his stomach (the Philly shell)
+    var ls = on(-r * 0.78, r * 0.3), le = on(-r * 0.7, r * 0.95), lh = on(-r * 0.02, r * 0.78);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(lean); ctx.scale(1 + 0.015 * nod, 1 - 0.02 * nod);
+    cncFighter(b, 0, 0, r);
+    ctx.restore();
+    cncArm(b, -1, ls.x, ls.y, le.x, le.y, lh.x, lh.y, r, 0.1);
+    cncHandset(hs.x, hs.y, 0.85, ha);
+    // the rear arm: out from his right side, elbow up, his glove wrapped
+    // round the middle of the handset
+    var rs = on(r * 0.9, r * 0.12), re = on(r * 1.45, r * 0.05), rh = { x: hs.x + Math.cos(ha) * 10 + 18, y: hs.y + Math.sin(ha) * 10 };
+    cncArm(b, 1, rs.x, rs.y, re.x, re.y, rh.x, rh.y, r, ha + Math.PI);
+    // his voice coming out of the mouthpiece on each word
+    if (w >= 0 && wk < 0.12) {
+      ctx.strokeStyle = "rgba(255,255,255," + (1 - wk / 0.12) + ")"; ctx.lineWidth = 6;
+      for (var v = 0; v < 3; v++) { ctx.beginPath(); ctx.arc(mp.x, mp.y, 40 + v * 26 + wk * 300, -0.2, 1.0); ctx.stroke(); }
+    }
   }
   ctx.restore();
-  cncText("SEAN STRICKLAND NEEDS BACKUP.", 540, 1270, 46, "#e3cd9a", "#000", "center", "800");
-  cncType("\"GET ME CHUCK NORRIS.\"", 540, 1370, 82, "#ffffff", "#c8101e", (u - 0.12) / 0.45);
+  cncText("SEAN STRICKLAND NEEDS BACKUP.", 540, 1290, 46, "#e3cd9a", "#000", "center", "800");
+  // the words, one at a time, each popping in
+  ctx.save(); ctx.font = cncFont("900", 84);
+  var gap = 22, widths = CNC_CALL_WORDS.map(function (t) { return ctx.measureText(t).width; });
+  var tot = widths.reduce(function (a2, b2) { return a2 + b2; }, 0) + gap * (CNC_CALL_WORDS.length - 1), wx = 540 - tot / 2;
+  ctx.restore();
+  for (var j = 0; j < CNC_CALL_WORDS.length; j++) {
+    var t0 = 0.16 + j * 0.13;
+    if (u >= t0) {
+      var pop = 1 + 0.35 * Math.exp(-(u - t0) * 30);
+      ctx.save(); ctx.translate(wx + widths[j] / 2, 1385); ctx.scale(pop, pop);
+      cncText(CNC_CALL_WORDS[j], 0, 0, 84, j >= 2 ? "#ffe14d" : "#ffffff", "#c8101e");
+      ctx.restore();
+    }
+    wx += widths[j] + gap;
+  }
 }
 
 // The ranch's landscape (everything that dips when he pushes the Earth down).
@@ -498,12 +544,15 @@ function cncRanchLand(u) {
 
 // 3. The ranch at sunrise.
 function cncShotRanch(u) {
-  // one-arm pushups: three reps, then the phone, then he stands
-  var reps = 1.05, standing = u >= reps;
-  var cyc = standing ? 0 : (u % 0.35) / 0.35, down = standing ? 0 : Math.sin(cyc * Math.PI); // 0 up, 1 down
-  var push = !standing && cyc > 0.5 ? Math.sin((cyc - 0.5) * 2 * Math.PI) : 0;           // the push up
-  var dip = reduceMotion ? 0 : push * 14;
-  var z = 1 + 0.07 * u;
+  // Story seconds 0-1.0 (about 2.6 real): three deep one-arm pushups
+  // (0.1-0.7), the porch phone rings, he springs up (0.72-0.84) and tips his
+  // hat. On each push the whole country dips: he's pushing the Earth down.
+  var REP0 = 0.1, REP = 0.2, NREP = 3, UP0 = 0.72, UP1 = 0.84;
+  var ri = Math.floor((u - REP0) / REP), rk = (u - REP0) / REP - ri, pushing = u >= REP0 && ri < NREP;
+  var down = pushing ? Math.sin(rk * Math.PI) : 0;                    // 0 arm straight, 1 chest to the boards
+  var push = pushing && rk > 0.5 ? Math.sin((rk - 0.5) * 2 * Math.PI) : 0;
+  var dip = reduceMotion ? 0 : push * 16;
+  var z = 1 + 0.05 * u;
   ctx.save();
   ctx.translate(540, 1200); ctx.scale(z, z); ctx.translate(-540, -1200);
   ctx.save(); ctx.translate(0, dip); cncRanchLand(u); ctx.restore();
@@ -514,50 +563,59 @@ function cncShotRanch(u) {
   ctx.fillStyle = "#6e4424";
   ctx.fillRect(900, 1080, 26, 230); ctx.fillRect(760, 1080, 400, 24);
   // the rotary phone on the rail, ringing
-  var ring = u > 0.9 && u < 1.35 ? u : 0;
+  var ring = u > 0.6 && u < 0.8 ? u : 0;
   cncRedPhone(840, 1050, 0.32, 0, ring ? ring + 1 : 0);
   if (ring) {
     ctx.strokeStyle = "#fff"; ctx.lineWidth = 5; ctx.lineCap = "round";
     for (var j = 0; j < 2; j++) { ctx.beginPath(); ctx.arc(840, 1040, 70 + j * 22, -2.4, -0.7); ctx.stroke(); }
   }
   // Chuck
-  var r = 200, x = 430, baseY = 1300 - r * 0.62;
-  var y2 = standing ? cncLerp(baseY - 0 + 0, 1300 - r - 40, cncOut((u - reps) / 0.3)) : baseY + down * 45 - 45;
-  // dust jumping off the boards on each rep
-  if (push > 0.6 && !reduceMotion) {
-    ctx.fillStyle = "rgba(220,190,140,0.6)";
-    for (var d = 0; d < 8; d++) { ctx.beginPath(); ctx.arc(x + 200 + (cncRand(d) - 0.5) * 200, 1300 - cncRand(d + 9) * 40 * push, 6 + cncRand(d + 4) * 8, 0, Math.PI * 2); ctx.fill(); }
+  var r = 190, x = 470, floor = 1310, hiY = floor - r * 1.55, loY = floor - r * 1.08, sc = r / CN_R;
+  var standUp = cncClamp((u - UP0) / (UP1 - UP0)), standY = floor - r - 30;
+  var y2 = u < UP0 ? cncLerp(hiY, loY, down) : cncLerp(hiY, standY, cncOut(standUp)) - Math.sin(standUp * Math.PI) * r * 0.5;
+  var lean = 0; // seen from the front: one arm under him, the other behind his back
+  var cl = Math.cos(lean), sl = Math.sin(lean);
+  function at(lx, ly) { return { x: x + (lx * cl - ly * sl), y: y2 + (lx * sl + ly * cl) }; }
+  // his shadow on the boards, darker the lower he gets
+  var near = 1 - (floor - r - y2) / (r * 1.2);
+  ctx.fillStyle = "rgba(40,20,8," + (0.2 + 0.25 * cncClamp(near)) + ")";
+  ctx.beginPath(); ctx.ellipse(x, floor + 4, r * (0.8 + 0.3 * cncClamp(near)), r * 0.12, 0, 0, Math.PI * 2); ctx.fill();
+  // dust jumping off the boards at the bottom of each rep
+  if (pushing && rk > 0.4 && rk < 0.75 && !reduceMotion) {
+    var dk2 = (rk - 0.4) / 0.35;
+    ctx.fillStyle = "rgba(225,195,150," + (0.7 * (1 - dk2)) + ")";
+    for (var d = 0; d < 10; d++) { var da = Math.PI + d / 9 * Math.PI; ctx.beginPath(); ctx.arc(x + Math.cos(da) * (r * 0.7 + 140 * dk2), floor - 6 + Math.sin(da) * 30 * dk2, 7 + cncRand(d) * 9, 0, Math.PI * 2); ctx.fill(); }
   }
-  var sc = r / CN_R;
-  if (!standing) {
-    // Leaning out over one straight arm planted on the boards, the other
-    // hand tucked behind his back. The arm bends as he goes down.
-    var lean = 0.32, cl = Math.cos(lean), sl = Math.sin(lean);
-    function at(lx, ly) { return { x: x + (lx * cl - ly * sl), y: y2 + (lx * sl + ly * cl) }; }
-    var sh = at(r * 0.5, r * 0.25), hand = { x: x + r * 0.95, y: 1300 - 14 };
-    var mx = (sh.x + hand.x) / 2, my = (sh.y + hand.y) / 2, el = { x: mx + r * (0.12 + 0.4 * down), y: my - r * 0.05 * down };
-    var back = at(-r * 0.62, r * 0.42);
-    strokeLimb(13 * sc * 0.7, CN_DENIM, function () { ctx.moveTo(at(-r * 0.6, r * 0.1).x, at(-r * 0.6, r * 0.1).y); ctx.lineTo(back.x, back.y); });
-    cnFist(back.x, back.y, 13 * sc * 0.62);
-    ctx.save(); ctx.translate(x, y2); ctx.rotate(lean); ctx.scale(sc, sc);
-    drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
-    drawCnKit(CN_R); drawCnHat(CN_R);
-    ctx.restore();
-    strokeLimb(13 * sc * 0.7, CN_DENIM, function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(el.x, el.y); ctx.lineTo(hand.x, hand.y); });
+  var limb = 13 * sc * 0.7;
+  ctx.save(); ctx.translate(x, y2); ctx.rotate(lean); ctx.scale(sc, sc);
+  drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
+  drawCnKit(CN_R); drawCnHat(CN_R);
+  if (u >= UP0) cnSalute(CN_R, standUp < 1 ? 0 : cncClamp((u - UP1) / 0.16) * CN_SALUTE * 0.6); // up, and the hat tip
+  ctx.restore();
+  if (u < UP0) {
+    // the working arm: shoulder, an elbow that folds up and back as he
+    // goes down, his hand flat on the boards out in front
+    var sh = at(r * 0.62, r * 0.3), hand = { x: x + r * 0.5, y: floor - 12 };
+    var dx = hand.x - sh.x, dy = hand.y - sh.y, D = Math.sqrt(dx * dx + dy * dy), seg = r * 0.62;
+    var h2 = Math.sqrt(Math.max(0, seg * seg - D * D / 4)), mx = (sh.x + hand.x) / 2, my = (sh.y + hand.y) / 2;
+    var el = { x: mx + (dy / D) * h2, y: my - (dx / D) * h2 };
+    if (el.x < mx) el = { x: mx - (dy / D) * h2, y: my + (dx / D) * h2 }; // the elbow flares out to the side as he goes down
     ctx.fillStyle = CN_LOOK.skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.ellipse(hand.x + 6, hand.y + 2, 13 * sc * 0.75, 13 * sc * 0.4, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // his hand flat on the boards
-  } else {
-    ctx.save(); ctx.translate(x, y2); ctx.scale(sc, sc);
-    drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
-    drawCnKit(CN_R); drawCnHat(CN_R);
-    cnSalute(CN_R, cncClamp((u - reps - 0.25) / 0.6) * CN_SALUTE); // tips his hat
-    ctx.restore();
+    ctx.beginPath(); ctx.ellipse(hand.x + 16, hand.y + 2, limb * 1.0, limb * 0.42, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // the hand flat on the boards
+    strokeLimb(limb, CN_DENIM, function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(el.x, el.y); ctx.lineTo(hand.x, hand.y - limb * 0.2); });
+    if (push > 0.3 && !reduceMotion) { // strain lines
+      ctx.strokeStyle = "rgba(255,255,255," + push + ")"; ctx.lineWidth = 5;
+      for (var q = 0; q < 3; q++) { ctx.beginPath(); ctx.moveTo(el.x + 30, el.y - 30 - q * 22); ctx.lineTo(el.x + 60, el.y - 44 - q * 26); ctx.stroke(); }
+    }
   }
   ctx.restore();
-  // the rep counter
-  var rep = standing ? 1000 : 997 + Math.min(3, Math.floor(u / 0.35) + (cyc > 0.75 ? 1 : 0));
-  cncText(rep === 1000 ? "1,000." : rep + "...", 540, 1520, 96, "#ffffff", "#7a2a10");
-  cncText("ONE-ARM PUSHUPS", 540, 1430, 44, "#ffe7a0", "#000", "center", "800");
+  // the rep counter, popping on each one
+  var done = u < REP0 ? 0 : Math.min(NREP, Math.floor((u - REP0) / REP + 0.5)), rep = 997 + done;
+  var since = done > 0 ? u - (REP0 + (done - 0.5) * REP) : 1, pop = 1 + 0.4 * Math.exp(-Math.max(0, since) * 25);
+  ctx.save(); ctx.translate(540, 1520); ctx.scale(pop, pop);
+  cncText(rep === 1000 ? "1,000." : rep + "...", 0, 0, 104, rep === 1000 ? "#ffe14d" : "#ffffff", "#7a2a10");
+  ctx.restore();
+  cncText("ONE-ARM PUSHUPS", 540, 1425, 44, "#ffe7a0", "#000", "center", "800");
   cncFlare(700, 1000 + dip, 160, 0.7);
   cncText("SOMEWHERE IN TEXAS", 540, 330, 64, "#ffe7a0", "#7a2a10");
 }
@@ -871,6 +929,13 @@ function cncShotRushmore(u) {
   ctx.fillStyle = sky; ctx.fillRect(0, 0, 1080, 1920);
   ctx.save();
   ctx.translate(540, 1100); ctx.scale(1.12 - 0.12 * lift, 1.12 - 0.12 * lift); ctx.translate(-540, -1100 + 160 * lift);
+  // Joe's photo, traced (chuck-norris-rushmore-art.js): the real cliff and
+  // the four real faces. The drawn version below is only a fallback.
+  var photo = typeof cncRushmoreImg !== "undefined" && cncRushmoreImg.complete && cncRushmoreImg.naturalWidth;
+  if (photo) {
+    ctx.fillStyle = "#24402c"; ctx.fillRect(-100, 1400, 1280, 700);
+    ctx.drawImage(cncRushmoreImg, -135, 560, 1350, 1350 * cncRushmoreImg.naturalHeight / cncRushmoreImg.naturalWidth);
+  } else {
   // the cliff (Joe's reference photo): craggy tan-pink granite, the heads in
   // its upper middle, a grey rubble slope and pines below
   ctx.fillStyle = "#b9a58f";
@@ -894,8 +959,9 @@ function cncShotRushmore(u) {
   ctx.fillStyle = "#24402c"; ctx.fillRect(-100, 1520, 1280, 600); // the forest floor
   ctx.fillStyle = "rgba(60,58,54,0.35)";
   for (var rb = 0; rb < 40; rb++) { ctx.beginPath(); ctx.arc(200 + cncRand(rb) * 620, 1180 + cncRand(rb + 40) * 300, 5 + cncRand(rb + 80) * 9, 0, Math.PI * 2); ctx.fill(); }
+  }
   // ...and the fifth: a round head in a cowboy hat, the chisel dust still falling
-  var fx = 880, fy = 950, fr = 96;
+  var fx = photo ? 950 : 880, fy = photo ? 880 : 950, fr = photo ? 80 : 96;
   ctx.save(); ctx.translate(fx, fy);
   var g2 = ctx.createRadialGradient(-30, -30, 10, 0, 0, fr);
   g2.addColorStop(0, "#e6e0d2"); g2.addColorStop(1, "#968f82");
@@ -1272,11 +1338,11 @@ function cncAudio() {
     // 2. the dial, the ringback, the typed words
     for (var i = 0; i < 6; i++) cncClick(ac, bus, t0 + cncReal(0.55) + i * 0.06, 2400, 0.25);
     cncTone(ac, bus, t0 + cncReal(0.9), "sine", 440, 440, 0.06, 0.35); cncTone(ac, bus, t0 + cncReal(0.9), "sine", 480, 480, 0.06, 0.35);
-    for (var j = 0; j < 19; j++) cncClick(ac, bus, t0 + cncReal(0.97 + j * 0.45 / 19), 3200 + (j % 3) * 400, 0.18);
-    cncClick(ac, bus, t0 + cncReal(1.45), 5000, 0.2); cncTone(ac, bus, t0 + cncReal(1.45), "triangle", 2600, 2600, 0.12, 0.4); // the typewriter bell
+    for (var j = 0; j < 4; j++) { mBigSnare(ac, bus, t0 + cncReal(0.85 + 0.16 + j * 0.13), 0.5); cncTone(ac, bus, t0 + cncReal(0.85 + 0.16 + j * 0.13), "sine", 90, 50, 0.4, 0.2); } // a hit on each word
+    for (var rg = 0; rg < 8; rg++) cncTone(ac, bus, t0 + cncReal(2.3) + rg * 0.05, "triangle", rg % 2 ? 1250 : 1500, rg % 2 ? 1250 : 1500, 0.07, 0.05); // the porch phone ringing
     // 3. the harmonica sting, then the march
     cncHarmonica(ac, bus, t0 + cncReal(1.72));
-    [0.0, 0.35, 0.7].forEach(function (d) { cncTone(ac, bus, t0 + cncReal(1.7 + d + 0.18), "sine", 70, 40, 0.5, 0.25); }); // the Earth thumping on each rep
+    [0.2, 0.4, 0.6].forEach(function (d) { cncTone(ac, bus, t0 + cncReal(1.7 + d), "sine", 70, 40, 0.5, 0.25); }); // the Earth thumping on each rep
     cncTone(ac, bus, t0 + cncReal(2.6), "sawtooth", 140, 110, 0.08, 0.45); // the moo
     cncMarch(ac, bus, t0 + cncReal(2.0), t0 + CNC.pre + 0.55 / CNC.slow);
     // 4. the suit-up hits
