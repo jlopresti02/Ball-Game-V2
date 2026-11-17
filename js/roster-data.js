@@ -2458,12 +2458,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-fedor-emelianenko",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Fedor Emelianenko",
     "base": "Brawler",
-    "bio": "\"The Last Emperor\". The PRIDE heavyweight champion, a Combat Sambo world champion from Stary Oskol, Russia, with a soft, everyman heavyweight build and no expression on his face. Slow on his feet, but his hands are the fastest heavy hands in the game: hard punches off alternating hands, strung into jab, cross, hook. Shoot on him and he sprawls on almost everything. Every so often he drops his level, reaches out with both arms and clinches: break free or he throws you over his hip, follows you down and rains punches from on top, the PRIDE flurry, sometimes switching to the armbar that finished Mark Coleman twice. He barely reacts to being hit: big shots barely move him, a dizzy wears off fast, and a low church bell rings when he walks through one. A quiet Russian Orthodox-style choir hums under every fight he's in. Special move: The Unmoving Man. Hands down, feet still, he slips everything they throw without changing a thing, catches their last punch in one glove and puts them through the cage with one overhand right.",
+    "bio": "\"The Last Emperor\". The PRIDE heavyweight champion, a Combat Sambo world champion from Stary Oskol, Russia, with a soft, everyman heavyweight build and no expression on his face. Slow on his feet, but his hands are the fastest heavy hands in the game: hard punches off alternating hands, strung into jab, cross, hook. Shoot on him and he sprawls on almost everything. Every so often he drops his level, reaches out with both arms and clinches: break free or he throws you over his hip, follows you down and rains punches from on top, the PRIDE flurry, sometimes switching to the armbar that finished Mark Coleman twice. Now and then up close he throws an elbow, and half of them land as crits. Pull guard on him and he steps right back in and passes it most of the time, straight into a slightly heavier flurry from on top. He barely reacts to being hit: big shots barely move him, a dizzy wears off fast, and a low church bell rings when he walks through one. A quiet Russian Orthodox-style choir hums under every fight he's in. Special move: The Unmoving Man. Hands down, feet still, he slips everything they throw without changing a thing, catches their last punch in one glove and puts them through the cage with one overhand right.",
     "color": "#7d93b2",
     "label": "",
     "imgData": null,
@@ -2493,7 +2493,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 26,
+      "damage": 21,
       "cooldown": 0.38,
       "speed": 0.16,
       "size": 14,
@@ -2512,6 +2512,24 @@ var SAVED_ROSTER = [
     "blockChance": 12,
     "tdd": {
       "sprawlChance": 78
+    },
+    "guardPass": {
+      "chance": 80,
+      "time": [
+        0.6,
+        1.2
+      ],
+      "gnp": true,
+      "gnpMult": 1.2
+    },
+    "elbow": {
+      "damage": 20,
+      "cooldown": 12.5,
+      "speed": 0.26,
+      "reach": 14,
+      "critChance": 50,
+      "critMult": 2,
+      "knockback": 160
     },
     "combos": {
       "first": [
