@@ -1929,35 +1929,72 @@ function drawBrawlCloud(o, bus) {
   ctx.restore();
 }
 
-// The dolly (a hand truck): two steel rails with a handle at the top, a
-// nose plate at the bottom, two wheels. `s` scales it.
+// The dolly (a red two-wheel hand truck, from Joe's photo): a red tube
+// frame with a black grip across the handle loop, cross braces, a small
+// pair of caster wheels up top, two big grey air tyres on silver hubs and
+// a wide red nose plate with bolts. `s` scales it.
 function drawDolly(x, y, ang, s) {
-  var hgt = 46 * s, w = 18 * s, ink = theme.wall;
+  var hgt = 58 * s, w = 16 * s, ink = theme.wall;
+  var red = "#d32f2f", redDk = "#8e1b1b", top = -hgt / 2, bot = hgt / 2;
   ctx.save();
   ctx.translate(x, y); ctx.rotate(ang);
   ctx.lineCap = "round"; ctx.lineJoin = "round";
-  // rails
-  [-1, 1].forEach(function (q) {
-    ctx.strokeStyle = ink; ctx.lineWidth = 6 * s;
-    ctx.beginPath(); ctx.moveTo(q * w / 2, -hgt / 2); ctx.lineTo(q * w / 2, hgt / 2 - 4 * s); ctx.stroke();
-    ctx.strokeStyle = "#c62828"; ctx.lineWidth = 3.4 * s;
-    ctx.beginPath(); ctx.moveTo(q * w / 2, -hgt / 2); ctx.lineTo(q * w / 2, hgt / 2 - 4 * s); ctx.stroke();
-  });
-  // handle loop and cross bars
-  ctx.strokeStyle = ink; ctx.lineWidth = 6 * s;
-  ctx.beginPath(); ctx.moveTo(-w / 2, -hgt / 2); ctx.quadraticCurveTo(0, -hgt / 2 - 9 * s, w / 2, -hgt / 2); ctx.stroke();
-  ctx.strokeStyle = "#c62828"; ctx.lineWidth = 3.4 * s; ctx.stroke();
-  ctx.strokeStyle = "#8d99a6"; ctx.lineWidth = 2.5 * s;
-  [-0.15, 0.15].forEach(function (f) { ctx.beginPath(); ctx.moveTo(-w / 2, hgt * f); ctx.lineTo(w / 2, hgt * f); ctx.stroke(); });
-  // nose plate
-  ctx.fillStyle = "#b0b8c0"; ctx.strokeStyle = ink; ctx.lineWidth = 2 * s;
-  ctx.fillRect(-w / 2 - 3 * s, hgt / 2 - 6 * s, w + 6 * s, 5 * s); ctx.strokeRect(-w / 2 - 3 * s, hgt / 2 - 6 * s, w + 6 * s, 5 * s);
-  // wheels
-  [-1, 1].forEach(function (q) {
-    ctx.fillStyle = "#1a1a1a"; ctx.strokeStyle = ink; ctx.lineWidth = 2 * s;
-    ctx.beginPath(); ctx.arc(q * (w / 2 + 2 * s), hgt / 2 - 10 * s, 6 * s, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#9aa0a6"; ctx.beginPath(); ctx.arc(q * (w / 2 + 2 * s), hgt / 2 - 10 * s, 2.4 * s, 0, Math.PI * 2); ctx.fill();
-  });
+  function tube(path, wd) {
+    ctx.strokeStyle = ink; ctx.lineWidth = (wd + 2.6) * s; ctx.beginPath(); path(); ctx.stroke();
+    ctx.strokeStyle = red; ctx.lineWidth = wd * s; ctx.beginPath(); path(); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = wd * 0.3 * s; ctx.beginPath(); path(); ctx.stroke();
+  }
+  function wheel(cx, cy, rad, hub) {
+    ctx.fillStyle = "#2b2b2b"; ctx.strokeStyle = ink; ctx.lineWidth = 2 * s;
+    ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    if (hub) {
+      ctx.strokeStyle = "#474747"; ctx.lineWidth = 1.2 * s;     // tread ring
+      ctx.beginPath(); ctx.arc(cx, cy, rad * 0.78, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "#c3c8cd"; ctx.beginPath(); ctx.arc(cx, cy, rad * 0.52, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#7d858c"; ctx.lineWidth = 1 * s; ctx.stroke();
+      ctx.fillStyle = "#5c6369"; ctx.beginPath(); ctx.arc(cx, cy, rad * 0.18, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.fillStyle = "#9aa0a6"; ctx.beginPath(); ctx.arc(cx, cy, rad * 0.35, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // the little casters on their axle, up near the handle
+  var cy = top + hgt * 0.2;
+  ctx.strokeStyle = "#5f666c"; ctx.lineWidth = 2 * s;
+  ctx.beginPath(); ctx.moveTo(-w / 2 - 6 * s, cy); ctx.lineTo(w / 2 + 6 * s, cy); ctx.stroke();
+  [-1, 1].forEach(function (q) { wheel(q * (w / 2 + 6 * s), cy, 3.6 * s, false); });
+  // the big wheels' axle, behind the frame
+  var wy = bot - 11 * s;
+  ctx.strokeStyle = "#5f666c"; ctx.lineWidth = 1.6 * s;
+  ctx.beginPath(); ctx.moveTo(-w / 2 - 6 * s, wy); ctx.lineTo(w / 2 + 6 * s, wy); ctx.stroke();
+  // the frame: two rails up into the handle loop
+  tube(function () {
+    ctx.moveTo(-w / 2, bot - 5 * s); ctx.lineTo(-w / 2, top + 5 * s);
+    ctx.quadraticCurveTo(-w / 2, top, -w / 2 + 5 * s, top);
+    ctx.lineTo(w / 2 - 5 * s, top);
+    ctx.quadraticCurveTo(w / 2, top, w / 2, top + 5 * s);
+    ctx.lineTo(w / 2, bot - 5 * s);
+  }, 3);
+  // cross braces and the lower struts that splay out to the axle
+  tube(function () {
+    [0.3, 0.5].forEach(function (f) { ctx.moveTo(-w / 2, top + hgt * f); ctx.lineTo(w / 2, top + hgt * f); });
+    ctx.moveTo(-w / 2, top + hgt * 0.5); ctx.lineTo(w / 2, wy - 3 * s);
+    ctx.moveTo(w / 2, top + hgt * 0.5); ctx.lineTo(-w / 2, wy - 3 * s);
+  }, 1.9);
+  // black grip across the top of the handle
+  ctx.strokeStyle = "#111111"; ctx.lineWidth = 4.4 * s;
+  ctx.beginPath(); ctx.moveTo(-w / 2 + 3.5 * s, top); ctx.lineTo(w / 2 - 3.5 * s, top); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = 1.2 * s;
+  ctx.beginPath(); ctx.moveTo(-w / 2 + 4 * s, top - 1.2 * s); ctx.lineTo(w / 2 - 4 * s, top - 1.2 * s); ctx.stroke();
+  // big air tyres on silver hubs
+  [-1, 1].forEach(function (q) { wheel(q * (w / 2 + 6 * s), wy, 8 * s, true); });
+  // the nose plate, wider than the frame, with its bolts
+  ctx.fillStyle = red; ctx.strokeStyle = ink; ctx.lineWidth = 2 * s;
+  ctx.beginPath();
+  ctx.moveTo(-w / 2 - 1 * s, bot - 6 * s); ctx.lineTo(w / 2 + 1 * s, bot - 6 * s);
+  ctx.lineTo(w / 2 + 4 * s, bot); ctx.lineTo(-w / 2 - 4 * s, bot); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = redDk;
+  [-0.28, 0, 0.28].forEach(function (f) { ctx.beginPath(); ctx.arc(f * w, bot - 2.8 * s, 0.9 * s, 0, Math.PI * 2); ctx.fill(); });
   ctx.restore();
 }
 
