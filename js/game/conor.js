@@ -1087,6 +1087,7 @@ function tickCrew(bus, owner, opp, sp, dt) {
       c.x += (c.tx - c.x) * ek; c.y += (c.ty - c.y) * ek;
       if (c.t >= 0.2) { c.st = "chase"; c.t = 0; }
     } else if (c.st === "chase") {
+      if (!opp.cmBrawl && !crewCanGrab(opp)) { crewWait(bus, c, owner, opp, sp, dt); return; } // (Joe: they circle round a submission or a combo, not stack on it)
       crewRun(c, opp.x + opp.vx * 0.12, opp.y + opp.vy * 0.12, sp.crewSpeed, dt);
       var dd = Math.sqrt((opp.x - c.x) * (opp.x - c.x) + (opp.y - c.y) * (opp.y - c.y));
       if (dd < opp.r + CM_CREW_R + 2 && (opp.cmBrawl || crewCanGrab(opp))) joinBrawl(c, opp, sp);
@@ -1099,6 +1100,30 @@ function tickCrew(bus, owner, opp, sp, dt) {
     }
   });
   tickBrawl(bus, owner, opp, sp, dt);
+}
+// Joe (2026-11-17): while they're tied up (a submission, a combo, a grab,
+// anything that means they can't be jumped yet) the lads don't pile on top of
+// the fighters. They spread out in a ring round the pair, a step back,
+// bouncing on their toes, and wait; their chase clock doesn't run while they
+// wait. The moment the opponent's free they're straight in.
+function crewWait(bus, c, owner, opp, sp, dt) {
+  var cx = opp.x, cy = opp.y, rad = opp.r;
+  if (owner.alive) {
+    var ox = owner.x - opp.x, oy = owner.y - opp.y, od = Math.sqrt(ox * ox + oy * oy);
+    if (od < owner.r + opp.r + 40) { cx = (owner.x + opp.x) / 2; cy = (owner.y + opp.y) / 2; rad = od / 2 + Math.max(owner.r, opp.r); } // tangled up together: round the both of them
+  }
+  rad += CM_CREW_R + 24;
+  var waiting = bus.crew.filter(function (q) { return q.st === "chase"; }), k = Math.max(0, waiting.indexOf(c)), n = Math.max(1, waiting.length);
+  var a = (k / n) * Math.PI * 2 + (bus.waitA || 0);
+  var tx = cx + Math.cos(a) * rad, ty = cy + Math.sin(a) * rad;
+  tx = Math.max(CM_CREW_R, Math.min(W - CM_CREW_R, tx)); ty = Math.max(CM_CREW_R, Math.min(H - CM_CREW_R, ty));
+  crewRun(c, tx, ty, sp.crewSpeed, dt);
+  c.face = cx > c.x ? 1 : -1; // facing in, watching
+  c.t = Math.max(0, c.t - dt); // the chase clock holds while they wait
+  if (k === 0) bus.waitA = (bus.waitA || 0) + dt * 0.35; // the ring drifts round slowly
+  // Bounce on their toes so nobody blends together.
+  var dx = c.x - cx, dy = c.y - cy, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  if (d < rad - 4) { c.x = cx + dx / d * (rad - 4); c.y = cy + dy / d * (rad - 4); }
 }
 function joinBrawl(c, opp, sp) {
   c.st = "brawl"; c.t = 0; c.hitT = sp.hitGap * Math.random();

@@ -147,6 +147,7 @@ function draw() {
     var sbo = swordBodyOffset(b); wox += sbo.x; woy += sbo.y; // lunging and leaping with the sword (sword.js)
     var kmo = kameOffset(b); wox += kmo.x; woy += kmo.y; // leaning back to charge, lunging into the Kamehameha (kamehameha.js)
     var bpo = beamPinOffset(b); wox += bpo.x; woy += bpo.y; // shaking, pinned to the cage by a beam (beam-clash.js)
+    var cgo = conorGuardOffset(b); wox += cgo.x; woy += cgo.y; // Conor's shoulder into a blocked shot (conor-guard.js)
     var rbo = rainbowOffset(b); wox += rbo.x; woy += rbo.y; // leaning over the pot of gold (rainbow-beam.js)
     var ngo = ngannouOffset(b); wox += ngo.x; woy += ngo.y; // up in the air for Ngannou's Smash (ngannou.js)
     var aso = andersonOffset(b); wox += aso.x; woy += aso.y; // Anderson Silva leaning back out of a shot, swaying with his hands down (anderson.js)
