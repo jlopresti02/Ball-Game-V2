@@ -1,6 +1,6 @@
 {
  "id": "c-jon-jones",
- "rev": 9,
+ "rev": 10,
  "builtin": false,
  "weightClass": "lightheavyweight",
  "name": "Jon Jones",
@@ -29,7 +29,7 @@
  },
  "hasKick": true,
  "kick": {
-  "damage": 35,
+  "damage": 44,
   "cooldown": 3.0,
   "speed": 0.5,
   "size": 17,
@@ -109,17 +109,18 @@
  "blockChance": 10,
  "elbow": { "damage": 6, "cooldown": 1.6, "speed": 0.26, "reach": 18, "critChance": 45, "critMult": 2.5, "knockback": 170, "cut": { "chance": 35, "time": 4, "dps": 2 } },
  "combos": { "first": [6, 9], "every": [9, 13], "list": { "jab-spin-elbow": 3, "jab-cross-elbow": 1 } },
+ "legKick": { "first": [5, 8], "every": [13, 19], "range": 56, "reach": 90, "damage": 8, "slow": 0.75, "time": 3, "stack": 0.1, "maxStacks": 3, "minSlow": 0.55, "size": 1.1 },
  "jonClinch": {
   "first": [3, 5], "every": [5.5, 8], "range": 22, "reach": 0.26, "evade": 18, "weaverEvade": 12,
   "strikes": [1, 2], "gap": 0.32, "escape": 25, "grapplerEscape": 10, "knockback": 360, "open": 0.7,
   "knee": { "damage": 5, "critChance": 25, "critMult": 2 },
   "elbow": { "critChance": 20, "critMult": 2 },
-  "goat": { "on": true, "knees": 55, "trip": 55, "spinElbow": true, "oblique": false },
+  "goat": { "on": true, "knees": 55, "trip": 55, "spinElbow": true, "oblique": true },
   "evil": { "on": true, "knees": 35, "trip": 35, "spinElbow": true, "oblique": true, "elbowCooldown": 1.6 },
   "trip": { "tell": 0.34, "defend": 28, "grapplerDefend": 15, "tddMult": 0.5, "damage": 12, "fall": 0.36, "down": 0.5 },
   "guillotine": { "lowHp": 40, "bonus": 35, "clinch": 40, "outcomes": { "escape": 60, "gnp": 5, "resink": 25, "slam": 10 } },
   "spinElbow": { "first": [5, 9], "every": [10, 15], "range": 26, "afterClinch": 30, "breakShove": 80, "turn": 0.22, "step": 380, "speed": 0.24, "damage": 8, "critChance": 25, "critMult": 2, "knockback": 380 },
-  "oblique": { "first": [1.5, 3], "every": [5, 8], "range": 46, "chamber": 0.2, "dur": 0.42, "damage": 5, "knockback": 200, "slow": 0.85, "slowTime": 1.5 }
+  "oblique": { "first": [1.5, 3], "every": [13, 19], "range": 46, "chamber": 0.2, "dur": 0.42, "damage": 5, "knockback": 200, "slow": 0.85, "slowTime": 1.5, "stack": 0.1, "minSlow": 0.55, "mixGap": 1.2 }
  },
  "jon": {
   "swapEvery": 15,
@@ -237,6 +238,7 @@
   "goats": 8,
   "goatGap": 0.7,
   "goatDamage": 20,
+  "goatLane": 1.2,
   "ramSpeed": 1900,
   "ramWalls": 3,
   "ramWallDamage": 4

@@ -3522,7 +3522,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 9,
+    "rev": 10,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
@@ -3551,7 +3551,7 @@ var SAVED_ROSTER = [
     },
     "hasKick": true,
     "kick": {
-      "damage": 35,
+      "damage": 44,
       "cooldown": 3.0,
       "speed": 0.5,
       "size": 17,
@@ -3657,6 +3657,25 @@ var SAVED_ROSTER = [
         "jab-cross-elbow": 1
       }
     },
+    "legKick": {
+      "first": [
+        5,
+        8
+      ],
+      "every": [
+        13,
+        19
+      ],
+      "range": 56,
+      "reach": 90,
+      "damage": 8,
+      "slow": 0.75,
+      "time": 3,
+      "stack": 0.1,
+      "maxStacks": 3,
+      "minSlow": 0.55,
+      "size": 1.1
+    },
     "jonClinch": {
       "first": [
         3,
@@ -3693,7 +3712,7 @@ var SAVED_ROSTER = [
         "knees": 55,
         "trip": 55,
         "spinElbow": true,
-        "oblique": false
+        "oblique": true
       },
       "evil": {
         "on": true,
@@ -3749,8 +3768,8 @@ var SAVED_ROSTER = [
           3
         ],
         "every": [
-          5,
-          8
+          13,
+          19
         ],
         "range": 46,
         "chamber": 0.2,
@@ -3758,7 +3777,10 @@ var SAVED_ROSTER = [
         "damage": 5,
         "knockback": 200,
         "slow": 0.85,
-        "slowTime": 1.5
+        "slowTime": 1.5,
+        "stack": 0.1,
+        "minSlow": 0.55,
+        "mixGap": 1.2
       }
     },
     "jon": {
@@ -3877,6 +3899,7 @@ var SAVED_ROSTER = [
       "goats": 8,
       "goatGap": 0.7,
       "goatDamage": 20,
+      "goatLane": 1.2,
       "ramSpeed": 1900,
       "ramWalls": 3,
       "ramWallDamage": 4
