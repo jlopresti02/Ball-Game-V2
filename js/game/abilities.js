@@ -212,6 +212,7 @@ function updateAbilities(dt) {
     if (updateKneeMoves(self, other, dt)) continue; // the clinch knees and the flying knee (knees.js)
     if (updateAnderson(self, other, dt)) continue; // Anderson Silva's front kick, hands down, counter, triangle off ground and pound (anderson.js)
     if (updateCormier(self, other, dt)) continue; // Daniel Cormier's double leg and super slam (cormier.js)
+    if (typeof updateJiriPhantom === "function" && updateJiriPhantom(self, other, dt)) continue; // Jiří Procházka's imaginary cut (jiri-phantom.js)
     if (!darkSideBlocks(self) && !ganeShotHolding(self) && updateSpecial(self, other, dt)) continue; // a created character's special move (it waits while Ciryl Gane's shot is a grab and slam, gane-shot.js)
     if (updateKoRush(self, other, dt)) continue;
     if (self.sprawl) { updateSprawl(self, dt); continue; }

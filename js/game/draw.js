@@ -476,6 +476,7 @@ function draw() {
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)
   drawCormierOver(); // SUPER SLAM! (cormier.js)
   drawProchazkaOver(); // the cuts Jiří Procházka's katanas leave (prochazka.js)
+  if (typeof drawJiriPhantomOver === "function") drawJiriPhantomOver(); // who Jiří Procházka's imaginary cut went through (jiri-phantom.js)
   if (typeof drawJiriReactOver === "function") drawJiriReactOver(); // animals Jiří Procházka cut in half (jiri-react.js)
   drawClinchOver(); // the clinch: arms tied round them, each knee and elbow, the swirl of the spin on the break (clinch.js)
   drawJonClinch(); // Jon Jones's arms locked over-under, his clinch knees and elbows, the trip's leg and red arrow (jon-clinch.js)

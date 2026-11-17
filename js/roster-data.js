@@ -3398,6 +3398,24 @@ var SAVED_ROSTER = [
           "poke"
         ]
       },
+      "phantom": {
+        "first": [
+          6,
+          10
+        ],
+        "every": [
+          12,
+          18
+        ],
+        "range": [
+          0,
+          230
+        ],
+        "stance": 0.55,
+        "cut": 0.14,
+        "after": 0.5,
+        "stun": 1.6
+      },
       "react": {
         "animals": {
           "chance": 100
