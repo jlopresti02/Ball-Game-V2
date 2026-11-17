@@ -1058,7 +1058,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 19,
+    "rev": 20,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -1118,7 +1118,7 @@ var SAVED_ROSTER = [
       "sprawlChance": 30,
       "reattackChance": 50,
       "vsGrapplerChance": 50,
-      "stuffChance": 30
+      "stuffChance": 40
     },
     "hasPowerPunch": false,
     "hasRage": false,
@@ -2458,12 +2458,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-fedor-emelianenko",
-    "rev": 1,
+    "rev": 3,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Fedor Emelianenko",
     "base": "Brawler",
-    "bio": "\"The Last Emperor\". The PRIDE heavyweight champion, a Combat Sambo world champion from Stary Oskol, Russia, with a soft, everyman heavyweight build and no expression on his face. Slow on his feet, but his hands are the fastest heavy hands in the game: hard punches off alternating hands, strung into jab, cross, hook. Shoot on him and he sprawls on almost everything. Every so often he drops his level, reaches out with both arms and clinches: break free or he throws you over his hip, follows you down and rains punches from on top, the PRIDE flurry, sometimes switching to the armbar that finished Mark Coleman twice. He barely reacts to being hit: big shots barely move him, a dizzy wears off fast, and a low church bell rings when he walks through one. A quiet Russian Orthodox-style choir hums under every fight he's in. Special move: The Unmoving Man. Hands down, feet still, he slips everything they throw without changing a thing, catches their last punch in one glove and puts them through the cage with one overhand right.",
+    "bio": "\"The Last Emperor\". The PRIDE heavyweight champion, a Combat Sambo world champion from Stary Oskol, Russia, with a soft, everyman heavyweight build and no expression on his face. Slow on his feet, but his hands are the fastest heavy hands in the game: hard punches off alternating hands, strung into jab, cross, hook. Shoot on him and he sprawls on almost everything. Every so often he drops his level, reaches out with both arms and clinches: break free or he throws you over his hip, follows you down and rains punches from on top, the PRIDE flurry, sometimes switching to the armbar that finished Mark Coleman twice. Now and then up close he throws an elbow, and half of them land as crits. Pull guard on him and he steps right back in and passes it most of the time, straight into a slightly heavier flurry from on top. He barely reacts to being hit: big shots barely move him, a dizzy wears off fast, and a low church bell rings when he walks through one. A quiet Russian Orthodox-style choir hums under every fight he's in. Special move: The Unmoving Man. Hands down, feet still, he slips everything they throw without changing a thing, catches their last punch in one glove and puts them through the cage with one overhand right.",
     "color": "#7d93b2",
     "label": "",
     "imgData": null,
@@ -2493,7 +2493,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 20,
+      "damage": 21,
       "cooldown": 0.38,
       "speed": 0.16,
       "size": 14,
@@ -2512,6 +2512,24 @@ var SAVED_ROSTER = [
     "blockChance": 12,
     "tdd": {
       "sprawlChance": 78
+    },
+    "guardPass": {
+      "chance": 80,
+      "time": [
+        0.6,
+        1.2
+      ],
+      "gnp": true,
+      "gnpMult": 1.2
+    },
+    "elbow": {
+      "damage": 20,
+      "cooldown": 12.5,
+      "speed": 0.26,
+      "reach": 14,
+      "critChance": 50,
+      "critMult": 2,
+      "knockback": 160
     },
     "combos": {
       "first": [
@@ -2541,12 +2559,12 @@ var SAVED_ROSTER = [
       },
       "throw": {
         "first": [
-          6,
-          9
+          4.5,
+          7
         ],
         "every": [
-          8,
-          12
+          6,
+          9
         ],
         "range": 24,
         "reach": 0.3,
@@ -2557,10 +2575,10 @@ var SAVED_ROSTER = [
         "tddScale": 0.3,
         "lift": 0.55,
         "damage": 14,
-        "gnpChance": 75
+        "gnpChance": 85
       },
       "gnp": {
-        "punches": 6,
+        "punches": 7,
         "damage": 5,
         "lastDamage": 10,
         "wind": 0.07,
@@ -2600,6 +2618,46 @@ var SAVED_ROSTER = [
           2
         ],
         "startChance": 100
+      },
+      "emperor": {
+        "trigger": {
+          "hpBelow": 50,
+          "at": 30
+        },
+        "cut": {
+          "len": 2.5,
+          "stepBack": 46,
+          "mirrorAt": 0.35,
+          "lookAt": 0.6,
+          "crownAt": 1.35,
+          "setAt": 1.95
+        },
+        "buff": {
+          "len": 10,
+          "crownFade": 0.6
+        },
+        "crit": {
+          "chance": 35,
+          "mult": 1.8,
+          "sources": [
+            "punch",
+            "jab",
+            "combo",
+            "elbow",
+            "knee",
+            "kick"
+          ],
+          "gnp": true
+        },
+        "shook": {
+          "take": 0.7,
+          "sweat": true,
+          "wobble": true
+        },
+        "voice": {
+          "clip": "fedorLastEmperor",
+          "line": "Fedor, the Last Emperor"
+        }
       }
     },
     "hasSpecial": true,
@@ -3522,7 +3580,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 9,
+    "rev": 11,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
@@ -3551,12 +3609,12 @@ var SAVED_ROSTER = [
     },
     "hasKick": true,
     "kick": {
-      "damage": 35,
+      "damage": 44,
       "cooldown": 3.0,
       "speed": 0.5,
       "size": 17,
       "knockback": 450,
-      "reach": 75,
+      "reach": 95,
       "checkChance": 35
     },
     "hasGrapple": true,
@@ -3633,7 +3691,7 @@ var SAVED_ROSTER = [
       "damage": 6,
       "cooldown": 1.6,
       "speed": 0.26,
-      "reach": 18,
+      "reach": 24,
       "critChance": 45,
       "critMult": 2.5,
       "knockback": 170,
@@ -3657,6 +3715,25 @@ var SAVED_ROSTER = [
         "jab-cross-elbow": 1
       }
     },
+    "legKick": {
+      "first": [
+        5,
+        8
+      ],
+      "every": [
+        13,
+        19
+      ],
+      "range": 70,
+      "reach": 105,
+      "damage": 8,
+      "slow": 0.75,
+      "time": 3,
+      "stack": 0.1,
+      "maxStacks": 3,
+      "minSlow": 0.55,
+      "size": 1.1
+    },
     "jonClinch": {
       "first": [
         3,
@@ -3666,7 +3743,7 @@ var SAVED_ROSTER = [
         5.5,
         8
       ],
-      "range": 22,
+      "range": 28,
       "reach": 0.26,
       "evade": 18,
       "weaverEvade": 12,
@@ -3693,7 +3770,7 @@ var SAVED_ROSTER = [
         "knees": 55,
         "trip": 55,
         "spinElbow": true,
-        "oblique": false
+        "oblique": true
       },
       "evil": {
         "on": true,
@@ -3703,6 +3780,12 @@ var SAVED_ROSTER = [
         "oblique": true,
         "elbowCooldown": 1.6
       },
+      "stepIn": [
+        "clinch",
+        "spinElbow",
+        "oblique",
+        "legKick"
+      ],
       "trip": {
         "tell": 0.34,
         "defend": 28,
@@ -3732,7 +3815,7 @@ var SAVED_ROSTER = [
           10,
           15
         ],
-        "range": 26,
+        "range": 32,
         "afterClinch": 30,
         "breakShove": 80,
         "turn": 0.22,
@@ -3749,20 +3832,56 @@ var SAVED_ROSTER = [
           3
         ],
         "every": [
-          5,
-          8
+          13,
+          19
         ],
-        "range": 46,
+        "range": 56,
         "chamber": 0.2,
         "dur": 0.42,
         "damage": 5,
         "knockback": 200,
         "slow": 0.85,
-        "slowTime": 1.5
+        "slowTime": 1.5,
+        "stack": 0.1,
+        "minSlow": 0.55,
+        "mixGap": 1.2
+      }
+    },
+    "movement": {
+      "spacing": {
+        "own": 8,
+        "jab": false,
+        "min": 30,
+        "max": 100,
+        "band": 10,
+        "turn": 12,
+        "turnIn": 18,
+        "angle": 0.6,
+        "jabEvery": [
+          0.25,
+          0.7
+        ],
+        "stepIn": 0.6,
+        "switch": [
+          1.5,
+          3.5
+        ],
+        "read": 0.12
       }
     },
     "jon": {
       "swapEvery": 15,
+      "tieUp": {
+        "chance": 45,
+        "takedownShare": 35,
+        "cooldown": 3,
+        "window": 0.4,
+        "range": 60,
+        "shot": {
+          "speed": 560,
+          "time": 0.35
+        }
+      },
       "rncChance": 5,
       "gnpChance": 5,
       "gnp": [
@@ -3877,6 +3996,7 @@ var SAVED_ROSTER = [
       "goats": 8,
       "goatGap": 0.7,
       "goatDamage": 20,
+      "goatLane": 1.2,
       "ramSpeed": 1900,
       "ramWalls": 3,
       "ramWallDamage": 4
@@ -4746,7 +4866,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-max-holloway",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Max Holloway",
@@ -4840,7 +4960,7 @@ var SAVED_ROSTER = [
     "hasForget": false,
     "blockChance": 12,
     "tdd": {
-      "sprawlChance": 70
+      "sprawlChance": 60
     },
     "holloway": {
       "volume": {
@@ -4971,7 +5091,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-michael-bisping",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Michael Bisping",
@@ -5215,7 +5335,7 @@ var SAVED_ROSTER = [
         "gap": 0.5,
         "hold": 0.5
       },
-      "damage": 16,
+      "damage": 24,
       "knockback": 760,
       "shove": 0.8
     }
@@ -5802,12 +5922,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-sean-strickland",
-    "rev": 5,
+    "rev": 8,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Sean Strickland",
     "base": "Brawler",
-    "bio": "Built on the Brawler base, and his offense is mostly two things: a long, stiff jab and the teep, a front push kick that shoves them back when they come in. He fights at the end of that jab: he hovers just outside their reach, steps in behind the jab and straight back out, and backs out at an angle or circles off the cage when they come in, in the Philly shell: lead hand low across his stomach, rear glove by his chin, rolling punches off his shoulder and jabbing straight back. Takedowns mostly get stuffed. He never gets tired: every few seconds his pace goes up, and late in the fight they're the ones sweating. The bar under his health is his trauma meter. Every hit and every taunt (any line of theirs, a thumbs down, a celebration) fills it, he gets TRIGGERED, and the fuller it is the faster his special charges. His special is America: when he's landing on them or has them cornered, a bald eagle swoops in and hits them, the crowd chants U-S-A under flags and fireworks, and Chuck Norris drops in to beat them up with him while he chases them into a corner throwing overhand rights. It's all one way: rocked by the talons, they can't grab him or throw anything back until it's over.",
+    "bio": "Built on the Brawler base, and his offense is mostly two things: a long, stiff jab and the teep, a long front push kick that shoves them back when they come in. He fights at the end of that jab: he hovers just outside their reach, steps in behind the jab and straight back out, and backs out at an angle or circles off the cage when they come in, in the Philly shell: lead hand low across his stomach, rear glove by his chin, rolling punches off his shoulder and jabbing straight back. He slips a lot of what comes back at him while he jabs. A very defensive fighter: kicks are hard to land on him and takedowns almost always get stuffed. He never gets tired: every few seconds his pace goes up, and late in the fight they're the ones sweating. The bar under his health is his trauma meter. Every hit and every taunt (any line of theirs, a thumbs down, a celebration) fills it, he gets TRIGGERED, and the fuller it is the faster his special charges. His special is America: when he's landing on them or has them cornered, a bald eagle swoops in and hits them, the crowd chants U-S-A under flags and fireworks, and Chuck Norris drops in to beat them up with him while he chases them into a corner throwing overhand rights. It's all one way: rocked by the talons, they can't grab him or throw anything back until it's over.",
     "color": "#3c3b6e",
     "label": "",
     "imgData": null,
@@ -5852,20 +5972,20 @@ var SAVED_ROSTER = [
     "hasWeave": false,
     "hasSwing": false,
     "hasForget": false,
-    "blockChance": 14,
+    "blockChance": 20,
     "tdd": {
       "sprawlChance": 80
     },
     "hasTeep": true,
     "teep": {
       "cooldown": 2.2,
-      "range": 34,
-      "reach": 52,
+      "range": 46,
+      "reach": 68,
       "chamber": 0.14,
       "extend": 0.08,
       "hold": 0.12,
       "recover": 0.16,
-      "damage": 10,
+      "damage": 18,
       "push": 620,
       "blockPush": 0.5,
       "stuff": true,
@@ -5911,10 +6031,14 @@ var SAVED_ROSTER = [
       },
       "shell": {
         "chance": 32,
-        "kickChance": 14,
+        "kickChance": 35,
         "projChance": 8,
         "counter": 50,
         "angryOff": true
+      },
+      "jabSlip": {
+        "chance": 40,
+        "after": 0.3
       },
       "cardio": {
         "every": 15,
@@ -6003,19 +6127,19 @@ var SAVED_ROSTER = [
         "flag": true,
         "speed": 560,
         "reach": 30,
-        "time": 2.6,
+        "time": 2,
         "punchEvery": 0.14,
         "kickEvery": 4,
         "punchDamage": 4,
-        "kickDamage": 9,
+        "kickDamage": 8,
         "punchKnock": 140,
         "kickKnock": 300,
         "stun": 0.12,
         "windup": 0.3,
-        "roundhouseDamage": 30,
+        "roundhouseDamage": 20,
         "unblockable": true,
         "roundhouseKnock": 700,
-        "overhandsCut": 2,
+        "overhandsCut": 3,
         "boom": true,
         "kickLine": 50,
         "lines": {

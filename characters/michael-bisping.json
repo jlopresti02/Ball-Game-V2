@@ -1,6 +1,6 @@
 {
   "id": "c-michael-bisping",
-  "rev": 2,
+  "rev": 3,
   "builtin": false,
   "weightClass": "middleweight",
   "name": "Michael Bisping",
@@ -83,6 +83,6 @@
     "ship": { "length": 290, "y": 0.6, "rise": 0.75, "board": 0.5, "sink": 0.7, "drift": 12, "bob": 4, "roll": 0.035, "solid": true, "sea": 0.34 },
     "cannons": { "count": 3, "aim": 1, "reaim": 0.75, "lock": 0.35, "lead": 1, "spread": 12, "stagger": 0.14, "speed": 780, "size": 11 },
     "volley": { "volleys": 2, "gap": 0.5, "hold": 0.5 },
-    "damage": 16, "knockback": 760, "shove": 0.8
+    "damage": 24, "knockback": 760, "shove": 0.8
   }
 }
