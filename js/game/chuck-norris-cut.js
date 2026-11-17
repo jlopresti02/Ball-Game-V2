@@ -824,9 +824,9 @@ function cncShotJet(u) {
 // Lincoln's beard).
 function cncCarvedHead(x, y, r, tilt, who) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
-  var lit = "#ddd6c8", mid = "#b0a99b", sh = "rgba(70,64,56,0.55)", deep = "rgba(45,40,34,0.75)";
+  var lit = "#f1ece2", mid = "#cdc5b6", sh = "rgba(70,64,56,0.55)", deep = "rgba(45,40,34,0.75)";
   // the rock left round the head
-  ctx.fillStyle = "#8f897d"; ctx.beginPath(); ctx.ellipse(r * 0.15, r * 0.2, r * 1.05, r * 1.25, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(110,92,76,0.28)"; ctx.beginPath(); ctx.ellipse(r * 0.12, r * 0.15, r * 0.95, r * 1.12, 0, 0, Math.PI * 2); ctx.fill();
   var g = ctx.createRadialGradient(-r * 0.4, -r * 0.45, r * 0.1, 0, 0, r * 1.1);
   g.addColorStop(0, lit); g.addColorStop(0.6, mid); g.addColorStop(1, "#7f796e");
   ctx.fillStyle = g;
@@ -867,23 +867,35 @@ function cncCarvedHead(x, y, r, tilt, who) {
 function cncShotRushmore(u) {
   var lift = cncEase(u / 0.6);
   var sky = ctx.createLinearGradient(0, 0, 0, 1920);
-  sky.addColorStop(0, "#f08a4b"); sky.addColorStop(0.5, "#ffd18a"); sky.addColorStop(1, "#9fc2e0");
+  sky.addColorStop(0, "#1d5fc4"); sky.addColorStop(0.55, "#3f86e0"); sky.addColorStop(1, "#8fc0f0");
   ctx.fillStyle = sky; ctx.fillRect(0, 0, 1080, 1920);
   ctx.save();
   ctx.translate(540, 1100); ctx.scale(1.12 - 0.12 * lift, 1.12 - 0.12 * lift); ctx.translate(-540, -1100 + 160 * lift);
-  // the mountain
-  ctx.fillStyle = "#9a948a";
-  ctx.beginPath(); ctx.moveTo(-100, 1700); ctx.lineTo(-100, 900); ctx.quadraticCurveTo(200, 700, 540, 720); ctx.quadraticCurveTo(900, 700, 1180, 880); ctx.lineTo(1180, 1700); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = "#7d776d";
-  ctx.beginPath(); ctx.moveTo(-100, 1700); ctx.lineTo(-100, 1150); ctx.quadraticCurveTo(540, 1050, 1180, 1150); ctx.lineTo(1180, 1700); ctx.closePath(); ctx.fill();
-  // the four presidents carved in the granite, left to right as they are on
-  // the mountain: Washington out front, Jefferson tucked behind him, Roosevelt
-  // set back in the shadow, Lincoln on the right with his beard
-  [[180, 950, 120, 0.12, "wash"], [345, 900, 108, -0.18, "jeff"], [505, 960, 96, 0.05, "teddy"], [680, 965, 118, -0.08, "abe"]].forEach(function (h) {
+  // the cliff (Joe's reference photo): craggy tan-pink granite, the heads in
+  // its upper middle, a grey rubble slope and pines below
+  ctx.fillStyle = "#b9a58f";
+  ctx.beginPath(); ctx.moveTo(-100, 2100); ctx.lineTo(-100, 820); ctx.lineTo(-20, 760); ctx.lineTo(60, 790); ctx.lineTo(120, 700); ctx.lineTo(200, 690);
+  ctx.lineTo(300, 720); ctx.lineTo(420, 740); ctx.lineTo(520, 770); ctx.lineTo(600, 800); ctx.lineTo(700, 790); ctx.lineTo(780, 760); ctx.lineTo(880, 770);
+  ctx.lineTo(960, 820); ctx.lineTo(1040, 800); ctx.lineTo(1180, 860); ctx.lineTo(1180, 2100); ctx.lineTo(-100, 2100); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "rgba(120,100,84,0.45)"; // shadowed ledges and crevices
+  [[0, 860, 90, 260], [110, 760, 50, 160], [960, 860, 120, 300], [1060, 880, 90, 220]].forEach(function (c) { ctx.beginPath(); ctx.ellipse(c[0], c[1] + c[3] / 2, c[2] / 2, c[3] / 2, 0, 0, Math.PI * 2); ctx.fill(); });
+  ctx.strokeStyle = "rgba(95,80,66,0.55)"; ctx.lineWidth = 4;
+  for (var cr = 0; cr < 16; cr++) { var cx0 = cncRand(cr) * 1180 - 60, cy0 = 820 + cncRand(cr + 20) * 300; ctx.beginPath(); ctx.moveTo(cx0, cy0); ctx.lineTo(cx0 + (cncRand(cr + 5) - 0.5) * 50, cy0 + 60 + cncRand(cr + 9) * 90); ctx.stroke(); }
+  // the four presidents, close together as on the mountain: Roosevelt set
+  // deep in the shadow behind, Jefferson tucked in at Washington's shoulder,
+  // Lincoln on the right, Washington out front on the left
+  [[540, 985, 90, 0.05, "teddy"], [400, 905, 104, -0.12, "jeff"], [680, 960, 116, -0.05, "abe"], [250, 860, 126, 0.06, "wash"]].forEach(function (h) {
     cncCarvedHead(h[0], h[1], h[2], h[3], h[4]);
+    if (h[4] === "teddy") { ctx.fillStyle = "rgba(70,58,46,0.3)"; ctx.beginPath(); ctx.ellipse(h[0], h[1], h[2] * 0.8, h[2], 0, 0, Math.PI * 2); ctx.fill(); }
   });
+  // the rubble slope below
+  ctx.fillStyle = "#8c8780";
+  ctx.beginPath(); ctx.moveTo(40, 1560); ctx.quadraticCurveTo(300, 1140, 480, 1110); ctx.quadraticCurveTo(700, 1130, 920, 1560); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#24402c"; ctx.fillRect(-100, 1520, 1280, 600); // the forest floor
+  ctx.fillStyle = "rgba(60,58,54,0.35)";
+  for (var rb = 0; rb < 40; rb++) { ctx.beginPath(); ctx.arc(200 + cncRand(rb) * 620, 1180 + cncRand(rb + 40) * 300, 5 + cncRand(rb + 80) * 9, 0, Math.PI * 2); ctx.fill(); }
   // ...and the fifth: a round head in a cowboy hat, the chisel dust still falling
-  var fx = 890, fy = 990, fr = 92;
+  var fx = 880, fy = 950, fr = 96;
   ctx.save(); ctx.translate(fx, fy);
   var g2 = ctx.createRadialGradient(-30, -30, 10, 0, 0, fr);
   g2.addColorStop(0, "#e6e0d2"); g2.addColorStop(1, "#968f82");
@@ -902,7 +914,7 @@ function cncShotRushmore(u) {
   for (var d = 0; d < 14; d++) { var dy = ((u * 260 + cncRand(d) * 200) % 200); ctx.beginPath(); ctx.arc(fx - 60 + cncRand(d + 3) * 120, fy + fr + dy, 4 + cncRand(d + 8) * 4, 0, Math.PI * 2); ctx.fill(); }
   // pines at the foot
   ctx.fillStyle = "#1f3a26";
-  for (var p = 0; p < 22; p++) { var px = p * 55 - 40, py = 1260 + cncRand(p) * 40; ctx.beginPath(); ctx.moveTo(px, py - 110); ctx.lineTo(px + 34, py); ctx.lineTo(px - 34, py); ctx.closePath(); ctx.fill(); }
+  for (var p = 0; p < 26; p++) { var px = p * 46 - 40, py = 1400 + cncRand(p) * 60 + (Math.abs(px - 480) < 260 ? 60 : -60 * cncRand(p + 3)); ctx.beginPath(); ctx.moveTo(px, py - 110); ctx.lineTo(px + 34, py); ctx.lineTo(px - 34, py); ctx.closePath(); ctx.fill(); }
   ctx.restore();
   // the jet streaking over the top, contrails behind
   var jx = cncLerp(-200, 1300, u / 0.6), jy = 520 - 60 * u;
