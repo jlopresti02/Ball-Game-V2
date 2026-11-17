@@ -338,6 +338,7 @@ function updateSamurai(self, other, dt) {
     return true;
   }
   if (m.phase === "close") {
+    if (typeof jpSamuraiWaits === "function" && jpSamuraiWaits(self, other, m, dt)) return true; // standing his ground while their goats, bull or eagle come at him (jiri-react.js)
     if (m.sl) { jpRunSlash(self, other, cfg, m, dt, gap); if (m.phase !== "close") return true; } // (cut down: the iai took over)
     else {
       var spd = (self.baseSpeed || SPEED) * cfg.speed * (gap < 6 ? 0.2 : 1);

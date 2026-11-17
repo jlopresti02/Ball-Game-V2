@@ -3418,7 +3418,8 @@ var SAVED_ROSTER = [
       },
       "react": {
         "animals": {
-          "chance": 100
+          "chance": 100,
+          "answer": 100
         },
         "leprechauns": {
           "range": 120

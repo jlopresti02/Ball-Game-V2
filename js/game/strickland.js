@@ -614,6 +614,7 @@ function skTrackLanded(b, s) {
 // landing, or he has them cornered, or he's waited long enough.
 function skTrigger(self, other, sp) {
   if (skDemo()) return "demo";
+  if (typeof jpSamuraiInvites === "function" && jpSamuraiInvites(self, other)) return "samurai"; // the eagle at Jiří Procházka's samurai (jiri-react.js)
   if (!skFree(other)) return null; // not while they're in the middle of something of their own
   var tg = sp.trigger || {}, s = self.sk;
   var dx = other.x - self.x, dy = other.y - self.y, gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;

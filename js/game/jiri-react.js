@@ -55,6 +55,54 @@ function jpAnimalCut(v, a) {
   return true;
 }
 
+// Joe (2026-11-17): "let them happen while he's a samurai, for the sake of
+// cool interactions." Jon's GOAT Stampede, Ilia's Aura Farm and Strickland's
+// America (the specials with an animal in them) can start while the samurai
+// is on his run, and the samurai calls them out: as his run starts their bar
+// fills (`answer`% of the time, once a samurai). While their animal is coming
+// he stands his ground with both swords up (his clock waits) and cuts it in
+// half; then he carries on.
+var JP_ANIMAL_SPECIALS = { goatstampede: true, aurafarm: true, america: true };
+function jpAnimalSpecial(b) { return !!(b && b.char.hasSpecial && b.char.special && JP_ANIMAL_SPECIALS[b.char.special.move]); }
+// From canStartIgbb (special.js) and skTrigger (strickland.js).
+function jpSamuraiInvites(self, other) {
+  return jpAnimalSpecial(self) && jpSamuraiCanCut(other) && other.igbb.phase === "close" && !other.igbb.sl && !self.igbb;
+}
+// From updateSamurai (prochazka.js), on the run: true while their animal is on its way.
+function jpSamuraiWaits(self, other, m, dt) {
+  var o = other.igbb;
+  if (m.sl || !o || !JP_ANIMAL_SPECIALS[o.move]) return false;
+  if (o.move === "america" && o.phase !== "eagle") return false;              // (the eagle's been: back to work)
+  if (o.move === "aurafarm" && (o.phase === "bow" || o.phase === "ko" || o.phase === "lift")) return false;
+  m.t = Math.max(0, m.t - dt); // his clock waits
+  self.vx = 0; self.vy = 0;
+  if (o.move === "goatstampede" && typeof jonGoats !== "undefined") {
+    // He goes and stands in the way of the next goat (jon.js's goats run in
+    // straight lanes through the middle).
+    var best = null, bd = Infinity;
+    jonGoats.forEach(function (g) {
+      if (g.hit || (g.phase !== "aim" && g.phase !== "charge")) return;
+      var px = self.x - g.x, py = self.y - g.y, along = px * g.dx + py * g.dy;
+      if (along < 0) return; // (already past him)
+      var qx = g.x + g.dx * along, qy = g.y + g.dy * along, dd = Math.hypot(qx - self.x, qy - self.y);
+      if (dd < bd) { bd = dd; best = { x: qx, y: qy }; }
+    });
+    if (best && bd > 4) {
+      var sp = (self.baseSpeed || SPEED) * ((jpSam(self) || {}).speed || 1);
+      self.vx = (best.x - self.x) / bd * sp; self.vy = (best.y - self.y) / bd * sp;
+    }
+  }
+  return true;
+}
+// From tickJiriReact: the samurai on his run calls their animal out.
+function jpCallAnimals(v) {
+  var ac = jpReactCfg(v) && jpReactCfg(v).animals, o = balls[1 - v.id];
+  if (!ac || !o || !samuraiOn(v) || v.igbb.phase !== "close" || v.jpCalledN === v.jpN || !jpAnimalSpecial(o) || o.igbb) return;
+  if (!canStartIgbb(o, v) || (o.char.special.move === "america" && o.sk && o.sk.fightT < (o.char.special.notBefore || 0))) return; // (only if they can come right now)
+  v.jpCalledN = v.jpN;
+  if (Math.random() * 100 < (ac.answer != null ? ac.answer : 100)) o.specialT = Math.max(o.specialT || 0, o.char.special.chargeTime);
+}
+
 // ---------------------------------------------------------------- leprechauns
 
 function jpLadsOut(v) { return typeof cmBus !== "undefined" && cmBus && cmBus.oppId === v.id && cmBus.crew.some(function (c) { return c.st === "chase" || c.st === "out" || c.st === "brawl"; }); }
@@ -98,6 +146,7 @@ function tickJiriReact(dt) {
     if (!h.puffed && h.t >= JP_HALF_LIFE - 0.35) { h.puffed = true; jpHalfPuff(h); }
   });
   jpHalves = jpHalves.filter(function (h) { return h.t < JP_HALF_LIFE; });
+  balls.forEach(function (v) { if (jpReactCfg(v)) jpCallAnimals(v); });
   balls.forEach(function (v) {
     if (!jpReactCfg(v) || typeof cmBus === "undefined" || !cmBus || !v.alive) return;
     if (v.jpScaredBus === cmBus) jpScareLads(v); // the rest of the crew won't come near him either

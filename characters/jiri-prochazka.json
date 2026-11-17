@@ -55,7 +55,7 @@
     "handsLow": true,
     "chin": { "critChance": 48, "critMult": 1.6, "sources": ["punch", "jab", "kick", "kickback", "elbow", "knee", "combo", "swing", "teep", "flow", "bat", "poke"] },
     "phantom": { "first": [6, 10], "every": [12, 18], "range": [0, 230], "stance": 0.55, "cut": 0.14, "after": 0.5, "stun": 1.6 },
-    "react": { "animals": { "chance": 100 }, "leprechauns": { "range": 120 } },
+    "react": { "animals": { "chance": 100, "answer": 100 }, "leprechauns": { "range": 120 } },
     "samurai": {
       "lowHp": 0.4, "oppLowHp": 0.4, "lowBoost": 1.5, "max": 2, "minGap": 8,
       "dream": 2.0, "outfit": 0.7, "draw": 0.6, "time": 5,
