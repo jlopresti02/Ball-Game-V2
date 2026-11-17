@@ -1929,10 +1929,10 @@ function drawBrawlCloud(o, bus) {
   ctx.restore();
 }
 
-// The dolly (a red two-wheel hand truck, from Joe's photo): a red tube
-// frame with a black grip across the handle loop, cross braces, a small
-// pair of caster wheels up top, two big grey air tyres on silver hubs and
-// a wide red nose plate with bolts. `s` scales it.
+// The dolly (a red two-wheel hand truck, from Joe's photo), seen from the
+// front: a red tube frame with a black grip across the handle loop, cross
+// braces, small casters up top and two big air tyres edge-on beside the
+// frame, and a wide red nose plate with bolts. `s` scales it.
 function drawDolly(x, y, ang, s) {
   var hgt = 58 * s, w = 16 * s, ink = theme.wall;
   var red = "#d32f2f", redDk = "#8e1b1b", top = -hgt / 2, bot = hgt / 2;
@@ -1944,28 +1944,29 @@ function drawDolly(x, y, ang, s) {
     ctx.strokeStyle = red; ctx.lineWidth = wd * s; ctx.beginPath(); path(); ctx.stroke();
     ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = wd * 0.3 * s; ctx.beginPath(); path(); ctx.stroke();
   }
-  function wheel(cx, cy, rad, hub) {
-    ctx.fillStyle = "#2b2b2b"; ctx.strokeStyle = ink; ctx.lineWidth = 2 * s;
-    ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    if (hub) {
-      ctx.strokeStyle = "#474747"; ctx.lineWidth = 1.2 * s;     // tread ring
-      ctx.beginPath(); ctx.arc(cx, cy, rad * 0.78, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = "#c3c8cd"; ctx.beginPath(); ctx.arc(cx, cy, rad * 0.52, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "#7d858c"; ctx.lineWidth = 1 * s; ctx.stroke();
-      ctx.fillStyle = "#5c6369"; ctx.beginPath(); ctx.arc(cx, cy, rad * 0.18, 0, Math.PI * 2); ctx.fill();
-    } else {
-      ctx.fillStyle = "#9aa0a6"; ctx.beginPath(); ctx.arc(cx, cy, rad * 0.35, 0, Math.PI * 2); ctx.fill();
-    }
+  // Seen from the front the wheels are edge-on: a tyre is a tall, narrow
+  // rounded strip of tread tucked in beside the frame, with just the end
+  // of its axle cap showing on the outside.
+  function tyre(cx, cy, tw, th, q) {
+    var x0 = cx - tw / 2, y0 = cy - th / 2, rr = tw / 2;
+    ctx.fillStyle = "#2b2b2b"; ctx.strokeStyle = ink; ctx.lineWidth = 1.8 * s;
+    ctx.beginPath();
+    ctx.moveTo(x0 + rr, y0); ctx.lineTo(x0 + tw - rr, y0); ctx.quadraticCurveTo(x0 + tw, y0, x0 + tw, y0 + rr);
+    ctx.lineTo(x0 + tw, y0 + th - rr); ctx.quadraticCurveTo(x0 + tw, y0 + th, x0 + tw - rr, y0 + th);
+    ctx.lineTo(x0 + rr, y0 + th); ctx.quadraticCurveTo(x0, y0 + th, x0, y0 + th - rr);
+    ctx.lineTo(x0, y0 + rr); ctx.quadraticCurveTo(x0, y0, x0 + rr, y0);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = "#4a4a4a"; ctx.lineWidth = 0.9 * s;           // tread
+    for (var k = 1; k < 6; k++) { var ty = y0 + th * k / 6; ctx.beginPath(); ctx.moveTo(x0 + tw * 0.2, ty); ctx.lineTo(x0 + tw * 0.8, ty); ctx.stroke(); }
+    ctx.fillStyle = "#c3c8cd"; ctx.strokeStyle = ink; ctx.lineWidth = 1 * s;   // axle cap
+    ctx.beginPath(); ctx.ellipse(cx + q * tw * 0.55, cy, tw * 0.22, th * 0.13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   }
-  // the little casters on their axle, up near the handle
+  // the little casters up near the handle, edge-on beside the rails
   var cy = top + hgt * 0.2;
-  ctx.strokeStyle = "#5f666c"; ctx.lineWidth = 2 * s;
-  ctx.beginPath(); ctx.moveTo(-w / 2 - 6 * s, cy); ctx.lineTo(w / 2 + 6 * s, cy); ctx.stroke();
-  [-1, 1].forEach(function (q) { wheel(q * (w / 2 + 6 * s), cy, 3.6 * s, false); });
-  // the big wheels' axle, behind the frame
-  var wy = bot - 11 * s;
-  ctx.strokeStyle = "#5f666c"; ctx.lineWidth = 1.6 * s;
-  ctx.beginPath(); ctx.moveTo(-w / 2 - 6 * s, wy); ctx.lineTo(w / 2 + 6 * s, wy); ctx.stroke();
+  [-1, 1].forEach(function (q) { tyre(q * (w / 2 + 3 * s), cy, 3 * s, 8 * s, q); });
+  // the big air tyres down at the foot, mostly behind the nose plate
+  var wy = bot - 10 * s;
+  [-1, 1].forEach(function (q) { tyre(q * (w / 2 + 4.2 * s), wy, 5.6 * s, 17 * s, q); });
   // the frame: two rails up into the handle loop
   tube(function () {
     ctx.moveTo(-w / 2, bot - 5 * s); ctx.lineTo(-w / 2, top + 5 * s);
@@ -1985,8 +1986,6 @@ function drawDolly(x, y, ang, s) {
   ctx.beginPath(); ctx.moveTo(-w / 2 + 3.5 * s, top); ctx.lineTo(w / 2 - 3.5 * s, top); ctx.stroke();
   ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = 1.2 * s;
   ctx.beginPath(); ctx.moveTo(-w / 2 + 4 * s, top - 1.2 * s); ctx.lineTo(w / 2 - 4 * s, top - 1.2 * s); ctx.stroke();
-  // big air tyres on silver hubs
-  [-1, 1].forEach(function (q) { wheel(q * (w / 2 + 6 * s), wy, 8 * s, true); });
   // the nose plate, wider than the frame, with its bolts
   ctx.fillStyle = red; ctx.strokeStyle = ink; ctx.lineWidth = 2 * s;
   ctx.beginPath();
