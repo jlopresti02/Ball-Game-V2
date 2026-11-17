@@ -5825,12 +5825,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-sean-strickland",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Sean Strickland",
     "base": "Brawler",
-    "bio": "Built on the Brawler base, and his offense is mostly two things: a long, stiff jab and the teep, a front push kick that shoves them back when they come in. He fights at the end of that jab: he hovers just outside their reach, steps in behind the jab and straight back out, and backs out at an angle or circles off the cage when they come in, in the Philly shell: lead hand low across his stomach, rear glove by his chin, rolling punches off his shoulder and jabbing straight back. Takedowns mostly get stuffed. He never gets tired: every few seconds his pace goes up, and late in the fight they're the ones sweating. The bar under his health is his trauma meter. Every hit and every taunt (any line of theirs, a thumbs down, a celebration) fills it, he gets TRIGGERED, and the fuller it is the faster his special charges. His special is America: when he's landing on them or has them cornered, a bald eagle swoops in and hits them, the crowd chants U-S-A under flags and fireworks, and Chuck Norris drops in to beat them up with him while he chases them into a corner throwing overhand rights. It's all one way: rocked by the talons, they can't grab him or throw anything back until it's over.",
+    "bio": "Built on the Brawler base, and his offense is mostly two things: a long, stiff jab and the teep, a long front push kick that shoves them back when they come in. He fights at the end of that jab: he hovers just outside their reach, steps in behind the jab and straight back out, and backs out at an angle or circles off the cage when they come in, in the Philly shell: lead hand low across his stomach, rear glove by his chin, rolling punches off his shoulder and jabbing straight back. He slips a lot of what comes back at him while he jabs. A very defensive fighter: kicks are hard to land on him and takedowns almost always get stuffed. He never gets tired: every few seconds his pace goes up, and late in the fight they're the ones sweating. The bar under his health is his trauma meter. Every hit and every taunt (any line of theirs, a thumbs down, a celebration) fills it, he gets TRIGGERED, and the fuller it is the faster his special charges. His special is America: when he's landing on them or has them cornered, a bald eagle swoops in and hits them, the crowd chants U-S-A under flags and fireworks, and Chuck Norris drops in to beat them up with him while he chases them into a corner throwing overhand rights. It's all one way: rocked by the talons, they can't grab him or throw anything back until it's over.",
     "color": "#3c3b6e",
     "label": "",
     "imgData": null,
@@ -5875,15 +5875,15 @@ var SAVED_ROSTER = [
     "hasWeave": false,
     "hasSwing": false,
     "hasForget": false,
-    "blockChance": 14,
+    "blockChance": 20,
     "tdd": {
-      "sprawlChance": 80
+      "sprawlChance": 90
     },
     "hasTeep": true,
     "teep": {
       "cooldown": 2.2,
-      "range": 34,
-      "reach": 52,
+      "range": 46,
+      "reach": 68,
       "chamber": 0.14,
       "extend": 0.08,
       "hold": 0.12,
@@ -5934,10 +5934,14 @@ var SAVED_ROSTER = [
       },
       "shell": {
         "chance": 32,
-        "kickChance": 14,
+        "kickChance": 35,
         "projChance": 8,
         "counter": 50,
         "angryOff": true
+      },
+      "jabSlip": {
+        "chance": 40,
+        "after": 0.3
       },
       "cardio": {
         "every": 15,
