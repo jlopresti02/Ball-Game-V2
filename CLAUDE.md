@@ -68,6 +68,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Ilia Topuria sprawls 75% (was 68), his regular strikes do about 10% more, rounded (punch 9, combo punches 9 / `dmgMax` 10, get-up shot 9), and his combo's final punch lands 50% heavier (`ramp.chain.finisher` [5.45, 6.82], was [4, 5]). His specials are unchanged: the bull and throw 70, rapier slash 40 / lunge 24 / slam 3, tornado 10 / slam 6 | Christian's Claude | live on main |
 | Justin Gaethje's regular punch about 10% lighter again (19, rounded; uppercuts stay about 30 via `uppercuts.damageMult` 1.579) and a few more calf kicks (`legKick.every` [1.82, 3.18], was [2, 3.5]: about 6% more a minute, which Christian said is fine) | Christian's Claude | live on main |
 | Fedor's special: The Unmoving Man (`fedor-unmoving.js`, `special.move` "unmoving"): slips every punch hands down, catches the last one, one overhand right into the cage | Joe | live on main |
+| Sean O'Malley's Sugar Rush aura (`omalley-aura.js`, draw-only, three one-line hooks in draw.js): while he calls it, hunts the candy and rides the sugar high he jitters, with a candy burst, lollipop swirl, cotton-candy flames, heartbeat rings, pink/blue ghost rims, orbiting candies and sugar dust. Gameplay unchanged | Joe | live on main |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
 
