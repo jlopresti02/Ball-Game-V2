@@ -75,6 +75,11 @@
 // (`slow` times their speed for `slowTime` seconds, the same limp as every
 // leg kick, leg-kick.js; `stack`, `maxStacks` and `minSlow` work here too).
 // It's a kick: it can be slipped or blocked, or whiff if they've got away.
+// With `mixGap` (seconds) and a calf kick of his own (a "legKick" block,
+// leg-kick.js), the two never come on top of each other: no oblique, and no
+// regular kick, while the calf kick's leg is still out, then at least
+// `mixGap` before the oblique; and at least `mixGap` after an oblique before
+// the next calf kick (Christian, 2026-11-17: Jon mixes the two).
 //
 // EVIL elbows: in a mode with `elbowCooldown`, his elbows (elbows.js) come
 // round at least that often instead of his elbow block's own cooldown.
@@ -160,6 +165,11 @@ function updateJonClinch(self, other, dt) {
   if (self.jclT > 0) self.jclT -= rate;
   if (self.jspT > 0) self.jspT -= rate;
   if (self.joblT > 0) self.joblT -= rate;
+  var mg = c.oblique && c.oblique.mixGap;
+  if (mg && self.lk) { // his calf kick's leg is still coming back (leg-kick.js): nothing else goes out on top of it
+    self.joblT = Math.max(self.joblT, mg);
+    if (self.char.hasKick) self.kickCd = Math.max(self.kickCd || 0, 0.05);
+  }
   if (!kneeFree(self) || self.chAct || self.plum || self.fknee || !plumTarget(other) || other.jcl || other.choked) return false;
   var gap = kDist(self, other) - self.r - other.r;
   if (mc.on && self.jclT <= 0 && gap < c.range) { startJonClinch(self, other, c); return true; }
@@ -501,6 +511,7 @@ function startJonOblique(self, other, c) {
   clearActions(self);
   self.jobl = { t: 0, hit: false, landed: false, vicId: other.id, frame: jclFrame, side: other.x >= self.x ? 1 : -1 };
   self.joblT = jclRand(c.oblique.every);
+  if (c.oblique.mixGap && self.lkT != null) self.lkT = Math.max(self.lkT, (c.oblique.dur || 0.42) + c.oblique.mixGap); // the calf kick waits (leg-kick.js)
   playJonObliqueLift();
 }
 

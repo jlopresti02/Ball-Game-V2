@@ -69,6 +69,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 | Justin Gaethje's regular punch about 10% lighter again (19, rounded; uppercuts stay about 30 via `uppercuts.damageMult` 1.579) and a few more calf kicks (`legKick.every` [1.82, 3.18], was [2, 3.5]: about 6% more a minute, which Christian said is fine) | Christian's Claude | live on main |
 | Fedor's special: The Unmoving Man (`fedor-unmoving.js`, `special.move` "unmoving"): slips every punch hands down, catches the last one, one overhand right into the cage | Joe | live on main |
 | Sean O'Malley's Sugar Rush aura (`omalley-aura.js`, draw-only, three one-line hooks in draw.js): while he calls it, hunts the candy and rides the sugar high he jitters, with a candy burst, lollipop swirl, cotton-candy flames, heartbeat rings, pink/blue ghost rims, orbiting candies and sugar dust. Gameplay unchanged | Joe | live on main |
+| Jon Jones (rev 10): each GOAT Stampede lane is 20% wider, drawn and rammed (`special.goatLane` 1.2, jon.js); calf kicks on the shared leg kick (`legKick`, every 13-19s) mixed with oblique kicks in both modes (`jonClinch.goat.oblique` on, `oblique.every` [13, 19], `oblique.mixGap` 1.2 keeps the two apart), about 12% more kicks in all; his spinning kick (the regular kick) hits for 44 (was 35). Clinch knees and elbows unchanged | Christian's Claude | live on main |
 
 Christian's Claude updates this table with each change it ships. Joe's Claude: if Joe starts one of these fighters himself, update the table so Christian's Claude skips it.
 
