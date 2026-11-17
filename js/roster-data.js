@@ -3522,7 +3522,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jon-jones",
-    "rev": 10,
+    "rev": 11,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Jon Jones",
@@ -3556,7 +3556,7 @@ var SAVED_ROSTER = [
       "speed": 0.5,
       "size": 17,
       "knockback": 450,
-      "reach": 75,
+      "reach": 95,
       "checkChance": 35
     },
     "hasGrapple": true,
@@ -3633,7 +3633,7 @@ var SAVED_ROSTER = [
       "damage": 6,
       "cooldown": 1.6,
       "speed": 0.26,
-      "reach": 18,
+      "reach": 24,
       "critChance": 45,
       "critMult": 2.5,
       "knockback": 170,
@@ -3666,8 +3666,8 @@ var SAVED_ROSTER = [
         13,
         19
       ],
-      "range": 56,
-      "reach": 90,
+      "range": 70,
+      "reach": 105,
       "damage": 8,
       "slow": 0.75,
       "time": 3,
@@ -3685,7 +3685,7 @@ var SAVED_ROSTER = [
         5.5,
         8
       ],
-      "range": 22,
+      "range": 28,
       "reach": 0.26,
       "evade": 18,
       "weaverEvade": 12,
@@ -3722,6 +3722,12 @@ var SAVED_ROSTER = [
         "oblique": true,
         "elbowCooldown": 1.6
       },
+      "stepIn": [
+        "clinch",
+        "spinElbow",
+        "oblique",
+        "legKick"
+      ],
       "trip": {
         "tell": 0.34,
         "defend": 28,
@@ -3751,7 +3757,7 @@ var SAVED_ROSTER = [
           10,
           15
         ],
-        "range": 26,
+        "range": 32,
         "afterClinch": 30,
         "breakShove": 80,
         "turn": 0.22,
@@ -3771,7 +3777,7 @@ var SAVED_ROSTER = [
           13,
           19
         ],
-        "range": 46,
+        "range": 56,
         "chamber": 0.2,
         "dur": 0.42,
         "damage": 5,
@@ -3783,8 +3789,41 @@ var SAVED_ROSTER = [
         "mixGap": 1.2
       }
     },
+    "movement": {
+      "spacing": {
+        "own": 8,
+        "jab": false,
+        "min": 30,
+        "max": 100,
+        "band": 10,
+        "turn": 12,
+        "turnIn": 18,
+        "angle": 0.6,
+        "jabEvery": [
+          0.25,
+          0.7
+        ],
+        "stepIn": 0.6,
+        "switch": [
+          1.5,
+          3.5
+        ],
+        "read": 0.12
+      }
+    },
     "jon": {
       "swapEvery": 15,
+      "tieUp": {
+        "chance": 45,
+        "takedownShare": 35,
+        "cooldown": 3,
+        "window": 0.4,
+        "range": 60,
+        "shot": {
+          "speed": 560,
+          "time": 0.35
+        }
+      },
       "rncChance": 5,
       "gnpChance": 5,
       "gnp": [

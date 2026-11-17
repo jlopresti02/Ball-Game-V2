@@ -2,7 +2,8 @@
 // with a "movement" block in his character file; a fighter without one
 // moves exactly as before (nothing here runs for him, and nothing here draws
 // a random number for him). Ilia Topuria, Khabib Nurmagomedov, Sean
-// Strickland (spacing) and Alex Pereira (center) use it.
+// Strickland (spacing), Jon Jones (spacing at his own kick's range) and
+// Alex Pereira (center) use it.
 //
 // Every part is its own block; take a block out and that part is off.
 // It only steers which way he's heading, never how fast (the speed
@@ -56,6 +57,16 @@
 //       "read": 0.12         in reach; then straight back out. A step in
 //     }                      that hasn't reached them in `stepIn` s is called
 //                            off. He reads them coming `read` seconds ahead.
+//                            Two opt-in keys for a fighter who keeps his OWN
+//                            range (Jon Jones, 2026-11-17): with `own` he
+//                            holds the gap `own` px inside his longest kick
+//                            that's on (his kick's reach, or his calf kick's
+//                            starting range, leg-kick.js), whatever they
+//                            throw, still kept between `min` and `max`; with
+//                            `jab` false the jab never steps him in. Either
+//                            way his own code can set b.mvIn (true for the
+//                            frame) to step him in the same way, for a move
+//                            of his that's due up close (jon-clinch.js).
 //     "center": {            HOLDS THE CENTER (Alex Pereira): he lets them
 //       "radius": 40,        come to him. Once he's drifted more than `radius`
 //       "turn": 9,           px from the middle of the ring he turns back
@@ -192,8 +203,21 @@ function mvReach(o, sc) {
   if (sc.kicks !== false && c.hasKick && c.kick) r = Math.max(r, c.kick.reach || 0);
   return r || 30;
 }
-// The gap he holds them at: just outside that.
-function mvHold(o, sc) { return Math.max(sc.min || 0, Math.min(sc.max || 999, mvReach(o, sc) + (sc.margin != null ? sc.margin : 14))); }
+// His own longest kick that's on, edge to edge: the kick ability's reach, or
+// his calf kick's starting range (leg-kick.js). 0 if he has neither.
+function mvOwnReach(c) {
+  var r = 0;
+  if (c.hasKick && c.kick) r = Math.max(r, c.kick.reach || 0);
+  if (c.legKick && !c.legKick.onKick) r = Math.max(r, c.legKick.range || 0);
+  return r;
+}
+// The gap he holds them at: just outside that (or, with `own`, just inside
+// his own kick).
+function mvHold(o, sc, b) {
+  var own = sc.own != null && b ? mvOwnReach(b.char) : 0;
+  var g = own ? own - sc.own : mvReach(o, sc) + (sc.margin != null ? sc.margin : 14);
+  return Math.max(sc.min || 0, Math.min(sc.max || 999, g));
+}
 function mvSpMode(sp, mode) { sp.mode = mode; sp.t = 0; }
 // How far he can go heading `a` before he's up against the cage.
 function mvRoom(b, a) {
@@ -210,13 +234,13 @@ function mvSpacing(b, other, mv, sc, dt, dx, dy, gap) {
   sp.t += dt;
   sp.sideT -= dt;
   if (sp.sideT <= 0) { sp.side = -sp.side; sp.sideT = mvRand(sc.switch || [1.5, 3.5]); }
-  var hold = mvHold(other, sc), band = sc.band || 10, to = Math.atan2(dy, dx), turn = sc.turn || 9;
+  var hold = mvHold(other, sc, b), band = sc.band || 10, to = Math.atan2(dy, dx), turn = sc.turn || 9;
   // Reads them coming: how close they'll be `read` seconds from now.
   var dl = Math.sqrt(dx * dx + dy * dy) || 1, closing = -((other.vx - b.vx) * dx + (other.vy - b.vy) * dy) / dl;
   var soon = gap - Math.max(0, closing) * (sc.read != null ? sc.read : 0.12);
-  var ready = b.char.hasPunch && !b.punch && !b.kick && !(b.punchCd > 0.05);
+  var ready = (sc.jab !== false && b.char.hasPunch && !b.punch && !b.kick && !(b.punchCd > 0.05)) || !!b.mvIn; // (b.mvIn: his own move that's due up close, e.g. jon-clinch.js)
   if (sp.mode === "in") {
-    if (b.punch || sp.t > (sc.stepIn || 0.45)) mvSpMode(sp, "out"); // the jab's gone (or they got away): straight back out
+    if ((b.punch && sc.jab !== false) || sp.t > (sc.stepIn || 0.45) || (sc.jab === false && !b.mvIn)) mvSpMode(sp, "out"); // the jab's gone (or they got away, or his own move's no longer due): straight back out
   } else if (sp.mode === "out") {
     if (gap >= hold - band * 0.5 || sp.t > 0.6) { mvSpMode(sp, "hold"); sp.hover = mvRand(sc.jabEvery || [0.25, 0.7]); } // (starts turning before he's there: he can't stop dead)
   } else {
@@ -274,6 +298,7 @@ function movementGalleryMoves(ch, add) {
   if (ss) add("↔️", "Side step", "Every " + ss.every[0] + "-" + ss.every[1] + "s a small step to one side, then straight back in.");
   if (ce) add("🎯", "Holds the center", "Stays in the middle of the ring and lets them come to him. Once they're within " + (ce.stepIn || 0) + "px he steps in to throw, but he won't follow them out to the cage.");
   if (cs) add("🤼", "Against the cage", "With them on the cage and him right on them, his takedown attempts come " + cs.rate + "x as often.");
-  if (m.spacing) add("📏", "Spacing", "Hovers just outside their reach (their longest punch, grab" + (m.spacing.kicks !== false ? " or kick" : "") + ", plus " + (m.spacing.margin != null ? m.spacing.margin : 14) +
+  if (m.spacing && m.spacing.own != null) add("📏", "Fights at the end of his kicks", "Holds them " + m.spacing.own + "px inside his longest kick, steps in when he means to clinch or kick low, and backs off at an angle or circles off the cage when they come in.");
+  else if (m.spacing) add("📏", "Spacing", "Hovers just outside their reach (their longest punch, grab" + (m.spacing.kicks !== false ? " or kick" : "") + ", plus " + (m.spacing.margin != null ? m.spacing.margin : 14) +
     "px), steps straight in behind the jab and straight back out, and backs off at an angle or circles off the cage when they come in.");
 }
