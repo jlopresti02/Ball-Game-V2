@@ -42,7 +42,7 @@ var CNC = { pre: 7.0, slow: 1 / 4, land: 0.3, card: 2.4, wipe: 0.8, slowMax: 4.5
 // played out over `len` real seconds, so there's time to see what's going on
 // (Joe: the first cut went by too fast). Everything in a shot, and its sounds,
 // stretches with it.
-var CNC_SHOTS = [[0, 0.5, 1.4], [0.5, 0.35, 1.0], [0.85, 0.85, 2.3], [1.7, 1.0, 2.6], [2.7, 1.0, 2.2],
+var CNC_SHOTS = [[0, 0.5, 1.4], [0.5, 0.35, 1.0], [0.85, 0.85, 2.3], [1.7, 1.0, 2.6], [2.7, 0.75, 1.65], [3.45, 0.25, 1.3],
                  [3.7, 0.8, 1.9], [4.5, 0.6, 1.6], [5.1, 1.1, 2.1], [6.2, 0.8, 1.8]];
 (function () { var at = 0; CNC_SHOTS.forEach(function (s) { s.push(at); at += s[2]; }); CNC.pre = at; })();
 // Real seconds into the cut -> story seconds, and back.
@@ -834,21 +834,119 @@ function cncBigFist(x, y, s, side) {
   ctx.fillStyle = "#f3d2bd"; ctx.beginPath(); ctx.ellipse(s * 0.2, s * 0.4, s * 0.1, s * 0.13, 0, 0, Math.PI * 2); ctx.fill(); // its nail
   ctx.restore();
 }
+// 4d. Extreme close-up: his fist, knuckles to the lens; his other hand's
+// thumb presses down on each knuckle in turn and each one pops (index to
+// pinky), the last the loudest. Story 3.45-3.7, played over 1.2 real seconds.
+var CNC_POPS = [0.2, 0.37, 0.54, 0.72];
+function cncKnuckleAt(i, cx, cy) {
+  var xs = [-225, -75, 75, 215], tops = [-150, -168, -158, -132];
+  return { x: cx + xs[i], y: cy + tops[i] };
+}
 function cncMacroKnuckles(k) {
   var bg = ctx.createRadialGradient(540, 960, 40, 540, 960, 900);
   bg.addColorStop(0, "#5a1a08"); bg.addColorStop(1, "#050202");
   ctx.fillStyle = bg; ctx.fillRect(0, 0, 1080, 1920);
-  var meet = cncOut(k / 0.35), gap = (1 - meet) * 360;
-  strokeLimb(170, CN_DENIM, function () { ctx.moveTo(-300, 1250); ctx.quadraticCurveTo(0, 960, 200 - gap, 960); });
-  strokeLimb(170, CN_DENIM, function () { ctx.moveTo(1380, 1250); ctx.quadraticCurveTo(1080, 960, 880 + gap, 960); });
-  cncBigFist(345 - gap, 960, 190, 1); cncBigFist(735 + gap, 960, 190, -1);
-  if (k > 0.33 && k < 0.8) {
-    var s = (k - 0.33) / 0.47;
+  // which knuckle the thumb is on, how hard it's pressing, and the last pop
+  var on = 0, press = 0, popAt = -1, popK = 1;
+  for (var p = 0; p < 4; p++) {
+    var d = k - CNC_POPS[p];
+    if (d > -0.09) on = p;
+    if (d > -0.09 && d < 0) press = 1 + d / 0.09; // pressing down into the pop
+    if (d >= 0 && d < 0.1) { popAt = p; popK = d / 0.1; press = 1 - popK; }
+  }
+  press = cncClamp(press);
+  var shake = !reduceMotion && popAt >= 0 ? (1 - popK) * (popAt === 3 ? 22 : 10) : 0;
+  var zoom = 1 + 0.04 * cncOut(k / 0.15) + (popAt === 3 ? 0.05 * (1 - popK) : 0);
+  ctx.save();
+  ctx.translate(540 + Math.sin(k * 300) * shake, 1000 + Math.cos(k * 260) * shake);
+  ctx.scale(zoom, zoom);
+  var cx = 0, cy = 0, skin = CN_LOOK.skin, dark = shadeHex(skin, -0.2), deep = shadeHex(skin, -0.35), lite = shadeHex(skin, 0.18);
+  ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.strokeStyle = theme.wall;
+  // the forearm and the denim cuff, down out of frame
+  ctx.fillStyle = skin; ctx.lineWidth = 9;
+  ctx.beginPath(); ctx.moveTo(-210, 120); ctx.lineTo(-230, 1100); ctx.lineTo(230, 1100); ctx.lineTo(210, 120); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = CN_DENIM; ctx.beginPath(); ctx.roundRect(-270, 380, 540, 800, 40); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.1)"; ctx.lineWidth = 3;
+  for (var dl = -250; dl < 270; dl += 22) { ctx.beginPath(); ctx.moveTo(dl, 400); ctx.lineTo(dl + 40, 1100); ctx.stroke(); }
+  ctx.strokeStyle = "#e3c46b"; ctx.lineWidth = 5; ctx.setLineDash([16, 12]); ctx.beginPath(); ctx.moveTo(-262, 420); ctx.lineTo(262, 420); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = theme.wall;
+  // the four fingers, folded: knuckle ridge on top, the middle joint, the
+  // curled tips tucked under, each squashing down when it pops
+  var ws = [150, 150, 145, 125];
+  for (var i = 0; i < 4; i++) {
+    var K = cncKnuckleAt(i, cx, cy), w = ws[i], sq = (i === popAt ? (1 - popK) * 14 : 0) + (i === on ? press * 10 : 0);
+    var top = K.y + sq, bot = 130;
+    var fg = ctx.createLinearGradient(0, top, 0, bot);
+    fg.addColorStop(0, lite); fg.addColorStop(0.45, skin); fg.addColorStop(1, dark);
+    ctx.fillStyle = fg; ctx.lineWidth = 9;
+    ctx.beginPath(); ctx.roundRect(K.x - w / 2, top, w, bot - top, [w * 0.42, w * 0.42, w * 0.3, w * 0.3]); ctx.fill(); ctx.stroke();
+    // the middle joint's crease and the curled fingertip below it
+    var mid = top + (bot - top) * 0.52;
+    ctx.strokeStyle = deep; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(K.x - w * 0.36, mid); ctx.quadraticCurveTo(K.x, mid + 14, K.x + w * 0.36, mid); ctx.stroke();
+    ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(K.x - w * 0.2, mid + 12); ctx.quadraticCurveTo(K.x, mid + 20, K.x + w * 0.2, mid + 12); ctx.stroke();
+    ctx.strokeStyle = theme.wall;
+    // the knuckle's shine
+    ctx.fillStyle = "rgba(255,255,255," + (0.35 + (i === popAt ? 0.4 * (1 - popK) : 0)) + ")";
+    ctx.beginPath(); ctx.ellipse(K.x - w * 0.08, top + 34, w * 0.26, 14, 0, 0, Math.PI * 2); ctx.fill();
+    // a few knuckle wrinkles
+    ctx.strokeStyle = "rgba(0,0,0,0.18)"; ctx.lineWidth = 3;
+    for (var wr = 0; wr < 3; wr++) { ctx.beginPath(); ctx.arc(K.x, top + 62 + wr * 9, w * (0.16 - wr * 0.03), Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); }
+    ctx.strokeStyle = theme.wall;
+  }
+  // the thumb, wrapped across the front of the first two fingers
+  var tg = ctx.createLinearGradient(0, 40, 0, 170);
+  tg.addColorStop(0, lite); tg.addColorStop(1, dark);
+  ctx.fillStyle = tg; ctx.lineWidth = 9;
+  ctx.beginPath(); ctx.moveTo(-330, 70); ctx.quadraticCurveTo(-200, 30, 20, 58); ctx.quadraticCurveTo(70, 66, 66, 110); ctx.quadraticCurveTo(60, 160, 0, 160); ctx.quadraticCurveTo(-200, 175, -330, 190); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#f4d6c4"; ctx.strokeStyle = deep; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.roundRect(-46, 76, 82, 66, 26); ctx.fill(); ctx.stroke(); // its nail
+  ctx.strokeStyle = deep; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-150, 70); ctx.quadraticCurveTo(-140, 115, -150, 170); ctx.stroke(); // its joint
+  ctx.strokeStyle = theme.wall;
+  // the other hand, in from the upper left: its thumb on the knuckle
+  var a0 = cncKnuckleAt(on, cx, cy), prev = cncKnuckleAt(Math.max(0, on - 1), cx, cy);
+  var slide = on === 0 ? cncOut(k / 0.12) : cncEase((k - (CNC_POPS[on - 1] + 0.05)) / 0.07);
+  var tx = cncLerp(on === 0 ? 560 : prev.x, a0.x, cncClamp(slide)), ty = cncLerp(on === 0 ? -700 : prev.y, a0.y, cncClamp(slide)) + press * 16 - 6;
+  var out = k > 0.82 ? cncEase((k - 0.82) / 0.15) : 0;
+  tx += out * 450; ty -= out * 600;
+  ctx.save(); ctx.translate(tx, ty); ctx.rotate(-2.55); // the thumb points down-left, the hand up and to the right
+  // the palm and the sleeve behind the thumb
+  ctx.fillStyle = CN_DENIM; ctx.lineWidth = 9; ctx.beginPath(); ctx.roundRect(-190, 470, 380, 700, 40); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(-30, 360, 200, 170, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = deep; ctx.lineWidth = 5;
+  for (var f = 0; f < 3; f++) { ctx.beginPath(); ctx.moveTo(-150 + f * 60, 250); ctx.quadraticCurveTo(-130 + f * 60, 330, -150 + f * 60, 420); ctx.stroke(); }
+  ctx.strokeStyle = theme.wall; ctx.lineWidth = 9;
+  var th = ctx.createLinearGradient(-50, 0, 50, 0);
+  th.addColorStop(0, lite); th.addColorStop(1, dark);
+  ctx.fillStyle = th; ctx.beginPath(); ctx.roundRect(-52, -8, 104, 300, [48, 48, 30, 30]); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#f4d6c4"; ctx.strokeStyle = deep; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(-32, 8, 64, 70, [26, 26, 12, 12]); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = deep; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-44, 130); ctx.quadraticCurveTo(0, 140, 44, 130); ctx.stroke();
+  ctx.restore();
+  // the pop: white crack lines bursting off the knuckle and a puff of dust
+  if (popAt >= 0) {
+    var P = cncKnuckleAt(popAt, cx, cy), big = popAt === 3 ? 1.6 : 1, rr = (50 + 170 * cncOut(popK)) * big;
     ctx.save(); ctx.globalCompositeOperation = "lighter";
-    ctx.strokeStyle = "rgba(255,255,255," + (1 - s) + ")"; ctx.lineWidth = 10;
-    ctx.beginPath(); ctx.arc(540, 960, 80 + 380 * s, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,245,210," + (1 - popK) + ")"; ctx.lineWidth = 9 * big;
+    for (var r2 = 0; r2 < 9; r2++) {
+      var ra = -Math.PI + r2 * Math.PI / 8 + (cncRand(r2 + popAt * 9) - 0.5) * 0.25;
+      ctx.beginPath(); ctx.moveTo(P.x + Math.cos(ra) * rr * 0.45, P.y + Math.sin(ra) * rr * 0.45); ctx.lineTo(P.x + Math.cos(ra) * rr, P.y + Math.sin(ra) * rr); ctx.stroke();
+    }
+    var fl = ctx.createRadialGradient(P.x, P.y, 0, P.x, P.y, 120 * big);
+    fl.addColorStop(0, "rgba(255,240,200," + (0.8 * (1 - popK)) + ")"); fl.addColorStop(1, "rgba(255,240,200,0)");
+    ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(P.x, P.y, 120 * big, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
-    cncText("CRACK!", 540, 650 - 40 * s, 110, "#ffe14d", "#c8101e");
+    ctx.fillStyle = "rgba(240,225,200," + (0.8 * (1 - popK)) + ")";
+    for (var dp = 0; dp < 7; dp++) { var da = -Math.PI * 0.9 + dp * 0.3; ctx.beginPath(); ctx.arc(P.x + Math.cos(da) * (40 + 120 * popK), P.y + Math.sin(da) * (40 + 120 * popK) - 30 * popK, 6 + cncRand(dp) * 6, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.restore();
+  // the CRACK on each one, smaller to bigger, the last one huge
+  for (var q = 0; q < 4; q++) {
+    var dq = k - CNC_POPS[q];
+    if (dq < 0 || dq > (q === 3 ? 0.3 : 0.16)) continue;
+    var P2 = cncKnuckleAt(q, 0, 0), pop2 = 1 + 0.5 * Math.exp(-dq * 40), sz = q === 3 ? 150 : 64 + q * 8;
+    ctx.save(); ctx.translate(q === 3 ? 540 : 540 + P2.x * 1.04, q === 3 ? 560 : 700 - q * 10); ctx.rotate((q % 2 ? 0.12 : -0.12) * (q === 3 ? 0.4 : 1)); ctx.scale(pop2, pop2);
+    cncText(q === 3 ? "CRACK!" : "CRK", 0, 0, sz, "#ffe14d", "#c8101e");
+    ctx.restore();
   }
 }
 
@@ -1548,7 +1646,11 @@ function cncAudio() {
     cncTone(ac, bus, t0 + cncReal(2.8), "sine", 110, 60, 0.6, 0.25);                                  // the hat
     cncTone(ac, bus, t0 + cncReal(3.06), "triangle", 2700, 2650, 0.25, 0.5);                      // the star: ting
     cncTone(ac, bus, t0 + cncReal(3.27), "triangle", 1800, 1790, 0.2, 0.25); cncTone(ac, bus, t0 + cncReal(3.33), "triangle", 2400, 2390, 0.16, 0.3); // the buckle
-    mNz(ac, bus, t0 + cncReal(3.54), "bandpass", 2200, 1.5, 0.8, 0.05); mNz(ac, bus, t0 + cncReal(3.6), "bandpass", 1600, 1.5, 0.7, 0.05); // the knuckles
+    CNC_POPS.forEach(function (kp, qi) { // the knuckles popping one by one, the last the loudest
+      var at = t0 + cncReal(3.45 + 0.25 * kp), big = qi === 3 ? 1.5 : 1;
+      mNz(ac, bus, at, "bandpass", 2600 - qi * 250, 1.8, 0.9 * big, 0.04); mNz(ac, bus, at + 0.012, "highpass", 4000, 0.7, 0.5 * big, 0.02);
+      cncTone(ac, bus, at, "sine", 160, 70, 0.35 * big, 0.12);
+    });
     // 5. the jet, the sound barrier, the eagle
     cncNoise(ac, bus, t0 + cncReal(3.7), 1.4, 500, 0.5, 0.6);
     mBigKick(ac, bus, t0 + cncReal(4.02), 1.4); cncTone(ac, bus, t0 + cncReal(4.02), "sine", 55, 28, 0.9, 1.0); mNz(ac, bus, t0 + cncReal(4.02), "bandpass", 150, 0.6, 0.9, 0.6);
