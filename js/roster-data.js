@@ -1058,7 +1058,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 20,
+    "rev": 21,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
@@ -1183,10 +1183,13 @@ var SAVED_ROSTER = [
         "elbow": 1
       },
       "knee": {
-        "damage": 7,
-        "headDamage": 9,
+        "damage": 8,
+        "headDamage": 10,
         "critChance": 25,
         "critMult": 2
+      },
+      "elbow": {
+        "damage": 7
       },
       "ramp": 5,
       "escape": 17,
@@ -1194,7 +1197,7 @@ var SAVED_ROSTER = [
       "knockback": 400,
       "open": 0.6,
       "parting": {
-        "chance": 40,
+        "chance": 80,
         "mix": {
           "knee": 2,
           "elbow": 1
@@ -3019,12 +3022,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-ilia-topuria",
-    "rev": 19,
+    "rev": 20,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Ilia Topuria",
     "base": "Brawler",
-    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits about 5 and a half times as hard, up to nearly 7 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm. He goes to the body right before the finisher, so the hook that ends the combo lands bigger, and comes up with uppercuts up close. Now and then, and much more once he's hurt, he snaps on a D'Arce choke: when they shoot and he sprawls on it, or lunging in for a front headlock up close.",
+    "bio": "\"El Matador\". Built on the Brawler base with takedown and kick defense added. He throws 3 and 4 punch combos all fight, off both hands, and every punch that lands sets up a harder one. Land the whole combo and the last punch hits about 4 and a half times as hard, up to about 6 times the more he's hurt (4-PIECE!), and most of the time it's a hook that comes round from the side. A miss, a slip or a block breaks the chain. The more he's hurt, the faster the combos come. He sprawls on shots and checks kicks, and answers both with punches. When his opponent is armed he draws a Spanish rapier: it parries 9 of 10 swings like Dustin's diamond sword, every 3rd parry starts a sword duel, and every few seconds he lunges down a red line at them (ESTOCADA!). Every so often he walks to the middle of the ring and spins into a Rose Tornado, throwing roses all over the mat: it can't be attacked, and anyone who touches it is sucked in, whipped round and spat out into the cage walls. Special move: Aura Farm. He goes to the body right before the finisher, so the hook that ends the combo lands bigger, and comes up with uppercuts up close. Now and then, and much more once he's hurt, he snaps on a D'Arce choke: when they shoot and he sprawls on it, or lunging in for a front headlock up close.",
     "color": "#b3121b",
     "label": "",
     "imgData": null,
@@ -3098,12 +3101,12 @@ var SAVED_ROSTER = [
         ],
         "build": 0.3,
         "finisher": [
-          5.45,
-          6.82
+          4.53,
+          5.96
         ],
         "cooldown": [
-          1.0,
-          0.6
+          1.1,
+          0.66
         ],
         "knockback": 560,
         "text": "{n}-PIECE!"
