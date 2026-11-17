@@ -55,7 +55,7 @@
       "damage": 62, "downTime": 1.2
     },
     "bodyLock": { "through": 25 },
-    "food": { "menu": ["cake", "chicken", "cake"], "max": 3, "eatTime": 1.5, "bites": 3, "damage": 1.17, "take": 0.94, "belly": 0.28, "grow": 0.035 },
+    "food": { "menu": ["cake", "chicken", "cake"], "max": 3, "eatTime": 1.5, "bites": 3, "damage": 1.17, "take": 0.94, "belly": 0.28, "grow": 0.035, "defend": true },
     "vsJon": { "damage": 1.12, "every": [9, 14] },
     "lines": {
       "start": ["Good thing about our job is we get to punch each other in the face. So I'm gonna keep talking, and it's his job to shut me up."],
