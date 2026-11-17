@@ -103,7 +103,7 @@ function cnGap(n, o) { var dx = o.x - n.x, dy = o.y - n.y; return Math.sqrt(dx *
 function cnFenceY() { return stadiumOn() ? H + ST.CAGE / 2 * W / ST.A : H; }
 
 // From resetStrickland (strickland.js).
-function resetChuckNorris() { chuckNorris = null; cnFlag = null; cnBoom = null; cnStar = null; cnSpeech = null; cnClock = 0; }
+function resetChuckNorris() { chuckNorris = null; cnFlag = null; cnBoom = null; cnStar = null; cnSpeech = null; cnClock = 0; cnCutReset(); /* his entrance cutscene (chuck-norris-cut.js) */ }
 
 // From updateAmerica (strickland.js), the moment it turns into America.
 function chuckNorrisArrives(self, other) {
@@ -364,6 +364,7 @@ function cnLand(n, cfg) {
     cnFlag = { x: Math.max(14, Math.min(W - 14, fx)), y: n.y + CN_R * 0.55, t: 0, fade: 0, side: side };
   }
   playCnLand();
+  cnCutLanded(n); // the landing and freeze frame of his entrance cutscene (chuck-norris-cut.js)
   crowdReact(1);
   n.sayKey = "arrive"; n.say = 0.25;
 }
