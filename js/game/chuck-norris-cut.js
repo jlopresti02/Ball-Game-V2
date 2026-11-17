@@ -4,6 +4,7 @@
 // over-the-top action movie, as American as it gets. Sean makes the call.
 //
 // Real seconds from the start:
+// (Story seconds below; each shot plays out about 2.4x slower in real time, CNC_SHOTS.)
 //   0.00  crash zoom into the jumbotron: SEAN STRICKLAND IS CALLING...
 //   0.50  extreme close-up: a red phone, his glove grabs the handset, the dial spins
 //   0.85  Sean on the red phone under a giant flag: "GET ME CHUCK NORRIS."
@@ -36,7 +37,23 @@
 // (chuck-norris.js), frame / runTicks (main.js), the end of draw (draw.js).
 "use strict";
 
-var CNC = { pre: 7.0, slow: 1 / 3, land: 0.25, card: 1.6, wipe: 0.6, slowMax: 3.5 };
+var CNC = { pre: 7.0, slow: 1 / 4, land: 0.3, card: 2.4, wipe: 0.8, slowMax: 4.5 };
+// Each shot was first timed tight (start, length, in "story" seconds) and is
+// played out over `len` real seconds, so there's time to see what's going on
+// (Joe: the first cut went by too fast). Everything in a shot, and its sounds,
+// stretches with it.
+var CNC_SHOTS = [[0, 0.5, 1.4], [0.5, 0.35, 1.0], [0.85, 0.85, 2.3], [1.7, 1.0, 2.6], [2.7, 1.0, 2.2],
+                 [3.7, 0.8, 1.9], [4.5, 0.6, 1.6], [5.1, 1.1, 2.1], [6.2, 0.8, 1.8]];
+(function () { var at = 0; CNC_SHOTS.forEach(function (s) { s.push(at); at += s[2]; }); CNC.pre = at; })();
+// Real seconds into the cut -> story seconds, and back.
+function cncStory(u) {
+  for (var i = 0; i < CNC_SHOTS.length; i++) { var s = CNC_SHOTS[i]; if (u < s[3] + s[2] || i === CNC_SHOTS.length - 1) return s[0] + Math.min(s[1], (u - s[3]) * s[1] / s[2]); }
+  return 7;
+}
+function cncReal(t) {
+  for (var i = 0; i < CNC_SHOTS.length; i++) { var s = CNC_SHOTS[i]; if (t < s[0] + s[1] || i === CNC_SHOTS.length - 1) return s[3] + (t - s[0]) * s[2] / s[1]; }
+  return CNC.pre;
+}
 var CNC_INK = "#0e0f14";
 
 var cncCut = null;     // { ownerId, vicId, stage, u, snap, bus, sparks, landX, landY, sparkT }
@@ -247,7 +264,7 @@ function cncCover(fn) {
 }
 
 function cncDrawPre(c) {
-  var u = c.u;
+  var u = cncStory(c.u);
   cncCover(function () {
     if (u < 0.5) cncShotCall(c, u);
     else if (u < 0.85) cncShotPhone(c, u - 0.5);
@@ -407,16 +424,17 @@ function cncShotSean(c, u) {
     var x = 500, y = 860, r = 250;
     // the cord, from the handset down out of the frame
     ctx.strokeStyle = "#8e0a14"; ctx.lineWidth = 10;
-    ctx.beginPath(); ctx.moveTo(x + r * 1.05, y - r * 0.2);
-    for (var i = 0; i <= 24; i++) { var k = i / 24; ctx.lineTo(cncLerp(x + r * 1.05, 980, k) + Math.sin(k * 44) * 12, cncLerp(y - r * 0.2, 1500, k)); }
+    ctx.beginPath(); ctx.moveTo(x + r * 1.1, y - r * 0.05);
+    for (var i = 0; i <= 24; i++) { var k = i / 24; ctx.lineTo(cncLerp(x + r * 1.1, 980, k) + Math.sin(k * 44) * 12, cncLerp(y - r * 0.05, 1500, k)); }
     ctx.stroke();
     cncFighter(b, x, y, r);
     // his lead hand low across his stomach (the Philly shell), the rear
     // hand holding the red handset up to the side of his head
     cncArm(b, -1, x - r * 0.75, y + r * 0.25, x - r * 0.6, y + r * 0.9, x + r * 0.05, y + r * 0.72, r, 0.2);
-    var hx = x + r * 0.92, hy = y - r * 0.55;
-    cncHandset(hx + r * 0.05, hy - r * 0.2, 1.05, -1.25);
-    cncArm(b, 1, x + r * 0.78, y + r * 0.2, x + r * 1.35, y + r * 0.2, hx + r * 0.1, hy, r, -1.8);
+    // the handset along the side of his head: earpiece up by his ear, mouthpiece by his jaw
+    var hx = x + r * 0.86, hy = y - r * 0.42, ha = 1.2;
+    cncHandset(hx, hy, 0.95, ha);
+    cncArm(b, 1, x + r * 0.8, y + r * 0.25, x + r * 1.45, y + r * 0.35, hx + r * 0.18, hy + r * 0.05, r, -2.2);
   }
   ctx.restore();
   cncText("SEAN STRICKLAND NEEDS BACKUP.", 540, 1270, 46, "#e3cd9a", "#000", "center", "800");
@@ -435,12 +453,28 @@ function cncRanchLand(u) {
   // the plain
   ctx.fillStyle = "#6b3e1e"; ctx.fillRect(-50, 1110, 1180, 500);
   ctx.fillStyle = "#3a200e";
-  // the windmill
-  ctx.fillRect(140, 760, 12, 360); ctx.fillRect(120, 1110, 52, 8);
-  ctx.save(); ctx.translate(146, 760); ctx.rotate(u * 3);
-  for (var i = 0; i < 12; i++) { ctx.rotate(Math.PI / 6); ctx.fillRect(0, -6, 90, 12); }
+  // the windmill: a lattice tower, a wheel of blades and the tail vane
+  ctx.strokeStyle = "#3a200e"; ctx.lineWidth = 7;
+  ctx.beginPath(); ctx.moveTo(95, 1112); ctx.lineTo(140, 780); ctx.moveTo(205, 1112); ctx.lineTo(160, 780); ctx.stroke();
+  ctx.lineWidth = 4;
+  for (var lv = 0; lv < 5; lv++) {
+    var y0 = 1112 - lv * 66, y1 = y0 - 66, w0 = 55 - lv * 8.5, w1 = 55 - (lv + 1) * 8.5;
+    ctx.beginPath(); ctx.moveTo(150 - w0, y0); ctx.lineTo(150 + w1, y1); ctx.moveTo(150 + w0, y0); ctx.lineTo(150 - w1, y1); ctx.moveTo(150 - w1, y1); ctx.lineTo(150 + w1, y1); ctx.stroke();
+  }
+  ctx.fillRect(140, 760, 70, 16);
+  ctx.beginPath(); ctx.moveTo(205, 768); ctx.lineTo(300, 768); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(300, 740); ctx.lineTo(330, 735); ctx.lineTo(330, 805); ctx.lineTo(300, 795); ctx.closePath(); ctx.fill(); // the tail vane
+  ctx.save(); ctx.translate(140, 768); ctx.scale(0.45, 1); ctx.rotate(u * 2.5);
+  ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(0, 0, 92, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 50, 0, Math.PI * 2); ctx.stroke();
+  for (var bl = 0; bl < 18; bl++) { ctx.save(); ctx.rotate(bl * Math.PI / 9); ctx.beginPath(); ctx.moveTo(18, -3); ctx.lineTo(95, -10); ctx.lineTo(95, 10); ctx.lineTo(18, 3); ctx.closePath(); ctx.fill(); ctx.restore(); }
+  ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
-  ctx.beginPath(); ctx.moveTo(150, 760); ctx.lineTo(240, 740); ctx.lineTo(240, 780); ctx.closePath(); ctx.fill();
+  // the barn
+  ctx.fillStyle = "#5a1a12";
+  ctx.beginPath(); ctx.moveTo(560, 1112); ctx.lineTo(560, 1020); ctx.lineTo(600, 980); ctx.lineTo(680, 960); ctx.lineTo(760, 980); ctx.lineTo(800, 1020); ctx.lineTo(800, 1112); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "#e9d8c0"; ctx.lineWidth = 4;
+  ctx.strokeRect(650, 1045, 60, 67); ctx.beginPath(); ctx.moveTo(650, 1045); ctx.lineTo(710, 1112); ctx.moveTo(710, 1045); ctx.lineTo(650, 1112); ctx.stroke();
+  ctx.fillStyle = "#3a200e";
   // the pumpjack, nodding
   var nod = Math.sin(u * 5) * 0.25;
   ctx.fillRect(880, 1000, 16, 110); ctx.fillRect(840, 1100, 120, 12);
@@ -494,21 +528,36 @@ function cncShotRanch(u) {
     ctx.fillStyle = "rgba(220,190,140,0.6)";
     for (var d = 0; d < 8; d++) { ctx.beginPath(); ctx.arc(x + 200 + (cncRand(d) - 0.5) * 200, 1300 - cncRand(d + 9) * 40 * push, 6 + cncRand(d + 4) * 8, 0, Math.PI * 2); ctx.fill(); }
   }
-  ctx.save(); ctx.translate(x, y2); ctx.scale(r / CN_R, r / CN_R);
+  var sc = r / CN_R;
   if (!standing) {
-    // one arm down to the boards, the other tucked behind his back
-    cnArm(-CN_R * 0.7, CN_R * 0.05, -CN_R * 1.0, CN_R * 0.55, 13);
+    // Leaning out over one straight arm planted on the boards, the other
+    // hand tucked behind his back. The arm bends as he goes down.
+    var lean = 0.32, cl = Math.cos(lean), sl = Math.sin(lean);
+    function at(lx, ly) { return { x: x + (lx * cl - ly * sl), y: y2 + (lx * sl + ly * cl) }; }
+    var sh = at(r * 0.5, r * 0.25), hand = { x: x + r * 0.95, y: 1300 - 14 };
+    var mx = (sh.x + hand.x) / 2, my = (sh.y + hand.y) / 2, el = { x: mx + r * (0.12 + 0.4 * down), y: my - r * 0.05 * down };
+    var back = at(-r * 0.62, r * 0.42);
+    strokeLimb(13 * sc * 0.7, CN_DENIM, function () { ctx.moveTo(at(-r * 0.6, r * 0.1).x, at(-r * 0.6, r * 0.1).y); ctx.lineTo(back.x, back.y); });
+    cnFist(back.x, back.y, 13 * sc * 0.62);
+    ctx.save(); ctx.translate(x, y2); ctx.rotate(lean); ctx.scale(sc, sc);
     drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
     drawCnKit(CN_R); drawCnHat(CN_R);
-    var handY = (1300 - y2) / (r / CN_R);
-    cnBentArm(CN_R * 0.6, CN_R * 0.1, CN_R * 1.15, CN_R * 0.2 + handY * 0.4, CN_R * 1.2, handY - 4, 13);
+    ctx.restore();
+    strokeLimb(13 * sc * 0.7, CN_DENIM, function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(el.x, el.y); ctx.lineTo(hand.x, hand.y); });
+    ctx.fillStyle = CN_LOOK.skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.ellipse(hand.x + 6, hand.y + 2, 13 * sc * 0.75, 13 * sc * 0.4, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // his hand flat on the boards
   } else {
+    ctx.save(); ctx.translate(x, y2); ctx.scale(sc, sc);
     drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
     drawCnKit(CN_R); drawCnHat(CN_R);
     cnSalute(CN_R, cncClamp((u - reps - 0.25) / 0.6) * CN_SALUTE); // tips his hat
+    ctx.restore();
   }
   ctx.restore();
-  ctx.restore();
+  // the rep counter
+  var rep = standing ? 1000 : 997 + Math.min(3, Math.floor(u / 0.35) + (cyc > 0.75 ? 1 : 0));
+  cncText(rep === 1000 ? "1,000." : rep + "...", 540, 1520, 96, "#ffffff", "#7a2a10");
+  cncText("ONE-ARM PUSHUPS", 540, 1430, 44, "#ffe7a0", "#000", "center", "800");
   cncFlare(700, 1000 + dip, 160, 0.7);
   cncText("SOMEWHERE IN TEXAS", 540, 330, 64, "#ffe7a0", "#7a2a10");
 }
@@ -551,17 +600,41 @@ function cncMacroHat(k) {
 }
 function cncMacroStar(k) {
   cncDenim(CN_DENIM);
-  var slide = (1 - cncOut(k / 0.45)) * 900;
-  var x = 540 + slide, y = 900;
-  ctx.fillStyle = "#e3e6ea"; ctx.strokeStyle = "#5b6066"; ctx.lineWidth = 12;
-  ctx.beginPath(); ctx.arc(x, y, 300, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.strokeStyle = "#9aa1a8"; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(x, y, 255, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = "#b9c0c8"; skStar(ctx, x, y, 240);
-  ctx.fillStyle = "rgba(255,255,255,0.45)"; skStar(ctx, x - 14, y - 14, 120);
-  ctx.save(); ctx.font = cncFont("900", 44); ctx.fillStyle = "#5b6066"; ctx.textAlign = "center";
-  ctx.fillText("TEXAS RANGER", x, y + 210); ctx.restore();
-  // his thumb pressing it on
-  if (k < 0.7) cnFist.call(null, x + 260, y + 300 - 40 * cncOut(k / 0.45), 90);
+  // the pocket seam it's pinned over
+  ctx.strokeStyle = "rgba(230,200,120,0.55)"; ctx.setLineDash([16, 12]); ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.moveTo(140, 1300); ctx.lineTo(140, 620); ctx.lineTo(940, 620); ctx.lineTo(940, 1300); ctx.stroke(); ctx.setLineDash([]);
+  var slide = (1 - cncOut(k / 0.45)) * 900, x = 540 + slide, y = 930, R = 300;
+  // the Texas Ranger "cinco peso" badge: a five-point star cut out of a silver
+  // ring, the words stamped round the ring
+  ctx.save(); ctx.translate(x, y);
+  ctx.shadowColor = "rgba(0,0,0,0.45)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 14;
+  var g = ctx.createLinearGradient(-R, -R, R, R);
+  g.addColorStop(0, "#f7f8fa"); g.addColorStop(0.45, "#b8bec6"); g.addColorStop(0.7, "#eef0f3"); g.addColorStop(1, "#8d949c");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.arc(0, 0, R * 0.7, 0, Math.PI * 2, true); ctx.fill();
+  ctx.shadowColor = "transparent";
+  ctx.fillStyle = g; skStar(ctx, 0, 0, R * 0.96);
+  ctx.strokeStyle = "#5b6066"; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, R * 0.7, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? R * 0.96 * 0.42 : R * 0.96; ctx[i ? "lineTo" : "moveTo"](Math.cos(a) * rr, Math.sin(a) * rr); }
+  ctx.closePath(); ctx.stroke();
+  // the rivets on the star points
+  ctx.fillStyle = "#d9dde2";
+  for (var p = 0; p < 5; p++) { var pa = -Math.PI / 2 + p * Math.PI * 2 / 5; ctx.beginPath(); ctx.arc(Math.cos(pa) * R * 0.85, Math.sin(pa) * R * 0.85, 14, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  // the stamped words
+  ctx.fillStyle = "#3e4349"; ctx.font = cncFont("900", 52); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  function arcText(txt, rad, mid, dir) {
+    var step = 0.15;
+    for (var j = 0; j < txt.length; j++) {
+      var aa = mid + (j - (txt.length - 1) / 2) * step * dir; // round the top left to right, round the bottom left to right too
+      ctx.save(); ctx.rotate(aa); ctx.translate(0, -rad * dir); ctx.fillText(txt[j], 0, 0); ctx.restore();
+    }
+  }
+  arcText("TEXAS RANGERS", R * 0.85, 0, 1);
+  arcText("COMPANY F", R * 0.85, 0, -1);
+  ctx.fillStyle = "rgba(255,255,255,0.35)"; skStar(ctx, -R * 0.08, -R * 0.1, R * 0.35);
+  ctx.restore();
   var gl = cncClamp((k - 0.45) / 0.4);
   if (gl > 0 && gl < 1) {
     var gx = cncLerp(x - 260, x + 260, gl), gy = cncLerp(y - 200, y + 120, gl);
@@ -572,6 +645,7 @@ function cncMacroStar(k) {
     cncFlare(gx, gy, 90, 0.8);
   }
 }
+
 function cncMacroBuckle(k) {
   cncDenim(CN_JEANS);
   ctx.fillStyle = "#5a3a22"; ctx.fillRect(0, 820, 1080, 200);
@@ -592,66 +666,99 @@ function cncMacroBuckle(k) {
   }
   cncFlare(x + 120, y - 90, 70, 0.6);
 }
+// A big bare fist, seen from the front: four knuckles, the fingers folded
+// under them, the thumb across, a denim cuff at the wrist. `side` -1 left, 1 right.
+function cncBigFist(x, y, s, side) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(side, 1);
+  ctx.lineJoin = "round"; ctx.strokeStyle = theme.wall; ctx.lineWidth = s * 0.05;
+  ctx.fillStyle = CN_DENIM; ctx.beginPath(); ctx.roundRect(-s * 1.55, -s * 0.55, s * 0.7, s * 1.1, s * 0.15); ctx.fill(); ctx.stroke(); // the cuff
+  var skin = CN_LOOK.skin, dark = shadeHex(skin, -0.18);
+  ctx.fillStyle = skin; ctx.beginPath(); ctx.roundRect(-s * 0.95, -s * 0.75, s * 1.6, s * 1.5, s * 0.45); ctx.fill(); ctx.stroke();
+  for (var i = 0; i < 4; i++) { // the knuckles and the folded fingers
+    var ky = -s * 0.56 + i * s * 0.375;
+    ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(s * 0.52, ky, s * 0.25, s * 0.19, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = dark; ctx.lineWidth = s * 0.035;
+    ctx.beginPath(); ctx.moveTo(s * 0.1, ky + s * 0.17); ctx.lineTo(s * 0.4, ky + s * 0.17); ctx.stroke();
+    ctx.strokeStyle = theme.wall; ctx.lineWidth = s * 0.05;
+  }
+  ctx.fillStyle = skin; ctx.beginPath(); ctx.roundRect(-s * 0.55, s * 0.2, s * 0.85, s * 0.42, s * 0.2); ctx.fill(); ctx.stroke(); // the thumb
+  ctx.fillStyle = "#f3d2bd"; ctx.beginPath(); ctx.ellipse(s * 0.2, s * 0.4, s * 0.1, s * 0.13, 0, 0, Math.PI * 2); ctx.fill(); // its nail
+  ctx.restore();
+}
 function cncMacroKnuckles(k) {
   var bg = ctx.createRadialGradient(540, 960, 40, 540, 960, 900);
   bg.addColorStop(0, "#5a1a08"); bg.addColorStop(1, "#050202");
   ctx.fillStyle = bg; ctx.fillRect(0, 0, 1080, 1920);
-  var meet = cncOut(k / 0.35), gap = (1 - meet) * 420;
-  // his own two arms, from each side, fists meeting in the middle
-  strokeLimb(150, CN_DENIM, function () { ctx.moveTo(-200, 1300); ctx.quadraticCurveTo(100, 1000, 380 - gap, 960); });
-  strokeLimb(150, CN_DENIM, function () { ctx.moveTo(1280, 1300); ctx.quadraticCurveTo(980, 1000, 700 + gap, 960); });
-  cnFist(400 - gap, 960, 150); cnFist(680 + gap, 960, 150);
+  var meet = cncOut(k / 0.35), gap = (1 - meet) * 360;
+  strokeLimb(170, CN_DENIM, function () { ctx.moveTo(-300, 1250); ctx.quadraticCurveTo(0, 960, 200 - gap, 960); });
+  strokeLimb(170, CN_DENIM, function () { ctx.moveTo(1380, 1250); ctx.quadraticCurveTo(1080, 960, 880 + gap, 960); });
+  cncBigFist(345 - gap, 960, 190, 1); cncBigFist(735 + gap, 960, 190, -1);
   if (k > 0.33 && k < 0.8) {
     var s = (k - 0.33) / 0.47;
     ctx.save(); ctx.globalCompositeOperation = "lighter";
     ctx.strokeStyle = "rgba(255,255,255," + (1 - s) + ")"; ctx.lineWidth = 10;
     ctx.beginPath(); ctx.arc(540, 960, 80 + 380 * s, 0, Math.PI * 2); ctx.stroke();
     ctx.restore();
-    cncText("CRACK!", 540, 700 - 40 * s, 110, "#ffe14d", "#c8101e");
+    cncText("CRACK!", 540, 650 - 40 * s, 110, "#ffe14d", "#c8101e");
   }
 }
 
-// The stars-and-stripes jet, side view, nose to the right, centred on (0, 0).
 function cncJet(s, burn) {
   ctx.save(); ctx.scale(s, s);
   ctx.lineJoin = "round"; ctx.strokeStyle = CNC_INK; ctx.lineWidth = 6;
-  // afterburner
+  // afterburner out of the nozzle, shock diamonds in it
   var fl = 0.8 + 0.2 * Math.sin(burn * 60);
-  var fg = ctx.createLinearGradient(-640, 0, -420, 0);
-  fg.addColorStop(0, "rgba(255,120,30,0)"); fg.addColorStop(0.5, "rgba(255,170,60,0.9)"); fg.addColorStop(1, "rgba(160,200,255,1)");
-  ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(-420, -34); ctx.lineTo(-420 - 240 * fl, 0); ctx.lineTo(-420, 34); ctx.closePath(); ctx.fill();
-  // the far wing
-  ctx.fillStyle = "#1f3a8a";
-  ctx.beginPath(); ctx.moveTo(-120, 10); ctx.lineTo(-300, -140); ctx.lineTo(-230, -140); ctx.lineTo(60, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
-  // the body
+  var fg = ctx.createLinearGradient(-700, 0, -440, 0);
+  fg.addColorStop(0, "rgba(255,110,30,0)"); fg.addColorStop(0.55, "rgba(255,170,60,0.9)"); fg.addColorStop(1, "rgba(170,210,255,1)");
+  ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(-440, -30); ctx.lineTo(-440 - 260 * fl, 0); ctx.lineTo(-440, 30); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.8)";
+  for (var d = 0; d < 3; d++) { var dx = -480 - d * 55; ctx.beginPath(); ctx.moveTo(dx + 16, 0); ctx.lineTo(dx, -10); ctx.lineTo(dx - 16, 0); ctx.lineTo(dx, 10); ctx.closePath(); ctx.fill(); }
+  // the far tail fin and far wing (darker)
+  ctx.fillStyle = "#8e0a14";
+  ctx.beginPath(); ctx.moveTo(-300, -40); ctx.lineTo(-390, -190); ctx.lineTo(-330, -190); ctx.lineTo(-210, -44); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#152a66";
+  ctx.beginPath(); ctx.moveTo(-60, -20); ctx.lineTo(-260, -120); ctx.lineTo(-330, -120); ctx.lineTo(-280, -30); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // the body: a long pointed nose, the intake under the cockpit, the nozzle
   var body = function () {
     ctx.beginPath();
-    ctx.moveTo(-430, -40); ctx.lineTo(200, -50); ctx.quadraticCurveTo(420, -40, 480, 0); ctx.quadraticCurveTo(420, 36, 200, 44); ctx.lineTo(-430, 40); ctx.closePath();
+    ctx.moveTo(-440, -32); ctx.lineTo(-300, -46); ctx.lineTo(120, -52);
+    ctx.quadraticCurveTo(330, -48, 470, -12); ctx.lineTo(560, 0); ctx.lineTo(470, 10);
+    ctx.quadraticCurveTo(330, 34, 120, 40); ctx.lineTo(-300, 42); ctx.lineTo(-440, 30); ctx.closePath();
   };
   body(); ctx.fillStyle = "#ffffff"; ctx.fill();
   ctx.save(); body(); ctx.clip();
-  for (var i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? "#ffffff" : "#c8101e"; ctx.fillRect(-440, -52 + i * 17, 520, 17); }
-  ctx.fillStyle = "#1f3a8a"; ctx.fillRect(80, -60, 420, 120);
+  for (var i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? "#ffffff" : "#c8101e"; ctx.fillRect(-460, -54 + i * 16, 560, 16); }
+  ctx.fillStyle = "#1f3a8a"; ctx.fillRect(100, -60, 480, 120);
   ctx.fillStyle = "#ffffff";
-  for (var j = 0; j < 7; j++) skStar(ctx, 130 + j * 40, -8 + (j % 2) * 24, 11);
+  for (var j = 0; j < 8; j++) skStar(ctx, 140 + j * 38, -6 + (j % 2) * 22, 10);
+  ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(-460, -50, 1100, 14); // the shine along the top
   ctx.restore();
   body(); ctx.stroke();
-  // the canopy
-  ctx.fillStyle = "#7fd4ff";
-  ctx.beginPath(); ctx.moveTo(150, -46); ctx.quadraticCurveTo(250, -100, 340, -36); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.beginPath(); ctx.ellipse(230, -64, 40, 8, -0.2, 0, Math.PI * 2); ctx.fill();
-  // the tail
+  ctx.fillStyle = "#3a3f48"; ctx.beginPath(); ctx.moveTo(-470, -28); ctx.lineTo(-440, -32); ctx.lineTo(-440, 30); ctx.lineTo(-470, 26); ctx.closePath(); ctx.fill(); ctx.stroke(); // the nozzle
+  ctx.fillStyle = "#23262c"; ctx.beginPath(); ctx.moveTo(80, 8); ctx.lineTo(200, 6); ctx.lineTo(200, 40); ctx.lineTo(80, 40); ctx.closePath(); ctx.fill(); ctx.stroke(); // the intake
+  ctx.strokeStyle = "#9aa3ad"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(560, 0); ctx.lineTo(640, 0); ctx.stroke(); // the pitot tube
+  ctx.strokeStyle = CNC_INK; ctx.lineWidth = 6;
+  // the bubble canopy, gold-tinted
+  var cg = ctx.createLinearGradient(220, -110, 330, -40);
+  cg.addColorStop(0, "#ffe9a0"); cg.addColorStop(1, "#b07a20");
+  ctx.fillStyle = cg;
+  ctx.beginPath(); ctx.moveTo(170, -48); ctx.quadraticCurveTo(280, -118, 400, -38); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.beginPath(); ctx.ellipse(260, -78, 46, 9, -0.25, 0, Math.PI * 2); ctx.fill();
+  // the near tail fin, the tailplane
   ctx.fillStyle = "#c8101e";
-  ctx.beginPath(); ctx.moveTo(-420, -40); ctx.lineTo(-470, -190); ctx.lineTo(-400, -190); ctx.lineTo(-280, -42); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#fff"; skStar(ctx, -410, -130, 24);
-  // the near wing
+  ctx.beginPath(); ctx.moveTo(-330, -42); ctx.lineTo(-430, -215); ctx.lineTo(-360, -215); ctx.lineTo(-210, -46); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#fff"; skStar(ctx, -350, -140, 24);
+  ctx.fillStyle = "#1f3a8a";
+  ctx.beginPath(); ctx.moveTo(-300, 20); ctx.lineTo(-430, 80); ctx.lineTo(-380, 82); ctx.lineTo(-230, 30); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // the near wing: a clipped delta, a missile on the tip
   ctx.fillStyle = "#2a4ab0";
-  ctx.beginPath(); ctx.moveTo(-160, 20); ctx.lineTo(-330, 170); ctx.lineTo(-250, 170); ctx.lineTo(80, 24); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#fff"; skStar(ctx, -230, 120, 26);
+  ctx.beginPath(); ctx.moveTo(-40, 24); ctx.lineTo(-250, 160); ctx.lineTo(-330, 160); ctx.lineTo(-270, 34); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#fff"; skStar(ctx, -210, 105, 26);
+  ctx.fillStyle = "#e6e8ec"; ctx.beginPath(); ctx.roundRect(-340, 160, 150, 16, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#c8101e"; ctx.beginPath(); ctx.moveTo(-190, 160); ctx.lineTo(-160, 168); ctx.lineTo(-190, 176); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
 
-// 5a. Tracking shot alongside the jet, Chuck standing on its back.
 function cncShotJet(u) {
   var sky = ctx.createLinearGradient(0, 0, 0, 1920);
   sky.addColorStop(0, "#1c58b8"); sky.addColorStop(0.6, "#7ab6ee"); sky.addColorStop(1, "#d6ecff");
@@ -711,6 +818,51 @@ function cncShotJet(u) {
   cncFlare(980, 200, 120, 0.5);
 }
 
+// One carved head on Mount Rushmore: granite lit from the upper left, a
+// shadowed brow, deep eye sockets, the nose, the mouth line and the chin,
+// plus each one's tell (Washington's wig roll, Roosevelt's glasses,
+// Lincoln's beard).
+function cncCarvedHead(x, y, r, tilt, who) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
+  var lit = "#ddd6c8", mid = "#b0a99b", sh = "rgba(70,64,56,0.55)", deep = "rgba(45,40,34,0.75)";
+  // the rock left round the head
+  ctx.fillStyle = "#8f897d"; ctx.beginPath(); ctx.ellipse(r * 0.15, r * 0.2, r * 1.05, r * 1.25, 0, 0, Math.PI * 2); ctx.fill();
+  var g = ctx.createRadialGradient(-r * 0.4, -r * 0.45, r * 0.1, 0, 0, r * 1.1);
+  g.addColorStop(0, lit); g.addColorStop(0.6, mid); g.addColorStop(1, "#7f796e");
+  ctx.fillStyle = g;
+  ctx.beginPath(); // the face: wide at the cheekbones, narrowing to the jaw
+  ctx.moveTo(-r * 0.62, -r * 0.55); ctx.quadraticCurveTo(0, -r * 1.05, r * 0.62, -r * 0.55);
+  ctx.quadraticCurveTo(r * 0.75, r * 0.15, r * 0.45, r * 0.7); ctx.quadraticCurveTo(0, r * 1.02, -r * 0.45, r * 0.7);
+  ctx.quadraticCurveTo(-r * 0.75, r * 0.15, -r * 0.62, -r * 0.55); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = sh; ctx.beginPath(); ctx.moveTo(r * 0.62, -r * 0.55); ctx.quadraticCurveTo(r * 0.75, r * 0.15, r * 0.45, r * 0.7); ctx.quadraticCurveTo(r * 0.3, r * 0.1, r * 0.62, -r * 0.55); ctx.fill(); // the shaded side
+  // the hair
+  ctx.fillStyle = "#a59e90";
+  if (who === "wash") { ctx.beginPath(); ctx.ellipse(-r * 0.66, -r * 0.2, r * 0.18, r * 0.28, 0.2, 0, Math.PI * 2); ctx.fill(); }
+  ctx.beginPath(); ctx.moveTo(-r * 0.66, -r * 0.5); ctx.quadraticCurveTo(0, -r * 1.2, r * 0.66, -r * 0.5); ctx.quadraticCurveTo(0, -r * 0.82, -r * 0.66, -r * 0.5); ctx.fill();
+  // the brow and the eye sockets
+  ctx.fillStyle = sh; ctx.fillRect(-r * 0.5, -r * 0.32, r, r * 0.08);
+  ctx.fillStyle = deep;
+  [-1, 1].forEach(function (s) { ctx.beginPath(); ctx.ellipse(s * r * 0.25, -r * 0.16, r * 0.15, r * 0.09, 0, 0, Math.PI * 2); ctx.fill(); });
+  if (who === "teddy") { ctx.strokeStyle = "rgba(50,45,40,0.8)"; ctx.lineWidth = r * 0.04; [-1, 1].forEach(function (s) { ctx.beginPath(); ctx.arc(s * r * 0.25, -r * 0.16, r * 0.17, 0, Math.PI * 2); ctx.stroke(); }); ctx.beginPath(); ctx.moveTo(-r * 0.08, -r * 0.18); ctx.lineTo(r * 0.08, -r * 0.18); ctx.stroke(); }
+  // the nose: lit ridge, shadow under and to the right
+  ctx.fillStyle = lit; ctx.beginPath(); ctx.moveTo(-r * 0.04, -r * 0.2); ctx.lineTo(-r * 0.13, r * 0.18); ctx.lineTo(r * 0.06, r * 0.2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = sh; ctx.beginPath(); ctx.moveTo(r * 0.02, -r * 0.18); ctx.lineTo(r * 0.14, r * 0.2); ctx.lineTo(r * 0.04, r * 0.22); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = deep; ctx.fillRect(-r * 0.12, r * 0.22, r * 0.24, r * 0.04);
+  // the mouth line, Teddy's moustache, Abe's beard
+  if (who === "teddy") { ctx.fillStyle = "#958e80"; ctx.beginPath(); ctx.ellipse(0, r * 0.36, r * 0.24, r * 0.08, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.strokeStyle = deep; ctx.lineWidth = r * 0.035; ctx.beginPath(); ctx.moveTo(-r * 0.17, r * 0.44); ctx.quadraticCurveTo(0, r * 0.48, r * 0.17, r * 0.44); ctx.stroke();
+  if (who === "abe") {
+    ctx.fillStyle = "#9c9588"; ctx.beginPath(); ctx.moveTo(-r * 0.55, r * 0.25); ctx.quadraticCurveTo(-r * 0.4, r * 1.05, 0, r * 1.05); ctx.quadraticCurveTo(r * 0.4, r * 1.05, r * 0.55, r * 0.25); ctx.quadraticCurveTo(r * 0.3, r * 0.6, 0, r * 0.62); ctx.quadraticCurveTo(-r * 0.3, r * 0.6, -r * 0.55, r * 0.25); ctx.fill();
+    ctx.strokeStyle = "rgba(60,55,48,0.45)"; ctx.lineWidth = 3;
+    for (var i = 0; i < 9; i++) { var bx = -r * 0.42 + i * r * 0.105; ctx.beginPath(); ctx.moveTo(bx, r * 0.6); ctx.lineTo(bx * 0.85, r * 0.95); ctx.stroke(); }
+  }
+  ctx.fillStyle = sh; ctx.beginPath(); ctx.ellipse(0, r * 0.62, r * 0.18, r * 0.06, 0, 0, Math.PI * 2); ctx.fill(); // under the lip
+  // chisel cracks
+  ctx.strokeStyle = "rgba(60,55,48,0.3)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-r * 0.6, r * 0.1); ctx.lineTo(-r * 0.45, r * 0.3); ctx.moveTo(r * 0.5, -r * 0.7); ctx.lineTo(r * 0.38, -r * 0.5); ctx.stroke();
+  ctx.restore();
+}
+
 // 5b. Drone shot pulling up over Mount Rushmore, with its fifth head.
 function cncShotRushmore(u) {
   var lift = cncEase(u / 0.6);
@@ -724,13 +876,11 @@ function cncShotRushmore(u) {
   ctx.beginPath(); ctx.moveTo(-100, 1700); ctx.lineTo(-100, 900); ctx.quadraticCurveTo(200, 700, 540, 720); ctx.quadraticCurveTo(900, 700, 1180, 880); ctx.lineTo(1180, 1700); ctx.closePath(); ctx.fill();
   ctx.fillStyle = "#7d776d";
   ctx.beginPath(); ctx.moveTo(-100, 1700); ctx.lineTo(-100, 1150); ctx.quadraticCurveTo(540, 1050, 1180, 1150); ctx.lineTo(1180, 1700); ctx.closePath(); ctx.fill();
-  // four carved heads (rough granite, no faces on anyone)...
-  [[150, 930, 105], [340, 905, 115], [520, 925, 100], [690, 960, 95]].forEach(function (h, i) {
-    var g = ctx.createRadialGradient(h[0] - h[2] * 0.3, h[1] - h[2] * 0.3, 10, h[0], h[1], h[2]);
-    g.addColorStop(0, "#d8d2c4"); g.addColorStop(1, "#8c867a");
-    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(h[0], h[1], h[2] * 0.82, h[2], 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "rgba(60,55,48,0.4)"; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(h[0] - h[2] * 0.5, h[1] + h[2] * 0.2 + i * 3); ctx.lineTo(h[0] + h[2] * 0.4, h[1] + h[2] * 0.35); ctx.stroke();
+  // the four presidents carved in the granite, left to right as they are on
+  // the mountain: Washington out front, Jefferson tucked behind him, Roosevelt
+  // set back in the shadow, Lincoln on the right with his beard
+  [[180, 950, 120, 0.12, "wash"], [345, 900, 108, -0.18, "jeff"], [505, 960, 96, 0.05, "teddy"], [680, 965, 118, -0.08, "abe"]].forEach(function (h) {
+    cncCarvedHead(h[0], h[1], h[2], h[3], h[4]);
   });
   // ...and the fifth: a round head in a cowboy hat, the chisel dust still falling
   var fx = 890, fy = 990, fr = 92;
@@ -738,6 +888,12 @@ function cncShotRushmore(u) {
   var g2 = ctx.createRadialGradient(-30, -30, 10, 0, 0, fr);
   g2.addColorStop(0, "#e6e0d2"); g2.addColorStop(1, "#968f82");
   ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(0, 0, fr, 0, Math.PI * 2); ctx.fill();
+  // his full beard, carved, chisel lines down it (and no face: he's a ball)
+  ctx.fillStyle = "#a8a194";
+  ctx.beginPath(); ctx.moveTo(-fr * 0.8, -fr * 0.05); ctx.quadraticCurveTo(-fr * 0.75, fr * 0.95, 0, fr * 0.98); ctx.quadraticCurveTo(fr * 0.75, fr * 0.95, fr * 0.8, -fr * 0.05);
+  ctx.quadraticCurveTo(fr * 0.4, fr * 0.2, 0, fr * 0.05); ctx.quadraticCurveTo(-fr * 0.4, fr * 0.2, -fr * 0.8, -fr * 0.05); ctx.fill();
+  ctx.strokeStyle = "rgba(60,55,48,0.45)"; ctx.lineWidth = 3;
+  for (var bl = 0; bl < 11; bl++) { var bx = -fr * 0.6 + bl * fr * 0.12; ctx.beginPath(); ctx.moveTo(bx, fr * 0.25); ctx.lineTo(bx * 0.85, fr * 0.85); ctx.stroke(); }
   var keep = CN_HAT; CN_HAT = "#b9b2a4"; var keepBand = CN_BAND; CN_BAND = "#8c867a";
   drawCnHat(fr);
   CN_HAT = keep; CN_BAND = keepBand;
@@ -768,6 +924,11 @@ function cncStadiumTop(u, r) {
   // the bowl
   ctx.fillStyle = "#1c1a22"; ctx.beginPath(); ctx.ellipse(540, 960, r * 1.0, r * 1.18, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#2a2632"; ctx.beginPath(); ctx.ellipse(540, 960, r * 0.86, r * 1.02, 0, 0, Math.PI * 2); ctx.fill();
+  // the roof ring, open over the cage, WWIT round it
+  ctx.strokeStyle = "#3a3440"; ctx.lineWidth = r * 0.16; ctx.beginPath(); ctx.ellipse(540, 960, r * 0.93, r * 1.1, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = WWIT.maroon; ctx.lineWidth = r * 0.03; ctx.beginPath(); ctx.ellipse(540, 960, r * 0.93, r * 1.1, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.save(); ctx.fillStyle = WWIT.gold; ctx.font = cncFont("900", Math.round(r * 0.11)); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("WWIT", 540, 960 - r * 1.1); ctx.fillText("MMA", 540, 960 + r * 1.1); ctx.restore();
   // the crowd: phone lights
   for (var j = 0; j < 160; j++) {
     var a = cncRand(j) * Math.PI * 2, d = 0.58 + cncRand(j + 50) * 0.36;
@@ -803,9 +964,18 @@ function cncShotDrop(u) {
     // the jet crossing (top-down), Chuck dropping off its back
     var jx = cncLerp(-150, 1250, u / 0.5), jy = 520;
     ctx.save(); ctx.translate(jx, jy);
-    ctx.fillStyle = "#ffffff"; ctx.strokeStyle = CNC_INK; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(80, 0); ctx.lineTo(-20, -14); ctx.lineTo(-30, -90); ctx.lineTo(-60, -90); ctx.lineTo(-60, -14); ctx.lineTo(-90, -10); ctx.lineTo(-100, -40); ctx.lineTo(-115, -40); ctx.lineTo(-115, 40); ctx.lineTo(-100, 40); ctx.lineTo(-90, 10); ctx.lineTo(-60, 14); ctx.lineTo(-60, 90); ctx.lineTo(-30, 90); ctx.lineTo(-20, 14); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#1f3a8a"; ctx.fillRect(10, -10, 50, 20);
+    // a fighter jet seen from above: pointed nose, swept wings, twin tails
+    ctx.strokeStyle = CNC_INK; ctx.lineWidth = 4; ctx.lineJoin = "round";
+    ctx.fillStyle = "#2a4ab0";
+    ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(-40, -95); ctx.lineTo(-70, -95); ctx.lineTo(-60, 0); ctx.lineTo(-70, 95); ctx.lineTo(-40, 95); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#c8101e";
+    ctx.beginPath(); ctx.moveTo(-85, -10); ctx.lineTo(-120, -50); ctx.lineTo(-135, -50); ctx.lineTo(-125, -8); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-85, 10); ctx.lineTo(-120, 50); ctx.lineTo(-135, 50); ctx.lineTo(-125, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.moveTo(110, 0); ctx.lineTo(40, -16); ctx.lineTo(-130, -14); ctx.lineTo(-130, 14); ctx.lineTo(40, 16); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#c8101e"; ctx.fillRect(-120, -5, 140, 10);
+    ctx.fillStyle = "#e0b24a"; ctx.beginPath(); ctx.ellipse(45, 0, 22, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#fff"; skStar(ctx, -45, -60, 12); skStar(ctx, -45, 60, 12);
     ctx.restore();
     // flares fanning out behind it
     for (var f = 0; f < 8; f++) {
@@ -869,7 +1039,7 @@ function cncShotMoon(u) {
   ctx.globalAlpha = 1;
   drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
   drawCnKit(CN_R); drawCnHat(CN_R);
-  if (!cut) cnSalute(CN_R, 0); else cnRappelArms(CN_R);
+  if (!cut) cnSalute(CN_R, 0); else cnCrossedArms(CN_R);
   ctx.restore();
   // rim light from the moon, dark on the near side
   ctx.save(); ctx.globalAlpha = 0.55 * (1 - fall); ctx.fillStyle = "#050814";
@@ -994,7 +1164,7 @@ function cncReactions(c) {
     fn(w, h);
     ctx.restore();
   }
-  if (v && v.char) panel(60, 235, 440, 300, (u - 0.2) / 0.6, -0.05, function (w, h) {
+  if (v && v.char) panel(60, 235, 440, 300, (u - 0.2) / 0.9, -0.05, function (w, h) {
     var shiver = reduceMotion ? 0 : Math.sin(u * 70) * 4;
     cncFighter(v, w / 2 + shiver, h * 0.62, 115);
     var dy = ((u - 0.2) * 260) % 120;
@@ -1004,7 +1174,7 @@ function cncReactions(c) {
     });
     cncText("GULP.", w / 2, 40, 48, "#ffffff", "#000");
   });
-  if (b && b.char) panel(580, 235, 440, 300, (u - 0.75) / 0.6, 0.05, function (w, h) {
+  if (b && b.char) panel(580, 235, 440, 300, (u - 1.15) / 0.9, 0.05, function (w, h) {
     var x = w / 2, y = h * 0.7, r = 105;
     cncFighter(b, x, y, r);
     cncArm(b, 1, x + r * 0.7, y - r * 0.3, x + r * 1.05, y - r * 0.9, x + r * 0.55, y - r * 1.45, r, -1.4); // pointing up at him
@@ -1082,40 +1252,40 @@ function cncAudio() {
     var t0 = ac.currentTime + 0.02, bus = ac.createGain();
     bus.gain.value = 0.8; bus.connect(ac.destination);
     cncCut.bus = bus;
-    duckMusic(t0, t0 + CNC.pre + 1.6);
+    duckMusic(t0, t0 + CNC.pre + 0.55 / CNC.slow);
     cncCrowdDuck(ac, CNC.pre);
     // 1. the bass hit and the alarm
     mBigKick(ac, bus, t0, 1.2); cncTone(ac, bus, t0, "sine", 60, 30, 0.6, 0.9);
-    [0.08, 0.28].forEach(function (d) { cncTone(ac, bus, t0 + d, "square", 880, 880, 0.08, 0.14); cncTone(ac, bus, t0 + d + 0.07, "square", 660, 660, 0.08, 0.1); });
+    [0.08, 0.28].forEach(function (d) { cncTone(ac, bus, t0 + cncReal(d), "square", 880, 880, 0.08, 0.14); cncTone(ac, bus, t0 + cncReal(d) + 0.07, "square", 660, 660, 0.08, 0.1); });
     // 2. the dial, the ringback, the typed words
-    for (var i = 0; i < 6; i++) cncClick(ac, bus, t0 + 0.55 + i * 0.045, 2400, 0.25);
-    cncTone(ac, bus, t0 + 0.9, "sine", 440, 440, 0.06, 0.35); cncTone(ac, bus, t0 + 0.9, "sine", 480, 480, 0.06, 0.35);
-    for (var j = 0; j < 19; j++) cncClick(ac, bus, t0 + 0.85 + 0.12 + j * 0.45 / 19, 3200 + (j % 3) * 400, 0.18);
-    cncClick(ac, bus, t0 + 1.45, 5000, 0.2); cncTone(ac, bus, t0 + 1.45, "triangle", 2600, 2600, 0.12, 0.4); // the typewriter bell
+    for (var i = 0; i < 6; i++) cncClick(ac, bus, t0 + cncReal(0.55) + i * 0.06, 2400, 0.25);
+    cncTone(ac, bus, t0 + cncReal(0.9), "sine", 440, 440, 0.06, 0.35); cncTone(ac, bus, t0 + cncReal(0.9), "sine", 480, 480, 0.06, 0.35);
+    for (var j = 0; j < 19; j++) cncClick(ac, bus, t0 + cncReal(0.97 + j * 0.45 / 19), 3200 + (j % 3) * 400, 0.18);
+    cncClick(ac, bus, t0 + cncReal(1.45), 5000, 0.2); cncTone(ac, bus, t0 + cncReal(1.45), "triangle", 2600, 2600, 0.12, 0.4); // the typewriter bell
     // 3. the harmonica sting, then the march
-    cncHarmonica(ac, bus, t0 + 1.72);
-    [0.0, 0.35, 0.7].forEach(function (d) { cncTone(ac, bus, t0 + 1.7 + d + 0.18, "sine", 70, 40, 0.5, 0.25); }); // the Earth thumping on each rep
-    cncTone(ac, bus, t0 + 2.6, "sawtooth", 140, 110, 0.08, 0.45); // the moo
-    cncMarch(ac, bus, t0 + 2.0, t0 + 8.7);
+    cncHarmonica(ac, bus, t0 + cncReal(1.72));
+    [0.0, 0.35, 0.7].forEach(function (d) { cncTone(ac, bus, t0 + cncReal(1.7 + d + 0.18), "sine", 70, 40, 0.5, 0.25); }); // the Earth thumping on each rep
+    cncTone(ac, bus, t0 + cncReal(2.6), "sawtooth", 140, 110, 0.08, 0.45); // the moo
+    cncMarch(ac, bus, t0 + cncReal(2.0), t0 + CNC.pre + 0.55 / CNC.slow);
     // 4. the suit-up hits
-    [2.7, 2.95, 3.2, 3.45].forEach(function (d) { mBigSnare(ac, bus, t0 + d, 1.1); mBigKick(ac, bus, t0 + d, 0.8); });
-    cncTone(ac, bus, t0 + 2.8, "sine", 110, 60, 0.6, 0.25);                                  // the hat
-    cncTone(ac, bus, t0 + 3.06, "triangle", 2700, 2650, 0.25, 0.5);                      // the star: ting
-    cncTone(ac, bus, t0 + 3.27, "triangle", 1800, 1790, 0.2, 0.25); cncTone(ac, bus, t0 + 3.33, "triangle", 2400, 2390, 0.16, 0.3); // the buckle
-    mNz(ac, bus, t0 + 3.54, "bandpass", 2200, 1.5, 0.8, 0.05); mNz(ac, bus, t0 + 3.6, "bandpass", 1600, 1.5, 0.7, 0.05); // the knuckles
+    [2.7, 2.95, 3.2, 3.45].forEach(function (d) { mBigSnare(ac, bus, t0 + cncReal(d), 1.1); mBigKick(ac, bus, t0 + cncReal(d), 0.8); });
+    cncTone(ac, bus, t0 + cncReal(2.8), "sine", 110, 60, 0.6, 0.25);                                  // the hat
+    cncTone(ac, bus, t0 + cncReal(3.06), "triangle", 2700, 2650, 0.25, 0.5);                      // the star: ting
+    cncTone(ac, bus, t0 + cncReal(3.27), "triangle", 1800, 1790, 0.2, 0.25); cncTone(ac, bus, t0 + cncReal(3.33), "triangle", 2400, 2390, 0.16, 0.3); // the buckle
+    mNz(ac, bus, t0 + cncReal(3.54), "bandpass", 2200, 1.5, 0.8, 0.05); mNz(ac, bus, t0 + cncReal(3.6), "bandpass", 1600, 1.5, 0.7, 0.05); // the knuckles
     // 5. the jet, the sound barrier, the eagle
-    cncNoise(ac, bus, t0 + 3.7, 1.4, 500, 0.5, 0.6);
-    mBigKick(ac, bus, t0 + 4.02, 1.4); cncTone(ac, bus, t0 + 4.02, "sine", 55, 28, 0.9, 1.0); mNz(ac, bus, t0 + 4.02, "bandpass", 150, 0.6, 0.9, 0.6);
-    playClip("eagleScreech", 0.55, t0 + 4.2);
-    cncNoise(ac, bus, t0 + 4.5, 0.6, 900, 1.0, 0.4); // whoosh past the mountain
+    cncNoise(ac, bus, t0 + cncReal(3.7), 1.4, 500, 0.5, 0.6);
+    mBigKick(ac, bus, t0 + cncReal(4.02), 1.4); cncTone(ac, bus, t0 + cncReal(4.02), "sine", 55, 28, 0.9, 1.0); mNz(ac, bus, t0 + cncReal(4.02), "bandpass", 150, 0.6, 0.9, 0.6);
+    playClip("eagleScreech", 0.55, t0 + cncReal(4.2));
+    cncNoise(ac, bus, t0 + cncReal(4.5), 0.6, 900, 1.0, 0.4); // whoosh past the mountain
     // 6. the wind and the fall
-    cncNoise(ac, bus, t0 + 5.1, 1.1, 700, 0.6, 0.35);
-    cncTone(ac, bus, t0 + 5.6, "sine", 1800, 500, 0.1, 0.6);
-    cncNoise(ac, bus, t0 + 5.6, 0.6, 400, 0.4, 0.6);
+    cncNoise(ac, bus, t0 + cncReal(5.1), 1.1, 700, 0.6, 0.35);
+    cncTone(ac, bus, t0 + cncReal(5.6), "sine", 1800, 500, 0.1, 0.6);
+    cncNoise(ac, bus, t0 + cncReal(5.6), 0.6, 400, 0.4, 0.6);
     // 7. the chute snapping open
-    mNz(ac, bus, t0 + 6.3, "bandpass", 700, 0.8, 0.6, 0.12);
+    mNz(ac, bus, t0 + cncReal(6.3), "bandpass", 700, 0.8, 0.6, 0.12);
     // slow motion: the heartbeat
-    [7.2, 7.55, 8.0, 8.35].forEach(function (d) { cncTone(ac, bus, t0 + d, "sine", 62, 40, 0.55, 0.18); });
+    [0.2, 0.7, 1.2, 1.7].forEach(function (d) { cncTone(ac, bus, t0 + CNC.pre + d, "sine", 62, 40, 0.55, 0.18); });
   } catch (e) { /* never let audio break the game */ }
 }
 function cncCrowdDuck(ac, len) {
