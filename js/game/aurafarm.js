@@ -335,6 +335,7 @@ function tickAuraBull(self, other, dt) {
       var vx = other.x - b.x, vy = other.y - b.y;
       if (Math.sqrt(vx * vx + vy * vy) < other.r + AF_BULL_R - 4) {
         // Straight into the opponent.
+        if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpBullArt(b))) { aura.bull = null; self.igbb.phase = "bow"; self.igbb.t = 0; return; } // Jiří Procházka cuts it in half (jiri-react.js)
         hurt(other, self.char.special.bullDamage, "igbb", self.id);
         violentHit(self, other, 1.2);
         self.igbb.kb = { vx: b.dx * 520 + (Math.random() - 0.5) * 200, vy: b.dy * 520 };
@@ -382,6 +383,7 @@ function tickAuraBull(self, other, dt) {
     b.spin += dt * 12;
     var ox = other.x - b.x, oy = other.y - b.y;
     if (other.alive && Math.sqrt(ox * ox + oy * oy) < other.r + AF_BULL_R) {
+      if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpBullArt(b))) { aura.bull = null; self.igbb.phase = "bow"; self.igbb.t = 0; return; } // Jiří Procházka cuts it in half (jiri-react.js)
       other.holdAtOne = false; // this one can finish it
       var m = self.igbb;
       hurt(other, self.char.special.throwDamage, "igbb", self.id);

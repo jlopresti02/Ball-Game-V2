@@ -64,7 +64,7 @@ function tickEagleStrikes(dt) {
     self.eagleT -= dt;
     if (self.eagleT > 0) return;
     // Not over the top of a special, a sword duel or the road.
-    if (!other.alive || self.igbb || other.igbb || allAmericanOn() || swordDuelActive()) { self.eagleT = 0.5; return; }
+    if (!other.alive || self.igbb || (other.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(other))) || allAmericanOn() || swordDuelActive()) { self.eagleT = 0.5; return; }
     self.eagleN++;
     self.eagleT = esRand(cfg.every);
     startEagleStrike(self, other, cfg);
@@ -121,8 +121,9 @@ function updateEagleStrike(e, dt) {
   }
   if (low && !e.hit) {
     var self = balls[e.owner], other = balls[1 - e.owner];
-    if (other.alive && !other.invincible && !other.igbb && segDist(other.x, other.y, px, py, e.x, e.y) < cfg.width + other.r) {
+    if (other.alive && !other.invincible && (!other.igbb || (typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(other))) && segDist(other.x, other.y, px, py, e.x, e.y) < cfg.width + other.r) {
       e.hit = true;
+      if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpEsEagleArt(e))) return false; // Jiří Procházka cuts it in half (jiri-react.js)
       eagleRake(e, self, other);
     }
   }
