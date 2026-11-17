@@ -354,7 +354,7 @@ function tapeSigTimes(A, B) {
 var TAPE_BEAT = 0.543;
 var TAPE_SIG_LEN = 1.1;
 function tapeSigKind(ch) {
-  var own = tapeTauntKind(ch); if (own) return own; // Conor's press conference, Charles's Super Saiyan flicker (tape-taunts.js)
+  var own = tapeTauntKind(ch); if (own) return own; // Conor's press conference, Charles's Super Saiyan, Ilia's rose (tape-taunts.js)
   if (ch.id === "c-josh-hokit") return "thumbs";
   if (ch.id === "c-ciryl-gane" || ch.id === "c-jon-jones") return "poke"; // both poke eyes in a fight
   return "gloves";
@@ -416,6 +416,8 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
       tapePresserGloves(g, pr, sig, side); // (tape-taunts.js)
     } else if (kind === "saiyan") {
       tapeSaiyanGloves(g, pr, sig); // (tape-taunts.js)
+    } else if (kind === "rose") {
+      tapeRoseGloves(g, pr, sig, side, oppKind === "poke" && oppSig >= 0 ? ost : -1); // Ilia's rose (tape-taunts.js)
     } else {
       // Both gloves punch together at the camera
       var tap = Math.max(0, Math.sin(Math.min(1, sig / 0.45) * Math.PI)) * back;
@@ -424,6 +426,7 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
     }
   }
   if (kind === "presser") drawTapePodium(x, y + bob, pr, sig); // his podium, in front of him (tape-taunts.js)
+  if (kind === "rose") drawTapeRose(g, gr, pr, sig, side, oppKind === "poke" && oppSig >= 0 ? ost : -1, x, y + bob); // (tape-taunts.js)
   // Draw the far glove first so the one coming at the camera is on top
   var order = g[0].s > g[1].s ? [1, 0] : [0, 1];
   order.forEach(function (j) { drawTapeGlove(ch, g[j], gr, side); });
@@ -449,6 +452,7 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   if (oppSig >= 0 && oppKind === "poke" && ost > 0.35) drawTapeStars(x, y - pr * 0.82, pr, ost);
   if (oppSig >= 0 && oppKind === "presser" && ost > 0.6 && sig < 0) drawTapeAnger(x + side * pr * 0.62, y - pr * 0.72, ost); // fuming at the press conference (on the outside, away from his speech bubble)
   if (kind === "saiyan") drawTapeSaiyanFront(x, y + bob, pr, sig); // (tape-taunts.js)
+  if (kind === "rose") drawTapeRoseScent(g, gr, pr, sig, side, oppKind === "poke" && oppSig >= 0 ? ost : -1); // (tape-taunts.js)
 }
 
 function drawTapeGlove(ch, g, gr, side) {

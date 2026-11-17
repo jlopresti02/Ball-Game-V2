@@ -39,11 +39,13 @@ var TAPE_SAIYAN_ON = [[0, 1.3]];
 function tapeTauntKind(ch) {
   if (ch.id === "c-conor-mcgregor") return "presser";
   if (ch.id === "c-charles-oliveira") return "saiyan";
+  if (ch.id === "c-ilia-topuria") return "rose";
   return null;
 }
 function tapeSigLen(kind) {
   if (kind === "presser") return tapePresserLen();
   if (kind === "saiyan") return TAPE_SAIYAN_LEN;
+  if (kind === "rose") return TAPE_ROSE_LEN;
   return TAPE_SIG_LEN;
 }
 // The press conference goes first and the other fighter answers once the
@@ -55,6 +57,13 @@ function tapeTauntTimes(A, B, sg) {
     s[i] = TAPE_PRESSER_AT;
     s[1 - i] = TAPE_PRESSER_AT + tapePresserLen() - 0.85;
     if (k[1 - i] === "saiyan") s[1 - i] = Math.min(s[1 - i], TAPE_HIT.out - TAPE_SAIYAN_LEN + 0.05);
+  }
+  // Ilia's rose: vs Gane he lifts it first and Gane's eye poke lands mid-sniff
+  // (he drops it); otherwise it just has to be over before the card goes.
+  for (var j = 0; j < 2; j++) {
+    if (k[j] !== "rose") continue;
+    if (k[1 - j] === "poke") { s[j] = TAPE_ROSE_AT; s[1 - j] = TAPE_ROSE_AT + TAPE_ROSE_POKE; }
+    else s[j] = Math.min(s[j], TAPE_HIT.out - TAPE_ROSE_LEN + 0.05);
   }
   return s;
 }
@@ -213,4 +222,93 @@ function drawTapePresserBubble(t, w, py, pr, px) {
   tapeFont(longest, lines.length > 1 ? 34 : 40, bw - 40, "900", TAPE_IMPACT); // one size for both lines
   lines.forEach(function (ln, k) { ctx.fillText(ln, 0, 2 + (k - (lines.length - 1) / 2) * 38); });
   ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Ilia ("rose", Joe 2026-11-17): he lifts a red rose to his nose with his
+// outside glove, breathes it in (eyes on the camera, scent curling up, a few
+// petals and hearts drifting off) and lowers it. Against Gane, Gane's eye
+// poke lands mid-sniff and the rose drops out of his glove and falls away.
+// ---------------------------------------------------------------
+var TAPE_ROSE_LEN = 1.6;
+var TAPE_ROSE_AT = 5.55;   // vs Gane: Ilia goes first...
+var TAPE_ROSE_POKE = 0.55; // ...and Gane's poke starts this far into his sniff
+var TAPE_ROSE_HIT = 0.17;  // Gane's first jab lands this far into the poke
+function tapeRoseUp(sig, ost) {
+  var up = Math.min(1, sig / 0.3), down = Math.min(1, Math.max(0, (TAPE_ROSE_LEN - sig) / 0.35));
+  var k = tapeEase(up) * down;
+  if (ost >= TAPE_ROSE_HIT) k *= Math.max(0, 1 - (ost - TAPE_ROSE_HIT) / 0.2); // poked: his glove drops back
+  return k;
+}
+// His outside glove brings the rose up under his nose.
+function tapeRoseGloves(g, pr, sig, side, ost) {
+  var out = side < 0 ? 0 : 1, k = tapeRoseUp(sig, ost);
+  var sniff = sig > 0.35 && ost < TAPE_ROSE_HIT ? Math.sin((sig - 0.35) * 9) * 0.5 + 0.5 : 0;
+  var gl = g[out];
+  gl.x += (-side * pr * 0.45 - side * pr * 0.03 * sniff) * k;
+  gl.y -= pr * (0.1 + 0.04 * sniff) * k;
+  if (ost >= TAPE_ROSE_HIT) { var sh = Math.max(0, 1 - (ost - TAPE_ROSE_HIT) / 0.5); g.forEach(function (o, j) { o.x += Math.sin(ost * 60 + j) * 5 * sh; o.y -= pr * 0.08 * sh; }); }
+}
+// Where the bloom sits while he holds it (his glove grips the stem).
+var TAPE_ROSE_S = 0.05; // the rose's size, in portrait radii per unit
+function tapeRoseHeld(gl, pr, side) {
+  return { x: gl.x - side * pr * 0.08, y: gl.y - pr * TAPE_ROSE_S * 7, rot: side * 0.25 };
+}
+// The rose itself, behind his glove so the glove grips the stem. Vs Gane,
+// once the poke lands it falls, tumbling, out of the bottom of the card.
+function drawTapeRose(g, gr, pr, sig, side, ost, x, y) {
+  var gl = g[side < 0 ? 0 : 1], s = pr * TAPE_ROSE_S;
+  if (ost >= TAPE_ROSE_HIT) {
+    var ft = ost - TAPE_ROSE_HIT;
+    if (ft > 1.1) return;
+    // Where it was held at the moment of the poke (full lift, his guard at rest).
+    var hx = x + side * pr * 0.6 - side * pr * 0.45, hy = y + pr * 0.3 - pr * 0.1;
+    var p = tapeRoseHeld({ x: hx, y: hy }, pr, side);
+    var fx = p.x + side * 160 * ft, fy = p.y + 1600 * ft * ft;
+    drawRose(fx, fy, p.rot + side * 7 * ft, s);
+    // a couple of petals knocked loose
+    for (var i = 0; i < 4; i++) {
+      var a = i * 1.7, px = p.x + Math.cos(a) * 140 * ft * (1 + i * 0.3), py = p.y - 90 * ft + 500 * ft * ft;
+      ctx.fillStyle = "rgba(181,18,27," + Math.max(0, 1 - ft) + ")";
+      ctx.beginPath(); ctx.ellipse(px, py, s * 1.8, s * 1.1, a + ft * 8, 0, Math.PI * 2); ctx.fill();
+    }
+    return;
+  }
+  if (sig < 0) return;
+  var k = tapeRoseUp(sig, ost);
+  if (k <= 0.02) return;
+  var p2 = tapeRoseHeld(gl, pr, side);
+  ctx.save(); ctx.globalAlpha = Math.min(1, k * 3);
+  drawRose(p2.x, p2.y, p2.rot * k, s);
+  ctx.restore();
+}
+// Over everything: the scent curling up off the bloom, petals and hearts.
+function drawTapeRoseScent(g, gr, pr, sig, side, ost) {
+  if (sig < 0.35 || ost >= TAPE_ROSE_HIT) return;
+  var k = tapeRoseUp(sig, ost); if (k < 0.5) return;
+  var p = tapeRoseHeld(g[side < 0 ? 0 : 1], pr, side), st = sig - 0.35, a = Math.min(1, st / 0.2) * k;
+  ctx.save(); ctx.lineCap = "round";
+  for (var w = 0; w < 3; w++) { // three wisps rising and curling
+    ctx.strokeStyle = "rgba(255,190,210," + (0.75 * a) + ")"; ctx.lineWidth = 4 - w;
+    ctx.beginPath();
+    for (var q = 0; q <= 14; q++) {
+      var u = q / 14, yy = p.y - pr * 0.15 - u * pr * 0.5, xx = p.x + Math.sin(u * 7 + st * 6 + w * 2) * pr * 0.07 * (0.4 + u) + (w - 1) * pr * 0.06;
+      if (q === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+    }
+    ctx.stroke();
+  }
+  for (var h = 0; h < 3; h++) { // little hearts floating off
+    var ht = (st * 0.9 + h * 0.33) % 1, hx = p.x + side * pr * (0.15 + 0.35 * ht) + Math.sin(ht * 9 + h) * 8, hy = p.y - pr * (0.2 + 0.6 * ht);
+    ctx.globalAlpha = a * (1 - ht);
+    tapeHeart(hx, hy, pr * 0.11 * (0.8 + 0.4 * ht), "#e0303a");
+  }
+  ctx.restore();
+}
+function tapeHeart(x, y, r, c) {
+  ctx.fillStyle = c; ctx.strokeStyle = "#5c0a0e"; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y + r * 0.9);
+  ctx.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.8, y - r * 1.3, x, y - r * 0.45);
+  ctx.bezierCurveTo(x + r * 0.8, y - r * 1.3, x + r * 1.6, y - r * 0.2, x, y + r * 0.9);
+  ctx.fill(); ctx.stroke();
 }
