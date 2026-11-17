@@ -98,6 +98,7 @@ function update(dt) {
   tickGolf(dt);         // and his golf mode running out (gaethje-golf.js)
   tickDiamond(dt);  // Dustin turning into Diamond Guard and throwing diamonds (diamond.js)
   updateHerb(dt);   // Herb Dean wandering the cage (herbdean.js)
+  tickSpecialSolid(dt); // solid through a special: eased out of his space, strikes BLOCKED! or DODGED! (special-solid.js)
   tickWatchdog(dt); // a fighter stuck in one state far too long gets let go (watchdog.js)
 
   balls.forEach(function (b) {
