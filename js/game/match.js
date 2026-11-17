@@ -310,6 +310,7 @@ function hurt(b, amount, source, attackerId) {
   if (kickSmothered(b, source, attackerId)) return 0; // kicks smothered up close: Josh Hokit (kick-smother.js)
   if (pratesDodge(b, source, attackerId)) return 0; // Carlos Prates partying: nothing touches him (prates.js)
   if (prochazkaParry(b, source, attackerId)) return 0; // Jiří Procházka's katanas meeting a katana, saber or bat (prochazka.js)
+  if (fedorCrownGuard(b, source, attackerId)) return 0; // Fedor crowning himself the Emperor: nothing lands on him (fedor-emperor.js)
   // Charging the Kamehameha: teleports away and keeps charging (kamehameha.js).
   if (kameEscape(b, attackerId, false, itProjHit)) return 0;
   // Mid Do Bronx pose: dodges everything.

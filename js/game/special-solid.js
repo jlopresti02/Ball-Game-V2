@@ -45,6 +45,7 @@ var SS_MOVES = {
 };
 
 function ssMove(b) {
+  if (fedorCrowning(b)) return EM_SOLID; // Fedor crowning himself the Emperor: solid through it (fedor-emperor.js)
   if (!b || !b.alive || !b.igbb) return null;
   var c = SS_MOVES[b.igbb.move];
   if (!c) return null;

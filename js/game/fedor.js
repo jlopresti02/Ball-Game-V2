@@ -32,6 +32,14 @@
 //             so they come down far quicker than anyone else's. It runs on the
 //             guillotine's ground and pound (bjj.js), like Jon Jones's. They
 //             can't slip or block them.
+// Guard pass  (top-level `guardPass`, guard.js) pull guard on him and
+//             `guardPass.time` seconds later he walks straight back in and
+//             passes it `guardPass.chance`% of the time ("GUARD PASSED"),
+//             then (`gnp`) drops the same flurry on them from on top
+//             (fedorPassGnp), `gnpMult` times as heavy, with them still flat
+//             on their back.
+// Elbow       the shared elbow (`elbow` block, elbows.js): rare, up close,
+//             and often a crit.
 // Armbar      `gnp.armbarChance`% of the time the flurry ends with him
 //             switching to the armbar (armbar.js), his finish on Mark Coleman
 //             (PRIDE 2004 and PRIDE 32). They tap `armbar.tapBase`% at full
@@ -59,6 +67,10 @@
 //             `win`, `unfazed`, `armbar`. A line with no clip is silent, so
 //             empty slots are safe; Christian picks the real lines.
 // Special     The Unmoving Man (Joe, 2026-11-15): fedor-unmoving.js.
+// Emperor     (fedor.emperor) once a fight he crowns himself the Emperor: a
+//             short cut with a hand mirror and a little gold crown, then his
+//             strikes crit and they're shook. An extra ability on its own
+//             clock, not his special: fedor-emperor.js.
 //
 // The throw runs on b.fd.act, the ground and pound on the opponent's guillo.
 "use strict";
@@ -80,6 +92,7 @@ function resetFedor() { stopFdMantra(0.25); }
 // From makeBall (after applyWeight).
 function initFedor(b) {
   b.fd = null;
+  initFedorEmperor(b); // the Emperor, once a fight (fedor-emperor.js)
   var cfg = fdCfg(b);
   if (!cfg) return;
   b.fd = {
@@ -131,6 +144,7 @@ function tickFedor(dt) {
     fdStoic(b, m, cfg, dt);
     fdGnpWatch(b, other, m, cfg);
     fdLines(b, other, m, cfg);
+    tickFedorEmperor(b, other, dt); // the Emperor's cut, his reign, the crown, them shook (fedor-emperor.js)
   });
   tickFdMantra();
 }
@@ -244,6 +258,7 @@ function updateFedor(self, other, dt) {
   var m = self.fd;
   if (!m) return false;
   var cfg = fdCfg(self);
+  if (updateFedorEmperor(self, other, dt)) return true; // crowning himself the Emperor (fedor-emperor.js)
   if (m.act) {
     if (!self.alive || !other.alive || over || self.bearHeld || self.torHeld) { fdEndAct(self, other, m); return false; }
     if (m.act.phase === "reach" || m.act.phase === "shoot") {
@@ -372,28 +387,45 @@ function fdEndAct(self, other, m) {
 }
 
 // Follows them down: the guillotine's ground and pound, already on top.
-function fdStartGnp(self, other, m, cfg, side) {
+// `guardSide` when it's off a guard pass: they stay flat on their back.
+function fdStartGnp(self, other, m, cfg, side, guardSide) {
   var gc = cfg.gnp;
   m.act = null;
   other.choked = false;
   var g = { atkId: self.id, t: 0, nx: -side, ny: 0, bar: 0, phase: "mount", mx: self.x, my: self.y, fedor: true, hits: [] };
+  if (guardSide) { g.fromGuard = true; g.side = guardSide; g.dir = guardSide; } // on his back, Fedor on the hips side (onBack, guard.js)
   for (var i = 0; i < gc.punches; i++) g.hits.push(i === gc.punches - 1 ? gc.lastDamage : gc.damage);
   g.fdArmbar = Math.random() * 100 < (gc.armbarChance || 0);
   other.guillo = g;
   self.choked = true;
   m.gnp = g;
-  floater(self.x, self.y - self.r - 44, "GROUND AND POUND", "crit");
+  floater(self.x, self.y - self.r - (guardSide ? 76 : 44), "GROUND AND POUND", "crit"); // (above GUARD PASSED off a pass)
   crowdReact(0.6);
+}
+
+// From guard.js when he passes someone's guard (`guardPass.gnp`): straight
+// into his ground and pound from on top. False (the guard's own free
+// punches) if he has none.
+function fedorPassGnp(b, other, side) {
+  var cfg = fdCfg(b);
+  if (!b.fd || !cfg || !cfg.gnp) return false;
+  fdStartGnp(b, other, b.fd, cfg, -side, side);
+  var mult = (b.char.guardPass && b.char.guardPass.gnpMult) || 1; // a little heavier off the pass
+  other.guillo.hits = other.guillo.hits.map(function (h) { return Math.round(h * mult * 10) / 10; });
+  b.vx = 0; b.vy = 0;
+  return true;
 }
 
 // ---------------------------------------------------------------- hurt (match.js)
 
 var FD_DURABLE_SKIP = { finisher: true, kopunch: true, kofinal: true, slugfest: true, laser: true }; // scripted finishes keep their numbers
 // His chin: he takes `durability.take` of the damage from everything else.
+// And the Emperor: his crits, and them shook hitting him.
 function fedorDamageMult(b, source, attackerId) {
+  var em = fedorEmperorMult(b, source, attackerId); // the Emperor's crits and them shook (fedor-emperor.js)
   var cfg = fdCfg(b);
-  if (!b.fd || !cfg || !cfg.durability || FD_DURABLE_SKIP[source] || attackerId == null || attackerId === b.id) return 1;
-  return cfg.durability.take;
+  if (!b.fd || !cfg || !cfg.durability || FD_DURABLE_SKIP[source] || attackerId == null || attackerId === b.id) return em;
+  return cfg.durability.take * em;
 }
 
 // ---------------------------------------------------------------- drawing
@@ -402,6 +434,7 @@ function fedorDamageMult(b, source, attackerId) {
 // one thrown flips over head first. From draw() with the canvas set up for b.
 function applyFedorPose(b) {
   applyUnmovingPose(b); // his slips and their lean in The Unmoving Man (fedor-unmoving.js)
+  applyEmperorPose(b); // stepping back and tilting to the mirror, and them trembling when shook (fedor-emperor.js)
   var a, angle = 0;
   if (b.fd && b.fd.act) {
     a = b.fd.act;
@@ -426,6 +459,8 @@ function applyFedorPose(b) {
 function drawFedor(b, other) {
   var m = b.fd, cfg = fdCfg(b);
   if (!m || !b.alive) return;
+  drawEmperor(b, other); // the mirror and the crown, the crown on through his reign (fedor-emperor.js)
+  if (fedorCrowning(b)) return;
   if (m.chill > 0) {
     ctx.save();
     ctx.globalAlpha = m.chill / 0.6 * 0.7;
@@ -522,8 +557,10 @@ function fedorGalleryMoves(ch, add) {
   if (f.hands) add("👊", "Fast hands", "Heavy punches off alternating hands, faster than a heavyweight has any right to throw them, with speed lines behind every fist.");
   if (tc) add("🤼", "Sambo throw", "Every " + tc.every[0] + "-" + tc.every[1] + "s up close he drops his level and reaches out with both arms (the tell), then steps into the clinch. They break free " + tc.escape + "% of the time (more for grapplers, weavers and good sprawlers, less the lighter they are). Otherwise he throws them over his hip for " + tc.damage + ", a takedown.");
   if (gc && tc) add("🔨", "Ground and pound", tc.gnpChance + "% of his throws he follows them down: " + gc.punches + " punches from on top (" + gc.damage + " each, " + gc.lastDamage + " for the last), the fastest ground and pound in the game. They can't slip or block them.");
+  if (ch.guardPass) add("🚪", "Passes the guard", "Pull guard on him and " + ch.guardPass.time[0] + "-" + ch.guardPass.time[1] + "s later he walks straight back in and passes it " + ch.guardPass.chance + "% of the time" + (ch.guardPass.gnp && gc ? ", then the same flurry from on top" + (ch.guardPass.gnpMult > 1 ? ", " + Math.round((ch.guardPass.gnpMult - 1) * 100) + "% heavier." : ".") : "."));
   if (gc && gc.armbarChance && f.armbar) add("🦾", "Armbar", gc.armbarChance + "% of the time the ground and pound ends in the armbar, his finish on Mark Coleman. They tap " + f.armbar.tapBase + "%, up to " + (f.armbar.tapBase + f.armbar.tapLowHp) + "% the more hurt they are.");
   if (st) add("🧊", "The Last Emperor's calm", "He barely reacts to being hit: knocked back only " + pct(st.knockback) + " as far, dizzy for " + pct(st.dizzy) + " as long, " + st.slamCut + " fewer bounce off the walls, and trash talk doesn't get to him. A shot of " + st.noteAt + "+ gets an \"UNFAZED\" and a low church bell.");
+  emperorGalleryMove(f, add); // the Emperor (fedor-emperor.js)
   if (mt && mt.on) add("🎵", "The mantra", "A low Russian Orthodox-style choir hums under the whole fight while he's in it, in the key of the music, never louder than the crowd, dipping when the music dips.");
 }
 
