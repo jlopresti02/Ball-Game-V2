@@ -4746,7 +4746,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-max-holloway",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Max Holloway",
@@ -4840,7 +4840,7 @@ var SAVED_ROSTER = [
     "hasForget": false,
     "blockChance": 12,
     "tdd": {
-      "sprawlChance": 70
+      "sprawlChance": 60
     },
     "holloway": {
       "volume": {
