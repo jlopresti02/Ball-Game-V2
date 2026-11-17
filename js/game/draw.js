@@ -425,6 +425,7 @@ function draw() {
   drawWatcherLasers();
   drawFinishers();
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
+  drawSpecialSolid(); // a guard snapping up as a special blocks a strike (special-solid.js)
   balls.forEach(drawPunchTypesOver); // uppercuts and body shots go over the opponent (body-shots-uppercuts.js)
   drawDiamondSwordsTop(); // Dustin's sword slashing into a bat, over both fighters (sword.js)
   drawDarkSideTop(); // Hokit's saber flying loose, the Force push, a saber lock (hokit-darkside.js)
