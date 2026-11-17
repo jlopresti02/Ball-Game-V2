@@ -84,6 +84,28 @@
 // EVIL elbows: in a mode with `elbowCooldown`, his elbows (elbows.js) come
 // round at least that often instead of his elbow block's own cooldown.
 //
+// Stepping in (Christian, 2026-11-17): Jon fights at the end of his kicks
+// (the `own` spacing in his `movement` block, movement.js). With `stepIn`
+// (a list of "clinch", "spinElbow", "oblique", "legKick"), while one of
+// those is due and they're still out of its range he steps in for it
+// (b.mvIn), then backs out to his range once it's thrown.
+//
+// Tying up punchers (Christian, 2026-11-17), from `jon.tieUp` in his file:
+//   "tieUp": { "chance": 45, "takedownShare": 35, "cooldown": 3, "window": 0.4,
+//              "range": 60, "shot": { "speed": 560, "time": 0.35 } }
+// When they throw a punch or start a combination at him (their punch,
+// combination or big punch, read once each, while they're within `range`
+// px or once it's hit him), `chance`% of the time he answers by tying them
+// up instead of trading, at his first free moment in the next `window`
+// seconds; a miss on the roll lets that whole flurry go (`window` seconds).
+// In both modes he goes straight into his clinch ("TIE UP": the reach
+// steps him in from up to `range` away); in GOAT mode `takedownShare`% of
+// them he changes levels and shoots his own takedown instead (the drive
+// in at `shot.speed` for up to `shot.time` seconds, then the grab,
+// attemptGrab, with every takedown defense). At most once every `cooldown`
+// seconds; never while he's held, mid-special, in the GOAT Stampede or the
+// Duck Drop, or while they're in a special of their own.
+//
 // Commentary calls (commentary-calls.js, fired only if it's loaded):
 // "spinElbow" when the spinning elbow lands, "takedown" when the inside trip
 // lands, "bigElbow" on a critical elbow in the clinch.
@@ -99,7 +121,7 @@ function jclRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
 function jclClamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 // In the clinch, tripping them, spinning or throwing the oblique kick: the
 // speed regulator leaves him alone (physics.js) and his mode waits (jon.js).
-function jonClinchBusy(b) { return !!(b && (b.jcl || b.jspin || b.jobl)); }
+function jonClinchBusy(b) { return !!(b && (b.jcl || b.jspin || b.jobl || b.jtuShot)); }
 // His hands are on them (drawJonClinch draws them; drawHands skips them).
 function jonClinchHandsBusy(b) { return !!(b && b.jcl && b.alive); }
 // Who's got this fighter tied up (null if nobody, or he's still reaching).
@@ -149,9 +171,11 @@ function jclSelfBroken(self) {
 // moves he's in, or starts one that's due. True while one has him (he does
 // nothing else).
 function updateJonClinch(self, other, dt) {
+  if (self.mvIn) self.mvIn = false;
   if (self.jcl) { self.jcl.frame = jclFrame; return runJonClinch(self, other, dt); }
   if (self.jspin) { self.jspin.frame = jclFrame; return runJonSpin(self, dt); }
   if (self.jobl) { self.jobl.frame = jclFrame; return runJonOblique(self, dt); }
+  if (self.jtuShot) { self.jtuShot.frame = jclFrame; return runJonTieShot(self, dt); }
   var c = jclCfg(self);
   if (!c || !isJon(self)) return false;
   var mc = c[self.jonMode] || {};
@@ -170,8 +194,11 @@ function updateJonClinch(self, other, dt) {
     self.joblT = Math.max(self.joblT, mg);
     if (self.char.hasKick) self.kickCd = Math.max(self.kickCd || 0, 0.05);
   }
-  if (!kneeFree(self) || self.chAct || self.plum || self.fknee || !plumTarget(other) || other.jcl || other.choked) return false;
   var gap = kDist(self, other) - self.r - other.r;
+  var tie = jtuWatch(self, other, gap, dt); // a punch of theirs coming that he answers by tying up (jon.tieUp)
+  jclStepIn(self, other, c, mc, gap); // steps in for a close move that's due (movement.js spacing)
+  if (tie && jtuStart(self, other, c, mc, gap)) return true;
+  if (!kneeFree(self) || self.chAct || self.plum || self.fknee || !plumTarget(other) || other.jcl || other.choked) return false;
   if (mc.on && self.jclT <= 0 && gap < c.range) { startJonClinch(self, other, c); return true; }
   if (mc.spinElbow && c.spinElbow && self.jspT <= 0 && gap < c.spinElbow.range) { startJonSpin(self, other, c, false); return true; }
   if (mc.oblique && c.oblique && self.joblT <= 0 && gap < c.oblique.range) { startJonOblique(self, other, c); return true; }
@@ -180,14 +207,14 @@ function updateJonClinch(self, other, dt) {
 
 // ---------------------------------------------------------------- the clinch
 
-function startJonClinch(self, other, c) {
+function startJonClinch(self, other, c, tie) {
   if (uppercutCounter(other, self)) return; // an uppercut as he ties them up stuffs it (Gaethje, body-shots-uppercuts.js)
   clearActions(self);
   self.kneeAnim = null; self.elbowAnim = null;
   var evade = c.evade + (other.char.hasWeave ? (c.weaverEvade || 0) : 0);
   self.jcl = { phase: "reach", t: 0, vicId: other.id, frame: jclFrame, mode: self.jonMode, slip: Math.random() * 100 < evade,
-    held: false, side: other.x >= self.x ? 1 : -1, count: 0, thrown: 0, landed: 0, strike: null, jolt: 0, joltKind: null, leg: 1 };
-  floater(self.x, self.y - self.r - 30, "CLINCH", "crit");
+    held: false, side: other.x >= self.x ? 1 : -1, count: 0, thrown: 0, landed: 0, strike: null, jolt: 0, joltKind: null, leg: 1, tie: !!tie };
+  floater(self.x, self.y - self.r - 30, tie ? "TIE UP" : "CLINCH", "crit");
   playClinchGrab(); // (knees.js)
 }
 
@@ -207,7 +234,7 @@ function runJonClinch(self, other, dt) {
     self.vx = (v.x - self.x) / d * sp; self.vy = (v.y - self.y) / d * sp;
     m.side = v.x >= self.x ? 1 : -1;
     if (m.t < c.reach) return true;
-    if (m.slip || gap > c.range + 10 || !plumTarget(v)) {
+    if (m.slip || gap > c.range + 10 || !(m.tie ? jtuTarget(v) : plumTarget(v))) { // (a tie-up catches them mid punch)
       floater(v.x, v.y - v.r - 8, "WHIFF", "dodge");
       if (m.slip && inOrdinaryMovement(v)) { v.vx = (v.x - self.x) / d * 300; v.vy = (v.y - self.y) / d * 300; } // they slip out of it
       if (m.slip) jclPunish(self, v);
@@ -547,6 +574,108 @@ function landJonOblique(self, v, k, oc) {
   checkEnd();
 }
 
+// ---------------------------------------------------------------- stepping in
+
+// While one of his close moves (`stepIn`) is due and they're still out of
+// its range, he steps in for it: b.mvIn, read by his spacing (movement.js).
+function jclStepIn(self, other, c, mc, gap) {
+  var si = c.stepIn;
+  if (!si || !inOrdinaryMovement(self) || self.chAct || specialBusy(self) || !kneeTarget(other)) return;
+  var on = function (k) { return si.indexOf(k) >= 0; };
+  var lk = on("legKick") && self.char.legKick && !self.char.legKick.onKick ? legKickCfg(self, other) : null;
+  self.mvIn = !!((on("clinch") && mc.on && self.jclT <= 0 && gap >= c.range) ||
+    (on("spinElbow") && mc.spinElbow && c.spinElbow && self.jspT <= 0 && gap >= c.spinElbow.range) ||
+    (on("oblique") && mc.oblique && c.oblique && self.joblT <= 0 && gap >= c.oblique.range) ||
+    (lk && !self.lk && self.lkT != null && self.lkT <= 0 && gap >= lk.range));
+}
+
+// ---------------------------------------------------------------- tying up punchers
+
+function jtuCfg(b) { return b && b.char && b.char.jon && b.char.jon.tieUp; }
+// Someone he can tie up: on their feet, maybe in the middle of a punch.
+function jtuTarget(o) { return kneeTarget(o) && inOrdinaryMovement(o) && !o.plum && !o.fknee && !o.jcl && !o.choked; }
+// Their punch, combination or big punch coming at him that he hasn't read yet.
+function jtuIncoming(o, id) {
+  var kp = o.koPunch && (o.koPunch.targetId == null || o.koPunch.targetId === id) ? o.koPunch : null;
+  var list = [o.punch, o.cmb, kp];
+  for (var i = 0; i < list.length; i++) if (list[i] && !list[i].jtuRead) return list[i];
+  return null;
+}
+
+// Every frame: reads each punch of theirs once and rolls whether he answers
+// it. True while an answer is waiting for his first free moment.
+function jtuWatch(self, other, gap, dt) {
+  var tu = jtuCfg(self);
+  if (!tu) return false;
+  var s = self.jtu || (self.jtu = { cd: 0, pend: 0, quiet: 0 });
+  if (s.cd > 0) s.cd -= dt;
+  if (s.pend > 0) s.pend -= dt;
+  if (s.quiet > 0) s.quiet -= dt;
+  var p = jtuIncoming(other, self.id);
+  if (p && (gap < (tu.range || 60) || p.hit)) {
+    p.jtuRead = true;
+    if (s.cd <= 0 && s.pend <= 0 && s.quiet <= 0) {
+      if (Math.random() * 100 < (tu.chance || 0)) s.pend = tu.window || 0.4;
+      else s.quiet = tu.window || 0.4; // (a flurry is one exchange: one roll)
+    }
+  }
+  return s.pend > 0 && s.cd <= 0;
+}
+
+// He's free and they're in range: the tie-up goes. True if it started.
+function jtuStart(self, other, c, mc, gap) {
+  var tu = jtuCfg(self), s = self.jtu;
+  if (gap >= (tu.range || 60) || !kneeFree(self) || self.chAct || self.plum || self.fknee || specialBusy(self)) return false;
+  if (!jtuTarget(other) || specialBusy(other)) return false;
+  var shoot = self.jonMode === "goat" && tu.takedownShare > 0 && jtuCanShoot(self, other);
+  if (shoot && Math.random() * 100 < tu.takedownShare) {
+    s.pend = 0; s.cd = tu.cooldown || 3;
+    startJonTieShot(self, other);
+    return true;
+  }
+  if (!mc.on) return false;
+  s.pend = 0; s.cd = tu.cooldown || 3;
+  startJonClinch(self, other, c, true);
+  return !!self.jcl; // (an uppercut can stuff it, body-shots-uppercuts.js)
+}
+
+function jtuCanShoot(self, o) {
+  if (!self.char.hasGrapple || !self.char.grapple || self.grapple || self.grabHold || self.grappled || self.sprawled) return false;
+  if (o.grappled || o.grapple || o.sprawl || o.sprawled || o.slam || o.invincible || subLocked(o)) return false;
+  return !grabBlockedByImpunity(self, o);
+}
+
+// The takedown: he changes levels and drives in, then shoots his own grab.
+function startJonTieShot(self, other) {
+  clearActions(self);
+  self.kneeAnim = null; self.elbowAnim = null;
+  self.jtuShot = { t: 0, vicId: other.id, frame: jclFrame };
+  floater(self.x, self.y - self.r - 30, "LEVEL CHANGE", "crit");
+  playWhoosh();
+}
+
+function runJonTieShot(self, dt) {
+  var sh = self.jtuShot, tu = jtuCfg(self), v = balls[sh.vicId];
+  if (!tu || jclSelfBroken(self) || !v || !v.alive || v.koOut || specialBusy(v)) { self.jtuShot = null; return false; }
+  var sc = tu.shot || {}, gr = self.char.grapple, d = kDist(self, v), gap = d - self.r - v.r;
+  sh.t += dt;
+  if (gap <= ((gr && gr.reach) || 6) + 8) {
+    self.jtuShot = null;
+    if (jtuCanShoot(self, v)) attemptGrab(self, v); // every takedown defense (grapple-duel.js)
+    if (gr) self.grappleCd = Math.max(self.grappleCd || 0, gr.cooldown);
+    return false;
+  }
+  if (sh.t >= (sc.time || 0.35)) {
+    self.jtuShot = null;
+    floater(v.x, v.y - v.r - 8, "WHIFF", "dodge");
+    jclPunish(self, v);
+    return false;
+  }
+  var sp = sc.speed || 560;
+  self.vx = (v.x - self.x) / d * sp; self.vy = (v.y - self.y) / d * sp;
+  return true;
+}
+
 // ---------------------------------------------------------------- every frame
 
 // From tickJon (jon.js): lets go of a move the abilities loop didn't get to
@@ -557,6 +686,7 @@ function tickJonClinch(dt) {
     if (b.jcl && b.jcl.frame !== jclFrame) endJonClinch(b, "lost");
     if (b.jspin && b.jspin.frame !== jclFrame) b.jspin = null;
     if (b.jobl && b.jobl.frame !== jclFrame) b.jobl = null;
+    if (b.jtuShot && b.jtuShot.frame !== jclFrame) b.jtuShot = null;
     if (b.jclGuOut && !b.guillo) { b.char.guillotine.outcomes = b.jclGuOut; b.jclGuOut = null; }
   });
   jclFrame++;
@@ -812,6 +942,9 @@ function jonClinchGalleryMoves(ch, add) {
     ": it shoves them back and they limp at " + Math.round(oc.slow * 100) + "% speed for " + oc.slowTime + "s.");
   var ev = c.evil;
   if (ev && ev.elbowCooldown != null) add("😈", "EVIL elbows", "In EVIL mode his elbows come every " + ev.elbowCooldown + "s, with oblique kicks and the eye poke.");
+  var tu = ch.jon && ch.jon.tieUp;
+  if (tu) add("🔒", "Ties up punchers", "When they throw punches at him, " + tu.chance + "% of the time he answers by tying them up in the clinch instead of trading (at most once every " + secs(tu.cooldown) + ")" +
+    (tu.takedownShare ? "; in GOAT mode " + tu.takedownShare + "% of those he changes levels and shoots a takedown instead." : "."));
   var gu = c.guillotine;
   if (gu) add("🪢", "Guillotine on the hurt", "In GOAT mode, once they're under " + gu.lowHp + "% health his guillotine gets likelier the more hurt they are: up to " + gu.bonus + "% more on their shots, and up to " + gu.clinch + "% of his clinches end in one instead of the trip.");
 }
