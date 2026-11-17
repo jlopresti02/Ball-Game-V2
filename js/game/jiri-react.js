@@ -1,35 +1,37 @@
-// Jiří Procházka's quick draw (Joe, 2026-11-17). Two reactions, both his own
-// two arms and a katana out of nowhere for a moment (the samurai's swords,
-// prochazka.js), numbers under `prochazka.react` in his character file:
+// Jiří Procházka's samurai against animals and leprechauns (Joe, 2026-11-17:
+// only in samurai mode). Numbers under `prochazka.react` in his character
+// file; it all runs while he has both katanas in his hands (the draw, the
+// run and the finisher of his samurai special, prochazka.js), never outside it.
 //
 // Animals   (react.animals) anything with four legs or wings that comes for
-//           him gets cut clean in half: Khabib's bear walking into him, Nate's
-//           lion landing its pounce, Jon's goats ramming, Ilia's bull charging
-//           or thrown at him, Gaethje's eagle strike and Strickland's eagle
-//           coming down on him. Instead of the attack: one katana out of his
-//           hip and through it in a white flash ("CUT IN HALF!"), and the two
-//           halves slide apart and puff away into smoke and cherry blossom.
-//           Never bloody: a clean white line, no red, nothing inside.
-//           `chance`% of the time (100 = always). Each animal's own file
-//           asks with one line: jpAnimalCut(victim, {...}).
-// Leprechauns (react.leprechauns) Conor McGregor's Bus Crew lads running at
-//           him: once the nearest is `range` away he draws both katanas and
-//           does his whirlwind spin (jiri-spin.js's spin, his own two arms),
-//           and every lad off the bus turns and legs it back aboard ("RUN!").
-//           Once a bus. The samurai's whirlwind in his special scares them
-//           off the same way.
+//           the samurai gets cut clean in half: Khabib's bear walking into him
+//           or thrown at him, Nate's lion landing its pounce, Jon's goats,
+//           Ilia's bull, Gaethje's eagle strike and Strickland's eagle.
+//           Instead of the attack: a white flash across it ("CUT IN HALF!"),
+//           and the two halves slide apart and puff away into smoke and cherry
+//           blossom. Never bloody: a clean white line, no red, nothing inside.
+//           `chance`% of the time (100 = always). Each animal's own file asks
+//           with one line (jpAnimalCut), and the bear, the lion and the eagle
+//           strike are let at him while he's a samurai (jpSamuraiCanCut).
+// Leprechauns (react.leprechauns) Conor McGregor's Bus Crew lads: the lads
+//           coming off the bus for him fill his samurai bar (once a bus) and the
+//           samurai answers the bus (jpBusAnswer), and with any lad within `range` his next cut
+//           is the whirlwind (jiri-spin.js). The whirlwind sends every lad off
+//           the bus legging it back aboard ("RUN!"), and any still to come off
+//           take one look and run back on.
 "use strict";
 
 var jpHalves = [];        // the animals he's cut, sliding apart
 var JP_HALF_LIFE = 1.15;  // seconds they're on screen
-var JP_ZAN_T = 0.5;       // the quick draw: out, through, and gone
 
 function jpReactCfg(b) { var c = jpCfg(b); return c && c.react; }
 function resetJiriReact() { jpHalves = []; }
 
-// Can he get a sword out right now?
-function jpCanReact(v) {
-  return !!(v && v.alive && !v.koOut && !v.grappled && !v.grapple && !v.slam && !v.bearHeld && !v.cmBrawl && !subLocked(v) && !v.dead);
+// The samurai with both katanas in his hands, free to use them.
+function jpSamuraiCanCut(v) {
+  if (!v || !v.alive || v.koOut || !samuraiOn(v) || !jpReactCfg(v)) return false;
+  var ph = v.igbb.phase;
+  return (ph === "draw" || ph === "close" || ph === "final") && !samuraiLockHeld(v) && !v.slam;
 }
 
 // ---------------------------------------------------------------- animals
@@ -40,12 +42,10 @@ function jpCanReact(v) {
 // the animal's file drops its attack and takes the animal away.
 function jpAnimalCut(v, a) {
   var rc = jpReactCfg(v), ac = rc && rc.animals;
-  if (!ac || !jpCanReact(v) || over) return false;
+  if (!ac || !jpSamuraiCanCut(v) || over) return false;
   if (Math.random() * 100 >= (ac.chance != null ? ac.chance : 100)) return false;
   var ang = Math.atan2(a.y - v.y, a.x - v.x);
-  var cut = ang + Math.PI / 2 + 0.45; // across it, a little on the diagonal
-  jpHalves.push({ x: a.x, y: a.y, r: a.r || 60, cut: cut, draw: a.draw, t: 0, puffed: false, dx: Math.cos(ang), dy: Math.sin(ang) });
-  if (!samuraiOn(v)) v.jpZan = { t: 0, ang: ang };
+  jpHalves.push({ x: a.x, y: a.y, r: a.r || 60, cut: ang + Math.PI / 2 + 0.45, draw: a.draw, t: 0, puffed: false, dx: Math.cos(ang), dy: Math.sin(ang) });
   floater(a.x, a.y - (a.r || 60) - 20, "CUT IN HALF!", "crit");
   playSamuraiGlint(true);
   playElbowSwish(true);
@@ -57,8 +57,21 @@ function jpAnimalCut(v, a) {
 
 // ---------------------------------------------------------------- leprechauns
 
-// The whirlwind scares off every lad off the bus (the samurai's too, from
-// jpSpinRun in jiri-spin.js).
+function jpLadsOut(v) { return typeof cmBus !== "undefined" && cmBus && cmBus.oppId === v.id && cmBus.crew.some(function (c) { return c.st === "chase" || c.st === "out" || c.st === "brawl"; }); }
+// From jpSpinMaybe (jiri-spin.js): a lad close enough that the next cut is the whirlwind.
+function jpLadsNear(v) {
+  var lc = jpReactCfg(v) && jpReactCfg(v).leprechauns;
+  if (!lc || !jpLadsOut(v)) return false;
+  return cmBus.crew.some(function (c) { return (c.st === "chase" || c.st === "out") && Math.hypot(c.x - v.x, c.y - v.y) - v.r - CM_CREW_R < (lc.range || 120); });
+}
+// From updateSamurai (prochazka.js): the lads out for him and his bar full,
+// the samurai answers the bus (like Tony's katanas get answered).
+function jpBusAnswer(self, other) {
+  var lc = jpReactCfg(self) && jpReactCfg(self).leprechauns;
+  return !!(lc && jpLadsOut(self) && self.alive && !self.igbb && !self.cmBrawl && !specialBusy(self) && inOrdinaryMovement(self) && !swordDuelActive());
+}
+
+// The whirlwind (jpSpinRun, jiri-spin.js) scares off every lad off the bus.
 function jpScareLads(v) {
   if (typeof cmBus === "undefined" || !cmBus || cmBus.oppId !== v.id) return 0;
   var n = 0, first = v.jpScaredBus !== cmBus;
@@ -70,28 +83,10 @@ function jpScareLads(v) {
     n++;
   });
   if (n && first) {
-    if (v.cmBrawl) { v.cmBrawl = null; if (v.dazed === "held") v.dazed = false; }
     floater(v.x, v.y - v.r - 44, "SCARED OFF!", "crit");
     crowdReact(1);
   }
   return n;
-}
-
-// Lads coming for him outside the samurai: the quick-draw whirlwind.
-function jpLepWatch(v) {
-  var rc = jpReactCfg(v), lc = rc && rc.leprechauns;
-  if (!lc || typeof cmBus === "undefined" || !cmBus || cmBus.oppId !== v.id || v.jpLepBus === cmBus || v.jpSpinR || samuraiOn(v)) return;
-  if (!jpCanReact(v) || v.igbb || specialBusy(v)) return;
-  var near = Infinity;
-  cmBus.crew.forEach(function (c) { if (c.st === "chase") near = Math.min(near, Math.hypot(c.x - v.x, c.y - v.y) - v.r - CM_CREW_R); });
-  if (near > (lc.range || 120)) return;
-  v.jpLepBus = cmBus;
-  var sam = jpSam(v) || {}, sp = sam.spin || {};
-  var o = balls[1 - v.id], a0 = Math.atan2(o.y - v.y, o.x - v.x);
-  clearActions(v);
-  v.jpSpinR = { sl: { kind: "spin", t: 0, spin: a0 + 1.3, spinV: 0, a0: a0 }, wind: sp.wind || 0.22, time: sp.time || 0.75, turns: sp.turns || 3, scared: false, whoosh: 0 };
-  floater(v.x, v.y - v.r - 30, "WHIRLWIND!", "crit");
-  playKatanaDraw(); // (ferguson.js)
 }
 
 // ---------------------------------------------------------------- every frame
@@ -104,25 +99,11 @@ function tickJiriReact(dt) {
   });
   jpHalves = jpHalves.filter(function (h) { return h.t < JP_HALF_LIFE; });
   balls.forEach(function (v) {
-    if (!jpReactCfg(v)) return;
-    if (typeof cmBus !== "undefined" && cmBus && v.jpScaredBus === cmBus && v.alive) jpScareLads(v); // the rest of the crew won't come near him either
-    if (v.jpZan && (v.jpZan.t += dt) >= JP_ZAN_T) v.jpZan = null;
-    jpLepWatch(v);
-    var R = v.jpSpinR;
-    if (!R) return;
-    if (!v.alive || over || !jpCanReact(v)) { v.jpSpinR = null; return; }
-    var sl = R.sl;
-    sl.t += dt;
-    v.vx *= 0.5; v.vy *= 0.5; // planted for it
-    v.punch = null; v.kick = null; v.combo = null; v.elbowAnim = null; v.kneeAnim = null; // (both hands on the swords)
-    if (sl.t < R.wind) return;
-    if (!R.scared) { R.scared = true; jpScareLads(v); }
-    var t = sl.t - R.wind, k = jpClamp(t / 0.12) * jpClamp((R.time - t) / 0.12 + 0.15);
-    sl.spinV = 2 * Math.PI * R.turns * k;
-    sl.spin += sl.spinV * dt;
-    R.whoosh -= dt;
-    if (R.whoosh <= 0 && k > 0.4) { R.whoosh = 0.15; playElbowSwish(true); }
-    if (t >= R.time) v.jpSpinR = null;
+    if (!jpReactCfg(v) || typeof cmBus === "undefined" || !cmBus || !v.alive) return;
+    if (v.jpScaredBus === cmBus) jpScareLads(v); // the rest of the crew won't come near him either
+    // The lads coming for him fill the samurai's bar (once a bus), so he answers them.
+    var sp = v.char.special, lc = jpReactCfg(v).leprechauns;
+    if (lc && v.jpBusFilled !== cmBus && jpLadsOut(v) && sp && sp.move === "samurai" && !samuraiOn(v)) { v.jpBusFilled = cmBus; v.specialT = Math.max(v.specialT || 0, sp.chargeTime); }
   });
 }
 // Smoke and cherry blossom where the halves were.
@@ -136,41 +117,6 @@ function jpHalfPuff(h) {
 }
 
 // ---------------------------------------------------------------- drawing
-
-// From prochazkaHandsBusy (prochazka.js): his arms are ours for a moment.
-function jpReactBusy(b) { return !!((b.jpZan || b.jpSpinR) && !samuraiOn(b)); }
-
-// From drawProchazka (prochazka.js): the quick draw, or the whirlwind.
-function jpDrawReact(b) {
-  if (samuraiOn(b)) return false;
-  if (b.jpSpinR) {
-    var sam = jpSam(b) || {};
-    jpDrawSpin(b, { spin: { wind: b.jpSpinR.wind } }, { sl: b.jpSpinR.sl }); // (jiri-spin.js)
-    return true;
-  }
-  var Z = b.jpZan;
-  if (!Z) return false;
-  var sam2 = jpSam(b) || { tell: 0.32, swing: 0.13, recover: 0.12 };
-  var T = sam2.tell, S = sam2.swing, R = sam2.recover, u = Z.t / JP_ZAN_T, st;
-  // already up (it came out of his hip), ripped through, held, then put away
-  if (u < 0.25) st = T + S * (u / 0.25);
-  else if (u < 0.7) st = T + S;
-  else st = T + S + R * ((u - 0.7) / 0.3);
-  var P = jpSwingPose(b, Z.ang, 1, { t: st, side: 1, both: false }, sam2), len = b.r * JP_LONG * (u < 0.85 ? 1 : Math.max(0, 1 - (u - 0.85) / 0.15));
-  if (u < 0.4) {
-    var pts = [];
-    for (var i = 0; i <= 10; i++) {
-      var Q = jpSwingPose(b, Z.ang, 1, { t: Math.max(T, Math.min(st, T + S) - 0.09 + i * 0.009), side: 1, both: false }, sam2);
-      pts.push({ m: { x: Q.hand.x + Math.cos(Q.ba) * len * 0.3, y: Q.hand.y + Math.sin(Q.ba) * len * 0.3 }, t: { x: Q.hand.x + Math.cos(Q.ba) * len, y: Q.hand.y + Math.sin(Q.ba) * len } });
-    }
-    katTrail(pts, 1 - u / 0.4); // (ferguson-katanas.js)
-  }
-  jpArm(b, Z.ang, 1, P.hand, P.ba, len, u > 0.25 && u < 0.55 ? 0.7 : 0);
-  // the other glove stays down by his hip
-  var size = ((b.char.punch && b.char.punch.size) || 14) * 0.7;
-  drawGloveAt(b.x - b.r * 1.0, b.y + b.r * 0.42, size * 0.95, b.char, Math.PI / 2 + 0.35);
-  return true;
-}
 
 // From draw() over the fighters (draw.js): the halves sliding apart.
 function drawJiriReactOver() {
@@ -212,21 +158,12 @@ function drawJiriReactOver() {
   });
 }
 
-// From applyProchazkaPose (prochazka.js): his body turning with the
-// quick-draw whirlwind.
-function jpReactPose(b) {
-  if (!b.jpSpinR || samuraiOn(b)) return false;
-  var rot = jpSpinPose(b.jpSpinR.sl); // (jiri-spin.js)
-  ctx.translate(b.x, b.y); ctx.rotate(rot); ctx.translate(-b.x, -b.y);
-  return true;
-}
-
 // The fighter card's move list (gallery.js).
 function jpReactGalleryMoves(p, add) {
   var rc = p && p.react;
   if (!rc) return;
-  if (rc.animals) add("🗡️", "Quick draw", "Any animal that comes for him (a bear, a lion, goats, a bull, an eagle) gets a katana out of his hip and is cut clean in half.");
-  if (rc.leprechauns) add("🍀", "Scares off leprechauns", "When Conor's bus crew comes running at him, he draws both katanas and does his whirlwind: every lad legs it back to the bus.");
+  if (rc.animals) add("🗡️", "Samurai vs animals", "As a samurai, any animal that comes for him (a bear, a lion, goats, a bull, an eagle) is cut clean in half.");
+  if (rc.leprechauns) add("🍀", "Scares off leprechauns", "As a samurai, his whirlwind sends Conor's bus crew legging it back to the bus.");
 }
 
 // ---------------------------------------------------------------- the animals, as they look right now

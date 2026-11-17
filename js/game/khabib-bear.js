@@ -42,7 +42,7 @@ function tickRingBear(dt) {
       var cfg = b.char.bear;
       if (!cfg || ringBear || !b.alive || b.bearN >= cfg.max) return;
       b.bearT -= dt;
-      if (b.bearT > 0 || jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb; })) return;
+      if (b.bearT > 0 || jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f)); })) return; // (Jiří Procházka's samurai can meet it: jiri-react.js)
       if (typeof natLion !== "undefined" && natLion) return; // not while Nate's lion is in the ring (nate-lion.js)
       b.bearN++;
       b.bearT = bearRand(cfg.every);
@@ -175,7 +175,7 @@ function bearBumps(B) {
   if (balls.some(sendLocOn)) return; // not while Khabib's orbital strike is coming in (send-location.js)
   for (var i = 0; i < balls.length; i++) {
     var f = balls[i];
-    if (!f.alive || f.invincible || specialBusy(f) || f.dazed || swordDuelLocked(f)) continue;
+    if (!f.alive || f.invincible || (specialBusy(f) && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f))) || f.dazed || swordDuelLocked(f)) continue; // (the samurai: jiri-react.js)
     var dx = f.x - B.x, dy = f.y - B.y;
     if (dx * dx + dy * dy > (f.r + BEAR_R) * (f.r + BEAR_R)) continue;
     var o = balls[1 - f.id];

@@ -28,8 +28,9 @@ function jpSpinCfg(b) { var s = jpSam(b); return s && s.spin; }
 // whirlwind now and then.
 function jpSpinMaybe(self, other, cfg, m) {
   var c = cfg.spin, sl = m.sl;
-  if (!c || !sl || sl.both) { m.plainCuts = (m.plainCuts || 0) + 1; return; }
+  if (!c || !sl || (sl.both && !(typeof jpLadsNear === "function" && jpLadsNear(self)))) { m.plainCuts = (m.plainCuts || 0) + 1; return; }
   var ok = (m.plainCuts || 0) >= (c.minPlain || 0) && katWallGap(other) > 20 && Math.random() * 100 < (c.chance || 0); // (katWallGap: ferguson-katanas.js)
+  if (typeof jpLadsNear === "function" && jpLadsNear(self) && self.jpScaredBus !== cmBus) ok = true; // Conor's lads close: the whirlwind, to scare them off (jiri-react.js)
   if (!ok) { m.plainCuts = (m.plainCuts || 0) + 1; return; }
   m.plainCuts = 0;
   sl.kind = "spin"; sl.spin = m.ang + 1.3; sl.spinV = 0; sl.hits = 0; sl.cd = 0; sl.whoosh = 0; sl.hit = true; sl.a0 = m.ang;

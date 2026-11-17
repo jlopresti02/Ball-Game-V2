@@ -53,9 +53,9 @@ function tickNateLion(dt) {
       if (!cfg || natLion || !b.alive || !o || !o.alive || b.lionN >= cfg.max) return;
       b.lionT -= dt;
       if (b.lionT > 0) return;
-      if (jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb || f.bearHeld; })) return;
+      if (jumboHold() || swordDuelActive() || balls.some(function (f) { return (f.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f))) || f.bearHeld; })) return; // (Jiří Procházka's samurai can meet it: jiri-react.js)
       if ((typeof ringBear !== "undefined" && ringBear) || (typeof nickDiaz !== "undefined" && nickDiaz)) return;
-      if (lionTangled(b) || lionTangled(o) || specialBusy(b) || specialBusy(o) || b.dazed || b.grabbed || (typeof diazBusy === "function" && diazBusy(b))) return;
+      if (lionTangled(b) || lionTangled(o) || specialBusy(b) || (specialBusy(o) && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(o))) || b.dazed || b.grabbed || (typeof diazBusy === "function" && diazBusy(b))) return;
       b.lionN++;
       b.lionT = lionRand(cfg.every);
       summonLion(b);
@@ -191,7 +191,7 @@ function tickLionStalk(L, o, dt) {
   }
   if (Math.abs(dx) > 4) L.face = dx > 0 ? 1 : -1;
   if (L.t > cfg.stalk * 1.6 && L.pounces > 0) { lionLeave(L); return; } // gave up
-  if (!L.moving && L.t > 0.35 && o.alive && !o.invincible && !o.bearHeld && !specialBusy(o) && !lionTangled(o) && !lionTangled(nate) && (inOrdinaryMovement(o) || o.dazed === true)) {
+  if (!L.moving && L.t > 0.35 && o.alive && !o.invincible && !o.bearHeld && (!specialBusy(o) || (typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(o))) && !lionTangled(o) && !lionTangled(nate) && (inOrdinaryMovement(o) || o.dazed === true || (typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(o)))) { // (the samurai: jiri-react.js)
     L.phase = "crouch"; L.t = 0; L.pounces++;
     floater(L.x, L.y - LION_S * 2.2, "!", "note");
   }
@@ -205,7 +205,7 @@ function tickLionLeap(L, o, dt) {
   if (u < 0.55) return;
   var dx = o.x - L.x, dy = o.y - L.y;
   var near = dx * dx + dy * dy < (o.r + LION_BUMP) * (o.r + LION_BUMP);
-  if (near && o.alive && !o.invincible && !o.bearHeld && !specialBusy(o) && !o.grabbed && !lionTangled(o)) {
+  if (near && o.alive && !o.invincible && !o.bearHeld && (!specialBusy(o) || (typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(o))) && !o.grabbed && !lionTangled(o)) { // (the samurai: jiri-react.js)
     if (o.justDodged) return; // Charles teleported out from under it
     if (typeof jpAnimalCut === "function" && jpAnimalCut(o, jpLionArt(L))) { natLion = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
     clearActions(o);
