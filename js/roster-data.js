@@ -3434,6 +3434,15 @@ var SAVED_ROSTER = [
           "sheathe": 0.45
         },
         "petals": 26,
+        "spin": {
+          "chance": 20,
+          "minPlain": 2,
+          "wind": 0.22,
+          "time": 0.75,
+          "turns": 3,
+          "hits": 2,
+          "mult": 0.8
+        },
         "finisher": {
           "damage": 45,
           "tell": 0.6,

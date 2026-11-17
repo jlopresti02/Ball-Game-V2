@@ -425,10 +425,12 @@ function jpStartSlash(self, other, cfg, m) {
   var both = cfg.xEvery && m.n % cfg.xEvery === 0;
   m.side = -(m.side || -1);
   m.sl = { t: 0, side: m.side, both: both, hit: false, glint: false };
+  if (typeof jpSpinMaybe === "function") jpSpinMaybe(self, other, cfg, m); // now and then a whirlwind instead (jiri-spin.js)
   playSamuraiGlint(false);
 }
 
 function jpRunSlash(self, other, cfg, m, dt, gap) {
+  if (m.sl.kind === "spin") return jpSpinRun(self, other, cfg, m, dt, gap); // the whirlwind (jiri-spin.js)
   var sl = m.sl, T = cfg.tell, S = cfg.swing, R = cfg.recover;
   sl.t += dt;
   var ux = Math.cos(m.ang), uy = Math.sin(m.ang), spd = (self.baseSpeed || SPEED) * cfg.speed;
@@ -770,7 +772,8 @@ function tickSamuraiLock(dt) {
 function applyProchazkaPose(b) {
   var m = samuraiOn(b) ? b.igbb : null, cfg = jpSam(b), rot = 0, sx = 1, sy = 1;
   if (!m || !cfg) return;
-  if (m.phase === "close" && m.sl) {
+  if (m.phase === "close" && m.sl && m.sl.kind === "spin") rot = jpSpinPose(m.sl); // turning with the whirlwind (jiri-spin.js)
+  else if (m.phase === "close" && m.sl) {
     var sl = m.sl, T = cfg.tell, S = cfg.swing;
     if (sl.t < T) rot = sl.side * 0.28 * jpEase(sl.t / T);
     else if (sl.t < T + S) rot = sl.side * (0.28 - 0.62 * jpEaseOut((sl.t - T) / S));
@@ -815,6 +818,7 @@ function drawProchazka(b, other) {
   if (m.phase === "final") { jpDrawFinal(b, other, sam, m, ang); return; }
   // The run.
   var sl = m.sl;
+  if (sl && sl.kind === "spin") { jpDrawSpin(b, sam, m); return; } // the whirlwind (jiri-spin.js)
   if (sl && sl.t < sam.tell) jpDrawTell(b, other, sam, m);
   [1, -1].forEach(function (s) {
     var len = b.r * (s > 0 ? JP_LONG : JP_SHORT);
@@ -1428,6 +1432,7 @@ function prochazkaGalleryMoves(ch, add) {
   if (!p) return;
   if (p.handsLow) add("🙌", "Hands low", "Fights with his gloves down by his hips. No block at all: he weaves instead.");
   if (p.chin) add("💥", "Chin", "With his hands that low, " + p.chin.critChance + "% of the strikes that land on him are critical hits for " + p.chin.critMult + "x.");
+  if (typeof jpSpinGalleryMove === "function") jpSpinGalleryMove(p, add); // the whirlwind (jiri-spin.js)
   if (p.samurai && p.samurai.vsTony) add("⚔️", "Katanas vs katanas", "Against Tony Ferguson, Tony's katanas come out to meet the samurai " + p.samurai.vsTony.answerChance + "% of the time.");
 }
 
