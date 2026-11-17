@@ -207,6 +207,7 @@ function tickLionLeap(L, o, dt) {
   var near = dx * dx + dy * dy < (o.r + LION_BUMP) * (o.r + LION_BUMP);
   if (near && o.alive && !o.invincible && !o.bearHeld && !specialBusy(o) && !o.grabbed && !lionTangled(o)) {
     if (o.justDodged) return; // Charles teleported out from under it
+    if (typeof jpAnimalCut === "function" && jpAnimalCut(o, jpLionArt(L))) { natLion = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
     clearActions(o);
     o.bearHeld = true; o.dazed = "held"; o.vx = o.vy = 0; o.invincible = true; o.immuneCd = 99;
     L.phase = "maul"; L.t = 0; L.z = 0; L.hitT = 0.12; L.dealt = 0; L.vsId = o.id; L.pops = []; L.words = [];

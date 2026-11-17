@@ -123,6 +123,7 @@ function updateEagleStrike(e, dt) {
     var self = balls[e.owner], other = balls[1 - e.owner];
     if (other.alive && !other.invincible && !other.igbb && segDist(other.x, other.y, px, py, e.x, e.y) < cfg.width + other.r) {
       e.hit = true;
+      if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpEsEagleArt(e))) return false; // Jiří Procházka cuts it in half (jiri-react.js)
       eagleRake(e, self, other);
     }
   }

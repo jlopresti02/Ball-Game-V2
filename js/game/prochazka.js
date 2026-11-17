@@ -134,6 +134,7 @@ function prochazkaHandsBusy(b) {
   var c = jpCfg(b);
   if (!c || !b.alive) return false;
   if (samuraiOn(b)) return true;
+  if (typeof jpReactBusy === "function" && jpReactBusy(b)) return true; // a katana out for a moment (jiri-react.js)
   return !!c.handsLow && jpHandsFree(b);
 }
 function jpHandsFree(b) {
@@ -144,7 +145,7 @@ function jpHandsFree(b) {
 // ---------------------------------------------------------------- setup
 
 // From startMatchSeeded.
-function resetProchazka() { jpLock = null; jpCuts = []; jpPetals = []; jpSlash = null; jpClock = 0; }
+function resetProchazka() { jpLock = null; jpCuts = []; jpPetals = []; jpSlash = null; jpClock = 0; if (typeof resetJiriReact === "function") resetJiriReact(); } // (and the halves: jiri-react.js)
 // From makeBall.
 function initProchazka(b) {
   b.jpN = 0; b.jpLowDone = false; b.jpLowDue = false; b.jpLastEnd = -999; b.jpCrit = 0; b.jpLookOff = null;
@@ -165,6 +166,7 @@ function tickProchazka(dt) {
   jpCuts = jpCuts.filter(function (f) { return f.t < f.max; });
   if (jpSlash && (jpSlash.t += dt) >= jpSlash.max) jpSlash = null;
   jpTickPetals(dt);
+  if (typeof tickJiriReact === "function") tickJiriReact(dt); // the quick draw: animals cut in half, leprechauns scared off (jiri-react.js)
   balls.forEach(function (b) {
     var cfg = jpCfg(b);
     if (!cfg) return;
@@ -770,6 +772,7 @@ function tickSamuraiLock(dt) {
 // From the fighter's transform in draw(): his body twisting into a cut,
 // leaning into the finisher's dash.
 function applyProchazkaPose(b) {
+  if (typeof jpReactPose === "function" && jpReactPose(b)) return; // turning with the quick-draw whirlwind (jiri-react.js)
   var m = samuraiOn(b) ? b.igbb : null, cfg = jpSam(b), rot = 0, sx = 1, sy = 1;
   if (!m || !cfg) return;
   if (m.phase === "close" && m.sl && m.sl.kind === "spin") rot = jpSpinPose(m.sl); // turning with the whirlwind (jiri-spin.js)
@@ -794,6 +797,7 @@ function drawProchazka(b, other) {
   var cfg = jpCfg(b);
   if (!cfg || !b.alive) return;
   if (b.jpCrit > 0) jpDrawChinCrack(b);
+  if (typeof jpDrawReact === "function" && jpDrawReact(b)) return; // the quick draw or the whirlwind (jiri-react.js)
   if (!samuraiOn(b)) {
     if (b.jpLookOff) jpDrawBelt(b, true); // (won it as a samurai: the kimono and the swords stay on)
     if (cfg.handsLow && jpHandsFree(b)) jpDrawHandsLow(b, other);
@@ -1433,6 +1437,7 @@ function prochazkaGalleryMoves(ch, add) {
   if (p.handsLow) add("🙌", "Hands low", "Fights with his gloves down by his hips. No block at all: he weaves instead.");
   if (p.chin) add("💥", "Chin", "With his hands that low, " + p.chin.critChance + "% of the strikes that land on him are critical hits for " + p.chin.critMult + "x.");
   if (typeof jpSpinGalleryMove === "function") jpSpinGalleryMove(p, add); // the whirlwind (jiri-spin.js)
+  if (typeof jpReactGalleryMoves === "function") jpReactGalleryMoves(p, add); // the quick draw and the leprechauns (jiri-react.js)
   if (p.samurai && p.samurai.vsTony) add("⚔️", "Katanas vs katanas", "Against Tony Ferguson, Tony's katanas come out to meet the samurai " + p.samurai.vsTony.answerChance + "% of the time.");
 }
 

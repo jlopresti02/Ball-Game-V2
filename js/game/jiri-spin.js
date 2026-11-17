@@ -42,6 +42,7 @@ function jpSpinRun(self, other, cfg, m, dt, gap) {
   sl.t += dt;
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d, spd = (self.baseSpeed || SPEED) * cfg.speed;
   if (sl.t < Wd) { self.vx = ux * spd * 0.2; self.vy = uy * spd * 0.2; return; } // coiling up
+  if (!sl.scared) { sl.scared = true; if (typeof jpScareLads === "function") jpScareLads(self); } // Conor's lads leg it (jiri-react.js)
   var t = sl.t - Wd, k = jpClamp(t / 0.12) * jpClamp((T - t) / 0.12 + 0.15);
   sl.spinV = 2 * Math.PI * (c.turns || 3) * k;
   sl.spin += sl.spinV * dt;

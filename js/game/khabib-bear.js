@@ -186,6 +186,7 @@ function bearBumps(B) {
       f.vx = f.vy = 0;
       B.phase = "scrap"; B.t = 0; B.vsId = f.id; B.hitT = 0;
     } else {
+      if (typeof jpAnimalCut === "function" && jpAnimalCut(f, jpBearArt(B))) { ringBear = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
       clearActions(f);
       f.bearHeld = true; f.dazed = "held"; f.vx = f.vy = 0; f.invincible = true; f.immuneCd = 99;
       B.phase = "maul"; B.t = 0; B.vsId = f.id; B.hitT = 0.15; B.dealt = 0;
@@ -301,6 +302,7 @@ function tickBearThrown(B, dt) {
   B.spin += B.spinV * dt;
   var ox = o.x - B.x, oy = o.y - B.y;
   if (o.alive && !o.invincible && ox * ox + oy * oy < (o.r + BEAR_R) * (o.r + BEAR_R)) {
+    if (typeof jpAnimalCut === "function" && jpAnimalCut(o, jpBearArt(B))) { bearGone(B, 0, 0); ringBear = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
     var dealt = hurtProjectile(o, cfg.throwDamage, k.id, B.dx, B.dy);
     if (o.justDodged && !o.invincible) return; // Charles teleported out of its way: it sails on
     if (dealt > 0) {

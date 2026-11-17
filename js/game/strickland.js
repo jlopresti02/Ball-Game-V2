@@ -1017,6 +1017,7 @@ function skEagleStrike(self, other, e) {
   var eg = (self.char.special && self.char.special.eagle) || {};
   e.mode = "rise"; e.t = 0; e.sx = e.ux; e.sy = e.uy;
   if (over || !other.alive || other.koOut) return;
+  if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpSkEagleArt(e))) { amEagle = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
   var dealt = hurt(other, eg.damage != null ? eg.damage : 18, eg.unblockable === false ? "kick" : "igbb", self.id);
   if (dealt <= 0) return; // slipped, blocked or untouchable (hurt says so): it swoops on past
   e.hit = true;

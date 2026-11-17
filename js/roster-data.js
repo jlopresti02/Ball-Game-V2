@@ -3398,6 +3398,14 @@ var SAVED_ROSTER = [
           "poke"
         ]
       },
+      "react": {
+        "animals": {
+          "chance": 100
+        },
+        "leprechauns": {
+          "range": 120
+        }
+      },
       "samurai": {
         "lowHp": 0.4,
         "oppLowHp": 0.4,
@@ -3435,7 +3443,7 @@ var SAVED_ROSTER = [
         },
         "petals": 26,
         "spin": {
-          "chance": 20,
+          "chance": 5,
           "minPlain": 2,
           "wind": 0.22,
           "time": 0.75,
