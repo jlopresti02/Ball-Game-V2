@@ -1,6 +1,6 @@
 {
   "id": "c-sean-strickland",
-  "rev": 7,
+  "rev": 8,
   "builtin": false,
   "weightClass": "middleweight",
   "name": "Sean Strickland",
@@ -64,9 +64,9 @@
     "overhands": 6, "overhandDamage": 17, "overhandKnock": 420, "cornerBonus": 1.6, "chase": 560, "time": 4.5,
     "norris": {
       "on": true, "chance": 100, "rappel": 0.55, "flag": true,
-      "speed": 560, "reach": 30, "time": 2.6,
-      "punchEvery": 0.14, "kickEvery": 4, "punchDamage": 4, "kickDamage": 9, "punchKnock": 140, "kickKnock": 300, "stun": 0.12,
-      "windup": 0.3, "roundhouseDamage": 30, "unblockable": true, "roundhouseKnock": 700, "overhandsCut": 2,
+      "speed": 560, "reach": 30, "time": 2,
+      "punchEvery": 0.14, "kickEvery": 4, "punchDamage": 4, "kickDamage": 8, "punchKnock": 140, "kickKnock": 300, "stun": 0.12,
+      "windup": 0.3, "roundhouseDamage": 20, "unblockable": true, "roundhouseKnock": 700, "overhandsCut": 3,
       "boom": true, "kickLine": 50,
       "lines": { "arrive": [], "roundhouse": [], "leave": [] }
     }
