@@ -24,11 +24,17 @@
 //           `rate` / `switch` keys still work if the spacing block is left out.
 // Philly shell  (strickland.shell) lead hand low across his stomach, rear
 //           glove up by his chin. He rolls `chance`% of punches off his
-//           shoulder ("SHOULDER ROLL"), `kickChance`% of kicks and
-//           `projChance`% of anything thrown, and `counter`% of the time he
+//           shoulder ("SHOULDER ROLL"), `kickChance`% of kicks (the kicks
+//           Josh Hokit's smother knows, SMOTHER_KICKS in kick-smother.js: the
+//           regular kick, calf and oblique kicks, the teep and the head kick)
+//           and `projChance`% of anything thrown, and `counter`% of the time he
 //           comes straight back with the jab. Not while he's triggered and storming
 //           in (`angryOff`). Takedown defense is the plain "tdd" block:
 //           he sprawls `tdd.sprawlChance`% of shots ("STUFFED").
+// Jab slip  (strickland.jabSlip) while his jab is out and for `after`
+//           seconds after it, he slips `chance`% of the strikes they throw
+//           ("SLIP"), before the shell gets its roll. Nothing thrown, no
+//           counter, and only his own: not the shared weave.
 // Cardio    (strickland.cardio) every `every` seconds, up to `max` times, his
 //           pace goes up ("PACE"): he moves `speed` and attacks `rate` faster
 //           and rolls `shell` more, and from `tiredAt` they're dripping
@@ -186,7 +192,6 @@ var SK_CALLS = {
 
 var SK_USA = { red: "#b22234", white: "#ffffff", blue: "#3c3b6e", navy: "#26254f" };
 var SK_NO_ROLL = { laser: true, slam: true, grapple: true, finisher: true, flow: true, kickback: true, slugfest: true, kofinal: true, igbb: true };
-var SK_KICKS = { kick: true, teep: true };
 var SK_HOP = 0.32;        // hopping off the bike
 var SK_END = 0.9;         // arms up at the end
 var SK_ROCKED = 0.4;      // rocked (dizzy) this long after America's over
@@ -228,7 +233,7 @@ function initStrickland(b) {
     trauma: 0, tauntCd: 0, hp: b.hp, saw: {}, fx: 0, mult: 1, fightT: 0,
     pace: 0, paceT: 0, speed0: b.baseSpeed, atk0: b.atkRate,
     side: Math.random() < 0.5 ? -1 : 1, sideT: 2, chargedT: 0, landedAt: [], strikes0: null, rival: null, said: {}, heard: {}, lineCd: 0,
-    twoCd: 0, twoWant: false, callAt: null, americaWin: false
+    twoCd: 0, twoWant: false, callAt: null, americaWin: false, jabT: 0
   };
   b.skTwo = null;
 }
@@ -247,6 +252,7 @@ function tickStrickland(dt) {
     if (!s) return;
     var cfg = skCfg(b), other = balls[1 - b.id];
     if (b.skRoll > 0) b.skRoll = Math.max(0, b.skRoll - dt);
+    if (b.punch) s.jabT = (cfg.jabSlip && cfg.jabSlip.after) || 0; else if (s.jabT > 0) s.jabT = Math.max(0, s.jabT - dt); // the jab slip's window (stricklandShell)
     if (s.fx > 0) s.fx = Math.max(0, s.fx - dt);
     if (s.rival === null) skMeetRival(b, other, cfg);
     skLines(b, other, cfg, dt);
@@ -534,17 +540,39 @@ function stricklandSquaredUp(b) {
 
 // ---------------------------------------------------------------- the Philly shell
 
-// From hurt (match.js), before the weave: rolling it off his shoulder. True
-// if it's rolled.
+// Which kick it is, on the list Josh Hokit's smother uses (SMOTHER_KICKS,
+// kick-smother.js): the regular kick (calf and oblique kicks hurt as one too),
+// the teep, and a head kick (head-kick.js, it hurts as a "finisher"). Null if
+// it isn't a kick.
+function skKick(b, source, atk) {
+  var kind = source === "finisher" ? (atk && atk.hkk && atk.hkk.vicId === b.id ? "headkick" : null) : source;
+  return kind && SMOTHER_KICKS.indexOf(kind) >= 0 ? kind : null;
+}
+
+// While his jab is out and for jabSlip.after seconds after it: a slip.
+function skJabSlip(b, jc) {
+  if (!b.punch && !(b.sk.jabT > 0)) return false;
+  if (Math.random() * 100 >= jc.chance) return false;
+  b.weaveAnim = { t: 0, dur: 0.22, sign: Math.random() < 0.5 ? -1 : 1 };
+  floater(b.x, b.y - b.r - 8, "SLIP", "dodge");
+  b.justDodged = true;
+  playSkRoll();
+  return true;
+}
+
+// From hurt (match.js), before the weave: slipping it behind his jab, or
+// rolling it off his shoulder. True if it's slipped or rolled.
 function stricklandShell(b, source, attackerId) {
-  var cfg = skCfg(b), sc = cfg && cfg.shell;
-  if (!sc || !b.sk || !b.alive || attackerId == null || attackerId === b.id || SK_NO_ROLL[source]) return false;
+  var cfg = skCfg(b), sc = cfg && cfg.shell, jc = cfg && cfg.jabSlip;
+  if ((!sc && !jc) || !b.sk || !b.alive || attackerId == null || attackerId === b.id) return false;
+  var atk = balls[attackerId], kick = skKick(b, source, atk);
+  if (SK_NO_ROLL[source] && !kick) return false; // (a head kick hurts as a finisher, but it's still a kick)
   if (b.grappled || b.grapple || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.igbb || b.koOut || b.shocked || b.dazed ||
       b.dizzy || b.shelled || b.guard || b.teep) return false;
-  if (sc.angryOff && b.angry) return false; // triggered: storming in, shell forgotten
-  var atk = balls[attackerId];
   if (b.sk.rival === "pereira" && atk && atk.chama) return false; // the combo that got him at UFC 276
-  var proj = !!PROJECTILE_SOURCES[source], kick = !!SK_KICKS[source];
+  var proj = !!PROJECTILE_SOURCES[source];
+  if (jc && jc.chance && !proj && skJabSlip(b, jc)) return true; // slipping it behind the jab
+  if (!sc || (sc.angryOff && b.angry)) return false; // triggered: storming in, shell forgotten
   var chance = proj ? sc.projChance : kick ? sc.kickChance : sc.chance;
   chance += b.sk.pace * ((cfg.cardio && cfg.cardio.shell) || 0);
   if (Math.random() * 100 >= chance) return false;
@@ -1553,7 +1581,8 @@ function stricklandGalleryMoves(ch, add) {
   var g = ch.strickland, sh = g.shell, cc = g.cardio, tr = g.trauma, rv = g.rivals || {};
   if (ch.hasPunch) add("👊", "Jab", "His main weapon: a long, stiff jab (" + ch.punch.damage + " damage, " + ch.punch.reach + " reach) every " + secs(ch.punch.cooldown) + ".");
   if (g.range && g.range.keep != null) add("📏", "Range", "Fights at the end of his jab: backs out at an angle when they get close, walks them down when they're far, and circles in between.");
-  if (sh) add("🛡️", "Philly shell", "Lead hand low across his stomach, rear glove up by his chin. Rolls " + sh.chance + "% of punches off his shoulder (" + sh.kickChance + "% of kicks, " + sh.projChance + "% of anything thrown)" + (sh.counter ? ", and " + (sh.counter === true ? "always" : sh.counter + "% of the time") + " comes straight back with the jab" : "") + (sh.angryOff ? ". Not while he's triggered." : "."));
+  if (sh) add("🛡️", "Philly shell", "Lead hand low across his stomach, rear glove up by his chin. Rolls " + sh.chance + "% of punches off his shoulder (" + sh.kickChance + "% of kicks, calf and head kicks too, " + sh.projChance + "% of anything thrown)" + (sh.counter ? ", and " + (sh.counter === true ? "always" : sh.counter + "% of the time") + " comes straight back with the jab" : "") + (sh.angryOff ? ". Not while he's triggered." : "."));
+  if (g.jabSlip) add("💨", "Slips behind the jab", "While his jab is out and for " + secs(g.jabSlip.after) + " after it, he slips " + g.jabSlip.chance + "% of the strikes they throw (\"SLIP\"), before the shell gets its roll.");
   if (ch.tdd) add("🧱", "Takedown defense", "Sprawls on " + ch.tdd.sprawlChance + "% of takedown shots (\"STUFFED\") and jabs straight back.");
   if (cc) add("🫁", "Cardio", "Every " + secs(cc.every) + " (up to " + cc.max + " times) his pace goes up: " + Math.round(cc.speed * 100) + "% faster, attacks " + Math.round(cc.rate * 100) + "% faster, rolls " + cc.shell + "% more. From the " + cc.tiredAt + "th step they're tired and sweating, slower each time.");
   if (tr) add("🧠", "Trauma", "The bar under his health fills as he gets hurt and whenever they taunt him (\"TRIGGERED\": any of their lines, a thumbs down, a celebration). The fuller it is, the faster his special charges, up to " + (1 + tr.boost).toFixed(1) + "x. America takes it back down.");

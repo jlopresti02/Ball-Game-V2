@@ -180,6 +180,7 @@ function attemptGrab(attacker, target) {
   if (cormierEatSafe(target)) return false; // Daniel Cormier blocks or slips everything while he eats (cormier.js)
   if (conorGuardSafe(target)) return false; // Conor blocks or slips everything during the Bus Crew and the presser (conor-guard.js)
   if (golfSwinging(target)) return false; // or Gaethje mid swing with his golf club (gaethje-golf.js)
+  if (fedorCrowning(target)) return false; // nobody takes Fedor down while he crowns himself the Emperor (fedor-emperor.js)
   if (kameEscape(target, attacker.id, true)) { // Charles teleports out of it mid Kamehameha (kamehameha.js)
     attacker.grappleCd = attacker.char.grapple ? attacker.char.grapple.cooldown : 0;
     return false;

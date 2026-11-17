@@ -157,7 +157,9 @@ function drawJonGlow(b) {
 // come in from random spots along the edges and don't follow
 // anyone, so the opponent can get out of the way just by being somewhere
 // else when it comes through. Every goat that hits rams them for
-// special.goatDamage.
+// special.goatDamage. special.goatLane widens each goat's lane: the red
+// lane drawn on the mat and how far off the goat's line it still rams them
+// (1, or left out, = as built; Christian 2026-11-17: 1.2 on Jon).
 // ---------------------------------------------------------------
 var GS_RISE = 0.9, GS_LAND = 0.6, GS_HOVER = 64;   // float up, come down, how high
 var GS_GOAT_R = 30;                                 // a goat's size (its hit radius)
@@ -245,7 +247,7 @@ function gsOffSide() { return stadiumOn() ? (ST.AX + 80) * W / ST.A : GS_GOAT_R 
 // picks a random line across the mat.
 function spawnGoat(self) {
   var side = ["bottom", "bottom", "left", "right"][Math.floor(Math.random() * 4)];
-  var f = gsFence(), g = { t: 0, phase: "run", z: 0, hoof: 0, hit: false, alpha: 1, side: side };
+  var f = gsFence(), g = { t: 0, phase: "run", z: 0, hoof: 0, hit: false, alpha: 1, side: side, lane: self.char.special.goatLane || 1 };
   var inset = GS_GOAT_R + 6, along = 70 + Math.random() * (W - 140);
   if (side === "bottom") {
     g.x = along + (Math.random() - 0.5) * 80; g.y = gsOffBottom();
@@ -299,7 +301,8 @@ function tickGoats(self, other, dt) {
       // Rams whoever is in its way, and keeps going.
       if (!g.hit && other.alive) {
         var hx = other.x - g.x, hy = other.y - g.y;
-        if (hx * hx + hy * hy < (other.r + GS_GOAT_R * 0.85) * (other.r + GS_GOAT_R * 0.85)) goatRam(self, other, g);
+        var hr = other.r + GS_GOAT_R * 0.85 * (g.lane || 1); // (special.goatLane widens it)
+        if (hx * hx + hy * hy < hr * hr) goatRam(self, other, g);
       }
       // Leaps out over the fence on the far side and off through the crowd.
       var out = g.x < -GS_GOAT_R || g.x > W + GS_GOAT_R || g.y < -GS_GOAT_R || g.y > H + GS_GOAT_R;
@@ -390,7 +393,7 @@ function drawJonLanes() {
   jonGoats.forEach(function (g) {
     var show = g.phase === "aim" ? Math.min(1, g.t / 0.15) : g.phase === "charge" ? Math.max(0, 1 - g.t / 0.35) : (g.phase === "leap" ? 0.35 * Math.min(1, g.t / GS_LEAP) : 0);
     if (show <= 0) return;
-    var len = Math.sqrt((g.ex - g.ix) * (g.ex - g.ix) + (g.ey - g.iy) * (g.ey - g.iy)), wdt = GS_GOAT_R * 1.8;
+    var len = Math.sqrt((g.ex - g.ix) * (g.ex - g.ix) + (g.ey - g.iy) * (g.ey - g.iy)), wdt = GS_GOAT_R * 1.8 * (g.lane || 1); // (as wide as it rams, special.goatLane)
     var pulse = 0.7 + 0.3 * Math.sin(now * 18);
     ctx.save();
     ctx.translate(g.ix, g.iy); ctx.rotate(Math.atan2(g.dy, g.dx));

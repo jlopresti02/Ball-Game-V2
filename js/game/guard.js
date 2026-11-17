@@ -11,6 +11,16 @@
 //     `subs` (a list of submissions and submission sets, see SUB_SETS).
 // If nobody steps in before the time's up, it gets back to its feet. Either
 // way it can't pull guard again for `cooldown` seconds once it's up.
+//
+// Guard passers (opt-in, a top-level `guardPass` block in the opponent's
+// character file, Fedor's): `time` [min, max] seconds after the guard is
+// pulled on him he walks straight back into the circle instead of waiting
+// to wander in, and he passes `chance`% of the time (the guard player's own
+// passChance if that's higher). With `gnp` the pass goes straight into his
+// own ground and pound from on top if he has one (Fedor's, fedor.js),
+// otherwise the guard's normal free punches; `gnpMult` makes the punches
+// after a pass that much heavier. Fighters without the block play the guard
+// exactly as before.
 "use strict";
 
 var GUARD_ARM_TIME = 0.5;     // the opponent has to stay out of the circle this long before stepping in counts
@@ -55,7 +65,8 @@ function beginGuard(b, atk) {
     t: 0, dur: gd.time, radius: gd.radius,
     side: atk.x >= b.x ? 1 : -1,  // hips toward the opponent
     outT: 0,                       // how long the opponent has been outside the circle
-    getup: -1                      // time into the get-up, once the guard runs out
+    getup: -1,                     // time into the get-up, once the guard runs out
+    passAt: guardPassAt(atk)       // a guard passer walks back in this far in (null for anyone else)
   };
   b.guardCd = gd.cooldown;
   // Whoever knocked it down backs off out of the circle, turning toward
@@ -93,16 +104,43 @@ function updateGuard(self, other, dt) {
     return;
   }
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
-  if (d >= g.radius) { g.outT += dt; return; }
+  var passer = g.passAt != null, passNow = passer && g.t >= g.passAt;
+  if (d >= g.radius) {
+    g.outT += dt;
+    if (passNow) walkIntoGuard(self, other, dx, dy, d);
+    return;
+  }
   // Only an opponent that's free to engage steps in (not one flying off a
   // slam, sitting in a seat, mid special and so on), and only once it's
   // been out of the circle for a moment, so the one that knocked it down
-  // can't just bounce straight back in.
-  if (g.outT < GUARD_ARM_TIME || other.invincible || other.slam || specialBusy(other)) return;
+  // can't just bounce straight back in. A guard passer waits for his own
+  // moment instead.
+  if ((passer ? !passNow : g.outT < GUARD_ARM_TIME) || other.invincible || other.slam || specialBusy(other)) return;
   clearActions(other);
   if (uppercutCounter(other, self, 320)) { g.outT = 0; return; } // an uppercut as they pull him in: he steps back out (Gaethje, body-shots-uppercuts.js)
-  if (Math.random() < self.char.guard.passChance / 100) passGuard(self, other, g);
+  if (Math.random() < guardPassChance(self, other) / 100) passGuard(self, other, g);
   else catchInGuard(self, other);
+}
+
+// When a guard passer (`guardPass`) walks back in, a moment after the guard
+// is pulled on him. Null for anyone without the block.
+function guardPassAt(atk) {
+  var gp = atk.char.guardPass, t = gp && gp.time;
+  if (!gp) return null;
+  return t ? t[0] + Math.random() * (t[1] - t[0]) : GUARD_ARM_TIME;
+}
+
+// The guard player's passChance, raised to a guard passer's own `chance`.
+function guardPassChance(self, atk) {
+  var pc = self.char.guard.passChance, gp = atk.char.guardPass;
+  return gp && gp.chance > pc ? gp.chance : pc;
+}
+
+// His moment's come: he heads straight for them, at his own pace.
+function walkIntoGuard(self, other, dx, dy, d) {
+  if (!inOrdinaryMovement(other) || other.invincible || specialBusy(other)) return;
+  var sp = Math.max(SPEED * 0.6, Math.sqrt(other.vx * other.vx + other.vy * other.vy));
+  other.vx = -dx / d * sp; other.vy = -dy / d * sp;
 }
 
 // Back on its feet: pushes off away from the opponent, and the speed
@@ -118,17 +156,18 @@ function endGuard(self, other) {
 // This uses the guillotine's ground-and-pound (bjj.js), straight from the
 // mount, with the guard player still flat on its back underneath.
 function passGuard(self, atk, g) {
-  var gd = self.char.guard;
+  var gd = self.char.guard, gp = atk.char.guardPass;
   self.guard = null;
+  floater((self.x + atk.x) / 2, Math.min(self.y, atk.y) - self.r - 30, "GUARD PASSED", "crit");
+  playWhoosh();
+  if (gp && gp.gnp && fedorPassGnp(atk, self, g.side)) return; // a guard passer's own ground and pound from on top (Fedor, fedor.js)
   self.guillo = {
     atkId: atk.id, t: 0, phase: "mount", fromGuard: true, side: g.side,
     nx: g.side, ny: 0, mx: atk.x, my: atk.y, dir: g.side,
-    hits: Array.apply(null, Array(Math.max(1, gd.passPunches))).map(function () { return gd.passDamage; })
+    hits: Array.apply(null, Array(Math.max(1, gd.passPunches))).map(function () { return gd.passDamage * ((gp && gp.gnpMult) || 1); })
   };
   atk.choked = true;
   atk.vx = 0; atk.vy = 0;
-  floater((self.x + atk.x) / 2, Math.min(self.y, atk.y) - self.r - 30, "GUARD PASSED", "crit");
-  playWhoosh();
 }
 
 // Caught: pulls the opponent in and goes for a submission.
