@@ -160,6 +160,7 @@ function drawTaleTape() {
   if (!tape.voiced && t >= TAPE_HIT.voice && t < 1.2 && clipBuffers.taleOfTheTape && audioCtx) {
     tape.voiced = !!cutInTalk("taleOfTheTape", 0.85);
   }
+  tickTapeTaunts(t); // Conor's mic and line, Charles's aura bursts (tape-taunts.js)
   var stadium = stadiumOn(), k, box;
   if (stadium) {
     k = canvas.width / STAGE_W;
@@ -256,11 +257,11 @@ function drawTapeCard(box, t, withTitle) {
   }
 
   // Portraits slide in from their sides
+  var presserX = null;
   var pr = 108, py = top + 136, lx = 180, rx = w - 180;
   // Taunts go left then right, but a thumbs down always comes first, so the
   // other fighter answers it (Gane pokes Hokit in the eye for it: Joe)
-  var sg = TAPE_HIT.sig;
-  if (tapeSigKind(B) === "thumbs" && tapeSigKind(A) !== "thumbs") sg = [sg[1], sg[0]];
+  var sg = tapeSigTimes(A, B);
   var fs = [[A, ca, lx, -1, TAPE_HIT.left, sg[0]], [B, cb, rx, 1, TAPE_HIT.right, sg[1]]];
   fs.forEach(function (f, i) {
     var p = tapeEase((t - f[4]) / 0.3);
@@ -269,6 +270,7 @@ function drawTapeCard(box, t, withTitle) {
     var o = fs[1 - i]; // the other fighter, whose taunt this one reacts to
     ctx.save();
     drawTapeFighter(f[0], f[1], x, py, pr, t, f[4], f[3], f[5], tapeSigKind(o[0]), o[5]);
+    if (tapeSigKind(f[0]) === "presser") presserX = x; // (his speech bubble, tape-taunts.js)
     // Name and nickname under the portrait
     ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
     var parts = (f[0].name || "").toUpperCase().trim().split(/\s+/), last = parts.pop(), first = parts.join(" ");
@@ -325,6 +327,7 @@ function drawTapeCard(box, t, withTitle) {
       ctx.restore();
     });
   });
+  drawTapePresserBubble(t, w, py, pr, presserX); // Conor's line (tape-taunts.js)
   ctx.restore();
 
   // Gold rim on top
@@ -333,6 +336,12 @@ function drawTapeCard(box, t, withTitle) {
   if (ctx.roundRect) ctx.roundRect(0, 0, w, h, 24); else ctx.rect(0, 0, w, h);
   ctx.stroke();
   ctx.globalAlpha = 1;
+}
+
+function tapeSigTimes(A, B) {
+  var sg = TAPE_HIT.sig;
+  if (tapeSigKind(B) === "thumbs" && tapeSigKind(A) !== "thumbs") sg = [sg[1], sg[0]];
+  return tapeTauntTimes(A, B, sg); // (the press conference goes first, tape-taunts.js)
 }
 
 // ---------------------------------------------------------------
@@ -345,19 +354,21 @@ function drawTapeCard(box, t, withTitle) {
 var TAPE_BEAT = 0.543;
 var TAPE_SIG_LEN = 1.1;
 function tapeSigKind(ch) {
+  var own = tapeTauntKind(ch); if (own) return own; // Conor's press conference, Charles's Super Saiyan, Ilia's rose (tape-taunts.js)
   if (ch.id === "c-josh-hokit") return "thumbs";
   if (ch.id === "c-ciryl-gane" || ch.id === "c-jon-jones") return "poke"; // both poke eyes in a fight
   return "gloves";
 }
 
 function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSigAt) {
-  var kind = tapeSigKind(ch), st = t - sigAt, sig = st > 0 && st < TAPE_SIG_LEN ? st : -1;
-  var ost = t - oppSigAt, oppSig = ost > 0 && ost < TAPE_SIG_LEN + 0.5 ? ost : -1;
+  var kind = tapeSigKind(ch), st = t - sigAt, sig = st > 0 && st < tapeSigLen(kind) ? st : -1;
+  var ost = t - oppSigAt, oppSig = ost > 0 && ost < tapeSigLen(oppKind) + 0.5 ? ost : -1;
   // Bounce on the beat (a fighter's stance), a little sway
   var ph = (t - tIn) / TAPE_BEAT;
   var bob = -Math.abs(Math.sin(Math.PI * ph)) * 7, sway = Math.sin(Math.PI * ph * 0.5) * 0.05;
   if (oppSig >= 0 && oppKind === "poke" && ost > 0.35) { bob += Math.sin(ost * 40) * 3 * Math.max(0, 1 - ost); } // rocked by the poke
   var ink = "#0b0f12";
+  if (kind === "saiyan") drawTapeSaiyanAura(x, y + bob, pr, sig); // (tape-taunts.js)
   // Ring
   ctx.shadowColor = shadeHex(col, 0.35); ctx.shadowBlur = 30;
   ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, pr, 0, Math.PI * 2); ctx.fill();
@@ -373,7 +384,7 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   ctx.save();
   ctx.beginPath(); ctx.arc(x, y, pr - 3, 0, Math.PI * 2); ctx.clip();
   ctx.translate(x, y + bob); ctx.rotate(sway);
-  if (ch.look) drawFighterArt(ctx, 0, 0, pr - 12, ch.look, ink, { layout: "contained", name: ch.name });
+  if (ch.look) drawFighterArt(ctx, 0, 0, pr - 12, kind === "saiyan" ? tapeSaiyanLook(ch, sig) : ch.look, ink, { layout: "contained", name: ch.name });
   else { ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 110px " + TAPE_IMPACT; ctx.fillText((ch.name || "?").charAt(0).toUpperCase(), 0, 4); }
   ctx.restore();
 
@@ -401,6 +412,12 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
       g[inn].x += -side * pr * (0.35 * k + 0.45 * jab); g[inn].y -= pr * 0.55 * k;
       g[inn].poke = k; g[inn].pokeDir = -side; g[inn].s = 1 + 0.3 * k;
       extra = jab > 0.85 ? "poke" : null;
+    } else if (kind === "presser") {
+      tapePresserGloves(g, pr, sig, side); // (tape-taunts.js)
+    } else if (kind === "saiyan") {
+      tapeSaiyanGloves(g, pr, sig); // (tape-taunts.js)
+    } else if (kind === "rose") {
+      tapeRoseGloves(g, pr, sig, side, oppKind === "poke" && oppSig >= 0 ? ost : -1); // Ilia's rose (tape-taunts.js)
     } else {
       // Both gloves punch together at the camera
       var tap = Math.max(0, Math.sin(Math.min(1, sig / 0.45) * Math.PI)) * back;
@@ -408,6 +425,8 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
       extra = tap > 0.9 ? "tap" : null;
     }
   }
+  if (kind === "presser") drawTapePodium(x, y + bob, pr, sig); // his podium, in front of him (tape-taunts.js)
+  if (kind === "rose") drawTapeRose(g, gr, pr, sig, side, oppKind === "poke" && oppSig >= 0 ? ost : -1, x, y + bob); // (tape-taunts.js)
   // Draw the far glove first so the one coming at the camera is on top
   var order = g[0].s > g[1].s ? [1, 0] : [0, 1];
   order.forEach(function (j) { drawTapeGlove(ch, g[j], gr, side); });
@@ -431,6 +450,9 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   // Reacting to the other fighter's taunt
   if (oppSig >= 0 && oppKind === "thumbs" && ost > 0.25) drawTapeAnger(x + pr * 0.62, y - pr * 0.72, ost);
   if (oppSig >= 0 && oppKind === "poke" && ost > 0.35) drawTapeStars(x, y - pr * 0.82, pr, ost);
+  if (oppSig >= 0 && oppKind === "presser" && ost > 0.6 && sig < 0) drawTapeAnger(x + side * pr * 0.62, y - pr * 0.72, ost); // fuming at the press conference (on the outside, away from his speech bubble)
+  if (kind === "saiyan") drawTapeSaiyanFront(x, y + bob, pr, sig); // (tape-taunts.js)
+  if (kind === "rose") drawTapeRoseScent(g, gr, pr, sig, side, oppKind === "poke" && oppSig >= 0 ? ost : -1); // (tape-taunts.js)
 }
 
 function drawTapeGlove(ch, g, gr, side) {
@@ -443,6 +465,14 @@ function drawTapeGlove(ch, g, gr, side) {
     // The thumb, sticking straight down out of the glove
     ctx.beginPath(); ctx.ellipse(g.x + side * r * 0.15, g.y + r * 1.2 * g.thumb, r * 0.38, r * 0.72 * g.thumb, 0, 0, Math.PI * 2);
     ctx.fill(); ctx.stroke();
+  } else if (g.point) {
+    // One finger out of the glove, pointing across at them
+    ctx.save(); ctx.translate(g.x + g.pointDir * r * 0.75, g.y - r * 0.1);
+    ctx.beginPath(); ctx.ellipse(g.pointDir * r * 0.5 * g.point, 0, r * 0.95 * g.point, r * 0.26, 0, 0, Math.PI * 2);
+    ctx.fillStyle = ch.look ? ch.look.skin : gc; ctx.fill(); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = gc;
+    ctx.beginPath(); ctx.arc(g.x, g.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   } else if (g.poke) {
     // Two fingers out of the glove, pointing across at the other fighter
     [-1, 1].forEach(function (d) {

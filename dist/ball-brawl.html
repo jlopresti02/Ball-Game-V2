@@ -8449,6 +8449,15 @@ var SAVED_ROSTER = [
           "poke"
         ]
       },
+      "react": {
+        "animals": {
+          "chance": 100,
+          "answer": 100
+        },
+        "leprechauns": {
+          "range": 120
+        }
+      },
       "samurai": {
         "lowHp": 0.4,
         "oppLowHp": 0.4,
@@ -8485,6 +8494,15 @@ var SAVED_ROSTER = [
           "sheathe": 0.45
         },
         "petals": 26,
+        "spin": {
+          "chance": 5,
+          "minPlain": 2,
+          "wind": 0.22,
+          "time": 0.75,
+          "turns": 3,
+          "hits": 2,
+          "mult": 0.8
+        },
         "finisher": {
           "damage": 45,
           "tell": 0.6,
@@ -26741,7 +26759,7 @@ function tickEagleStrikes(dt) {
     self.eagleT -= dt;
     if (self.eagleT > 0) return;
     // Not over the top of a special, a sword duel or the road.
-    if (!other.alive || self.igbb || other.igbb || allAmericanOn() || swordDuelActive()) { self.eagleT = 0.5; return; }
+    if (!other.alive || self.igbb || (other.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(other))) || allAmericanOn() || swordDuelActive()) { self.eagleT = 0.5; return; }
     self.eagleN++;
     self.eagleT = esRand(cfg.every);
     startEagleStrike(self, other, cfg);
@@ -26798,8 +26816,9 @@ function updateEagleStrike(e, dt) {
   }
   if (low && !e.hit) {
     var self = balls[e.owner], other = balls[1 - e.owner];
-    if (other.alive && !other.invincible && !other.igbb && segDist(other.x, other.y, px, py, e.x, e.y) < cfg.width + other.r) {
+    if (other.alive && !other.invincible && (!other.igbb || (typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(other))) && segDist(other.x, other.y, px, py, e.x, e.y) < cfg.width + other.r) {
       e.hit = true;
+      if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpEsEagleArt(e))) return false; // Jiří Procházka cuts it in half (jiri-react.js)
       eagleRake(e, self, other);
     }
   }
@@ -31630,6 +31649,7 @@ function tickGoats(self, other, dt) {
 
 function goatRam(self, other, g) {
   g.hit = true;
+  if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpGoatArt(g))) { g.alpha = 0; return; } // Jiří Procházka cuts it in half (jiri-react.js)
   var dealt = hurtProjectile(other, self.char.special.goatDamage, self.id, g.dx, g.dy);
   if (other.justDodged) return; // Charles teleported out of its way: it charges on past
   // Sent flying, pinballing violently off the walls (the power punch's wall
@@ -36229,7 +36249,7 @@ function tickRingBear(dt) {
       var cfg = b.char.bear;
       if (!cfg || ringBear || !b.alive || b.bearN >= cfg.max) return;
       b.bearT -= dt;
-      if (b.bearT > 0 || jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb; })) return;
+      if (b.bearT > 0 || jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f)); })) return; // (Jiří Procházka's samurai can meet it: jiri-react.js)
       if (typeof natLion !== "undefined" && natLion) return; // not while Nate's lion is in the ring (nate-lion.js)
       b.bearN++;
       b.bearT = bearRand(cfg.every);
@@ -36362,7 +36382,7 @@ function bearBumps(B) {
   if (balls.some(sendLocOn)) return; // not while Khabib's orbital strike is coming in (send-location.js)
   for (var i = 0; i < balls.length; i++) {
     var f = balls[i];
-    if (!f.alive || f.invincible || specialBusy(f) || f.dazed || swordDuelLocked(f)) continue;
+    if (!f.alive || f.invincible || (specialBusy(f) && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f))) || f.dazed || swordDuelLocked(f)) continue; // (the samurai: jiri-react.js)
     var dx = f.x - B.x, dy = f.y - B.y;
     if (dx * dx + dy * dy > (f.r + BEAR_R) * (f.r + BEAR_R)) continue;
     var o = balls[1 - f.id];
@@ -36373,6 +36393,7 @@ function bearBumps(B) {
       f.vx = f.vy = 0;
       B.phase = "scrap"; B.t = 0; B.vsId = f.id; B.hitT = 0;
     } else {
+      if (typeof jpAnimalCut === "function" && jpAnimalCut(f, jpBearArt(B))) { ringBear = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
       clearActions(f);
       f.bearHeld = true; f.dazed = "held"; f.vx = f.vy = 0; f.invincible = true; f.immuneCd = 99;
       B.phase = "maul"; B.t = 0; B.vsId = f.id; B.hitT = 0.15; B.dealt = 0;
@@ -36488,6 +36509,7 @@ function tickBearThrown(B, dt) {
   B.spin += B.spinV * dt;
   var ox = o.x - B.x, oy = o.y - B.y;
   if (o.alive && !o.invincible && ox * ox + oy * oy < (o.r + BEAR_R) * (o.r + BEAR_R)) {
+    if (typeof jpAnimalCut === "function" && jpAnimalCut(o, jpBearArt(B))) { bearGone(B, 0, 0); ringBear = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
     var dealt = hurtProjectile(o, cfg.throwDamage, k.id, B.dx, B.dy);
     if (o.justDodged && !o.invincible) return; // Charles teleported out of its way: it sails on
     if (dealt > 0) {
@@ -37114,6 +37136,7 @@ function tickAuraBull(self, other, dt) {
       var vx = other.x - b.x, vy = other.y - b.y;
       if (Math.sqrt(vx * vx + vy * vy) < other.r + AF_BULL_R - 4) {
         // Straight into the opponent.
+        if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpBullArt(b))) { aura.bull = null; self.igbb.phase = "bow"; self.igbb.t = 0; return; } // Jiří Procházka cuts it in half (jiri-react.js)
         hurt(other, self.char.special.bullDamage, "igbb", self.id);
         violentHit(self, other, 1.2);
         self.igbb.kb = { vx: b.dx * 520 + (Math.random() - 0.5) * 200, vy: b.dy * 520 };
@@ -37161,6 +37184,7 @@ function tickAuraBull(self, other, dt) {
     b.spin += dt * 12;
     var ox = other.x - b.x, oy = other.y - b.y;
     if (other.alive && Math.sqrt(ox * ox + oy * oy) < other.r + AF_BULL_R) {
+      if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpBullArt(b))) { aura.bull = null; self.igbb.phase = "bow"; self.igbb.t = 0; return; } // Jiří Procházka cuts it in half (jiri-react.js)
       other.holdAtOne = false; // this one can finish it
       var m = self.igbb;
       hurt(other, self.char.special.throwDamage, "igbb", self.id);
@@ -39282,7 +39306,7 @@ function specialBusy(b) {
     b.beamPin || b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled || b.dazed || chamaOn(b) || ngannouBusy(b); // (Alex Pereira's CHAMA combo, pereira.js; Francis Ngannou's rage punch, ngannou.js)
 }
 function canStartIgbb(self, other) {
-  if (!other.alive || other.invincible || specialBusy(self) || specialBusy(other)) return false;
+  if (!other.alive || other.invincible || specialBusy(self) || (specialBusy(other) && !(typeof jpSamuraiInvites === "function" && jpSamuraiInvites(self, other)))) return false; // (Jon's goats, Ilia's bull and Strickland's eagle can come at Jiří Procházka's samurai: jiri-react.js)
   // Lets its own attack in progress finish first.
   if (self.punch || self.kick || self.swing || self.throwAnim || self.powerState || self.rageState || self.watcherState) return false;
   return true;
@@ -45348,9 +45372,9 @@ function tickNateLion(dt) {
       if (!cfg || natLion || !b.alive || !o || !o.alive || b.lionN >= cfg.max) return;
       b.lionT -= dt;
       if (b.lionT > 0) return;
-      if (jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb || f.bearHeld; })) return;
+      if (jumboHold() || swordDuelActive() || balls.some(function (f) { return (f.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f))) || f.bearHeld; })) return; // (Jiří Procházka's samurai can meet it: jiri-react.js)
       if ((typeof ringBear !== "undefined" && ringBear) || (typeof nickDiaz !== "undefined" && nickDiaz)) return;
-      if (lionTangled(b) || lionTangled(o) || specialBusy(b) || specialBusy(o) || b.dazed || b.grabbed || (typeof diazBusy === "function" && diazBusy(b))) return;
+      if (lionTangled(b) || lionTangled(o) || specialBusy(b) || (specialBusy(o) && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(o))) || b.dazed || b.grabbed || (typeof diazBusy === "function" && diazBusy(b))) return;
       b.lionN++;
       b.lionT = lionRand(cfg.every);
       summonLion(b);
@@ -45486,7 +45510,7 @@ function tickLionStalk(L, o, dt) {
   }
   if (Math.abs(dx) > 4) L.face = dx > 0 ? 1 : -1;
   if (L.t > cfg.stalk * 1.6 && L.pounces > 0) { lionLeave(L); return; } // gave up
-  if (!L.moving && L.t > 0.35 && o.alive && !o.invincible && !o.bearHeld && !specialBusy(o) && !lionTangled(o) && !lionTangled(nate) && (inOrdinaryMovement(o) || o.dazed === true)) {
+  if (!L.moving && L.t > 0.35 && o.alive && !o.invincible && !o.bearHeld && (!specialBusy(o) || (typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(o))) && !lionTangled(o) && !lionTangled(nate) && (inOrdinaryMovement(o) || o.dazed === true || (typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(o)))) { // (the samurai: jiri-react.js)
     L.phase = "crouch"; L.t = 0; L.pounces++;
     floater(L.x, L.y - LION_S * 2.2, "!", "note");
   }
@@ -45500,8 +45524,9 @@ function tickLionLeap(L, o, dt) {
   if (u < 0.55) return;
   var dx = o.x - L.x, dy = o.y - L.y;
   var near = dx * dx + dy * dy < (o.r + LION_BUMP) * (o.r + LION_BUMP);
-  if (near && o.alive && !o.invincible && !o.bearHeld && !specialBusy(o) && !o.grabbed && !lionTangled(o)) {
+  if (near && o.alive && !o.invincible && !o.bearHeld && (!specialBusy(o) || (typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(o))) && !o.grabbed && !lionTangled(o)) { // (the samurai: jiri-react.js)
     if (o.justDodged) return; // Charles teleported out from under it
+    if (typeof jpAnimalCut === "function" && jpAnimalCut(o, jpLionArt(L))) { natLion = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
     clearActions(o);
     o.bearHeld = true; o.dazed = "held"; o.vx = o.vy = 0; o.invincible = true; o.immuneCd = 99;
     L.phase = "maul"; L.t = 0; L.z = 0; L.hitT = 0.12; L.dealt = 0; L.vsId = o.id; L.pops = []; L.words = [];
@@ -58074,7 +58099,7 @@ function jpHandsFree(b) {
 // ---------------------------------------------------------------- setup
 
 // From startMatchSeeded.
-function resetProchazka() { jpLock = null; jpCuts = []; jpPetals = []; jpSlash = null; jpClock = 0; }
+function resetProchazka() { jpLock = null; jpCuts = []; jpPetals = []; jpSlash = null; jpClock = 0; if (typeof resetJiriReact === "function") resetJiriReact(); } // (and the halves: jiri-react.js)
 // From makeBall.
 function initProchazka(b) {
   b.jpN = 0; b.jpLowDone = false; b.jpLowDue = false; b.jpLastEnd = -999; b.jpCrit = 0; b.jpLookOff = null;
@@ -58095,6 +58120,7 @@ function tickProchazka(dt) {
   jpCuts = jpCuts.filter(function (f) { return f.t < f.max; });
   if (jpSlash && (jpSlash.t += dt) >= jpSlash.max) jpSlash = null;
   jpTickPetals(dt);
+  if (typeof tickJiriReact === "function") tickJiriReact(dt); // the samurai's animals cut in half, leprechauns scared off (jiri-react.js)
   balls.forEach(function (b) {
     var cfg = jpCfg(b);
     if (!cfg) return;
@@ -58223,7 +58249,8 @@ function updateSamurai(self, other, dt) {
     if (self.specialT < sp.chargeTime) return false;
     // Tony Ferguson's katanas out don't stop him: the samurai answers them.
     var vsKatanas = katanaOn(other) && other.igbb.phase === "close" && other.alive && !specialBusy(self) && !self.punch && !self.kick;
-    if (!(canStartIgbb(self, other) || vsKatanas) || swordDuelActive() || jpLock || katanaLock) return false;
+    var vsBus = typeof jpBusAnswer === "function" && jpBusAnswer(self, other); // Conor's lads out for him: the samurai answers the bus (jiri-react.js)
+    if (!(canStartIgbb(self, other) || vsKatanas || vsBus) || swordDuelActive() || jpLock || katanaLock) return false;
     jpStart(self, other, cfg);
   }
   var m = self.igbb;
@@ -58264,6 +58291,7 @@ function updateSamurai(self, other, dt) {
     return true;
   }
   if (m.phase === "close") {
+    if (typeof jpSamuraiWaits === "function" && jpSamuraiWaits(self, other, m, dt)) return true; // standing his ground while their goats, bull or eagle come at him (jiri-react.js)
     if (m.sl) { jpRunSlash(self, other, cfg, m, dt, gap); if (m.phase !== "close") return true; } // (cut down: the iai took over)
     else {
       var spd = (self.baseSpeed || SPEED) * cfg.speed * (gap < 6 ? 0.2 : 1);
@@ -58355,10 +58383,12 @@ function jpStartSlash(self, other, cfg, m) {
   var both = cfg.xEvery && m.n % cfg.xEvery === 0;
   m.side = -(m.side || -1);
   m.sl = { t: 0, side: m.side, both: both, hit: false, glint: false };
+  if (typeof jpSpinMaybe === "function") jpSpinMaybe(self, other, cfg, m); // now and then a whirlwind instead (jiri-spin.js)
   playSamuraiGlint(false);
 }
 
 function jpRunSlash(self, other, cfg, m, dt, gap) {
+  if (m.sl.kind === "spin") return jpSpinRun(self, other, cfg, m, dt, gap); // the whirlwind (jiri-spin.js)
   var sl = m.sl, T = cfg.tell, S = cfg.swing, R = cfg.recover;
   sl.t += dt;
   var ux = Math.cos(m.ang), uy = Math.sin(m.ang), spd = (self.baseSpeed || SPEED) * cfg.speed;
@@ -58700,7 +58730,8 @@ function tickSamuraiLock(dt) {
 function applyProchazkaPose(b) {
   var m = samuraiOn(b) ? b.igbb : null, cfg = jpSam(b), rot = 0, sx = 1, sy = 1;
   if (!m || !cfg) return;
-  if (m.phase === "close" && m.sl) {
+  if (m.phase === "close" && m.sl && m.sl.kind === "spin") rot = jpSpinPose(m.sl); // turning with the whirlwind (jiri-spin.js)
+  else if (m.phase === "close" && m.sl) {
     var sl = m.sl, T = cfg.tell, S = cfg.swing;
     if (sl.t < T) rot = sl.side * 0.28 * jpEase(sl.t / T);
     else if (sl.t < T + S) rot = sl.side * (0.28 - 0.62 * jpEaseOut((sl.t - T) / S));
@@ -58745,6 +58776,7 @@ function drawProchazka(b, other) {
   if (m.phase === "final") { jpDrawFinal(b, other, sam, m, ang); return; }
   // The run.
   var sl = m.sl;
+  if (sl && sl.kind === "spin") { jpDrawSpin(b, sam, m); return; } // the whirlwind (jiri-spin.js)
   if (sl && sl.t < sam.tell) jpDrawTell(b, other, sam, m);
   [1, -1].forEach(function (s) {
     var len = b.r * (s > 0 ? JP_LONG : JP_SHORT);
@@ -59358,6 +59390,8 @@ function prochazkaGalleryMoves(ch, add) {
   if (!p) return;
   if (p.handsLow) add("🙌", "Hands low", "Fights with his gloves down by his hips. No block at all: he weaves instead.");
   if (p.chin) add("💥", "Chin", "With his hands that low, " + p.chin.critChance + "% of the strikes that land on him are critical hits for " + p.chin.critMult + "x.");
+  if (typeof jpSpinGalleryMove === "function") jpSpinGalleryMove(p, add); // the whirlwind (jiri-spin.js)
+  if (typeof jpReactGalleryMoves === "function") jpReactGalleryMoves(p, add); // the quick draw and the leprechauns (jiri-react.js)
   if (p.samurai && p.samurai.vsTony) add("⚔️", "Katanas vs katanas", "Against Tony Ferguson, Tony's katanas come out to meet the samurai " + p.samurai.vsTony.answerChance + "% of the time.");
 }
 
@@ -59445,6 +59479,375 @@ function playChinCrack() {
     caneTone(ac, t, "triangle", 900, 260, 0.3, 0.09);
     caneTone(ac, t, "sine", 140, 60, 0.4, 0.16);
   });
+}
+
+// Jiří Procházka's whirlwind (Joe, 2026-11-17): now and then in the samurai's
+// run, instead of a single cut, he coils both katanas over his shoulder and
+// spins round like a blender with both blades out, the same idea as Tony
+// Ferguson's blade cyclone (Katana B, ferguson-katanas.js). Numbers live in
+// his character file under `prochazka.samurai.spin`; leave the block out and
+// it never happens.
+//
+//   chance   % of his cuts that become the whirlwind, once at least
+//            `minPlain` ordinary cuts have gone since the last one (never on
+//            an X cut, never with them up against the cage)
+//   wind     seconds coiling up (the tell: blades cross over his shoulder
+//            with a glint, "WHIRLWIND!")
+//   time     seconds spinning
+//   turns    turns a second at full speed
+//   hits     the most cuts one whirlwind can land
+//   mult     each cut is the samurai's `damage` x `mult` (crits, bleeding
+//            cuts, clashes with their weapon and the cut down all work the
+//            same as his other cuts: it goes through jpCut in prochazka.js)
+//
+// Like Tony's, it never pins anyone in a corner (Joe's rule for the
+// cyclone): no knockback off its cuts, it never starts near the cage, and it
+// stops drifting in if they get there. Only his own two arms.
+"use strict";
+
+function jpSpinCfg(b) { var s = jpSam(b); return s && s.spin; }
+
+// From jpStartSlash (prochazka.js): turns the cut that's starting into a
+// whirlwind now and then.
+function jpSpinMaybe(self, other, cfg, m) {
+  var c = cfg.spin, sl = m.sl;
+  if (!c || !sl || (sl.both && !(typeof jpLadsNear === "function" && jpLadsNear(self)))) { m.plainCuts = (m.plainCuts || 0) + 1; return; }
+  var ok = (m.plainCuts || 0) >= (c.minPlain || 0) && katWallGap(other) > 20 && Math.random() * 100 < (c.chance || 0); // (katWallGap: ferguson-katanas.js)
+  if (typeof jpLadsNear === "function" && jpLadsNear(self) && self.jpScaredBus !== cmBus) ok = true; // Conor's lads close: the whirlwind, to scare them off (jiri-react.js)
+  if (!ok) { m.plainCuts = (m.plainCuts || 0) + 1; return; }
+  m.plainCuts = 0;
+  sl.kind = "spin"; sl.spin = m.ang + 1.3; sl.spinV = 0; sl.hits = 0; sl.cd = 0; sl.whoosh = 0; sl.hit = true; sl.a0 = m.ang;
+  floater(self.x, self.y - self.r - 30, "WHIRLWIND!", "crit");
+}
+
+// From jpRunSlash (prochazka.js) while the cut is a whirlwind.
+function jpSpinRun(self, other, cfg, m, dt, gap) {
+  var c = cfg.spin, sl = m.sl, Wd = c.wind || 0.2, T = c.time || 0.75;
+  sl.t += dt;
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d, spd = (self.baseSpeed || SPEED) * cfg.speed;
+  if (sl.t < Wd) { self.vx = ux * spd * 0.2; self.vy = uy * spd * 0.2; return; } // coiling up
+  if (!sl.scared) { sl.scared = true; if (typeof jpScareLads === "function") jpScareLads(self); } // Conor's lads leg it (jiri-react.js)
+  var t = sl.t - Wd, k = jpClamp(t / 0.12) * jpClamp((T - t) / 0.12 + 0.15);
+  sl.spinV = 2 * Math.PI * (c.turns || 3) * k;
+  sl.spin += sl.spinV * dt;
+  // Drifts in, but never pins them: stops once they're near the cage.
+  var drift = katWallGap(other) > other.r + 25 && gap > 4 ? spd * 0.45 : 0;
+  self.vx = ux * drift; self.vy = uy * drift;
+  sl.cd -= dt; sl.whoosh -= dt;
+  if (sl.whoosh <= 0 && k > 0.4) { sl.whoosh = 0.15; playElbowSwish(true); }
+  var ang = Math.atan2(uy, ux);
+  for (var s = -1; s <= 1; s += 2) {
+    var ba = sl.spin + (s > 0 ? 0 : Math.PI), diff = Math.atan2(Math.sin(ba - ang), Math.cos(ba - ang));
+    if (sl.cd <= 0 && sl.hits < (c.hits || 2) && Math.abs(diff) < 0.4 && k > 0.5 && other.alive && gap < self.r * (s > 0 ? JP_LONG : JP_SHORT) * 0.8) {
+      sl.cd = 0.22; sl.hits++;
+      m.ang = ang;
+      var vx = other.vx, vy = other.vy;
+      jpCut(self, other, cfg, m, c.mult || 0.8, "line", ang + Math.PI / 2 + 0.3);
+      if (m.phase !== "close") return; // (the cut down took over)
+      if (!other.justDodged) { other.vx = vx; other.vy = vy; } // no knockback: no bouncing them off the cage
+      if (!m.sl) return; // (it met their weapon: the clash ends the whirlwind)
+    }
+  }
+  if (t >= T) { m.sl = null; m.next = 0.15; }
+}
+
+// From applyProchazkaPose (prochazka.js): his body turning with the spin.
+function jpSpinPose(sl) {
+  return sl.t < 0 ? 0 : sl.spin - (sl.a0 + 1.3) + 0.28 * jpEase(Math.min(1, sl.t / 0.12));
+}
+
+// From drawProchazka (prochazka.js): coiled with both blades crossed over his
+// shoulder, then both straight out either side, trailing a swoosh.
+function jpDrawSpin(b, sam, m) {
+  var sl = m.sl, c = sam.spin, Wd = c.wind || 0.2;
+  if (sl.t < Wd) {
+    var u = jpEase(sl.t / (Wd * 0.7)), ang = sl.a0;
+    [1, -1].forEach(function (s) {
+      var len = b.r * (s > 0 ? JP_LONG : JP_SHORT), g = jpGuard(b, ang, s);
+      var hand = jpAt(b, jpLerpA(ang + s * 0.62, ang + 1.05 + s * 0.2, u), 1.0 - 0.1 * u);
+      jpArm(b, ang, s, hand, jpLerpA(g.ba, ang + 2.5 + s * 0.25, u), len, sl.t > Wd * 0.5 ? 0.5 + 0.5 * Math.sin(jpClock * 40) : 0);
+    });
+    return;
+  }
+  [1, -1].forEach(function (s) {
+    var len = b.r * (s > 0 ? JP_LONG : JP_SHORT), th = sl.spin + (s > 0 ? 0 : Math.PI);
+    if (sl.spinV > 6) {
+      var pts = [];
+      for (var i = 0; i <= 12; i++) {
+        var back = (1 - i / 12) * 1.25, a = th - back, h = jpAt(b, a, 1.05), ba = a - 0.12;
+        pts.push({ m: { x: h.x + Math.cos(ba) * len * 0.3, y: h.y + Math.sin(ba) * len * 0.3 }, t: { x: h.x + Math.cos(ba) * len, y: h.y + Math.sin(ba) * len } });
+      }
+      katTrail(pts, Math.min(1, sl.spinV / 18) * 0.85); // (ferguson-katanas.js)
+    }
+    jpArm(b, th - s * Math.PI / 2, s, jpAt(b, th, 1.05), th - 0.12, len, 0);
+  });
+}
+
+// The fighter card's move list (gallery.js).
+function jpSpinGalleryMove(p, add) {
+  var c = p && p.samurai && p.samurai.spin;
+  if (c) add("🌀", "Whirlwind", "Now and then in the samurai's run, " + c.chance + "% of his cuts become a spin with both katanas out: up to " + c.hits + " cuts at " + c.mult + "x, no knockback, never in a corner.");
+}
+
+// Jiří Procházka's samurai against animals and leprechauns (Joe, 2026-11-17:
+// only in samurai mode). Numbers under `prochazka.react` in his character
+// file; it all runs while he has both katanas in his hands (the draw, the
+// run and the finisher of his samurai special, prochazka.js), never outside it.
+//
+// Animals   (react.animals) anything with four legs or wings that comes for
+//           the samurai gets cut clean in half: Khabib's bear walking into him
+//           or thrown at him, Nate's lion landing its pounce, Jon's goats,
+//           Ilia's bull, Gaethje's eagle strike and Strickland's eagle.
+//           Instead of the attack: a white flash across it ("CUT IN HALF!"),
+//           and the two halves slide apart and puff away into smoke and cherry
+//           blossom. Never bloody: a clean white line, no red, nothing inside.
+//           `chance`% of the time (100 = always). Each animal's own file asks
+//           with one line (jpAnimalCut), and the bear, the lion and the eagle
+//           strike are let at him while he's a samurai (jpSamuraiCanCut).
+// Leprechauns (react.leprechauns) Conor McGregor's Bus Crew lads: the lads
+//           coming off the bus for him fill his samurai bar (once a bus) and the
+//           samurai answers the bus (jpBusAnswer), and with any lad within `range` his next cut
+//           is the whirlwind (jiri-spin.js). The whirlwind sends every lad off
+//           the bus legging it back aboard ("RUN!"), and any still to come off
+//           take one look and run back on.
+"use strict";
+
+var jpHalves = [];        // the animals he's cut, sliding apart
+var JP_HALF_LIFE = 1.15;  // seconds they're on screen
+
+function jpReactCfg(b) { var c = jpCfg(b); return c && c.react; }
+function resetJiriReact() { jpHalves = []; }
+
+// The samurai with both katanas in his hands, free to use them.
+function jpSamuraiCanCut(v) {
+  if (!v || !v.alive || v.koOut || !samuraiOn(v) || !jpReactCfg(v)) return false;
+  var ph = v.igbb.phase;
+  return (ph === "draw" || ph === "close" || ph === "final") && !samuraiLockHeld(v) && !v.slam;
+}
+
+// ---------------------------------------------------------------- animals
+
+// From each animal's file at the moment it would hit him. `a`: { x, y } the
+// middle of the animal as drawn, `r` roughly how big it is, `draw` a function
+// that draws it exactly as it is right now. True: it's been cut in half, so
+// the animal's file drops its attack and takes the animal away.
+function jpAnimalCut(v, a) {
+  var rc = jpReactCfg(v), ac = rc && rc.animals;
+  if (!ac || !jpSamuraiCanCut(v) || over) return false;
+  if (Math.random() * 100 >= (ac.chance != null ? ac.chance : 100)) return false;
+  var ang = Math.atan2(a.y - v.y, a.x - v.x);
+  jpHalves.push({ x: a.x, y: a.y, r: a.r || 60, cut: ang + Math.PI / 2 + 0.45, draw: a.draw, t: 0, puffed: false, dx: Math.cos(ang), dy: Math.sin(ang) });
+  floater(a.x, a.y - (a.r || 60) - 20, "CUT IN HALF!", "crit");
+  playSamuraiGlint(true);
+  playElbowSwish(true);
+  hitStop = Math.max(hitStop, 0.1);
+  if (!reduceMotion) shake = Math.max(shake, 10);
+  crowdReact(1);
+  return true;
+}
+
+// Joe (2026-11-17): "let them happen while he's a samurai, for the sake of
+// cool interactions." Jon's GOAT Stampede, Ilia's Aura Farm and Strickland's
+// America (the specials with an animal in them) can start while the samurai
+// is on his run, and the samurai calls them out: as his run starts their bar
+// fills (`answer`% of the time, once a samurai). While their animal is coming
+// he stands his ground with both swords up (his clock waits) and cuts it in
+// half; then he carries on.
+var JP_ANIMAL_SPECIALS = { goatstampede: true, aurafarm: true, america: true };
+function jpAnimalSpecial(b) { return !!(b && b.char.hasSpecial && b.char.special && JP_ANIMAL_SPECIALS[b.char.special.move]); }
+// From canStartIgbb (special.js) and skTrigger (strickland.js).
+function jpSamuraiInvites(self, other) {
+  return jpAnimalSpecial(self) && jpSamuraiCanCut(other) && other.igbb.phase === "close" && !other.igbb.sl && !self.igbb;
+}
+// From updateSamurai (prochazka.js), on the run: true while their animal is on its way.
+function jpSamuraiWaits(self, other, m, dt) {
+  var o = other.igbb;
+  if (m.sl || !o || !JP_ANIMAL_SPECIALS[o.move]) return false;
+  if (o.move === "america" && o.phase !== "eagle") return false;              // (the eagle's been: back to work)
+  if (o.move === "aurafarm" && (o.phase === "bow" || o.phase === "ko" || o.phase === "lift")) return false;
+  m.t = Math.max(0, m.t - dt); // his clock waits
+  self.vx = 0; self.vy = 0;
+  if (o.move === "goatstampede" && typeof jonGoats !== "undefined") {
+    // He goes and stands in the way of the next goat (jon.js's goats run in
+    // straight lanes through the middle).
+    var best = null, bd = Infinity;
+    jonGoats.forEach(function (g) {
+      if (g.hit || (g.phase !== "aim" && g.phase !== "charge")) return;
+      var px = self.x - g.x, py = self.y - g.y, along = px * g.dx + py * g.dy;
+      if (along < 0) return; // (already past him)
+      var qx = g.x + g.dx * along, qy = g.y + g.dy * along, dd = Math.hypot(qx - self.x, qy - self.y);
+      if (dd < bd) { bd = dd; best = { x: qx, y: qy }; }
+    });
+    if (best && bd > 4) {
+      var sp = (self.baseSpeed || SPEED) * ((jpSam(self) || {}).speed || 1);
+      self.vx = (best.x - self.x) / bd * sp; self.vy = (best.y - self.y) / bd * sp;
+    }
+  }
+  return true;
+}
+// From tickJiriReact: the samurai on his run calls their animal out.
+function jpCallAnimals(v) {
+  var ac = jpReactCfg(v) && jpReactCfg(v).animals, o = balls[1 - v.id];
+  if (!ac || !o || !samuraiOn(v) || v.igbb.phase !== "close" || v.jpCalledN === v.jpN || !jpAnimalSpecial(o) || o.igbb) return;
+  if (!canStartIgbb(o, v) || (o.char.special.move === "america" && o.sk && o.sk.fightT < (o.char.special.notBefore || 0))) return; // (only if they can come right now)
+  v.jpCalledN = v.jpN;
+  if (Math.random() * 100 < (ac.answer != null ? ac.answer : 100)) o.specialT = Math.max(o.specialT || 0, o.char.special.chargeTime);
+}
+
+// ---------------------------------------------------------------- leprechauns
+
+function jpLadsOut(v) { return typeof cmBus !== "undefined" && cmBus && cmBus.oppId === v.id && cmBus.crew.some(function (c) { return c.st === "chase" || c.st === "out" || c.st === "brawl"; }); }
+// From jpSpinMaybe (jiri-spin.js): a lad close enough that the next cut is the whirlwind.
+function jpLadsNear(v) {
+  var lc = jpReactCfg(v) && jpReactCfg(v).leprechauns;
+  if (!lc || !jpLadsOut(v)) return false;
+  return cmBus.crew.some(function (c) { return (c.st === "chase" || c.st === "out") && Math.hypot(c.x - v.x, c.y - v.y) - v.r - CM_CREW_R < (lc.range || 120); });
+}
+// From updateSamurai (prochazka.js): the lads out for him and his bar full,
+// the samurai answers the bus (like Tony's katanas get answered).
+function jpBusAnswer(self, other) {
+  var lc = jpReactCfg(self) && jpReactCfg(self).leprechauns;
+  return !!(lc && jpLadsOut(self) && self.alive && !self.igbb && !self.cmBrawl && !specialBusy(self) && inOrdinaryMovement(self) && !swordDuelActive());
+}
+
+// The whirlwind (jpSpinRun, jiri-spin.js) scares off every lad off the bus.
+function jpScareLads(v) {
+  if (typeof cmBus === "undefined" || !cmBus || cmBus.oppId !== v.id) return 0;
+  var n = 0, first = v.jpScaredBus !== cmBus;
+  v.jpScaredBus = cmBus; // (any lad still to come off the bus takes one look and runs back on: tickJiriReact)
+  cmBus.crew.forEach(function (c) {
+    if (c.st !== "chase" && c.st !== "out" && c.st !== "brawl") return;
+    c.st = "back"; c.t = 0; c.dizzy = 0; c.puff = 0; c.scared = true;
+    floater(c.x, c.y - 30, (c.i % 2) ? "AAAH!" : "RUN!", "note");
+    n++;
+  });
+  if (n && first) {
+    floater(v.x, v.y - v.r - 44, "SCARED OFF!", "crit");
+    crowdReact(1);
+  }
+  return n;
+}
+
+// ---------------------------------------------------------------- every frame
+
+// From tickProchazka (prochazka.js).
+function tickJiriReact(dt) {
+  jpHalves.forEach(function (h) {
+    h.t += dt;
+    if (!h.puffed && h.t >= JP_HALF_LIFE - 0.35) { h.puffed = true; jpHalfPuff(h); }
+  });
+  jpHalves = jpHalves.filter(function (h) { return h.t < JP_HALF_LIFE; });
+  balls.forEach(function (v) { if (jpReactCfg(v)) jpCallAnimals(v); });
+  balls.forEach(function (v) {
+    if (!jpReactCfg(v) || typeof cmBus === "undefined" || !cmBus || !v.alive) return;
+    if (v.jpScaredBus === cmBus) jpScareLads(v); // the rest of the crew won't come near him either
+    // The lads coming for him fill the samurai's bar (once a bus), so he answers them.
+    var sp = v.char.special, lc = jpReactCfg(v).leprechauns;
+    if (lc && v.jpBusFilled !== cmBus && jpLadsOut(v) && sp && sp.move === "samurai" && !samuraiOn(v)) { v.jpBusFilled = cmBus; v.specialT = Math.max(v.specialT || 0, sp.chargeTime); }
+  });
+}
+// Smoke and cherry blossom where the halves were.
+function jpHalfPuff(h) {
+  for (var i = 0; i < 22 && !reduceMotion; i++) {
+    var a = nativeRandom() * Math.PI * 2, s = 60 + nativeRandom() * 160;
+    particles.push({ x: h.x + Math.cos(a) * h.r * 0.4, y: h.y + Math.sin(a) * h.r * 0.3, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 40,
+      life: 0.5 + nativeRandom() * 0.3, max: 0.8, size: 5 + nativeRandom() * 7, color: i % 3 ? "rgba(236,232,224,0.85)" : "#f4b6c8" });
+  }
+  playWhoosh();
+}
+
+// ---------------------------------------------------------------- drawing
+
+// From draw() over the fighters (draw.js): the halves sliding apart.
+function drawJiriReactOver() {
+  jpHalves.forEach(function (h) {
+    var u = h.t / JP_HALF_LIFE, e = jpEaseOut(Math.min(1, h.t / 0.5));
+    var cx = Math.cos(h.cut), cy = Math.sin(h.cut), nx = -cy, ny = cx, R = h.r * 3;
+    var alpha = h.t < JP_HALF_LIFE - 0.4 ? 1 : Math.max(0, (JP_HALF_LIFE - h.t) / 0.4);
+    [-1, 1].forEach(function (s) {
+      var sep = h.r * 0.38 * e, rot = s * 0.22 * e, drop = h.r * 0.12 * e;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(nx * s * sep + h.dx * h.r * 0.25 * e, ny * s * sep + drop + h.dy * h.r * 0.25 * e);
+      ctx.translate(h.x, h.y); ctx.rotate(rot); ctx.translate(-h.x, -h.y);
+      // this side of the cut line
+      ctx.beginPath();
+      ctx.moveTo(h.x - cx * R, h.y - cy * R);
+      ctx.lineTo(h.x + cx * R, h.y + cy * R);
+      ctx.lineTo(h.x + cx * R + nx * s * R, h.y + cy * R + ny * s * R);
+      ctx.lineTo(h.x - cx * R + nx * s * R, h.y - cy * R + ny * s * R);
+      ctx.closePath();
+      ctx.clip();
+      try { h.draw(); } catch (err) { /* an animal's art not loaded yet */ }
+      // the clean cut face: a white edge, nothing inside
+      ctx.strokeStyle = "rgba(255,255,255,0.95)"; ctx.lineWidth = 5; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(h.x - cx * h.r * 1.3, h.y - cy * h.r * 1.3); ctx.lineTo(h.x + cx * h.r * 1.3, h.y + cy * h.r * 1.3); ctx.stroke();
+      ctx.restore();
+    });
+    // the flash of the cut itself, across the gap
+    if (h.t < 0.3) {
+      var g = jpClamp(h.t / 0.06), L = h.r * 1.8;
+      ctx.save(); ctx.lineCap = "round";
+      ctx.globalAlpha = 1 - h.t / 0.3;
+      ctx.strokeStyle = JP_INK; ctx.lineWidth = 12;
+      ctx.beginPath(); ctx.moveTo(h.x - cx * L, h.y - cy * L); ctx.lineTo(h.x - cx * L + cx * 2 * L * g, h.y - cy * L + cy * 2 * L * g); ctx.stroke();
+      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(h.x - cx * L, h.y - cy * L); ctx.lineTo(h.x - cx * L + cx * 2 * L * g, h.y - cy * L + cy * 2 * L * g); ctx.stroke();
+      ctx.restore();
+    }
+  });
+}
+
+// The fighter card's move list (gallery.js).
+function jpReactGalleryMoves(p, add) {
+  var rc = p && p.react;
+  if (!rc) return;
+  if (rc.animals) add("🗡️", "Samurai vs animals", "As a samurai, any animal that comes for him (a bear, a lion, goats, a bull, an eagle) is cut clean in half.");
+  if (rc.leprechauns) add("🍀", "Scares off leprechauns", "As a samurai, his whirlwind sends Conor's bus crew legging it back to the bus.");
+}
+
+// ---------------------------------------------------------------- the animals, as they look right now
+
+// Each returns { x, y, r, draw } for jpAnimalCut: where the middle of it is
+// and a function that draws it frozen at this moment (their own art).
+function jpBearArt(B) {
+  if (B.phase === "thrown") {
+    var tx = B.x, ty = B.y - (B.z || 0), rot = Math.PI + (B.spin || 0);
+    return { x: tx, y: ty, r: BEAR_SIDE_H * 0.45, draw: function () { drawBearSide(tx, ty, rot, 1); } };
+  }
+  if (B.moving) {
+    var x = B.x, y = B.y - (B.z || 0), face = B.face;
+    return { x: x, y: y, r: BEAR_SIDE_H * 0.45, draw: function () { drawBearSide(x, y, 0, face); } }; // (khabib-bear.js)
+  }
+  var sx = B.x, sy = B.y - BEAR_H * 0.1, sf = B.face;
+  return { x: sx, y: sy, r: BEAR_H * 0.4, draw: function () { drawBearSprite(sx, sy, 0, sf, 1); } };
+}
+function jpLionArt(L) {
+  var x = L.x, y = L.y - (L.z || 0), face = L.face, h = LION_SIDE_H;
+  return { x: x, y: y, r: h * 0.55, draw: function () { drawLionPic(lionSideImg, LION_SIDE_ASPECT, x, y, h, face, -0.15); } }; // (nate-lion.js)
+}
+function jpGoatArt(g) {
+  var x = g.x, y = g.y - (g.z || 0), face = g.face, r = GS_GOAT_R, tilt = Math.max(-0.4, Math.min(0.4, g.dy * 0.5)) * g.face;
+  return { x: x, y: y, r: r * 1.3, draw: function () { // (as drawJonGoats draws it, jon.js)
+    var im = goatImage();
+    ctx.save(); ctx.translate(x, y); ctx.rotate(tilt); ctx.scale(face, 1);
+    if (im) { var w = r * 2.6, h = w * JON_GOAT_ASPECT; ctx.drawImage(im, -w / 2, r * 0.95 - h, w, h); }
+    else { ctx.fillStyle = "#1b1b1b"; ctx.beginPath(); ctx.ellipse(0, 0, r * 1.1, r * 0.7, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  } };
+}
+function jpEsEagleArt(e) {
+  var h = Math.abs(e.k - 0.5) * 2, x = e.x, y = e.y - h * h * 90, sc = 0.62 + 0.5 * h, ang = Math.atan2(e.dy, e.dx), flap = e.t * 16;
+  return { x: x, y: y, r: 70 * sc, draw: function () { drawEagle(x, y, ang, sc, flap, true); } }; // (allamerican.js)
+}
+function jpSkEagleArt(e) {
+  var x = e.x, y = e.y, ux = e.ux, uy = e.uy, flap = e.flap;
+  var tilt = Math.max(-0.9, Math.min(0.9, (ux >= 0 ? 1 : -1) * Math.atan2(uy, Math.abs(ux) + 0.001) * 0.6));
+  return { x: x, y: y, r: 60, draw: function () { ctx.save(); ctx.translate(x, y); ctx.rotate(tilt); drawEagle(0, 0, Math.atan2(uy, ux), 0.8, flap, true); ctx.restore(); } }; // (as strickland.js draws it)
+}
+function jpBullArt(b) {
+  var x = b.x, y = b.y - (b.z || 0), face = b.face, spin = b.spin || 0, ko = b.ko, t = b.t;
+  return { x: x, y: y - AF_BULL_R * 0.3, r: AF_BULL_R * 1.2, draw: function () { drawBull(x, y, AF_BULL_R, face, spin, ko, t, true); } }; // (aurafarm.js)
 }
 
 // The teep: a front push kick (Christian, 2026-11-13). A small strike any
@@ -62814,6 +63217,7 @@ function skTrackLanded(b, s) {
 // landing, or he has them cornered, or he's waited long enough.
 function skTrigger(self, other, sp) {
   if (skDemo()) return "demo";
+  if (typeof jpSamuraiInvites === "function" && jpSamuraiInvites(self, other)) return "samurai"; // the eagle at Jiří Procházka's samurai (jiri-react.js)
   if (!skFree(other)) return null; // not while they're in the middle of something of their own
   var tg = sp.trigger || {}, s = self.sk;
   var dx = other.x - self.x, dy = other.y - self.y, gap = Math.sqrt(dx * dx + dy * dy) - self.r - other.r;
@@ -63218,6 +63622,7 @@ function skEagleStrike(self, other, e) {
   var eg = (self.char.special && self.char.special.eagle) || {};
   e.mode = "rise"; e.t = 0; e.sx = e.ux; e.sy = e.uy;
   if (over || !other.alive || other.koOut) return;
+  if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpSkEagleArt(e))) { amEagle = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
   var dealt = hurt(other, eg.damage != null ? eg.damage : 18, eg.unblockable === false ? "kick" : "igbb", self.id);
   if (dealt <= 0) return; // slipped, blocked or untouchable (hurt says so): it swoops on past
   e.hit = true;
@@ -78166,6 +78571,7 @@ function drawTaleTape() {
   if (!tape.voiced && t >= TAPE_HIT.voice && t < 1.2 && clipBuffers.taleOfTheTape && audioCtx) {
     tape.voiced = !!cutInTalk("taleOfTheTape", 0.85);
   }
+  tickTapeTaunts(t); // Conor's mic and line, Charles's aura bursts (tape-taunts.js)
   var stadium = stadiumOn(), k, box;
   if (stadium) {
     k = canvas.width / STAGE_W;
@@ -78262,11 +78668,11 @@ function drawTapeCard(box, t, withTitle) {
   }
 
   // Portraits slide in from their sides
+  var presserX = null;
   var pr = 108, py = top + 136, lx = 180, rx = w - 180;
   // Taunts go left then right, but a thumbs down always comes first, so the
   // other fighter answers it (Gane pokes Hokit in the eye for it: Joe)
-  var sg = TAPE_HIT.sig;
-  if (tapeSigKind(B) === "thumbs" && tapeSigKind(A) !== "thumbs") sg = [sg[1], sg[0]];
+  var sg = tapeSigTimes(A, B);
   var fs = [[A, ca, lx, -1, TAPE_HIT.left, sg[0]], [B, cb, rx, 1, TAPE_HIT.right, sg[1]]];
   fs.forEach(function (f, i) {
     var p = tapeEase((t - f[4]) / 0.3);
@@ -78275,6 +78681,7 @@ function drawTapeCard(box, t, withTitle) {
     var o = fs[1 - i]; // the other fighter, whose taunt this one reacts to
     ctx.save();
     drawTapeFighter(f[0], f[1], x, py, pr, t, f[4], f[3], f[5], tapeSigKind(o[0]), o[5]);
+    if (tapeSigKind(f[0]) === "presser") presserX = x; // (his speech bubble, tape-taunts.js)
     // Name and nickname under the portrait
     ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
     var parts = (f[0].name || "").toUpperCase().trim().split(/\s+/), last = parts.pop(), first = parts.join(" ");
@@ -78331,6 +78738,7 @@ function drawTapeCard(box, t, withTitle) {
       ctx.restore();
     });
   });
+  drawTapePresserBubble(t, w, py, pr, presserX); // Conor's line (tape-taunts.js)
   ctx.restore();
 
   // Gold rim on top
@@ -78339,6 +78747,12 @@ function drawTapeCard(box, t, withTitle) {
   if (ctx.roundRect) ctx.roundRect(0, 0, w, h, 24); else ctx.rect(0, 0, w, h);
   ctx.stroke();
   ctx.globalAlpha = 1;
+}
+
+function tapeSigTimes(A, B) {
+  var sg = TAPE_HIT.sig;
+  if (tapeSigKind(B) === "thumbs" && tapeSigKind(A) !== "thumbs") sg = [sg[1], sg[0]];
+  return tapeTauntTimes(A, B, sg); // (the press conference goes first, tape-taunts.js)
 }
 
 // ---------------------------------------------------------------
@@ -78351,19 +78765,21 @@ function drawTapeCard(box, t, withTitle) {
 var TAPE_BEAT = 0.543;
 var TAPE_SIG_LEN = 1.1;
 function tapeSigKind(ch) {
+  var own = tapeTauntKind(ch); if (own) return own; // Conor's press conference, Charles's Super Saiyan, Ilia's rose (tape-taunts.js)
   if (ch.id === "c-josh-hokit") return "thumbs";
   if (ch.id === "c-ciryl-gane" || ch.id === "c-jon-jones") return "poke"; // both poke eyes in a fight
   return "gloves";
 }
 
 function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSigAt) {
-  var kind = tapeSigKind(ch), st = t - sigAt, sig = st > 0 && st < TAPE_SIG_LEN ? st : -1;
-  var ost = t - oppSigAt, oppSig = ost > 0 && ost < TAPE_SIG_LEN + 0.5 ? ost : -1;
+  var kind = tapeSigKind(ch), st = t - sigAt, sig = st > 0 && st < tapeSigLen(kind) ? st : -1;
+  var ost = t - oppSigAt, oppSig = ost > 0 && ost < tapeSigLen(oppKind) + 0.5 ? ost : -1;
   // Bounce on the beat (a fighter's stance), a little sway
   var ph = (t - tIn) / TAPE_BEAT;
   var bob = -Math.abs(Math.sin(Math.PI * ph)) * 7, sway = Math.sin(Math.PI * ph * 0.5) * 0.05;
   if (oppSig >= 0 && oppKind === "poke" && ost > 0.35) { bob += Math.sin(ost * 40) * 3 * Math.max(0, 1 - ost); } // rocked by the poke
   var ink = "#0b0f12";
+  if (kind === "saiyan") drawTapeSaiyanAura(x, y + bob, pr, sig); // (tape-taunts.js)
   // Ring
   ctx.shadowColor = shadeHex(col, 0.35); ctx.shadowBlur = 30;
   ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, pr, 0, Math.PI * 2); ctx.fill();
@@ -78379,7 +78795,7 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   ctx.save();
   ctx.beginPath(); ctx.arc(x, y, pr - 3, 0, Math.PI * 2); ctx.clip();
   ctx.translate(x, y + bob); ctx.rotate(sway);
-  if (ch.look) drawFighterArt(ctx, 0, 0, pr - 12, ch.look, ink, { layout: "contained", name: ch.name });
+  if (ch.look) drawFighterArt(ctx, 0, 0, pr - 12, kind === "saiyan" ? tapeSaiyanLook(ch, sig) : ch.look, ink, { layout: "contained", name: ch.name });
   else { ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 110px " + TAPE_IMPACT; ctx.fillText((ch.name || "?").charAt(0).toUpperCase(), 0, 4); }
   ctx.restore();
 
@@ -78407,6 +78823,12 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
       g[inn].x += -side * pr * (0.35 * k + 0.45 * jab); g[inn].y -= pr * 0.55 * k;
       g[inn].poke = k; g[inn].pokeDir = -side; g[inn].s = 1 + 0.3 * k;
       extra = jab > 0.85 ? "poke" : null;
+    } else if (kind === "presser") {
+      tapePresserGloves(g, pr, sig, side); // (tape-taunts.js)
+    } else if (kind === "saiyan") {
+      tapeSaiyanGloves(g, pr, sig); // (tape-taunts.js)
+    } else if (kind === "rose") {
+      tapeRoseGloves(g, pr, sig, side, oppKind === "poke" && oppSig >= 0 ? ost : -1); // Ilia's rose (tape-taunts.js)
     } else {
       // Both gloves punch together at the camera
       var tap = Math.max(0, Math.sin(Math.min(1, sig / 0.45) * Math.PI)) * back;
@@ -78414,6 +78836,8 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
       extra = tap > 0.9 ? "tap" : null;
     }
   }
+  if (kind === "presser") drawTapePodium(x, y + bob, pr, sig); // his podium, in front of him (tape-taunts.js)
+  if (kind === "rose") drawTapeRose(g, gr, pr, sig, side, oppKind === "poke" && oppSig >= 0 ? ost : -1, x, y + bob); // (tape-taunts.js)
   // Draw the far glove first so the one coming at the camera is on top
   var order = g[0].s > g[1].s ? [1, 0] : [0, 1];
   order.forEach(function (j) { drawTapeGlove(ch, g[j], gr, side); });
@@ -78437,6 +78861,9 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   // Reacting to the other fighter's taunt
   if (oppSig >= 0 && oppKind === "thumbs" && ost > 0.25) drawTapeAnger(x + pr * 0.62, y - pr * 0.72, ost);
   if (oppSig >= 0 && oppKind === "poke" && ost > 0.35) drawTapeStars(x, y - pr * 0.82, pr, ost);
+  if (oppSig >= 0 && oppKind === "presser" && ost > 0.6 && sig < 0) drawTapeAnger(x + side * pr * 0.62, y - pr * 0.72, ost); // fuming at the press conference (on the outside, away from his speech bubble)
+  if (kind === "saiyan") drawTapeSaiyanFront(x, y + bob, pr, sig); // (tape-taunts.js)
+  if (kind === "rose") drawTapeRoseScent(g, gr, pr, sig, side, oppKind === "poke" && oppSig >= 0 ? ost : -1); // (tape-taunts.js)
 }
 
 function drawTapeGlove(ch, g, gr, side) {
@@ -78449,6 +78876,14 @@ function drawTapeGlove(ch, g, gr, side) {
     // The thumb, sticking straight down out of the glove
     ctx.beginPath(); ctx.ellipse(g.x + side * r * 0.15, g.y + r * 1.2 * g.thumb, r * 0.38, r * 0.72 * g.thumb, 0, 0, Math.PI * 2);
     ctx.fill(); ctx.stroke();
+  } else if (g.point) {
+    // One finger out of the glove, pointing across at them
+    ctx.save(); ctx.translate(g.x + g.pointDir * r * 0.75, g.y - r * 0.1);
+    ctx.beginPath(); ctx.ellipse(g.pointDir * r * 0.5 * g.point, 0, r * 0.95 * g.point, r * 0.26, 0, 0, Math.PI * 2);
+    ctx.fillStyle = ch.look ? ch.look.skin : gc; ctx.fill(); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = gc;
+    ctx.beginPath(); ctx.arc(g.x, g.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   } else if (g.poke) {
     // Two fingers out of the glove, pointing across at the other fighter
     [-1, 1].forEach(function (d) {
@@ -78496,6 +78931,321 @@ function drawTapeStars(cx, cy, pr, t) {
     ctx.restore();
   }
   ctx.restore();
+}
+
+// Tale of the tape taunts for Conor McGregor and Charles Oliveira (Joe,
+// 2026-11-15), on top of the tale of the tape intro (tale-tape.js).
+//
+// Conor ("presser"): his press conference in his portrait. His podium rises
+// in front of him, the mic squeals, and he talks trash to the other fighter
+// with his real line "He's a snake in the grass." while his outside glove
+// points across at them, word by word. The other fighter fumes, then does
+// their own taunt once he's said it.
+// Charles ("saiyan"): he powers up into Super Saiyan once (blond hair, the
+// golden aura and lightning round his portrait, with the power-up burst),
+// holds the form, then powers down.
+// Only ever the fighter's own two gloves. The line goes through the talk
+// channel (playTalk), so it never talks over the announcer.
+"use strict";
+
+var TAPE_PRESSER_AT = 4.9;   // the podium comes up (a beat before the last row)
+var TAPE_PRESSER_LEN = 2.5;  // up, the line, down again
+var TAPE_PRESSER_RISE = 0.3;
+var TAPE_PRESSER_LINE = "He's a snake in the grass.";
+
+// His line: his own line for that opponent if he has one with a clip (vs
+// Dustin: "A gust of wind and he does the chicken dance.", conor.js), else
+// the snake in the grass.
+function tapePresserLine() {
+  var b = balls && balls[0] && balls[1] ? (tapeSigKind(balls[0].char) === "presser" ? balls[1] : balls[0]) : null;
+  var vs = b && typeof CM_LINES !== "undefined" && CM_LINES.vs && CM_LINES.vs[b.char.id];
+  return vs && vs[0] && SPEECH_CLIPS[vs[0]] ? vs[0] : TAPE_PRESSER_LINE;
+}
+// How long his part runs: long enough for the line (Joe, 2026-11-16).
+function tapePresserLen() {
+  var name = SPEECH_CLIPS[tapePresserLine()], d = name && clipBuffers[name] ? clipBuffers[name].duration : 1.5;
+  return Math.max(TAPE_PRESSER_LEN, TAPE_PRESSER_RISE + 0.1 + d + 0.55);
+}
+var TAPE_SAIYAN_LEN = 1.45;
+// When he's blond (seconds into his taunt): one power-up, he holds the form,
+// then powers down (Joe, 2026-11-15: no flickering).
+var TAPE_SAIYAN_ON = [[0, 1.3]];
+
+function tapeTauntKind(ch) {
+  if (ch.id === "c-conor-mcgregor") return "presser";
+  if (ch.id === "c-charles-oliveira") return "saiyan";
+  if (ch.id === "c-ilia-topuria") return "rose";
+  return null;
+}
+function tapeSigLen(kind) {
+  if (kind === "presser") return tapePresserLen();
+  if (kind === "saiyan") return TAPE_SAIYAN_LEN;
+  if (kind === "rose") return TAPE_ROSE_LEN;
+  return TAPE_SIG_LEN;
+}
+// The press conference goes first and the other fighter answers once the
+// line is out (sg: the usual [left, right] times).
+function tapeTauntTimes(A, B, sg) {
+  var s = [sg[0], sg[1]], k = [tapeSigKind(A), tapeSigKind(B)];
+  for (var i = 0; i < 2; i++) {
+    if (k[i] !== "presser" || k[1 - i] === "presser") continue;
+    s[i] = TAPE_PRESSER_AT;
+    s[1 - i] = TAPE_PRESSER_AT + tapePresserLen() - 0.85;
+    if (k[1 - i] === "saiyan") s[1 - i] = Math.min(s[1 - i], TAPE_HIT.out - TAPE_SAIYAN_LEN + 0.05);
+  }
+  // Ilia's rose: vs Gane he lifts it first and Gane's eye poke lands mid-sniff
+  // (he drops it); otherwise it just has to be over before the card goes.
+  for (var j = 0; j < 2; j++) {
+    if (k[j] !== "rose") continue;
+    if (k[1 - j] === "poke") { s[j] = TAPE_ROSE_AT; s[1 - j] = TAPE_ROSE_AT + TAPE_ROSE_POKE; }
+    else s[j] = Math.min(s[j], TAPE_HIT.out - TAPE_ROSE_LEN + 0.05);
+  }
+  return s;
+}
+function tapeSaiyanOn(sig) {
+  if (sig < 0) return false;
+  for (var i = 0; i < TAPE_SAIYAN_ON.length; i++) if (sig >= TAPE_SAIYAN_ON[i][0] && sig < TAPE_SAIYAN_ON[i][1]) return true;
+  return false;
+}
+
+// From drawTaleTape: the mic, the line and the aura sounds, once each.
+function tickTapeTaunts(t) {
+  if (!tape || !balls || !balls[0] || !balls[1]) return;
+  var A = balls[0].char, B = balls[1].char, sg = tapeSigTimes(A, B), snd = tape.snd || (tape.snd = {});
+  [A, B].forEach(function (ch, i) {
+    var kind = tapeSigKind(ch), st = t - sg[i];
+    if (kind === "presser") {
+      if (!snd.mic && st >= 0) { snd.mic = true; if (typeof playMicFeedback === "function") playMicFeedback(); }
+      if (!snd.line && st >= TAPE_PRESSER_RISE + 0.1 && st < tapePresserLen() - 0.6) {
+        tape.line = tapePresserLine();
+        var name = SPEECH_CLIPS[tape.line];
+        if (!name || !clipBuffers[name]) { snd.line = true; tape.lineAt = t; tape.lineLen = 1.5; }
+        else if (playTalk(name, 1)) { snd.line = true; tape.lineAt = t; tape.lineLen = clipBuffers[name].duration; }
+      }
+    } else if (kind === "saiyan") {
+      if (!snd["up" + i] && st >= 0 && st < 0.2) { snd["up" + i] = true; playClipOnce("saiyanUp", 0.9); }
+      var end = TAPE_SAIYAN_ON[TAPE_SAIYAN_ON.length - 1][1];
+      if (!snd["down" + i] && st >= end && st < end + 0.3) { snd["down" + i] = true; playClipOnce("saiyanDown", AURA_VOL * 1.1); }
+    }
+  });
+}
+
+// From drawTapeFighter, behind the ring: Charles's golden aura while he's blond.
+function drawTapeSaiyanAura(x, y, pr, sig) {
+  if (!tapeSaiyanOn(sig)) return;
+  var t = performance.now() / 1000, rr = pr * 0.78;
+  ctx.save();
+  [[1.0, 0.0], [0.82, 0.9]].forEach(function (L, li) {
+    ctx.beginPath();
+    saiyanFlamePath(x, y, rr * L[0], t, L[1], li);
+    var g = ctx.createLinearGradient(0, y + pr * 1.2, 0, y - pr * 2.2);
+    g.addColorStop(0, li ? "rgba(255,236,90,0.75)" : "rgba(255,170,0,0.7)");
+    g.addColorStop(1, li ? "rgba(255,248,180,0.35)" : "rgba(255,226,90,0.3)");
+    ctx.fillStyle = g;
+    if (!li) { ctx.shadowColor = "rgba(255,200,0,0.95)"; ctx.shadowBlur = 30; }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+  // Streaks of energy shooting up past the ring
+  ctx.lineCap = "round";
+  for (var k = 0; k < 8; k++) {
+    var p = (t * 1.8 + k * 0.137) % 1, sx = x + Math.sin(k * 2.39) * pr * 1.1, sy = y + pr * 0.9 - p * pr * 2.6;
+    ctx.strokeStyle = "rgba(255,252,215," + (0.9 * Math.sin(p * Math.PI)) + ")"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, sy - pr * 0.3); ctx.stroke();
+  }
+  ctx.restore();
+}
+// In front of him: a white flash each time it snaps on, and lightning over him.
+function drawTapeSaiyanFront(x, y, pr, sig) {
+  if (sig < 0) return;
+  ctx.save();
+  TAPE_SAIYAN_ON.forEach(function (on) {
+    var f = (sig - on[0]) / 0.08;
+    if (f >= 0 && f < 1) {
+      ctx.fillStyle = "rgba(255,226,120," + (0.3 * (1 - f)) + ")";
+      ctx.beginPath(); ctx.arc(x, y, pr * (1 + 0.25 * f), 0, Math.PI * 2); ctx.fill();
+    }
+  });
+  if (tapeSaiyanOn(sig)) {
+    // a gold glow over him and a gold rim while he's blond
+    ctx.fillStyle = "rgba(255,200,40,0.14)";
+    ctx.beginPath(); ctx.arc(x, y, pr - 3, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 7; ctx.strokeStyle = "#ffd23f"; ctx.shadowColor = "rgba(255,200,0,0.9)"; ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.arc(x, y, pr, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+    var slot = Math.floor(performance.now() / 1000 * 12);
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    for (var j = 0; j < 2; j++) {
+      var h = Math.sin((slot + j * 17) * 12.9898) * 43758.5453; h -= Math.floor(h);
+      if (h > 0.6) continue;
+      var a0 = h * 40, sx = x + Math.cos(a0) * pr * 0.9, sy = y + Math.sin(a0) * pr * 0.7, pts = [[sx, sy]];
+      for (var q = 1; q <= 4; q++) {
+        var hh = Math.sin((slot * 5 + q * 31 + j * 7) * 78.233) * 12345.678; hh -= Math.floor(hh);
+        pts.push([sx + (hh - 0.5) * pr * 0.7, sy - q * pr * 0.25]);
+      }
+      [[7, "rgba(120,200,255,0.45)"], [3, "rgba(235,250,255,0.95)"]].forEach(function (s) {
+        ctx.lineWidth = s[0]; ctx.strokeStyle = s[1];
+        ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+        for (var q2 = 1; q2 < pts.length; q2++) ctx.lineTo(pts[q2][0], pts[q2][1]);
+        ctx.stroke();
+      });
+    }
+  }
+  ctx.restore();
+}
+// His look in the portrait: blond while it's on (his Do Bronx hair colour).
+function tapeSaiyanLook(ch, sig) {
+  var hc = ch.special && ch.special.hairColor;
+  if (!ch.look || !hc || !tapeSaiyanOn(sig)) return ch.look;
+  return Object.assign({}, ch.look, { hairColor: hc });
+}
+// His gloves while he powers up: fists clenched low, shaking.
+function tapeSaiyanGloves(g, pr, sig) {
+  var k = Math.min(1, sig / 0.1) * Math.min(1, Math.max(0, (TAPE_SAIYAN_LEN - sig) / 0.15));
+  var sh = tapeSaiyanOn(sig) ? 4 : 2;
+  g.forEach(function (gl, j) {
+    gl.y += pr * 0.22 * k + Math.sin(sig * 70 + j * 2) * sh * k;
+    gl.x += (j ? 1 : -1) * pr * 0.12 * k + Math.cos(sig * 63 + j) * sh * k;
+    gl.s = 1 + 0.1 * k;
+  });
+}
+
+// Conor's podium in front of his portrait (his own podium art, conor.js).
+function drawTapePodium(x, y, pr, sig) {
+  if (sig < 0 || typeof drawPodium !== "function") return;
+  var sink = tapePresserLen() - 0.35, keep = cmPodium;
+  cmPodium = { id: -1, x: x, y: y + pr * 0.14, t: sig, sink: sig > sink ? sink : null };
+  try { drawPodium({ r: pr * 0.64 }); } catch (e) {}
+  cmPodium = keep;
+}
+// His gloves at the podium: the inside one resting on it, the outside one
+// pointing across at the other fighter, jabbing on the words.
+function tapePresserGloves(g, pr, sig, side) {
+  var up = Math.min(1, sig / TAPE_PRESSER_RISE) * Math.min(1, Math.max(0, (tapePresserLen() - 0.3 - sig) / 0.25));
+  var out = side < 0 ? 0 : 1, inn = 1 - out, talk = tape && tape.lineAt != null ? (performance.now() - tape.t0) / 1000 - tape.lineAt : -1;
+  var jab = talk >= 0 && talk < (tape.lineLen || 1.5) ? Math.abs(Math.sin(talk * 9)) : 0;
+  g[out].y += pr * 0.12 * up; g[out].x -= side * pr * 0.12 * up; // resting on the podium
+  g[inn].x += -side * pr * (0.42 + 0.14 * jab) * up; g[inn].y -= pr * 0.12 * up; // pointing across at them
+  g[inn].point = up; g[inn].pointDir = -side;
+  g[inn].s = 1 + 0.12 * jab;
+}
+
+// The line, in a speech bubble over the middle of the card, its tail to him.
+function drawTapePresserBubble(t, w, py, pr, px) {
+  if (!tape || tape.lineAt == null || px == null) return;
+  var st = t - tape.lineAt, len = (tape.lineLen || 1.5) + 0.35;
+  if (st < 0 || st > len) return;
+  var a = Math.min(1, st / 0.12) * Math.min(1, (len - st) / 0.2), pop = tapePop(Math.min(1, st / 0.2));
+  var bw = 430, bh = 92, bx = w / 2, by = Math.max(bh / 2 + 10, py - pr * 0.95); // (kept inside the card)
+  var dir = px > bx ? 1 : -1;
+  ctx.save();
+  ctx.globalAlpha *= a;
+  ctx.translate(bx, by); ctx.scale(pop, pop);
+  ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = 6; ctx.lineJoin = "round";
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(-bw / 2, -bh / 2, bw, bh, 26); else ctx.rect(-bw / 2, -bh / 2, bw, bh);
+  ctx.moveTo(dir * (bw / 2 - 70), bh / 2 - 3);
+  ctx.lineTo(dir * (bw / 2 + 10), bh / 2 + 34);
+  ctx.lineTo(dir * (bw / 2 - 20), bh / 2 - 3);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(dir > 0 ? bw / 2 - 66 : -bw / 2 + 24, bh / 2 - 9, 42, 12); // (no line where the tail meets it)
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  var words = (tape.line || TAPE_PRESSER_LINE).toUpperCase().split(" "), lines = [words.join(" ")];
+  if (lines[0].length > 28) { var half = Math.ceil(words.length / 2); lines = [words.slice(0, half).join(" "), words.slice(half).join(" ")]; }
+  ctx.fillStyle = "#0b0f12";
+  var longest = lines.reduce(function (m, ln) { return ln.length > m.length ? ln : m; }, "");
+  tapeFont(longest, lines.length > 1 ? 34 : 40, bw - 40, "900", TAPE_IMPACT); // one size for both lines
+  lines.forEach(function (ln, k) { ctx.fillText(ln, 0, 2 + (k - (lines.length - 1) / 2) * 38); });
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Ilia ("rose", Joe 2026-11-17): he lifts a red rose to his nose with his
+// outside glove, breathes it in (eyes on the camera, scent curling up, a few
+// petals and hearts drifting off) and lowers it. Against Gane, Gane's eye
+// poke lands mid-sniff and the rose drops out of his glove and falls away.
+// ---------------------------------------------------------------
+var TAPE_ROSE_LEN = 1.6;
+var TAPE_ROSE_AT = 5.55;   // vs Gane: Ilia goes first...
+var TAPE_ROSE_POKE = 0.55; // ...and Gane's poke starts this far into his sniff
+var TAPE_ROSE_HIT = 0.17;  // Gane's first jab lands this far into the poke
+function tapeRoseUp(sig, ost) {
+  var up = Math.min(1, sig / 0.3), down = Math.min(1, Math.max(0, (TAPE_ROSE_LEN - sig) / 0.35));
+  var k = tapeEase(up) * down;
+  if (ost >= TAPE_ROSE_HIT) k *= Math.max(0, 1 - (ost - TAPE_ROSE_HIT) / 0.2); // poked: his glove drops back
+  return k;
+}
+// His outside glove brings the rose up under his nose.
+function tapeRoseGloves(g, pr, sig, side, ost) {
+  var out = side < 0 ? 0 : 1, k = tapeRoseUp(sig, ost);
+  var sniff = sig > 0.35 && ost < TAPE_ROSE_HIT ? Math.sin((sig - 0.35) * 9) * 0.5 + 0.5 : 0;
+  var gl = g[out];
+  gl.x += (-side * pr * 0.45 - side * pr * 0.03 * sniff) * k;
+  gl.y -= pr * (0.1 + 0.04 * sniff) * k;
+  if (ost >= TAPE_ROSE_HIT) { var sh = Math.max(0, 1 - (ost - TAPE_ROSE_HIT) / 0.5); g.forEach(function (o, j) { o.x += Math.sin(ost * 60 + j) * 5 * sh; o.y -= pr * 0.08 * sh; }); }
+}
+// Where the bloom sits while he holds it (his glove grips the stem).
+var TAPE_ROSE_S = 0.05; // the rose's size, in portrait radii per unit
+function tapeRoseHeld(gl, pr, side) {
+  return { x: gl.x - side * pr * 0.08, y: gl.y - pr * TAPE_ROSE_S * 7, rot: side * 0.25 };
+}
+// The rose itself, behind his glove so the glove grips the stem. Vs Gane,
+// once the poke lands it falls, tumbling, out of the bottom of the card.
+function drawTapeRose(g, gr, pr, sig, side, ost, x, y) {
+  var gl = g[side < 0 ? 0 : 1], s = pr * TAPE_ROSE_S;
+  if (ost >= TAPE_ROSE_HIT) {
+    var ft = ost - TAPE_ROSE_HIT;
+    if (ft > 1.1) return;
+    // Where it was held at the moment of the poke (full lift, his guard at rest).
+    var hx = x + side * pr * 0.6 - side * pr * 0.45, hy = y + pr * 0.3 - pr * 0.1;
+    var p = tapeRoseHeld({ x: hx, y: hy }, pr, side);
+    var fx = p.x + side * 160 * ft, fy = p.y + 1600 * ft * ft;
+    drawRose(fx, fy, p.rot + side * 7 * ft, s);
+    // a couple of petals knocked loose
+    for (var i = 0; i < 4; i++) {
+      var a = i * 1.7, px = p.x + Math.cos(a) * 140 * ft * (1 + i * 0.3), py = p.y - 90 * ft + 500 * ft * ft;
+      ctx.fillStyle = "rgba(181,18,27," + Math.max(0, 1 - ft) + ")";
+      ctx.beginPath(); ctx.ellipse(px, py, s * 1.8, s * 1.1, a + ft * 8, 0, Math.PI * 2); ctx.fill();
+    }
+    return;
+  }
+  if (sig < 0) return;
+  var k = tapeRoseUp(sig, ost);
+  if (k <= 0.02) return;
+  var p2 = tapeRoseHeld(gl, pr, side);
+  ctx.save(); ctx.globalAlpha = Math.min(1, k * 3);
+  drawRose(p2.x, p2.y, p2.rot * k, s);
+  ctx.restore();
+}
+// Over everything: the scent curling up off the bloom, petals and hearts.
+function drawTapeRoseScent(g, gr, pr, sig, side, ost) {
+  if (sig < 0.35 || ost >= TAPE_ROSE_HIT) return;
+  var k = tapeRoseUp(sig, ost); if (k < 0.5) return;
+  var p = tapeRoseHeld(g[side < 0 ? 0 : 1], pr, side), st = sig - 0.35, a = Math.min(1, st / 0.2) * k;
+  ctx.save(); ctx.lineCap = "round";
+  for (var w = 0; w < 3; w++) { // three wisps rising and curling
+    ctx.strokeStyle = "rgba(255,190,210," + (0.75 * a) + ")"; ctx.lineWidth = 4 - w;
+    ctx.beginPath();
+    for (var q = 0; q <= 14; q++) {
+      var u = q / 14, yy = p.y - pr * 0.15 - u * pr * 0.5, xx = p.x + Math.sin(u * 7 + st * 6 + w * 2) * pr * 0.07 * (0.4 + u) + (w - 1) * pr * 0.06;
+      if (q === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+    }
+    ctx.stroke();
+  }
+  for (var h = 0; h < 3; h++) { // little hearts floating off
+    var ht = (st * 0.9 + h * 0.33) % 1, hx = p.x + side * pr * (0.15 + 0.35 * ht) + Math.sin(ht * 9 + h) * 8, hy = p.y - pr * (0.2 + 0.6 * ht);
+    ctx.globalAlpha = a * (1 - ht);
+    tapeHeart(hx, hy, pr * 0.11 * (0.8 + 0.4 * ht), "#e0303a");
+  }
+  ctx.restore();
+}
+function tapeHeart(x, y, r, c) {
+  ctx.fillStyle = c; ctx.strokeStyle = "#5c0a0e"; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y + r * 0.9);
+  ctx.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.8, y - r * 1.3, x, y - r * 0.45);
+  ctx.bezierCurveTo(x + r * 0.8, y - r * 1.3, x + r * 1.6, y - r * 0.2, x, y + r * 0.9);
+  ctx.fill(); ctx.stroke();
 }
 
 // Solid through the special (Joe, 2026-11-17): "fighters should block or dodge
@@ -82866,6 +83616,7 @@ function draw() {
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)
   drawCormierOver(); // SUPER SLAM! (cormier.js)
   drawProchazkaOver(); // the cuts Jiří Procházka's katanas leave (prochazka.js)
+  if (typeof drawJiriReactOver === "function") drawJiriReactOver(); // animals Jiří Procházka cut in half (jiri-react.js)
   drawClinchOver(); // the clinch: arms tied round them, each knee and elbow, the swirl of the spin on the break (clinch.js)
   drawJonClinch(); // Jon Jones's arms locked over-under, his clinch knees and elbows, the trip's leg and red arrow (jon-clinch.js)
   drawVanOver(); // Joshua Van's chain counter under him, lit while he keeps it (van.js)
@@ -83892,20 +84643,21 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261117233516"></script>
-  <script src="js/game/tale-tape.js?v=20261117233516"></script>
-<script src="js/game/special-solid.js?v=20261117233516"></script>
-<script src="js/game/watchdog.js?v=20261117233516"></script>
-<script src="js/game/update.js?v=20261117233516"></script>
-<script src="js/game/fighter-art.js?v=20261117233516"></script>
-<script src="js/game/fedor-skin.js?v=20261117233516"></script>
-<script src="js/game/draw-attacks.js?v=20261117233516"></script>
-<script src="js/game/wwit-badge.js?v=20261117233516"></script>
-<script src="js/game/stadium.js?v=20261117233516"></script>
-<script src="js/game/draw.js?v=20261117233516"></script>
-<script src="js/ui/gallery.js?v=20261117233516"></script>
-<script src="js/ui/saved-fights.js?v=20261117233516"></script>
-<script src="js/main.js?v=20261117233516"></script>
-<script src="js/ui/fight-link.js?v=20261117233516"></script>
+  <script src="js/game/intro-msg.js?v=20261117233731"></script>
+  <script src="js/game/tale-tape.js?v=20261117233731"></script>
+  <script src="js/game/tape-taunts.js?v=20261117233731"></script>
+<script src="js/game/special-solid.js?v=20261117233731"></script>
+<script src="js/game/watchdog.js?v=20261117233731"></script>
+<script src="js/game/update.js?v=20261117233731"></script>
+<script src="js/game/fighter-art.js?v=20261117233731"></script>
+<script src="js/game/fedor-skin.js?v=20261117233731"></script>
+<script src="js/game/draw-attacks.js?v=20261117233731"></script>
+<script src="js/game/wwit-badge.js?v=20261117233731"></script>
+<script src="js/game/stadium.js?v=20261117233731"></script>
+<script src="js/game/draw.js?v=20261117233731"></script>
+<script src="js/ui/gallery.js?v=20261117233731"></script>
+<script src="js/ui/saved-fights.js?v=20261117233731"></script>
+<script src="js/main.js?v=20261117233731"></script>
+<script src="js/ui/fight-link.js?v=20261117233731"></script>
 </body>
 </html>
