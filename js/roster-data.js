@@ -1872,7 +1872,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-daniel-cormier",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "heavyweight",
     "speedMult": 1.12,
@@ -1965,16 +1965,16 @@ var SAVED_ROSTER = [
     "cormier": {
       "doubleLeg": {
         "first": [
-          5,
-          9
-        ],
-        "every": [
-          11,
-          16
-        ],
-        "retry": [
           4,
           7
+        ],
+        "every": [
+          8,
+          12
+        ],
+        "retry": [
+          3,
+          5.5
         ],
         "range": 170,
         "tell": 0.5,
@@ -1989,7 +1989,7 @@ var SAVED_ROSTER = [
         "minCarry": 0.9,
         "crowd": 0.5,
         "hoist": 0.35,
-        "damage": 62,
+        "damage": 72,
         "downTime": 1.2
       },
       "bodyLock": {

@@ -1,6 +1,6 @@
 {
   "id": "c-daniel-cormier",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "heavyweight",
   "speedMult": 1.12,
@@ -48,11 +48,11 @@
   "blockChance": 10,
   "cormier": {
     "doubleLeg": {
-      "first": [5, 9], "every": [11, 16], "retry": [4, 7], "range": 170,
+      "first": [4, 7], "every": [8, 12], "retry": [3, 5.5], "range": 170,
       "tell": 0.5, "readChance": 15, "shootSpeed": 950, "shootTime": 0.34, "turn": 6, "whiffStun": 0.5,
       "sprawlScale": 0.45, "minStuff": 8,
       "carrySpeed": 320, "minCarry": 0.9, "crowd": 0.5, "hoist": 0.35,
-      "damage": 62, "downTime": 1.2
+      "damage": 72, "downTime": 1.2
     },
     "bodyLock": { "through": 25 },
     "food": { "menu": ["cake", "chicken", "cake"], "max": 3, "eatTime": 1.5, "bites": 3, "damage": 1.17, "take": 0.94, "belly": 0.28, "grow": 0.035, "defend": true },
