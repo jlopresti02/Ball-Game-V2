@@ -32,6 +32,14 @@
 //             so they come down far quicker than anyone else's. It runs on the
 //             guillotine's ground and pound (bjj.js), like Jon Jones's. They
 //             can't slip or block them.
+// Guard pass  (top-level `guardPass`, guard.js) pull guard on him and
+//             `guardPass.time` seconds later he walks straight back in and
+//             passes it `guardPass.chance`% of the time ("GUARD PASSED"),
+//             then (`gnp`) drops the same flurry on them from on top
+//             (fedorPassGnp), `gnpMult` times as heavy, with them still flat
+//             on their back.
+// Elbow       the shared elbow (`elbow` block, elbows.js): rare, up close,
+//             and often a crit.
 // Armbar      `gnp.armbarChance`% of the time the flurry ends with him
 //             switching to the armbar (armbar.js), his finish on Mark Coleman
 //             (PRIDE 2004 and PRIDE 32). They tap `armbar.tapBase`% at full
@@ -379,18 +387,33 @@ function fdEndAct(self, other, m) {
 }
 
 // Follows them down: the guillotine's ground and pound, already on top.
-function fdStartGnp(self, other, m, cfg, side) {
+// `guardSide` when it's off a guard pass: they stay flat on their back.
+function fdStartGnp(self, other, m, cfg, side, guardSide) {
   var gc = cfg.gnp;
   m.act = null;
   other.choked = false;
   var g = { atkId: self.id, t: 0, nx: -side, ny: 0, bar: 0, phase: "mount", mx: self.x, my: self.y, fedor: true, hits: [] };
+  if (guardSide) { g.fromGuard = true; g.side = guardSide; g.dir = guardSide; } // on his back, Fedor on the hips side (onBack, guard.js)
   for (var i = 0; i < gc.punches; i++) g.hits.push(i === gc.punches - 1 ? gc.lastDamage : gc.damage);
   g.fdArmbar = Math.random() * 100 < (gc.armbarChance || 0);
   other.guillo = g;
   self.choked = true;
   m.gnp = g;
-  floater(self.x, self.y - self.r - 44, "GROUND AND POUND", "crit");
+  floater(self.x, self.y - self.r - (guardSide ? 76 : 44), "GROUND AND POUND", "crit"); // (above GUARD PASSED off a pass)
   crowdReact(0.6);
+}
+
+// From guard.js when he passes someone's guard (`guardPass.gnp`): straight
+// into his ground and pound from on top. False (the guard's own free
+// punches) if he has none.
+function fedorPassGnp(b, other, side) {
+  var cfg = fdCfg(b);
+  if (!b.fd || !cfg || !cfg.gnp) return false;
+  fdStartGnp(b, other, b.fd, cfg, -side, side);
+  var mult = (b.char.guardPass && b.char.guardPass.gnpMult) || 1; // a little heavier off the pass
+  other.guillo.hits = other.guillo.hits.map(function (h) { return Math.round(h * mult * 10) / 10; });
+  b.vx = 0; b.vy = 0;
+  return true;
 }
 
 // ---------------------------------------------------------------- hurt (match.js)
@@ -534,6 +557,7 @@ function fedorGalleryMoves(ch, add) {
   if (f.hands) add("👊", "Fast hands", "Heavy punches off alternating hands, faster than a heavyweight has any right to throw them, with speed lines behind every fist.");
   if (tc) add("🤼", "Sambo throw", "Every " + tc.every[0] + "-" + tc.every[1] + "s up close he drops his level and reaches out with both arms (the tell), then steps into the clinch. They break free " + tc.escape + "% of the time (more for grapplers, weavers and good sprawlers, less the lighter they are). Otherwise he throws them over his hip for " + tc.damage + ", a takedown.");
   if (gc && tc) add("🔨", "Ground and pound", tc.gnpChance + "% of his throws he follows them down: " + gc.punches + " punches from on top (" + gc.damage + " each, " + gc.lastDamage + " for the last), the fastest ground and pound in the game. They can't slip or block them.");
+  if (ch.guardPass) add("🚪", "Passes the guard", "Pull guard on him and " + ch.guardPass.time[0] + "-" + ch.guardPass.time[1] + "s later he walks straight back in and passes it " + ch.guardPass.chance + "% of the time" + (ch.guardPass.gnp && gc ? ", then the same flurry from on top" + (ch.guardPass.gnpMult > 1 ? ", " + Math.round((ch.guardPass.gnpMult - 1) * 100) + "% heavier." : ".") : "."));
   if (gc && gc.armbarChance && f.armbar) add("🦾", "Armbar", gc.armbarChance + "% of the time the ground and pound ends in the armbar, his finish on Mark Coleman. They tap " + f.armbar.tapBase + "%, up to " + (f.armbar.tapBase + f.armbar.tapLowHp) + "% the more hurt they are.");
   if (st) add("🧊", "The Last Emperor's calm", "He barely reacts to being hit: knocked back only " + pct(st.knockback) + " as far, dizzy for " + pct(st.dizzy) + " as long, " + st.slamCut + " fewer bounce off the walls, and trash talk doesn't get to him. A shot of " + st.noteAt + "+ gets an \"UNFAZED\" and a low church bell.");
   emperorGalleryMove(f, add); // the Emperor (fedor-emperor.js)
