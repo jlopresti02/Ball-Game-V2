@@ -1,6 +1,6 @@
 {
   "id": "c-fedor-emelianenko",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "heavyweight",
   "name": "Fedor Emelianenko",
@@ -28,7 +28,7 @@
   "hasProjectile": false,
   "proj": { "size": 7, "speed": 460, "damage": 10, "cooldown": 1.6, "imgData": null },
   "hasPunch": true,
-  "punch": { "damage": 20, "cooldown": 0.38, "speed": 0.16, "size": 14, "knockback": 50, "reach": 44, "koChance": 0 },
+  "punch": { "damage": 26, "cooldown": 0.38, "speed": 0.16, "size": 14, "knockback": 50, "reach": 44, "koChance": 0 },
   "hasKick": false,
   "hasGrapple": false,
   "hasPowerPunch": false,
@@ -44,12 +44,13 @@
     "hands": { "alternate": true, "streaks": true, "whip": true },
     "stalk": { "turn": 3.5, "minGap": 8 },
     "durability": { "take": 0.82 },
-    "throw": { "first": [6, 9], "every": [8, 12], "range": 24, "reach": 0.3, "escape": 25, "escapeDizzy": 5, "grapplerEscape": 10, "weaveEscape": 10, "tddScale": 0.3, "lift": 0.55, "damage": 14, "gnpChance": 75 },
-    "gnp": { "punches": 6, "damage": 5, "lastDamage": 10, "wind": 0.07, "lastWind": 0.22, "armbarChance": 30 },
+    "throw": { "first": [4.5, 7], "every": [6, 9], "range": 24, "reach": 0.3, "escape": 25, "escapeDizzy": 5, "grapplerEscape": 10, "weaveEscape": 10, "tddScale": 0.3, "lift": 0.55, "damage": 14, "gnpChance": 85 },
+    "gnp": { "punches": 7, "damage": 5, "lastDamage": 10, "wind": 0.07, "lastWind": 0.22, "armbarChance": 30 },
     "armbar": { "tapBase": 15, "tapLowHp": 55 },
     "stoic": { "knockback": 0.45, "dizzy": 0.4, "slamCut": 1, "squash": 0.35, "taunts": 100, "furious": 60, "noteAt": 20, "noteGap": 9, "bell": true },
     "mantra": { "on": true, "level": 0.8, "duck": 0.35, "fadeIn": 2.5, "fadeOut": 3, "followKey": true },
-    "lines": { "start": [], "win": [], "unfazed": [], "armbar": [], "startAt": [0.8, 2], "startChance": 100 }
+    "lines": { "start": [], "win": [], "unfazed": [], "armbar": [], "startAt": [0.8, 2], "startChance": 100 },
+    "emperor": { "trigger": { "hpBelow": 50, "at": 30 }, "cut": { "len": 2.5, "stepBack": 46, "mirrorAt": 0.35, "lookAt": 0.6, "crownAt": 1.35, "setAt": 1.95 }, "buff": { "len": 10, "crownFade": 0.6 }, "crit": { "chance": 35, "mult": 1.8, "sources": ["punch", "jab", "combo", "elbow", "knee", "kick"], "gnp": true }, "shook": { "take": 0.7, "sweat": true, "wobble": true }, "voice": { "clip": "fedorLastEmperor", "line": "Fedor, the Last Emperor" } }
   },
   "hasSpecial": true,
   "special": { "move": "unmoving", "chargeTime": 45, "hitCut": 1.5, "punchCut": 1, "range": 140, "waitMax": 2.5, "damage": 150, "launch": 1300, "slamDamage": 10 }

@@ -49,6 +49,7 @@ function tickSpecialCharge(b, dt) {
 // Busy with something that shouldn't be interrupted.
 function specialBusy(b) {
   if (pratesPartyBusy(b)) return true; // Carlos Prates lighting up or partying: nothing new starts on him (prates.js)
+  if (fedorCrowning(b)) return true; // Fedor crowning himself the Emperor: nothing new starts on him (fedor-emperor.js)
   return b.grapple || b.grappled || b.slam || b.sprawl || b.sprawled || subLocked(b) || b.combo || b.taunt || b.flow ||
     b.beamPin || b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled || b.dazed || chamaOn(b) || ngannouBusy(b); // (Alex Pereira's CHAMA combo, pereira.js; Francis Ngannou's rage punch, ngannou.js)
 }

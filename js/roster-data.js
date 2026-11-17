@@ -2458,7 +2458,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-fedor-emelianenko",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Fedor Emelianenko",
@@ -2493,7 +2493,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 20,
+      "damage": 26,
       "cooldown": 0.38,
       "speed": 0.16,
       "size": 14,
@@ -2541,12 +2541,12 @@ var SAVED_ROSTER = [
       },
       "throw": {
         "first": [
-          6,
-          9
+          4.5,
+          7
         ],
         "every": [
-          8,
-          12
+          6,
+          9
         ],
         "range": 24,
         "reach": 0.3,
@@ -2557,10 +2557,10 @@ var SAVED_ROSTER = [
         "tddScale": 0.3,
         "lift": 0.55,
         "damage": 14,
-        "gnpChance": 75
+        "gnpChance": 85
       },
       "gnp": {
-        "punches": 6,
+        "punches": 7,
         "damage": 5,
         "lastDamage": 10,
         "wind": 0.07,
@@ -2600,6 +2600,46 @@ var SAVED_ROSTER = [
           2
         ],
         "startChance": 100
+      },
+      "emperor": {
+        "trigger": {
+          "hpBelow": 50,
+          "at": 30
+        },
+        "cut": {
+          "len": 2.5,
+          "stepBack": 46,
+          "mirrorAt": 0.35,
+          "lookAt": 0.6,
+          "crownAt": 1.35,
+          "setAt": 1.95
+        },
+        "buff": {
+          "len": 10,
+          "crownFade": 0.6
+        },
+        "crit": {
+          "chance": 35,
+          "mult": 1.8,
+          "sources": [
+            "punch",
+            "jab",
+            "combo",
+            "elbow",
+            "knee",
+            "kick"
+          ],
+          "gnp": true
+        },
+        "shook": {
+          "take": 0.7,
+          "sweat": true,
+          "wobble": true
+        },
+        "voice": {
+          "clip": "fedorLastEmperor",
+          "line": "Fedor, the Last Emperor"
+        }
       }
     },
     "hasSpecial": true,
