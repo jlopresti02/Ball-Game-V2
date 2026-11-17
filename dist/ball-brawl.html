@@ -7451,12 +7451,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-fedor-emelianenko",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "heavyweight",
     "name": "Fedor Emelianenko",
     "base": "Brawler",
-    "bio": "\"The Last Emperor\". The PRIDE heavyweight champion, a Combat Sambo world champion from Stary Oskol, Russia, with a soft, everyman heavyweight build and no expression on his face. Slow on his feet, but his hands are the fastest heavy hands in the game: hard punches off alternating hands, strung into jab, cross, hook. Shoot on him and he sprawls on almost everything. Every so often he drops his level, reaches out with both arms and clinches: break free or he throws you over his hip, follows you down and rains punches from on top, the PRIDE flurry, sometimes switching to the armbar that finished Mark Coleman twice. He barely reacts to being hit: big shots barely move him, a dizzy wears off fast, and a low church bell rings when he walks through one. A quiet Russian Orthodox-style choir hums under every fight he's in. Special move: The Unmoving Man. Hands down, feet still, he slips everything they throw without changing a thing, catches their last punch in one glove and puts them through the cage with one overhand right.",
+    "bio": "\"The Last Emperor\". The PRIDE heavyweight champion, a Combat Sambo world champion from Stary Oskol, Russia, with a soft, everyman heavyweight build and no expression on his face. Slow on his feet, but his hands are the fastest heavy hands in the game: hard punches off alternating hands, strung into jab, cross, hook. Shoot on him and he sprawls on almost everything. Every so often he drops his level, reaches out with both arms and clinches: break free or he throws you over his hip, follows you down and rains punches from on top, the PRIDE flurry, sometimes switching to the armbar that finished Mark Coleman twice. Now and then up close he throws an elbow, and half of them land as crits. Pull guard on him and he steps right back in and passes it most of the time, straight into a slightly heavier flurry from on top. He barely reacts to being hit: big shots barely move him, a dizzy wears off fast, and a low church bell rings when he walks through one. A quiet Russian Orthodox-style choir hums under every fight he's in. Special move: The Unmoving Man. Hands down, feet still, he slips everything they throw without changing a thing, catches their last punch in one glove and puts them through the cage with one overhand right.",
     "color": "#7d93b2",
     "label": "",
     "imgData": null,
@@ -7486,7 +7486,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 26,
+      "damage": 21,
       "cooldown": 0.38,
       "speed": 0.16,
       "size": 14,
@@ -7505,6 +7505,24 @@ var SAVED_ROSTER = [
     "blockChance": 12,
     "tdd": {
       "sprawlChance": 78
+    },
+    "guardPass": {
+      "chance": 80,
+      "time": [
+        0.6,
+        1.2
+      ],
+      "gnp": true,
+      "gnpMult": 1.2
+    },
+    "elbow": {
+      "damage": 20,
+      "cooldown": 12.5,
+      "speed": 0.26,
+      "reach": 14,
+      "critChance": 50,
+      "critMult": 2,
+      "knockback": 160
     },
     "combos": {
       "first": [
@@ -15805,6 +15823,16 @@ function drawSuplexes() {
 //     `subs` (a list of submissions and submission sets, see SUB_SETS).
 // If nobody steps in before the time's up, it gets back to its feet. Either
 // way it can't pull guard again for `cooldown` seconds once it's up.
+//
+// Guard passers (opt-in, a top-level `guardPass` block in the opponent's
+// character file, Fedor's): `time` [min, max] seconds after the guard is
+// pulled on him he walks straight back into the circle instead of waiting
+// to wander in, and he passes `chance`% of the time (the guard player's own
+// passChance if that's higher). With `gnp` the pass goes straight into his
+// own ground and pound from on top if he has one (Fedor's, fedor.js),
+// otherwise the guard's normal free punches; `gnpMult` makes the punches
+// after a pass that much heavier. Fighters without the block play the guard
+// exactly as before.
 "use strict";
 
 var GUARD_ARM_TIME = 0.5;     // the opponent has to stay out of the circle this long before stepping in counts
@@ -15849,7 +15877,8 @@ function beginGuard(b, atk) {
     t: 0, dur: gd.time, radius: gd.radius,
     side: atk.x >= b.x ? 1 : -1,  // hips toward the opponent
     outT: 0,                       // how long the opponent has been outside the circle
-    getup: -1                      // time into the get-up, once the guard runs out
+    getup: -1,                     // time into the get-up, once the guard runs out
+    passAt: guardPassAt(atk)       // a guard passer walks back in this far in (null for anyone else)
   };
   b.guardCd = gd.cooldown;
   // Whoever knocked it down backs off out of the circle, turning toward
@@ -15887,16 +15916,43 @@ function updateGuard(self, other, dt) {
     return;
   }
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy);
-  if (d >= g.radius) { g.outT += dt; return; }
+  var passer = g.passAt != null, passNow = passer && g.t >= g.passAt;
+  if (d >= g.radius) {
+    g.outT += dt;
+    if (passNow) walkIntoGuard(self, other, dx, dy, d);
+    return;
+  }
   // Only an opponent that's free to engage steps in (not one flying off a
   // slam, sitting in a seat, mid special and so on), and only once it's
   // been out of the circle for a moment, so the one that knocked it down
-  // can't just bounce straight back in.
-  if (g.outT < GUARD_ARM_TIME || other.invincible || other.slam || specialBusy(other)) return;
+  // can't just bounce straight back in. A guard passer waits for his own
+  // moment instead.
+  if ((passer ? !passNow : g.outT < GUARD_ARM_TIME) || other.invincible || other.slam || specialBusy(other)) return;
   clearActions(other);
   if (uppercutCounter(other, self, 320)) { g.outT = 0; return; } // an uppercut as they pull him in: he steps back out (Gaethje, body-shots-uppercuts.js)
-  if (Math.random() < self.char.guard.passChance / 100) passGuard(self, other, g);
+  if (Math.random() < guardPassChance(self, other) / 100) passGuard(self, other, g);
   else catchInGuard(self, other);
+}
+
+// When a guard passer (`guardPass`) walks back in, a moment after the guard
+// is pulled on him. Null for anyone without the block.
+function guardPassAt(atk) {
+  var gp = atk.char.guardPass, t = gp && gp.time;
+  if (!gp) return null;
+  return t ? t[0] + Math.random() * (t[1] - t[0]) : GUARD_ARM_TIME;
+}
+
+// The guard player's passChance, raised to a guard passer's own `chance`.
+function guardPassChance(self, atk) {
+  var pc = self.char.guard.passChance, gp = atk.char.guardPass;
+  return gp && gp.chance > pc ? gp.chance : pc;
+}
+
+// His moment's come: he heads straight for them, at his own pace.
+function walkIntoGuard(self, other, dx, dy, d) {
+  if (!inOrdinaryMovement(other) || other.invincible || specialBusy(other)) return;
+  var sp = Math.max(SPEED * 0.6, Math.sqrt(other.vx * other.vx + other.vy * other.vy));
+  other.vx = -dx / d * sp; other.vy = -dy / d * sp;
 }
 
 // Back on its feet: pushes off away from the opponent, and the speed
@@ -15912,17 +15968,18 @@ function endGuard(self, other) {
 // This uses the guillotine's ground-and-pound (bjj.js), straight from the
 // mount, with the guard player still flat on its back underneath.
 function passGuard(self, atk, g) {
-  var gd = self.char.guard;
+  var gd = self.char.guard, gp = atk.char.guardPass;
   self.guard = null;
+  floater((self.x + atk.x) / 2, Math.min(self.y, atk.y) - self.r - 30, "GUARD PASSED", "crit");
+  playWhoosh();
+  if (gp && gp.gnp && fedorPassGnp(atk, self, g.side)) return; // a guard passer's own ground and pound from on top (Fedor, fedor.js)
   self.guillo = {
     atkId: atk.id, t: 0, phase: "mount", fromGuard: true, side: g.side,
     nx: g.side, ny: 0, mx: atk.x, my: atk.y, dir: g.side,
-    hits: Array.apply(null, Array(Math.max(1, gd.passPunches))).map(function () { return gd.passDamage; })
+    hits: Array.apply(null, Array(Math.max(1, gd.passPunches))).map(function () { return gd.passDamage * ((gp && gp.gnpMult) || 1); })
   };
   atk.choked = true;
   atk.vx = 0; atk.vy = 0;
-  floater((self.x + atk.x) / 2, Math.min(self.y, atk.y) - self.r - 30, "GUARD PASSED", "crit");
-  playWhoosh();
 }
 
 // Caught: pulls the opponent in and goes for a submission.
@@ -52352,6 +52409,14 @@ function playTripThud() { tfAudio(function (ac, t) { caneTone(ac, t, "sine", 90,
 //             so they come down far quicker than anyone else's. It runs on the
 //             guillotine's ground and pound (bjj.js), like Jon Jones's. They
 //             can't slip or block them.
+// Guard pass  (top-level `guardPass`, guard.js) pull guard on him and
+//             `guardPass.time` seconds later he walks straight back in and
+//             passes it `guardPass.chance`% of the time ("GUARD PASSED"),
+//             then (`gnp`) drops the same flurry on them from on top
+//             (fedorPassGnp), `gnpMult` times as heavy, with them still flat
+//             on their back.
+// Elbow       the shared elbow (`elbow` block, elbows.js): rare, up close,
+//             and often a crit.
 // Armbar      `gnp.armbarChance`% of the time the flurry ends with him
 //             switching to the armbar (armbar.js), his finish on Mark Coleman
 //             (PRIDE 2004 and PRIDE 32). They tap `armbar.tapBase`% at full
@@ -52699,18 +52764,33 @@ function fdEndAct(self, other, m) {
 }
 
 // Follows them down: the guillotine's ground and pound, already on top.
-function fdStartGnp(self, other, m, cfg, side) {
+// `guardSide` when it's off a guard pass: they stay flat on their back.
+function fdStartGnp(self, other, m, cfg, side, guardSide) {
   var gc = cfg.gnp;
   m.act = null;
   other.choked = false;
   var g = { atkId: self.id, t: 0, nx: -side, ny: 0, bar: 0, phase: "mount", mx: self.x, my: self.y, fedor: true, hits: [] };
+  if (guardSide) { g.fromGuard = true; g.side = guardSide; g.dir = guardSide; } // on his back, Fedor on the hips side (onBack, guard.js)
   for (var i = 0; i < gc.punches; i++) g.hits.push(i === gc.punches - 1 ? gc.lastDamage : gc.damage);
   g.fdArmbar = Math.random() * 100 < (gc.armbarChance || 0);
   other.guillo = g;
   self.choked = true;
   m.gnp = g;
-  floater(self.x, self.y - self.r - 44, "GROUND AND POUND", "crit");
+  floater(self.x, self.y - self.r - (guardSide ? 76 : 44), "GROUND AND POUND", "crit"); // (above GUARD PASSED off a pass)
   crowdReact(0.6);
+}
+
+// From guard.js when he passes someone's guard (`guardPass.gnp`): straight
+// into his ground and pound from on top. False (the guard's own free
+// punches) if he has none.
+function fedorPassGnp(b, other, side) {
+  var cfg = fdCfg(b);
+  if (!b.fd || !cfg || !cfg.gnp) return false;
+  fdStartGnp(b, other, b.fd, cfg, -side, side);
+  var mult = (b.char.guardPass && b.char.guardPass.gnpMult) || 1; // a little heavier off the pass
+  other.guillo.hits = other.guillo.hits.map(function (h) { return Math.round(h * mult * 10) / 10; });
+  b.vx = 0; b.vy = 0;
+  return true;
 }
 
 // ---------------------------------------------------------------- hurt (match.js)
@@ -52854,6 +52934,7 @@ function fedorGalleryMoves(ch, add) {
   if (f.hands) add("👊", "Fast hands", "Heavy punches off alternating hands, faster than a heavyweight has any right to throw them, with speed lines behind every fist.");
   if (tc) add("🤼", "Sambo throw", "Every " + tc.every[0] + "-" + tc.every[1] + "s up close he drops his level and reaches out with both arms (the tell), then steps into the clinch. They break free " + tc.escape + "% of the time (more for grapplers, weavers and good sprawlers, less the lighter they are). Otherwise he throws them over his hip for " + tc.damage + ", a takedown.");
   if (gc && tc) add("🔨", "Ground and pound", tc.gnpChance + "% of his throws he follows them down: " + gc.punches + " punches from on top (" + gc.damage + " each, " + gc.lastDamage + " for the last), the fastest ground and pound in the game. They can't slip or block them.");
+  if (ch.guardPass) add("🚪", "Passes the guard", "Pull guard on him and " + ch.guardPass.time[0] + "-" + ch.guardPass.time[1] + "s later he walks straight back in and passes it " + ch.guardPass.chance + "% of the time" + (ch.guardPass.gnp && gc ? ", then the same flurry from on top" + (ch.guardPass.gnpMult > 1 ? ", " + Math.round((ch.guardPass.gnpMult - 1) * 100) + "% heavier." : ".") : "."));
   if (gc && gc.armbarChance && f.armbar) add("🦾", "Armbar", gc.armbarChance + "% of the time the ground and pound ends in the armbar, his finish on Mark Coleman. They tap " + f.armbar.tapBase + "%, up to " + (f.armbar.tapBase + f.armbar.tapLowHp) + "% the more hurt they are.");
   if (st) add("🧊", "The Last Emperor's calm", "He barely reacts to being hit: knocked back only " + pct(st.knockback) + " as far, dizzy for " + pct(st.dizzy) + " as long, " + st.slamCut + " fewer bounce off the walls, and trash talk doesn't get to him. A shot of " + st.noteAt + "+ gets an \"UNFAZED\" and a low church bell.");
   emperorGalleryMove(f, add); // the Emperor (fedor-emperor.js)
@@ -82052,20 +82133,20 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261117182553"></script>
-  <script src="js/game/tale-tape.js?v=20261117182553"></script>
-<script src="js/game/special-solid.js?v=20261117182553"></script>
-<script src="js/game/watchdog.js?v=20261117182553"></script>
-<script src="js/game/update.js?v=20261117182553"></script>
-<script src="js/game/fighter-art.js?v=20261117182553"></script>
-<script src="js/game/fedor-skin.js?v=20261117182553"></script>
-<script src="js/game/draw-attacks.js?v=20261117182553"></script>
-<script src="js/game/wwit-badge.js?v=20261117182553"></script>
-<script src="js/game/stadium.js?v=20261117182553"></script>
-<script src="js/game/draw.js?v=20261117182553"></script>
-<script src="js/ui/gallery.js?v=20261117182553"></script>
-<script src="js/ui/saved-fights.js?v=20261117182553"></script>
-<script src="js/main.js?v=20261117182553"></script>
-<script src="js/ui/fight-link.js?v=20261117182553"></script>
+  <script src="js/game/intro-msg.js?v=20261117183337"></script>
+  <script src="js/game/tale-tape.js?v=20261117183337"></script>
+<script src="js/game/special-solid.js?v=20261117183337"></script>
+<script src="js/game/watchdog.js?v=20261117183337"></script>
+<script src="js/game/update.js?v=20261117183337"></script>
+<script src="js/game/fighter-art.js?v=20261117183337"></script>
+<script src="js/game/fedor-skin.js?v=20261117183337"></script>
+<script src="js/game/draw-attacks.js?v=20261117183337"></script>
+<script src="js/game/wwit-badge.js?v=20261117183337"></script>
+<script src="js/game/stadium.js?v=20261117183337"></script>
+<script src="js/game/draw.js?v=20261117183337"></script>
+<script src="js/ui/gallery.js?v=20261117183337"></script>
+<script src="js/ui/saved-fights.js?v=20261117183337"></script>
+<script src="js/main.js?v=20261117183337"></script>
+<script src="js/ui/fight-link.js?v=20261117183337"></script>
 </body>
 </html>
