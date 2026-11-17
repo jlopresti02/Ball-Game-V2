@@ -1,6 +1,6 @@
 {
   "id": "c-sean-strickland",
-  "rev": 6,
+  "rev": 7,
   "builtin": false,
   "weightClass": "middleweight",
   "name": "Sean Strickland",
@@ -37,9 +37,9 @@
   "hasSwing": false,
   "hasForget": false,
   "blockChance": 20,
-  "tdd": { "sprawlChance": 90 },
+  "tdd": { "sprawlChance": 80 },
   "hasTeep": true,
-  "teep": { "cooldown": 2.2, "range": 46, "reach": 68, "chamber": 0.14, "extend": 0.08, "hold": 0.12, "recover": 0.16, "damage": 10, "push": 620, "blockPush": 0.5, "stuff": true, "onlyClosing": true, "size": 15 },
+  "teep": { "cooldown": 2.2, "range": 46, "reach": 68, "chamber": 0.14, "extend": 0.08, "hold": 0.12, "recover": 0.16, "damage": 18, "push": 620, "blockPush": 0.5, "stuff": true, "onlyClosing": true, "size": 15 },
   "movement": {
     "spacing": { "margin": 14, "min": 30, "max": 96, "kicks": true, "band": 10, "turn": 14, "turnIn": 18, "angle": 0.6, "jabEvery": [0.25, 0.7], "stepIn": 0.45, "switch": [1.5, 3.5], "read": 0.12 }
   },
