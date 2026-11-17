@@ -13,6 +13,8 @@
 // thread). Left alone on purpose (designed that way): Ilia's Rose Tornado
 // (can't be touched, sucks them in), Dustin's hot sauce panic run (Joe turned
 // down a solid wall there), Jon up in the sky as a duck or falling back in,
+// Jon floating over his GOAT Stampede and GSP up in the air aiming the
+// Superman dive (Joe: flying, so they can pass underneath),
 // Hokit's leap off the top rope and lying flat after it, GSP flying in on the
 // Superman dive, Ngannou in the air on the Smash, Gaethje carried off by the
 // eagle, Khabib running out of his own target circle, the slashes that run
@@ -29,10 +31,9 @@ var SS_MOVES = {
   herbdean: { phases: ["announce"] },                           // Ciryl Gane while Herb Dean is announced (herbdean.js)
   mimic: { phases: ["crouch"] },                                // Mighty Mouse crouched for his own special (mighty-mouse.js)
   smash: { phases: ["crouch", "pose"] },                        // Ngannou crouching for the Smash, and posing after it (ngannou.js)
-  supermandive: { phases: ["rise", "aim", "land", "crash"] },   // GSP rising and aiming the Superman dive, and landing (gsp.js)
+  supermandive: { phases: ["land", "crash"] },                  // GSP back down after the Superman dive (gsp.js)
   samurai: { phases: ["outfit", "dream", "draw", "sheathe"] },  // Procházka suiting up, drawing and sheathing (prochazka.js)
   duckdrop: { phases: ["flicker"] },                            // Jon's tattoo flickering before the poof (jon-duck.js)
-  goatstampede: { phases: "all", slip: false },                 // Jon floating over the goats (jon.js)
   chairshot: { phases: ["fetch"] },                             // Hokit fetching the chair (chairshot.js)
   helmetcharge: { phases: ["suit", "set"] },                    // Hokit's helmet going on, and his three-point stance (hokit-helmet.js)
   toprope: { phases: ["run", "climb", "perch"], slip: false },  // Hokit heading up the corner and up on the post (hokit-toprope.js)
