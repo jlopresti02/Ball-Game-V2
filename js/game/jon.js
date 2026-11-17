@@ -314,6 +314,7 @@ function tickGoats(self, other, dt) {
 
 function goatRam(self, other, g) {
   g.hit = true;
+  if (typeof jpAnimalCut === "function" && jpAnimalCut(other, jpGoatArt(g))) { g.alpha = 0; return; } // Jiří Procházka cuts it in half (jiri-react.js)
   var dealt = hurtProjectile(other, self.char.special.goatDamage, self.id, g.dx, g.dy);
   if (other.justDodged) return; // Charles teleported out of its way: it charges on past
   // Sent flying, pinballing violently off the walls (the power punch's wall

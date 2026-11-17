@@ -42,7 +42,7 @@ function tickRingBear(dt) {
       var cfg = b.char.bear;
       if (!cfg || ringBear || !b.alive || b.bearN >= cfg.max) return;
       b.bearT -= dt;
-      if (b.bearT > 0 || jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb; })) return;
+      if (b.bearT > 0 || jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f)); })) return; // (Jiří Procházka's samurai can meet it: jiri-react.js)
       if (typeof natLion !== "undefined" && natLion) return; // not while Nate's lion is in the ring (nate-lion.js)
       b.bearN++;
       b.bearT = bearRand(cfg.every);
@@ -175,7 +175,7 @@ function bearBumps(B) {
   if (balls.some(sendLocOn)) return; // not while Khabib's orbital strike is coming in (send-location.js)
   for (var i = 0; i < balls.length; i++) {
     var f = balls[i];
-    if (!f.alive || f.invincible || specialBusy(f) || f.dazed || swordDuelLocked(f)) continue;
+    if (!f.alive || f.invincible || (specialBusy(f) && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f))) || f.dazed || swordDuelLocked(f)) continue; // (the samurai: jiri-react.js)
     var dx = f.x - B.x, dy = f.y - B.y;
     if (dx * dx + dy * dy > (f.r + BEAR_R) * (f.r + BEAR_R)) continue;
     var o = balls[1 - f.id];
@@ -186,6 +186,7 @@ function bearBumps(B) {
       f.vx = f.vy = 0;
       B.phase = "scrap"; B.t = 0; B.vsId = f.id; B.hitT = 0;
     } else {
+      if (typeof jpAnimalCut === "function" && jpAnimalCut(f, jpBearArt(B))) { ringBear = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
       clearActions(f);
       f.bearHeld = true; f.dazed = "held"; f.vx = f.vy = 0; f.invincible = true; f.immuneCd = 99;
       B.phase = "maul"; B.t = 0; B.vsId = f.id; B.hitT = 0.15; B.dealt = 0;
@@ -301,6 +302,7 @@ function tickBearThrown(B, dt) {
   B.spin += B.spinV * dt;
   var ox = o.x - B.x, oy = o.y - B.y;
   if (o.alive && !o.invincible && ox * ox + oy * oy < (o.r + BEAR_R) * (o.r + BEAR_R)) {
+    if (typeof jpAnimalCut === "function" && jpAnimalCut(o, jpBearArt(B))) { bearGone(B, 0, 0); ringBear = null; return; } // Jiří Procházka cuts it in half (jiri-react.js)
     var dealt = hurtProjectile(o, cfg.throwDamage, k.id, B.dx, B.dy);
     if (o.justDodged && !o.invincible) return; // Charles teleported out of its way: it sails on
     if (dealt > 0) {

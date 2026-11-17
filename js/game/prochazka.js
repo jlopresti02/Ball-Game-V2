@@ -144,7 +144,7 @@ function jpHandsFree(b) {
 // ---------------------------------------------------------------- setup
 
 // From startMatchSeeded.
-function resetProchazka() { jpLock = null; jpCuts = []; jpPetals = []; jpSlash = null; jpClock = 0; }
+function resetProchazka() { jpLock = null; jpCuts = []; jpPetals = []; jpSlash = null; jpClock = 0; if (typeof resetJiriReact === "function") resetJiriReact(); } // (and the halves: jiri-react.js)
 // From makeBall.
 function initProchazka(b) {
   b.jpN = 0; b.jpLowDone = false; b.jpLowDue = false; b.jpLastEnd = -999; b.jpCrit = 0; b.jpLookOff = null;
@@ -165,6 +165,7 @@ function tickProchazka(dt) {
   jpCuts = jpCuts.filter(function (f) { return f.t < f.max; });
   if (jpSlash && (jpSlash.t += dt) >= jpSlash.max) jpSlash = null;
   jpTickPetals(dt);
+  if (typeof tickJiriReact === "function") tickJiriReact(dt); // the samurai's animals cut in half, leprechauns scared off (jiri-react.js)
   balls.forEach(function (b) {
     var cfg = jpCfg(b);
     if (!cfg) return;
@@ -293,7 +294,8 @@ function updateSamurai(self, other, dt) {
     if (self.specialT < sp.chargeTime) return false;
     // Tony Ferguson's katanas out don't stop him: the samurai answers them.
     var vsKatanas = katanaOn(other) && other.igbb.phase === "close" && other.alive && !specialBusy(self) && !self.punch && !self.kick;
-    if (!(canStartIgbb(self, other) || vsKatanas) || swordDuelActive() || jpLock || katanaLock) return false;
+    var vsBus = typeof jpBusAnswer === "function" && jpBusAnswer(self, other); // Conor's lads out for him: the samurai answers the bus (jiri-react.js)
+    if (!(canStartIgbb(self, other) || vsKatanas || vsBus) || swordDuelActive() || jpLock || katanaLock) return false;
     jpStart(self, other, cfg);
   }
   var m = self.igbb;
@@ -334,6 +336,7 @@ function updateSamurai(self, other, dt) {
     return true;
   }
   if (m.phase === "close") {
+    if (typeof jpSamuraiWaits === "function" && jpSamuraiWaits(self, other, m, dt)) return true; // standing his ground while their goats, bull or eagle come at him (jiri-react.js)
     if (m.sl) { jpRunSlash(self, other, cfg, m, dt, gap); if (m.phase !== "close") return true; } // (cut down: the iai took over)
     else {
       var spd = (self.baseSpeed || SPEED) * cfg.speed * (gap < 6 ? 0.2 : 1);
@@ -425,10 +428,12 @@ function jpStartSlash(self, other, cfg, m) {
   var both = cfg.xEvery && m.n % cfg.xEvery === 0;
   m.side = -(m.side || -1);
   m.sl = { t: 0, side: m.side, both: both, hit: false, glint: false };
+  if (typeof jpSpinMaybe === "function") jpSpinMaybe(self, other, cfg, m); // now and then a whirlwind instead (jiri-spin.js)
   playSamuraiGlint(false);
 }
 
 function jpRunSlash(self, other, cfg, m, dt, gap) {
+  if (m.sl.kind === "spin") return jpSpinRun(self, other, cfg, m, dt, gap); // the whirlwind (jiri-spin.js)
   var sl = m.sl, T = cfg.tell, S = cfg.swing, R = cfg.recover;
   sl.t += dt;
   var ux = Math.cos(m.ang), uy = Math.sin(m.ang), spd = (self.baseSpeed || SPEED) * cfg.speed;
@@ -770,7 +775,8 @@ function tickSamuraiLock(dt) {
 function applyProchazkaPose(b) {
   var m = samuraiOn(b) ? b.igbb : null, cfg = jpSam(b), rot = 0, sx = 1, sy = 1;
   if (!m || !cfg) return;
-  if (m.phase === "close" && m.sl) {
+  if (m.phase === "close" && m.sl && m.sl.kind === "spin") rot = jpSpinPose(m.sl); // turning with the whirlwind (jiri-spin.js)
+  else if (m.phase === "close" && m.sl) {
     var sl = m.sl, T = cfg.tell, S = cfg.swing;
     if (sl.t < T) rot = sl.side * 0.28 * jpEase(sl.t / T);
     else if (sl.t < T + S) rot = sl.side * (0.28 - 0.62 * jpEaseOut((sl.t - T) / S));
@@ -815,6 +821,7 @@ function drawProchazka(b, other) {
   if (m.phase === "final") { jpDrawFinal(b, other, sam, m, ang); return; }
   // The run.
   var sl = m.sl;
+  if (sl && sl.kind === "spin") { jpDrawSpin(b, sam, m); return; } // the whirlwind (jiri-spin.js)
   if (sl && sl.t < sam.tell) jpDrawTell(b, other, sam, m);
   [1, -1].forEach(function (s) {
     var len = b.r * (s > 0 ? JP_LONG : JP_SHORT);
@@ -1428,6 +1435,8 @@ function prochazkaGalleryMoves(ch, add) {
   if (!p) return;
   if (p.handsLow) add("🙌", "Hands low", "Fights with his gloves down by his hips. No block at all: he weaves instead.");
   if (p.chin) add("💥", "Chin", "With his hands that low, " + p.chin.critChance + "% of the strikes that land on him are critical hits for " + p.chin.critMult + "x.");
+  if (typeof jpSpinGalleryMove === "function") jpSpinGalleryMove(p, add); // the whirlwind (jiri-spin.js)
+  if (typeof jpReactGalleryMoves === "function") jpReactGalleryMoves(p, add); // the quick draw and the leprechauns (jiri-react.js)
   if (p.samurai && p.samurai.vsTony) add("⚔️", "Katanas vs katanas", "Against Tony Ferguson, Tony's katanas come out to meet the samurai " + p.samurai.vsTony.answerChance + "% of the time.");
 }
 

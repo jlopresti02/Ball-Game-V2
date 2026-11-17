@@ -54,6 +54,7 @@
   "prochazka": {
     "handsLow": true,
     "chin": { "critChance": 48, "critMult": 1.6, "sources": ["punch", "jab", "kick", "kickback", "elbow", "knee", "combo", "swing", "teep", "flow", "bat", "poke"] },
+    "react": { "animals": { "chance": 100, "answer": 100 }, "leprechauns": { "range": 120 } },
     "samurai": {
       "lowHp": 0.4, "oppLowHp": 0.4, "lowBoost": 1.5, "max": 2, "minGap": 8,
       "dream": 2.0, "outfit": 0.7, "draw": 0.6, "time": 5,
@@ -64,6 +65,7 @@
       "ko": { "below": 0.5, "chance": 60 },
       "iai": { "hold": 0.45, "sheathe": 0.45 },
       "petals": 26,
+      "spin": { "chance": 5, "minPlain": 2, "wind": 0.22, "time": 0.75, "turns": 3, "hits": 2, "mult": 0.8 },
       "finisher": { "damage": 45, "tell": 0.6, "lock": 0.2, "dash": 2400, "reach": 46, "knockback": 1100, "wallSlams": 1, "slamDamage": 4 },
       "keepOutfit": false,
       "look": {

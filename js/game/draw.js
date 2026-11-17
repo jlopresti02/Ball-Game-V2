@@ -476,6 +476,7 @@ function draw() {
   drawAndersonOver(); // Anderson Silva's front kick: the knee up, the leg out, the foot on their face (anderson.js)
   drawCormierOver(); // SUPER SLAM! (cormier.js)
   drawProchazkaOver(); // the cuts Jiří Procházka's katanas leave (prochazka.js)
+  if (typeof drawJiriReactOver === "function") drawJiriReactOver(); // animals Jiří Procházka cut in half (jiri-react.js)
   drawClinchOver(); // the clinch: arms tied round them, each knee and elbow, the swirl of the spin on the break (clinch.js)
   drawJonClinch(); // Jon Jones's arms locked over-under, his clinch knees and elbows, the trip's leg and red arrow (jon-clinch.js)
   drawVanOver(); // Joshua Van's chain counter under him, lit while he keeps it (van.js)
@@ -556,5 +557,6 @@ function draw() {
   drawTaleTape(); // the tale of the tape before the whistle, which then starts the fight (tale-tape.js)
   drawIntroMsg(s, ox, oy); // the instruction to the viewer at the start (intro-msg.js)
   drawSendLocSpace(); // cut up to the space station while the fight holds (send-location.js)
+  drawCnCut(s, ox, oy); // Chuck Norris's entrance cutscene in Sean Strickland's America (chuck-norris-cut.js)
   drawDcCakeCut(); // Daniel Cormier's All About That Cake music video, over everything while the fight holds (cormier-cake-cut.js)
 }

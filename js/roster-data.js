@@ -3456,6 +3456,15 @@ var SAVED_ROSTER = [
           "poke"
         ]
       },
+      "react": {
+        "animals": {
+          "chance": 100,
+          "answer": 100
+        },
+        "leprechauns": {
+          "range": 120
+        }
+      },
       "samurai": {
         "lowHp": 0.4,
         "oppLowHp": 0.4,
@@ -3492,6 +3501,15 @@ var SAVED_ROSTER = [
           "sheathe": 0.45
         },
         "petals": 26,
+        "spin": {
+          "chance": 5,
+          "minPlain": 2,
+          "wind": 0.22,
+          "time": 0.75,
+          "turns": 3,
+          "hits": 2,
+          "mult": 0.8
+        },
         "finisher": {
           "damage": 45,
           "tell": 0.6,
