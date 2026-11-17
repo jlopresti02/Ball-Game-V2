@@ -23,7 +23,7 @@ Christian's fighters on `main` (2026-11-14): Alex Pereira, Conor McGregor, Sean 
 |---|---|---|
 | Carlos Prates | Christian's Claude | live on main |
 | Jiří Procházka | Christian's Claude | live on main |
-| Daniel Cormier (rev 2: shoots the double leg more often, first [4, 7] / every [8, 12] / retry [3, 5.5]; super slam 72, was 62; vsJon.every stays [9, 14]) | Christian's Claude | live on main |
+| Daniel Cormier (rev 3): double leg first [4, 7] / every [8, 12] / retry [3, 5.5], super slam 72; wrestles like Khabib (shared `movement.js` press / cutCage / cageShots in his `movement` block, `grapple.shotChance` 38, was 20); chain wrestling (`cormier.chain`: 65% re-shot through `attemptGrab` after a stuffed or sprawled shot, max 2); ground and pound (`cormier.gnp`: 80% after the super slam, 70% after his other takedowns, 5 x 6 then 12); vs Jon double leg every [7, 11] (was [9, 14]). All in `cormier.js`, no shared file touched | Christian's Claude | live on main |
 | Joshua Van | Christian's Claude | live on main |
 | Jon Jones: clinch, inside trip, spinning elbow, EVIL oblique kicks (new file `jon-clinch.js`, one-line hooks) | Christian's Claude | live on main |
 | Max Holloway hits harder (volume punches 8-12, punch 8) and Ilia Topuria hits harder (punch 8) | Christian's Claude | live on main |

@@ -1875,7 +1875,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-daniel-cormier",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "heavyweight",
     "speedMult": 1.12,
@@ -1936,7 +1936,7 @@ var SAVED_ROSTER = [
       "sprawlChance": 55,
       "reattackChance": 70,
       "vsGrapplerChance": 100,
-      "shotChance": 20,
+      "shotChance": 38,
       "shotName": "BODY LOCK"
     },
     "hasSuplex": true,
@@ -2016,9 +2016,27 @@ var SAVED_ROSTER = [
       "vsJon": {
         "damage": 1.12,
         "every": [
-          9,
-          14
+          7,
+          11
         ]
+      },
+      "gnp": {
+        "chance": 80,
+        "takedown": 70,
+        "punches": 5,
+        "damage": 6,
+        "last": 12,
+        "gap": 0.22
+      },
+      "chain": {
+        "chance": 65,
+        "delay": [
+          0.15,
+          0.3
+        ],
+        "max": 2,
+        "speed": 720,
+        "time": 0.3
       },
       "lines": {
         "start": [
@@ -2067,6 +2085,22 @@ var SAVED_ROSTER = [
           18
         ],
         "wait": 8
+      }
+    },
+    "movement": {
+      "after": 0.6,
+      "press": {
+        "turn": 3.2,
+        "lead": 0.1
+      },
+      "cutCage": {
+        "weight": 0.7,
+        "fade": 80
+      },
+      "cageShots": {
+        "near": 30,
+        "within": 40,
+        "rate": 1.6
       }
     },
     "hasSpecial": true,

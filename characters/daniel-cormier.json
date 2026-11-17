@@ -1,6 +1,6 @@
 {
   "id": "c-daniel-cormier",
-  "rev": 2,
+  "rev": 3,
   "builtin": false,
   "weightClass": "heavyweight",
   "speedMult": 1.12,
@@ -35,7 +35,7 @@
   "punch": { "damage": 20, "cooldown": 0.75, "speed": 0.26, "size": 15, "knockback": 160, "reach": 40, "koChance": 3 },
   "hasKick": false,
   "hasGrapple": true,
-  "grapple": { "damage": 32, "cooldown": 1.6, "speed": 0.45, "reach": 6, "counterChance": 15, "finSlamDamage": 20, "finPunches": 3, "finPunchDamage": 10, "sprawlChance": 55, "reattackChance": 70, "vsGrapplerChance": 100, "shotChance": 20, "shotName": "BODY LOCK" },
+  "grapple": { "damage": 32, "cooldown": 1.6, "speed": 0.45, "reach": 6, "counterChance": 15, "finSlamDamage": 20, "finPunches": 3, "finPunchDamage": 10, "sprawlChance": 55, "reattackChance": 70, "vsGrapplerChance": 100, "shotChance": 38, "shotName": "BODY LOCK" },
   "hasSuplex": true,
   "suplex": { "chance": 35, "damage": 45, "cooldown": 4 },
   "combos": { "first": [4, 6], "every": [5, 8], "list": { "jab-cross-hook": 3 } },
@@ -56,7 +56,9 @@
     },
     "bodyLock": { "through": 25 },
     "food": { "menu": ["cake", "chicken", "cake"], "max": 3, "eatTime": 1.5, "bites": 3, "damage": 1.17, "take": 0.94, "belly": 0.28, "grow": 0.035, "defend": true },
-    "vsJon": { "damage": 1.12, "every": [9, 14] },
+    "vsJon": { "damage": 1.12, "every": [7, 11] },
+    "gnp": { "chance": 80, "takedown": 70, "punches": 5, "damage": 6, "last": 12, "gap": 0.22 },
+    "chain": { "chance": 65, "delay": [0.15, 0.3], "max": 2, "speed": 720, "time": 0.3 },
     "lines": {
       "start": ["Good thing about our job is we get to punch each other in the face. So I'm gonna keep talking, and it's his job to shut me up."],
       "food": ["I'm all about that cake, 'bout that cake, and chicken!"],
@@ -69,6 +71,7 @@
     },
     "lineTiming": {"slamChance": 60, "clinchChance": 40, "tauntEvery": [12, 20], "tauntChance": 60, "gap": 8, "jonFirst": [8, 14], "jonGap": [12, 18], "wait": 8}
   },
+  "movement": { "after": 0.6, "press": { "turn": 3.2, "lead": 0.1 }, "cutCage": { "weight": 0.7, "fade": 80 }, "cageShots": { "near": 30, "within": 40, "rate": 1.6 } },
   "hasSpecial": true,
   "special": { "move": "cake", "chargeTime": 32, "hitCut": 2.5, "punchCut": 1.2 }
 }

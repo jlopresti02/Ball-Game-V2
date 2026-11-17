@@ -32,6 +32,28 @@
 //              over them. Runs on b.igbb (move "dcslam"), so nothing else
 //              starts while it's on and he can't be touched; whoever he's
 //              carrying is held (b.dcHeld).
+// Ground and pound (cormier.gnp, Christian 2026-11-17) he mauls them once
+//              they're down. After the super slam `chance`% of the time,
+//              and after any other takedown of his (his body lock or shot
+//              slamming them, a reattack off a sprawl, the suplex)
+//              `takedown`% of the time, he drops on top of them where they
+//              lie ("GROUND AND POUND") and pounds them: `punches` punches
+//              of `damage`, then a `last` one, `gap` seconds of wind-up
+//              apiece (the last one twice that; the Father's Plan punch,
+//              drawFpPound in special.js), then a short flex. They stay down
+//              for it. It runs on the super slam's hold (b.igbb "dcslam",
+//              them b.dcHeld lying flat), so nothing else starts in the
+//              middle of it; it ends cleanly if either of them goes down.
+// Chain wrestling (cormier.chain, Christian 2026-11-17, like Khabib) when a
+//              shot of his is stuffed (sprawled on, the double leg too) and
+//              they're both back up, `chance`% of the time he goes straight
+//              back in: after `delay` seconds he drives at them (`speed`,
+//              up to `time` seconds) and shoots again on contact, his
+//              regular shot (attemptGrab, grapple-duel.js) with all its
+//              defences. Up to `max` chained shots in a row. He walks them
+//              down and cuts the cage on the shared movement styles
+//              (movement.js, his `movement` block, Khabib's press, cutCage
+//              and cageShots).
 // Body lock    (cormier.bodyLock) his grab: `through`% of them go straight
 //              through, no weave, block or sprawl (cormierBodyLock, called
 //              from attemptGrab in grapple-duel.js).
@@ -78,6 +100,9 @@ var DC_SLAM_T = 0.15;    // bringing them down
 var DC_PLATE = 0.4;      // pulling out the plate
 var DC_SWELL = 0.75;     // the belly swelling up after he eats
 var DC_STEP = 0.2;       // footfalls while he carries them
+var DC_MOUNT = 0.25;     // dropping on top of them for the ground and pound
+var DC_GNP_FLEX = 0.5;   // the short flex after the ground and pound
+var DC_CHAIN_WAIT = 0.6; // how long a chained shot waits for a free moment before it's called off
 var DC_CAKE = { sponge: "#5b301c", sponge2: "#7a4428", cream: "#f6e6c4", frost: "#fff2f5", frost2: "#f3c6d6", cherry: "#d0142c", plate: "#f4f4f2" };
 var DC_GOLD = "#ffd24a";
 
@@ -111,7 +136,8 @@ function initCormier(b) {
   b.dc = {
     t: 0, shot: null, shotT: dl ? dcRand(dl.first) : Infinity, servings: 0, eating: false,
     baseR: b.r, belly0: b.char.look && b.char.look.belly || 1, bellyShown: 0, opened: false, won: false,
-    must: [], lineGap: 0, tauntT: dcRand((cfg.lineTiming && cfg.lineTiming.tauntEvery) || [12, 20]), jonLeft: null, jonT: 0, lastLock: null
+    must: [], lineGap: 0, tauntT: dcRand((cfg.lineTiming && cfg.lineTiming.tauntEvery) || [12, 20]), jonLeft: null, jonT: 0, lastLock: null,
+    chain: null, chainN: 0, sprawlSeen: false, lastGrab: null, lastSup: null // chain wrestling, and the takedowns he mauls them after
   };
   b.dc.bellyShown = b.dc.belly0;
   if (cfg.food) dcCakeCutPreload(); // the song for his music video (cormier-cake-cut.js)
@@ -185,13 +211,15 @@ function dcTakeable(o) {
   if (specialBusy(o) || o.bearHeld || o.torHeld) return false;
   return inOrdinaryMovement(o) || !!o.dizzy;
 }
-// The shot's tell and the dash: the speed regulator leaves him alone (physics.js).
-function cormierBusy(b) { return !!(b && b.dc && b.dc.shot); }
+// The double leg's shot, or a chained shot driving in (drawn the same way).
+function dcShooting(m) { return m.shot || (m.chain && m.chain.phase === "shoot" ? m.chain : null); }
+// The shot's tell and the dash (and a chained shot's): the speed regulator leaves him alone (physics.js).
+function cormierBusy(b) { return !!(b && b.dc && dcShooting(b.dc)); }
 // His hands (and the hands of whoever he's carrying) are drawn by drawCormier (draw-attacks.js skips them).
 function cormierHandsBusy(b) {
   if (!b || !b.alive) return false;
   if (b.dcHeld) return true;
-  return !!(b.dc && (b.dc.shot || dcSlamOn(b) || dcFoodOn(b)));
+  return !!(b.dc && (dcShooting(b.dc) || dcSlamOn(b) || dcFoodOn(b)));
 }
 // He can be hit while he eats (special.js specialGuarding).
 function cormierOpen(b) { return dcFoodOn(b) && !cormierEatSafe(b); }
@@ -227,6 +255,7 @@ function updateCormier(self, other, dt) {
   if (!m) return false;
   if (dcSlamOn(self)) return updateSuperSlam(self, other, dt);
   if (self.igbb) return false; // eating (the special) or held in someone else's move
+  if (m.chain) return dcUpdateChain(self, other, dt, m); // straight back in after a stuffed shot
   var dl = dcCfg(self).doubleLeg;
   if (!dl) return false;
   if (m.shot) return dcUpdateShot(self, other, dt, m, dl);
@@ -326,6 +355,58 @@ function cormierBodyLock(attacker, target) {
   return true;
 }
 
+// ---------------------------------------------------------------- chain wrestling
+
+// From tickCormier the moment a stuffed shot of his is over and he's back on
+// his feet (not slammed, not in a reattack of his own): `chain.chance`% of the
+// time he goes again, up to `chain.max` in a row.
+function dcArmChain(b, o, cfg) {
+  var m = b.dc, cc = cfg.chain;
+  if (!cc || !b.alive || !o || !o.alive || !started || over || b.grapple || b.igbb || dcHeldUp(b) ||
+      m.chainN >= (cc.max || 1) || Math.random() * 100 >= (cc.chance || 0)) { m.chainN = 0; return; }
+  m.chain = { phase: "wait", t: 0, delay: dcRand(cc.delay || [0.15, 0.3]), aim: 0 };
+}
+
+// The chained shot: a beat to get his feet back, then he drives at them and
+// shoots again on contact (his regular shot, attemptGrab in grapple-duel.js,
+// so it can be weaved, blocked, sprawled or caught like any other). A miss
+// just ends it.
+function dcUpdateChain(self, other, dt, m) {
+  var c = m.chain, cc = dcCfg(self).chain, dl = dcCfg(self).doubleLeg;
+  if (!cc || !self.alive || !other.alive || !started || over || dcHeldUp(self)) { m.chain = null; return false; }
+  c.t += dt;
+  if (c.phase === "wait") {
+    if (c.t < c.delay) return false; // (free to do whatever he'd do while he gets his feet back)
+    if (!inOrdinaryMovement(self) || self.punch || self.kick || self.koPunch || self.swing || specialBusy(self) || swordDuelActive() ||
+        !dcTakeable(other) || grabBlockedByImpunity(self, other)) {
+      if (c.t >= c.delay + DC_CHAIN_WAIT) m.chain = null;
+      return false;
+    }
+    clearActions(self);
+    c.phase = "shoot"; c.t = 0; c.aim = Math.atan2(other.y - self.y, other.x - self.x);
+    m.chainN++;
+    floater(self.x, self.y - self.r - 30, "CHAIN WRESTLING", "crit");
+    playDcShoot();
+    crowdReact(0.2);
+    return true;
+  }
+  var want = Math.atan2(other.y - self.y, other.x - self.x), turn = ((dl && dl.turn) || 6) * dt;
+  c.aim += Math.max(-turn, Math.min(turn, dcWrap(want - c.aim)));
+  self.vx = Math.cos(c.aim) * (cc.speed || 700); self.vy = Math.sin(c.aim) * (cc.speed || 700);
+  if (dcGap(self, other) <= DC_CONTACT) {
+    m.chain = null;
+    self.vx = 0; self.vy = 0;
+    if (dcTakeable(other) && !grabBlockedByImpunity(self, other)) attemptGrab(self, other);
+    return true;
+  }
+  if (c.t >= (cc.time || 0.3)) {
+    m.chain = null;
+    if (self.alive && inOrdinaryMovement(self)) setSpeed(self, (self.baseSpeed || SPEED) * 0.6);
+    return false;
+  }
+  return true;
+}
+
 // ---------------------------------------------------------------- the super slam
 
 function startSuperSlam(self, other, dl) {
@@ -337,6 +418,7 @@ function startSuperSlam(self, other, dl) {
   other.dcHeld = { by: self.id, z: 0, rot: 0, side: side, phase: "lift", kick: Math.random() * 10 };
   self.igbb = { move: "dcslam", phase: "lift", t: 0, vic: other.id, side: side, stepT: 0, face: side };
   recordTakedown(self.id);
+  if (self.dc) self.dc.chainN = 0;
   floater(self.x, self.y - self.r - 30, "PICKED UP!", "crit");
   dcCall("takedown", self, other);
   playDcLift();
@@ -424,9 +506,10 @@ function updateSuperSlam(self, other, dt) {
     if (k >= 1) dcSlamLands(self, vic, dl, m);
     return true;
   }
-  // Down: they lie there, he flexes over them.
+  // Down: they lie there, he flexes over them (after the ground and pound, a short one).
   if (h) { h.z = 0; vic.x = m.lx; vic.y = m.ly; }
-  if (m.t >= dl.downTime || (h && !vic.alive)) { dcEndSlam(self, vic); return false; }
+  if (m.gnp) return dcRunGnp(self, vic, m, dt);
+  if (m.t >= (m.downT != null ? m.downT : dl.downTime) || (h && !vic.alive)) { dcEndSlam(self, vic); return false; }
   return true;
 }
 
@@ -449,10 +532,112 @@ function dcSlamLands(self, vic, dl, m) {
   if (stadiumOn() && typeof cameraFlash === "function") { cameraFlash(); screenFlash = 0.35; } // the cameras going off (dobronx.js)
   if (!vic.alive) { vic.shelled = false; vic.dcHeld = null; }
   checkEnd();
+  var gc = dcCfg(self).gnp;
+  if (gc && vic.alive && !over) dcBeginGnp(self, vic, m, gc.chance); // drops on top and pounds them
   return dealt;
 }
 
+// ---------------------------------------------------------------- ground and pound
+
+// Off any other takedown of his (from tickCormier: the body lock or shot
+// slamming them, a reattack, the suplex): `gnp.takedown`% of the time he
+// follows them down where they landed. The super slam's hold, started on
+// the mat ("down"), so it runs and ends the same way.
+function dcStartMaul(self, vic) {
+  var gc = dcCfg(self).gnp;
+  if (!gc || !gc.takedown || !vic || vic === self || !started || over || !self.alive || !vic.alive) return;
+  if (self.igbb || self.dc.shot || self.dc.chain || dcHeldUp(self) || self.suplex || self.choked || swordDuelActive()) return;
+  if (vic.koOut || vic.invincible || vic.grappled || vic.grapple || vic.slam || vic.sprawl || vic.sprawled || subLocked(vic) || vic.igbb ||
+      vic.dcHeld || vic.guillo || vic.choked || vic.suplex || vic.bearHeld || vic.torHeld || vic.beamPin || specialBusy(vic)) return;
+  if (Math.random() * 100 >= gc.takedown) return;
+  clearActions(self); clearActions(vic);
+  vic.dizzy = null; vic.speedEase = null;
+  vic.shelled = true; vic.vx = 0; vic.vy = 0;
+  self.vx = 0; self.vy = 0;
+  vic.x = Math.max(vic.r, Math.min(W - vic.r, vic.x)); vic.y = Math.max(vic.r, Math.min(H - vic.r, vic.y));
+  var side = vic.x >= self.x ? 1 : -1;
+  vic.dcHeld = { by: self.id, z: 0, rot: side * Math.PI / 2, side: side, phase: "down", kick: Math.random() * 10 };
+  self.igbb = { move: "dcslam", phase: "down", t: 0, vic: vic.id, side: side, stepT: 0, face: side, lx: vic.x, ly: vic.y, maul: true };
+  if (!dcBeginGnp(self, vic, self.igbb, 100)) dcEndSlam(self, vic);
+}
+
+// `chance`% of the time: on top of them and the punches lined up.
+function dcBeginGnp(self, vic, m, chance) {
+  var gc = dcCfg(self).gnp, hits = [];
+  if (!gc || !vic.alive || over || !vic.dcHeld || Math.random() * 100 >= (chance || 0)) return false;
+  for (var i = 0; i < (gc.punches || 0); i++) hits.push(gc.damage);
+  if (gc.last) hits.push(gc.last);
+  if (!hits.length) return false;
+  m.gnp = { phase: "mount", t: 0, dir: self.x < vic.x ? -1 : 1, fx: self.x, fy: self.y, hits: hits, thrown: 0, gp: null };
+  var sp = dcGnpSpot(self, vic, m.gnp);
+  floater(sp.x, sp.y - self.r - 44, "GROUND AND POUND", "crit");
+  crowdReact(0.5);
+  return true;
+}
+
+// Where he sits: on top of them, on his own side (kept in the cage).
+function dcGnpSpot(self, vic, g) {
+  var sum = self.r + vic.r;
+  return { x: Math.max(self.r, Math.min(W - self.r, vic.x + g.dir * sum * 0.62)), y: Math.max(self.r, Math.min(H - self.r, vic.y - sum * 0.62)) };
+}
+
+// Drops on top, then the punches: each one cocked for its wind-up, driven
+// down and bounced back (FP_STRIKE / FP_RECOIL, the Father's Plan timing).
+function dcRunGnp(self, vic, m, dt) {
+  var g = m.gnp, gc = dcCfg(self).gnp || {}, sp = dcGnpSpot(self, vic, g), k;
+  g.t += dt;
+  if (g.phase === "mount") {
+    k = ease(Math.min(1, g.t / DC_MOUNT));
+    self.x = dcLerp(g.fx, sp.x, k); self.y = dcLerp(g.fy, sp.y, k);
+    if (!vic.alive || over || !vic.dcHeld) { dcGnpDone(m); return true; }
+    if (g.t >= DC_MOUNT) { g.phase = "pound"; g.t = 0; playDcStep(0.9); dcDust(vic, 8); }
+    return true;
+  }
+  var gp = g.gp, lean = 0;
+  if (gp) {
+    gp.t += dt;
+    if (gp.t < gp.wind) lean = -6 * (gp.t / gp.wind);
+    else if (gp.t < gp.wind + FP_STRIKE) lean = 12;
+    else lean = 12 * Math.max(0, 1 - (gp.t - gp.wind - FP_STRIKE) / FP_RECOIL);
+    if (!gp.hit && gp.t >= gp.wind + FP_STRIKE) { gp.hit = true; dcGnpLands(self, vic, gp); }
+    if (gp.t >= gp.wind + FP_STRIKE + FP_RECOIL) g.gp = null;
+  }
+  self.x = sp.x + (reduceMotion ? 0 : Math.sin(g.t * 31) * 1.5); self.y = sp.y + lean;
+  // Either of them gone, or the fight over: no more punches.
+  if (!vic.alive || over || !vic.dcHeld) { dcGnpDone(m); return true; }
+  if (!g.gp && g.thrown < g.hits.length) {
+    var last = g.thrown === g.hits.length - 1 && !!gc.last;
+    g.gp = { t: 0, wind: (gc.gap || FP_WIND) * (last ? 2 : 1), hit: false, last: last, side: g.thrown % 2 ? -1 : 1, dmg: g.hits[g.thrown] };
+    g.thrown++;
+    playWhoosh();
+  }
+  if (!g.gp && g.thrown >= g.hits.length) dcGnpDone(m);
+  return true;
+}
+
+// The punch lands: can't be slipped or blocked, like the slam.
+function dcGnpLands(self, vic, gp) {
+  var big = gp.last, dealt = hurt(vic, gp.dmg, "igbb", self.id);
+  if (dealt > 0) playPunch(dealt * (big ? 4 : 3));
+  var cx = vic.x, cy = vic.y - vic.r * 0.45;
+  vic.squash = { t: big ? 0.28 : 0.18, max: big ? 0.28 : 0.18, nx: 0, ny: -1 };
+  impacts.push({ x: cx, y: cy, nx: 0, ny: -1, life: big ? 0.55 : 0.4, max: big ? 0.55 : 0.4, color: theme.hit });
+  igbbSparks(cx, cy, 0, -1, self.char.color, big ? 26 : 16, big ? 560 : 420);
+  if (big) dcDust(vic, 10);
+  if (!reduceMotion) shake = Math.max(shake, big ? 26 : 16);
+  hitStop = Math.max(hitStop, big ? 0.18 : 0.08);
+  if (!vic.alive) { vic.shelled = false; vic.dcHeld = null; }
+  checkEnd();
+}
+
+// Done pounding (or it's over): a short flex, then the hold ends as usual.
+function dcGnpDone(m) {
+  m.gnp = null;
+  m.t = 0; m.downT = DC_GNP_FLEX;
+}
+
 function dcEndSlam(self, vic) {
+  var maul = !!(self.igbb && self.igbb.move === "dcslam" && self.igbb.maul);
   if (self.igbb && self.igbb.move === "dcslam") self.igbb = null;
   if (vic && vic.dcHeld && vic.dcHeld.by === self.id) {
     vic.dcHeld = null;
@@ -462,7 +647,7 @@ function dcEndSlam(self, vic) {
       vic.vx = Math.cos(a) * SPEED * 0.5; vic.vy = Math.sin(a) * SPEED * 0.5;
     }
   }
-  if (self.dc) self.dc.shotT = dcRand(dcEvery(self));
+  if (self.dc && !maul) self.dc.shotT = dcRand(dcEvery(self)); // (a maul off another takedown leaves the double leg's clock alone)
   if (self.alive) {
     var b2 = Math.random() * Math.PI * 2;
     self.vx = Math.cos(b2) * (self.baseSpeed || SPEED); self.vy = Math.sin(b2) * (self.baseSpeed || SPEED);
@@ -608,7 +793,8 @@ function tickCormier(dt) {
     // Held by a DC who's let go (or isn't carrying any more): let them down.
     if (b.dcHeld) {
       var holder = balls[b.dcHeld.by];
-      if (!holder || !dcSlamOn(holder) || holder.igbb.vic !== b.id) { b.dcHeld = null; b.shelled = false; }
+      if (holder && !holder.alive && dcSlamOn(holder)) dcEndSlam(holder, b); // he went down mid-hold (the ground and pound too): let go
+      else if (!holder || !dcSlamOn(holder) || holder.igbb.vic !== b.id) { b.dcHeld = null; b.shelled = false; }
     }
     var m = b.dc;
     if (!m) return;
@@ -619,6 +805,25 @@ function tickCormier(dt) {
       else m.eating = false;
     }
     if (m.shot && (dcHeldUp(b) || b.igbb)) { m.shot = null; m.shotT = dcRand(cfg.doubleLeg.retry); }
+    if (m.chain && (dcHeldUp(b) || b.igbb)) m.chain = null;
+    // His takedowns landing (the grab's slam, after any Iowa Style press, and
+    // the suplex): the ground and pound may follow them down.
+    var o0 = balls[1 - b.id];
+    if (b.grapple) m.lastGrab = b.grapple;
+    else if (m.lastGrab) {
+      var lg = m.lastGrab;
+      m.lastGrab = null;
+      if (lg.dealt && !lg.finisher) { m.chainN = 0; dcStartMaul(b, balls[lg.targetId]); }
+    }
+    if (b.suplex) m.lastSup = b.suplex;
+    else if (m.lastSup) {
+      var ls = m.lastSup;
+      m.lastSup = null;
+      if (ls.phase === "down") { m.chainN = 0; dcStartMaul(b, balls[ls.vicId]); }
+    }
+    // A shot of his was stuffed and he's back up: chain wrestling.
+    if (b.sprawled) m.sprawlSeen = true;
+    else if (m.sprawlSeen) { m.sprawlSeen = false; dcArmChain(b, o0, cfg); }
     // His back suplex (suplex.js): the commentators call it, once per suplex.
     if (b.suplex && !b.suplex.dcCalled) { b.suplex.dcCalled = true; dcCall("suplex", b, balls[b.suplex.vicId]); }
     // The belly (and his size) catching up with what he's eaten.
@@ -659,9 +864,9 @@ function applyCormierPose(b) {
   }
   var m = b.dc;
   if (!m || !b.alive) return;
-  var k, ax = b.x, ay = b.y + b.r;
-  if (m.shot) {
-    var s = m.shot, lean = Math.cos(s.aim) * 0.18;
+  var k, ax = b.x, ay = b.y + b.r, sh = dcShooting(m);
+  if (sh) {
+    var s = sh, lean = Math.cos(s.aim) * 0.18;
     k = s.phase === "tell" ? ease(s.t / 0.18) : s.phase === "shoot" ? 1 : Math.max(0, 1 - s.t / 0.3);
     ctx.translate(ax, ay); ctx.rotate(lean * k); ctx.scale(1 + 0.12 * k, 1 - 0.18 * k); ctx.translate(-ax, -ay);
     return;
@@ -709,11 +914,11 @@ function drawCormier(b, other) {
   if (b.dcHeld && b.alive) { drawDcHeldLimbs(b); return; }
   var m = b.dc;
   if (!m || !b.alive) return;
-  var r = b.r, ch = b.char, w = r * 0.2, g = b.igbb;
+  var r = b.r, ch = b.char, w = r * 0.2, g = b.igbb, sh = dcShooting(m);
   ctx.save();
-  if (m.shot) {
-    // Hands low and reaching for the legs.
-    var s = m.shot, ux = Math.cos(s.aim), uy = Math.sin(s.aim), px = -uy, py = ux;
+  if (sh) {
+    // Hands low and reaching for the legs (a chained shot too).
+    var s = sh, ux = Math.cos(s.aim), uy = Math.sin(s.aim), px = -uy, py = ux;
     var reach = s.phase === "shoot" ? r * 1.15 : r * 0.75, low = s.phase === "shoot" ? r * 0.25 : r * 0.45;
     [-1, 1].forEach(function (sd) {
       var sx = b.x + px * sd * r * 0.55, sy = b.y - r * 0.05;
@@ -731,6 +936,7 @@ function drawCormier(b, other) {
 
 function drawDcCarryArms(b, g) {
   var r = b.r, ch = b.char, w = r * 0.2, vic = balls[g.vic], h = vic && vic.dcHeld;
+  if (g.gnp) return; // the ground and pound is drawn over them (drawDcGnpArms, from drawCormierOver)
   if (g.phase === "down" || !h) {
     // Double biceps over them, pumping.
     var pump = Math.abs(Math.sin(dcClock * 10)) * r * 0.25;
@@ -1021,8 +1227,24 @@ function drawDcTarget(b, g) {
   ctx.restore();
 }
 
-// Over everything (draw.js): the SUPER SLAM! lettering.
+// The ground and pound, drawn over both of them: one glove posted on them
+// (both while he drops on top), the other coming down (drawFpPound,
+// special.js, the Father's Plan punch).
+function drawDcGnpArms(b, g) {
+  var vic = balls[g.vic], gn = g.gnp, r = b.r, w = r * 0.2;
+  if (!vic) return;
+  var toward = vic.x < b.x ? -1 : 1;
+  ctx.save();
+  (gn.gp ? [-gn.gp.side] : [-1, 1]).forEach(function (sd) {
+    dcArm(b.char, b.x + toward * sd * r * 0.45, b.y - r * 0.1, vic.x + toward * sd * vic.r * 0.3, vic.y - vic.r * 0.15, w, sd);
+  });
+  ctx.restore();
+  if (gn.gp) drawFpPound(b, gn.gp);
+}
+
+// Over everything (draw.js): the ground and pound, and the SUPER SLAM! lettering.
 function drawCormierOver() {
+  balls.forEach(function (b) { if (b.alive && dcSlamOn(b) && b.igbb.gnp) drawDcGnpArms(b, b.igbb); });
   if (!dcStamp) return;
   var s = dcStamp, pop = s.t < 0.12 ? 1.6 - 0.6 * (s.t / 0.12) : 1, fade = s.t > 1 ? Math.max(0, 1 - (s.t - 1) / 0.3) : 1;
   var x = Math.max(110, Math.min(W - 110, s.x)), y = Math.max(40, s.y - s.t * 14);
@@ -1088,6 +1310,15 @@ function cormierGalleryMoves(ch, add) {
     add("🤼", "Double leg", "Every " + dl.every[0] + "-" + dl.every[1] + "s up close he drops his level while a red lane shows where he's going (the tell), then shoots. Miss and he stumbles. They can sprawl on it (their own sprawl chance x" + dl.sprawlScale + ", at least " + dl.minStuff + "%), or catch his head in a guillotine.");
     add("🏟️", "Super slam", "When the double leg gets through he picks them up over his head, carries them to the middle of the cage (a target comes up there) while the crowd gets up, and throws them down on it: " + dl.damage + " damage, can't be slipped or blocked.");
   }
+  var gn = g.gnp;
+  if (gn) {
+    var gnHits = gn.punches + " punches (" + gn.damage + " each" + (gn.last ? ", then a last one for " + gn.last : "") + ")";
+    add("🔨", "Ground and pound", "After " + (dl && gn.chance ? gn.chance + "% of his super slams" : "") + (dl && gn.chance && gn.takedown ? " and " : "") +
+      (gn.takedown ? gn.takedown + "% of his other takedowns (the body lock, a reattack, the suplex)" : "") +
+      " he drops on top of them where they landed and mauls them: " + gnHits + ", can't be slipped or blocked. They stay down for it.");
+  }
+  var cc = g.chain;
+  if (cc) add("⛓️", "Chain wrestling", "Stuff his shot and " + cc.chance + "% of the time he's straight back in: he drives at you and shoots again, up to " + cc.max + " in a row.");
   if (g.bodyLock) add("🔒", "Body lock", g.bodyLock.through + "% of his body locks go straight through: no weave, no block, no sprawl.");
   if (fd) add("🍰", "Comfort food", "Every serving (up to " + fd.max + "): x" + fd.damage + " damage on everything he lands, x" + fd.take + " damage taken, and a bigger belly.");
   if (vj) add("🐐", "vs Jon Jones", "His rival: he hits Jon x" + vj.damage + " as hard and shoots the double leg more often.");
