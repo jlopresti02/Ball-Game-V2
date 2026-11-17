@@ -43,7 +43,7 @@ var CNC = { pre: 7.0, slow: 1 / 4, land: 0.3, card: 2.4, wipe: 0.8, slowMax: 4.5
 // (Joe: the first cut went by too fast). Everything in a shot, and its sounds,
 // stretches with it.
 var CNC_SHOTS = [[0, 0.5, 1.4], [0.5, 0.35, 1.0], [0.85, 0.85, 2.3], [1.7, 1.0, 2.6], [2.7, 1.0, 2.2],
-                 [3.7, 0.8, 1.9], [4.5, 0.6, 3.0], [5.1, 1.1, 2.1], [6.2, 0.8, 1.8]];
+                 [3.7, 0.8, 1.9], [4.5, 0.6, 1.6], [5.1, 1.1, 2.1], [6.2, 0.8, 1.8]];
 (function () { var at = 0; CNC_SHOTS.forEach(function (s) { s.push(at); at += s[2]; }); CNC.pre = at; })();
 // Real seconds into the cut -> story seconds, and back.
 function cncStory(u) {
@@ -79,7 +79,7 @@ function cnCutHold(self, other) {
   var snap = document.createElement("canvas");
   snap.width = canvas.width; snap.height = canvas.height;
   try { snap.getContext("2d").drawImage(canvas, 0, 0); } catch (e) {}
-  cncCut = { ownerId: self.id, vicId: other.id, stage: "pre", u: 0, snap: snap, bus: null, sparks: [], sparkT: 0, landX: 0, landY: 0 };
+  cncCut = { ownerId: self.id, vicId: other.id, stage: "pre", u: 0, snap: snap, arena: cncArenaXf(), bus: null, sparks: [], sparkT: 0, landX: 0, landY: 0 };
   shake = 0;
   cncAudio();
   return true;
@@ -245,6 +245,13 @@ function cncChuck(x, y, r, arms, rot) {
 // ---------------------------------------------------------------- drawing
 
 // From the end of draw (draw.js). ox, oy, sc: where the arena is on screen.
+// Where the arena sits on the canvas, worked out the same way draw() does.
+function cncArenaXf() {
+  try {
+    var st = stadiumOn(), px = canvas.width / STAGE_W;
+    return { s: st ? px * ST.A / W : canvas.width / W, ox: st ? ST.AX * px : 0, oy: st ? ST.AY * px : 0 };
+  } catch (e) { return null; }
+}
 function drawCnCut(sc, ox, oy) {
   var c = cncCut;
   if (!c) return;
@@ -631,15 +638,18 @@ function cncRanchLand(u) {
 }
 
 // 3. The ranch at sunrise.
+var CNC_RANCH = { rep0: 0.08, rep: 0.2, n: 3, gx: 360, gy: 600, r: 150, up0: 0.72, up1: 0.84, floor: 1310 };
 function cncShotRanch(u) {
-  // Story seconds 0-1.0 (about 2.6 real): three deep one-arm pushups
-  // (0.1-0.7), the porch phone rings, he springs up (0.72-0.84) and tips his
-  // hat. On each push the whole country dips: he's pushing the Earth down.
-  var REP0 = 0.1, REP = 0.2, NREP = 3, UP0 = 0.72, UP1 = 0.84;
-  var ri = Math.floor((u - REP0) / REP), rk = (u - REP0) / REP - ri, pushing = u >= REP0 && ri < NREP;
-  var down = pushing ? Math.sin(rk * Math.PI) : 0;                    // 0 arm straight, 1 chest to the boards
-  var push = pushing && rk > 0.5 ? Math.sin((rk - 0.5) * 2 * Math.PI) : 0;
-  var dip = reduceMotion ? 0 : push * 16;
+  // Story seconds 0-1.0 (about 2.6 real): on the porch's pull-up bar, three
+  // one-arm pull-ups (0.08-0.68), the other hand curling the 1 TON weight on
+  // every rep. On each pull the whole country dips: he's pulling the Earth
+  // down, not himself up. The porch phone rings, he lets go (0.72), lands
+  // with the weight (0.84) and tips his hat.
+  var R = CNC_RANCH, r = R.r, floor = R.floor, sc = r / CN_R;
+  var ri = Math.floor((u - R.rep0) / R.rep), rk = (u - R.rep0) / R.rep - ri, going = u >= R.rep0 && ri < R.n;
+  var pull = !going ? 0 : rk < 0.35 ? cncEase(rk / 0.35) : rk < 0.55 ? 1 : 1 - cncEase((rk - 0.55) / 0.45);
+  var landK = cncClamp((u - R.up1) / 0.06), thud = u > R.up1 ? Math.exp(-(u - R.up1) * 30) : 0;
+  var dip = reduceMotion ? 0 : pull * 16 + thud * 26;
   var z = 1 + 0.05 * u;
   ctx.save();
   ctx.translate(540, 1200); ctx.scale(z, z); ctx.translate(-540, -1200);
@@ -655,55 +665,48 @@ function cncShotRanch(u) {
   cncRedPhone(840, 1035, 0.32, 0, ring ? ring + 1 : 0, true);
   if (ring) {
     ctx.strokeStyle = "#fff"; ctx.lineWidth = 5; ctx.lineCap = "round";
-    for (var j = 0; j < 2; j++) { ctx.beginPath(); ctx.arc(840, 1040, 70 + j * 22, -2.4, -0.7); ctx.stroke(); }
+    for (var j = 0; j < 2; j++) { ctx.beginPath(); ctx.arc(840, 990, 70 + j * 22, -2.4, -0.7); ctx.stroke(); }
   }
-  // Chuck
-  var r = 190, x = 470, floor = 1310, hiY = floor - r * 1.55, loY = floor - r * 1.08, sc = r / CN_R;
-  var standUp = cncClamp((u - UP0) / (UP1 - UP0)), standY = floor - r - 30;
-  var y2 = u < UP0 ? cncLerp(hiY, loY, down) : cncLerp(hiY, standY, cncOut(standUp)) - Math.sin(standUp * Math.PI) * r * 0.5;
-  var lean = 0; // seen from the front: one arm under him, the other behind his back
-  var cl = Math.cos(lean), sl = Math.sin(lean);
-  function at(lx, ly) { return { x: x + (lx * cl - ly * sl), y: y2 + (lx * sl + ly * cl) }; }
-  // his shadow on the boards, darker the lower he gets
-  var near = 1 - (floor - r - y2) / (r * 1.2);
-  ctx.fillStyle = "rgba(40,20,8," + (0.2 + 0.25 * cncClamp(near)) + ")";
-  ctx.beginPath(); ctx.ellipse(x, floor + 4, r * (0.8 + 0.3 * cncClamp(near)), r * 0.12, 0, 0, Math.PI * 2); ctx.fill();
-  // dust jumping off the boards at the bottom of each rep
-  if (pushing && rk > 0.4 && rk < 0.75 && !reduceMotion) {
-    var dk2 = (rk - 0.4) / 0.35;
-    ctx.fillStyle = "rgba(225,195,150," + (0.7 * (1 - dk2)) + ")";
-    for (var d = 0; d < 10; d++) { var da = Math.PI + d / 9 * Math.PI; ctx.beginPath(); ctx.arc(x + Math.cos(da) * (r * 0.7 + 140 * dk2), floor - 6 + Math.sin(da) * 30 * dk2, 7 + cncRand(d) * 9, 0, Math.PI * 2); ctx.fill(); }
-  }
-  var limb = 13 * sc * 0.7;
-  ctx.save(); ctx.translate(x, y2); ctx.rotate(lean); ctx.scale(sc, sc);
-  drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
-  drawCnKit(CN_R); drawCnHat(CN_R);
-  if (u >= UP0) cnSalute(CN_R, standUp < 1 ? 0 : cncClamp((u - UP1) / 0.16) * CN_SALUTE * 0.6); // up, and the hat tip
-  ctx.restore();
-  if (u < UP0) {
-    // the working arm: shoulder, an elbow that folds up and back as he
-    // goes down, his hand flat on the boards out in front
-    var sh = at(r * 0.62, r * 0.3), hand = { x: x + r * 0.5, y: floor - 12 };
-    var dx = hand.x - sh.x, dy = hand.y - sh.y, D = Math.sqrt(dx * dx + dy * dy), seg = r * 0.62;
-    var h2 = Math.sqrt(Math.max(0, seg * seg - D * D / 4)), mx = (sh.x + hand.x) / 2, my = (sh.y + hand.y) / 2;
-    var el = { x: mx + (dy / D) * h2, y: my - (dx / D) * h2 };
-    if (el.x < mx) el = { x: mx - (dy / D) * h2, y: my + (dx / D) * h2 }; // the elbow flares out to the side as he goes down
-    ctx.fillStyle = CN_LOOK.skin; ctx.strokeStyle = theme.wall; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.ellipse(hand.x + 16, hand.y + 2, limb * 1.0, limb * 0.42, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // the hand flat on the boards
-    strokeLimb(limb, CN_DENIM, function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(el.x, el.y); ctx.lineTo(hand.x, hand.y - limb * 0.2); });
-    if (push > 0.3 && !reduceMotion) { // strain lines
-      ctx.strokeStyle = "rgba(255,255,255," + push + ")"; ctx.lineWidth = 5;
-      for (var q = 0; q < 3; q++) { ctx.beginPath(); ctx.moveTo(el.x + 30, el.y - 30 - q * 22); ctx.lineTo(el.x + 60, el.y - 44 - q * 26); ctx.stroke(); }
+  // the pull-up bar: two cedar posts and a steel pipe across
+  ctx.strokeStyle = CNC_INK; ctx.lineWidth = 5;
+  ctx.fillStyle = "#6e4424";
+  [170, 720].forEach(function (px) { ctx.beginPath(); ctx.rect(px - 22, R.gy - 60, 44, floor - R.gy + 60); ctx.fill(); ctx.stroke(); });
+  ctx.fillStyle = "rgba(0,0,0,0.2)"; [170, 720].forEach(function (px) { ctx.fillRect(px + 6, R.gy - 56, 14, floor - R.gy + 52); });
+  var pg = ctx.createLinearGradient(0, R.gy - 12, 0, R.gy + 12);
+  pg.addColorStop(0, "#e9ebef"); pg.addColorStop(0.5, "#8d9097"); pg.addColorStop(1, "#4a4c52");
+  ctx.fillStyle = pg; ctx.beginPath(); ctx.roundRect(150, R.gy - 12, 590, 24, 12); ctx.fill(); ctx.stroke();
+  // his shadow on the boards
+  var hangY = cncLerp(R.gy + r * 1.95, R.gy + r * 0.5, pull);
+  var fallK = cncClamp((u - R.up0) / (R.up1 - R.up0)), standY = floor - r - 30;
+  var shY = u < R.up0 ? hangY : cncLerp(R.gy + r * 1.95, standY, fallK * fallK);
+  var near = 1 - (floor - r - shY) / (r * 3);
+  ctx.fillStyle = "rgba(40,20,8," + (0.15 + 0.3 * cncClamp(near)) + ")";
+  ctx.beginPath(); ctx.ellipse(R.gx + r * 0.7, floor + 4, r * (0.8 + 0.4 * cncClamp(near)), r * 0.12, 0, 0, Math.PI * 2); ctx.fill();
+  if (u < R.up0) {
+    cncPullUps(u, R);
+  } else {
+    // he lets go, drops to the boards, the weight slams down beside him, and the hat tip
+    var bx = R.gx + r * 0.55, wy = Math.min(shY + r * 1.42, floor - r * 1.45 * 1.05);
+    cncTonWeight(bx + r * 1.15, wy, r * 1.45, 0);
+    if (thud > 0.05 && !reduceMotion) {
+      ctx.fillStyle = "rgba(225,195,150," + (0.8 * thud) + ")";
+      for (var d = 0; d < 12; d++) { var da = Math.PI + d / 11 * Math.PI, dr = (1 - thud) * 220; ctx.beginPath(); ctx.arc(bx + r * 1.15 + Math.cos(da) * (r * 0.8 + dr), floor - 6 + Math.sin(da) * 40 * (1 - thud), 8 + cncRand(d) * 9, 0, Math.PI * 2); ctx.fill(); }
     }
+    ctx.save(); ctx.translate(bx, shY); ctx.scale(sc, sc);
+    drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
+    drawCnKit(CN_R); drawCnHat(CN_R);
+    cnSalute(CN_R, fallK < 1 ? 0 : cncClamp((u - R.up1) / 0.16) * CN_SALUTE * 0.6);
+    ctx.restore();
   }
   ctx.restore();
   // the rep counter, popping on each one
-  var done = u < REP0 ? 0 : Math.min(NREP, Math.floor((u - REP0) / REP + 0.5)), rep = 997 + done;
-  var since = done > 0 ? u - (REP0 + (done - 0.5) * REP) : 1, pop = 1 + 0.4 * Math.exp(-Math.max(0, since) * 25);
-  ctx.save(); ctx.translate(540, 1520); ctx.scale(pop, pop);
+  var done = u < R.rep0 ? 0 : Math.min(R.n, Math.floor((u - R.rep0) / R.rep + 0.65)), rep = 997 + done;
+  var since = done > 0 ? u - (R.rep0 + (done - 0.65) * R.rep) : 1, pop = 1 + 0.4 * Math.exp(-Math.max(0, since) * 25);
+  ctx.save(); ctx.translate(540, 1620); ctx.scale(pop, pop);
   cncText(rep === 1000 ? "1,000." : rep + "...", 0, 0, 104, rep === 1000 ? "#ffe14d" : "#ffffff", "#7a2a10");
   ctx.restore();
-  cncText("ONE-ARM PUSHUPS", 540, 1425, 44, "#ffe7a0", "#000", "center", "800");
+  cncText("ONE-ARM PULL-UPS", 540, 1450, 50, "#ffffff", "#000", "center", "900");
+  cncText("+ 1-TON CURLS", 540, 1510, 50, "#ffe14d", "#000", "center", "900");
   cncFlare(700, 1000 + dip, 160, 0.7);
   cncText("SOMEWHERE IN TEXAS", 540, 330, 64, "#ffe7a0", "#7a2a10");
 }
@@ -1009,24 +1012,20 @@ function cncCarvedHead(x, y, r, tilt, who) {
   ctx.restore();
 }
 
-// 5b. Drone shot pulling up over Mount Rushmore. Chuck hangs off the top of
-// the cliff by one hand to the right of Lincoln, doing pull-ups, curling the
-// 1 TON weight (Joe's photo) with the other hand on every rep. Story seconds
-// 0-0.6, played over 3 real seconds: three reps.
-var CNC_RM = { rep0: 0.03, rep: 0.18, n: 3, gx: 815, gy: 858, r: 74 };
+// 5b. Drone shot pulling up over Mount Rushmore (the four presidents only).
 function cncShotRushmore(u) {
   var lift = cncEase(u / 0.6);
   var sky = ctx.createLinearGradient(0, 0, 0, 1920);
   sky.addColorStop(0, "#1d5fc4"); sky.addColorStop(0.55, "#3f86e0"); sky.addColorStop(1, "#8fc0f0");
   ctx.fillStyle = sky; ctx.fillRect(0, 0, 1080, 1920);
   ctx.save();
-  ctx.translate(540, 1100); ctx.scale(1.06 - 0.06 * lift, 1.06 - 0.06 * lift); ctx.translate(-540, -1100 + 160 * lift);
+  ctx.translate(540, 1100); ctx.scale(1.12 - 0.12 * lift, 1.12 - 0.12 * lift); ctx.translate(-540, -1100 + 160 * lift);
   // Joe's photo, traced (chuck-norris-rushmore-art.js): the real cliff and
   // the four real faces. The drawn version below is only a fallback.
   var photo = typeof cncRushmoreImg !== "undefined" && cncRushmoreImg.complete && cncRushmoreImg.naturalWidth;
   if (photo) {
     ctx.fillStyle = "#24402c"; ctx.fillRect(-100, 1400, 1280, 700);
-    ctx.drawImage(cncRushmoreImg, -235, 560, 1350, 1350 * cncRushmoreImg.naturalHeight / cncRushmoreImg.naturalWidth);
+    ctx.drawImage(cncRushmoreImg, -135, 560, 1350, 1350 * cncRushmoreImg.naturalHeight / cncRushmoreImg.naturalWidth);
   } else {
   // the cliff (Joe's reference photo): craggy tan-pink granite, the heads in
   // its upper middle, a grey rubble slope and pines below
@@ -1052,7 +1051,6 @@ function cncShotRushmore(u) {
   ctx.fillStyle = "rgba(60,58,54,0.35)";
   for (var rb = 0; rb < 40; rb++) { ctx.beginPath(); ctx.arc(200 + cncRand(rb) * 620, 1180 + cncRand(rb + 40) * 300, 5 + cncRand(rb + 80) * 9, 0, Math.PI * 2); ctx.fill(); }
   }
-  if (photo) cncPullUps(u); // on the photo; the drawn fallback keeps its four heads
   // pines at the foot
   ctx.fillStyle = "#1f3a26";
   for (var p = 0; p < 26; p++) { var px = p * 46 - 40, py = 1400 + cncRand(p) * 60 + (Math.abs(px - 480) < 260 ? 60 : -60 * cncRand(p + 3)); ctx.beginPath(); ctx.moveTo(px, py - 110); ctx.lineTo(px + 34, py); ctx.lineTo(px - 34, py); ctx.closePath(); ctx.fill(); }
@@ -1065,12 +1063,7 @@ function cncShotRushmore(u) {
   });
   ctx.globalAlpha = 1;
   ctx.save(); ctx.translate(jx, jy); ctx.rotate(-0.04); cncJet(0.22, u); ctx.restore();
-  cncText("MOUNT RUSHMORE, SOUTH DAKOTA", 540, 330, 50, "#ffffff", "#000", "center", "800");
-  var R = CNC_RM, done = u < R.rep0 ? 0 : Math.min(R.n, Math.floor((u - R.rep0) / R.rep + 0.55));
-  var since = done > 0 ? u - (R.rep0 + (done - 0.55) * R.rep) : 1, pop = 1 + 0.4 * Math.exp(-Math.max(0, since) * 25);
-  cncText("ONE-ARM PULL-UPS", 540, 1505, 50, "#ffffff", "#000", "center", "900");
-  cncText("+ 1-TON CURLS", 540, 1565, 50, "#ffe14d", "#000", "center", "900");
-  if (done > 0) { ctx.save(); ctx.translate(540, 1665); ctx.scale(pop, pop); cncText(done + (done === R.n ? "." : "..."), 0, 0, 104, done === R.n ? "#ffe14d" : "#ffffff", "#1f3a8a"); ctx.restore(); }
+  cncText("MOUNT RUSHMORE, SOUTH DAKOTA", 540, 1500, 44, "#ffffff", "#000", "center", "800");
 }
 
 // The 1 TON weight from Joe's photo: a black iron block, narrower at the
@@ -1116,22 +1109,21 @@ function cncTonWeight(x, y, w, tilt) {
   ctx.restore();
 }
 
-// Chuck on the cliff edge: his right hand gripping the top, pulling himself
-// up, his left curling the weight as he goes, both his own arms.
-function cncPullUps(u) {
-  var R = CNC_RM, r = R.r, sc = r / CN_R, limb = 13 * sc * 0.7, fist = 13 * sc * 0.62;
+// Chuck on the bar: his right hand gripping it, pulling himself up, his left
+// curling the weight as he goes, both his own arms. R: the grip (gx, gy), his
+// size r and the reps (rep0, rep, n). Returns how far up he is (0-1).
+function cncPullUps(u, R) {
+  var r = R.r, sc = r / CN_R, limb = 13 * sc * 0.7, fist = 13 * sc * 0.62;
   var ri = Math.floor((u - R.rep0) / R.rep), rk = (u - R.rep0) / R.rep - ri, going = u >= R.rep0 && ri < R.n;
   // 0 hanging, 1 chin over the edge: up fast, a beat at the top, down slow
   var k = !going ? 0 : rk < 0.35 ? cncEase(rk / 0.35) : rk < 0.55 ? 1 : 1 - cncEase((rk - 0.55) / 0.45);
   var H = { x: R.gx, y: R.gy }, bx = H.x + r * 0.55 + Math.sin(u * 7) * 3, by = cncLerp(H.y + r * 1.95, H.y + r * 0.5, k);
-  // the rock crumbling off the edge under his grip at the top of each rep
+  // dust shaken off the bar under his grip at the top of each rep
   if (going && rk > 0.3 && !reduceMotion) {
     var ck = (rk - 0.3) / 0.7;
-    ctx.fillStyle = "rgba(170,160,150," + (1 - ck) + ")";
+    ctx.fillStyle = "rgba(225,195,150," + (1 - ck) + ")";
     for (var d = 0; d < 9; d++) { ctx.beginPath(); ctx.arc(H.x - 30 + cncRand(d + ri * 9) * 60 + (cncRand(d + 4) - 0.5) * 40 * ck, H.y + 10 + ck * ck * (160 + cncRand(d) * 160), 3 + cncRand(d + 7) * 5, 0, Math.PI * 2); ctx.fill(); }
   }
-  // his shadow on the granite
-  ctx.fillStyle = "rgba(40,34,30,0.28)"; ctx.beginPath(); ctx.ellipse(bx + 16, by + 14, r * 0.95, r * 0.9, 0, 0, Math.PI * 2); ctx.fill();
   ctx.save(); ctx.translate(bx, by); ctx.scale(sc, sc);
   drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
   drawCnKit(CN_R); drawCnHat(CN_R);
@@ -1157,10 +1149,45 @@ function cncPullUps(u) {
     for (var q = 0; q < 3; q++) { ctx.beginPath(); ctx.moveTo(bx + r * 1.2 + q * 8, by - r * 0.6 - q * 18); ctx.lineTo(bx + r * 1.5 + q * 8, by - r * 0.8 - q * 22); ctx.stroke(); }
     for (var q2 = 0; q2 < 2; q2++) { ctx.beginPath(); ctx.moveTo(E.x - 14, E.y - 10 - q2 * 18); ctx.lineTo(E.x - 40, E.y - 22 - q2 * 22); ctx.stroke(); }
   }
+  return k;
 }
 
 // The WWIT stadium from straight above at night.
+// The real WWIT stadium from straight above: the game's own frame (the
+// snapshot taken as the cut began: the square cream mat with the maroon
+// octagon line and the badge, the maroon apron, the jumbotron and the stands
+// full of fans) laid in as the open roof of the building, the arena's center
+// on (540, 960). r: how big (the mat is r * 0.9 wide).
 function cncStadiumTop(u, r) {
+  var c = cncCut, a = c && c.arena;
+  if (c && c.snap && a && a.s) {
+    var k = r * 0.9 / (W * a.s), cw = c.snap.width, ch = c.snap.height;
+    var acx = a.ox + a.s * W / 2, acy = a.oy + a.s * H / 2;
+    var x0 = 540 - acx * k, y0 = 960 - acy * k, w = cw * k, h = ch * k, m = r * 0.12;
+    ctx.fillStyle = "#05070f"; ctx.fillRect(-2000, -2000, 5080, 5920);
+    // the city and the parking lot lights round it
+    ctx.fillStyle = "rgba(255,210,120,0.6)";
+    for (var i = 0; i < 160; i++) { var px = 540 + (cncRand(i) - 0.5) * 2600, py = 960 + (cncRand(i + 200) - 0.5) * 3800; if (Math.abs(px - 540) > w / 2 + m * 2 || Math.abs(py - 960 - (y0 + h / 2 - 960)) > h / 2 + m * 2) ctx.fillRect(px, py, 4, 4); }
+    // the building: a dark roof rim round the open top, light spilling out
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    var gl = ctx.createRadialGradient(540, y0 + h / 2, w * 0.3, 540, y0 + h / 2, h * 0.8);
+    gl.addColorStop(0, "rgba(255,240,200,0.18)"); gl.addColorStop(1, "rgba(255,240,200,0)");
+    ctx.fillStyle = gl; ctx.fillRect(x0 - h, y0 - h / 2, w + 2 * h, h * 2);
+    ctx.restore();
+    ctx.fillStyle = "#1c1a22"; ctx.beginPath(); ctx.roundRect(x0 - m, y0 - m, w + 2 * m, h + 2 * m, m * 0.8); ctx.fill();
+    ctx.strokeStyle = WWIT.maroon; ctx.lineWidth = m * 0.25; ctx.beginPath(); ctx.roundRect(x0 - m * 0.5, y0 - m * 0.5, w + m, h + m, m * 0.5); ctx.stroke();
+    ctx.save(); ctx.fillStyle = WWIT.gold; ctx.font = cncFont("900", Math.round(m * 0.62)); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("WWIT MMA", 540, y0 - m * 0.5); ctx.fillText("WHAT WOULD IT TAKE", 540, y0 + h + m * 0.5); ctx.restore();
+    ctx.drawImage(c.snap, x0, y0, w, h);
+    // the arena lights over the cage
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    var al = ctx.createRadialGradient(540, 960, 0, 540, 960, r * 0.6);
+    al.addColorStop(0, "rgba(255,240,200,0.18)"); al.addColorStop(1, "rgba(255,240,200,0)");
+    ctx.fillStyle = al; ctx.beginPath(); ctx.arc(540, 960, r * 0.6, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    return;
+  }
+  // (no snapshot: a drawn stand-in)
   ctx.fillStyle = "#05070f"; ctx.fillRect(-2000, -2000, 5080, 5920);
   // the parking lot lights and the city
   ctx.fillStyle = "rgba(255,210,120,0.6)";
@@ -1508,7 +1535,12 @@ function cncAudio() {
     for (var rg = 0; rg < 8; rg++) cncTone(ac, bus, t0 + cncReal(2.3) + rg * 0.05, "triangle", rg % 2 ? 1250 : 1500, rg % 2 ? 1250 : 1500, 0.07, 0.05); // the porch phone ringing
     // 3. the harmonica sting, then the march
     cncHarmonica(ac, bus, t0 + cncReal(1.72));
-    [0.2, 0.4, 0.6].forEach(function (d) { cncTone(ac, bus, t0 + cncReal(1.7 + d), "sine", 70, 40, 0.5, 0.25); }); // the Earth thumping on each rep
+    for (var pu = 0; pu < CNC_RANCH.n; pu++) { // each rep at the top: the Earth thumping, the iron clank, the bar creaking
+      var pt = t0 + cncReal(1.7 + CNC_RANCH.rep0 + (pu + 0.35) * CNC_RANCH.rep);
+      cncTone(ac, bus, pt, "sine", 70, 40, 0.5, 0.25); cncTone(ac, bus, pt, "triangle", 320, 300, 0.2, 0.4);
+      cncTone(ac, bus, pt, "square", 180, 170, 0.05, 0.15); cncNoise(ac, bus, pt + 0.03, 0.3, 1800, 0.7, 0.12);
+    }
+    mBigKick(ac, bus, t0 + cncReal(1.7 + CNC_RANCH.up1), 1.3); cncTone(ac, bus, t0 + cncReal(1.7 + CNC_RANCH.up1), "sine", 55, 28, 0.8, 0.6); // the ton hits the porch
     cncTone(ac, bus, t0 + cncReal(2.6), "sawtooth", 140, 110, 0.08, 0.45); // the moo
     cncMarch(ac, bus, t0 + cncReal(2.0), t0 + CNC.pre + 0.55 / CNC.slow);
     // 4. the suit-up hits
@@ -1522,11 +1554,7 @@ function cncAudio() {
     mBigKick(ac, bus, t0 + cncReal(4.02), 1.4); cncTone(ac, bus, t0 + cncReal(4.02), "sine", 55, 28, 0.9, 1.0); mNz(ac, bus, t0 + cncReal(4.02), "bandpass", 150, 0.6, 0.9, 0.6);
     playClip("eagleScreech", 0.55, t0 + cncReal(4.2));
     cncNoise(ac, bus, t0 + cncReal(4.5), 0.6, 900, 1.0, 0.4); // whoosh past the mountain
-    for (var pu = 0; pu < CNC_RM.n; pu++) { // each rep at the top: the iron clank, a thud, the rock crumbling
-      var pt = t0 + cncReal(4.5 + CNC_RM.rep0 + (pu + 0.35) * CNC_RM.rep);
-      cncTone(ac, bus, pt, "triangle", 320, 300, 0.22, 0.4); cncTone(ac, bus, pt, "square", 180, 170, 0.06, 0.15);
-      mBigKick(ac, bus, pt, 0.7); cncNoise(ac, bus, pt + 0.03, 0.5, 1800, 0.7, 0.18);
-    }
+
     // 6. the wind and the fall
     cncNoise(ac, bus, t0 + cncReal(5.1), 1.1, 700, 0.6, 0.35);
     cncTone(ac, bus, t0 + cncReal(5.6), "sine", 1800, 500, 0.1, 0.6);
