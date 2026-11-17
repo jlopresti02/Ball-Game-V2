@@ -43,7 +43,7 @@ var CNC = { pre: 7.0, slow: 1 / 4, land: 0.3, card: 2.4, wipe: 0.8, slowMax: 4.5
 // (Joe: the first cut went by too fast). Everything in a shot, and its sounds,
 // stretches with it.
 var CNC_SHOTS = [[0, 0.5, 1.4], [0.5, 0.35, 1.0], [0.85, 0.85, 2.3], [1.7, 1.0, 2.6], [2.7, 1.0, 2.2],
-                 [3.7, 0.8, 1.9], [4.5, 0.6, 1.6], [5.1, 1.1, 2.1], [6.2, 0.8, 1.8]];
+                 [3.7, 0.8, 1.9], [4.5, 0.6, 3.0], [5.1, 1.1, 2.1], [6.2, 0.8, 1.8]];
 (function () { var at = 0; CNC_SHOTS.forEach(function (s) { s.push(at); at += s[2]; }); CNC.pre = at; })();
 // Real seconds into the cut -> story seconds, and back.
 function cncStory(u) {
@@ -332,37 +332,133 @@ function cncShotCall(c, u) {
   ctx.fillStyle = "rgba(255,0,30," + (0.12 + 0.12 * (Math.floor(u * 12) % 2)) + ")"; ctx.fillRect(0, 0, 1080, 1920);
 }
 
-// The red phone (the base), at (x, y), size s.
-function cncRedPhone(x, y, s, dialSpin, ringing) {
+// The red phone, drawn from Joe's photo of a classic rotary desk phone:
+// glossy red, the handset lying across the cradle prongs on top, the finger
+// wheel with its ten holes over a ring of numbers and letters, a white
+// center disc, the silver finger stop, the coiled cord off the left side and
+// two dark feet. Base at (x, y), size s; `onHook` puts the handset on it.
+var CNC_DIAL = [["1", ""], ["2", "ABC"], ["3", "DEF"], ["4", "GHI"], ["5", "JKL"], ["6", "MNO"], ["7", "PRS"], ["8", "TUV"], ["9", "WXY"], ["0", "OPER"]];
+function cncDialAng(i) { return (-60 - i * 30) * Math.PI / 180; }
+function cncGloss(top, mid, bot, y0, y1) {
+  var g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, top); g.addColorStop(0.45, mid); g.addColorStop(1, bot);
+  return g;
+}
+// A coiled cord from (x0, y0) to (x1, y1), bowed out by (bx, by).
+function cncCoil(x0, y0, x1, y1, bx, by, loops, w, thick) {
+  var cx = (x0 + x1) / 2 + bx, cy = (y0 + y1) / 2 + by, n = loops * 14;
+  function pt(t) {
+    var a = (1 - t) * (1 - t), b2 = 2 * (1 - t) * t, c2 = t * t;
+    return { x: a * x0 + b2 * cx + c2 * x1, y: a * y0 + b2 * cy + c2 * y1 };
+  }
+  var pts = [];
+  for (var i = 0; i <= n; i++) {
+    var t = i / n, p = pt(t), q = pt(Math.min(1, t + 0.01)), p0 = pt(Math.max(0, t - 0.01));
+    var tx = q.x - p0.x, ty = q.y - p0.y, L = Math.sqrt(tx * tx + ty * ty) || 1; tx /= L; ty /= L;
+    var ph = t * loops * Math.PI * 2, ww = w * Math.min(1, t * 8, (1 - t) * 8);
+    pts.push({ x: p.x - ty * Math.sin(ph) * ww + tx * Math.cos(ph) * ww * 0.45, y: p.y + tx * Math.sin(ph) * ww + ty * Math.cos(ph) * ww * 0.45 });
+  }
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  [[thick + 5, CNC_INK], [thick, "#c8101e"], [thick * 0.3, "rgba(255,190,190,0.6)"]].forEach(function (L) {
+    ctx.strokeStyle = L[1]; ctx.lineWidth = L[0];
+    ctx.beginPath(); pts.forEach(function (p, i) { if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }); ctx.stroke();
+  });
+}
+// The handset in its own space: the long arched grip, the earpiece cup on
+// the left (-x) and the mouthpiece on the right (+x), both bulging toward +y.
+function cncHandsetShape() {
+  var pieces = [
+    function () { ctx.moveTo(-170, -6); ctx.quadraticCurveTo(0, -52, 170, -6); ctx.lineTo(170, 26); ctx.quadraticCurveTo(0, -8, -170, 26); ctx.closePath(); },
+    function () { ctx.roundRect(-238, -34, 104, 100, [44, 34, 50, 50]); },
+    function () { ctx.roundRect(134, -34, 104, 100, [34, 44, 50, 50]); }
+  ];
+  ctx.lineJoin = "round"; ctx.strokeStyle = CNC_INK; ctx.lineWidth = 14;
+  pieces.forEach(function (p) { ctx.beginPath(); p(); ctx.stroke(); });
+  ctx.fillStyle = cncGloss("#ff4a50", "#d0141e", "#6e0610", -50, 70);
+  pieces.forEach(function (p) { ctx.beginPath(); p(); ctx.fill(); });
+  // the cups' faces, just showing underneath
+  ctx.fillStyle = "#8a0812";
+  [-186, 186].forEach(function (cx) { ctx.beginPath(); ctx.ellipse(cx, 58, 42, 9, 0, 0, Math.PI * 2); ctx.fill(); });
+  // the shine: a long streak along the grip, a hot spot on each cup
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.beginPath(); ctx.moveTo(-120, -14); ctx.quadraticCurveTo(0, -42, 120, -14); ctx.quadraticCurveTo(0, -30, -120, -14); ctx.fill();
+  [-206, 166].forEach(function (cx) { ctx.beginPath(); ctx.ellipse(cx, -6, 16, 22, -0.3, 0, Math.PI * 2); ctx.fill(); });
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  [-186, 186].forEach(function (cx) { ctx.beginPath(); ctx.ellipse(cx, 20, 34, 30, 0, 0, Math.PI * 2); ctx.fill(); });
+}
+function cncRedPhone(x, y, s, dialSpin, ringing, onHook) {
   ctx.save();
   ctx.translate(x, y); ctx.scale(s, s);
   if (ringing) ctx.translate(Math.sin(ringing * 80) * 4, 0);
   ctx.lineJoin = "round"; ctx.strokeStyle = CNC_INK; ctx.lineWidth = 8;
-  var g = ctx.createLinearGradient(0, -120, 0, 120);
-  g.addColorStop(0, "#ff3b3b"); g.addColorStop(0.5, "#c8101e"); g.addColorStop(1, "#6e0610");
-  ctx.fillStyle = g;
-  ctx.beginPath(); ctx.moveTo(-200, 110); ctx.lineTo(-150, -70); ctx.quadraticCurveTo(0, -100, 150, -70); ctx.lineTo(200, 110); ctx.closePath(); ctx.fill(); ctx.stroke();
-  // the dial
-  ctx.fillStyle = "#f2efe6"; ctx.beginPath(); ctx.arc(0, 30, 82, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.save(); ctx.rotate(dialSpin || 0);
-  ctx.fillStyle = "#2b2b2b";
-  for (var i = 0; i < 10; i++) { var a = -Math.PI * 0.35 + i * Math.PI * 1.5 / 9; ctx.beginPath(); ctx.arc(Math.cos(a) * 56, 30 + Math.sin(a) * 56, 13, 0, Math.PI * 2); ctx.fill(); }
+  // the feet
+  ctx.fillStyle = "#2a2422";
+  [-140, 140].forEach(function (fx) { ctx.beginPath(); ctx.roundRect(fx - 30, 112, 60, 30, 8); ctx.fill(); ctx.stroke(); });
+  // the cradle prongs (behind), the dark well between them
+  ctx.fillStyle = "#5e050a"; ctx.beginPath(); ctx.roundRect(-90, -112, 180, 60, 18); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = cncGloss("#ff4a50", "#c8101e", "#7a0710", -150, -50);
+  [-62, 62].forEach(function (px) { ctx.beginPath(); ctx.roundRect(px - 24, -150, 48, 100, [16, 16, 4, 4]); ctx.fill(); ctx.stroke(); });
+  // the body: a rounded wedge, wider at the bottom
+  ctx.fillStyle = cncGloss("#ff3a42", "#c8101e", "#6e0610", -80, 125);
+  ctx.beginPath();
+  ctx.moveTo(-130, -74); ctx.quadraticCurveTo(0, -84, 130, -74); ctx.quadraticCurveTo(160, -72, 172, -40);
+  ctx.quadraticCurveTo(204, 60, 208, 104); ctx.quadraticCurveTo(208, 122, 190, 122); ctx.lineTo(-190, 122); ctx.quadraticCurveTo(-208, 122, -208, 104);
+  ctx.quadraticCurveTo(-204, 60, -172, -40); ctx.quadraticCurveTo(-160, -72, -130, -74); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // the front face along the bottom, a ridge of light above it
+  ctx.fillStyle = "rgba(90,4,10,0.45)"; ctx.beginPath(); ctx.roundRect(-204, 84, 408, 36, 12); ctx.fill();
+  ctx.strokeStyle = "rgba(255,150,150,0.55)"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-196, 82); ctx.lineTo(196, 82); ctx.stroke();
+  // the shine down the left shoulder
+  ctx.fillStyle = "rgba(255,255,255,0.32)";
+  ctx.beginPath(); ctx.moveTo(-150, -60); ctx.quadraticCurveTo(-190, 20, -192, 90); ctx.lineTo(-176, 90); ctx.quadraticCurveTo(-170, 20, -136, -58); ctx.closePath(); ctx.fill();
+  // the number ring: the ten numbers and their letters round the wheel
+  ctx.strokeStyle = CNC_INK; ctx.lineWidth = 6;
+  ctx.fillStyle = "#b00d18"; ctx.beginPath(); ctx.ellipse(0, 18, 134, 98, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  CNC_DIAL.forEach(function (d, i) {
+    var a = cncDialAng(i), lx = Math.cos(a) * 120, ly = 18 + Math.sin(a) * 86;
+    ctx.save(); ctx.translate(lx, ly);
+    ctx.font = "bold 17px Arial, sans-serif"; ctx.fillText(d[0], d[1] ? 9 : 0, 0);
+    if (d[1]) { ctx.font = "bold 10px Arial, sans-serif"; ctx.fillText(d[1], -13, 0); }
+    ctx.restore();
+  });
+  // the finger wheel and its holes (it turns when dialed)
+  ctx.fillStyle = cncGloss("#f0414a", "#d01822", "#9a0a14", -70, 100);
+  ctx.beginPath(); ctx.ellipse(0, 18, 104, 76, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  for (var i = 0; i < 10; i++) {
+    var a = cncDialAng(i) + (dialSpin || 0), hx = Math.cos(a) * 74, hy = 18 + Math.sin(a) * 54;
+    ctx.fillStyle = "#6e0610"; ctx.beginPath(); ctx.ellipse(hx, hy, 19, 15, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(255,170,170,0.7)"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(hx, hy, 19, 15, 0, 0.2, Math.PI - 0.2); ctx.stroke();
+  }
+  // the white center disc
+  var wg = ctx.createRadialGradient(-12, 6, 4, 0, 18, 48);
+  wg.addColorStop(0, "#ffffff"); wg.addColorStop(1, "#cfcac2");
+  ctx.fillStyle = wg; ctx.strokeStyle = CNC_INK; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.ellipse(0, 18, 46, 35, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  // the silver finger stop, lower right
+  var sa = 0.22, sx0 = Math.cos(sa) * 108, sy0 = 18 + Math.sin(sa) * 80, sx1 = Math.cos(sa) * 66, sy1 = 18 + Math.sin(sa) * 50;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = CNC_INK; ctx.lineWidth = 17; ctx.beginPath(); ctx.moveTo(sx0, sy0); ctx.lineTo(sx1, sy1); ctx.stroke();
+  ctx.strokeStyle = "#c9ccd2"; ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(sx0, sy0); ctx.lineTo(sx1, sy1); ctx.stroke();
+  ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx0, sy0 - 3); ctx.lineTo(sx1 + 4, sy1 - 3); ctx.stroke();
+  // the handset on the cradle, and its coiled cord off the left
+  if (onHook) {
+    ctx.save(); ctx.translate(0, -150); ctx.scale(0.88, 0.88);
+    if (ringing) ctx.rotate(Math.sin(ringing * 120) * 0.04);
+    cncHandsetShape();
+    ctx.restore();
+    cncCoil(-200, -110, -196, 60, -70, 20, 7, 20, 9);
+  }
   ctx.restore();
-  ctx.fillStyle = "#c8101e"; ctx.beginPath(); ctx.arc(0, 30, 26, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#fff"; skStar(ctx, 0, 30, 18);
-  // the eagle seal plate
-  ctx.fillStyle = "#e3c46b"; ctx.beginPath(); ctx.roundRect(-60, 112, 120, 26, 6); ctx.fill(); ctx.stroke();
-  ctx.restore();
+}
+// Where a point on the handset (in its own space) ends up on screen.
+function cncHandsetPt(x, y, s, ang, lx, ly) {
+  var k = s * 0.85, c = Math.cos(ang), n = Math.sin(ang);
+  return { x: x + (lx * c - ly * n) * k, y: y + (lx * n + ly * c) * k };
 }
 function cncHandset(x, y, s, ang) {
   ctx.save();
-  ctx.translate(x, y); ctx.rotate(ang); ctx.scale(s, s);
-  ctx.lineJoin = "round"; ctx.strokeStyle = CNC_INK; ctx.lineWidth = 8;
-  ctx.fillStyle = "#d4121f";
-  ctx.beginPath(); ctx.roundRect(-150, -26, 300, 52, 26); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.roundRect(-170, -20, 70, 70, 22); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.roundRect(100, -20, 70, 70, 22); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.fillRect(-120, -16, 240, 8);
+  ctx.translate(x, y); ctx.rotate(ang); ctx.scale(s * 0.85, s * 0.85);
+  cncHandsetShape();
   ctx.restore();
 }
 
@@ -377,17 +473,15 @@ function cncShotPhone(c, u) {
   ctx.fillStyle = "rgba(255,200,140,0.15)"; ctx.fillRect(0, 1180, 1080, 10);
   var lift = cncEase((u - 0.12) / 0.2), z = 1.15 + 0.08 * u;
   ctx.save(); ctx.translate(540, 1000); ctx.scale(z, z); ctx.translate(-540, -1000);
-  cncRedPhone(540, 1080, 1.9, u * 9, u < 0.14 ? u + 1 : 0);
-  // the cord
-  ctx.strokeStyle = "#8e0a14"; ctx.lineWidth = 12;
-  ctx.beginPath(); ctx.moveTo(220, 1160);
-  for (var i = 0; i <= 20; i++) { var k = i / 20; ctx.lineTo(cncLerp(220, 300 + 200 * lift, k) + Math.sin(k * 40) * 14, cncLerp(1160, 820 - 260 * lift, k)); }
-  ctx.stroke();
-  var hx = 470 - 120 * lift, hy = 820 - 300 * lift;
-  cncHandset(hx, hy, 1.3, -0.05 - 0.4 * lift);
+  cncRedPhone(540, 1080, 1.9, 0, u < 0.14 ? u + 1 : 0);
+  // the handset comes up off the cradle, its coiled cord stretching after it
+  var hx = 540 - 100 * lift, hy = 795 - 300 * lift, ha = -0.35 * lift, hsz = 1.97;
+  var ce = cncHandsetPt(hx, hy, hsz, ha, -186, 50);
+  cncCoil(168, 1194, ce.x, ce.y, -160, 40, 9, 26 + 8 * lift, 14);
+  cncHandset(hx, hy, hsz, ha);
   if (b && b.char) {
     // his own glove, in from the lower right, closing round the handset
-    var gx = hx + 160, gy = hy + 10;
+    var gp = cncHandsetPt(hx, hy, hsz, ha, 90, -6), gx = gp.x, gy = gp.y;
     strokeLimb(70, armColor(b.char, 1), function () { ctx.moveTo(1200, 1500); ctx.quadraticCurveTo(1000, 1000, gx, gy); });
     drawGloveAt(gx, gy, 66, b.char, Math.atan2(gy - 1000, gx - 1000));
   }
@@ -443,14 +537,8 @@ function cncShotSean(c, u) {
     // his ear, the mouthpiece down by his jaw
     var hs = on(r * 0.86, -r * 0.5), ha = 1.05 + lean;
     // the coiled cord, from the mouthpiece end down to the desk phone
-    var mp = { x: hs.x + Math.cos(ha) * 150 * 0.85, y: hs.y + Math.sin(ha) * 150 * 0.85 };
-    ctx.strokeStyle = "#8e0a14"; ctx.lineWidth = 9; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(mp.x, mp.y);
-    for (var k = 1; k <= 40; k++) {
-      var t = k / 40, cx = cncLerp(mp.x, 900, t) + Math.sin(t * Math.PI) * 120, cy = cncLerp(mp.y, 1130, t);
-      ctx.lineTo(cx + Math.cos(t * 70) * 13, cy + Math.sin(t * 70) * 7);
-    }
-    ctx.stroke();
+    var mp = cncHandsetPt(hs.x, hs.y, 0.85, ha, 186, 40);
+    cncCoil(mp.x, mp.y, 820 - 196 * 0.55, 1160 + 60 * 0.55, -40, 0, 12, 12, 7);
     // his lead hand low across his stomach (the Philly shell)
     var ls = on(-r * 0.78, r * 0.3), le = on(-r * 0.7, r * 0.95), lh = on(-r * 0.02, r * 0.78);
     ctx.save(); ctx.translate(x, y); ctx.rotate(lean); ctx.scale(1 + 0.015 * nod, 1 - 0.02 * nod);
@@ -564,7 +652,7 @@ function cncShotRanch(u) {
   ctx.fillRect(900, 1080, 26, 230); ctx.fillRect(760, 1080, 400, 24);
   // the rotary phone on the rail, ringing
   var ring = u > 0.6 && u < 0.8 ? u : 0;
-  cncRedPhone(840, 1050, 0.32, 0, ring ? ring + 1 : 0);
+  cncRedPhone(840, 1035, 0.32, 0, ring ? ring + 1 : 0, true);
   if (ring) {
     ctx.strokeStyle = "#fff"; ctx.lineWidth = 5; ctx.lineCap = "round";
     for (var j = 0; j < 2; j++) { ctx.beginPath(); ctx.arc(840, 1040, 70 + j * 22, -2.4, -0.7); ctx.stroke(); }
@@ -921,20 +1009,24 @@ function cncCarvedHead(x, y, r, tilt, who) {
   ctx.restore();
 }
 
-// 5b. Drone shot pulling up over Mount Rushmore, with its fifth head.
+// 5b. Drone shot pulling up over Mount Rushmore. Chuck hangs off the top of
+// the cliff by one hand to the right of Lincoln, doing pull-ups, curling the
+// 1 TON weight (Joe's photo) with the other hand on every rep. Story seconds
+// 0-0.6, played over 3 real seconds: three reps.
+var CNC_RM = { rep0: 0.03, rep: 0.18, n: 3, gx: 815, gy: 858, r: 74 };
 function cncShotRushmore(u) {
   var lift = cncEase(u / 0.6);
   var sky = ctx.createLinearGradient(0, 0, 0, 1920);
   sky.addColorStop(0, "#1d5fc4"); sky.addColorStop(0.55, "#3f86e0"); sky.addColorStop(1, "#8fc0f0");
   ctx.fillStyle = sky; ctx.fillRect(0, 0, 1080, 1920);
   ctx.save();
-  ctx.translate(540, 1100); ctx.scale(1.12 - 0.12 * lift, 1.12 - 0.12 * lift); ctx.translate(-540, -1100 + 160 * lift);
+  ctx.translate(540, 1100); ctx.scale(1.06 - 0.06 * lift, 1.06 - 0.06 * lift); ctx.translate(-540, -1100 + 160 * lift);
   // Joe's photo, traced (chuck-norris-rushmore-art.js): the real cliff and
   // the four real faces. The drawn version below is only a fallback.
   var photo = typeof cncRushmoreImg !== "undefined" && cncRushmoreImg.complete && cncRushmoreImg.naturalWidth;
   if (photo) {
     ctx.fillStyle = "#24402c"; ctx.fillRect(-100, 1400, 1280, 700);
-    ctx.drawImage(cncRushmoreImg, -135, 560, 1350, 1350 * cncRushmoreImg.naturalHeight / cncRushmoreImg.naturalWidth);
+    ctx.drawImage(cncRushmoreImg, -235, 560, 1350, 1350 * cncRushmoreImg.naturalHeight / cncRushmoreImg.naturalWidth);
   } else {
   // the cliff (Joe's reference photo): craggy tan-pink granite, the heads in
   // its upper middle, a grey rubble slope and pines below
@@ -960,24 +1052,7 @@ function cncShotRushmore(u) {
   ctx.fillStyle = "rgba(60,58,54,0.35)";
   for (var rb = 0; rb < 40; rb++) { ctx.beginPath(); ctx.arc(200 + cncRand(rb) * 620, 1180 + cncRand(rb + 40) * 300, 5 + cncRand(rb + 80) * 9, 0, Math.PI * 2); ctx.fill(); }
   }
-  // ...and the fifth: a round head in a cowboy hat, the chisel dust still falling
-  var fx = photo ? 950 : 880, fy = photo ? 880 : 950, fr = photo ? 80 : 96;
-  ctx.save(); ctx.translate(fx, fy);
-  var g2 = ctx.createRadialGradient(-30, -30, 10, 0, 0, fr);
-  g2.addColorStop(0, "#e6e0d2"); g2.addColorStop(1, "#968f82");
-  ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(0, 0, fr, 0, Math.PI * 2); ctx.fill();
-  // his full beard, carved, chisel lines down it (and no face: he's a ball)
-  ctx.fillStyle = "#a8a194";
-  ctx.beginPath(); ctx.moveTo(-fr * 0.8, -fr * 0.05); ctx.quadraticCurveTo(-fr * 0.75, fr * 0.95, 0, fr * 0.98); ctx.quadraticCurveTo(fr * 0.75, fr * 0.95, fr * 0.8, -fr * 0.05);
-  ctx.quadraticCurveTo(fr * 0.4, fr * 0.2, 0, fr * 0.05); ctx.quadraticCurveTo(-fr * 0.4, fr * 0.2, -fr * 0.8, -fr * 0.05); ctx.fill();
-  ctx.strokeStyle = "rgba(60,55,48,0.45)"; ctx.lineWidth = 3;
-  for (var bl = 0; bl < 11; bl++) { var bx = -fr * 0.6 + bl * fr * 0.12; ctx.beginPath(); ctx.moveTo(bx, fr * 0.25); ctx.lineTo(bx * 0.85, fr * 0.85); ctx.stroke(); }
-  var keep = CN_HAT; CN_HAT = "#b9b2a4"; var keepBand = CN_BAND; CN_BAND = "#8c867a";
-  drawCnHat(fr);
-  CN_HAT = keep; CN_BAND = keepBand;
-  ctx.restore();
-  ctx.fillStyle = "rgba(235,228,214,0.8)";
-  for (var d = 0; d < 14; d++) { var dy = ((u * 260 + cncRand(d) * 200) % 200); ctx.beginPath(); ctx.arc(fx - 60 + cncRand(d + 3) * 120, fy + fr + dy, 4 + cncRand(d + 8) * 4, 0, Math.PI * 2); ctx.fill(); }
+  if (photo) cncPullUps(u); // on the photo; the drawn fallback keeps its four heads
   // pines at the foot
   ctx.fillStyle = "#1f3a26";
   for (var p = 0; p < 26; p++) { var px = p * 46 - 40, py = 1400 + cncRand(p) * 60 + (Math.abs(px - 480) < 260 ? 60 : -60 * cncRand(p + 3)); ctx.beginPath(); ctx.moveTo(px, py - 110); ctx.lineTo(px + 34, py); ctx.lineTo(px - 34, py); ctx.closePath(); ctx.fill(); }
@@ -990,7 +1065,98 @@ function cncShotRushmore(u) {
   });
   ctx.globalAlpha = 1;
   ctx.save(); ctx.translate(jx, jy); ctx.rotate(-0.04); cncJet(0.22, u); ctx.restore();
-  cncText("MOUNT RUSHMORE, SOUTH DAKOTA", 540, 1500, 44, "#ffffff", "#000", "center", "800");
+  cncText("MOUNT RUSHMORE, SOUTH DAKOTA", 540, 330, 50, "#ffffff", "#000", "center", "800");
+  var R = CNC_RM, done = u < R.rep0 ? 0 : Math.min(R.n, Math.floor((u - R.rep0) / R.rep + 0.55));
+  var since = done > 0 ? u - (R.rep0 + (done - 0.55) * R.rep) : 1, pop = 1 + 0.4 * Math.exp(-Math.max(0, since) * 25);
+  cncText("ONE-ARM PULL-UPS", 540, 1505, 50, "#ffffff", "#000", "center", "900");
+  cncText("+ 1-TON CURLS", 540, 1565, 50, "#ffe14d", "#000", "center", "900");
+  if (done > 0) { ctx.save(); ctx.translate(540, 1665); ctx.scale(pop, pop); cncText(done + (done === R.n ? "." : "..."), 0, 0, 104, done === R.n ? "#ffe14d" : "#ffffff", "#1f3a8a"); ctx.restore(); }
+}
+
+// The 1 TON weight from Joe's photo: a black iron block, narrower at the
+// top, bevelled faces with "1 TON" in raised silver letters on the front and
+// the side, and a thick steel ring on top. (x, y) is the ring's top; w is
+// its width at the bottom.
+function cncTonWeight(x, y, w, tilt) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(tilt || 0);
+  var ringR = w * 0.16, top = ringR * 1.7, h = w * 0.78, tw = w * 0.72, side = w * 0.2;
+  ctx.lineJoin = "round"; ctx.strokeStyle = "#050506";
+  // the ring
+  ctx.lineWidth = w * 0.075; ctx.strokeStyle = "#050506"; ctx.beginPath(); ctx.ellipse(0, ringR, ringR, ringR * 1.05, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = w * 0.05; ctx.strokeStyle = "#45474d"; ctx.beginPath(); ctx.ellipse(0, ringR, ringR, ringR * 1.05, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = w * 0.012; ctx.strokeStyle = "rgba(255,255,255,0.45)"; ctx.beginPath(); ctx.arc(0, ringR, ringR * 1.05, -2.6, -1.2); ctx.stroke();
+  // the side face (right), in shadow
+  ctx.lineWidth = Math.max(2, w * 0.02); ctx.strokeStyle = "#050506";
+  ctx.fillStyle = "#16171a";
+  ctx.beginPath(); ctx.moveTo(tw / 2, top); ctx.lineTo(tw / 2 + side * 0.7, top - side * 0.35); ctx.lineTo(w / 2 + side, top + h - side * 0.45); ctx.lineTo(w / 2, top + h); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // the top
+  ctx.fillStyle = "#3a3c42";
+  ctx.beginPath(); ctx.moveTo(-tw / 2, top); ctx.lineTo(-tw / 2 + side * 0.7, top - side * 0.35); ctx.lineTo(tw / 2 + side * 0.7, top - side * 0.35); ctx.lineTo(tw / 2, top); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // the front face, its bevelled panel and the letters
+  var g = ctx.createLinearGradient(-w / 2, top, w / 2, top + h);
+  g.addColorStop(0, "#3b3d43"); g.addColorStop(1, "#1a1b1f");
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(-tw / 2, top); ctx.lineTo(tw / 2, top); ctx.lineTo(w / 2, top + h); ctx.lineTo(-w / 2, top + h); ctx.closePath(); ctx.fill(); ctx.stroke();
+  var ins = w * 0.07;
+  ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = Math.max(1.5, w * 0.012);
+  ctx.beginPath(); ctx.moveTo(-tw / 2 + ins, top + ins); ctx.lineTo(tw / 2 - ins, top + ins); ctx.lineTo(w / 2 - ins * 1.2, top + h - ins); ctx.lineTo(-w / 2 + ins * 1.2, top + h - ins); ctx.closePath(); ctx.stroke();
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.font = "900 " + Math.round(w * 0.3) + "px \"Barlow Condensed\", \"Arial Narrow\", sans-serif";
+  [["1", top + h * 0.3], ["TON", top + h * 0.68]].forEach(function (L) {
+    ctx.fillStyle = "#050506"; ctx.fillText(L[0], w * 0.012, L[1] + w * 0.015);
+    var sg = ctx.createLinearGradient(0, L[1] - w * 0.15, 0, L[1] + w * 0.15);
+    sg.addColorStop(0, "#f4f5f7"); sg.addColorStop(1, "#9a9ca3");
+    ctx.fillStyle = sg; ctx.fillText(L[0], 0, L[1]);
+  });
+  // the silver letters on the side, skewed onto it
+  ctx.save(); ctx.translate(w / 2 + side * 0.25, top + h * 0.5); ctx.transform(0.42, -0.2, 0, 1, 0, 0);
+  ctx.fillStyle = "#8d8f96"; ctx.font = "900 " + Math.round(w * 0.2) + "px \"Barlow Condensed\", \"Arial Narrow\", sans-serif";
+  ctx.fillText("1", 0, -h * 0.17); ctx.fillText("TON", 0, h * 0.15);
+  ctx.restore();
+  ctx.restore();
+}
+
+// Chuck on the cliff edge: his right hand gripping the top, pulling himself
+// up, his left curling the weight as he goes, both his own arms.
+function cncPullUps(u) {
+  var R = CNC_RM, r = R.r, sc = r / CN_R, limb = 13 * sc * 0.7, fist = 13 * sc * 0.62;
+  var ri = Math.floor((u - R.rep0) / R.rep), rk = (u - R.rep0) / R.rep - ri, going = u >= R.rep0 && ri < R.n;
+  // 0 hanging, 1 chin over the edge: up fast, a beat at the top, down slow
+  var k = !going ? 0 : rk < 0.35 ? cncEase(rk / 0.35) : rk < 0.55 ? 1 : 1 - cncEase((rk - 0.55) / 0.45);
+  var H = { x: R.gx, y: R.gy }, bx = H.x + r * 0.55 + Math.sin(u * 7) * 3, by = cncLerp(H.y + r * 1.95, H.y + r * 0.5, k);
+  // the rock crumbling off the edge under his grip at the top of each rep
+  if (going && rk > 0.3 && !reduceMotion) {
+    var ck = (rk - 0.3) / 0.7;
+    ctx.fillStyle = "rgba(170,160,150," + (1 - ck) + ")";
+    for (var d = 0; d < 9; d++) { ctx.beginPath(); ctx.arc(H.x - 30 + cncRand(d + ri * 9) * 60 + (cncRand(d + 4) - 0.5) * 40 * ck, H.y + 10 + ck * ck * (160 + cncRand(d) * 160), 3 + cncRand(d + 7) * 5, 0, Math.PI * 2); ctx.fill(); }
+  }
+  // his shadow on the granite
+  ctx.fillStyle = "rgba(40,34,30,0.28)"; ctx.beginPath(); ctx.ellipse(bx + 16, by + 14, r * 0.95, r * 0.9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.translate(bx, by); ctx.scale(sc, sc);
+  drawFighterArt(ctx, 0, 0, CN_R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
+  drawCnKit(CN_R); drawCnHat(CN_R);
+  ctx.restore();
+  // the pulling arm: shoulder, elbow out to the side, fist on the edge
+  var S = { x: bx - r * 0.6, y: by - r * 0.35 }, seg = r * 0.82;
+  var dx = H.x - S.x, dy = H.y - S.y, D = Math.max(1, Math.sqrt(dx * dx + dy * dy)), Dc = Math.min(D, seg * 1.98);
+  var h2 = Math.sqrt(Math.max(0, seg * seg - Dc * Dc / 4)), mx = S.x + dx * 0.5, my = S.y + dy * 0.5;
+  var E = { x: mx + (dy / D) * h2, y: my - (dx / D) * h2 };
+  if (E.x > mx) E = { x: mx - (dy / D) * h2, y: my + (dx / D) * h2 };
+  strokeLimb(limb, CN_DENIM, function () { ctx.moveTo(S.x, S.y); ctx.lineTo(E.x, E.y); ctx.lineTo(H.x, H.y); });
+  cnFist(H.x, H.y, fist);
+  // the curling arm: the elbow pinned at his side, the forearm swinging the
+  // weight up to his shoulder in time with the pull
+  var C = { x: bx + r * 0.62, y: by + r * 0.12 }, EL = { x: bx + r * 0.98, y: by + r * 0.72 };
+  var th = cncLerp(1.4, -1.35, k), F = { x: EL.x + Math.cos(th) * r * 0.72, y: EL.y + Math.sin(th) * r * 0.72 };
+  cncTonWeight(F.x, F.y - fist * 0.6, r * 1.45, (reduceMotion ? 0 : Math.sin(u * 30) * 0.03) - 0.12 * k);
+  strokeLimb(limb, CN_DENIM, function () { ctx.moveTo(C.x, C.y); ctx.lineTo(EL.x, EL.y); ctx.lineTo(F.x, F.y); });
+  cnFist(F.x, F.y, fist);
+  // strain lines at the top
+  if (k > 0.6 && !reduceMotion) {
+    ctx.strokeStyle = "rgba(255,255,255," + (k - 0.4) + ")"; ctx.lineWidth = 4; ctx.lineCap = "round";
+    for (var q = 0; q < 3; q++) { ctx.beginPath(); ctx.moveTo(bx + r * 1.2 + q * 8, by - r * 0.6 - q * 18); ctx.lineTo(bx + r * 1.5 + q * 8, by - r * 0.8 - q * 22); ctx.stroke(); }
+    for (var q2 = 0; q2 < 2; q2++) { ctx.beginPath(); ctx.moveTo(E.x - 14, E.y - 10 - q2 * 18); ctx.lineTo(E.x - 40, E.y - 22 - q2 * 22); ctx.stroke(); }
+  }
 }
 
 // The WWIT stadium from straight above at night.
@@ -1356,6 +1522,11 @@ function cncAudio() {
     mBigKick(ac, bus, t0 + cncReal(4.02), 1.4); cncTone(ac, bus, t0 + cncReal(4.02), "sine", 55, 28, 0.9, 1.0); mNz(ac, bus, t0 + cncReal(4.02), "bandpass", 150, 0.6, 0.9, 0.6);
     playClip("eagleScreech", 0.55, t0 + cncReal(4.2));
     cncNoise(ac, bus, t0 + cncReal(4.5), 0.6, 900, 1.0, 0.4); // whoosh past the mountain
+    for (var pu = 0; pu < CNC_RM.n; pu++) { // each rep at the top: the iron clank, a thud, the rock crumbling
+      var pt = t0 + cncReal(4.5 + CNC_RM.rep0 + (pu + 0.35) * CNC_RM.rep);
+      cncTone(ac, bus, pt, "triangle", 320, 300, 0.22, 0.4); cncTone(ac, bus, pt, "square", 180, 170, 0.06, 0.15);
+      mBigKick(ac, bus, pt, 0.7); cncNoise(ac, bus, pt + 0.03, 0.5, 1800, 0.7, 0.18);
+    }
     // 6. the wind and the fall
     cncNoise(ac, bus, t0 + cncReal(5.1), 1.1, 700, 0.6, 0.35);
     cncTone(ac, bus, t0 + cncReal(5.6), "sine", 1800, 500, 0.1, 0.6);
