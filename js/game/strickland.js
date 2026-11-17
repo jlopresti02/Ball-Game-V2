@@ -686,6 +686,7 @@ function updateAmerica(self, other, dt) {
     if (m.phase !== "rev" || m.t < sp.rev - sp.lock) m.aim = skTurn(m.aim, want, dt * 6);
     m.face = skFace(m.aim, m.face);
     if (m.phase === "eagle" && skEagleDone(m, eg)) {
+      if (cnCutHold(self, other)) return true; // the first time: Chuck Norris's entrance cutscene plays first, the fight held (chuck-norris-cut.js)
       m.phase = "flags"; m.t = 0;
       startAmericaShow(self);
       chuckNorrisArrives(self, other); // Chuck Norris rappels in (chuck-norris.js)
