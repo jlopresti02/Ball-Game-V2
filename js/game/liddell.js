@@ -81,7 +81,7 @@ function snowDayOn(b) { return !!(b && b.igbb && b.igbb.move === "snow"); }
 function liddellHandsBusy(b) { return snowDayOn(b); }
 
 // From startMatchSeeded.
-function resetLiddell() { icSnow = null; icClock = 0; }
+function resetLiddell() { icSnow = null; icClock = 0; resetSnowballs(); } // (snowballs: liddell-snowball.js)
 // From makeBall, after its weight class is applied.
 function initLiddell(b) {
   b.frost = null; b.iceRage = null; b.atkRate0 = b.atkRate;
@@ -200,7 +200,7 @@ function updateSnowDay(self, other, dt) {
     self.igbb = { move: "snow", phase: "dip", t: 0, read: Math.random() * 100 < (sp.readChance || 0) };
     floater(self.x, self.y - self.r - 30, "SNOW DAY!", "crit");
     if (self.igbb.read) floater(other.x, other.y - other.r - 30, "!", "crit");
-    startSnow(IC_DIP + IC_SCOOP + IC_PACK + IC_FLARE + sp.rampage.time);
+    startSnow(IC_DIP + IC_SCOOP + IC_PACK + IC_FLARE + (sp.snowball ? (sp.snowball.bite || 0) + sp.snowball.windup + sp.snowball.follow : 0) + sp.rampage.time);
     say(self, IC_LINES.windup);
     crowdReact(0.6);
   }
@@ -223,6 +223,10 @@ function updateSnowDay(self, other, dt) {
       if (SPEECH_CLIPS[IC_LINES.snowDone]) say(self, IC_LINES.snowDone);
     }
   } else if (m.phase === "flare" && m.t >= IC_FLARE) {
+    if (sp.snowball && other.alive) { m.phase = "snowball"; m.t = 0; return true; } // he throws the snowball at them first (liddell-snowball.js)
+    startRampage(self, other, sp);
+    return false;
+  } else if (m.phase === "snowball" && !snowballThrowPhase(self, other, m, dt)) { // liddell-snowball.js
     startRampage(self, other, sp);
     return false;
   }
@@ -312,6 +316,7 @@ function startRampage(self, other, sp) {
 // Chuck's own wind-up, speed, all-out attack and taunts.
 function tickLiddell(dt) {
   icClock += dt;
+  tickSnowballs(dt); // the snowball flying (liddell-snowball.js)
   if (icSnow) { icSnow.t += dt; if (icSnow.t > icSnow.dur + 1.6) icSnow = null; }
   balls.forEach(function (b) {
     var f = b.frost;
@@ -601,6 +606,7 @@ function icSwingFist(self) {
 // The Snow Day wind-up. Everything happens low in front of him: the snow
 // goes from the mat into his gloves, never up toward his head.
 function drawSnowDay(b, m) {
+  if (m.phase === "snowball") { ctx.save(); drawSnowThrow(b, m); ctx.restore(); return; } // throwing the snowball (liddell-snowball.js)
   var r = b.r, size = (b.char.punch && b.char.punch.size) || 15, gs = size * 0.72;
   var shL = { x: b.x - r * 0.62, y: b.y - r * 0.05 }, shR = { x: b.x + r * 0.62, y: b.y - r * 0.05 };
   // the mat in front of his feet, and his stomach (well below his head, which
@@ -627,7 +633,8 @@ function drawSnowDay(b, m) {
   } else {
     var k3 = easeOut(m.t / IC_FLARE);
     gx = r * (0.5 + 0.1 * k3); gy = holdY - r * 0.06 * k3;
-    ball = k3 < 0.6 ? { y: holdY, r: sbR * 0.85 * (1 + k3), blue: 1, burst: k3 / 0.6 } : null;
+    ball = b.char.special.snowball ? { y: holdY, r: sbR * 0.85, blue: 1 } // kept to throw (liddell-snowball.js)
+      : k3 < 0.6 ? { y: holdY, r: sbR * 0.85 * (1 + k3), blue: 1, burst: k3 / 0.6 } : null;
     angL = -0.4; angR = Math.PI + 0.4;
   }
   ctx.save();

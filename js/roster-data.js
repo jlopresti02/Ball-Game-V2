@@ -1378,6 +1378,14 @@ var SAVED_ROSTER = [
       "punchCut": 2,
       "hurtCut": 2.5,
       "readChance": 35,
+      "snowball": {
+        "damage": 4,
+        "speed": 900,
+        "windup": 0.32,
+        "follow": 0.26,
+        "turn": 1.6,
+        "bite": 0.95
+      },
       "rampage": {
         "time": 6,
         "speed": 1.6,
