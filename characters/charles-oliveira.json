@@ -1,11 +1,11 @@
 {
   "id": "c-charles-oliveira",
-  "rev": 21,
+  "rev": 22,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Charles Oliveira",
   "base": "Grappler",
-  "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Special move: Do Bronx.",
+  "bio": "\"Do Bronx\". Built on the Grappler base, with quick 7-damage punches, a Muay Thai body kick (22) and light calf kicks. Against another Grappler he only shoots for the takedown half the time on contact. He ties them up in the clinch every 5-7 seconds. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Once they're under 40% health he hunts the finish: he walks them down, shoots 1.6x as often, and 45% of the takedowns he lands go straight into the rear naked choke or the armbar. Special move: Do Bronx.",
   "color": "#d9a514",
   "label": "",
   "imgData": null,
@@ -38,7 +38,7 @@
   },
   "hasPunch": true,
   "punch": {
-    "damage": 5,
+    "damage": 7,
     "cooldown": 0.7,
     "speed": 0.22,
     "size": 13,
@@ -46,7 +46,17 @@
     "reach": 30,
     "koChance": 0
   },
-  "hasKick": false,
+  "hasKick": true,
+  "kick": {
+    "damage": 22,
+    "cooldown": 2.4,
+    "speed": 0.4,
+    "size": 14,
+    "knockback": 200,
+    "reach": 64,
+    "checkChance": 0
+  },
+  "legKick": { "first": [3, 6], "every": [6, 9], "range": 56, "reach": 88, "damage": 6, "slow": 0.85, "time": 2 },
   "hasGrapple": true,
   "grapple": {
     "damage": 50,
@@ -94,11 +104,12 @@
   },
   "blockChance": 10,
   "knee": { "damage": 9, "cooldown": 3.4, "speed": 0.3, "reach": 12, "knockback": 180 },
-  "clinch": { "first": [4, 7], "every": [7, 10], "range": 16, "tie": "plum", "reach": 0.26, "evade": 10, "weaverEvade": 10,
+  "clinch": { "first": [3, 5], "every": [5, 7], "range": 16, "tie": "plum", "reach": 0.26, "evade": 10, "weaverEvade": 10,
     "strikes": [2, 4], "gap": 0.34, "mix": { "bodyKnee": 3, "headKnee": 3, "elbow": 1 },
     "knee": { "damage": 8, "headDamage": 10, "critChance": 25, "critMult": 2 }, "elbow": { "damage": 7 }, "ramp": 5,
     "escape": 17, "grapplerEscape": 10, "knockback": 400, "open": 0.6,
     "parting": { "chance": 80, "mix": { "knee": 2, "elbow": 1 } } },
+  "oliveira": { "subHunt": { "below": 40, "shotMult": 1.6, "press": { "turn": 4, "lead": 0.15 }, "subChance": 45 } },
   "kamehameha": {
     "first": [
       10,

@@ -68,6 +68,7 @@ function update(dt) {
   tickNgannou(dt); // Francis Ngannou's rage meter, knockdowns, Dana White (ngannou.js)
   tickVolk(dt); // Alexander Volkanovski's fight IQ, circling, the green and gold arena (volkanovski.js)
   tickMovement(dt); // shared movement styles: walking them down, cutting the cage, side steps (movement.js)
+  tickOliveiraHunt(dt); // Charles Oliveira hunting the sub once they're hurt: shoots more, walks them down (oliveira-hunt.js)
   tickHolloway(dt); // Max Holloway's Blessed meter, Button Mash buttons, the flashback (holloway.js)
   tickVan(dt); // Joshua Van's chain counter, the fire on his gloves, the win flag, his lines (van.js)
   tickStrickland(dt); // Sean Strickland's range, pace, trauma meter and the America show (strickland.js)

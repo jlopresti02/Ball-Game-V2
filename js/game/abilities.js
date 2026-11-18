@@ -403,7 +403,7 @@ function updateAbilities(dt) {
             burst(tgt);
             if (g.toss && tgt.alive) tossImpact(self, tgt, g); // the ragdoll throw lands (toss.js)
             checkEnd();
-            if (tgt.alive && self.doBronx) {
+            if (tgt.alive && (self.doBronx || oliveiraHuntSub(self, tgt))) { // (and Charles Oliveira hunting the sub once they're hurt, oliveira-hunt.js)
               // Do Bronx: every takedown goes straight into a submission.
               tgt.grappled = false; self.grapple = null; iowa = true; // (already let go)
               floater(self.x, self.y - self.r - 60, "SUBMISSION ATTEMPT", "note");
