@@ -875,6 +875,7 @@ function drawVanChest(c, r, lw, contained, look) {
 // flag's yellow, green and red down the outside of each leg, the flag on his
 // left leg and "JOSHUA 1:9" (a verse on his real shorts) on his right.
 function drawVanShorts(c, r, look, sTop, band, name) {
+  if (look.vanReal) return drawVanRealShorts(c, r, look, sTop, band, name); // Joe's look from his photos (van-skin.js)
   var dark = shadeHex(look.shorts, -0.45), gold = look.accent || "#e8b923";
   c.save();
   c.beginPath(); c.rect(-r, sTop + band, r * 2, r - sTop - band); c.clip();
@@ -928,6 +929,7 @@ function drawVanShorts(c, r, look, sTop, band, name) {
 // look.vanGoatee: his thin moustache and the short beard on his chin, both
 // fine stubble rather than solid hair.
 function drawVanGoatee(c, r, look, line, lw) {
+  if (look.vanReal) return drawVanRealHead(c, r, look, line, lw); // Joe's look from his photos (van-skin.js)
   var bc = look.beardColor || look.hairColor, gr = artRand(731);
   var stache = function () {
     c.beginPath();
