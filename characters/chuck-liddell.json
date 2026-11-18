@@ -60,7 +60,7 @@
   "hasSpecial": true,
   "special": {
     "move": "snow", "chargeTime": 60, "hitCut": 2, "punchCut": 2, "hurtCut": 2.5, "readChance": 35,
-    "snowball": { "damage": 4, "speed": 900, "windup": 0.32, "follow": 0.26, "turn": 1.6 },
+    "snowball": { "damage": 4, "speed": 900, "windup": 0.32, "follow": 0.26, "turn": 1.6, "bite": 0.95 },
     "rampage": { "time": 6, "speed": 1.6, "windup": 0.26, "extend": 0.18, "recover": 0.12, "vicinity": 150, "aimError": 10, "blockMult": 1, "weaveMult": 1, "damage": 1.25 }
   }
 }

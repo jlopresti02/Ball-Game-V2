@@ -200,7 +200,7 @@ function updateSnowDay(self, other, dt) {
     self.igbb = { move: "snow", phase: "dip", t: 0, read: Math.random() * 100 < (sp.readChance || 0) };
     floater(self.x, self.y - self.r - 30, "SNOW DAY!", "crit");
     if (self.igbb.read) floater(other.x, other.y - other.r - 30, "!", "crit");
-    startSnow(IC_DIP + IC_SCOOP + IC_PACK + IC_FLARE + (sp.snowball ? sp.snowball.windup + sp.snowball.follow : 0) + sp.rampage.time);
+    startSnow(IC_DIP + IC_SCOOP + IC_PACK + IC_FLARE + (sp.snowball ? (sp.snowball.bite || 0) + sp.snowball.windup + sp.snowball.follow : 0) + sp.rampage.time);
     say(self, IC_LINES.windup);
     crowdReact(0.6);
   }

@@ -1383,7 +1383,8 @@ var SAVED_ROSTER = [
         "speed": 900,
         "windup": 0.32,
         "follow": 0.26,
-        "turn": 1.6
+        "turn": 1.6,
+        "bite": 0.95
       },
       "rampage": {
         "time": 6,
