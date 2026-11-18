@@ -96,13 +96,16 @@ var ND_LINES = {
   ],
   slapped: "I already slapped him in his face. I already told you guys that.", // after a Stockton Slap now and then (lines.slapped)
   trash: [                                                                   // more real trash talk, no names
-    "I got one talent, I can baptize people, but I'm not God or nothing like that.", // UFC 244 press conference, 2019
     "I mean, honestly, I don't care about the belt.",                        // interview (voice-clips manifest diazDontCareBelt)
     "The belt is just a credential for all these guys.",                     // same interview
     "I don't need to fight. I beat the best guy at the moment.",             // ESPN interview
     "I sneeze loud and everybody hears about it.",                           // same
-    "I want to fight the best guys. I want to win the best.",                // same
-    "I got a 145 pound homeboy out here, will beat your [BLEEP] too."        // interview (voice-clips manifest diazCand6)
+    "I got a 145 pound homeboy out here, will beat your [BLEEP] too.",       // interview (voice-clips manifest diazCand6)
+    // Christian's voice review (2026-11-18): three more in; the baptize and
+    // fight-the-best lines are out (new ones coming).
+    "That's gross.",                                                         // UFC 279 post-fight presser, 2022 (diazCand3)
+    "Sometimes less is more I believe",                                      // Jake Paul fight week, ESPN, 2023 (diazCand5)
+    "I had to stop smoking joints so I had to smoke something"              // UFC 241 open workout, TSN, 2019 (diazCand7)
   ]
 };
 var NICK_LINE = "Don't be scared, homie."; // Nick Diaz to K.J. Noons, EliteXC: Return of the King, 2008

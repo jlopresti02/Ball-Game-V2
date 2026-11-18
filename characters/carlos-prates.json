@@ -1,6 +1,6 @@
 {
   "id": "c-carlos-prates",
-  "rev": 3,
+  "rev": 4,
   "builtin": false,
   "weightClass": "welterweight",
   "name": "Carlos Prates",
@@ -75,7 +75,7 @@
       "taunt": ["I can punch, I can knee, I can kick, so I'm better now."],
       "punches": ["I'm not here to play, you know."],
       "smoke": ["I can be a champ still smoking, still party, still drinking whiskey."],
-      "party": ["Time to party, let's go!"],
+      "party": [],
       "win": []
     },
     "lineOdds": { "gap": 6, "start": 100, "taunt": 45, "punches": 30, "smoke": 100, "party": 100, "win": 100 },

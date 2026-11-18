@@ -1,6 +1,6 @@
 {
   "id": "c-alexander-volkanovski",
-  "rev": 3,
+  "rev": 4,
   "builtin": false,
   "weightClass": "featherweight",
   "name": "Alexander Volkanovski",
@@ -57,7 +57,7 @@
     "angles": { "outMargin": 10, "outMax": 56, "inRange": 90, "ready": 0.1, "inAngle": 0.55, "inSpeed": 1.1, "inTime": 0.5, "outTime": 0.3, "outAngle": 0.95, "outSpeed": 1.2, "cone": 55, "pivotGap": 0.5, "slip": 35 },
     "rivals": { "ilia": { "damageTaken": 1.3 }, "max": { "damage": 1.1 } },
     "walkout": { "keep": 1.6 },
-    "lines": { "start": true, "plan": 70, "adapt": true, "rival": true, "nail": 30, "win": true, "gap": 8 }
+    "lines": { "start": true, "plan": 70, "wrestle": 100, "adapt": true, "rival": true, "nail": 30, "win": true, "gap": 8 }
   },
   "hasSpecial": true,
   "special": {

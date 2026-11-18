@@ -89,8 +89,6 @@ var VK_LINES = {
   fans: "Some of the best fans in the world are here in Australia.",
   // https://www.espn.com/mma/story/_/id/44651940/volkanovski-wins-vacant-title-slugfest-lopes-ufc-314 (UFC 314, 2025; the swear word bleeped)
   movie: "This [BLEEP], people are going to write books about. These are going to be movies.",
-  // same ESPN UFC 314 story
-  adversity: "Adversity is a privilege.",
   // https://www.espn.com/mma/story/_/id/27984767/alexander-volkanovski-blessed-era-ends-ufc-245 (UFC 245 presser, 2019, about Max Holloway)
   blessed: "I think the Blessed Era ends. It's my time.",
   // https://www.bjpenn.com/mma-news/ufc/alexander-volkanovski-reveals-he-politely-asked-max-holloway-to-get-the-fk-out-of-my-division-immediately-following-their-trilogy-fight-at-ufc-276/ (what he told Max after UFC 276, 2022; bleeped)
@@ -102,6 +100,12 @@ var VK_LINES = {
 };
 var VK_START = ["king", "earned", "old"];
 var VK_WIN = ["king", "movie"];
+// Christian's voice review (2026-11-18): the movies line comes up 3 times as
+// often as "king" after a win (SPEECH_MORE, speech.js); "Wrestle the bloke" on
+// every wrestling read (`lines.wrestle`%) and when he switches to wrestling
+// after his adjustments line. (His "adversity" win line is gone: that clip was
+// Joe Rogan's voice, not his.)
+SPEECH_MORE[VK_LINES.movie] = 3;
 var VK_PLAN_LINE = { kicks: "rounded", wrestle: "wrestle", mixed: "puzzle" };
 var VK_PLAN_NAMES = { kicks: "KICKS", wrestle: "WRESTLE", mixed: "MIX IT UP" };
 var VK_PLAN_NOTES = { kicks: "STAY OFF THE MAT", wrestle: "TAKE HIM DOWN", mixed: "A BIT OF BOTH" };
@@ -235,7 +239,8 @@ function volkRead(b, other, cfg) {
   playFightIq();
   crowdReact(0.3);
   var L = cfg.lines;
-  if (L && L.plan && Math.random() * 100 < L.plan) volkQueue(b, VK_LINES[VK_PLAN_LINE[plan]]);
+  var chance = plan === "wrestle" && L && L.wrestle != null ? L.wrestle : L && L.plan;
+  if (chance && Math.random() * 100 < chance) volkQueue(b, VK_LINES[VK_PLAN_LINE[plan]]);
 }
 
 function volkSetPlan(b, plan, title) {
@@ -306,6 +311,7 @@ function volkAdapt(b, other, cfg) {
   crowdReact(0.4);
   var L = cfg.lines;
   if (L && L.adapt && !v.said.adjust) { v.said.adjust = true; volkQueue(b, VK_LINES.adjust); }
+  else if (L && L.wrestle && next === "wrestle" && !v.said.wrestleAdapt) { v.said.wrestleAdapt = true; volkQueue(b, VK_LINES.wrestle); }
 }
 
 // ---------------------------------------------------------------- circling
@@ -528,8 +534,7 @@ function tickVolkLines(b, other, cfg, dt) {
     if (L.win && b.alive && !other.alive && !v.said.win && v.winT >= 0.6) {
       v.said.win = true;
       var line = v.rival === "max" && L.rival ? VK_LINES.division
-        : b.hp < MAX_HP * 0.3 ? VK_LINES.adversity
-        : VK_LINES[pickLine(b, VK_WIN, "win")];
+        : pickLine(b, VK_WIN.map(function (k) { return VK_LINES[k]; }), "win");
       say(b, line, { hold: 1 });
     }
     return;

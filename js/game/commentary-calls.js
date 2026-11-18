@@ -6,9 +6,10 @@
 //
 // kind      what just happened, a key of COMMENTARY_CALLS below: combo,
 //           leftRight, rightHand, bigElbow, elbows, spinElbow, spinKick, shot,
-//           takedown, sprawl, suplex, choke, ko, instantKo, fightEnd, and the
+//           takedown, sprawl, suplex, choke, armbar, knockdown, ko, instantKo,
+//           chokeFinish, subFinish, domination, fightEnd, and the
 //           fighter-only ones (khabibGroundElbow, dustinBigLeft,
-//           gaethjeKnockdownRight, vanLeftHook, hollowayFight), which only
+//           gaethjeKnockdownRight, vanLeftHook, volkTeeing, hollowayFight), which only
 //           play when `only` is the attacker. Two more are signals with no
 //           line of their own: "elbow" (any elbow that lands, opts.crit: a
 //           crit is a big elbow, two close together are "elbows") and
@@ -44,7 +45,11 @@
 //   cold (koOut, the KO Rush, Ngannou, Conor's counter, O'Malley) or knocked
 //   out from COMMENTARY_ONE_SHOT of his health in one hit is a one-shot
 //   (instantKo); a winner left on COMMENTARY_CLOSE of his health or less is a
-//   close fight (fightEnd);
+//   close fight (fightEnd), on COMMENTARY_DOMINANT or more a domination; a
+//   submission is chokeFinish when the last hold on him was a choke, else
+//   subFinish. Armbars (b.armbar) and knockdowns (dizzy, knocked onto his
+//   back by a strike, or one punch of COMMENTARY_KNOCKDOWN_HIT that leaves
+//   him up) are watched from here too;
 // - only lines with a real clip are used (SPEECH_CLIPS, voice-clips.js), like
 //   chatter.js, each heard once a fight before any repeats;
 // - while one of our calls is talking, a fighter's line that comes up waits for
@@ -88,8 +93,11 @@ var COMMENTARY_LEFTIES = { "c-conor-mcgregor": true, "c-dustin-poirier": true };
 // Every line is the commentator's real words, cut from the broadcast (the
 // clip, its source and timestamps are in the voice-clips manifest; codes are
 // Christian's picks, round 5).
+// Voice review, round 1 (Christian, 2026-11-18): the new calls are named by
+// their clip; `along` lines join a kind's pool only when that fighter is in
+// the cage; favourites come up more often (SPEECH_MORE, below the table).
 var COMMENTARY_CALLS = {
-  combo: { chance: 55, prio: 2, lines: [
+  combo: { chance: 80, prio: 2, lines: [                   // (was 55)
     "Oh my goodness! Oh my goodness! What a combination!", // CG1
     "Wow, what a combination!"] },                          // CG6
   leftRight: { chance: 60, prio: 3, lines: ["Oh! Big left! And now a right! Hurt, man!"] },        // CC2
@@ -98,15 +106,38 @@ var COMMENTARY_CALLS = {
   elbows: { chance: 50, prio: 3, lines: ["Oh! Oh, he's hurt! Excellent elbows!"] },                // CC5
   spinElbow: { chance: 85, prio: 5, lines: ["Spinning elbow! Wow! Spinning elbow! Nasty! Wow!"] }, // CC7
   spinKick: { chance: 80, prio: 5, lines: ["Oh, nice spinning kick to the body!"] },               // CG12
-  shot: { chance: 25, prio: 1, lines: ["There's the shot!"] },                                     // CG3
+  shot: { chance: 45, prio: 1, gap: 15, lines: ["There's the shot!"] },                            // CG3 (was 25, gap 25)
   takedown: { chance: 50, prio: 2, lines: [
     "Beautiful shot there on the double leg!",  // CG4
     "Fast double leg!"] },                      // CC3
   sprawl: { chance: 85, prio: 4, lines: ["He has successfully thwarted the first takedown attempt."] }, // CG5
-  suplex: { chance: 85, prio: 5, lines: ["Did that just suplex him?"] },                           // CG13
-  choke: { chance: 70, prio: 4, lines: ["There's the choke! He's got it! It's under the neck!"] }, // CG9
-  ko: { chance: 40, prio: 6, end: true, lines: ["Oh! Just slept him! My goodness! Clean as can be!"] },        // CG10
-  instantKo: { chance: 90, prio: 8, end: true, lines: ["Oh! Just slept him! My goodness! Clean as can be!"] }, // CG10
+  suplex: { chance: 100, prio: 5, gap: 12, lines: ["Did that just suplex him?"] },                 // CG13 (was 85, gap 25)
+  choke: { chance: 100, prio: 4, gap: 15, lines: ["There's the choke! He's got it! It's under the neck!"] }, // CG9 (was 70, gap 25)
+  // Anyone locking an armbar (watched from tickCommentaryCalls: b.armbar, armbar.js; not Anderson's triangle).
+  armbar: { chance: 100, prio: 4, lines: ["Oh! Right into an armbar! Phenomenal! Oh my goodness! Oh my God!"] }, // callMightyMouseArmbar
+  // Knocked down and still up: dizzy, put on his back by a strike, or one punch of COMMENTARY_KNOCKDOWN_HIT.
+  knockdown: { chance: 60, prio: 4, lines: [
+    "That is picture perfect. And he just sits him down.", // callVolk273PerfectRight (was Volkanovski's knockout call)
+    "Oh my goodness, oh my goodness!"],                    // callGenericOhMyGoodness
+    along: { "c-dustin-poirier": ["Are you kidding me right now? My goodness!"] } }, // callGenericKidding
+  // Volkanovski's combination landing on someone already hurt (under COMMENTARY_VOLK_HURT of his health).
+  volkTeeing: { chance: 60, prio: 3, gap: 30, only: "c-alexander-volkanovski",
+    lines: ["He's hurt, he's hurt! Volkanovski's teeing off on him."] }, // callVolk232HurtTeeing
+  ko: { chance: 100, prio: 6, end: true, lines: [          // (was 40)
+    "Oh! Just slept him! My goodness! Clean as can be!",   // CG10
+    "He's hurt real bad! Oh, he's hurt bad, they're going to stop the fight! That's it!", // callGenericStopIt
+    "That is going to do it!"] },                          // callGenericGoingToDoIt
+  instantKo: { chance: 100, prio: 8, end: true, lines: [   // (was 90)
+    "Oh! Just slept him! My goodness! Clean as can be!",   // CG10
+    "Wow, that was nasty! That's as nasty as it ever gets! Oh my goodness!", // callGenericNasty
+    "Oh, out cold!",                                       // callGenericOutCold
+    "Slept him!"],                                         // callGenericSlept
+    along: { "c-dustin-poirier": ["Are you kidding me right now? My goodness!"] } }, // callGenericKidding
+  // A submission: a choke (the last hold on him was one, commentaryCall "choke") or any other.
+  chokeFinish: { chance: 90, prio: 8, end: true, lines: ["Wow! Oh my goodness! Wow! Choked him unconscious!"] }, // callGenericChokedOut
+  subFinish: { chance: 60, prio: 6, end: true, lines: ["That is going to do it!"] },                           // callGenericGoingToDoIt
+  // The winner still on COMMENTARY_DOMINANT of his health or more.
+  domination: { chance: 60, prio: 7, end: true, lines: ["Wow. Domination."] },                                 // callGenericDomination
   fightEnd: { chance: 75, prio: 7, end: true, lines: ["What a fight!"] },                                      // CG16
   khabibGroundElbow: { chance: 80, prio: 6, gap: 40, only: "c-khabib-nurmagomedov", need: "big",
     lines: ["Oh, big elbow from Nurmagomedov!"] },                         // CG19
@@ -119,6 +150,15 @@ var COMMENTARY_CALLS = {
   hollowayFight: { chance: 100, prio: 4, once: true, wait: 12, only: "c-max-holloway",
     lines: ["Max just looked at the commentary team and said, 'I'm the best boxer in the UFC.'"] } // MX-C1
 };
+// Christian's favourites (voice review, 2026-11-18): this many times as likely
+// as each of the other lines they share a call with (speech.js).
+SPEECH_MORE["Oh! Just slept him! My goodness! Clean as can be!"] = 4;
+SPEECH_MORE["Wow, what a combination!"] = 2;
+SPEECH_MORE["That is picture perfect. And he just sits him down."] = 2;
+var COMMENTARY_KNOCKDOWN_HIT = 26; // one punch this big that leaves him standing is a knockdown
+var COMMENTARY_DOMINANT = 0.8;     // a dominant win: the winner on this share of his health or more
+var COMMENTARY_VOLK = "c-alexander-volkanovski";
+var COMMENTARY_VOLK_HURT = 0.6;    // Volkanovski's flurry call: they're under this share of their health
 
 // A fighter's own call that's about to come up: no call of ours starts while
 // one of these is true, so it can't be the reason theirs gets skipped.
@@ -134,7 +174,7 @@ var cc = null; // this fight's calls (made fresh for each fight)
 function ccState() {
   if (!cc || cc.balls !== balls) {
     cc = { balls: balls, t: 0, fightT: 0, cool: 0, n: 0, kindT: {}, heard: {}, done: {}, want: null, end: null,
-      overT: null, otherT: -99, mine: null, prev: [], lefts: {}, elbows: {}, stuffed: 0,
+      overT: null, otherT: -99, mine: null, prev: [], lefts: {}, elbows: {}, stuffed: 0, lock: {},
       hwAt: COMMENTARY_HOLLOWAY_AT[0] + ccRand() * (COMMENTARY_HOLLOWAY_AT[1] - COMMENTARY_HOLLOWAY_AT[0]), log: [] };
   }
   return cc;
@@ -142,8 +182,10 @@ function ccState() {
 function ccRand() { return typeof nativeRandom === "function" ? nativeRandom() : Math.random(); }
 function ccIs(b, id) { return !!(b && b.char && String(b.char.id).indexOf(id) === 0); }
 function ccLines(kind) {
-  var k = COMMENTARY_CALLS[kind];
-  return ((k && k.lines) || []).filter(function (t) { return !COMMENTARY_NEED_CLIP || (typeof SPEECH_CLIPS !== "undefined" && SPEECH_CLIPS[t]); });
+  var k = COMMENTARY_CALLS[kind], all = ((k && k.lines) || []).slice();
+  // `along` lines: only while that fighter is in the cage (never name an absent fighter).
+  if (k && k.along && typeof balls !== "undefined" && balls) for (var id in k.along) if (balls.some(function (b) { return ccIs(b, id); })) all = all.concat(k.along[id]);
+  return all.filter(function (t) { return !COMMENTARY_NEED_CLIP || (typeof SPEECH_CLIPS !== "undefined" && SPEECH_CLIPS[t]); });
 }
 
 function commentaryCall(kind, attacker, defender, opts) {
@@ -154,8 +196,14 @@ function commentaryCall(kind, attacker, defender, opts) {
     // The signals: they only decide which call it is.
     if (kind === "elbow") return ccElbow(c, attacker, defender, opts);
     if (kind === "leftHand") { if (attacker) c.lefts[attacker.id] = c.t; return false; }
+    if (kind === "choke" && defender) c.lock[defender.id] = "choke"; // (a submission after it is a choke finish)
     if (kind === "rightHand") kind = ccRight(c, attacker, defender);
-    else if (kind === "combo") kind = ccCombo(opts);
+    else if (kind === "combo") {
+      kind = ccCombo(opts);
+      // Volkanovski's combination on someone already hurt: "Volkanovski's teeing off on him."
+      if (kind === "combo" && ccIs(attacker, COMMENTARY_VOLK) && defender && defender.hp < MAX_HP * COMMENTARY_VOLK_HURT &&
+          ccWant(c, ccTake(c, "volkTeeing", attacker, defender, opts, false))) return true;
+    }
     if (kind === "shot") return ccWant(c, ccTake(c, "shot", attacker, defender, opts, true));
     if (kind === "sprawl" && c.stuffed++ > 0) return false; // only the first stuffed shot of the fight
     return ccWant(c, ccTake(c, kind, attacker, defender, opts, false));
@@ -259,7 +307,7 @@ function ccPick(c, kind) {
   if (!all.length) return null;
   var fresh = all.filter(function (t) { return !c.heard[t]; });
   if (!fresh.length) { all.forEach(function (t) { c.heard[t] = false; }); fresh = all; }
-  var line = fresh[Math.floor(ccRand() * fresh.length)];
+  var line = fresh[speechPickWeighted(fresh, ccRand())]; // (favourites more often: SPEECH_MORE, speech.js)
   c.heard[line] = true;
   return line;
 }
@@ -289,14 +337,24 @@ function tickCommentaryCalls(dt) {
     if (p) {
       if (b.koOut && !p.koOut) commentaryCall("instantKo", o, b);
       else if (!b.alive && p.alive && !p.koOut && winBy !== "submission") commentaryCall(p.hp >= MAX_HP * COMMENTARY_ONE_SHOT ? "instantKo" : "ko", o, b);
+      else if (!b.alive && p.alive && winBy === "submission") commentaryCall(c.lock[b.id] === "choke" ? "chokeFinish" : "subFinish", o, b);
+      // An armbar going on (armbar.js; Anderson's triangle rides on it as a choke).
+      var ab = b.armbar, v = ab && balls[ab.vicId];
+      if (ab && ab !== p.armbar && v) {
+        c.lock[v.id] = ab.tri ? "choke" : "armbar";
+        if (!ab.tri) commentaryCall("armbar", b, v);
+      }
+      // Knocked down and still up: dizzy, or put on his back (guard.js) by a hit.
+      if (b.alive && ((b.dizzy && !p.dizzy) || (b.guard && !p.guard && b.hp < p.hp))) commentaryCall("knockdown", o, b);
     }
-    c.prev[i] = { alive: b.alive, hp: b.hp, koOut: b.koOut };
+    c.prev[i] = { alive: b.alive, hp: b.hp, koOut: b.koOut, armbar: b.armbar || null, dizzy: !!b.dizzy, guard: !!b.guard };
   });
   if (over && c.overT == null) {
     c.overT = c.t;
     c.want = null;
     var w = balls[0].alive ? balls[0] : (balls[1].alive ? balls[1] : null);
     if (w && w.hp <= MAX_HP * COMMENTARY_CLOSE) commentaryCall("fightEnd", w, balls[1 - w.id]);
+    else if (w && w.hp >= MAX_HP * COMMENTARY_DOMINANT) commentaryCall("domination", w, balls[1 - w.id]);
   }
   // Once, early in a Max Holloway fight (asked again until it gets its quiet spell).
   if (!over && !c.done.hollowayFight && c.fightT >= c.hwAt && c.fightT < c.hwAt + 20 && !(c.want && c.want.kind === "hollowayFight")) {
@@ -348,6 +406,7 @@ function commentaryHit(b, dealt, source, attackerId) {
     if (!a || !a.char || ccJab(a)) return;
     var own = (a.char.punch && a.char.punch.damage) || 0;
     if (!(dealt >= COMMENTARY_BIG_PUNCH || (own > 0 && dealt >= Math.max(COMMENTARY_BIG_MIN, own * COMMENTARY_BIG_OWN)) || a.sugaCrit)) return;
+    if (b.alive && dealt >= COMMENTARY_KNOCKDOWN_HIT && commentaryCall("knockdown", a, b)) return; // "he just sits him down"
     if (ccLeft(a, source)) {
       ccState().lefts[a.id] = cc.t;
       commentaryCall("leftRight", a, b, { delay: 0.5 });

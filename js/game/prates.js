@@ -861,7 +861,7 @@ function prStartSmoke(b, other, sp) {
   prLights.want = 1;
   if (sp.music !== false) prMusicStart(sp.musicLevel || 0.22, sp.song);
   crowdReact(0.6);
-  // "Time to party, let's go!" every time the music starts (right after his smoke line if that's still going).
+  // His party line (lines.party, empty until Christian's new pick is in) every time the music starts (right after his smoke line if that's still going).
   prQueue(b, "party", (prCfg(b).lineTiming || {}).bigWait || 8);
 }
 
