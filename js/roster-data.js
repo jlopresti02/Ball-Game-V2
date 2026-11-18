@@ -1057,12 +1057,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 21,
+    "rev": 22,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
     "base": "Grappler",
-    "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Special move: Do Bronx.",
+    "bio": "\"Do Bronx\". Built on the Grappler base, with quick 7-damage punches, a Muay Thai body kick (22) and light calf kicks. Against another Grappler he only shoots for the takedown half the time on contact. He ties them up in the clinch every 5-7 seconds. When he's hit he has a 25% chance to fall into guard: planted on his back for 5 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Once they're under 40% health he hunts the finish: he walks them down, shoots 1.6x as often, and 45% of the takedowns he lands go straight into the rear naked choke or the armbar. Special move: Do Bronx.",
     "color": "#d9a514",
     "label": "",
     "imgData": null,
@@ -1095,7 +1095,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 5,
+      "damage": 7,
       "cooldown": 0.7,
       "speed": 0.22,
       "size": 13,
@@ -1103,7 +1103,31 @@ var SAVED_ROSTER = [
       "reach": 30,
       "koChance": 0
     },
-    "hasKick": false,
+    "hasKick": true,
+    "kick": {
+      "damage": 22,
+      "cooldown": 2.4,
+      "speed": 0.4,
+      "size": 14,
+      "knockback": 200,
+      "reach": 64,
+      "checkChance": 0
+    },
+    "legKick": {
+      "first": [
+        3,
+        6
+      ],
+      "every": [
+        6,
+        9
+      ],
+      "range": 56,
+      "reach": 88,
+      "damage": 6,
+      "slow": 0.85,
+      "time": 2
+    },
     "hasGrapple": true,
     "grapple": {
       "damage": 50,
@@ -1159,12 +1183,12 @@ var SAVED_ROSTER = [
     },
     "clinch": {
       "first": [
-        4,
-        7
+        3,
+        5
       ],
       "every": [
-        7,
-        10
+        5,
+        7
       ],
       "range": 16,
       "tie": "plum",
@@ -1201,6 +1225,17 @@ var SAVED_ROSTER = [
           "knee": 2,
           "elbow": 1
         }
+      }
+    },
+    "oliveira": {
+      "subHunt": {
+        "below": 40,
+        "shotMult": 1.6,
+        "press": {
+          "turn": 4,
+          "lead": 0.15
+        },
+        "subChance": 45
       }
     },
     "kamehameha": {

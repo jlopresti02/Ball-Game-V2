@@ -6050,12 +6050,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-charles-oliveira",
-    "rev": 21,
+    "rev": 22,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Charles Oliveira",
     "base": "Grappler",
-    "bio": "\"Do Bronx\". Built on the Grappler base, with Khabib's quick 5-damage punches. Against another Grappler he only shoots for the takedown half the time on contact. When he's hit he has a 25% chance to fall into guard: planted on his back for 6 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Special move: Do Bronx.",
+    "bio": "\"Do Bronx\". Built on the Grappler base, with quick 7-damage punches, a Muay Thai body kick (22) and light calf kicks. Against another Grappler he only shoots for the takedown half the time on contact. He ties them up in the clinch every 5-7 seconds. When he's hit he has a 25% chance to fall into guard: planted on his back for 5 seconds with a circle around him. Step in and it's a coin flip: pass the guard for free ground and pound, or get caught in one of his BJJ submissions, a rear naked choke or an armbar. Once they're under 40% health he hunts the finish: he walks them down, shoots 1.6x as often, and 45% of the takedowns he lands go straight into the rear naked choke or the armbar. Special move: Do Bronx.",
     "color": "#d9a514",
     "label": "",
     "imgData": null,
@@ -6088,7 +6088,7 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 5,
+      "damage": 7,
       "cooldown": 0.7,
       "speed": 0.22,
       "size": 13,
@@ -6096,7 +6096,31 @@ var SAVED_ROSTER = [
       "reach": 30,
       "koChance": 0
     },
-    "hasKick": false,
+    "hasKick": true,
+    "kick": {
+      "damage": 22,
+      "cooldown": 2.4,
+      "speed": 0.4,
+      "size": 14,
+      "knockback": 200,
+      "reach": 64,
+      "checkChance": 0
+    },
+    "legKick": {
+      "first": [
+        3,
+        6
+      ],
+      "every": [
+        6,
+        9
+      ],
+      "range": 56,
+      "reach": 88,
+      "damage": 6,
+      "slow": 0.85,
+      "time": 2
+    },
     "hasGrapple": true,
     "grapple": {
       "damage": 50,
@@ -6152,12 +6176,12 @@ var SAVED_ROSTER = [
     },
     "clinch": {
       "first": [
-        4,
-        7
+        3,
+        5
       ],
       "every": [
-        7,
-        10
+        5,
+        7
       ],
       "range": 16,
       "tie": "plum",
@@ -6194,6 +6218,17 @@ var SAVED_ROSTER = [
           "knee": 2,
           "elbow": 1
         }
+      }
+    },
+    "oliveira": {
+      "subHunt": {
+        "below": 40,
+        "shotMult": 1.6,
+        "press": {
+          "turn": 4,
+          "lead": 0.15
+        },
+        "subChance": 45
       }
     },
     "kamehameha": {
@@ -14007,7 +14042,7 @@ function updateAbilities(dt) {
             burst(tgt);
             if (g.toss && tgt.alive) tossImpact(self, tgt, g); // the ragdoll throw lands (toss.js)
             checkEnd();
-            if (tgt.alive && self.doBronx) {
+            if (tgt.alive && (self.doBronx || oliveiraHuntSub(self, tgt))) { // (and Charles Oliveira hunting the sub once they're hurt, oliveira-hunt.js)
               // Do Bronx: every takedown goes straight into a submission.
               tgt.grappled = false; self.grapple = null; iowa = true; // (already let go)
               floater(self.x, self.y - self.r - 60, "SUBMISSION ATTEMPT", "note");
@@ -40681,6 +40716,78 @@ function drawDoBronx(b) {
     ctx.fillStyle = gloveColor(b.char); ctx.strokeStyle = theme.wall; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(hx, hy, size * 0.95, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   });
+}
+
+// Charles Oliveira hunts the submission once they're hurt (Christian,
+// 2026-11-18). A fighter opts in with an "oliveira": { "subHunt": {...} }
+// block in his character file. A fighter without one is untouched: nothing
+// here runs for him and nothing here draws a random number for him.
+//
+//   "oliveira": { "subHunt": {
+//     "below": 40,          once the opponent is under this % of a full bar:
+//     "shotMult": 1.6,      his takedown clock (grapple.cooldown) runs this
+//                           many times as fast, so he shoots that much more
+//                           often
+//     "press": {            and he walks them down to get the contact he
+//       "turn": 4,          needs to shoot (the shared movement.js press, only
+//       "lead": 0.15        while they're hurt; take the block out and he
+//     },                    moves as before)
+//     "subChance": 45       and this % of the takedowns he lands go straight
+//                           into one of his BJJ submissions (his guard's
+//                           `subs`: the rear naked choke or the armbar,
+//                           guard.js startSubmission), the same way every Do
+//                           Bronx takedown does (abilities.js)
+//   } }
+//
+// The takedown still lands (its damage and the throw); the submission takes
+// the place of letting them go. The tap odds are the submission's own, so
+// they already rise the more hurt the victim is (rnc.js, armbar.js). A
+// takedown that would finish them is still the finisher. Do Bronx is left
+// exactly as it was: while it's on, none of this runs (every takedown is a
+// submission then anyway).
+"use strict";
+
+function ohCfg(b) { var o = b && b.char && b.char.oliveira; return (o && o.subHunt) || null; }
+function ohBelow(h) { return h.below != null ? h.below : 40; }
+function ohHurt(other, h) { return !!(other && other.alive && other.hp < MAX_HP * ohBelow(h) / 100); }
+
+// From the takedown landing (abilities.js, the Do Bronx branch): true when
+// this takedown goes straight into a submission.
+function oliveiraHuntSub(self, tgt) {
+  var h = ohCfg(self);
+  if (!h || self.doBronx || !ohHurt(tgt, h)) return false;
+  if (Math.random() * 100 >= (h.subChance != null ? h.subChance : 45)) return false;
+  if (typeof tossSkipBounce === "function") tossSkipBounce(tgt); // straight into the hold: no bounce after the throw (toss.js)
+  return true;
+}
+
+// Every frame (update.js): while they're hurt, the faster takedown clock and
+// the walk-down.
+function tickOliveiraHunt(dt) {
+  balls.forEach(function (b) {
+    var h = ohCfg(b);
+    if (!h || !started || over || !b.alive || b.doBronx) return;
+    var o = balls[1 - b.id];
+    if (!ohHurt(o, h)) return;
+    var m = h.shotMult || 1;
+    if (m > 1 && b.char.hasGrapple && b.grappleCd > 0 && !b.guard && inOrdinaryMovement(b)) {
+      b.grappleCd = Math.max(0, b.grappleCd - dt * (b.atkRate || 1) * (m - 1));
+    }
+    if (h.press && !b.char.movement && typeof mvSteer === "function") {
+      if (!b.ohMv) b.ohMv = { t: 1, step: null, reset: null };
+      mvSteer(b, o, b.ohMv, { press: h.press }, dt);
+    }
+  });
+}
+
+// The card (gallery.js).
+function oliveiraGalleryMoves(ch, add) {
+  var h = ohCfg({ char: ch });
+  if (!h) return;
+  var gd = ch.guard || {}, subs = (gd.subs || ["bjj"]).map(function (s) { return SUB_NAMES[s] || s; }).join(" or ");
+  add("🥋", "Sub hunt", "Once they're under " + ohBelow(h) + "% health he hunts the finish: " + (h.press ? "he walks them down, " : "") +
+    "shoots " + (h.shotMult || 1) + "x as often, and " + (h.subChance != null ? h.subChance : 45) + "% of the takedowns he lands go straight into a " + subs +
+    " (they tap more the more hurt they are).");
 }
 
 // Charles Oliveira's Kamehameha (Joe, 2026-11-09). Its own move, apart from
@@ -80424,6 +80531,7 @@ function update(dt) {
   tickNgannou(dt); // Francis Ngannou's rage meter, knockdowns, Dana White (ngannou.js)
   tickVolk(dt); // Alexander Volkanovski's fight IQ, circling, the green and gold arena (volkanovski.js)
   tickMovement(dt); // shared movement styles: walking them down, cutting the cage, side steps (movement.js)
+  tickOliveiraHunt(dt); // Charles Oliveira hunting the sub once they're hurt: shoots more, walks them down (oliveira-hunt.js)
   tickHolloway(dt); // Max Holloway's Blessed meter, Button Mash buttons, the flashback (holloway.js)
   tickVan(dt); // Joshua Van's chain counter, the fire on his gloves, the win flag, his lines (van.js)
   tickStrickland(dt); // Sean Strickland's range, pace, trauma meter and the America show (strickland.js)
@@ -84753,6 +84861,7 @@ function galleryMoves(ch) {
   if (ch.clinch) clinchGalleryMoves(ch, add); // the clinch and the parting shot on the break (clinch.js)
   if (ch.ramp && ch.ramp.chain) iliaComboGalleryMoves(ch, add); // Ilia Topuria's combos and finisher (ilia-combos.js)
   if (ch.darce) iliaDarceGalleryMoves(ch, add); // Ilia Topuria's D'Arce choke (ilia-darce.js)
+  if (ch.oliveira) oliveiraGalleryMoves(ch, add); // Charles Oliveira's sub hunt once they're hurt (oliveira-hunt.js)
   if (ch.hooks) hookGalleryMoves(ch, add); // hooks that come round from the side (hook-punch.js)
   if (ch.legKick) legKickGalleryMoves(ch, add); // calf kicks that leave them limping (leg-kick.js)
   if (ch.headKick) headKickGalleryMoves(ch, add); // the head kick the calf kicks set up (head-kick.js)
@@ -85515,21 +85624,21 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261118123707"></script>
-  <script src="js/game/tale-tape.js?v=20261118123707"></script>
-  <script src="js/game/tape-taunts.js?v=20261118123707"></script>
-<script src="js/game/special-solid.js?v=20261118123707"></script>
-<script src="js/game/watchdog.js?v=20261118123707"></script>
-<script src="js/game/update.js?v=20261118123707"></script>
-<script src="js/game/fighter-art.js?v=20261118123707"></script>
-<script src="js/game/fedor-skin.js?v=20261118123707"></script>
-<script src="js/game/draw-attacks.js?v=20261118123707"></script>
-<script src="js/game/wwit-badge.js?v=20261118123707"></script>
-<script src="js/game/stadium.js?v=20261118123707"></script>
-<script src="js/game/draw.js?v=20261118123707"></script>
-<script src="js/ui/gallery.js?v=20261118123707"></script>
-<script src="js/ui/saved-fights.js?v=20261118123707"></script>
-<script src="js/main.js?v=20261118123707"></script>
-<script src="js/ui/fight-link.js?v=20261118123707"></script>
+  <script src="js/game/intro-msg.js?v=20261118123857"></script>
+  <script src="js/game/tale-tape.js?v=20261118123857"></script>
+  <script src="js/game/tape-taunts.js?v=20261118123857"></script>
+<script src="js/game/special-solid.js?v=20261118123857"></script>
+<script src="js/game/watchdog.js?v=20261118123857"></script>
+<script src="js/game/update.js?v=20261118123857"></script>
+<script src="js/game/fighter-art.js?v=20261118123857"></script>
+<script src="js/game/fedor-skin.js?v=20261118123857"></script>
+<script src="js/game/draw-attacks.js?v=20261118123857"></script>
+<script src="js/game/wwit-badge.js?v=20261118123857"></script>
+<script src="js/game/stadium.js?v=20261118123857"></script>
+<script src="js/game/draw.js?v=20261118123857"></script>
+<script src="js/ui/gallery.js?v=20261118123857"></script>
+<script src="js/ui/saved-fights.js?v=20261118123857"></script>
+<script src="js/main.js?v=20261118123857"></script>
+<script src="js/ui/fight-link.js?v=20261118123857"></script>
 </body>
 </html>
