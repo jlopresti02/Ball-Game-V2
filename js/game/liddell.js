@@ -47,8 +47,9 @@
 //             (`taunt.first` seconds in). "I like fighting as a sport. I like
 //             trying to show you I'm better than you." when he comes back from
 //             at least iceman.taunt.behind health down to take the lead, and
-//             now and then as a taunt, mixed with the head-off line (every
-//             `every` seconds) (speech.js).
+//             now and then as a taunt, mixed with the head-off line and "I'm
+//             going to knock him out, and he knows it." (every `every`
+//             seconds) (speech.js).
 // The wind-up runs on b.igbb (move "snow"), like the other specials: he can't
 // be hurt or grabbed while he's packing the snow, but he stays solid (nobody
 // walks through him: they're eased out of his space, no bounce) and anything
@@ -63,7 +64,8 @@ var IC_OVERHAND = 1;          // the hand his overhands come from (cte.js hookSi
 var IC_LINES = {
   windup: "I'm gonna knock his head off.",
   taunt: "I like fighting as a sport. I like trying to show you I'm better than you.",
-  snowDone: "Oh yeah, baby!" // as the snow flares up; only said when a real clip of it exists (voice-clips.js)
+  snowDone: "Oh yeah, baby!", // as the snow flares up; only said when a real clip of it exists (voice-clips.js)
+  knockOut: "I'm going to knock him out, and he knows it." // in the taunt mix (Christian's voice review, 2026-11-18; manifest liddellKillYourAss)
 };
 // What a frosted glove looks like, in fractions of the glove's radius:
 // where the ice crystals stick out round the rim, and how far.
@@ -399,7 +401,7 @@ function tickIceman(b, other, ic, dt) {
   var dx = other.x - b.x, dy = other.y - b.y;
   if (b.tauntT <= 0 && dx * dx + dy * dy > 170 * 170 && canSay(b) && !b.igbb) {
     // He opens every fight with the head-off line, then mixes in the other.
-    say(b, b.icOpened ? pickLine(b, [IC_LINES.taunt, IC_LINES.windup], "taunt") : IC_LINES.windup);
+    say(b, b.icOpened ? pickLine(b, [IC_LINES.taunt, IC_LINES.windup, IC_LINES.knockOut], "taunt") : IC_LINES.windup);
     b.icOpened = true;
     b.tauntT = icRand(ic.taunt.every);
   }

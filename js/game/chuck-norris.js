@@ -53,8 +53,7 @@
 // line (`kickLine`% the roundhouse one): both are long, and the talk channel
 // drops a line that would have to wait on another.
 var CN_LINES = {
-  arrive: [       // landing at Strickland's side
-    "Hi, I'm Chuck Norris."                                            // his 2012 election video ("a dire warning for America")
+  arrive: [       // landing at Strickland's side (empty: Christian's voice review, 2026-11-18, a new line is coming)
   ],
   roundhouse: [   // right after the kick lands
     "There's no chin behind Chuck Norris's beard, only another fist.", // Mike Huckabee's 2008 campaign ad, "Chuck Norris Approved"

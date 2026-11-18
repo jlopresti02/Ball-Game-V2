@@ -22,13 +22,19 @@
 // canSay(b)      false while a bubble is up or for `SPEECH_GAP` seconds after,
 //                so a talker doesn't bury the fight in text.
 // pickLine(b, lines, key)  a random line from `lines`, never the same one
-//                twice in a row for that key.
+//                twice in a row for that key. A line listed in SPEECH_MORE
+//                comes up that many times as often (Christian's favourites,
+//                voice review 2026-11-18); chatter.js and commentary-calls.js
+//                weigh their picks the same way (speechPickWeighted).
 // announce(text, { who })  the commentator's call, as a TV lower-third
 //                across the bottom of the cage with his name on a gold tab
 //                (who: "ROGAN", "ANIK", "DC", "BUFFER"...). For a fighter's
 //                famous finish, call it the moment he lands that exact move.
 //                One at a time; it keeps going through a knockout. Takes
-//                { clip } like say().
+//                { clip } like say(). A call made once the fight is over,
+//                while the knockout cheer holds the talk channel (audio.js),
+//                waits for the cheer (up to SPEECH_END_WAIT) instead of being
+//                skipped, so a finish call is heard.
 "use strict";
 
 var SPEECH_WORD = 0.11;  // seconds per word as the line comes in
@@ -44,9 +50,11 @@ var SPEECH_LINE_H = 27;
 var SPEECH_CLIPS = {};   // "exact line text": "soundClipName" (voice-clips.js)
 var SPEECH_TEXT_WITH_CLIP = false; // true: draw the bubble/caption even when the line is heard
 var SPEECH_TEXT_WITHOUT_CLIP = false; // false: a line with no clip yet is not shown at all (every line is heard, never read)
+var SPEECH_MORE = {};    // "exact line text": weight (1 if left out), set next to each fighter's lines
+var SPEECH_END_WAIT = 8; // after the fight: how long a lower-third's clip waits for the knockout cheer
 var speech = [];         // by fighter id: { words, t, dur, said, quietT, clip }
 
-var announcer = null;     // { words, t, dur, who, clip }
+var announcer = null;     // { words, t, dur, who, clip, clipWait }
 
 function resetSpeech() { speech = []; announcer = null; }
 
@@ -72,10 +80,36 @@ function speaking(b) { var s = speech[b && b.id]; return !!(s && s.words); }
 
 function pickLine(b, lines, key) {
   if (!lines || !lines.length) return null;
-  var s = speechOf(b), k = key || "_", i = Math.floor(Math.random() * lines.length);
-  if (lines.length > 1 && i === s.last[k]) i = (i + 1) % lines.length;
+  var s = speechOf(b), k = key || "_", r = Math.random(), i = Math.floor(r * lines.length);
+  if (lines.some(function (t) { return SPEECH_MORE[t]; })) {
+    // Weighted (SPEECH_MORE), still never the same one twice in a row.
+    var idx = [];
+    for (var j = 0; j < lines.length; j++) if (lines.length < 2 || j !== s.last[k]) idx.push(j);
+    i = idx[speechPickWeighted(idx.map(function (n) { return lines[n]; }), r)];
+  } else if (lines.length > 1 && i === s.last[k]) i = (i + 1) % lines.length;
   s.last[k] = i;
   return lines[i];
+}
+
+// How many times as often a line comes up (SPEECH_MORE, 1 if not listed).
+function speechWeight(t) { var w = SPEECH_MORE[t]; return w > 0 ? w : 1; }
+// The index of one of `lines`, weighted by speechWeight; r is a random number in [0, 1).
+function speechPickWeighted(lines, r) {
+  var total = 0, i;
+  for (i = 0; i < lines.length; i++) total += speechWeight(lines[i]);
+  var x = r * total;
+  for (i = 0; i < lines.length; i++) { x -= speechWeight(lines[i]); if (x < 0) return i; }
+  return lines.length - 1;
+}
+
+// The fight is over and the talk channel is held (the knockout cheer, audio.js)
+// for longer than a line would wait: a clip started now would be skipped.
+function speechTalkHeld() {
+  try {
+    if (typeof over === "undefined" || !over || typeof audioCtx === "undefined" || !audioCtx || audioCtx.state !== "running") return false;
+    var left = talkEnd - audioCtx.currentTime;
+    return left > 0 && (talkQueued || left > TALK_WAIT);
+  } catch (e) { return false; }
 }
 
 // "Sorry I'm late, I just don't give a [BLEEP]." -> words, with the bleeps
@@ -88,7 +122,14 @@ function splitSpeech(text) {
 }
 
 function tickSpeech(dt) {
-  if (announcer) {
+  if (announcer && announcer.clipWait) {
+    // A finish call waiting for the knockout cheer: it starts once the cheer is
+    // nearly done (playTalk lines it up right after), or it's dropped.
+    announcer.waitT += dt;
+    if (!speechTalkHeld()) { announcer.clipWait = false; playSpeechClip(announcer.clip); }
+    else if (announcer.waitT > SPEECH_END_WAIT) announcer = null;
+  }
+  if (announcer && !announcer.clipWait) {
     announcer.t += dt;
     var an = Math.min(announcer.words.length, Math.floor(announcer.t / SPEECH_WORD) + 1);
     while (announcer.said < an) { if (announcer.words[announcer.said].bleep && !announcer.clip && !announcer.hidden) playBleep(); announcer.said++; }
@@ -172,7 +213,8 @@ function announce(text, opts) {
     dur: words.length * SPEECH_WORD + SPEECH_READ + 0.6 + words.length * 0.12 + ((opts && opts.hold) || 0),
     clip: (opts && opts.clip) || SPEECH_CLIPS[text] || null };
   announcer.hidden = announcer.clip ? !SPEECH_TEXT_WITH_CLIP : !SPEECH_TEXT_WITHOUT_CLIP;
-  if (announcer.clip) playSpeechClip(announcer.clip);
+  announcer.clipWait = !!(announcer.clip && speechTalkHeld()); announcer.waitT = 0; // the knockout cheer: it waits (tickSpeech)
+  if (announcer.clip && !announcer.clipWait) playSpeechClip(announcer.clip);
 }
 
 // From draw.js with the speech bubbles: the lower-third across the bottom of

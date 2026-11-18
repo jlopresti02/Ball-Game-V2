@@ -1,6 +1,6 @@
 {
   "id": "c-tony-ferguson",
-  "rev": 11,
+  "rev": 12,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Tony Ferguson",
@@ -86,11 +86,11 @@
       "vs": {
         "c-khabib-nurmagomedov": {
           "start": "You're gonna face the boogeyman.",
-          "taunts": ["I'm going to make you taste nickels and dimes, son.", "What are you doing, Khabib, [BLEEP] stuffing your face full of tiramisu? It's not even Tuesday, dog.", "He's a cake eater."],
+          "taunts": ["What are you doing, Khabib, [BLEEP] stuffing your face full of tiramisu? It's not even Tuesday, dog.", "He's a cake eater."],
           "win": "I've got the belt.",
           "bear": "You wrestle bear cubs. I'm a [BLEEP] wolverine."
         },
-        "c-conor-mcgregor": { "start": "Where you at, McNuggets?", "taunts": ["Defend or vacate."] }
+        "c-conor-mcgregor": { "taunts": ["Defend or vacate."] }
       }
     },
     "calls": {

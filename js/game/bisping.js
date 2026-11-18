@@ -53,8 +53,10 @@
 //             moments are a roll each (`...Chance`%), at most one every `gap`
 //             seconds and never over his own bubble: `taunt` every
 //             `tauntEvery` seconds (at most `tauntMax`), `takedown` when he
-//             sprawls on a shot, `clinch` as the clinch starts, `combo` after
-//             a combination where every strike landed, `blind` when a hit
+//             sprawls on a shot and stuffs it (`takedownChance`%, said as soon
+//             as he's free, up to BS_TD_WAIT seconds), `clinch` as the clinch
+//             starts, `combo` after a combination where every strike landed,
+//             `blind` (none now: Christian took it out, 2026-11-18) when a hit
 //             lands from his blind side (the patched eye, screen left,
 //             `blindChance`%) or he misses a punch or kick (`missChance`%),
 //             at most `blindMax` a fight. `special` every time the ship comes
@@ -94,6 +96,7 @@ var BS_ANGLE_KEEP = 0.6; // a step that isn't followed by the kick in this long 
 var BS_BLIND_COS = 0.34; // their side of him is his blind side when it's within ~70 degrees of screen left
 var BS_BLIND_MIN = 4;    // a hit that takes this much off counts (not a cut bleeding)
 var BS_LINE_WAIT = 30;   // a defining moment's line waits up to this long for quiet before it goes anyway
+var BS_TD_WAIT = 2;      // his stop-takedowns line waits up to this long after his sprawl for him to be free
 
 var bsShots = [];   // cannonballs in flight: { x, y, vx, vy, r, owner, t, trail, dodged }
 var bsSmoke = [];   // smoke puffs off the cannons and the cannonballs: { x, y, vx, vy, t, max, r }
@@ -221,7 +224,11 @@ function bispingPlumElbow(b, s) {
 // takedown defense), so they're bent over in front of him.
 function bsPunish(b, other, cfg) {
   var s = b.bs, pc = cfg.punish;
-  if (b.sprawl && !s.wasSprawl) bsSay(b, "takedown", (cfg.lines || {}).takedownChance); // "I can't wrestle too well, but I can stop takedowns."
+  // "I can't wrestle too well, but I can stop takedowns.": on his sprawl, the
+  // moment he's free to talk (his sprawl or the stuff, not his own shots).
+  var tdc = (cfg.lines || {}).takedownChance;
+  if (b.sprawl && !s.wasSprawl && (tdc == null || Math.random() * 100 < tdc)) s.tdUntil = s.fightT + BS_TD_WAIT;
+  if (s.tdUntil != null) { if (s.fightT > s.tdUntil || bsSay(b, "takedown")) s.tdUntil = null; }
   var stuffed = s.wasSprawl && !b.sprawl && !b.grappled && !b.grapple && !b.char.hasGrapple;
   s.wasSprawl = !!b.sprawl;
   if (!stuffed || !pc || !b.alive || !other.alive || other.koOut || b.plum || b.fknee || b.igbb) return;
@@ -261,7 +268,7 @@ function bsStrikeWatch(b, other, cfg, dt) {
   s.lastN = n;
   if (s.outT > 0) s.outT -= dt;
   if (fw) { s.sideT -= dt; if (s.sideT <= 0) { s.side = -s.side; s.sideT = bsRand(fw.switch); } }
-  if (missed) bsBlindLine(b, lc.missChance); // "I can't look two places at once, guys."
+  if (missed) bsBlindLine(b, lc.missChance); // (lines.blind: none now)
   // A combination where every strike was thrown and landed (not the one into
   // the clinch: the clinch has its own line).
   if (b.cmb) s.cmbRef = b.cmb;
@@ -422,7 +429,7 @@ function bsSay(b, key, chance, force) {
   return true;
 }
 
-// "I can't look two places at once, guys.", at most blindMax a fight.
+// His blind-side line (lines.blind, none now), at most blindMax a fight.
 function bsBlindLine(b, chance) {
   var lc = bsCfg(b).lines || {}, s = b.bs;
   if (s.blindN >= (lc.blindMax != null ? lc.blindMax : 2)) return;

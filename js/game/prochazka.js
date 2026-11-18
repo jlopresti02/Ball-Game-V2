@@ -75,10 +75,10 @@
 //            after a loss (each waits up to `talk.wait` seconds for quiet
 //            rather than being dropped). Now and then: `hurt` after he eats a critical hit
 //            (`talk.hurtChance`%, at most one every `talk.hurtGap` seconds),
-//            `comeback` when he's `talk.comebackBehind` behind and puts a
-//            burst on them (`talk.comebackRun` damage in a couple of seconds,
-//            `comebackChance`%, up to
-//            `comebackMax` a fight), never with a samurai about to go off.
+//            `losing` once a fight when he's losing: under `talk.losingBelow`
+//            of his health and behind them on health (`losingChance`%; it
+//            waits for a samurai about to go off rather than being dropped;
+//            Christian's voice review, 2026-11-18, was a comeback burst).
 //            One line at a time, never over another one; a line with no clip
 //            yet is silent (speech.js).
 "use strict";
@@ -148,10 +148,10 @@ function resetProchazka() { jpLock = null; jpCuts = []; jpPetals = []; jpSlash =
 // From makeBall.
 function initProchazka(b) {
   b.jpN = 0; b.jpLowDone = false; b.jpLowDue = false; b.jpLastEnd = -999; b.jpCrit = 0; b.jpLookOff = null;
-  // his lines: when the opening one goes, the one he owes, the gaps, the comeback
+  // his lines: when the opening one goes, the one he owes, the gaps, the losing line
   var T = jpCfg(b) && jpCfg(b).talk;
   b.jpTalkT = 0; b.jpStartAt = T ? jpRand(T.start || [1, 3]) : 0; b.jpStartSaid = false; b.jpEndSaid = false; b.jpEndT = 0;
-  b.jpOwed = []; b.jpHurtGap = 0; b.jpOppHp = null; b.jpComebacks = 0; b.jpSpinSeen = null;
+  b.jpOwed = []; b.jpHurtGap = 0; b.jpLosingDone = false; b.jpLosingOk = null; b.jpSpinSeen = null;
 }
 function jpRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
 
@@ -205,7 +205,7 @@ function jpCharge(b, sam, dt) {
 // start, going samurai, a win, a loss) get their line EVERY time: it waits in
 // line, as long as `talk.wait` seconds, for him and the talk channel to be
 // quiet, rather than being dropped. The frequent moments (eating a shot, a
-// comeback) are chances with gaps, only when nothing else is waiting, and not
+// losing) are chances with gaps, only when nothing else is waiting, and not
 // while a samurai is about to go off. Through say() only (speech.js).
 var JP_DEFINING = { start: true, samurai: true, win: true, loss: true };
 function jpOwe(b, lines, key, wait) {
@@ -233,16 +233,13 @@ function jpTalk(b, cfg, dt) {
   if (!over) {
     b.jpTalkT += dt;
     if (!b.jpStartSaid && b.jpTalkT >= b.jpStartAt) { b.jpStartSaid = true; jpOwe(b, L.start, "start", T.wait || 12); }
-    // A comeback: well behind (`comebackBehind`), he puts a burst on them
-    // (`comebackRun` damage in the last couple of seconds) and he's fighting
-    // back (not around the samurai, which has its own line).
-    if (b.alive && o && o.alive) {
-      b.jpBurst = (b.jpBurst || 0) * Math.exp(-dt / 2) + (b.jpOppHp != null ? Math.max(0, b.jpOppHp - o.hp) : 0);
-      b.jpOppHp = o.hp;
-      if (b.jpBurst >= (T.comebackRun || 40) && b.jpComebacks < (T.comebackMax || 1) && !jpSamuraiDue(b) && o.hp + b.jpBurst - b.hp >= (T.comebackBehind || 60)) {
-        b.jpBurst = 0;
-        if (Math.random() * 100 < (T.comebackChance != null ? T.comebackChance : 100)) { b.jpComebacks++; jpOwe(b, L.comeback, "comeback", 3); }
-      }
+    // Losing: under `losingBelow` of his health and behind them on health, once
+    // a fight (`losingChance`%), as soon as nothing's in the way (no line
+    // waiting, no samurai about to go off, which has its own line).
+    if (b.alive && o && o.alive && L.losing && !b.jpLosingDone && b.hp < (T.losingBelow || 0.3) * MAX_HP && b.hp < o.hp) {
+      if (b.jpLosingOk == null) b.jpLosingOk = Math.random() * 100 < (T.losingChance != null ? T.losingChance : 100);
+      if (!b.jpLosingOk) b.jpLosingDone = true;
+      else if (!q.length && !jpSamuraiDue(b)) { b.jpLosingDone = true; jpOwe(b, L.losing, "losing", 3); }
     }
   } else if (!b.jpEndSaid && o) {
     // After the fight: his win line, or (knocked out) his loss line, every time.

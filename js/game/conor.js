@@ -127,6 +127,9 @@ var CM_LINES = {
   counterKo: "Precision beats power, and timing beats speed.",
   khabibGnp: "Let's talk now."
 };
+// Christian's favourites come up twice as often (voice review, 2026-11-18; SPEECH_MORE, speech.js).
+SPEECH_MORE["Who the [BLEEP] is that guy?"] = 2;
+SPEECH_MORE["He's in a [BLEEP] tracksuit. He can't even afford a suit anymore."] = 2;
 // The commentator's real call (announce, speech.js) when he lands the move
 // one of his famous finishes was made of. Word for word from the broadcast
 // captions (sources in the README). `who` is the commentator.
@@ -138,7 +141,9 @@ var CM_CALLS = {
   // UFC 205, the combination on Eddie Alvarez: a fight he finishes with punches.
   alvarez: { who: "GOLDBERG", text: "And it's all over! History has been made! Conor McGregor is the UFC lightweight champion!" },
   // UFC 246, Cerrone in 40 seconds (the head kick): a fight he finishes with a kick inside a minute.
-  cerrone: { who: "ANIK", text: "Less than a minute in, Conor McGregor announces his return with about as many style points as you could produce." }
+  cerrone: { who: "ANIK", text: "Less than a minute in, Conor McGregor announces his return with about as many style points as you could produce." },
+  // Voice review (Christian, 2026-11-18): any other knockout of Dustin Poirier (voice-clips manifest callConorVsDustin).
+  dustin: { who: "UFC BROADCAST", text: "No one's ever done that to Poirier before." }
 };
 var CM_KHABIB = "c-khabib-nurmagomedov", CM_DUSTIN = "c-dustin-poirier";
 var CM_KO_BEAT = 0.45;   // watching them drop before the strut
@@ -345,8 +350,9 @@ function cmWinWatch(b, other, m, cfg) {
     m.won = true;
     m.winLine = true;
     if (winBy !== "submission" && !m.koCounter) {
-      var last = other.cmLastHit;
-      if (last === "counter") cmCall(b, cmIs(other, CM_DUSTIN) && !cmCfg(other) ? "poirier" : "aldo");
+      var last = other.cmLastHit, vsDustin = cmIs(other, CM_DUSTIN) && !cmCfg(other);
+      if (last === "counter") cmCall(b, vsDustin ? "poirier" : "aldo");
+      else if (vsDustin) cmCall(b, "dustin"); // only against Dustin: it names him
       else if (last === "punch") cmCall(b, "alvarez");
       else if (last === "kick" && m.t < 60) cmCall(b, "cerrone");
     }

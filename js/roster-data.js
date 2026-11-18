@@ -205,7 +205,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-alexander-volkanovski",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "featherweight",
     "name": "Alexander Volkanovski",
@@ -377,6 +377,7 @@ var SAVED_ROSTER = [
       "lines": {
         "start": true,
         "plan": 70,
+        "wrestle": 100,
         "adapt": true,
         "rival": true,
         "nail": 30,
@@ -724,7 +725,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-carlos-prates",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "welterweight",
     "name": "Carlos Prates",
@@ -980,9 +981,7 @@ var SAVED_ROSTER = [
         "smoke": [
           "I can be a champ still smoking, still party, still drinking whiskey."
         ],
-        "party": [
-          "Time to party, let's go!"
-        ],
+        "party": [],
         "win": []
       },
       "lineOdds": {
@@ -3302,7 +3301,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-jiri-prochazka",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Ji\u0159\u00ed Proch\u00e1zka",
@@ -3609,7 +3608,7 @@ var SAVED_ROSTER = [
         "hurt": [
           "Sometimes I need to catch some punches to release, to release the true Jirka."
         ],
-        "comeback": [
+        "losing": [
           "I will never stop, I will never stop. If I will be die, my body will still work."
         ],
         "win": [
@@ -3626,10 +3625,8 @@ var SAVED_ROSTER = [
         ],
         "hurtChance": 35,
         "hurtGap": 15,
-        "comebackBehind": 60,
-        "comebackRun": 40,
-        "comebackChance": 70,
-        "comebackMax": 1,
+        "losingBelow": 0.3,
+        "losingChance": 100,
         "lossDelay": 1.5,
         "wait": 12
       }
@@ -5158,7 +5155,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-michael-bisping",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Michael Bisping",
@@ -5329,7 +5326,7 @@ var SAVED_ROSTER = [
         "takedown": [
           "I can't wrestle too well, but I can stop takedowns."
         ],
-        "takedownChance": 70,
+        "takedownChance": 100,
         "clinch": [
           "If the guy's holding you down and he won't let you move, just, just fire away with elbows.",
           "I'm going to bring my knee up and knee him in the face."
@@ -5339,12 +5336,6 @@ var SAVED_ROSTER = [
           "Very basic stuff done to a high level is what wins fights."
         ],
         "comboChance": 70,
-        "blind": [
-          "I can't look two places at once, guys."
-        ],
-        "blindChance": 10,
-        "missChance": 4,
-        "blindMax": 1,
         "knockdown": [
           "I've always said I had knockout power, for God's sake. Nobody believed it."
         ],
@@ -6219,7 +6210,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-tony-ferguson",
-    "rev": 11,
+    "rev": 12,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Tony Ferguson",
@@ -6564,7 +6555,6 @@ var SAVED_ROSTER = [
           "c-khabib-nurmagomedov": {
             "start": "You're gonna face the boogeyman.",
             "taunts": [
-              "I'm going to make you taste nickels and dimes, son.",
               "What are you doing, Khabib, [BLEEP] stuffing your face full of tiramisu? It's not even Tuesday, dog.",
               "He's a cake eater."
             ],
@@ -6572,7 +6562,6 @@ var SAVED_ROSTER = [
             "bear": "You wrestle bear cubs. I'm a [BLEEP] wolverine."
           },
           "c-conor-mcgregor": {
-            "start": "Where you at, McNuggets?",
             "taunts": [
               "Defend or vacate."
             ]
