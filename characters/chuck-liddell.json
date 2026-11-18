@@ -1,6 +1,6 @@
 {
   "id": "c-chuck-liddell",
-  "rev": 1,
+  "rev": 2,
   "builtin": false,
   "weightClass": "lightheavyweight",
   "name": "Chuck Liddell",
@@ -11,22 +11,23 @@
   "imgData": null,
   "speedMult": 0.82,
   "look": {
-    "skin": "#edc0a0",
+    "skin": "#dba07a",
     "build": "stocky",
-    "bodyHair": "light",
+    "bodyHair": "none",
     "hair": "mohawk",
-    "hairColor": "#6b4e37",
+    "hairColor": "#8b5636",
     "beard": "none",
-    "beardColor": "#7a5a40",
+    "beardColor": "#6a4530",
     "ears": "normal",
     "tattoos": {
-      "leftArm": true
+      "leftArm": false
     },
-    "shorts": "#5b9bd5",
-    "trim": "#eef6fc",
+    "shorts": "#2452c4",
+    "trim": "#f4f8ff",
     "shortsStyle": "icicles",
-    "gloves": "#141414",
+    "gloves": "#2148b8",
     "icehawk": true,
+    "icemanReal": true,
     "goatee": true,
     "scalpInk": "koeikan"
   },
