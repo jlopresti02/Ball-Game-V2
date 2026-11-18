@@ -6228,7 +6228,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-chuck-liddell",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "lightheavyweight",
     "name": "Chuck Liddell",
@@ -6239,22 +6239,23 @@ var SAVED_ROSTER = [
     "imgData": null,
     "speedMult": 0.82,
     "look": {
-      "skin": "#edc0a0",
+      "skin": "#dba07a",
       "build": "stocky",
-      "bodyHair": "light",
+      "bodyHair": "none",
       "hair": "mohawk",
-      "hairColor": "#6b4e37",
+      "hairColor": "#8b5636",
       "beard": "none",
-      "beardColor": "#7a5a40",
+      "beardColor": "#6a4530",
       "ears": "normal",
       "tattoos": {
-        "leftArm": true
+        "leftArm": false
       },
-      "shorts": "#5b9bd5",
-      "trim": "#eef6fc",
+      "shorts": "#2452c4",
+      "trim": "#f4f8ff",
       "shortsStyle": "icicles",
-      "gloves": "#141414",
+      "gloves": "#2148b8",
       "icehawk": true,
+      "icemanReal": true,
       "goatee": true,
       "scalpInk": "koeikan"
     },
@@ -6370,6 +6371,14 @@ var SAVED_ROSTER = [
       "punchCut": 2,
       "hurtCut": 2.5,
       "readChance": 35,
+      "snowball": {
+        "damage": 4,
+        "speed": 900,
+        "windup": 0.32,
+        "follow": 0.26,
+        "turn": 1.6,
+        "bite": 0.95
+      },
       "rampage": {
         "time": 6,
         "speed": 1.6,
@@ -7872,7 +7881,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-georges-st-pierre",
-    "rev": 2,
+    "rev": 3,
     "builtin": false,
     "weightClass": "welterweight",
     "name": "Georges St-Pierre",
@@ -7978,8 +7987,8 @@ var SAVED_ROSTER = [
         "speed": 950,
         "turn": 2.5,
         "reach": 30,
-        "damage": 18,
-        "chantDamage": 30,
+        "damage": 21,
+        "chantDamage": 34,
         "knockback": 380,
         "chantKnockback": 620
       },
@@ -9280,7 +9289,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-joshua-van",
-    "rev": 3,
+    "rev": 4,
     "builtin": false,
     "weightClass": "flyweight",
     "name": "Joshua Van",
@@ -9302,13 +9311,16 @@ var SAVED_ROSTER = [
       "vanGoatee": true,
       "ears": "normal",
       "tattoos": {
-        "blessed": true,
-        "rightArm": true,
         "armInk": true,
-        "armInkSide": "right"
+        "armDecal": "data:image/png;base64,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",
+        "armDecalLeft": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAAGECAMAAAC8p6a9AAAASFBMVEUTERI0LjEvKi0yLTBKLS1PTk9CNDNMLExFQkUsLU1BPUFDQUNANjVBPUA9PUBTUx0jVyMSYWFAOj0+PUBBPUA+PkBDQUL/AADKEFW0AAAAGHRSTlMLXd2dGhNZF1kYXpiXmFwKCwXXltHLygGzjClMAAAYsklEQVR42p1dh7bbOA4VzCbJ9ZVs/v9Pl2gkWCQ7oz2b5BVdgyA6QM6yNE9Y8xPMN/Dr/OelPMsHTwgdSv5OyF+vrsC49yDr2hOjP9krOfAe5pqfGU5YI7h3ywpBf/n++weBwla/TX+Gdc9/VZxtiiIwab3//Fz+/CGKmCm40JACMi0Fd4bjQ/jKfz3za/vtjr/658//kCTEIn4l4s4eApywOfiySbtzF+eu1/vv5X9XZnfizdJlC0HuNeJ43os9Mht/1vX6gzBIET8rEZZ/afFCkPsaYL7wWyljOIJx677e75mY6zWoDOAXvIObO1oXfQ6iCMxj3+9uZfEN1+v/kFHX6/fvnX+94GzDdntPxDBM/sv9rIF4smYUYtP1fr8zPcqfiRh6D/w4oinDpExkuJI4MluyUDl3J9qdLqvf9mesMPTHA19df39/r0Wmw53fDQuz2blxzxHGJ4GB/P+wfC2kG9cq4vjyXshxI86SQZblRWtCnEd4hl13KAnK7Rs5QqjAMNAJDtKSf84wCJSW9YHCgjjInfWKL95u931/CY7rcUKlSXEyfx/3n53IyUKU/8gwtz2r17qnQDg9jC9QslX5Nx55FT/unnHuCHO//SAMsnvdgbeLyW73W6nJD5Kbf4x6tO4o0HeHCnvbXaYmL2+/w6LkGBhP/2tgIAsEkZ5txy7rvC377bbHPUPv9CPZjQqTFoMCsuRihPI38puEdN+RyDXyCy1MYQ80MPXZYd8TbXEko4IilUhLEQbMTnlkGn6LceRH4bETPY/HThYr6pbm/aLPbWGWp2dilsWuihU1r2MHUlrni72Me+LdaleFTAakVLYcVUcNFOwqTbgS/1x8ZnMkNvfk+F4AYXkU/+bYFDnSA7RCuFu0qgANjFfRQeL5rU3VWNUsf/Jzee73vF1ZdO47lM0tMMmLABLMI7/xYMZkuPAAyJzYwD0yPxwJYpYgtxdyGtbgsxFMBsO3EOWxFZXLkCnsjnQiBdjJacjGtC4GeYY8VVMAZYO3lI0I+AfBXFgM0AwQzsTqOLH5tE9sI7fHAx5bJvSxPhxRg+hpF5ilhXnxbhtqCG9jDm9LxoIH4SBM1ohddMiwGEVQZE9eRyZtIWzsKzJdW6bq8UBLSjD3W/QzGLU3hgrYvqDA5MXlDQw5YPqOKD83VZkK85S/NzLWTrntNlIJNishL+gnkH9YyT8OVqvqKEnfA/3PAwGzDcStJ96gCODW7bQq9OZs3Xy/S+RY0YmB4w1XLjn4IqrIUUYUHLYXTExoeENqRjCL4z8QJjNZBKwofvadtxvHPMtMZMiHIz/Yjz1UmerPH2TF7uuuVqO1E4kNBO1TFip08/mTHuL9RE3wwc/ParDT9qEgQ0+MwjgADRfYapBeiYUlXqSwit5OYdQtAEeJgTebtkk/Z1N/7uyKNwtDpph47Go0BfoD5j+UmGhXeWoIEpIZnjcbRLq34jKMOZYVD/KnH8smVgwfGh7jefL3QnX7CdSih2UkiJREI3tev3Fgon0cvS0wMnmREAl5XSi6FFYKi7NyZKP60JcZZhtgZCf1a1d5VvYbVJjCIH+VGmSA7Mir2oDKz1A8kNXFFgY0jJr8TEI9NvUWCGrYkNcXFqgw9EuhUMPv4lfJCcPK2gefifZBYEhsSkwgJlBta3mU5tTCQANDL/OmWRinbn6y2Q3MhaK/IoPlozcSFJXPZklPy0bQBEX3jCEv9bP5818HMC+1SxqAs7RdZIFFmJXn5AzdzF1KdAQVRqMaZ1Si/L5itwpVso6SCzWqdABTxWvr1FJiALZiNeBWmE2j0yFnSP0CGUYVS6wrNPQEkUfwY8KgsGxODUyzQMhx2V+xNfWlbXlNRUhEfUDBpVAM4JUAKAHJ5HEXqOpa0NyQ9B6Jcv0FA2OjKAyz/wFGAj772e9gwhFFxafAYgyrX/7pqdbJ2OchwXzzfC3FNm1OLYYzouIPGLqMkiimUzeuSRD8CHZggVTiizAKLyPEI5sFJ9wBwyGkAGKEStG2dFZr3CryfmzcXS1vYI7hDzZ3UixgDS+hron/+9y7WcCE9STIYgtJE46ELBVyKPKbBRoFhQQnes/rmuJIVWGAUe90MfneoYykxU29rngdWGoZUkS5+9WnddQdDu8TK6i6umr0YaYWxJzuZ7ImK33FebiZixGzMBHDguLa4LclvdhCb2PNzlxYVdC4nWB8uyr1+Ur9ZjVLirs1UvMF5sDYSYZoVdbVqF1lwJe1pqkhLxmimgpntKCs+avIQuiEJikMGG5QtFNj0osxfpNYlsQ66VvGlINu7eXSleTVObeFZ3F9ulWbxFNO3xsEmBiTtGbTZ76uhngcaAkMGBRYZiWnqUMBZ7hhqruVlhMYcIXHGq8VZgh/v2qUDCpyYUJN9+kXW/qg4mSN2T0XfuaCQ6K2zWBcY8vUYz0njndkhnz9Kva8JiOxmoeg+xRSfbnHAVlTkdAX6nF2VVF9XmiVwpbt7bJqgFoUbMkocZbZ+UoCmeRqel0Njzm+JRg/WHXVEGe7R6XwV6Pk8neO/vwygSEebWD5IduVnc6mWlThIswjtFCYI3zI0SWYUI9QpMaQtdBLljw+T92IopJ/JbPfsoURnU5SSMaSXzHDaW6+t7ohEmA91KH4VEpGtuRnQuQSUGGyqjibk6qo+lNfqZkHM1ATGMl1JAfT8iwSkvLDzbgdWxySSCVxAWEx0QdFBFyqCxSAb4+Hg33HjkcIKRUjZYzx0ySINYeChxRXH1KultpSKW/u3jcK8DRRMmhJDd/fuAD6kCR7v9+d27mfF1bYiR6Vv7BsFoZZfeFmV9h+aIk/9yTNvX2P3GNcta46lG+6YNxhBfRHZXoNS+K+10KWK+DyQppu1lMKPq66pXt+/uDfSIEV2i2LXCK7gzKw+S4LRwWuFuK+YxPwer+vT9NFJRa/Eva0/FxsmhiP1iId5dC1uFNQTiS2gVsbvSod+fm+Ix+SdCPX62/pnCG7A9YIxFFqblcrjUxIFrL9+5sqsfffb2zhSTdQiivhgf0cXtTcv2BTDAtgtwvBrNhp+/79n3STeZEBa8chRVSGr2Az8a2URmJ45k/AeuU9L5r6ft+/dpsQ7hGzZqSIEXIxgYFQxLRJbfuGb2cCfhHm9/qqCJ7q4VhJDzGKQWY3yFEJcj5xc4VhMg6t6VKbksjrvGfYI8rU7ATTZA6Jc4yQFScoT/JqiFtX3o68WZcfVNEf0q1nXpUn8kTpv2pkSH0oJJK7oRcDQ01J3oQ1ZLOxPoMPy1BfAJAGqmNV3G+37+8KE6i1+cMtc4TZ0yx5TQl5Ra/tWmjfGea+Yj+Ner4rBpI7SWWaaQIXx4NQHRN+HKN8Z/nLG77+YcXHvnJ+UjAtnNBEzDY6K8/vfUW9CNfiiXfUhU12+Gl8cIGJI8w9pfW+V447bOqEF5vSvOHRm5KfWNkJDI8/3C/Vn/48WLhQ/GKESRo+wuyMcrPxBTISN/JGMH4C00TSIdCu5jeqHSLmSFU+xr2JKopbT9G8oCpw036ioDzyfmP39ka5azKZna/dwBjZVUlnVwh0ErY4zj6x75F3LDVdu7Y+kNDiJ/lnijXKkVqeDEFksxSOqnVd0a3WWNGfQxslx3AwaGJULAdlkkglaZQ+TBWI4o28ppT1ewsWAxUqFQvvTRQYSzjqOKeguQ7cJmLxgqZiSRK/U5PU5zAVUFtSzTW4JwO1GyxBeBSX6UPtVXEwFT33ljZf5MeVl6X+rZGufDuYON22+Hkhs4SOYGALYGF4t/3ypZYUp1XiFAZKPutcdt61sZLCZKgKmcO74UtiVmN2WdNWove2uhJMhS4TKK2ybSlBuWm7UoFHg3fXFOlCg+Zr7q5poBbJOHHYggTNvMu1hDwmZqDjFkvXWqBF0TJfJaQVmNTW60rTdylZaS3Po3WTVQfFh867gKkFdVWhWqnfJFsM/XBIMpYrLFKi5vYTS79puHN65IL2yd1h/8S21rVLYqqzm1S7AlyOYUqnq8VxYFYLYKaBmqGWvn1XZKVkMLUusXCv4TLthim3QbWwblPVTZllIf7WdkWYGS0oJX1bjzCVPgtzUoxvayamv8CStrli/txZTR9cVQbb0pRpFakkbppGb3ObrtudTOvaqALZd23U2KLCpO/Y7MDTjCxJVg8V5qx+M+QltlOF729ayYajeYFSBRgL7O2eSZszHZIjQGNvBGqtq1beD7Shr77aFYKBgeJSDuRGhpFscxiaohXl+3DaoNDZsB5HPlxx4C3MUkSuWsRScqxDlw2Mn3coVOy0eFr7/1oQLO3+Y3Xgl5IOjHSyc6lzh+ldt80YZmgL9s449XNimkZT3W9nJhC0lxxOltT7U2TR3+p+pbDizpp/paU6gwYTo3BH94AcY2LGFkrWdp3JKOSEgzqvWt1xyKcOC4iVtE3G3trUAZGC9WrnwhTHDlx9jS1xO7hinaCzZvhc6KrZ7FssMuKTbLAwBalbAv0AiHHEGNPMSuDbUAaqJtnPatvBeOQuMC/jGaEZoekcdKltzrq2czZJ6O4XMPVya4ol+AttFAkHzWloGj/Q+HZo/H8o486zhmvz+2kxv1anW4vcHKsZzYjHZ98wDkNnPrTETKqu/sAOTD48zMzp0QEIGHzvlxDq28FnMeTbdG7DUzjaztj5hcqcWvBYvN2wp2li+RnfFeZvaOsm+o/t2Nh6XwX00AaGOa+Cb4NEmJi3w922cMEszh818LpZxIOZt75ld0rOdOTNuKjtszkMGKaYa9DGQP6TcYwOBszMM5SMd2a3qELmtaMxaKcM4HN3WJxCu7KvbKs2rGl4a8gHJe+tRc+79MJ+SPKpcUeTUdS5JyrsoTI/ViT9aIzs1OAw7NF868vXCp4xIX1Y42xOWbPMJtcMgzTZiFa2p6zAz2aJXsmYgMrhErfJwZgLC4s/i45C0YIyigrQzrXVgAaOh0O0h9BPtBmUYZpD9AsmEyJ2wK5mP85NhjnAOsWuKlAb+mALhrUE89XP0DY1CrOMsSh6sYfuvPTyXx1MaSyNSxkfGGS7WnQ78dFY8VO7CHQ8Cbzvsvmql1lPubO6bBv+k7IvtACNB/T6QhoriG0X159aaeGmT8vpXNk4NlSfv1j65iLf4sO/jad1v+3/wcX062ycnqzKf0SN16f/QVSYUOuqxzBP7yM/fox8RmrO1qU4Ewc4bNUJDoHcMs5zlDRrPj8j52bW5SEKzD9sL7Wz4s3gFJiTnHPcl+dzERzfbniRCD//8OmmEYOUN6ycvRh/8lh6YoTe6X3KKFpXFGHTavp/0KeM4yJuz1+Sv/+IQjCYInlmcjfI87FAI3tkfL/TIf+R1FQuEmt7Et7TgZVxlDvsYvJ2uyHbPNdPXxopnMRErPv7xUz0wcz6HqLgULHnplzGqUl0Xd7XYLueOmWLn3Fjv3nLW4RqRYg1ue+L6cq+VqUyNxAGjylFfJ++MqN4RcXbjS9NOJ+lC7ma32S/m63EzesIoYWx4dNMvR1yIXrpI9EKg3QGoZT/4FBqonNRsuVYTge7QNQB96cFBsbRzLL7kXN2r8PacuY5ZrY4xvEyxtplBMHmxLy//HKkjixC4Bc34nH+F8PAOEzO5ofqvBIPRR1AR1iPoDFKqEMnz9zMY5rQxkZYt8wGf5O3ozaE4aAEZro1bZCGO64v3/RfNFHgymEiK8CmNl0mOlHq6AzwjRE9WgjnTFgFbR5uyu5E88XAkJGIkWf7ovfT0oUpLigMKp6yKNIgXd0JY3QExnelAc2ByFkEOfcfmYTFt/bWWxjfk2TH8S/FONiVaCCxlKzAN6MzxmH5pZxP+SbLEH1jlDzY2uobm5lZlMWXYLysrMujYTpG28/y0EQjwvjQePSLHkUS4VmmnXW9UwH4RGW0LgHj6SLkQwXWN12uSzmH4QwMBXexmV5wnYpLOcNXEDZJ0d1svOedmaPQBlyFCU1abG9TIBDF8bZBDsuQEIdeqUoRExGUud4uqB4k79qjBUU4x5scVaYSXJoVHZyOX0wNgyQDLWKRlVDHaZxJ7835B9/B6M+78wrOjkx3XcoJNeVEWV0Sra4mibGUai1jwthYkw3nya52mkaiI5mjmDQaXl/lzIHYSYWh/7v2Vg24jCdin019QicXspdgFFzbE9Rn+cKpUw2H8rlidNF8Im/KQRp7QnUSc9Xuk8DkhT3J2vhayfdm66XrWu2572hhT0QimHU6SveWxk+cneye3GrRKpWDxQ4JMFuiNjanMKFtTYEzDVIQX6G5XAtyBGOKc6Wxr5MXVJVtNKsvyQ/jGGbGn2nx1WbZ9TYVoCkK144QhlqUYlt1aKDvIqSmrWFXzzB6lqsOHigLm15Z6GHAWG2G8fZggekxWmpenfiZNjS+iDAyVgbi6jSiqJ2s4/KsngAgilS32ZS6vuUBJ60qaRU6jhZFtz3U02VwNP5gxmh1BsTJqDuYWMRPi99NGbOxWzIBYtXSnD3rSlpD584pR5POMoEEIwHg+EROAS8n0erOmMojQD1ZfVz9ATN7U++xkuW1XnaZ9ynCzPzxFJveL2DrcN0Z28Ilb8qcW3OMpx7rWMDUFztSJofIlh7GeV2wm0H0z0tFqjmkx/pQzyfA8Sk51c0mY2AJlvAMaqm+n61fps7X8leX57gC1lDxt3JzAiNzhiXe4qlDkhe/dLXYM5hmvwWHrueAONfA2bLo+FuzLg3ovY/+M5hCczO8CHVg2B/0dv0UBrQJpW6AgxNfy2D+/RCGnDitewYflODm0zcA9jqA5T89ajtr0O//A0qd1lBmA/w7ELRDWxwURGhLYG9RAdoIioPtpkrs4yBB8yO9xm8UGJNsRXhPTBfA66UNsSatcQrjZ2pejGKJZaQATiUCOLJWrdutIacvEWeto2NKkz5aFrSZq7PlJu/7yhycjJrUgYBhdGO4CmjKHFevrijhuF/ediPCMJjETp4d7exGQP+RFINJHYqBj6Wl5CG+x2HV7iamEU4L3/6jzg2qNtD05aVv/zkuVURwn3SAGptli1wiOFiU/LBC3SYY5P0jtqh9rbkunzWlYIgF5qMqMw0fgnUmSvf56cV9cvj2GT1Sc7tI0RKVSur58Pk4x6a5iwSjzX03dbrrI5hyOY/M4Uff8vezSzq4XERFY0kulo+nQgwMHbQlqYb5BV/woXaVKU32waUhKtfafOxpapCrw3cA83m3Q86YKoyTcisS9W8wpobF5SWow+AfVA4bf6kZBDYuVSFBkmJwny1KsgS+rAtgYJr7yO6UwykiyFy6r1Ui+GijzKVEOvHu6WSepDewvO+KljsDrAzprGpz1cFbzuixVrk9TueSYPkYBqrkuW6Uol7P9GG0xFtkQlu9sc8NJ2BOTKgr94rSYkS/SnT4aSBZarAB99zm/47s6kfOoTO13umIub0b8QOS7I0GbcJXzym8mxJt2pbQOT9jaN7fl1SuP3HdHI07zVVbRZBKQ1tWG30KnLVDoXQIXblDYCkzdQDn1YUKow4FTAfWOXOf8AfeDmGMrAkJblxbCm8WdQEtOY2TSm6Sgh1pAhSb3uWLQmHwb/2dsNgUYOpCfBs/nwsO1CKmGWfx9mRHybbhjfgNE3SeiwPNjWKnCVEXLUgkGxHGjqwPpyrCvOCmmYKIDuV4AJPUoi/JN2uy7GDhidPDL36ZyoBZE2irAiqM6/bsKLKsML50z1xZ3DstKLdB9vtE+XgZtwh+OQ38Kvubmg8GRq0O+FPVND+0c5c+8slL38bw08BkM9WkPllkai5DPjrBCT2MueVQujhuqd+yN4aewQgdyfbsWoY8pyzeuhS8bZfazs1pJj+BaS4xlXr422xjs+dFuoujy+E2GO7lGPNfa68Hf26O6LqzYH8OE2zPig8AtvfBHsJM+QijTW8brJU5pzCuZrGul/mWHDOuCkd60twzCfXMpRlceJgzuL0dNDUmHQk/UvJQW8d97cTbW7xq+3kOs7aZSVNzsaeVHJzBcBxvzgdfhkO6aIvAwbnHDA9wZlVgbyiqDWzn3oQlaW1hjKgNF+qfWeRgYGAxAedwy9xpeBP2AmPi1qmgwZn3Xp0dFjiD6U5bdeQUGCehvnzw6FHgpG0XfsoZDOnYtQyVG8zsicVpBrKWOQqsTQ0wJRT1/WWTrQUkcorhvdS7x9w8Ij5INy2Mq2kTHFjhw/LC7lxz5Vg9Cz1j6QFMIOZok9lN7s7rYQ7OmId7C3Mu+odlinCtgzOgt2MeiT64w4xzvbkyveEup01Md3JYPVxrzVBhDjbqDEb/q0NUaKm3UMzS7pMSTqgwQDBJ6vLjCx6mt4+WvdLkvWSmB//ll9P7Bs1VOeY+PHd0meuRJbX/SaYynTr/bXdy6f/ClzaZWvHw38rw72HMlrezSHOYE5NM1xFN0+4O5zz6Cn+a8ZpDGDgt4mzLtdJx4kjOb6m0EjieBbOy131A+j8PBpoa9gSfBQAAAABJRU5ErkJggg==",
+        "armDecalRight": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAC0lEQVR42mNgQAcAABIAAeRVjecAAAAASUVORK5CYII=",
+        "vanChestReal": true
       },
+      "vanReal": true,
+      "vanBlessed": "data:image/png;base64,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",
       "shorts": "#b3132a",
-      "trim": "#7a0c1c",
+      "trim": "#141414",
       "accent": "#e8b923",
       "shortsStyle": "acheik",
       "legPatch": false,
@@ -24336,7 +24348,7 @@ function snowDayOn(b) { return !!(b && b.igbb && b.igbb.move === "snow"); }
 function liddellHandsBusy(b) { return snowDayOn(b); }
 
 // From startMatchSeeded.
-function resetLiddell() { icSnow = null; icClock = 0; }
+function resetLiddell() { icSnow = null; icClock = 0; resetSnowballs(); } // (snowballs: liddell-snowball.js)
 // From makeBall, after its weight class is applied.
 function initLiddell(b) {
   b.frost = null; b.iceRage = null; b.atkRate0 = b.atkRate;
@@ -24455,7 +24467,7 @@ function updateSnowDay(self, other, dt) {
     self.igbb = { move: "snow", phase: "dip", t: 0, read: Math.random() * 100 < (sp.readChance || 0) };
     floater(self.x, self.y - self.r - 30, "SNOW DAY!", "crit");
     if (self.igbb.read) floater(other.x, other.y - other.r - 30, "!", "crit");
-    startSnow(IC_DIP + IC_SCOOP + IC_PACK + IC_FLARE + sp.rampage.time);
+    startSnow(IC_DIP + IC_SCOOP + IC_PACK + IC_FLARE + (sp.snowball ? (sp.snowball.bite || 0) + sp.snowball.windup + sp.snowball.follow : 0) + sp.rampage.time);
     say(self, IC_LINES.windup);
     crowdReact(0.6);
   }
@@ -24478,6 +24490,10 @@ function updateSnowDay(self, other, dt) {
       if (SPEECH_CLIPS[IC_LINES.snowDone]) say(self, IC_LINES.snowDone);
     }
   } else if (m.phase === "flare" && m.t >= IC_FLARE) {
+    if (sp.snowball && other.alive) { m.phase = "snowball"; m.t = 0; return true; } // he throws the snowball at them first (liddell-snowball.js)
+    startRampage(self, other, sp);
+    return false;
+  } else if (m.phase === "snowball" && !snowballThrowPhase(self, other, m, dt)) { // liddell-snowball.js
     startRampage(self, other, sp);
     return false;
   }
@@ -24567,6 +24583,7 @@ function startRampage(self, other, sp) {
 // Chuck's own wind-up, speed, all-out attack and taunts.
 function tickLiddell(dt) {
   icClock += dt;
+  tickSnowballs(dt); // the snowball flying (liddell-snowball.js)
   if (icSnow) { icSnow.t += dt; if (icSnow.t > icSnow.dur + 1.6) icSnow = null; }
   balls.forEach(function (b) {
     var f = b.frost;
@@ -24856,6 +24873,7 @@ function icSwingFist(self) {
 // The Snow Day wind-up. Everything happens low in front of him: the snow
 // goes from the mat into his gloves, never up toward his head.
 function drawSnowDay(b, m) {
+  if (m.phase === "snowball") { ctx.save(); drawSnowThrow(b, m); ctx.restore(); return; } // throwing the snowball (liddell-snowball.js)
   var r = b.r, size = (b.char.punch && b.char.punch.size) || 15, gs = size * 0.72;
   var shL = { x: b.x - r * 0.62, y: b.y - r * 0.05 }, shR = { x: b.x + r * 0.62, y: b.y - r * 0.05 };
   // the mat in front of his feet, and his stomach (well below his head, which
@@ -24882,7 +24900,8 @@ function drawSnowDay(b, m) {
   } else {
     var k3 = easeOut(m.t / IC_FLARE);
     gx = r * (0.5 + 0.1 * k3); gy = holdY - r * 0.06 * k3;
-    ball = k3 < 0.6 ? { y: holdY, r: sbR * 0.85 * (1 + k3), blue: 1, burst: k3 / 0.6 } : null;
+    ball = b.char.special.snowball ? { y: holdY, r: sbR * 0.85, blue: 1 } // kept to throw (liddell-snowball.js)
+      : k3 < 0.6 ? { y: holdY, r: sbR * 0.85 * (1 + k3), blue: 1, burst: k3 / 0.6 } : null;
     angL = -0.4; angR = Math.PI + 0.4;
   }
   ctx.save();
@@ -24981,6 +25000,7 @@ function drawSnowflake(x, y, s, rot) {
 // The "Icehawk": his mohawk as a spiky crest rising off the top of his head,
 // past the ball (contained layout).
 function drawIcehawk(c, r, look, ink) {
+  if (look.icemanReal) return drawIcemanRealHawk(c, r, look, ink); // Joe's look from his photos (liddell-skin.js)
   var hc = look.hairColor, base = -r * 0.78;
   // Tufts swept up and a little back off a narrow strip, the middle ones
   // tallest: [x at the root, x at the tip, height of the tip], in radii.
@@ -25016,6 +25036,7 @@ function drawIcehawk(c, r, look, ink) {
 // (screen right, as we look at him): drawn as brush strokes, a stand-in for
 // the real characters. From drawArtHeadLayer.
 function drawIcemanHead(c, r, look, lw) {
+  if (look.icemanReal) return drawIcemanRealHead(c, r, look, lw); // Joe's look from his photos (liddell-skin.js)
   if (look.scalpInk) {
     c.save();
     c.translate(r * 0.47, -r * 0.71); c.rotate(0.62);
@@ -25064,6 +25085,7 @@ function drawIcemanHead(c, r, look, lw) {
 // "icicles" shorts: white icicles hanging off the waistband all the way
 // round, like his Iceman trunks. From drawArtBody, before the waistband.
 function drawIcicleShorts(c, r, look, sTop, band, name) {
+  if (look.icemanReal) return drawIcemanRealShorts(c, r, look, sTop, band, name); // Joe's look from his photos (liddell-skin.js)
   var rnd = artRand(artSeed(name + "icicles")), y0 = sTop + band - r * 0.01, n = 11;
   c.save();
   // a frosty band of snow just under the waistband
@@ -25159,6 +25181,312 @@ function playOverhandIce() {
     for (var i = 0; i < 5; i++) caneBurst(ac, t + 0.01 + i * 0.03, 4200 + i * 700, 3, 0.25, 0.05);
     caneTone(ac, t, "sine", 1900, 900, 0.12, 0.25);
   });
+}
+
+// Chuck Liddell's snowball (Joe, 2026-11-18). At the end of his Snow Day
+// wind-up (liddell.js), once the snowball he packed has flared blue, he
+// doesn't burst it into his gloves any more: he takes it in his right glove,
+// draws it back low out to his right side and slings it at them. It flies a little
+// ahead of where they're heading (a gentle curve after them), and when it
+// lands it bursts into snow for a small hit (special.snowball.damage, source
+// "throw", so it can be slipped or blocked like any thrown thing). Then the
+// all-out attack starts as usual, chasing in behind it.
+//
+// First he eats a little of it (Joe, 2026-11-18): he lifts it to his mouth in
+// his right glove and takes two crunchy bites out of the top (`bite` seconds
+// in all; 0 skips it), and the bite marks stay on it as it flies.
+// Only his own two arms and gloves: the right one throws, the left stays in
+// front of his stomach. Opt-in: a fighter whose special has no `snowball`
+// block keeps the old wind-up (the snowball flares into the gloves).
+// Tuned in characters/chuck-liddell.json, special.snowball:
+//   damage   the hit when it lands
+//   speed    how fast it flies (px a second)
+//   windup   seconds drawing it back behind his shoulder
+//   follow   seconds of follow-through after it leaves his glove
+//   turn     how hard it curves after them (radians a second)
+//   bite     seconds eating a little of it first (lift, two bites, lower)
+"use strict";
+
+var icSnowballs = [];          // snowballs in the air: { x, y, vx, vy, t, r, owner, target, dmg, spin }
+
+function icSnowballCfg(b) { var sp = b && b.char && b.char.special; return sp && sp.snowball; }
+function resetSnowballs() { icSnowballs = []; }
+
+// From updateSnowDay (liddell.js) once the flare is done. True while he's
+// still throwing; false once he's done (the all-out attack starts).
+var IC_BITES = [0.4, 0.62];   // when the two bites go in, as fractions of the bite
+function snowBiteT(cfg) { return cfg.bite || 0; }
+function snowballThrowPhase(self, other, m, dt) {
+  var cfg = icSnowballCfg(self), B = snowBiteT(cfg);
+  if (m.t < B) { // eating a little of it
+    var f = m.t / B;
+    m.bites = m.bites || 0;
+    if (m.bites < IC_BITES.length && f >= IC_BITES[m.bites]) {
+      m.bites++;
+      playSnowCrunch(1.1);
+      if (m.bites === 1) floater(self.x, self.y - self.r - 30, "CHOMP!", "crit");
+      for (var j = 0; j < 8 && !reduceMotion; j++) { // crumbs of snow off his mouth
+        var a = Math.PI / 2 + (Math.random() - 0.5) * 2.4, v = 50 + Math.random() * 110;
+        particles.push({ x: self.x + (Math.random() - 0.5) * self.r * 0.3, y: self.y - self.r * 0.3, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.3 + Math.random() * 0.25, max: 0.55, size: 1.5 + Math.random() * 2, color: j % 2 ? "#ffffff" : "#d9f2ff" });
+      }
+    }
+    return true;
+  }
+  var tt = m.t - B;
+  if (!m.thrown && tt >= cfg.windup) {
+    m.thrown = true;
+    var h = snowThrowHand(self, other, m, cfg.windup);
+    var lead = 0.18, tx = other.x + (other.vx || 0) * lead, ty = other.y + (other.vy || 0) * lead;
+    var dx = tx - h.x, dy = ty - h.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+    icSnowballs.push({ x: h.x, y: h.y, vx: dx / d * cfg.speed, vy: dy / d * cfg.speed, t: 0, r: self.r * 0.3,
+      owner: self.id, target: other.id, dmg: cfg.damage, turn: cfg.turn || 0, spin: -Math.PI / 2, bites: m.bites || 0 });
+    playWhoosh();
+    for (var i = 0; i < 6 && !reduceMotion; i++) {
+      particles.push({ x: h.x, y: h.y, vx: (Math.random() - 0.5) * 120 - dx / d * 60, vy: (Math.random() - 0.5) * 120 - dy / d * 60, life: 0.25, max: 0.25, size: 2 + Math.random() * 2, color: "#d9f2ff" });
+    }
+  }
+  return tt < cfg.windup + cfg.follow;
+}
+
+// Where his right glove is during the throw: from the hold in front of his
+// stomach, drawn back out to his right side (kept low), then whipped out toward them.
+function snowThrowHand(b, other, m, t) {
+  var cfg = icSnowballCfg(b), r = b.r;
+  var ang = m.throwAng != null ? m.throwAng : (m.throwAng = Math.atan2(other.y - b.y, other.x - b.x));
+  var ux = Math.cos(ang), uy = Math.sin(ang);
+  var sh = { x: b.x + r * 0.62, y: b.y - r * 0.05 };
+  var hold = { x: b.x + r * 0.3, y: b.y + r * 0.3 };
+  var back = { x: b.x + r * 1.05 - ux * r * 0.3, y: b.y + r * 0.2 - uy * r * 0.3 }; // out to his right side, low (never up by his head)
+  var out = { x: b.x + ux * r * 1.55 + r * 0.2, y: b.y + uy * r * 1.55 };
+  if (t < cfg.windup) {
+    var k = easeOut(t / cfg.windup);
+    return { x: hold.x + (back.x - hold.x) * k, y: hold.y + (back.y - hold.y) * k, sh: sh };
+  }
+  var k2 = Math.min(1, (t - cfg.windup) / Math.max(0.01, cfg.follow * 0.45));
+  k2 = k2 * k2 * (3 - 2 * k2);
+  var k3 = Math.max(0, (t - cfg.windup - cfg.follow * 0.45) / (cfg.follow * 0.55)); // and back toward the guard
+  var x = back.x + (out.x - back.x) * k2, y = back.y + (out.y - back.y) * k2;
+  if (k3 > 0) { var kk = Math.min(1, k3) * 0.5; x += (hold.x - x) * kk; y += (hold.y - y) * kk; }
+  return { x: x, y: y, sh: sh };
+}
+
+// From tickLiddell (liddell.js): the snowballs flying.
+function tickSnowballs(dt) {
+  for (var i = icSnowballs.length - 1; i >= 0; i--) {
+    var s = icSnowballs[i], tg = balls[s.target];
+    s.t += dt; s.spin += dt * 9;
+    if (tg && tg.alive && s.turn) { // a gentle curve after them
+      var want = Math.atan2(tg.y - s.y, tg.x - s.x), cur = Math.atan2(s.vy, s.vx), sp = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+      var dA = Math.atan2(Math.sin(want - cur), Math.cos(want - cur)), step = Math.max(-s.turn * dt, Math.min(s.turn * dt, dA));
+      cur += step; s.vx = Math.cos(cur) * sp; s.vy = Math.sin(cur) * sp;
+    }
+    s.x += s.vx * dt; s.y += s.vy * dt;
+    var gone = false;
+    if (tg && tg.alive && !s.missed) {
+      var dx = tg.x - s.x, dy = tg.y - s.y;
+      if (dx * dx + dy * dy < (tg.r + s.r) * (tg.r + s.r)) {
+        var dealt = over ? 0 : hurt(tg, s.dmg, "throw", s.owner);
+        if (tg.justDodged) s.missed = true; // slipped: it flies on past
+        else {
+          snowballSplat(s.x, s.y, s.vx, s.vy, dealt > 0 ? 18 : 10);
+          if (dealt > 0) {
+            floater(tg.x, tg.y - tg.r - 26, "SNOWBALL!", "crit");
+            var sp2 = Math.sqrt(s.vx * s.vx + s.vy * s.vy) || 1;
+            tg.vx += s.vx / sp2 * 160; tg.vy += s.vy / sp2 * 160;
+            crowdReact(0.5);
+          }
+          gone = true;
+        }
+      }
+    }
+    if (!gone && (s.x < s.r || s.x > W - s.r || s.y < s.r || s.y > H - s.r)) { // into the cage
+      snowballSplat(Math.max(0, Math.min(W, s.x)), Math.max(0, Math.min(H, s.y)), s.vx, s.vy, 12);
+      gone = true;
+    }
+    if (gone || s.t > 2) icSnowballs.splice(i, 1);
+  }
+}
+
+function snowballSplat(x, y, vx, vy, n) {
+  playSnowCrunch(1.3);
+  if (reduceMotion) return;
+  var back = Math.atan2(-vy, -vx);
+  for (var i = 0; i < n; i++) {
+    var a = back + (Math.random() - 0.5) * 2.8, v = 80 + Math.random() * 220;
+    particles.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.35 + Math.random() * 0.35, max: 0.7, size: 2.5 + Math.random() * 3, color: i % 3 ? "#ffffff" : "#bfe9ff" });
+  }
+  shake = Math.max(shake, 3);
+}
+
+// The snowball itself (white with a blue glow from the flare, spinning).
+function drawSnowballAt(x, y, r, spin, bites, biteAng, glow) {
+  if (glow !== 0) drawGloveFlare(ctx, x, y, r, glow == null ? 0.6 : glow);
+  ctx.save();
+  if (bites) { // bites taken out of it: clipped away on the side he bit
+    var ba = biteAng != null ? biteAng : -Math.PI / 2, bx = Math.cos(ba), by = Math.sin(ba);
+    ctx.beginPath(); ctx.rect(x - r * 3, y - r * 3, r * 6, r * 6);
+    for (var i = 0; i < bites; i++) {
+      var off = (i === 0 ? -0.28 : 0.3) * r, cx = x + bx * r * 0.98 - by * off, cy = y + by * r * 0.98 + bx * off;
+      ctx.moveTo(cx + r * 0.36, cy); ctx.arc(cx, cy, r * 0.36, 0, Math.PI * 2, true);
+    }
+    ctx.clip("evenodd");
+  }
+  ctx.fillStyle = mixHex("#ffffff", "#6cc6ff", 0.5); ctx.strokeStyle = "#4f7fa8"; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  ctx.beginPath(); ctx.arc(x - r * 0.35, y - r * 0.35, r * 0.28, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(95,141,181,0.4)"; // a clump of packed snow, turning as it flies
+  ctx.beginPath(); ctx.arc(x + Math.cos(spin) * r * 0.45, y + Math.sin(spin) * r * 0.45, r * 0.24, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+// Eating a little of it: the right glove lifts it to his mouth, two bites off
+// the top, and back down to the hold in front of his stomach.
+function drawSnowBite(b, m, cfg) {
+  var r = b.r, size = (b.char.punch && b.char.punch.size) || 15, gs = size * 0.72, B = snowBiteT(cfg), f = m.t / B;
+  var shL = { x: b.x - r * 0.62, y: b.y - r * 0.05 }, shR = { x: b.x + r * 0.62, y: b.y - r * 0.05 };
+  var L = { x: b.x - r * 0.5, y: b.y + r * 0.24 };
+  var br = r * 0.3, hold = { x: b.x + r * 0.3, y: b.y + r * 0.3 }, mouth = { x: b.x + r * 0.02, y: b.y - r * 0.33 + br * 0.6 };
+  var k = f < 0.3 ? easeOut(f / 0.3) : f < 0.75 ? 1 : 1 - easeOut((f - 0.75) / 0.25);
+  var bx = hold.x + (mouth.x - hold.x) * k, by = hold.y + (mouth.y - hold.y) * k;
+  // a little push into his mouth on each bite
+  IC_BITES.forEach(function (t0) { var d = (f - t0) / 0.08; if (d > -1 && d < 1) by -= (1 - Math.abs(d)) * r * 0.05; });
+  var R = { x: bx + br * 0.75, y: by + br * 0.75 }; // his glove cupping it from below on the right
+  strokeLimb(size * 0.7, armColor(b.char), function () { ctx.moveTo(shL.x, shL.y); ctx.lineTo(L.x, L.y); });
+  strokeLimb(size * 0.7, armColor(b.char), function () { ctx.moveTo(shR.x, shR.y); ctx.lineTo(R.x, R.y); });
+  drawGloveAt(L.x, L.y, gs, b.char, -0.4);
+  var fl = 1 - 0.75 * k; // the flare dies down while it's up at his mouth, so you can see the bites
+  drawGloveFlare(ctx, L.x, L.y, gs, fl);
+  drawSnowballAt(bx, by, br, -Math.PI / 2 + 0.6, m.bites || 0, -Math.PI / 2, 0.6 * (1 - k));
+  drawGloveAt(R.x, R.y, gs, b.char, -2.3);
+  drawGloveFlare(ctx, R.x, R.y, gs, fl * 0.6);
+}
+
+// From drawSnowDay (liddell.js) in the throw: his own two arms. The left glove
+// stays in front of his stomach; the right takes the snowball back and throws it.
+function drawSnowThrow(b, m) {
+  var other = balls[1 - b.id] || b, cfg = icSnowballCfg(b), r = b.r;
+  if (m.t < snowBiteT(cfg)) { drawSnowBite(b, m, cfg); return; }
+  var tt = m.t - snowBiteT(cfg);
+  var size = (b.char.punch && b.char.punch.size) || 15, gs = size * 0.72;
+  var shL = { x: b.x - r * 0.62, y: b.y - r * 0.05 };
+  var h = snowThrowHand(b, other, m, tt);
+  var L = { x: b.x - r * 0.5, y: b.y + r * 0.24 };
+  var fade = Math.max(0, 1 - tt / (cfg.windup + cfg.follow));
+  strokeLimb(size * 0.7, armColor(b.char), function () { ctx.moveTo(shL.x, shL.y); ctx.lineTo(L.x, L.y); });
+  strokeLimb(size * 0.7, armColor(b.char), function () { ctx.moveTo(h.sh.x, h.sh.y); ctx.lineTo(h.x, h.y); });
+  drawGloveAt(L.x, L.y, gs, b.char, -0.4);
+  drawGloveAt(h.x, h.y, gs, b.char, Math.atan2(h.y - h.sh.y, h.x - h.sh.x));
+  if (!m.thrown) { // in his glove, held out on the far side of it
+    var ax = h.x - h.sh.x, ay = h.y - h.sh.y, al = Math.sqrt(ax * ax + ay * ay) || 1;
+    drawSnowballAt(h.x + ax / al * gs * 0.55, h.y + ay / al * gs * 0.55, r * 0.3, tt * 4, m.bites || 0, -Math.PI / 2);
+  }
+  if (fade > 0) { drawGloveFlare(ctx, L.x, L.y, gs, fade); drawGloveFlare(ctx, h.x, h.y, gs, fade); }
+}
+
+// From draw(), over the fighters: the snowballs in the air.
+function drawSnowballsOver() {
+  icSnowballs.forEach(function (s) {
+    if (!reduceMotion) { // a short trail of snow dust behind it
+      ctx.save();
+      for (var j = 1; j <= 3; j++) {
+        ctx.globalAlpha = 0.25 / j; ctx.fillStyle = "#e8f6ff";
+        ctx.beginPath(); ctx.arc(s.x - s.vx * 0.018 * j, s.y - s.vy * 0.018 * j, s.r * (1 - j * 0.18), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+    drawSnowballAt(s.x, s.y, s.r, s.spin, s.bites, s.spin);
+  });
+}
+
+// Chuck Liddell's look from Joe's photos (Joe, 2026-11-18), turned on by
+// look.icemanReal in characters/chuck-liddell.json. Each function takes over
+// from its counterpart in liddell.js (one-line hooks there):
+//   drawIcemanRealHawk    a short, flat, reddish-brown strip front to back (drawIcehawk)
+//   drawIcemanRealHead    stubble on the shaved sides, the real Koei-Kan kanji behind
+//                         his left ear, a horseshoe goatee and soul patch (drawIcemanHead)
+//   drawIcemanRealShorts  white paint drips off the waistband and ICEMAN in pink
+//                         and red (drawIcicleShorts)
+// c is at the ball's centre, r its radius (contained layout).
+
+function drawIcemanRealHawk(c, r, look, ink) {
+  var hc = look.hairColor, rnd = artRand(77);
+  var strip = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.15, -r * 0.68);                         // squared front edge at the hairline
+    c.quadraticCurveTo(0, -r * 0.71, r * 0.15, -r * 0.68);
+    c.lineTo(r * 0.12, -r * 0.98); c.quadraticCurveTo(r * 0.1, -r * 1.07, 0, -r * 1.075); // a low flat crest just over the top
+    c.quadraticCurveTo(-r * 0.1, -r * 1.07, -r * 0.12, -r * 0.98); c.closePath();
+  };
+  c.save();
+  var g = c.createLinearGradient(0, -r * 1.08, 0, -r * 0.68);
+  g.addColorStop(0, shadeHex(hc, 0.18)); g.addColorStop(1, shadeHex(hc, -0.12));
+  c.fillStyle = g; strip(); c.fill();
+  c.save(); c.beginPath(); c.rect(-r, -r * 2, r * 2, r * 1.02); c.clip();  // outlined only where it sits past the ball
+  c.strokeStyle = ink; c.lineWidth = Math.max(1.5, r * 0.035); strip(); c.stroke(); c.restore();
+  c.save(); strip(); c.clip(); c.lineCap = "round";                       // short bristles
+  for (var k = 0; k < 70; k++) {
+    var x = (rnd() * 2 - 1) * r * 0.13, y = -r * (0.7 + rnd() * 0.36);
+    c.strokeStyle = rnd() < 0.5 ? shadeHex(hc, -0.3) : shadeHex(hc, 0.3); c.globalAlpha = 0.55; c.lineWidth = Math.max(0.8, r * 0.012);
+    c.beginPath(); c.moveTo(x, y); c.lineTo(x + (rnd() - 0.5) * r * 0.02, y - r * 0.035); c.stroke();
+  }
+  c.restore(); c.restore();
+}
+
+function drawIcemanRealHead(c, r, look, lw) {
+  // shaved sides: a fine stubble shadow
+  var rnd = artRand(31);
+  c.save(); c.fillStyle = shadeHex(look.hairColor, -0.2); c.globalAlpha = 0.22;
+  for (var k = 0; k < 160; k++) {
+    var s = rnd() < 0.5 ? -1 : 1, x = s * r * (0.2 + rnd() * 0.7), y = -r * (0.6 + rnd() * 0.38);
+    if (x * x + y * y < r * r * 0.97) c.fillRect(x, y, r * 0.012, r * 0.012);
+  }
+  c.restore();
+  // Koei-Kan kanji: three characters stacked behind his left ear (screen right)
+  c.save(); c.translate(r * 0.47, -r * 0.62); c.rotate(0.5);
+  c.fillStyle = "rgba(22,26,36,0.88)"; c.textAlign = "center"; c.textBaseline = "middle";
+  c.font = "bold " + (r * 0.105) + "px \"Hiragino Mincho ProN\",\"Yu Mincho\",\"Noto Serif CJK JP\",\"WenQuanYi Zen Hei\",serif";
+  ["幸", "栄", "館"].forEach(function (ch, i) { c.fillText(ch, 0, (i - 1) * r * 0.115); });
+  c.restore();
+  // Horseshoe goatee: moustache running down past the mouth into the chin, open in the middle
+  var bc = look.beardColor || look.hairColor;
+  var hs = function () {
+    c.beginPath();
+    c.moveTo(-r * 0.18, -r * 0.38); c.quadraticCurveTo(0, -r * 0.47, r * 0.18, -r * 0.38);  // top of the moustache
+    c.quadraticCurveTo(r * 0.21, -r * 0.27, r * 0.16, -r * 0.2);                            // down the right side
+    c.quadraticCurveTo(0, -r * 0.14, -r * 0.16, -r * 0.2);                                 // round under the chin
+    c.quadraticCurveTo(-r * 0.21, -r * 0.27, -r * 0.18, -r * 0.38); c.closePath();
+    // the shaved middle: lips and chin between the bars
+    c.moveTo(r * 0.105, -r * 0.375); c.quadraticCurveTo(0, -r * 0.39, -r * 0.105, -r * 0.375);
+    c.quadraticCurveTo(-r * 0.115, -r * 0.27, -r * 0.06, -r * 0.235); c.quadraticCurveTo(0, -r * 0.215, r * 0.06, -r * 0.235);
+    c.quadraticCurveTo(r * 0.115, -r * 0.27, r * 0.105, -r * 0.375); c.closePath();
+  };
+  c.save(); c.fillStyle = bc; c.globalAlpha = 0.92; hs(); c.fill("evenodd");
+  hs(); c.clip("evenodd"); c.globalAlpha = 0.45; c.fillStyle = shadeHex(bc, 0.3);
+  var g2 = artRand(23);
+  for (var i = 0; i < 90; i++) c.fillRect((g2() * 2 - 1) * r * 0.19, -r * 0.46 + g2() * r * 0.33, r * 0.014, r * 0.014);
+  c.restore();
+  // soul patch under the lip
+  c.save(); c.fillStyle = bc; c.globalAlpha = 0.85; c.beginPath();
+  c.moveTo(0, -r * 0.315); c.lineTo(r * 0.02, -r * 0.29); c.lineTo(0, -r * 0.265); c.lineTo(-r * 0.02, -r * 0.29); c.closePath(); c.fill();
+  c.restore();
+}
+
+function drawIcemanRealShorts(c, r, look, sTop, band, name) {
+  var rnd = artRand(artSeed(name + "drips")), y0 = sTop + band - r * 0.01;
+  c.save(); c.fillStyle = "#f4f8ff";
+  c.beginPath(); c.moveTo(-r, y0); c.lineTo(r, y0); c.lineTo(r, y0 + r * 0.04);
+  for (var i = 24; i >= 0; i--) {
+    var x = -r + i * r / 12, len = r * (0.04 + (i % 3 === 0 ? 0.1 + rnd() * 0.12 : rnd() * 0.05));
+    c.lineTo(x + r * 0.03, y0 + r * 0.04); c.quadraticCurveTo(x + r * 0.025, y0 + len, x, y0 + len + r * 0.01); c.quadraticCurveTo(x - r * 0.025, y0 + len, x - r * 0.03, y0 + r * 0.04);
+  }
+  c.closePath(); c.fill();
+  c.font = "900 " + (r * 0.15) + "px \"Arial Black\",Impact,sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
+  var ty = y0 + r * 0.33; c.lineJoin = "round";
+  c.lineWidth = r * 0.05; c.strokeStyle = "#ffffff"; c.strokeText("ICEMAN", 0, ty);
+  c.lineWidth = r * 0.022; c.strokeStyle = "#c8102e"; c.strokeText("ICEMAN", 0, ty);
+  c.fillStyle = "#ff5c8a"; c.fillText("ICEMAN", 0, ty);
+  c.restore();
 }
 
 // Francis Ngannou, "The Predator" (Christian, 2026-11-13). Heavyweight.
@@ -71517,6 +71845,7 @@ function drawVanChest(c, r, lw, contained, look) {
 // flag's yellow, green and red down the outside of each leg, the flag on his
 // left leg and "JOSHUA 1:9" (a verse on his real shorts) on his right.
 function drawVanShorts(c, r, look, sTop, band, name) {
+  if (look.vanReal) return drawVanRealShorts(c, r, look, sTop, band, name); // Joe's look from his photos (van-skin.js)
   var dark = shadeHex(look.shorts, -0.45), gold = look.accent || "#e8b923";
   c.save();
   c.beginPath(); c.rect(-r, sTop + band, r * 2, r - sTop - band); c.clip();
@@ -71570,6 +71899,7 @@ function drawVanShorts(c, r, look, sTop, band, name) {
 // look.vanGoatee: his thin moustache and the short beard on his chin, both
 // fine stubble rather than solid hair.
 function drawVanGoatee(c, r, look, line, lw) {
+  if (look.vanReal) return drawVanRealHead(c, r, look, line, lw); // Joe's look from his photos (van-skin.js)
   var bc = look.beardColor || look.hairColor, gr = artRand(731);
   var stache = function () {
     c.beginPath();
@@ -71693,6 +72023,124 @@ function playVnKeep() {
 // The chain he kept running out: a fizzle sliding down.
 function playVnFizzle() {
   vnAudio(function (ac, t) { caneBurst(ac, t, 1800, 0.7, 0.12, 0.35); caneTone(ac, t, "sine", 500, 180, 0.08, 0.3); });
+}
+
+// Joshua Van's look from Joe's five photos (Joe, 2026-11-18), turned on by
+// look.vanReal in characters/joshua-van.json. Each function takes over from
+// its counterpart in van.js (one-line hooks there):
+//   drawVanRealHead    his chest piece (tattoos.vanChestReal) drawn from the
+//                      head layer so it can run right up to the chin line and
+//                      stop there, then a thin moustache and a narrow chin
+//                      goatee (drawVanGoatee)
+//   drawVanRealShorts  red with darker red zigzags, black and white stripes,
+//                      JOSHUA 1:9 in white (drawVanShorts)
+// The chest piece, placed from the square-on photo: angel wings along the
+// collarbones (cut off at the chin line), "Blessed" across both pecs (the
+// real lettering traced off his photo, look.vanBlessed), two roses at the
+// bottom middle of the chest with their stems meeting where the sternum
+// meets the abs, and small praying hands between them. His sleeve is on his
+// LEFT ARM only (tattoos.armDecalLeft, a traced decal with "Romans 8:31");
+// his right arm and his body carry no arm ink.
+// c is at the ball's centre, r its radius (contained layout).
+"use strict";
+
+function drawVanRealChest(c, r, look, lw) {
+    const R=k=>r*k, ink='rgba(14,16,24,0.88)', grey='rgba(40,44,58,';
+    c.save();
+    // the chest only: under the chin and neck, down to the waistband
+    // cut off along the chin line (drawArtHeadLayer's jaw curve), just under its stroke
+    c.beginPath(); c.moveTo(-r,-R(0.39)); c.lineTo(-R(0.68),-R(0.39)); c.quadraticCurveTo(-R(0.52),-R(0.15),0,-R(0.15));
+    c.quadraticCurveTo(R(0.52),-R(0.15),R(0.68),-R(0.39)); c.lineTo(r,-R(0.39)); c.lineTo(r,R(0.37)); c.lineTo(-r,R(0.37)); c.closePath(); c.clip();
+    // soft grey cloud shading behind the script and roses
+    [[0,-0.08,0.48,0.09,0.14],[0,0.14,0.36,0.1,0.1]].forEach(q=>{
+      const g=c.createRadialGradient(R(q[0]),R(q[1]),0,R(q[0]),R(q[1]),R(q[2]));
+      g.addColorStop(0,grey+q[4]+')'); g.addColorStop(1,grey+'0)'); c.fillStyle=g;
+      c.save(); c.translate(R(q[0]),R(q[1])); c.scale(1,q[3]/q[2]); c.translate(-R(q[0]),-R(q[1])); c.beginPath(); c.arc(R(q[0]),R(q[1]),R(q[2]),0,Math.PI*2); c.fill(); c.restore(); });
+    // angel wings: top edge along the collarbones, feathers hanging down and out
+    [-1,1].forEach(sd=>{ c.save(); c.scale(sd,1);
+      const wing=()=>{ c.beginPath(); c.moveTo(R(0.06),-R(0.3));
+        c.quadraticCurveTo(R(0.35),-R(0.3),R(0.7),-R(0.35));
+        c.quadraticCurveTo(R(0.74),-R(0.27),R(0.66),-R(0.2));
+        for(let f=0;f<6;f++){ const x0=R(0.66-f*0.09), x1=R(0.66-(f+1)*0.09), yb=-R(0.2-f*0.012)+R(0.025);
+          c.quadraticCurveTo((x0+x1)/2+R(0.01),yb+R(0.045),x1,yb-R(0.012)); }
+        c.quadraticCurveTo(R(0.1),-R(0.17),R(0.06),-R(0.3)); c.closePath(); };
+      const wg=c.createLinearGradient(0,-R(0.37),0,-R(0.16)); wg.addColorStop(0,grey+'0.4)'); wg.addColorStop(1,grey+'0.12)'); c.fillStyle=wg; wing(); c.fill();
+      c.save(); wing(); c.clip();
+      c.strokeStyle='rgba(14,16,24,0.35)'; c.lineWidth=lw(0.008);
+      for(let row=0;row<4;row++){ for(let f=0;f<10-row*2;f++){            // rows of feathers, long ones at the outside
+        const x=R(0.68-f*0.065-row*0.04), y=-R(0.34-row*0.045)+f*R(0.006);
+        c.beginPath(); c.moveTo(x,y); c.quadraticCurveTo(x+R(0.004),y+R(0.05),x-R(0.03),y+R(0.06)); c.quadraticCurveTo(x-R(0.04),y+R(0.03),x-R(0.035),y); c.stroke(); } }
+            c.restore();
+      c.strokeStyle=ink; c.lineWidth=lw(0.011); c.globalAlpha=0.7; wing(); c.stroke(); c.globalAlpha=1;
+      c.restore(); });
+    // roses: layered petals, deep red with dark edges
+    const rose=(x,y,rr,rot)=>{ c.save(); c.translate(R(x),R(y)); c.rotate(rot||0); c.scale(1.25,1); const q=R(rr);
+      c.fillStyle='rgba(120,14,26,0.92)'; c.beginPath(); c.arc(0,0,q,0,Math.PI*2); c.fill();
+      c.strokeStyle='rgba(40,4,10,0.85)'; c.lineWidth=lw(0.009);
+      for(let ring=0;ring<3;ring++){ const n=5-ring, pr=q*(0.95-ring*0.28);
+        for(let i=0;i<n;i++){ const a=i/n*Math.PI*2+ring*0.6;
+          c.fillStyle=ring===2?'rgba(110,10,22,0.95)':'rgba('+(170+ring*15)+',26,40,0.9)';
+          c.beginPath(); c.ellipse(Math.cos(a)*pr*0.45,Math.sin(a)*pr*0.45,pr*0.55,pr*0.38,a+Math.PI/2,0,Math.PI*2); c.fill(); c.stroke(); } }
+      c.fillStyle='rgba(60,6,14,0.9)'; c.beginPath(); c.arc(0,0,q*0.12,0,Math.PI*2); c.fill();
+      c.restore(); };
+    const leaf=(x,y,a,len)=>{ c.save(); c.translate(R(x),R(y)); c.rotate(a); const L=R(len);
+      c.fillStyle='rgba(70,96,64,0.85)'; c.strokeStyle='rgba(16,24,16,0.8)'; c.lineWidth=lw(0.008);
+      c.beginPath(); c.moveTo(0,0); c.quadraticCurveTo(L*0.5,-L*0.4,L,0); c.quadraticCurveTo(L*0.5,L*0.4,0,0); c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(0,0); c.lineTo(L*0.9,0); c.stroke(); c.restore(); };
+    // two roses at the bottom of the piece, one under each pec, their stems curving in to the sternum
+    c.strokeStyle='rgba(30,40,30,0.85)'; c.lineWidth=lw(0.013);
+    [-1,1].forEach(sd=>{ c.beginPath(); c.moveTo(sd*R(0.12),R(0.02)); c.bezierCurveTo(sd*R(0.1),R(0.06),sd*R(0.03),R(0.06),0,R(0.085)); c.stroke();
+      leaf(sd*0.075,0.05,sd>0?2.3:0.8,0.035); });
+    rose(-0.14,-0.005,0.045,0.2); rose(0.14,-0.005,0.045,-0.3);
+    // praying hands down the sternum: two palms pressed together, fingers up and leaning,
+    // thumbs on the near side, sleeve cuffs at the wrists and rosary beads hanging off them
+    c.save(); c.translate(0,R(0.0)); c.rotate(0.06); c.scale(0.38,0.42);
+    const palm=sd=>{ c.beginPath(); c.moveTo(0,-R(0.1));
+      c.bezierCurveTo(sd*R(0.005),-R(0.12),sd*R(0.04),-R(0.1),sd*R(0.05),-R(0.05));
+      c.quadraticCurveTo(sd*R(0.075),R(0.0),sd*R(0.06),R(0.06)); c.lineTo(0,R(0.06)); c.closePath(); };
+    [-1,1].forEach(sd=>{ const hg=c.createLinearGradient(sd*R(0.05),0,0,0); hg.addColorStop(0,grey+'0.5)'); hg.addColorStop(1,grey+'0.18)');
+      c.fillStyle=hg; palm(sd); c.fill(); c.strokeStyle=ink; c.lineWidth=lw(0.009); palm(sd); c.stroke(); });
+    c.lineWidth=lw(0.006); c.strokeStyle='rgba(14,16,24,0.6)';
+    c.beginPath(); c.moveTo(0,-R(0.11)); c.lineTo(0,R(0.06)); c.stroke();                      // where the palms meet
+    [-0.07,-0.045,-0.02].forEach(y=>{ c.beginPath(); c.moveTo(-R(0.045),R(y)); c.quadraticCurveTo(-R(0.025),R(y)+R(0.008),-R(0.005),R(y)); c.stroke(); }); // finger joints
+    c.beginPath(); c.ellipse(R(0.035),R(0.01),R(0.014),R(0.035),-0.3,0,Math.PI*2); c.stroke();   // thumb
+    c.fillStyle=grey+'0.55)'; c.beginPath(); c.moveTo(-R(0.07),R(0.06)); c.lineTo(R(0.07),R(0.06)); c.lineTo(R(0.075),R(0.1)); c.lineTo(-R(0.075),R(0.1)); c.closePath(); c.fill(); c.strokeStyle=ink; c.stroke(); // cuffs
+    c.fillStyle=ink; for(let bd=0;bd<8;bd++){ c.beginPath(); c.arc(-R(0.06)-Math.sin(bd*0.5)*R(0.01),-R(0.02)+bd*R(0.013),R(0.0055),0,Math.PI*2); c.fill(); }
+    c.restore();
+    // "Blessed": the real lettering traced off the front photo, across both pecs
+    const bim=look.vanBlessed&&artDecalImage(look.vanBlessed);
+    if(bim&&bim.complete&&bim.naturalWidth){ c.save(); c.translate(R(0.02),-R(0.115)); c.rotate(-0.03);
+      const bw=R(0.72), bh=bw*bim.naturalHeight/bim.naturalWidth*0.55;
+      c.globalAlpha=0.95; c.drawImage(bim,-bw/2,-bh/2,bw,bh); c.restore(); }
+    c.restore();
+}
+
+function drawVanRealHead(c, r, look, line, lw) {
+  if (look.tattoos && look.tattoos.vanChestReal) drawVanRealChest(c, r, look, lw);
+    const bc=look.beardColor, gr=artRand(731);
+    const stache=()=>{c.beginPath(); c.moveTo(-r*0.17,-r*0.4); c.quadraticCurveTo(-r*0.08,-r*0.45,0,-r*0.44); c.quadraticCurveTo(r*0.08,-r*0.45,r*0.17,-r*0.4);
+      c.quadraticCurveTo(r*0.08,-r*0.425,0,-r*0.42); c.quadraticCurveTo(-r*0.08,-r*0.425,-r*0.17,-r*0.4); c.closePath();};
+    const chin=()=>{c.beginPath(); c.moveTo(-r*0.05,-r*0.385); c.quadraticCurveTo(0,-r*0.395,r*0.05,-r*0.385);
+      c.quadraticCurveTo(r*0.085,-r*0.3,r*0.06,-r*0.235); c.quadraticCurveTo(0,-r*0.21,-r*0.06,-r*0.235); c.quadraticCurveTo(-r*0.085,-r*0.3,-r*0.05,-r*0.385); c.closePath();};
+    c.save();
+    [stache,chin].forEach((sh,i)=>{ c.globalAlpha=i?0.32:0.6; c.fillStyle=bc; sh(); c.fill();
+      c.save(); sh(); c.clip(); c.globalAlpha=i?0.35:0.8; for(let k=0;k<(i?110:70);k++) c.fillRect((gr()*2-1)*r*0.18,-r*(i?0.4:0.46)+gr()*r*(i?0.2:0.07),r*(i?0.008:0.013),r*(i?0.008:0.013)); c.restore(); });
+    c.restore();
+}
+
+function drawVanRealShorts(c, r, look, sTop, band, name) {
+    const dark=shadeHex(look.shorts,-0.4);
+    c.save(); c.beginPath(); c.rect(-r,sTop+band,r*2,r-sTop-band); c.clip();
+    for(let row=0;row<4;row++){ const y0=sTop+band+r*0.07+row*r*0.15;
+      c.fillStyle=dark; c.globalAlpha=0.7; c.beginPath(); c.moveTo(-r,y0);
+      for(let u=0;u<=20;u++) c.lineTo(-r+u*r*0.1,y0+(u%2?r*0.07:0));
+      for(let u=20;u>=0;u--) c.lineTo(-r+u*r*0.1,y0+r*0.04+(u%2?r*0.07:0)); c.closePath(); c.fill(); }
+    c.globalAlpha=1;
+    [-1,1].forEach(s=>{ [['#141414',0],['#ffffff',0.045]].forEach(([col,o])=>{ c.strokeStyle=col; c.lineWidth=Math.max(0.8,r*0.02);
+      c.beginPath(); c.moveTo(s*r*(0.62+o),sTop+band); c.lineTo(s*r*(0.4+o),r); c.stroke(); }); });
+    c.fillStyle='#ffffff'; c.font='900 '+(r*0.075)+'px Arial, Helvetica, sans-serif'; c.textAlign='center'; c.textBaseline='middle';
+    c.fillText('JOSHUA 1:9',-r*0.3,r*0.8);
+    c.restore();
 }
 
 // Carlos Prates, "The Nightmare" (Christian, 2026-11-13; footwork and the
@@ -83876,6 +84324,7 @@ function draw() {
   drawDiazOver(); // Nick Diaz, his bubble, the NICK DIAZ banner in the test arena (diaz.js)
   drawFergusonOver(); // Tony Ferguson's holds and tug-of-war bar, the Kaioken flash, the CANCELLED stamps (ferguson.js)
   drawPratesOver(); // Carlos Prates's smoke, music notes and the disco lights (prates.js)
+  drawSnowballsOver(); // Chuck Liddell's snowball flying at them (liddell-snowball.js)
   drawKneesOver(); // knees coming up, the clinch, the flying knee and its red line (knees.js)
   drawLegKicksOver(); // leg kicks whipping round low into the calf, the hit mark on it (leg-kick.js)
   drawHeadKicksOver(); // a head kick whipping up high into the head, the star on it (head-kick.js)
@@ -84911,21 +85360,21 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261117185557"></script>
-  <script src="js/game/tale-tape.js?v=20261117185557"></script>
-  <script src="js/game/tape-taunts.js?v=20261117185557"></script>
-<script src="js/game/special-solid.js?v=20261117185557"></script>
-<script src="js/game/watchdog.js?v=20261117185557"></script>
-<script src="js/game/update.js?v=20261117185557"></script>
-<script src="js/game/fighter-art.js?v=20261117185557"></script>
-<script src="js/game/fedor-skin.js?v=20261117185557"></script>
-<script src="js/game/draw-attacks.js?v=20261117185557"></script>
-<script src="js/game/wwit-badge.js?v=20261117185557"></script>
-<script src="js/game/stadium.js?v=20261117185557"></script>
-<script src="js/game/draw.js?v=20261117185557"></script>
-<script src="js/ui/gallery.js?v=20261117185557"></script>
-<script src="js/ui/saved-fights.js?v=20261117185557"></script>
-<script src="js/main.js?v=20261117185557"></script>
-<script src="js/ui/fight-link.js?v=20261117185557"></script>
+  <script src="js/game/intro-msg.js?v=20261118122636"></script>
+  <script src="js/game/tale-tape.js?v=20261118122636"></script>
+  <script src="js/game/tape-taunts.js?v=20261118122636"></script>
+<script src="js/game/special-solid.js?v=20261118122636"></script>
+<script src="js/game/watchdog.js?v=20261118122636"></script>
+<script src="js/game/update.js?v=20261118122636"></script>
+<script src="js/game/fighter-art.js?v=20261118122636"></script>
+<script src="js/game/fedor-skin.js?v=20261118122636"></script>
+<script src="js/game/draw-attacks.js?v=20261118122636"></script>
+<script src="js/game/wwit-badge.js?v=20261118122636"></script>
+<script src="js/game/stadium.js?v=20261118122636"></script>
+<script src="js/game/draw.js?v=20261118122636"></script>
+<script src="js/ui/gallery.js?v=20261118122636"></script>
+<script src="js/ui/saved-fights.js?v=20261118122636"></script>
+<script src="js/main.js?v=20261118122636"></script>
+<script src="js/ui/fight-link.js?v=20261118122636"></script>
 </body>
 </html>
