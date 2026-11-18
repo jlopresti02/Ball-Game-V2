@@ -726,6 +726,7 @@ function drawSnowflake(x, y, s, rot) {
 // The "Icehawk": his mohawk as a spiky crest rising off the top of his head,
 // past the ball (contained layout).
 function drawIcehawk(c, r, look, ink) {
+  if (look.icemanReal) return drawIcemanRealHawk(c, r, look, ink); // Joe's look from his photos (liddell-skin.js)
   var hc = look.hairColor, base = -r * 0.78;
   // Tufts swept up and a little back off a narrow strip, the middle ones
   // tallest: [x at the root, x at the tip, height of the tip], in radii.
@@ -761,6 +762,7 @@ function drawIcehawk(c, r, look, ink) {
 // (screen right, as we look at him): drawn as brush strokes, a stand-in for
 // the real characters. From drawArtHeadLayer.
 function drawIcemanHead(c, r, look, lw) {
+  if (look.icemanReal) return drawIcemanRealHead(c, r, look, lw); // Joe's look from his photos (liddell-skin.js)
   if (look.scalpInk) {
     c.save();
     c.translate(r * 0.47, -r * 0.71); c.rotate(0.62);
@@ -809,6 +811,7 @@ function drawIcemanHead(c, r, look, lw) {
 // "icicles" shorts: white icicles hanging off the waistband all the way
 // round, like his Iceman trunks. From drawArtBody, before the waistband.
 function drawIcicleShorts(c, r, look, sTop, band, name) {
+  if (look.icemanReal) return drawIcemanRealShorts(c, r, look, sTop, band, name); // Joe's look from his photos (liddell-skin.js)
   var rnd = artRand(artSeed(name + "icicles")), y0 = sTop + band - r * 0.01, n = 11;
   c.save();
   // a frosty band of snow just under the waistband
