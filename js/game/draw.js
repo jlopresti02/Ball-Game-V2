@@ -468,6 +468,7 @@ function draw() {
   drawDiazOver(); // Nick Diaz, his bubble, the NICK DIAZ banner in the test arena (diaz.js)
   drawFergusonOver(); // Tony Ferguson's holds and tug-of-war bar, the Kaioken flash, the CANCELLED stamps (ferguson.js)
   drawPratesOver(); // Carlos Prates's smoke, music notes and the disco lights (prates.js)
+  drawSnowballsOver(); // Chuck Liddell's snowball flying at them (liddell-snowball.js)
   drawKneesOver(); // knees coming up, the clinch, the flying knee and its red line (knees.js)
   drawLegKicksOver(); // leg kicks whipping round low into the calf, the hit mark on it (leg-kick.js)
   drawHeadKicksOver(); // a head kick whipping up high into the head, the star on it (head-kick.js)
