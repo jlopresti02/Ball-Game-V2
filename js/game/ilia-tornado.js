@@ -7,6 +7,8 @@
 //   - Anyone who touches it is sucked in, whipped round inside it a couple
 //     of times, then spat out: flung across the ring and slammed off the
 //     cage walls with the momentum.
+//   - (Christian, 2026-11-18) Anyone close by is dragged in toward it while
+//     it spins, harder the closer they are (torDrag, char.tornado.suck).
 // It runs on b.igbb (move "tornado"). The roses stay on the mat for a while
 // afterwards. Config: char.tornado.
 "use strict";
@@ -98,6 +100,7 @@ function updateIliaTornado(self, other, dt) {
 
 // Pulls them toward it a little; touching it sucks them in.
 function torSuck(self, other, m, cfg, dt) {
+  torDrag(self, other, m, cfg, dt); // Christian: it really drags them in now (torDrag, below)
   var R = torRadius(self) * m.grow;
   var c = m.caught;
   if (!c) {
@@ -137,6 +140,31 @@ function torSuck(self, other, m, cfg, dt) {
   other.vx = other.vy = 0;
   if (Math.random() < dt * 8) playWhoosh();
   if (c.t >= cfg.orbit || m.t >= cfg.spin + 1.5) torSpit(self, other, m, cfg);
+}
+
+// The drag (Christian, 2026-11-18): while it spins, anyone within
+// suck.radius of the middle is dragged in toward it, harder the closer they
+// are (suck.min of the strength at the edge, all of it at the middle). It's
+// a nudge on top of their own movement, so from the edge they can still run
+// for it. Never while they're in a hold, a special, frozen or held, or just
+// spat out and flying off the cage, and never through the cage walls. Once
+// they reach it, touching it does what it always did (above).
+// Config: char.tornado.suck { radius, strength, min }; without it nothing changes.
+function torDrag(self, other, m, cfg, dt) {
+  m.dragK = 0;
+  var s = cfg.suck;
+  if (!s || !(s.strength > 0) || !(s.radius > 0) || m.caught) return;
+  if (!other.alive || other.torHeld || other.slam || other.invincible || (m.spat >= 0 && m.t - m.spat < 0.5)) return;
+  if (!inOrdinaryMovement(other) || specialBusy(other) || swordDuelLocked(other) || other.bearHeld) return;
+  var dx = m.cx - other.x, dy = m.cy - other.y, d = Math.sqrt(dx * dx + dy * dy);
+  if (d >= s.radius || d < 1) return;
+  var min = s.min != null ? s.min : 0;
+  var k = (min + (1 - min) * (1 - d / s.radius)) * m.grow;
+  var step = Math.min(d, s.strength * k * dt);
+  other.x += dx / d * step; other.y += dy / d * step;
+  other.x = Math.min(W - other.r, Math.max(other.r, other.x));
+  other.y = Math.min(H - other.r, Math.max(other.r, other.y));
+  m.dragK = k;
 }
 
 // Flung out along the way it was going round, into the cage.
@@ -277,7 +305,33 @@ function drawTornadoUnder() {
       ctx.beginPath(); ctx.ellipse(m.cx, m.cy + b.r * 0.8, R * (0.8 + i * 0.15), R * (0.28 + i * 0.05), 0, a0, a0 + 1.4); ctx.stroke();
     }
     ctx.restore();
+    drawTornadoDrag(b, m); // and the dust off whoever it's dragging in (drawTornadoDrag, below)
   });
+}
+
+// The drag, drawn (Christian): dust whipping round their feet and streaking
+// off them into the foot of the funnel, bent round the way it spins.
+function drawTornadoDrag(b, m) {
+  var o = balls[1 - b.id];
+  if (!o || !o.alive || m.phase !== "spin" || m.caught || !(m.dragK > 0)) return;
+  var k = Math.min(1, m.dragK), fx = o.x, fy = o.y + o.r * 0.8;
+  var R = torRadius(b) * m.grow, bx = m.cx, by = m.cy + b.r * 0.8;
+  var dx = bx - fx, dy = by - fy, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
+  var tx = uy, ty = -ux; // round the way it spins
+  ctx.save();
+  ctx.strokeStyle = "rgba(200,170,140," + (0.6 * k).toFixed(3) + ")"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
+  for (var i = 0; i < 2; i++) {
+    var a0 = m.ang * 0.6 + i * Math.PI;
+    ctx.beginPath(); ctx.ellipse(fx, fy, o.r * 0.95, o.r * 0.34, 0, a0, a0 + 1.6); ctx.stroke();
+  }
+  var ex = bx - ux * R * 0.9, ey = by - uy * R * 0.35;
+  ctx.setLineDash([9, 13]); ctx.lineDashOffset = -m.ang * 4;
+  for (var j = -1; j <= 1; j++) {
+    var sx = fx + tx * j * o.r * 0.55, sy = fy + ty * j * o.r * 0.2;
+    var mx = (sx + ex) / 2 + tx * d * 0.22, my = (sy + ey) / 2 + ty * d * 0.11;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(mx, my, ex + tx * j * R * 0.2, ey + ty * j * R * 0.08); ctx.stroke();
+  }
+  ctx.restore();
 }
 
 // Over the fighters: the funnel itself, petals whipping round in it, and the
