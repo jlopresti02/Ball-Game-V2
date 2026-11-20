@@ -110,7 +110,7 @@ function updateDarkSide(self, other, dt) {
     if (!started || over || !other.alive) return false;
     if (!self.sithRandUsed) self.sithRandT -= dt;
     var why = dsOppWeapon(other) ? "weapon" : (!self.sithRandUsed && self.sithRandT <= 0 ? "random" : null);
-    if (!why || self.sithCd > 0 || self.igbb || self.doBronx || self.hokitShot || self.mock || self.fenceGrab || swordDuelActive() || !(canStartIgbb(self, other) || canSuitUpVsKatanas(self, other))) return false; // (he can suit up mid katana special, ferguson-katanas.js)
+    if (!why || self.sithCd > 0 || self.igbb || self.doBronx || self.hokitShot || self.mock || self.fenceGrab || swordDuelActive() || sceneLocked() /* scene-lock.js */ || !(canStartIgbb(self, other) || canSuitUpVsKatanas(self, other))) return false; // (he can suit up mid katana special, ferguson-katanas.js)
     if (why === "random") self.sithRandUsed = true;
     startDarkSide(self, why);
     s = self.sith;
@@ -136,7 +136,7 @@ function updateDarkSide(self, other, dt) {
     if (s.force) { updateForce(self, dt); return true; }
     if (saberLock && saberLock.hId === self.id) { updateSaberLock(self, dt); return true; }
     if (!self.cheater || !self.cheater.saber) self.cheater = { mode: "bat", saber: true, cd: 0.35, cfg: { bat: cfg.saber } };
-    s.left -= dt;
+    if (!sceneLocked()) s.left -= dt; // the form never runs out mid clash or cutscene (scene-lock.js)
     // A bat or club still out keeps it on (not a sword drawn back at his saber, or it'd never end).
     if (other.alive && other.cheater && other.cheater.mode === "bat" && !other.cheater.saber) s.left = Math.max(s.left, cfg.linger);
     if ((s.left <= 0 || over) && !self.chAct && !swordDuelLocked(self) && !specialBusy(self)) {

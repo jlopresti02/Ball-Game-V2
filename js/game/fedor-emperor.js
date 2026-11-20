@@ -59,7 +59,7 @@ function emShookBy(o) { var e = o && balls && balls[1 - o.id]; return e && e !==
 // Free to crown himself: nothing holding him, nothing of his own or theirs going on.
 function emFree(self, other) {
   if (fdHeld(self) || self.choked || self.fd.gnp || self.armbar || !inOrdinaryMovement(self)) return false;
-  if (self.punch || self.kick || self.koPunch || self.cmb || specialBusy(self) || specialBusy(other) || swordDuelActive()) return false;
+  if (self.punch || self.kick || self.koPunch || self.cmb || specialBusy(self) || specialBusy(other) || swordDuelActive() || sceneLocked()) return false; // (scene-lock.js)
   return true;
 }
 

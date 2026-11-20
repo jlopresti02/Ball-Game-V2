@@ -194,7 +194,7 @@ function updateFerguson(self, other, dt) {
   if (!started || over || !other.alive || self.igbb || self.koRush || self.elbowAnim) return false;
   if (subLocked(self) || self.sprawl || self.slam || self.checkStun > 0 || swordDuelLocked(self)) return false; // (down in guard, in a hold, ...)
   if (self.punch || self.kick || self.swing || self.throwAnim || self.combo || self.taunt) return false; // lets his own strike finish
-  if (other.choked || other.grappled || subLocked(other) || other.invincible || other.koOut || swordDuelActive()) return false;
+  if (other.choked || other.grappled || subLocked(other) || other.invincible || other.koOut || swordDuelActive() || sceneLocked()) return false; // (scene-lock.js)
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, gap = d - self.r - other.r;
   if (tfWantBurrito(self, cfg)) { startTfBurrito(self); return true; }
   if (tfMasAct(self, other, cfg, dt)) return true;

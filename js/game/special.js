@@ -54,6 +54,7 @@ function specialBusy(b) {
     b.beamPin || b.koRush || b.shocked || b.koOut || b.koDuel || b.checkStun > 0 || b.checkAnim || b.igbb || b.shelled || b.dazed || chamaOn(b) || ngannouBusy(b); // (Alex Pereira's CHAMA combo, pereira.js; Francis Ngannou's rage punch, ngannou.js)
 }
 function canStartIgbb(self, other) {
+  if (sceneLocked()) return false; // waits out a sword clash, blade lock, beam clash or cutscene (scene-lock.js)
   if (!other.alive || other.invincible || specialBusy(self) || (specialBusy(other) && !(typeof jpSamuraiInvites === "function" && jpSamuraiInvites(self, other)))) return false; // (Jon's goats, Ilia's bull and Strickland's eagle can come at Jiří Procházka's samurai: jiri-react.js)
   // Lets its own attack in progress finish first.
   if (self.punch || self.kick || self.swing || self.throwAnim || self.powerState || self.rageState || self.watcherState) return false;
