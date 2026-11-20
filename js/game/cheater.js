@@ -51,6 +51,7 @@ function tickRefNap(dt) {
   if (rf.stop || over) { if (rf.asleep) wakeRef(rf); return; }
   // Out cold for the whole of Gane's special (herbdean.js wakes him after).
   if (herbDeanActive()) { rf.asleep = true; rf.napT = 0; return; }
+  if (sceneLocked()) return; // stays as he is through a sword duel, saber lock, beam clash or cutscene (scene-lock.js)
   if (swordDuelActive() || saberLock) return; // stays asleep through a sword duel (sword.js) or a saber lock (hokit-darkside.js)
   rf.napT = (rf.napT || 0) + dt;
   if (!rf.asleep && rf.napT >= ch.awake) {

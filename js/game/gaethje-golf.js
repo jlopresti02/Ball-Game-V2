@@ -43,7 +43,7 @@ function golfGap(cfg) { var e = cfg.ball.every; return e[0] + Math.random() * (e
 
 // Can his eagle pick him up right now?
 function canSnatch(b) {
-  return !!(golfCfg(b) && b.alive && !golfing(b) && !b.igbb && !specialBusy(b) && !swordDuelLocked(b));
+  return !!(golfCfg(b) && b.alive && !golfing(b) && !b.igbb && !specialBusy(b) && !swordDuelLocked(b) && !sceneLocked()); // (scene-lock.js)
 }
 
 function startEagleCarry(self, e) {
@@ -244,7 +244,7 @@ function tickGolf(dt) {
     // Grabbed, held, choked, knocked out or caught in their special: the club
     // goes too, so a swing never hangs half done under a takedown or a hold.
     if (golfCaught(b)) { endGolfMode(b, true); return; }
-    b.golfLeft -= dt;
+    if (!sceneLocked()) b.golfLeft -= dt; // the club never runs out mid clash or cutscene (scene-lock.js)
     // A swing or a shot gets to finish, but never more than GOLF_OVERTIME past the end.
     if (b.golfLeft <= 0 && (!b.chAct || b.golfLeft <= -GOLF_OVERTIME)) endGolfMode(b, true);
   });

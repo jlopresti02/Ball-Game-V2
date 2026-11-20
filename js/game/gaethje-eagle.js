@@ -52,6 +52,7 @@ function tickEagleStrikes(dt) {
     if (!cfg || !self.alive) return;
     if (eagleStrikes.some(function (e) { return e.owner === self.id; })) return;
     // Dustin's diamonds or Gane's bat coming out: the eagle comes to arm him.
+    if (sceneLocked()) return; // waits out a clash or cutscene, cue and all (scene-lock.js)
     var saw = self.eagleSaw || (self.eagleSaw = { diamond: false, bat: false });
     var dia = !!(other.diamond && other.diamond.on), bat = !!(other.cheater && other.cheater.mode === "bat");
     var cue = (dia && !saw.diamond) || (bat && !saw.bat);

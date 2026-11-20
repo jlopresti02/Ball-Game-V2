@@ -53,7 +53,7 @@ function tickNateLion(dt) {
       if (!cfg || natLion || !b.alive || !o || !o.alive || b.lionN >= cfg.max) return;
       b.lionT -= dt;
       if (b.lionT > 0) return;
-      if (jumboHold() || swordDuelActive() || balls.some(function (f) { return (f.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f))) || f.bearHeld; })) return; // (Jiří Procházka's samurai can meet it: jiri-react.js)
+      if (jumboHold() || swordDuelActive() || sceneLocked() /* scene-lock.js */ || balls.some(function (f) { return (f.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f))) || f.bearHeld; })) return; // (Jiří Procházka's samurai can meet it: jiri-react.js)
       if ((typeof ringBear !== "undefined" && ringBear) || (typeof nickDiaz !== "undefined" && nickDiaz)) return;
       if (lionTangled(b) || lionTangled(o) || specialBusy(b) || (specialBusy(o) && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(o))) || b.dazed || b.grabbed || (typeof diazBusy === "function" && diazBusy(b))) return;
       b.lionN++;

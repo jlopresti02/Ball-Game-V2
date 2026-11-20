@@ -42,7 +42,7 @@ function tickRingBear(dt) {
       var cfg = b.char.bear;
       if (!cfg || ringBear || !b.alive || b.bearN >= cfg.max) return;
       b.bearT -= dt;
-      if (b.bearT > 0 || jumboHold() || swordDuelActive() || balls.some(function (f) { return f.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f)); })) return; // (Jiří Procházka's samurai can meet it: jiri-react.js)
+      if (b.bearT > 0 || jumboHold() || swordDuelActive() || sceneLocked() /* scene-lock.js */ || balls.some(function (f) { return f.igbb && !(typeof jpSamuraiCanCut === "function" && jpSamuraiCanCut(f)); })) return; // (Jiří Procházka's samurai can meet it: jiri-react.js)
       if (typeof natLion !== "undefined" && natLion) return; // not while Nate's lion is in the ring (nate-lion.js)
       b.bearN++;
       b.bearT = bearRand(cfg.every);
