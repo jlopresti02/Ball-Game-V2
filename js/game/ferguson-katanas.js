@@ -47,7 +47,7 @@ function katWallGap(b) { return Math.min(b.x - b.r, W - b.r - b.x, b.y - b.r, H 
 function updateKatanas(self, other, dt) {
   var sp = self.char.special;
   if (!self.igbb) {
-    if (self.specialT < sp.chargeTime || !(canStartIgbb(self, other) || samuraiCallsKatanas(self, other)) || fergusonBusy(self) || self.elbowAnim || swordDuelActive()) return false; // (Jiří Procházka's samurai calls them out, prochazka.js)
+    if (self.specialT < sp.chargeTime || !(canStartIgbb(self, other) || samuraiCallsKatanas(self, other)) || fergusonBusy(self) || self.elbowAnim || swordDuelActive() || sceneLocked()) return false; // (scene-lock.js) (Jiří Procházka's samurai calls them out, prochazka.js)
     clearActions(self);
     self.igbb = { move: "katana", phase: "draw", t: 0, n: 0, next: 0, side: 1, crits: 0, plain: 1, fx: [],
       read: Math.random() * 100 < sp.readChance + (other.char.hasWeave ? 15 : 0) };
@@ -64,6 +64,7 @@ function updateKatanas(self, other, dt) {
   // the special waits instead of steering him.
   if (katanaLockHeld(self) || self.slam || (self.checkStun || 0) > 0) { if (katanaLockHeld(self)) { self.vx = 0; self.vy = 0; } return true; }
   m.t += dt;
+  if (m.phase === "close" && sceneLocked()) m.t = Math.max(0, m.t - dt); // his clock waits out a clash or cutscene, so the katanas never go away mid lock (scene-lock.js)
   m.fx.forEach(function (f) { f.t += dt; });
   m.fx = m.fx.filter(function (f) { return f.t < f.max; });
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d, gap = d - self.r - other.r;

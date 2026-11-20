@@ -371,7 +371,7 @@ function hwFlashReady(self, other, cfg) {
   var fb = cfg.flashback;
   if (!fb || self.hwFlashDone || self.hwT < self.hwFlashT || hwFlash || self.hwMash) return false;
   if (!other.alive || specialBusy(other) || other.guard || other.koOut || other.invincible || other.dazed || other.dizzy) return false;
-  if (other.hwAct || other.watcherState || swordDuelActive()) return false;
+  if (other.hwAct || other.watcherState || swordDuelActive() || sceneLocked()) return false; // (scene-lock.js)
   return true;
 }
 

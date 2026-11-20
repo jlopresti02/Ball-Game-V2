@@ -46,7 +46,7 @@ function tickDiamond(dt) {
     var cfg = b.char.diamond, other = balls[1 - b.id];
     if (!dg.on) {
       // Waits for any special (or Father's Plan) to be completely over (truckees-ad.js)
-      if (b.hp > 0 && b.hp < MAX_HP * cfg.triggerHp && !jumboHold()) startDiamondGuard(b);
+      if (b.hp > 0 && b.hp < MAX_HP * cfg.triggerHp && !jumboHold() && !sceneLocked()) startDiamondGuard(b); // (and never in a clash or cutscene: scene-lock.js)
       return;
     }
     // An occasional diamond, thrown when his hands are free.

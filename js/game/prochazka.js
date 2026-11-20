@@ -292,7 +292,7 @@ function updateSamurai(self, other, dt) {
     // Tony Ferguson's katanas out don't stop him: the samurai answers them.
     var vsKatanas = katanaOn(other) && other.igbb.phase === "close" && other.alive && !specialBusy(self) && !self.punch && !self.kick;
     var vsBus = typeof jpBusAnswer === "function" && jpBusAnswer(self, other); // Conor's lads out for him: the samurai answers the bus (jiri-react.js)
-    if (!(canStartIgbb(self, other) || vsKatanas || vsBus) || swordDuelActive() || jpLock || katanaLock) return false;
+    if (!(canStartIgbb(self, other) || vsKatanas || vsBus) || swordDuelActive() || jpLock || katanaLock || sceneLocked()) return false; // (scene-lock.js)
     jpStart(self, other, cfg);
   }
   var m = self.igbb;
@@ -301,6 +301,7 @@ function updateSamurai(self, other, dt) {
   if (samuraiLockHeld(self)) { self.vx = 0; self.vy = 0; return true; }
   if (self.slam || (self.checkStun || 0) > 0) return true; // knocked into the cage: the special waits
   m.t += dt;
+  if (m.phase === "close" && formHeld(self) && (sceneLocked() || (m.held = (m.held || 0) + dt) < 4)) m.t = Math.max(0, m.t - dt); // his run waits out a clash or cutscene, and up to 4s for an animal coming at him, so he never sheathes mid cut (scene-lock.js)
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d, gap = d - self.r - other.r;
   if (m.phase === "iai") return jpIaiTick(self, other, cfg, m);
   if (!(m.phase === "close" && m.sl && m.sl.t >= cfg.tell * 0.7)) m.ang = Math.atan2(uy, ux);
