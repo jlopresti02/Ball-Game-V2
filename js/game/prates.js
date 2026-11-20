@@ -786,7 +786,7 @@ function updateCigarette(self, other, dt) {
   if (s.smoke) return prPlanted(self);
   if (self.specialT < sp.chargeTime) return false;
   if (!prDemo() && s.fightT < (sp.notBefore || 0)) return false;
-  if (!started || over || !other.alive || other.koOut || other.igbb || specialBusy(self) || specialBusy(other) || swordDuelActive()) return false;
+  if (!started || over || !other.alive || other.koOut || other.igbb || specialBusy(self) || specialBusy(other) || swordDuelActive() || sceneLocked()) return false; // (scene-lock.js)
   if (!inOrdinaryMovement(self) || self.prRub || self.punch || self.kick || self.koPunch || self.elbowAnim || self.kneeAnim || self.teep ||
       self.plum || self.fknee || self.cmb || self.dizzy) return false;
   prStartLight(self, other, sp);
