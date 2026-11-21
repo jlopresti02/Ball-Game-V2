@@ -132,13 +132,7 @@ function draw() {
     // Weaving slips the whole fighter sideways for a moment, and a taunting
     // fighter bounces on the spot. Everything below draws at the shifted spot.
     var wox = 0, woy = 0;
-    if (b.weaveAnim) {
-      var wa = b.weaveAnim, wk = Math.sin(Math.PI * wa.t / wa.dur);
-      var wsp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), wfx = 1, wfy = 0;
-      if (wsp > 1) { wfx = b.vx / wsp; wfy = b.vy / wsp; }
-      wox = -wfy * wa.sign * b.r * 0.75 * wk;
-      woy = wfx * wa.sign * b.r * 0.75 * wk;
-    }
+    var wvo = weaveFlowOffset(b); wox += wvo.x; woy += wvo.y; // the slip, gliding from one weave into the next (weave-flow.js)
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
     var hjo = herbJoltOffset(b); wox += hjo.x; woy += hjo.y; // rocked by a bat or a cane (herbdean.js)
     var gbl = ganeBatLean(b); wox += gbl.x; woy += gbl.y; // throwing his weight into a bat swing (cheater.js)
@@ -480,6 +474,7 @@ function draw() {
   drawProchazkaOver(); // the cuts Jiří Procházka's katanas leave (prochazka.js)
   drawKatanaDuelOver(); // the katana duel's petals and the loser's cut (katana-duel.js)
   if (typeof drawJiriReactOver === "function") drawJiriReactOver(); // animals Jiří Procházka cut in half (jiri-react.js)
+  drawPushFlowOver(); // a tie-up's over-under arms, the frame on a pivot off the cage (push-flow.js)
   drawClinchOver(); // the clinch: arms tied round them, each knee and elbow, the swirl of the spin on the break (clinch.js)
   drawJonClinch(); // Jon Jones's arms locked over-under, his clinch knees and elbows, the trip's leg and red arrow (jon-clinch.js)
   drawVanOver(); // Joshua Van's chain counter under him, lit while he keeps it (van.js)

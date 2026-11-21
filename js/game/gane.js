@@ -129,7 +129,7 @@ function ganeDamageMult(b, source, attackerId) {
 
 function gnHandsFree(b) {
   return !(b.taunt || b.combo || b.flow || b.koRush || b.koPunch || b.throwAnim || b.jabAnim || b.shelled || b.igbb || b.swing || b.mock ||
-    b.elbowAnim || b.kneeAnim || b.cmb || b.plum || b.fknee || b.chAct || b.cheater || b.weaveAnim);
+    b.elbowAnim || b.kneeAnim || b.cmb || b.plum || b.fknee || b.chAct || b.cheater || b.weaveAnim || pushFlowHandsBusy(b)); // (arms on them in a tie-up, push-flow.js)
 }
 // From drawHands (draw-attacks.js): his hands are down (drawGane draws them).
 function ganeHandsBusy(b) {
