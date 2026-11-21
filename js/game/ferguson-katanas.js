@@ -62,6 +62,7 @@ function updateKatanas(self, other, dt) {
   // Held in a katana lock (his special runs before the lock hold in the
   // abilities loop), or stunned / thrown by a Force push or a wall slam:
   // the special waits instead of steering him.
+  if (katanaDuelHeld(self)) return true; // the katana duel with Jiří holds him (katana-duel.js)
   if (katanaLockHeld(self) || self.slam || (self.checkStun || 0) > 0) { if (katanaLockHeld(self)) { self.vx = 0; self.vy = 0; } return true; }
   m.t += dt;
   if (m.phase === "close" && sceneLocked()) m.t = Math.max(0, m.t - dt); // his clock waits out a clash or cutscene, so the katanas never go away mid lock (scene-lock.js)
@@ -381,6 +382,7 @@ function tickKatanaLock(dt) {
 // From applyFergusonPose (ferguson.js): his body twisting into a slash,
 // spinning in the cyclone, crouched before a flash-step.
 function applyKatanaPose(b) {
+  if (applyKatanaDuelPose(b)) return; // in the katana duel with Jiří (katana-duel.js)
   var m = b.igbb, sl = m.phase === "close" ? m.sl : null, rot = 0, sx = 1, sy = 1;
   if (sl && sl.kind === "A" && !sl.both) {
     var p = sl.t / KAT_A_DUR;
@@ -472,6 +474,7 @@ function katGhosts(b, pts, fade) {
 // From drawFerguson (ferguson.js) while his katanas are out.
 function drawTfKatanas(b, other, ang) {
   var m = b.igbb, sp = b.char.special, L = b.r * KAT_LEN;
+  if (drawKatanaDuelTony(b, ang)) return; // in the katana duel with Jiří (katana-duel.js)
   if (katanaLock && katanaLock.tRef === b && m.phase === "close") {
     // In the lock: both elbows forward, the blades angled up into theirs, straining.
     var lp = katLockPoint(), jt = !reduceMotion ? Math.sin(performance.now() / 21) * 0.04 : 0;

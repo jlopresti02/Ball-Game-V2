@@ -299,6 +299,7 @@ function updateSamurai(self, other, dt) {
   if (m.move !== "samurai") return false;
   self.combo = null; self.flow = null; self.taunt = null; // (a critical weave mid special waits for nothing)
   if (samuraiLockHeld(self)) { self.vx = 0; self.vy = 0; return true; }
+  if (katanaDuelHeld(self)) return true; // the katana duel with Tony holds him (katana-duel.js)
   if (self.slam || (self.checkStun || 0) > 0) return true; // knocked into the cage: the special waits
   m.t += dt;
   if (m.phase === "close" && formHeld(self) && (sceneLocked() || (m.held = (m.held || 0) + dt) < 4)) m.t = Math.max(0, m.t - dt); // his run waits out a clash or cutscene, and up to 4s for an animal coming at him, so he never sheathes mid cut (scene-lock.js)
@@ -773,6 +774,7 @@ function tickSamuraiLock(dt) {
 function applyProchazkaPose(b) {
   var m = samuraiOn(b) ? b.igbb : null, cfg = jpSam(b), rot = 0, sx = 1, sy = 1;
   if (!m || !cfg) return;
+  if (applyKatanaDuelPose(b)) return; // in the katana duel with Tony (katana-duel.js)
   if (m.phase === "close" && m.sl && m.sl.kind === "spin") rot = jpSpinPose(m.sl); // turning with the whirlwind (jiri-spin.js)
   else if (m.phase === "close" && m.sl) {
     var sl = m.sl, T = cfg.tell, S = cfg.swing;
@@ -806,6 +808,7 @@ function drawProchazka(b, other) {
   if (m.phase === "outfit") { jpDrawHandsLow(b, other); jpDrawInkWipe(b, m.t / sam.outfit); return; }
   if (m.phase === "iai") { jpDrawIai(b, sam, m); return; }
   if (samuraiLockHeld(b)) { jpDrawLockArms(b, ang); return; }
+  if (drawKatanaDuelJiri(b, ang)) return; // in the katana duel with Tony (katana-duel.js)
   if (m.phase === "draw" || m.phase === "sheathe") {
     var k = m.phase === "draw" ? m.t / sam.draw : 1 - m.t / JP_SHEATHE;
     [1, -1].forEach(function (s) {
