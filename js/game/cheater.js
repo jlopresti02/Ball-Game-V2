@@ -89,6 +89,7 @@ function updateCheater(self, other, dt, d) {
   if (self.chAct) { updateCheaterAct(self, other, dt); return true; }
   var c = self.cheater;
   if (!c) return false;
+  if (self.punch) self.punch = null; // a punch left over from before he took the weapon out would hang frozen (Joe, 2026-11-21: Gaethje's arm stuck out across the cage)
   if (!other.alive || over) return true;
   c.cd = Math.max(0, c.cd - dt * self.atkRate);
   if (c.club) c.golfCd = Math.max(0, c.golfCd - dt * self.atkRate);

@@ -369,6 +369,7 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   var ph = (t - tIn) / TAPE_BEAT;
   var bob = -Math.abs(Math.sin(Math.PI * ph)) * 7, sway = Math.sin(Math.PI * ph * 0.5) * 0.05;
   if (oppSig >= 0 && oppKind === "poke" && ost > 0.35) { bob += Math.sin(ost * 40) * 3 * Math.max(0, 1 - ost); } // rocked by the poke
+  if (oppSig >= 0) bob += tapeHitShake(oppKind, ost); // rocked by Nate's slaps or Khabib's strike (tape-taunts.js)
   var ink = "#0b0f12";
   if (kind === "saiyan") drawTapeSaiyanAura(x, y + bob, pr, sig); // (tape-taunts.js)
   // Ring
@@ -426,6 +427,10 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
       tapeKatanaGloves(g, x, y + bob, pr, sig, side); // Jiri draws his katana (tape-taunts.js)
     } else if (kind === "burrito") {
       tapeBurritoGloves(g, x, y + bob, pr, sig, side); // Tony's burrito (tape-taunts.js)
+    } else if (kind === "stockton") {
+      tapeStocktonGloves(g, x, pr, sig, side); // Nate's Stockton slaps (tape-taunts.js)
+    } else if (kind === "sendloc") {
+      tapeSendLocGloves(g, x, y + bob, pr, sig, side); // Khabib's call (tape-taunts.js)
     } else {
       // Both gloves punch together at the camera
       var tap = Math.max(0, Math.sin(Math.min(1, sig / 0.45) * Math.PI)) * back;
@@ -438,6 +443,8 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   if (kind === "fire" && sig >= 0) drawTapeFire(g, gr, sig, false); // (tape-taunts.js)
   if (kind === "katana" && sig >= 0) drawTapeKatana(g, x, y + bob, pr, sig, side); // (tape-taunts.js)
   if (kind === "burrito" && sig >= 0) drawTapeBurrito(g, x, y + bob, pr, sig, side); // (tape-taunts.js)
+  if (kind === "sendloc" && sig >= 0) drawTapeSendLocPhone(g, pr, sig, side); // Khabib's sat-phone, in his glove (tape-taunts.js)
+  if (kind === "stockton" && sig >= 0) drawTapeLion(x, y + bob, pr, sig, side); // Nate's lion bounds up at his side (tape-taunts.js)
   // Draw the far glove first so the one coming at the camera is on top
   var order = g[0].s > g[1].s ? [1, 0] : [0, 1];
   order.forEach(function (j) { drawTapeGlove(ch, g[j], gr, side); });
@@ -467,6 +474,9 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   if (kind === "fire" && sig >= 0) drawTapeFire(g, gr, sig, true); // (tape-taunts.js)
   if (kind === "katana" && sig >= 0) drawTapeKatanaGlint(x, y + bob, pr, sig, side); // (tape-taunts.js)
   if (kind === "burrito" && sig >= 0) drawTapeBurritoChomp(x, y + bob, pr, sig, side); // (tape-taunts.js)
+  if (kind === "stockton" && sig >= 0) drawTapeNateFront(x, y + bob, pr, sig, side); // (tape-taunts.js)
+  if (kind === "sendloc" && sig >= 0) drawTapeSendLocBubble(x, y + bob, pr, sig, side); // (tape-taunts.js)
+  if (oppSig >= 0) drawTapeTauntReact(x, y + bob, pr, oppKind, ost); // stars from Nate's slaps, Khabib's strike landing (tape-taunts.js)
 }
 
 function drawTapeGlove(ch, g, gr, side) {

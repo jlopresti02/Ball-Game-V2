@@ -13,7 +13,6 @@
 // channel (playTalk), so it never talks over the announcer.
 "use strict";
 
-var TAPE_PRESSER_AT = 4.9;   // the podium comes up (a beat before the last row)
 var TAPE_PRESSER_LEN = 2.5;  // up, the line, down again
 var TAPE_PRESSER_RISE = 0.3;
 var TAPE_PRESSER_LINE = "He's a snake in the grass.";
@@ -43,6 +42,8 @@ function tapeTauntKind(ch) {
   if (ch.id === "c-joshua-van") return "fire";
   if (ch.id === "c-jiri-prochazka") return "katana";
   if (ch.id === "c-tony-ferguson") return "burrito";
+  if (ch.id === "c-nate-diaz") return "stockton";
+  if (ch.id === "c-khabib-nurmagomedov") return "sendloc";
   return null;
 }
 function tapeSigLen(kind) {
@@ -51,25 +52,32 @@ function tapeSigLen(kind) {
   if (kind === "rose") return TAPE_ROSE_LEN;
   return tapeOwnLen(kind) || TAPE_SIG_LEN;
 }
-// The press conference goes first and the other fighter answers once the
-// line is out (sg: the usual [left, right] times).
+// When the taunts go (Joe, 2026-11-21): the first one starts as the first
+// stat pops up, right after the announcer's "Our tale of the tape!", and the
+// other fighter answers once it's done. Who goes first: a thumbs down (the
+// order in sg, tale-tape.js), the press conference, Ilia's rose against an
+// eye poke (Gane's poke lands mid-sniff), then Khabib's call (his strike lands
+// on the other fighter); otherwise left then right. Everything is over before
+// the card goes.
+var TAPE_TAUNT_AT = TAPE_HIT.rows[0], TAPE_TAUNT_GAP = 0.15;
+function tapeTauntFirst(k) {
+  var p = k.map(function (kind, i) {
+    if (kind === "presser" || kind === "thumbs") return 3;
+    if (kind === "rose" && k[1 - i] === "poke") return 2;
+    return kind === "sendloc" ? 1 : 0;
+  });
+  return p[1] > p[0] ? 1 : p[0] > p[1] ? 0 : -1;
+}
 function tapeTauntTimes(A, B, sg) {
-  var s = [sg[0], sg[1]], k = [tapeSigKind(A), tapeSigKind(B)];
-  for (var i = 0; i < 2; i++) {
-    if (k[i] !== "presser" || k[1 - i] === "presser") continue;
-    s[i] = TAPE_PRESSER_AT;
-    s[1 - i] = TAPE_PRESSER_AT + tapePresserLen() - 0.85;
-    if (k[1 - i] === "saiyan") s[1 - i] = Math.min(s[1 - i], TAPE_HIT.out - TAPE_SAIYAN_LEN + 0.05);
-  }
-  // Ilia's rose: vs Gane he lifts it first and Gane's eye poke lands mid-sniff
-  // (he drops it); otherwise it just has to be over before the card goes.
-  for (var j = 0; j < 2; j++) {
-    if (k[j] !== "rose") continue;
-    if (k[1 - j] === "poke") { s[j] = TAPE_ROSE_AT; s[1 - j] = TAPE_ROSE_AT + TAPE_ROSE_POKE; }
-    else s[j] = Math.min(s[j], TAPE_HIT.out - TAPE_ROSE_LEN + 0.05);
-  }
-  // Van's fire, Jiri's katana, Tony's burrito: over before the card goes.
-  for (var q = 0; q < 2; q++) if (tapeOwnLen(k[q])) s[q] = Math.min(s[q], TAPE_HIT.out - tapeOwnLen(k[q]) + 0.05);
+  var k = [tapeSigKind(A), tapeSigKind(B)], len = [tapeSigLen(k[0]), tapeSigLen(k[1])];
+  var first = tapeTauntFirst(k);
+  if (first < 0) first = sg[1] < sg[0] ? 1 : 0;
+  var s = [0, 0], t0 = TAPE_TAUNT_AT, other = 1 - first;
+  s[first] = t0;
+  var next = t0 + len[first] + TAPE_TAUNT_GAP;
+  if (k[first] === "presser") next = t0 + len[first] - 0.85; // answers as the line finishes
+  if (k[first] === "rose" && k[other] === "poke") next = t0 + TAPE_ROSE_POKE;
+  s[other] = Math.max(t0 + 0.4, Math.min(next, TAPE_HIT.out + 0.05 - len[other]));
   return s;
 }
 function tapeSaiyanOn(sig) {
@@ -236,8 +244,7 @@ function drawTapePresserBubble(t, w, py, pr, px) {
 // poke lands mid-sniff and the rose drops out of his glove and falls away.
 // ---------------------------------------------------------------
 var TAPE_ROSE_LEN = 1.6;
-var TAPE_ROSE_AT = 5.55;   // vs Gane: Ilia goes first...
-var TAPE_ROSE_POKE = 0.55; // ...and Gane's poke starts this far into his sniff
+var TAPE_ROSE_POKE = 0.55; // vs Gane: Ilia goes first and Gane's poke starts this far into his sniff
 var TAPE_ROSE_HIT = 0.17;  // Gane's first jab lands this far into the poke
 function tapeRoseUp(sig, ost) {
   var up = Math.min(1, sig / 0.3), down = Math.min(1, Math.max(0, (TAPE_ROSE_LEN - sig) / 0.35));
@@ -333,7 +340,8 @@ var TAPE_FIRE_LEN = 1.5, TAPE_FIRE_LIT = 0.22;
 var TAPE_KATANA_LEN = 1.5, TAPE_KATANA_DRAW = [0.2, 0.42], TAPE_KATANA_HOME = 1.15;
 var TAPE_BURRITO_LEN = 1.6, TAPE_BURRITO_BITES = [0.45, 0.78, 1.11];
 function tapeOwnLen(kind) {
-  return kind === "fire" ? TAPE_FIRE_LEN : kind === "katana" ? TAPE_KATANA_LEN : kind === "burrito" ? TAPE_BURRITO_LEN : 0;
+  return kind === "fire" ? TAPE_FIRE_LEN : kind === "katana" ? TAPE_KATANA_LEN : kind === "burrito" ? TAPE_BURRITO_LEN :
+    kind === "stockton" ? TAPE_NATE_LEN : kind === "sendloc" ? TAPE_SL_LEN : 0;
 }
 function tapeSmooth(u) { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); }
 
@@ -346,7 +354,7 @@ function tickTapeOwn(kind, st, i, snd) {
     if (!snd["home" + i] && st >= TAPE_KATANA_HOME + 0.2 && st < TAPE_KATANA_LEN) { snd["home" + i] = true; if (typeof playSheatheClick === "function") playSheatheClick(); }
   } else if (kind === "burrito") {
     if (!snd["chew" + i] && st >= TAPE_BURRITO_BITES[0] - 0.05 && st < TAPE_BURRITO_LEN) { snd["chew" + i] = true; withClip("burritoEat", function () { playClip("burritoEat", 0.95); }); } // a sound effect, not a voice line
-  }
+  } else if (kind === "stockton" || kind === "sendloc") tickTapeNateKhabib(kind, st, i, snd); // (below)
 }
 
 // Van: how far his gloves are lit (0..1).
@@ -506,4 +514,200 @@ function drawTapeBurritoChomp(x, y, pr, sig, side) {
     }
   }
   ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Nate Diaz ("stockton", Joe 2026-11-21): two Stockton slaps across at the
+// other fighter with his inside glove (SLAP!, they see stars), then he throws
+// his arms out wide ("what?") while his lion rears up behind his portrait and
+// roars (Joe's roar, nate-lion.js).
+// Khabib ("sendloc", Joe 2026-11-21): his Send Me Location call (send-location.js).
+// The outside glove brings the sat-phone to his ear, "SEND ME LOCATION" word by
+// word (Joe's clip, on the talk channel), then he looks at the screen
+// (LOCATION SENT), a red target locks onto the other fighter's portrait and
+// the beam comes down on them from orbit (they're left seeing stars).
+// Only ever the fighter's own two gloves.
+// ---------------------------------------------------------------
+var TAPE_NATE_LEN = 2.3, TAPE_NATE_SLAPS = [0.3, 0.66], TAPE_NATE_LION = [0.95, 2.25], TAPE_NATE_ROAR = 1.2;
+var TAPE_SL_LEN = 3.5, TAPE_SL_UP = 0.35, TAPE_SL_TALK = 1.75, TAPE_SL_TARGET = 2.45, TAPE_SL_BEAM = 2.95;
+var TAPE_SL_SENT = TAPE_SL_UP + TAPE_SL_TALK; // he looks at the screen
+
+// Sounds (from tickTapeOwn).
+function tickTapeNateKhabib(kind, st, i, snd) {
+  if (kind === "stockton") {
+    TAPE_NATE_SLAPS.forEach(function (at, j) {
+      if (!snd["slap" + i + j] && st >= at && st < at + 0.2) { snd["slap" + i + j] = true; if (typeof playStocktonSlap === "function") playStocktonSlap(j === 1); }
+    });
+    if (!snd["roar" + i] && st >= TAPE_NATE_ROAR && st < TAPE_NATE_LEN) { snd["roar" + i] = true; if (typeof playLionRoar === "function") playLionRoar("B", 0.9); } // a sound effect, not a voice line
+    return;
+  }
+  // Khabib: his line through the talk channel (tried again until it gets a turn), the beeps, the hit
+  if (!snd["slv" + i] && st >= TAPE_SL_UP && st < TAPE_SL_SENT - 0.4) { withClip("sendMeLocation"); if (clipBuffers.sendMeLocation && playTalk("sendMeLocation", 1)) snd["slv" + i] = true; }
+  if (!snd["sls" + i] && st >= TAPE_SL_SENT + 0.15 && st < TAPE_SL_TARGET) { snd["sls" + i] = true; if (typeof playSendLocation === "function") playSendLocation("send"); }
+  if (!snd["slt" + i] && st >= TAPE_SL_TARGET && st < TAPE_SL_BEAM) { snd["slt" + i] = true; if (typeof playSendLocation === "function") playSendLocation("lock"); }
+  if (!snd["slb" + i] && st >= TAPE_SL_BEAM && st < TAPE_SL_LEN) { snd["slb" + i] = true; withClip("slImpact", function () { playClip("slImpact", 0.6); }); }
+}
+
+// How much a fighter's portrait is rocked by the other one's taunt (Nate's
+// slaps, Khabib's strike), added to his bob in drawTapeFighter.
+function tapeHitShake(oppKind, ost) {
+  if (ost < 0) return 0;
+  var hits = oppKind === "stockton" ? TAPE_NATE_SLAPS.map(function (a) { return a + 0.06; }) : oppKind === "sendloc" ? [TAPE_SL_BEAM] : [];
+  var y = 0;
+  hits.forEach(function (h) { var d = ost - h; if (d > 0 && d < 0.5) y += Math.sin(d * 45) * 7 * (1 - d / 0.5); });
+  return y;
+}
+
+// Nate: how far into each slap (0 at rest, 1 at the hit).
+function tapeNateSlap(sig) {
+  var k = 0;
+  TAPE_NATE_SLAPS.forEach(function (at) { var d = sig - at; if (d > -0.16 && d < 0.2) k = Math.max(k, d < 0 ? tapeSmooth((d + 0.16) / 0.16) : 1 - tapeSmooth(d / 0.2)); });
+  return k;
+}
+function tapeNateWide(sig) {
+  return tapeSmooth((sig - TAPE_NATE_LION[0]) / 0.25) * tapeSmooth((TAPE_NATE_LEN - sig) / 0.3);
+}
+function tapeStocktonGloves(g, x, pr, sig, side) {
+  var out = side < 0 ? 0 : 1, inn = 1 - out, sl = tapeNateSlap(sig), wide = tapeNateWide(sig);
+  var cock = sig < TAPE_NATE_SLAPS[1] + 0.2 ? tapeSmooth(sig / 0.15) * (1 - sl) : 0; // the glove drawn back between slaps
+  g[inn].x += side * pr * 0.25 * cock - side * pr * 0.95 * sl; g[inn].y -= pr * 0.2 * sl; g[inn].s = 1 + 0.35 * sl;
+  [0, 1].forEach(function (j) { var d = j === out ? side : -side; g[j].x += d * pr * 0.38 * wide; g[j].y -= pr * 0.28 * wide; }); // arms out: "what?"
+}
+// In front of his portrait, behind his gloves: the lion bounding up at his
+// side (on the outside), roaring.
+function drawTapeLion(x, y, pr, sig, side) {
+  if (typeof lionRoarImg === "undefined" || !lionRoarImg.complete || !lionRoarImg.naturalWidth) return;
+  var a = TAPE_NATE_LION, up = tapeSmooth((sig - a[0]) / 0.3) * tapeSmooth((a[1] - sig) / 0.3);
+  if (up <= 0) return;
+  var roar = sig > TAPE_NATE_ROAR ? Math.max(0, 1 - (sig - TAPE_NATE_ROAR) / 0.8) : 0;
+  var h = pr * 1.9 * (0.7 + 0.3 * up) * (1 + 0.05 * Math.sin(sig * 32) * roar);
+  var lx = x + side * pr * (1.0 - 0.3 * up), ly = y + pr * (0.7 - 0.4 * up);
+  ctx.save();
+  ctx.globalAlpha *= Math.min(1, up * 1.5);
+  drawLionPic(lionRoarImg, LION_ROAR_ASPECT, lx, ly, h, side, -side * 0.08); // (nate-lion.js; facing in)
+  ctx.restore();
+}
+// Over everything: SLAP! on each hit, RAWR! as the lion roars.
+function drawTapeNateFront(x, y, pr, sig, side) {
+  ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+  TAPE_NATE_SLAPS.forEach(function (at, j) {
+    var d = sig - at;
+    if (d < 0 || d > 0.32) return;
+    var pop = tapePop(Math.min(1, d / 0.12)), tx = x - side * pr * 1.25, ty = y - pr * (0.55 + 0.22 * j);
+    ctx.save(); ctx.globalAlpha *= Math.min(1, (0.32 - d) / 0.1);
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 5; ctx.lineCap = "round"; // the crack of it
+    for (var q = 0; q < 7; q++) { var an = q / 7 * Math.PI * 2; ctx.beginPath(); ctx.moveTo(tx + Math.cos(an) * 34, ty + 40 + Math.sin(an) * 34); ctx.lineTo(tx + Math.cos(an) * 52, ty + 40 + Math.sin(an) * 52); ctx.stroke(); }
+    ctx.translate(tx, ty); ctx.rotate(-side * 0.14); ctx.scale(pop, pop);
+    ctx.font = "900 " + (j ? 48 : 40) + "px " + TAPE_IMPACT;
+    ctx.lineWidth = 8; ctx.strokeStyle = "#000"; ctx.strokeText("SLAP!", 0, 0);
+    ctx.fillStyle = "#ffffff"; ctx.fillText("SLAP!", 0, 0);
+    ctx.restore();
+  });
+  var r = sig - TAPE_NATE_ROAR;
+  if (r > 0 && r < 0.9) {
+    var p2 = tapePop(Math.min(1, r / 0.15)), shake = Math.sin(r * 50) * 3;
+    ctx.save(); ctx.globalAlpha *= Math.min(1, (0.9 - r) / 0.2);
+    ctx.translate(x + side * pr * 0.55 + shake, y - pr * 0.8); ctx.rotate(side * 0.12); ctx.scale(p2, p2);
+    ctx.font = "900 52px " + TAPE_IMPACT;
+    ctx.lineWidth = 8; ctx.strokeStyle = "#000"; ctx.strokeText("RAWR!", 0, 0);
+    ctx.fillStyle = "#ffb627"; ctx.fillText("RAWR!", 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// Khabib: where his outside glove is (at his ear, then the screen in front,
+// then pointing up at the sky).
+function tapeSlPose(x, y, pr, sig, side) {
+  var guard = { x: x + side * pr * 0.6, y: y + pr * 0.3 };
+  var ear = { x: x + side * pr * 0.8, y: y + pr * 0.02 }, look = { x: x + side * pr * 0.32, y: y + pr * 0.42 };
+  var sky = { x: x + side * pr * 0.62, y: y - pr * 0.72 };
+  var lerp = function (a, b, k) { return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k }; };
+  if (sig < TAPE_SL_UP) return { p: lerp(guard, ear, tapeSmooth(sig / TAPE_SL_UP)), phone: "ear" };
+  if (sig < TAPE_SL_SENT) { var w = Math.sin((sig - TAPE_SL_UP) * 7.5); return { p: { x: ear.x, y: ear.y + w * 1.5 }, phone: "ear", rock: w }; }
+  if (sig < TAPE_SL_TARGET) return { p: lerp(ear, look, tapeSmooth((sig - TAPE_SL_SENT) / 0.22)), phone: "look" };
+  if (sig < TAPE_SL_LEN - 0.3) return { p: lerp(look, sky, tapeSmooth((sig - TAPE_SL_TARGET) / 0.2)), phone: null };
+  return { p: lerp(sky, guard, tapeSmooth((sig - (TAPE_SL_LEN - 0.3)) / 0.3)), phone: null };
+}
+function tapeSendLocGloves(g, x, y, pr, sig, side) {
+  var gl = g[side < 0 ? 0 : 1], s = tapeSlPose(x, y, pr, sig, side);
+  gl.x = s.p.x; gl.y = s.p.y;
+}
+// The sat-phone in his glove (send-location.js draws it): its back pressed to
+// his ear while he talks, then the screen as he looks at it.
+function drawTapeSendLocPhone(g, pr, sig, side) {
+  if (typeof slPhoneBack !== "function") return;
+  var s = tapeSlPose(0, 0, pr, sig, side), gl = g[side < 0 ? 0 : 1];
+  if (!s.phone) return;
+  var sc = pr / 52, ang = s.phone === "ear" ? -0.12 * side + (s.rock || 0) * 0.05 : -0.35 * side;
+  var px = gl.x + Math.sin(ang) * 14 * sc, py = gl.y - Math.cos(ang) * 14 * sc;
+  if (s.phone === "ear") slPhoneBack(px, py, ang, sc, true, sig);
+  else {
+    var ls = sig - TAPE_SL_SENT;
+    slPhone(px, py, ang, sc, 1, { on: true, flash: ls > 0.12 && ls < 0.3, sweep: null, pin: ls < 0.15, sent: ls >= 0.15, press: ls > 0.1 && ls < 0.25, led: Math.floor(sig * 4) % 2 === 0 }, sig);
+  }
+}
+// His speech bubble, toward the middle of the card, word by word.
+function drawTapeSendLocBubble(x, y, pr, sig, side) {
+  var tk = sig - TAPE_SL_UP;
+  if (tk < 0 || sig > TAPE_SL_TARGET + 0.35) return;
+  var sent = sig >= TAPE_SL_SENT + 0.15;
+  var text = sent ? "LOCATION SENT ✓" : tk < 0.55 ? "SEND" : tk < 1.0 ? "SEND ME" : "SEND ME LOCATION";
+  var a = Math.min(1, tk / 0.1) * Math.min(1, (TAPE_SL_TARGET + 0.35 - sig) / 0.2);
+  ctx.save(); ctx.globalAlpha *= a;
+  ctx.font = "900 34px " + TAPE_IMPACT;
+  var tw = ctx.measureText(text).width, bw = tw + 40, bh = 54;
+  var bx = x - side * (pr * 0.2 + bw / 2), by = y - pr * 0.82; // by his head, toward the middle (inside the card)
+  ctx.fillStyle = sent ? "#eaffdf" : "#ffffff"; ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = 6; ctx.lineJoin = "round";
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx - bw / 2, by - bh / 2, bw, bh, 22); else ctx.rect(bx - bw / 2, by - bh / 2, bw, bh);
+  var tx = x - side * pr * 0.05;
+  ctx.moveTo(tx - side * 26, by + bh / 2 - 3); ctx.lineTo(tx + side * 6, by + bh / 2 + 30); ctx.lineTo(tx + side * 4, by + bh / 2 - 3);
+  ctx.fill(); ctx.stroke();
+  ctx.fillRect(Math.min(tx - side * 24, tx + side * 2) + 2, by + bh / 2 - 9, 22, 12); // (no line where the tail meets it)
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = sent ? "#1f7a1a" : "#0b0f12"; ctx.fillText(text, bx, by + 2);
+  ctx.restore();
+}
+// On the other fighter's portrait: the red target locking on, the beam
+// coming down from orbit, the flash, and stars after.
+function drawTapeOrbitalHit(x, y, pr, ost) {
+  if (ost < TAPE_SL_TARGET) return;
+  ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+  var tt = ost - TAPE_SL_TARGET;
+  if (ost < TAPE_SL_BEAM) { // the target: rings closing in, crosshair, pulsing
+    var k = tapeSmooth(tt / (TAPE_SL_BEAM - TAPE_SL_TARGET)), pulse = 0.5 + 0.5 * Math.sin(tt * 28);
+    ctx.strokeStyle = "rgba(255,40,40," + (0.65 + 0.35 * pulse) + ")"; ctx.lineWidth = 6;
+    var R = pr * (1.6 - 0.45 * k);
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([14, 10]); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, R * 0.72, tt * 3, tt * 3 + Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (q) { ctx.beginPath(); ctx.moveTo(x + q[0] * R * 0.85, y + q[1] * R * 0.85); ctx.lineTo(x + q[0] * R * 1.15, y + q[1] * R * 1.15); ctx.stroke(); });
+    if (tt > 0.12) { ctx.font = "900 30px " + TAPE_IMPACT; ctx.lineWidth = 6; ctx.strokeStyle = "#000"; ctx.strokeText("TARGET LOCKED", x, y + pr * 0.62); ctx.fillStyle = "#ff3b2f"; ctx.fillText("TARGET LOCKED", x, y + pr * 0.62); }
+  }
+  var bt = ost - TAPE_SL_BEAM;
+  if (bt >= 0 && bt < 0.45) { // the beam, from the top of the card down onto him
+    var bw = pr * 0.8 * (1 - bt / 0.45) + pr * 0.15, top = y - pr * 4;
+    var gr = ctx.createLinearGradient(x - bw, 0, x + bw, 0);
+    gr.addColorStop(0, "rgba(120,200,255,0)"); gr.addColorStop(0.3, "rgba(120,200,255,0.8)"); gr.addColorStop(0.5, "rgba(255,255,255,1)");
+    gr.addColorStop(0.7, "rgba(120,200,255,0.8)"); gr.addColorStop(1, "rgba(120,200,255,0)");
+    ctx.fillStyle = gr; ctx.fillRect(x - bw, top, bw * 2, y - top);
+    ctx.fillStyle = "rgba(255,255,255," + (0.85 * (1 - bt / 0.45)) + ")"; // the flash on him
+    ctx.beginPath(); ctx.arc(x, y, pr * (1.05 + bt * 1.2), 0, Math.PI * 2); ctx.fill();
+  }
+  if (bt > 0.05 && bt < 1.05) { // the call
+    var p = tapePop(Math.min(1, (bt - 0.05) / 0.15));
+    ctx.save(); ctx.globalAlpha *= Math.min(1, (1.05 - bt) / 0.2);
+    ctx.translate(x, y + pr * 0.6); ctx.scale(p, p);
+    ctx.font = "900 40px " + TAPE_IMPACT; ctx.lineWidth = 8; ctx.strokeStyle = "#000"; ctx.strokeText("ORBITAL STRIKE!", 0, 0);
+    ctx.fillStyle = "#ffffff"; ctx.fillText("ORBITAL STRIKE!", 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+  if (bt > 0.2) drawTapeStars(x, y - pr * 0.82, pr, bt); // (tale-tape.js)
+}
+// The other fighter's portrait answering Nate's slaps (stars) or Khabib's strike.
+function drawTapeTauntReact(x, y, pr, oppKind, ost) {
+  if (ost < 0) return;
+  if (oppKind === "stockton" && ost > TAPE_NATE_SLAPS[0] + 0.08) drawTapeStars(x, y - pr * 0.82, pr, ost); // (tale-tape.js)
+  if (oppKind === "sendloc") drawTapeOrbitalHit(x, y, pr, ost);
 }
