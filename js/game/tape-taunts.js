@@ -519,8 +519,7 @@ function drawTapeBurritoChomp(x, y, pr, sig, side) {
 // ---------------------------------------------------------------
 // Nate Diaz ("stockton", Joe 2026-11-21): two Stockton slaps across at the
 // other fighter with his inside glove (SLAP!, they see stars), then he throws
-// his arms out wide ("what?") while his lion rears up behind his portrait and
-// roars (Joe's roar, nate-lion.js).
+// his arms out wide ("what?"). No lion (Joe).
 // Khabib ("sendloc", Joe 2026-11-21): his Send Me Location call (send-location.js).
 // The outside glove brings the sat-phone to his ear, "SEND ME LOCATION" word by
 // word (Joe's clip, on the talk channel), then he looks at the screen
@@ -528,7 +527,7 @@ function drawTapeBurritoChomp(x, y, pr, sig, side) {
 // the beam comes down on them from orbit (they're left seeing stars).
 // Only ever the fighter's own two gloves.
 // ---------------------------------------------------------------
-var TAPE_NATE_LEN = 2.3, TAPE_NATE_SLAPS = [0.3, 0.66], TAPE_NATE_LION = [0.95, 2.25], TAPE_NATE_ROAR = 1.2;
+var TAPE_NATE_LEN = 1.75, TAPE_NATE_SLAPS = [0.3, 0.66], TAPE_NATE_WIDE = 0.95;
 var TAPE_SL_LEN = 3.5, TAPE_SL_UP = 0.35, TAPE_SL_TALK = 1.75, TAPE_SL_TARGET = 2.45, TAPE_SL_BEAM = 2.95;
 var TAPE_SL_SENT = TAPE_SL_UP + TAPE_SL_TALK; // he looks at the screen
 
@@ -538,7 +537,6 @@ function tickTapeNateKhabib(kind, st, i, snd) {
     TAPE_NATE_SLAPS.forEach(function (at, j) {
       if (!snd["slap" + i + j] && st >= at && st < at + 0.2) { snd["slap" + i + j] = true; if (typeof playStocktonSlap === "function") playStocktonSlap(j === 1); }
     });
-    if (!snd["roar" + i] && st >= TAPE_NATE_ROAR && st < TAPE_NATE_LEN) { snd["roar" + i] = true; if (typeof playLionRoar === "function") playLionRoar("B", 0.9); } // a sound effect, not a voice line
     return;
   }
   // Khabib: his line through the talk channel (tried again until it gets a turn), the beeps, the hit
@@ -565,7 +563,7 @@ function tapeNateSlap(sig) {
   return k;
 }
 function tapeNateWide(sig) {
-  return tapeSmooth((sig - TAPE_NATE_LION[0]) / 0.25) * tapeSmooth((TAPE_NATE_LEN - sig) / 0.3);
+  return tapeSmooth((sig - TAPE_NATE_WIDE) / 0.25) * tapeSmooth((TAPE_NATE_LEN - sig) / 0.3);
 }
 function tapeStocktonGloves(g, x, pr, sig, side) {
   var out = side < 0 ? 0 : 1, inn = 1 - out, sl = tapeNateSlap(sig), wide = tapeNateWide(sig);
@@ -573,21 +571,7 @@ function tapeStocktonGloves(g, x, pr, sig, side) {
   g[inn].x += side * pr * 0.25 * cock - side * pr * 0.95 * sl; g[inn].y -= pr * 0.2 * sl; g[inn].s = 1 + 0.35 * sl;
   [0, 1].forEach(function (j) { var d = j === out ? side : -side; g[j].x += d * pr * 0.38 * wide; g[j].y -= pr * 0.28 * wide; }); // arms out: "what?"
 }
-// In front of his portrait, behind his gloves: the lion bounding up at his
-// side (on the outside), roaring.
-function drawTapeLion(x, y, pr, sig, side) {
-  if (typeof lionRoarImg === "undefined" || !lionRoarImg.complete || !lionRoarImg.naturalWidth) return;
-  var a = TAPE_NATE_LION, up = tapeSmooth((sig - a[0]) / 0.3) * tapeSmooth((a[1] - sig) / 0.3);
-  if (up <= 0) return;
-  var roar = sig > TAPE_NATE_ROAR ? Math.max(0, 1 - (sig - TAPE_NATE_ROAR) / 0.8) : 0;
-  var h = pr * 1.9 * (0.7 + 0.3 * up) * (1 + 0.05 * Math.sin(sig * 32) * roar);
-  var lx = x + side * pr * (1.0 - 0.3 * up), ly = y + pr * (0.7 - 0.4 * up);
-  ctx.save();
-  ctx.globalAlpha *= Math.min(1, up * 1.5);
-  drawLionPic(lionRoarImg, LION_ROAR_ASPECT, lx, ly, h, side, -side * 0.08); // (nate-lion.js; facing in)
-  ctx.restore();
-}
-// Over everything: SLAP! on each hit, RAWR! as the lion roars.
+// Over everything: SLAP! on each hit.
 function drawTapeNateFront(x, y, pr, sig, side) {
   ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
   TAPE_NATE_SLAPS.forEach(function (at, j) {
@@ -603,16 +587,6 @@ function drawTapeNateFront(x, y, pr, sig, side) {
     ctx.fillStyle = "#ffffff"; ctx.fillText("SLAP!", 0, 0);
     ctx.restore();
   });
-  var r = sig - TAPE_NATE_ROAR;
-  if (r > 0 && r < 0.9) {
-    var p2 = tapePop(Math.min(1, r / 0.15)), shake = Math.sin(r * 50) * 3;
-    ctx.save(); ctx.globalAlpha *= Math.min(1, (0.9 - r) / 0.2);
-    ctx.translate(x + side * pr * 0.55 + shake, y - pr * 0.8); ctx.rotate(side * 0.12); ctx.scale(p2, p2);
-    ctx.font = "900 52px " + TAPE_IMPACT;
-    ctx.lineWidth = 8; ctx.strokeStyle = "#000"; ctx.strokeText("RAWR!", 0, 0);
-    ctx.fillStyle = "#ffb627"; ctx.fillText("RAWR!", 0, 0);
-    ctx.restore();
-  }
   ctx.restore();
 }
 

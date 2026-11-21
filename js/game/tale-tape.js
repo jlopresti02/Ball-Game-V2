@@ -444,7 +444,6 @@ function drawTapeFighter(ch, col, x, y, pr, t, tIn, side, sigAt, oppKind, oppSig
   if (kind === "katana" && sig >= 0) drawTapeKatana(g, x, y + bob, pr, sig, side); // (tape-taunts.js)
   if (kind === "burrito" && sig >= 0) drawTapeBurrito(g, x, y + bob, pr, sig, side); // (tape-taunts.js)
   if (kind === "sendloc" && sig >= 0) drawTapeSendLocPhone(g, pr, sig, side); // Khabib's sat-phone, in his glove (tape-taunts.js)
-  if (kind === "stockton" && sig >= 0) drawTapeLion(x, y + bob, pr, sig, side); // Nate's lion bounds up at his side (tape-taunts.js)
   // Draw the far glove first so the one coming at the camera is on top
   var order = g[0].s > g[1].s ? [1, 0] : [0, 1];
   order.forEach(function (j) { drawTapeGlove(ch, g[j], gr, side); });
