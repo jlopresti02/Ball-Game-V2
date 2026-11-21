@@ -108,11 +108,12 @@ function updateRapierLunge(self, other, dt) {
     var len = Math.min(d + other.r + 30, hcRayToWall(self.x, self.y, ux, uy, self.r));
     self.igbb = { move: "lunge", phase: "coil", t: 0, sx: self.x, sy: self.y, dx: ux, dy: uy, len: len, run: 0, hit: false };
     self.invincible = true;
-    floater(self.x, self.y - self.r - 30, cfg.coilText || "EN GARDE", cfg.coilKind || "note"); // (Bisping's "AVAST!" is a big call, bisping-cutlass.js)
+    if (cfg.coilText !== "") floater(self.x, self.y - self.r - 30, cfg.coilText || "EN GARDE", cfg.coilKind || "note"); // (Bisping's AVAST! is its own shout burst instead, bisping-cutlass.js)
     playSwordDraw();
   }
   var m = self.igbb;
   m.t += dt;
+  cutlassChargeTick(self, other, m, cfg, dt); // Bisping's AVAST!: the stomp, glint and big swing (bisping-cutlass.js)
   self.vx = 0; self.vy = 0; self.immuneCd = 1;
   if (over || !self.alive) { endRapierLunge(self); return false; }
   if (m.phase === "coil") {
@@ -231,11 +232,13 @@ function drawRapierArms(b, sw, sh, fsh, hand, ang, len, k, alpha, sideK, pz, inD
   drawBentArm(b, fsh, free, -sg);
   drawGloveAt(free.x, free.y, r * 0.2, b.char);
   if (inDuel && swordDuel.dId === b.id && swordDuel.slashLine && swordDuel.done) drawSlashLine(b, swordDuel);
+  ang += cutlassSpin(b); // Bisping's twirl after his charge (bisping-cutlass.js)
   var fl = cutlassStyle(b) ? cutlassFlip(b, hand.x, hand.y, ang) : 1; // (the cutlass edge turned toward them, bisping-cutlass.js)
   var dr = cutlassStyle(b) ? function (x, y, a2, l, kk, al) { drawCutlass(x, y, a2, l, kk, al, fl); } : drawRapier; // (or Bisping's cutlass, bisping-cutlass.js)
   drawTrail(sw.trail, function (g, a) { dr(g.x, g.y, g.ang, len, k, a); });
   dr(hand.x, hand.y, ang, len, k, 1);
   pushTrail(sw.trail, hand.x, hand.y, ang);
+  drawCutlassFx(b, hand, ang, len); // Bisping's AVAST! glint, speed lines and swing (bisping-cutlass.js)
   drawBentArm(b, sh, hand, sg);
   drawGloveAt(hand.x, hand.y, r * 0.22, b.char, ang);
   ctx.restore();

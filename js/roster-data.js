@@ -5287,15 +5287,14 @@ var SAVED_ROSTER = [
           3,
           5
         ],
-        "warn": 0.5,
+        "warn": 0.85,
         "range": 300,
         "speed": 1400,
         "damage": 22,
         "knockback": 1000,
         "wallSlams": 1,
         "slamDamage": 3,
-        "coilText": "AVAST!",
-        "coilKind": "crit",
+        "coilText": "",
         "lungeText": "BOARDING SLASH!",
         "hitText": "CUTLASS SLASH!"
       }

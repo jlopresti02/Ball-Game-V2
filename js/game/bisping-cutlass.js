@@ -49,14 +49,7 @@ function cutlassNoRival(b, o) { return !!(b && o && b.rapier && o.rapier && (cut
 // at them, -PI/2 straight up), free hand x/y, lean toward them.
 function cutlassTarget(b, sw, other) {
   var t = sw.t + b.id * 1.3, sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), m = b.igbb;
-  if (m && m.move === "lunge" && (m.phase === "coil" || m.phase === "lunge")) {
-    var sg = sw.side >= 0 ? 1 : -1, th = Math.atan2(m.dy, m.dx);
-    var a = sg > 0 ? th : Math.PI - th, cx = Math.cos(th) * sg, cy = Math.sin(th);
-    // Coiled: blade cocked back over his shoulder. Then swung across in front.
-    if (m.phase === "coil") return { key: "coil", rate: 16, p: [cx * 0.1, cy * 0.1 - 0.45, a - 2.1, -0.7, 0.2, -0.2] };
-    var run = m.len ? Math.min(1, m.run / m.len) : 0;
-    return { key: "lunge", rate: 22, p: [cx * 0.95, cy * 0.95 - 0.1, a - 1.6 + 2.2 * ease(run * 1.4), -0.75, 0.1, 0.32] };
-  }
+  if (m && m.move === "lunge") return cutlassChargePose(b, sw, m);
   if (sw.parry >= 0) {
     var p = sw.parry / SWORD_SLASH;
     if (p < 0.4) return { key: "parry", rate: 30, p: [0.75, -0.5, -1.45, -0.6, 0.2, 0.0] };   // blade upright across him, taking it on the edge
@@ -72,6 +65,158 @@ function cutlassTarget(b, sw, other) {
   // on his hip, bouncing on his feet.
   var sway = Math.sin(t * 1.7), bob = Math.abs(Math.sin(t * 4.2)), circ = Math.sin(t * 2.3);
   return { key: "ready", rate: 8, p: [0.6 + sway * 0.03, -0.32 - bob * 0.04, -0.85 + circ * 0.1, -0.62, 0.22, sway * 0.02] };
+}
+
+// ---------------------------------------------------------------- AVAST!
+//
+// The charge (Joe, 2026-11-21: "a better animation on the avast"), on the
+// rapier lunge's clock (rapier.js) with `lunge.warn` stretched for it:
+//   raise   (first 40% of the coil) the cutlass thrust straight up at the
+//           sky, his free glove pointing at them, a glint running up the
+//           blade to a star at the tip as he roars AVAST!
+//   cock    (the rest) blade dropped back behind his head, crouched, a stomp
+//           of dust at his feet as the red line locks
+//   charge  he runs down the line with the blade still back over his
+//           shoulder, speed lines streaming behind him, then the last part
+//           of the run it comes round in one big swing: a wide silver
+//           crescent swooshes across the line in front of him
+//   twirl   (the recovery) a spin of the cutlass off his wrist and back on
+//           guard
+function cutlassChargePose(b, sw, m) {
+  var sg = sw.side >= 0 ? 1 : -1, th = Math.atan2(m.dy, m.dx), cfg = b.char.rapier.lunge;
+  var a = sg > 0 ? th : Math.PI - th, cx = Math.cos(th) * sg, cy = Math.sin(th);
+  if (m.phase === "coil") {
+    var u = m.t / cfg.warn;
+    if (u < 0.4) return { key: "raise", rate: 18, p: [-0.45, -0.8, -Math.PI / 2 - 0.35, cx * 1.15, cy * 1.15 - 0.2, -0.12] }; // up at the sky off his back shoulder, pointing at them
+    return { key: "cock", rate: 14, p: [cx * -0.05, cy * -0.05 - 0.5, a - 2.5, cx * 0.55, cy * 0.55 - 0.05, -0.24] };              // back behind his head, crouched
+  }
+  if (m.phase === "lunge") {
+    var run = m.len ? Math.min(1, m.run / m.len) : 0, sw2 = ease((run - 0.45) / 0.45);
+    return { key: "charge", rate: 30, p: [cx * (0.5 + 0.5 * sw2), cy * (0.5 + 0.5 * sw2) - 0.35 + 0.3 * sw2, a - 2.4 + 3.3 * sw2, -0.8, 0.05, 0.35] };
+  }
+  // The recovery: follow-through out in front, then the twirl (cutlassSpin).
+  return { key: "follow", rate: 16, p: [0.85, 0.05, 0.75, -0.65, 0.15, 0.1] };
+}
+
+// From drawRapierArms (rapier.js): the twirl after the charge, added to the drawn angle.
+function cutlassSpin(b) {
+  var m = b.igbb;
+  if (cutlassStyle(b) && m && m.move === "lunge" && m.phase === "coil") { // cocked back, trembling to go
+    var cu = m.t / b.char.rapier.lunge.warn;
+    return cu > 0.45 ? Math.sin(m.t * 70) * 0.05 * Math.min(1, (cu - 0.45) / 0.2) : 0;
+  }
+  if (!cutlassStyle(b) || !m || m.move !== "lunge" || m.phase !== "recover") return 0;
+  var u = Math.min(1, m.t / LUNGE_RECOVER), sg = b.rapier.sword && b.rapier.sword.side >= 0 ? 1 : -1;
+  return ease((u - 0.15) / 0.75) * Math.PI * 2 * sg;
+}
+
+// From updateRapierLunge (rapier.js), every frame of the charge after its
+// clock moves: the stomp, the glint, the swing's sound and its crescent.
+function cutlassChargeTick(self, other, m, cfg, dt) {
+  if (!cutlassStyle(self)) return;
+  var u = m.phase === "coil" ? m.t / cfg.warn : 0;
+  if (m.phase === "coil" && u >= 0.12 && !m.cGlint) { m.cGlint = true; playSwordDraw(); }
+  if (m.phase === "coil" && u >= 0.62 && !m.cStomp) { // crouching into it: dust off his feet
+    m.cStomp = true;
+    if (!reduceMotion) {
+      shake = Math.max(shake, 5);
+      for (var i = 0; i < 16; i++) {
+        var a = i / 16 * Math.PI * 2, s = 140 + Math.random() * 90;
+        particles.push({ x: self.x + Math.cos(a) * self.r * 0.8, y: self.y + self.r * 0.7 + Math.sin(a) * self.r * 0.25, vx: Math.cos(a) * s, vy: Math.sin(a) * s * 0.35 - 20, life: 0.45, max: 0.45, size: 3 + Math.random() * 4, color: "#d8cdb5" });
+      }
+    }
+  }
+  if (m.phase === "lunge") {
+    var run = m.len ? m.run / m.len : 1;
+    if (!reduceMotion) for (var d = 0; d < 2; d++) particles.push({ x: self.x - m.dx * self.r * 0.6 + (Math.random() - 0.5) * self.r, y: self.y + self.r * 0.6, vx: -m.dx * 90 + (Math.random() - 0.5) * 60, vy: -m.dy * 90 - 30, life: 0.4, max: 0.4, size: 3 + Math.random() * 4, color: "#d8cdb5" });
+    if (run >= 0.45 && !m.cSwing) { // the big swing comes round
+      m.cSwing = { t: 0, x: self.x, y: self.y, ang: Math.atan2(m.dy, m.dx) };
+      playWhoosh();
+    }
+  }
+  if (m.cSwing) { m.cSwing.t += dt; m.cSwing.x = self.x; m.cSwing.y = self.y; }
+}
+
+// From drawRapierArms (rapier.js), over the blade: the glint and star on the
+// raised blade, speed lines on the charge, the crescent of the swing.
+function drawCutlassFx(b, hand, ang, len) {
+  var m = b.igbb;
+  if (!cutlassStyle(b) || !m || m.move !== "lunge") return;
+  var cfg = b.char.rapier.lunge, r = b.r;
+  ctx.save();
+  if (m.phase === "coil") {
+    var u = m.t / cfg.warn, g = Math.max(0, Math.min(1, (u - 0.1) / 0.3)); // the glint runs up the blade
+    if (g > 0 && u < 0.6) {
+      var ca = Math.cos(ang), sa = Math.sin(ang), gx = hand.x + ca * len * g, gy = hand.y + sa * len * g;
+      var star = Math.sin(Math.min(1, (u - 0.1) / 0.5) * Math.PI) * r * 0.95;
+      ctx.save();
+      ctx.translate(gx, gy);
+      ctx.strokeStyle = "rgba(255,240,180," + (0.7 * star / r) + ")"; ctx.lineWidth = 3; // a ring of light off it
+      ctx.beginPath(); ctx.arc(0, 0, star * 0.75, 0, Math.PI * 2); ctx.stroke();
+      ctx.rotate(u * 3);
+      ctx.fillStyle = "rgba(255,255,255,0.97)"; ctx.shadowColor = "#fff2a8"; ctx.shadowBlur = 22;
+      ctx.beginPath();
+      for (var i = 0; i < 8; i++) { var aa = i * Math.PI / 4, rr = i % 2 ? star * 0.14 : (i % 4 ? star * 0.6 : star); ctx.lineTo(Math.cos(aa) * rr, Math.sin(aa) * rr); }
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    drawAvastBurst(b, u);
+  } else if (m.phase === "lunge") {
+    // Speed lines streaming off behind him.
+    var th = Math.atan2(m.dy, m.dx), px = -m.dy, py = m.dx;
+    ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.lineCap = "round";
+    for (var k = 0; k < 6; k++) {
+      var off = (k - 2.5) * r * 0.32, l = r * (1.1 + 0.5 * ((k * 37) % 5) / 4);
+      var bx = b.x - m.dx * r * 1.05 + px * off, by = b.y - m.dy * r * 1.05 + py * off;
+      ctx.lineWidth = 3 - Math.abs(k - 2.5) * 0.5;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - m.dx * l, by - m.dy * l); ctx.stroke();
+    }
+  }
+  // The crescent: a wide silver swoosh across the line in front of him.
+  var cs = m.cSwing;
+  if (cs && cs.t < 0.42) {
+    var f = cs.t / 0.42, grow = easeOut(Math.min(1, f / 0.35)), fade = 1 - ease((f - 0.35) / 0.65);
+    var R = r * (0.5 + CUTLASS_LEN) * 0.92, sg = b.rapier.sword && b.rapier.sword.side >= 0 ? 1 : -1;
+    var a0 = cs.ang - sg * 1.5, a1 = cs.ang - sg * 1.5 + sg * 3.0 * grow;
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = "rgba(238,244,252,0.95)"; ctx.shadowColor = "#ffffff"; ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.arc(cs.x, cs.y, R, a0, a1, sg < 0);
+    ctx.arc(cs.x + Math.cos(cs.ang) * r * 0.35, cs.y + Math.sin(cs.ang) * r * 0.35, R * 0.78, a1, a0, sg > 0);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(255,214,120,0.95)"; ctx.lineWidth = 4; // a gold edge on the swing
+    ctx.beginPath(); ctx.arc(cs.x, cs.y, R, a0, a1, sg < 0); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// AVAST! as a comic shout: a jagged white burst over his head that pops in
+// and shakes while he roars it, through the wind-up.
+function drawAvastBurst(b, u) {
+  var r = b.r, pop = u < 0.12 ? easeOut(u / 0.12) * 1.15 : u < 0.2 ? 1.15 - 0.15 * ease((u - 0.12) / 0.08) : 1;
+  var jx = u < 0.6 ? Math.sin(u * 90) * r * 0.04 : 0, jy = u < 0.6 ? Math.cos(u * 77) * r * 0.03 : 0;
+  var o = balls[1 - b.id], toward = o && o.x < b.x ? -1 : 1; // up on their side, clear of the raised blade
+  var x = b.x + toward * r * 1.15 + jx, y = b.y - r * 1.75 + jy, w = r * 1.55 * pop, h = r * 0.8 * pop;
+  if (pop <= 0) return;
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(-0.08);
+  ctx.beginPath();
+  for (var i = 0; i < 18; i++) { // the spiky outline
+    var a = i / 18 * Math.PI * 2, k = i % 2 ? 0.74 : 1.0;
+    ctx.lineTo(Math.cos(a) * w * k, Math.sin(a) * h * k);
+  }
+  ctx.closePath();
+  ctx.fillStyle = "#ffffff"; ctx.fill();
+  ctx.strokeStyle = "#1f2328"; ctx.lineWidth = 3.5; ctx.lineJoin = "round"; ctx.stroke();
+  // A little tail down to his head.
+  var tx = -toward * w * 0.55; // the tail leans back down to his head
+  ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.moveTo(tx - w * 0.12, h * 0.6); ctx.lineTo(tx - toward * w * 0.18, h * 1.25); ctx.lineTo(tx + w * 0.12, h * 0.58); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(tx - w * 0.12, h * 0.64); ctx.lineTo(tx - toward * w * 0.18, h * 1.25); ctx.lineTo(tx + w * 0.12, h * 0.62); ctx.stroke();
+  ctx.font = "900 " + Math.round(r * 0.5 * pop) + "px Impact, 'Arial Black', sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.lineWidth = 5; ctx.strokeStyle = "#5a0f18"; ctx.strokeText("AVAST!", 0, 2);
+  ctx.fillStyle = "#e3b23c"; ctx.fillText("AVAST!", 0, 2);
+  ctx.restore();
 }
 
 // When he's stood still and nothing's coming (u = 0..1).
