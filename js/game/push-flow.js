@@ -47,15 +47,33 @@ var PUSH_FLOW = {
   pivot: 0.36,        // s the pivot takes
   pivotAngle: 1.9,    // radians he swings round them (about 110 degrees)
   exitSpeed: 400,     // px/s he slides out at
-  cooldown: 1.4       // s before the same pair can do it again
+  cooldown: 1.4,      // s before the same pair can do it again
+  // A runaway push (Joe, 2026-11-21, round 2): relative odds of what happens.
+  // `punches`: the pusher was throwing (a combination, a weave combo, a punch
+  // out); `walk`: he was just walking them back. dirty only for a weaver
+  // (the BMF base) or one mid combination.
+  punches: { plant: 35, duck: 25, dirty: 25, tie: 15 },
+  walk: { plant: 35, duck: 25, tie: 40 },
+  plant: { shell: 0.32, end: 0.55, knockback: 300 }, // shells up, eats the shots on the gloves, swings back
+  duck: { dur: 0.34, slide: 72 },                    // ducks the punch and slides out under it
+  dirty: { shots: 3, gap: 0.15, end: 0.62, mult: 0.6, shove: 320 }, // collar tie, short uppercuts, shove off
+  kickPivot: { cage: 30, open: 8, near: 30 }         // % of kicks landing on him he pivots off (within `near` px of the cage, or in the open)
 };
 
 var pfPair = null; // { a, b, kind: "tie"|"pivot", t, dur, ... } the one running now
 var pfWatch = null; // { balls, touchT, overN, pinT, cd }
 
-function pushFlowHeld(b) { return !!(pfPair && b && ((pfPair.a === b && !pfPair.formA) || pfPair.b === b)); }
+function pushFlowHeld(b) { return !!(pfPair && b && ((pfPair.a === b && !pfPair.loose) || pfPair.b === b)); }
 // While tied up both his hands are on them; while pivoting the one getting out frames with his.
-function pushFlowHandsBusy(b) { return !!(pfPair && b && b.alive && (pfPair.kind === "tie" ? pushFlowHeld(b) : pfPair.b === b)); }
+function pushFlowHandsBusy(b) {
+  var m = pfPair;
+  if (!m || !b || !b.alive) return false;
+  if (m.kind === "tie") return m.a === b || m.b === b;
+  if (m.kind === "pivot") return m.b === b;                       // framing on them
+  if (m.kind === "plant") return m.b === b && m.t < PUSH_FLOW.plant.shell; // shelled up (then the counter is a normal punch)
+  if (m.kind === "dirty") return m.a === b;                       // collar tie and uppercuts
+  return false;
+}
 
 // Walking about in a weapon form (Tony's katanas, Jiří's samurai run): he
 // can still be pivoted off, though he's never stopped or held for it.
@@ -114,7 +132,7 @@ function tickPushFlow(dt) {
   var sa = Math.sqrt(a.vx * a.vx + a.vy * a.vy), sc = Math.sqrt(c.vx * c.vx + c.vy * c.vy);
   var drive = Math.max(Math.min(aIn, -cIn), Math.min(cIn, -aIn)); // the slower of pusher-in and pushed-back
   if (Math.max(sa, sc) > P.over && drive > P.over * 0.5) w.overN++; else w.overN = 0;
-  if (w.overN >= P.overTicks && fa && fc) { pfStartTie(a, c, "runaway"); return; }
+  if (w.overN >= P.overTicks && fa && fc) { if (aIn >= cIn) pfStartRunaway(a, c); else pfStartRunaway(c, a); return; }
   if (pfInMove(a) || pfInMove(c)) { w.touchT = 0; pfCool(w, dt); return; }
   // Pinned on the cage with the other walking in: he pivots off.
   for (var i = 0; i < 2; i++) {
@@ -128,7 +146,7 @@ function tickPushFlow(dt) {
   if (!(fa && fc)) return;
   // Walking into each other in the open for too long: tie-up.
   if (aIn > 20 || cIn > 20) w.touchT += dt; else w.touchT = 0;
-  if (w.touchT >= P.pushTime && !pfWalls(a, P.wall) && !pfWalls(c, P.wall)) pfStartTie(a, c, "push");
+  if (w.touchT >= P.pushTime && !pfWalls(a, P.wall) && !pfWalls(c, P.wall)) { if (aIn >= cIn) pfStartRunaway(a, c); else pfStartRunaway(c, a); }
 }
 
 // Off the cage and apart, the pin wears off (slowly, so rattling in and out of a corner adds up).
@@ -159,17 +177,94 @@ function pfStartTie(a, c, why) {
   crowdReact(0.15);
 }
 
-function pfStartPivot(p, v) {
+// A runaway push: `atk` driving `def` back. What happens depends on whether he
+// was punching his way in or just walking them back.
+function pfStartRunaway(atk, def) {
+  var punching = !!(atk.combo || atk.cmb || atk.flow || atk.punch || atk.jabAnim);
+  var odds = punching ? PUSH_FLOW.punches : PUSH_FLOW.walk, pick = {}, tot = 0, k;
+  for (k in odds) {
+    if (k === "dirty" && !(atk.char.hasWeave || atk.combo || atk.cmb)) continue;
+    pick[k] = odds[k]; tot += odds[k];
+  }
+  var r = Math.random() * tot, kind = "tie";
+  for (k in pick) { r -= pick[k]; if (r < 0) { kind = k; break; } }
+  if (kind === "plant") pfStartPlant(atk, def);
+  else if (kind === "duck") pfStartDuck(atk, def);
+  else if (kind === "dirty") pfStartDirty(atk, def);
+  else pfStartTie(atk, def, punching ? "punches" : "walk");
+}
+
+function pfDir(a, b) { var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1; return { x: dx / d, y: dy / d, d: d }; }
+
+// PLANTS: he digs in, shells up and takes the next shots on the gloves, then
+// swings back. The swing is his own punch: it lands, or they weave, block or
+// slip it the way they always would (hurt runs their defense). After that the
+// fight carries on from right there, clinch and takedowns at their normal rates.
+function pfStartPlant(atk, def) {
+  pfStop(atk); pfStop(def);
+  var u = pfDir(atk, def);
+  pfPair = { kind: "plant", a: atk, b: def, t: 0, ux: u.x, uy: u.y, ax: atk.x, ay: atk.y, bx: def.x, by: def.y, shots: 0, swung: false };
+  floater(def.x, def.y - def.r - 30, "PLANTS!", "note");
+  playPunch(3);
+  if (!reduceMotion) shake = Math.max(shake, 3);
+}
+
+// DUCKED!: the next punch goes over his head and he slides out under it, away
+// along the open side; the puncher's left reaching where he was.
+function pfStartDuck(atk, def) {
+  pfStop(atk); pfStop(def);
+  var u = pfDir(atk, def), qx = -u.y, qy = u.x;
+  // Duck out toward the more open side.
+  var room = function (s) { var x = def.x + qx * s * 80, y = def.y + qy * s * 80; return Math.min(x - def.r, W - def.r - x, y - def.r, H - def.r - y); };
+  var side = room(1) >= room(-1) ? 1 : -1;
+  atk.jabAnim = { t: 0, dur: 0.26, sign: 1, big: true, dx: u.x, dy: u.y };
+  pfPair = { kind: "duck", a: atk, b: def, t: 0, ux: u.x, uy: u.y, qx: qx * side, qy: qy * side, ax: atk.x, ay: atk.y, bx: def.x, by: def.y };
+  def.squash = { t: 0.22, max: 0.22, nx: 0, ny: 1 };
+  playWhoosh();
+}
+
+// DIRTY BOXING (the BMF, or one mid combination): he plants his last few shots:
+// lead hand behind their head, short uppercuts with the other, then shoves off.
+function pfStartDirty(atk, def) {
+  pfStop(atk); pfStop(def);
+  var u = pfDir(atk, def);
+  pfPair = { kind: "dirty", a: atk, b: def, t: 0, ux: u.x, uy: u.y, ax: atk.x, ay: atk.y, bx: def.x, by: def.y, shots: 0, hitT: -1 };
+  floater(atk.x, atk.y - atk.r - 30, "DIRTY BOXING!", "crit");
+  if (typeof playClinchGrab === "function") playClinchGrab(); else playPunch(4);
+  crowdReact(0.25);
+}
+
+// From hurt (match.js). Mid pivot or mid duck he's on his way out: nothing
+// lands. Otherwise a kick about to land on him, and he pivots off it instead
+// (more often with his back near the cage). True if it missed.
+function pushFlowDodge(v, source, attackerId) {
+  var P = PUSH_FLOW, kp = P.kickPivot;
+  if (pfPair && pfPair.b === v && (pfPair.kind === "pivot" || pfPair.kind === "duck") && attackerId != null && attackerId !== v.id) { v.justDodged = true; return true; }
+  if (!P.on || !kp || pfPair || attackerId == null || attackerId === v.id || !started || over) return false;
+  if (typeof SMOTHER_KICKS === "undefined" || SMOTHER_KICKS.indexOf(source) < 0) return false;
+  var p = balls[attackerId];
+  if (!p || !p.alive || p.igbb || p.grapple || p.grappled || sceneLocked() || (pfWatch && pfWatch.cd > 0)) return false;
+  if (!pfFree(v) || pfInMove(v)) return false;
+  var u = pfDir(p, v);
+  if (u.d - p.r - v.r > 40) return false; // too far to swing round him
+  var nearCage = pfWalls(v, kp.near) > 0;
+  if (Math.random() * 100 >= (nearCage ? kp.cage : kp.open)) return false;
+  pfStartPivot(p, v, true);
+  v.justDodged = true;
+  return true;
+}
+
+function pfStartPivot(p, v, offKick) {
   var form = pfForm(p);
-  if (!form) pfStop(p);
+  if (!form && !offKick) pfStop(p);
   pfStop(v);
   var ox = v.x - p.x, oy = v.y - p.y, d = Math.sqrt(ox * ox + oy * oy) || 1;
   // Round toward the middle of the ring.
   var cx = W / 2 - p.x, cy = H / 2 - p.y;
   var dir = (ox * cy - oy * cx) >= 0 ? 1 : -1;
   if (Math.abs(ox * cy - oy * cx) < 1) dir = Math.random() < 0.5 ? 1 : -1;
-  pfPair = { kind: "pivot", formA: form, a: p, b: v, t: 0, dur: PUSH_FLOW.pivot, px: p.x, py: p.y, a0: Math.atan2(oy, ox), dir: dir, dist: Math.max(d, p.r + v.r) };
-  floater(v.x, v.y - v.r - 30, "PIVOT!", "dodge");
+  pfPair = { kind: "pivot", formA: form, loose: form || !!offKick, kick: !!offKick, a: p, b: v, t: 0, dur: PUSH_FLOW.pivot, px: p.x, py: p.y, a0: Math.atan2(oy, ox), dir: dir, dist: Math.max(d, p.r + v.r) };
+  floater(v.x, v.y - v.r - 30, offKick ? "PIVOTS OFF THE KICK!" : "PIVOT!", "dodge");
   playWhoosh();
   crowdReact(0.15);
 }
@@ -188,7 +283,7 @@ function pfPlaceTie(t) {
 function pfRun(dt) {
   var m = pfPair, a = m.a, c = m.b;
   // Something else took over (a KO, a special landing on them): let go.
-  var gone = over || !a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.slam || c.slam || (a.igbb && !m.formA) || c.igbb || a.koOut || c.koOut || sceneLocked() || (m.formA && !pfForm(a));
+  var gone = over || !a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.slam || c.slam || (a.igbb && !m.formA) || c.igbb || a.koOut || c.koOut || sceneLocked() || (m.formA && !pfForm(a)) || (m.kick && a.igbb);
   m.t += dt;
   if (gone) { pfPair = null; pfWatch.cd = PUSH_FLOW.cooldown; return; }
   if (m.kind === "tie") {
@@ -198,9 +293,12 @@ function pfRun(dt) {
     if (m.t >= m.dur) pfBreak();
     return;
   }
+  if (m.kind === "plant") { pfRunPlant(m, a, c); return; }
+  if (m.kind === "duck") { pfRunDuck(m, a, c); return; }
+  if (m.kind === "dirty") { pfRunDirty(m, a, c); return; }
   // The pivot: the pusher plants, the pinned one swings round him.
   var e = pfEase(m.t / m.dur), ang = m.a0 + m.dir * PUSH_FLOW.pivotAngle * e;
-  if (m.formA) { m.px = a.x; m.py = a.y; } // still walking in his form: swing round wherever he is
+  if (m.loose) { m.px = a.x; m.py = a.y; } // still walking in his form, or finishing his kick: swing round wherever he is
   else { a.x = m.px; a.y = m.py; a.vx = a.vy = 0; }
   c.x = Math.min(W - c.r, Math.max(c.r, m.px + Math.cos(ang) * m.dist));
   c.y = Math.min(H - c.r, Math.max(c.r, m.py + Math.sin(ang) * m.dist));
@@ -211,8 +309,71 @@ function pfRun(dt) {
     var ox = Math.cos(ang), oy = Math.sin(ang);                       // away from them
     var vx = tx * 0.75 + ox * 0.66, vy = ty * 0.75 + oy * 0.66, vl = Math.sqrt(vx * vx + vy * vy) || 1;
     c.vx = vx / vl * PUSH_FLOW.exitSpeed; c.vy = vy / vl * PUSH_FLOW.exitSpeed;
-    if (!m.formA) { a.vx = -Math.cos(m.a0) * 120; a.vy = -Math.sin(m.a0) * 120; } // a half step toward where he was
+    if (!m.loose) { a.vx = -Math.cos(m.a0) * 120; a.vy = -Math.sin(m.a0) * 120; } // a half step toward where he was
     pfPair = null; pfWatch.cd = PUSH_FLOW.cooldown; pfWatch.pinT = [0, 0]; pfWatch.touchT = 0;
+  }
+}
+
+function pfDone(m) { pfPair = null; pfWatch.cd = PUSH_FLOW.cooldown; pfWatch.touchT = 0; pfWatch.overN = 0; pfWatch.pinT = [0, 0]; }
+function pfHold(m, a, c) { a.x = m.ax; a.y = m.ay; c.x = m.bx; c.y = m.by; a.vx = a.vy = c.vx = c.vy = 0; }
+
+function pfRunPlant(m, a, c) {
+  var P = PUSH_FLOW.plant;
+  pfHold(m, a, c);
+  // Two of his punches thud into the shell.
+  if (m.shots < 2 && m.t >= 0.04 + m.shots * 0.14) {
+    m.shots++;
+    a.jabAnim = { t: 0, dur: 0.12, sign: m.shots % 2 ? 1 : -1, big: false, dx: m.ux, dy: m.uy };
+    if (m.shots === 1) floater(c.x, c.y - c.r - 8, "BLOCKED", "dodge");
+    playPunch(2);
+  }
+  if (!m.swung && m.t >= P.shell) {
+    m.swung = true;
+    var dmg = (c.char.hasPunch && c.char.punch) ? c.char.punch.damage : 10;
+    c.jabAnim = { t: 0, dur: 0.22, sign: 1, big: true, dx: -m.ux, dy: -m.uy };
+    var dealt = hurt(a, dmg, "punch", c.id);
+    if (dealt > 0) {
+      playPunch(dealt);
+      m.knock = true;
+      if (!reduceMotion) shake = Math.max(shake, 6);
+    } else if (!a.justDodged) floater(a.x, a.y - a.r - 8, "MISS", "dodge");
+    else playWhoosh();
+    if (typeof checkEnd === "function") checkEnd();
+  }
+  if (m.t >= P.end) {
+    if (m.knock && a.alive) { a.vx = -m.ux * P.knockback; a.vy = -m.uy * P.knockback; }
+    pfDone(m);
+  }
+}
+
+function pfRunDuck(m, a, c) {
+  var P = PUSH_FLOW.duck, k = pfEase(m.t / P.dur);
+  a.x = m.ax; a.y = m.ay; a.vx = a.vy = 0;
+  c.x = Math.min(W - c.r, Math.max(c.r, m.bx + m.qx * P.slide * k + m.ux * P.slide * 0.3 * k));
+  c.y = Math.min(H - c.r, Math.max(c.r, m.by + m.qy * P.slide * k + m.uy * P.slide * 0.3 * k));
+  c.vx = c.vy = 0;
+  if (!m.called && m.t >= 0.1) { m.called = true; floater(m.bx, m.by - c.r - 30, "DUCKED!", "dodge"); crowdReact(0.15); }
+  if (m.t >= P.dur) {
+    var vx = m.qx * 0.8 + m.ux * 0.6, vy = m.qy * 0.8 + m.uy * 0.6, vl = Math.sqrt(vx * vx + vy * vy) || 1;
+    c.vx = vx / vl * PUSH_FLOW.exitSpeed; c.vy = vy / vl * PUSH_FLOW.exitSpeed;
+    a.vx = m.ux * 160; a.vy = m.uy * 160; // carried on into where he was
+    pfDone(m);
+  }
+}
+
+function pfRunDirty(m, a, c) {
+  var P = PUSH_FLOW.dirty;
+  pfHold(m, a, c);
+  if (m.shots < P.shots && m.t >= 0.1 + m.shots * P.gap) {
+    m.shots++; m.hitT = m.t;
+    var base = a.char.hasWeave ? a.char.weave.comboDamage : ((a.char.hasPunch && a.char.punch) ? a.char.punch.damage * P.mult : 6);
+    var dealt = hurt(c, base, "combo", a.id);
+    if (dealt > 0) { playCritPunch(m.shots === P.shots); if (!reduceMotion) shake = Math.max(shake, 5); }
+    if (typeof checkEnd === "function") checkEnd();
+  }
+  if (m.t >= P.end) {
+    if (c.alive) { c.vx = m.ux * P.shove; c.vy = m.uy * P.shove; }
+    pfDone(m);
   }
 }
 
@@ -235,8 +396,12 @@ function drawPushFlowOver() {
   if (m.kind === "tie") {
     pfTieArms(m.a, m.b, m.swap, m.t);
     pfTieArms(m.b, m.a, -m.swap, m.t);
-  } else {
+  } else if (m.kind === "pivot") {
     pfFrameArms(m.b, m.a, m.t / m.dur);
+  } else if (m.kind === "plant" && m.t < PUSH_FLOW.plant.shell) {
+    pfShellArms(m.b, m.a);
+  } else if (m.kind === "dirty") {
+    pfDirtyArms(m.a, m.b, m);
   }
   ctx.restore();
 }
@@ -271,4 +436,35 @@ function pfFrameArms(b, v, k) {
   var hdR = { x: b.x + ux * r * 0.95 - qx * r * 0.35, y: b.y + uy * r * 0.95 - qy * r * 0.35 };
   strokeLimb(limb, armColor(b.char, -1), function () { ctx.moveTo(shR.x, shR.y); ctx.lineTo(hdR.x, hdR.y); });
   drawGloveAt(hdR.x, hdR.y, r * 0.24, b.char, Math.atan2(uy, ux));
+}
+
+// Shelled up: both gloves high in front of his face, elbows tight.
+function pfShellArms(b, v) {
+  var u = pfDir(b, v), qx = -u.y, qy = u.x, r = b.r, limb = r * 0.2;
+  [-1, 1].forEach(function (side) {
+    var sh = { x: b.x + u.x * r * 0.25 + qx * side * r * 0.62, y: b.y + u.y * r * 0.25 + qy * side * r * 0.62 };
+    var hd = { x: b.x + u.x * r * 0.92 + qx * side * r * 0.22, y: b.y + u.y * r * 0.92 + qy * side * r * 0.22 };
+    var el = { x: b.x + u.x * r * 0.55 + qx * side * r * 0.75, y: b.y + u.y * r * 0.55 + qy * side * r * 0.75 };
+    strokeLimb(limb, armColor(b.char, side), function () { ctx.moveTo(sh.x, sh.y); ctx.quadraticCurveTo(el.x, el.y, hd.x, hd.y); });
+    drawGloveAt(hd.x, hd.y, r * 0.27, b.char, Math.atan2(u.y, u.x));
+  });
+}
+
+// Dirty boxing: lead hand cupped behind their head, short uppercuts with the other.
+function pfDirtyArms(b, v, m) {
+  var u = pfDir(b, v), qx = -u.y, qy = u.x, r = b.r, R = v.r, limb = r * 0.2;
+  var shL = { x: b.x + u.x * r * 0.3 + qx * r * 0.62, y: b.y + u.y * r * 0.3 + qy * r * 0.62 };
+  var hdL = { x: v.x + u.x * R * 0.35 + qx * R * 0.45, y: v.y + u.y * R * 0.35 + qy * R * 0.45 };
+  var cpL = { x: (shL.x + hdL.x) / 2 + qx * r * 0.3, y: (shL.y + hdL.y) / 2 + qy * r * 0.3 };
+  strokeLimb(limb, armColor(b.char, 1), function () { ctx.moveTo(shL.x, shL.y); ctx.quadraticCurveTo(cpL.x, cpL.y, hdL.x, hdL.y); });
+  drawGloveAt(hdL.x, hdL.y, r * 0.24, b.char, Math.atan2(u.y, u.x));
+  // The uppercut: from tucked by his chin up into their chin, 0.12s each.
+  var since = m.hitT >= 0 ? m.t - m.hitT : 1, k = since < 0.12 ? Math.sin(since / 0.12 * Math.PI) : 0;
+  var shR = { x: b.x + u.x * r * 0.3 - qx * r * 0.62, y: b.y + u.y * r * 0.3 - qy * r * 0.62 };
+  var rest = { x: b.x + u.x * r * 0.9 - qx * r * 0.35, y: b.y + u.y * r * 0.9 - qy * r * 0.35 };
+  var chin = { x: v.x - u.x * R * 0.55 - qx * R * 0.1, y: v.y - u.y * R * 0.55 - qy * R * 0.1 - R * 0.25 };
+  var hdR = { x: rest.x + (chin.x - rest.x) * k, y: rest.y + (chin.y - rest.y) * k };
+  var elR = { x: (shR.x + hdR.x) / 2 - qx * r * 0.25, y: (shR.y + hdR.y) / 2 - qy * r * 0.25 + r * 0.2 * k };
+  strokeLimb(limb, armColor(b.char, -1), function () { ctx.moveTo(shR.x, shR.y); ctx.quadraticCurveTo(elR.x, elR.y, hdR.x, hdR.y); });
+  drawGloveAt(hdR.x, hdR.y, r * (0.24 + 0.05 * k), b.char, Math.atan2(u.y, u.x));
 }
