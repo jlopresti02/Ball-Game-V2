@@ -133,6 +133,7 @@ function startMatchSeeded(ch0, ch1) {
   resetCormier(); // the dents and SUPER SLAM! from Daniel Cormier's slams (cormier.js)
   resetPrates(); // Carlos Prates's smoke, butts, disco lights and baile funk (prates.js)
   resetProchazka(); // Jiří Procházka's blade lock and cut lines (prochazka.js)
+  resetKatanaDuel(); // Tony vs Jiří's katana duel (katana-duel.js)
   resetSpeech(); // voice-line speech bubbles (speech.js)
   resetTaleTape(); // the tale of the tape intro (tale-tape.js)
   resetEagleStrikes();
