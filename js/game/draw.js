@@ -132,13 +132,7 @@ function draw() {
     // Weaving slips the whole fighter sideways for a moment, and a taunting
     // fighter bounces on the spot. Everything below draws at the shifted spot.
     var wox = 0, woy = 0;
-    if (b.weaveAnim) {
-      var wa = b.weaveAnim, wk = Math.sin(Math.PI * wa.t / wa.dur);
-      var wsp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), wfx = 1, wfy = 0;
-      if (wsp > 1) { wfx = b.vx / wsp; wfy = b.vy / wsp; }
-      wox = -wfy * wa.sign * b.r * 0.75 * wk;
-      woy = wfx * wa.sign * b.r * 0.75 * wk;
-    }
+    var wvo = weaveFlowOffset(b); wox += wvo.x; woy += wvo.y; // the slip, gliding from one weave into the next (weave-flow.js)
     if (b.taunt && b.taunt.t > 0) woy -= Math.abs(Math.sin(b.taunt.t * 11)) * 6;
     var hjo = herbJoltOffset(b); wox += hjo.x; woy += hjo.y; // rocked by a bat or a cane (herbdean.js)
     var gbl = ganeBatLean(b); wox += gbl.x; woy += gbl.y; // throwing his weight into a bat swing (cheater.js)

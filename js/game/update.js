@@ -129,6 +129,7 @@ function update(dt) {
       b.weaveAnim.t += dt;
       if (b.weaveAnim.t >= b.weaveAnim.dur) b.weaveAnim = null;
     }
+    tickWeaveFlow(b, dt); // the weave's slip drawn smooth, a string of them flowing side to side (weave-flow.js)
     if (b.knockFly > 0) {
       // Launched by a combo finisher: flies at full launch speed for a moment
       // before the speed regulator starts easing it back down.

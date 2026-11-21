@@ -56,8 +56,13 @@ var PUSH_FLOW = {
   walk: { plant: 35, duck: 25, tie: 40 },
   plant: { shell: 0.32, end: 0.55, knockback: 300 }, // shells up, eats the shots on the gloves, swings back
   duck: { dur: 0.34, slide: 72 },                    // ducks the punch and slides out under it
-  dirty: { shots: 3, gap: 0.15, end: 0.62, mult: 0.6, shove: 320 }, // collar tie, short uppercuts, shove off
-  kickPivot: { cage: 30, open: 8, near: 30 }         // % of kicks landing on him he pivots off (within `near` px of the cage, or in the open)
+  // Dirty boxing: collar tie, then `shots` short shots (each `cycle` s: chamber,
+  // drive, back), the kinds in turn from `mix`, the last one shoves them off.
+  dirty: { shots: 4, cycle: 0.17, start: 0.1, mult: 0.6, shove: 340, pull: 7, mix: ["uppercut", "uppercut", "hook", "uppercut"] },
+  // Kicked while trapped on the cage (Joe, round 3): he checks it and gets out
+  // of there. % of the kicks that land on him within `near` px of the cage
+  // (`corner` with two walls that close).
+  kickCheck: { cage: 40, corner: 70, near: 30, shin: 0.22, move: 0.34, slide: 80 }
 };
 
 var pfPair = null; // { a, b, kind: "tie"|"pivot", t, dur, ... } the one running now
@@ -72,6 +77,7 @@ function pushFlowHandsBusy(b) {
   if (m.kind === "pivot") return m.b === b;                       // framing on them
   if (m.kind === "plant") return m.b === b && m.t < PUSH_FLOW.plant.shell; // shelled up (then the counter is a normal punch)
   if (m.kind === "dirty") return m.a === b;                       // collar tie and uppercuts
+  if (m.kind === "check") return m.b === b && m.t < PUSH_FLOW.kickCheck.shin + 0.05; // guard tight while the shin's up
   return false;
 }
 
@@ -234,24 +240,40 @@ function pfStartDirty(atk, def) {
   crowdReact(0.25);
 }
 
-// From hurt (match.js). Mid pivot or mid duck he's on his way out: nothing
-// lands. Otherwise a kick about to land on him, and he pivots off it instead
-// (more often with his back near the cage). True if it missed.
+// From hurt (match.js). Mid pivot, duck or check-and-move he's on his way
+// out: nothing lands. Otherwise a kick about to land on him while he's trapped
+// on the cage: he checks it with his shin (no damage) and moves out along the
+// cage toward open space. True if it didn't land.
 function pushFlowDodge(v, source, attackerId) {
-  var P = PUSH_FLOW, kp = P.kickPivot;
-  if (pfPair && pfPair.b === v && (pfPair.kind === "pivot" || pfPair.kind === "duck") && attackerId != null && attackerId !== v.id) { v.justDodged = true; return true; }
-  if (!P.on || !kp || pfPair || attackerId == null || attackerId === v.id || !started || over) return false;
+  var P = PUSH_FLOW, kc = P.kickCheck;
+  if (pfPair && pfPair.b === v && (pfPair.kind === "pivot" || pfPair.kind === "duck" || pfPair.kind === "check") && attackerId != null && attackerId !== v.id) { v.justDodged = true; return true; }
+  if (!P.on || !kc || pfPair || attackerId == null || attackerId === v.id || !started || over) return false;
   if (typeof SMOTHER_KICKS === "undefined" || SMOTHER_KICKS.indexOf(source) < 0) return false;
   var p = balls[attackerId];
   if (!p || !p.alive || p.igbb || p.grapple || p.grappled || sceneLocked() || (pfWatch && pfWatch.cd > 0)) return false;
   if (!pfFree(v) || pfInMove(v)) return false;
-  var u = pfDir(p, v);
-  if (u.d - p.r - v.r > 40) return false; // too far to swing round him
-  var nearCage = pfWalls(v, kp.near) > 0;
-  if (Math.random() * 100 >= (nearCage ? kp.cage : kp.open)) return false;
-  pfStartPivot(p, v, true);
+  var walls = pfWalls(v, kc.near);
+  if (!walls || Math.random() * 100 >= (walls >= 2 ? kc.corner : kc.cage)) return false;
+  pfStartCheck(p, v);
   v.justDodged = true;
   return true;
+}
+
+// The check: shin up to take it, then out along the cage, away from the kicker
+// and toward the middle. The kicker finishes his kick where he is.
+function pfStartCheck(p, v) {
+  pfStop(v);
+  var u = pfDir(p, v), kc = PUSH_FLOW.kickCheck;
+  // Out toward the middle, and sideways off the kicker's line, whichever side is more open.
+  var cx = W / 2 - v.x, cy = H / 2 - v.y, cl = Math.sqrt(cx * cx + cy * cy) || 1;
+  cx /= cl; cy /= cl;
+  var qx = -u.y, qy = u.x;
+  if (qx * cx + qy * cy < 0) { qx = -qx; qy = -qy; }
+  var ox = qx * 0.75 + cx * 0.65, oy = qy * 0.75 + cy * 0.65, ol = Math.sqrt(ox * ox + oy * oy) || 1;
+  pfPair = { kind: "check", loose: true, a: p, b: v, t: 0, ux: u.x, uy: u.y, bx: v.x, by: v.y, ox: ox / ol, oy: oy / ol, dur: kc.shin + kc.move };
+  floater(v.x, v.y - v.r - 8, "CHECKED", "dodge");
+  playPunch(12);
+  if (!reduceMotion) shake = Math.max(shake, 5);
 }
 
 function pfStartPivot(p, v, offKick) {
@@ -283,6 +305,7 @@ function pfPlaceTie(t) {
 function pfRun(dt) {
   var m = pfPair, a = m.a, c = m.b;
   // Something else took over (a KO, a special landing on them): let go.
+  if (m.kind === "check" && (over || !c.alive || c.grappled || c.slam || c.igbb || c.koOut)) { pfDone(m); return; }
   var gone = over || !a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.slam || c.slam || (a.igbb && !m.formA) || c.igbb || a.koOut || c.koOut || sceneLocked() || (m.formA && !pfForm(a)) || (m.kick && a.igbb);
   m.t += dt;
   if (gone) { pfPair = null; pfWatch.cd = PUSH_FLOW.cooldown; return; }
@@ -296,6 +319,7 @@ function pfRun(dt) {
   if (m.kind === "plant") { pfRunPlant(m, a, c); return; }
   if (m.kind === "duck") { pfRunDuck(m, a, c); return; }
   if (m.kind === "dirty") { pfRunDirty(m, a, c); return; }
+  if (m.kind === "check") { pfRunCheck(m, a, c); return; }
   // The pivot: the pusher plants, the pinned one swings round him.
   var e = pfEase(m.t / m.dur), ang = m.a0 + m.dir * PUSH_FLOW.pivotAngle * e;
   if (m.loose) { m.px = a.x; m.py = a.y; } // still walking in his form, or finishing his kick: swing round wherever he is
@@ -363,18 +387,40 @@ function pfRunDuck(m, a, c) {
 
 function pfRunDirty(m, a, c) {
   var P = PUSH_FLOW.dirty;
-  pfHold(m, a, c);
-  if (m.shots < P.shots && m.t >= 0.1 + m.shots * P.gap) {
+  // He pulls their head in on the tie, and each shot rocks it back.
+  var pull = P.pull * Math.min(1, m.t / 0.1), rock = m.hitT >= 0 ? Math.max(0, 1 - (m.t - m.hitT) / 0.1) * 5 : 0;
+  a.x = m.ax; a.y = m.ay; a.vx = a.vy = 0;
+  c.x = m.bx - m.ux * (pull - rock); c.y = m.by - m.uy * (pull - rock); c.vx = c.vy = 0;
+  var hitAt = P.start + m.shots * P.cycle + P.cycle * 0.7;
+  if (m.shots < P.shots && m.t >= hitAt) {
     m.shots++; m.hitT = m.t;
+    var kind = P.mix[(m.shots - 1) % P.mix.length], last = m.shots === P.shots;
     var base = a.char.hasWeave ? a.char.weave.comboDamage : ((a.char.hasPunch && a.char.punch) ? a.char.punch.damage * P.mult : 6);
-    var dealt = hurt(c, base, "combo", a.id);
-    if (dealt > 0) { playCritPunch(m.shots === P.shots); if (!reduceMotion) shake = Math.max(shake, 5); }
+    var dealt = hurt(c, base * (last ? 1.4 : 1), "combo", a.id);
+    if (dealt > 0) {
+      playCritPunch(last);
+      if (!reduceMotion) shake = Math.max(shake, last ? 9 : 5);
+      var hp = pfDirtyTarget(a, c, kind);
+      impacts.push({ x: hp.x, y: hp.y, nx: kind === "hook" ? pfSide(a, c) : 0, ny: kind === "hook" ? 0 : -1, life: 0.2, max: 0.2, color: "#ffffff" });
+      c.squash = kind === "hook" ? { t: 0.1, max: 0.1, nx: pfSide(a, c), ny: 0 } : { t: 0.1, max: 0.1, nx: 0, ny: -1 }; // head snapped up, or round
+    }
     if (typeof checkEnd === "function") checkEnd();
   }
-  if (m.t >= P.end) {
+  if (m.t >= P.start + P.shots * P.cycle + 0.06) {
     if (c.alive) { c.vx = m.ux * P.shove; c.vy = m.uy * P.shove; }
     pfDone(m);
   }
+}
+
+function pfRunCheck(m, a, c) {
+  var kc = PUSH_FLOW.kickCheck;
+  if (m.t < kc.shin) { c.x = m.bx; c.y = m.by; c.vx = c.vy = 0; return; }
+  var k = pfEase((m.t - kc.shin) / kc.move);
+  c.x = Math.min(W - c.r, Math.max(c.r, m.bx + m.ox * kc.slide * k));
+  c.y = Math.min(H - c.r, Math.max(c.r, m.by + m.oy * kc.slide * k));
+  c.vx = c.vy = 0;
+  if (!m.out && k > 0.2) { m.out = true; floater(c.x, c.y - c.r - 30, "OFF THE CAGE!", "note"); playWhoosh(); }
+  if (m.t >= m.dur) { c.vx = m.ox * PUSH_FLOW.exitSpeed; c.vy = m.oy * PUSH_FLOW.exitSpeed; pfDone(m); }
 }
 
 function pfBreak() {
@@ -402,6 +448,9 @@ function drawPushFlowOver() {
     pfShellArms(m.b, m.a);
   } else if (m.kind === "dirty") {
     pfDirtyArms(m.a, m.b, m);
+  } else if (m.kind === "check" && m.t < PUSH_FLOW.kickCheck.shin + 0.05) {
+    pfCheckShin(m.b, m.a, m.t / PUSH_FLOW.kickCheck.shin);
+    pfShellArms(m.b, m.a);
   }
   ctx.restore();
 }
@@ -450,21 +499,80 @@ function pfShellArms(b, v) {
   });
 }
 
-// Dirty boxing: lead hand cupped behind their head, short uppercuts with the other.
+// Dirty boxing is drawn the way the fighters are: faces front on, so "up"
+// on screen is up their body. `sx` is the side they're on (left or right).
+function pfSide(b, v) { return v.x >= b.x ? 1 : -1; }
+// Where each shot lands: an uppercut up under the chin, a hook round onto the cheek.
+function pfDirtyTarget(b, v, kind) {
+  var sx = pfSide(b, v), R = v.r;
+  if (kind === "hook") return { x: v.x - sx * R * 0.3, y: v.y - R * 0.32 };
+  return { x: v.x - sx * R * 0.22, y: v.y + R * 0.02 };
+}
+
+// Dirty boxing, his own two arms: the lead arm up over their head in a collar
+// tie (glove cupped on the back of their head, yanking it in on each shot),
+// the other hand chambering low by his hip and ripping up into the chin, or
+// out wide and round for the hook, with a swoosh along it.
 function pfDirtyArms(b, v, m) {
-  var u = pfDir(b, v), qx = -u.y, qy = u.x, r = b.r, R = v.r, limb = r * 0.2;
-  var shL = { x: b.x + u.x * r * 0.3 + qx * r * 0.62, y: b.y + u.y * r * 0.3 + qy * r * 0.62 };
-  var hdL = { x: v.x + u.x * R * 0.35 + qx * R * 0.45, y: v.y + u.y * R * 0.35 + qy * R * 0.45 };
-  var cpL = { x: (shL.x + hdL.x) / 2 + qx * r * 0.3, y: (shL.y + hdL.y) / 2 + qy * r * 0.3 };
-  strokeLimb(limb, armColor(b.char, 1), function () { ctx.moveTo(shL.x, shL.y); ctx.quadraticCurveTo(cpL.x, cpL.y, hdL.x, hdL.y); });
-  drawGloveAt(hdL.x, hdL.y, r * 0.24, b.char, Math.atan2(u.y, u.x));
-  // The uppercut: from tucked by his chin up into their chin, 0.12s each.
-  var since = m.hitT >= 0 ? m.t - m.hitT : 1, k = since < 0.12 ? Math.sin(since / 0.12 * Math.PI) : 0;
-  var shR = { x: b.x + u.x * r * 0.3 - qx * r * 0.62, y: b.y + u.y * r * 0.3 - qy * r * 0.62 };
-  var rest = { x: b.x + u.x * r * 0.9 - qx * r * 0.35, y: b.y + u.y * r * 0.9 - qy * r * 0.35 };
-  var chin = { x: v.x - u.x * R * 0.55 - qx * R * 0.1, y: v.y - u.y * R * 0.55 - qy * R * 0.1 - R * 0.25 };
-  var hdR = { x: rest.x + (chin.x - rest.x) * k, y: rest.y + (chin.y - rest.y) * k };
-  var elR = { x: (shR.x + hdR.x) / 2 - qx * r * 0.25, y: (shR.y + hdR.y) / 2 - qy * r * 0.25 + r * 0.2 * k };
-  strokeLimb(limb, armColor(b.char, -1), function () { ctx.moveTo(shR.x, shR.y); ctx.quadraticCurveTo(elR.x, elR.y, hdR.x, hdR.y); });
-  drawGloveAt(hdR.x, hdR.y, r * (0.24 + 0.05 * k), b.char, Math.atan2(u.y, u.x));
+  var P = PUSH_FLOW.dirty, sx = pfSide(b, v), r = b.r, R = v.r, limb = r * 0.21;
+  var idx = Math.floor((m.t - P.start) / P.cycle), p = (m.t - P.start) / P.cycle - idx;
+  var active = m.t >= P.start && idx < P.shots;
+  var kind = P.mix[Math.max(0, idx) % P.mix.length];
+  var hitK = m.hitT >= 0 ? Math.max(0, 1 - (m.t - m.hitT) / 0.1) : 0;
+  var tie = Math.min(1, m.t / 0.1);
+  // Lead arm: over the top to the back of their head.
+  var shL = { x: b.x + sx * r * 0.55, y: b.y - r * 0.3 };
+  var grip = { x: v.x - sx * R * 0.05 - sx * 4 * hitK, y: v.y - R * 0.78 + 3 * hitK };
+  var guardL = { x: b.x + sx * r * 0.85, y: b.y - r * 0.35 };
+  var hdL = { x: guardL.x + (grip.x - guardL.x) * tie, y: guardL.y + (grip.y - guardL.y) * tie };
+  var elL = { x: (shL.x + hdL.x) / 2, y: Math.min(shL.y, hdL.y) - r * 0.45 * tie };
+  strokeLimb(limb, armColor(b.char, 1), function () { ctx.moveTo(shL.x, shL.y); ctx.quadraticCurveTo(elL.x, elL.y, hdL.x, hdL.y); });
+  drawGloveAt(hdL.x, hdL.y, r * 0.24, b.char, sx > 0 ? Math.PI * 0.35 : Math.PI * 0.65);
+  // Rear arm.
+  var shR = { x: b.x + sx * r * 0.2, y: b.y + r * 0.05 };
+  var rest = { x: b.x + sx * r * 0.7, y: b.y - r * 0.05 };
+  var tgt = pfDirtyTarget(b, v, kind), chamber, ctl;
+  if (kind === "hook") {
+    chamber = { x: b.x + sx * r * 0.25, y: b.y - r * 0.55 };
+    ctl = { x: (b.x + v.x) / 2, y: Math.min(chamber.y, tgt.y) - r * 0.55 };
+  } else {
+    chamber = { x: b.x + sx * r * 0.45, y: b.y + r * 0.62 };
+    ctl = { x: tgt.x - sx * r * 0.1, y: Math.max(chamber.y, tgt.y) + r * 0.35 };
+  }
+  var drive = function (k) { var a1 = 1 - k; return { x: a1 * a1 * chamber.x + 2 * a1 * k * ctl.x + k * k * tgt.x, y: a1 * a1 * chamber.y + 2 * a1 * k * ctl.y + k * k * tgt.y }; };
+  var hd;
+  if (!active) hd = rest;
+  else if (p < 0.35) { var k1 = pfEase(p / 0.35); hd = { x: rest.x + (chamber.x - rest.x) * k1, y: rest.y + (chamber.y - rest.y) * k1 }; }
+  else if (p < 0.7) hd = drive(pfEase((p - 0.35) / 0.35));
+  else { var k3 = pfEase((p - 0.7) / 0.3); hd = { x: tgt.x + (rest.x - tgt.x) * k3, y: tgt.y + (rest.y - tgt.y) * k3 }; }
+  if (active && p > 0.38 && p < 0.95) {
+    var upto = Math.min(1, (p - 0.35) / 0.35), from = Math.max(0, upto - 0.7), fade = p < 0.7 ? 1 : 1 - (p - 0.7) / 0.25;
+    ctx.save(); ctx.lineCap = "round";
+    [[theme.wall, limb * 0.8 + 4, 0.3], ["#ffffff", limb * 0.8, 0.9]].forEach(function (pass) {
+      ctx.globalAlpha = pass[2] * fade; ctx.strokeStyle = pass[0]; ctx.lineWidth = pass[1];
+      ctx.beginPath();
+      for (var i = 0; i <= 10; i++) { var q = drive(from + (upto - from) * i / 10); if (i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); }
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+  // Elbow: tucked under for the uppercut, up and out for the hook.
+  var elR = kind === "hook" && active ? { x: (shR.x + hd.x) / 2 - sx * r * 0.1, y: Math.min(shR.y, hd.y) - r * 0.25 }
+    : { x: (shR.x + hd.x) / 2 - sx * r * 0.15, y: Math.max(shR.y, hd.y) + r * 0.22 };
+  strokeLimb(limb, armColor(b.char, -1), function () { ctx.moveTo(shR.x, shR.y); ctx.quadraticCurveTo(elR.x, elR.y, hd.x, hd.y); });
+  var punching = active && p > 0.45 && p < 0.8;
+  drawGloveAt(hd.x, hd.y, r * (punching ? 0.29 : 0.25), b.char, kind === "hook" ? (sx > 0 ? 0 : Math.PI) : -Math.PI / 2 + sx * 0.5);
+}
+
+// Checking the kick: his lead leg comes up, knee turned out toward the kicker.
+function pfCheckShin(b, atk, k) {
+  var u = pfDir(b, atk), qx = -u.y, qy = u.x, r = b.r, e = Math.sin(Math.PI * Math.min(1, k));
+  var hip = { x: b.x + u.x * r * 0.35 + qx * r * 0.35, y: b.y + u.y * r * 0.35 + qy * r * 0.35 + r * 0.25 };
+  var knee = { x: hip.x + (u.x * 0.75 + qx * 0.55) * r * (0.45 + 0.4 * e), y: hip.y + (u.y * 0.75 + qy * 0.55) * r * (0.45 + 0.4 * e) - r * 0.2 * e };
+  var foot = { x: knee.x - u.x * r * 0.15 + qx * r * 0.35, y: knee.y - u.y * r * 0.15 + qy * r * 0.35 + r * 0.45 };
+  drawBjjLeg(b.char, hip, knee, foot, r * 0.17, 0, r * 0.3);
+  if (k < 0.45) {
+    ctx.save(); ctx.globalAlpha = 1 - k / 0.45; ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(knee.x, knee.y, r * 0.28, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  }
 }
