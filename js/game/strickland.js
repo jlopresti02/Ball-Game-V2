@@ -1083,7 +1083,7 @@ function skEagleStrike(self, other, e) {
 
 function stricklandShellStance(b) {
   return !!(b.sk && b.alive && !b.koOut && !b.kick && !b.grappled && !b.grapple && !b.sprawl && !subLocked(b) && !b.combo && !b.swing &&
-    !b.taunt && !b.mock && !b.punch && !b.throwAnim && !b.koRush && !b.koPunch && !b.igbb && !b.shelled && !b.angry && !b.dizzy && !b.dazed && !b.skTwo);
+    !b.taunt && !b.mock && !b.punch && !b.throwAnim && !b.koRush && !b.koPunch && !b.igbb && !b.shelled && !b.angry && !b.dizzy && !b.dazed && !b.skTwo && !pushFlowHandsBusy(b)); // (arms on them in a tie-up, push-flow.js)
 }
 // His hands are drawn by drawStrickland: the shell, the bike, the overhands
 // (drawHands skips them, draw-attacks.js).

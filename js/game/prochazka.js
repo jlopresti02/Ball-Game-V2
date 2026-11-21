@@ -138,7 +138,7 @@ function prochazkaHandsBusy(b) {
 }
 function jpHandsFree(b) {
   return !(b.punch || b.kick || b.taunt || b.combo || b.flow || b.koRush || b.koPunch || b.throwAnim || b.jabAnim || b.shelled ||
-    b.igbb || b.swing || b.mock || b.elbowAnim || b.kneeAnim || b.cmb || b.plum || b.fknee || b.chAct || b.cheater || clinchBusy(b)); // (his arms are on them in the clinch, clinch.js)
+    b.igbb || b.swing || b.mock || b.elbowAnim || b.kneeAnim || b.cmb || b.plum || b.fknee || b.chAct || b.cheater || clinchBusy(b) || pushFlowHandsBusy(b)); // (his arms are on them in the clinch, clinch.js; in a tie-up or framing off the cage, push-flow.js)
 }
 
 // ---------------------------------------------------------------- setup

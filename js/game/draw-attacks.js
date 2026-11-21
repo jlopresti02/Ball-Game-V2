@@ -151,6 +151,7 @@ function drawHands(b, other) {
   if (pratesHandsBusy(b)) return; // lighting up, or the Rubber Pistol (drawPrates, prates.js)
   if (jonClinchHandsBusy(b)) return; // Jon Jones's arms locked round them (drawJonClinch, jon-clinch.js)
   if (clinchHandsBusy(b)) return; // arms tied round them in the clinch (drawClinchOver, clinch.js)
+  if (pushFlowHandsBusy(b)) return; // pummelling in a tie-up, or framing to pivot off the cage (drawPushFlowOver, push-flow.js)
   if (topRopeDrawnApart(b)) return; // on the top rope or in the air (drawTopRopeOver)
   if (jonHandsBusy(b) || duckHandsBusy(b)) return; // hands raised, summoning goats (drawGoatStampede)
   if (auraHandsBusy(b)) return; // dancing, the cape, the bull (drawAuraFarm)

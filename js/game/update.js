@@ -42,6 +42,7 @@ function update(dt) {
     b.x = Math.min(W - b.r, Math.max(b.r, b.x));
     b.y = Math.min(H - b.r, Math.max(b.r, b.y));
   });
+  tickPushFlow(dt); // a runaway push ties up and breaks, a fighter pinned on the cage pivots off (push-flow.js)
   impacts = impacts.filter(function (im) { im.life -= dt; return im.life > 0; });
   updateReferee(dt);
   tickRefNap(dt);   // the ref nodding off in Gane's fights (cheater.js)
