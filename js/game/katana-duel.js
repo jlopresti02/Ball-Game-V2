@@ -31,7 +31,7 @@
 "use strict";
 
 var KD_DEFAULT = { on: true, exchanges: 9, tonyWins: 50, damage: 120, knockback: 1150, wallSlams: 1, slamDamage: 6 };
-var KD_SET = 0.35, KD_LOCK = 0.7;
+var KD_SET = 0.62, KD_LOCK = 0.7; // (the set: Jiří backflips and Tony turtle-slides apart to their marks)
 // One turn: coil (WIND), the cut (to HIT, blade on blade), held a moment, back to guard by BACK, next turn at EX.
 var KD_WIND = 0.1, KD_HIT = 0.15, KD_BACK = 0.3, KD_EX = 0.38;
 // Who cuts each turn (A = whoever goes first): a wild back-and-forth, now and then two in a row.
@@ -64,8 +64,10 @@ function kdReach(K, k) { var b = K[k]; return k === "T" ? b.r * (0.95 + KAT_LEN)
 
 // ---------------------------------------------------------------- starting
 
+// Blades out or coming out: the duel can take them as soon as both are
+// drawing or drawn, so neither runs onto the other first.
 function kdReady(b, on) {
-  return on(b) && b.alive && !b.koOut && b.igbb.phase === "close" && !b.igbb.kdDone && !b.slam && !((b.checkStun || 0) > 0);
+  return on(b) && b.alive && !b.koOut && (b.igbb.phase === "close" || b.igbb.phase === "draw") && !b.igbb.kdDone && !b.slam && !((b.checkStun || 0) > 0);
 }
 function kdTryStart() {
   if (kDuel || over || !started || !balls || balls.length < 2) return;
@@ -101,7 +103,7 @@ function tickKatanaDuel(dt) {
   var K = kDuel, T = K.T, J = K.J;
   var revealed = K.phase === "cut" && K.revealed;
   if (balls[T.id] !== T || balls[J.id] !== J || (!revealed && (!T.alive || !J.alive || over || !katanaOn(T) || !samuraiOn(J)))) { kdEnd(); return; }
-  K.t += dt;
+  K.t += dt; K.dt = dt;
   K.cam.flash = Math.max(0, K.cam.flash - dt * 3);
   ["T", "J"].forEach(function (k) { var g = K.ghosts[k]; g.forEach(function (q) { q.t += dt; }); K.ghosts[k] = g.filter(function (q) { return q.t < 0.3; }); });
   T.kdPose = null; J.kdPose = null;
@@ -129,10 +131,21 @@ function kdAng(v) { return Math.atan2(v.y, v.x); }
 // (`up` is across the line: + is screen-up when the line runs left-right)
 function kdAt(K, k, off, up) { var s = kdSpot(K, k), v = kdToward(K, k), u = kdU(K), px = u.y, py = -u.x; if (py > 0) { px = -px; py = -py; } kdPlace(K[k], { x: s.x + v.x * off - px * (up || 0), y: s.y + v.y * off - py * (up || 0) }); }
 
+// The set: wherever they were (tangled up on the cage, even on top of each
+// other), they spring apart to their marks. Jiří backflips away, in the air
+// over Tony; Tony drops into his turtle shell and slides back, spinning, then
+// pops out with the blades out.
 function kdTickSet(K, dt) {
-  var u = kdE(K.t / KD_SET);
-  ["T", "J"].forEach(function (k) { var s = kdSpot(K, k), f = K.from[k]; kdPlace(K[k], kdLerpP(f, s, u)); });
-  kdCam(K, 1 + 0.25 * u, 0, 0);
+  var t = K.t, T = K.T, J = K.J;
+  var uJ = kdE((t - 0.04) / 0.5), uT = kdEO((t - 0.1) / 0.34);
+  kdPlace(J, kdLerpP(K.from.J, kdSpot(K, "J"), uJ)); kdPlace(T, kdLerpP(K.from.T, kdSpot(K, "T"), uT));
+  J.kdPose = { kind: "flip", k: kdC01((t - 0.04) / 0.5), dir: kdAng(kdToward(K, "J")) };
+  T.kdPose = t < 0.1 ? { kind: "shell", phase: "in", t: t * 1.8 } : t < 0.44 ? { kind: "shell", phase: "spin", t: t - 0.1 } : { kind: "shell", phase: "out", t: t - 0.44 };
+  if (t > 0.1 && t < 0.44) K.ghosts.T.push({ x: T.x, y: T.y, t: 0 });
+  if (!K.said.flip) { K.said.flip = true; playShellIn(); playElbowSwish(false); } // (ferguson.js, elbows.js)
+  if (!K.said.slide && t >= 0.1) { K.said.slide = true; playShellSpin(); }
+  if (!K.said.land && t >= 0.54) { K.said.land = true; playKatanaDraw(); if (!reduceMotion) shake = Math.max(shake, 5); }
+  kdCam(K, 1 + 0.25 * kdE(t / KD_SET), 0, 0);
   if (K.t >= KD_SET) { K.phase = "turns"; K.t = 0; K.n = 0; K.hit = false; K.started = false; }
 }
 
@@ -284,22 +297,29 @@ function kdBeatSlashes(K, e) {
 function kdBeatShell(K, e) {
   var T = K.T, J = K.J, SH = T.r * 1.14;
   if (!K.said.shell) { K.said.shell = true; floater(T.x, T.y - T.r - 34, "TURTLE SHELL!", "crit"); playShellIn(); } // (ferguson.js)
-  kdAt(K, "T", 0, 0);
-  T.kdPose = { kind: "shell", phase: e < 0.12 ? "in" : "hold", t: e };
+  K.shellMarks = K.shellMarks || [];
+  K.shellMarks.forEach(function (m) { m.t += K.dt || 1 / 60; });
+  var jolt = 0;
+  K.shellMarks.forEach(function (m) { jolt = Math.max(jolt, 9 * Math.max(0, 1 - m.t / 0.16)); });
+  kdAt(K, "T", -jolt, 0); // knocked back a touch by each cut
+  T.kdPose = { kind: "shell", phase: e < 0.12 ? "in" : "hold", t: e, marks: K.shellMarks };
   var cuts = [{ at: 0.08, both: true, side: 1 }, { at: 0.42, both: false, side: 1 }, { at: 0.7, both: false, side: -1 }];
   var cur = cuts[0], ci = 0;
   cuts.forEach(function (c, i) { if (e >= c.at) { cur = c; ci = i; } });
   var ce = e - cur.at, wind = 0.12, hit = 0.18;
-  // in close enough that the blade's tip is on the shell, not through it
-  var reachIn = K.D - (kdReach(K, "J") + SH);
+  // in close enough that the blade comes down on the shell itself
+  var reachIn = K.D - (kdReach(K, "J") + SH * 0.4);
   var off = e < cuts[0].at ? 0 : ce < wind ? kdLerp(ci ? reachIn : 0, reachIn, kdE(ce / wind)) : reachIn - 6 * Math.sin(kdC01((ce - hit) / 0.16) * Math.PI);
   if (ci === 2 && ce > 0.25) off = kdLerp(reachIn, 0, kdE((ce - 0.25) / 0.2));
   kdAt(K, "J", off, 0);
-  var vJ = kdToward(K, "J"), P = { x: T.x - vJ.x * SH, y: T.y - vJ.y * SH - T.r * 0.2 };
+  var vJ = kdToward(K, "J"), sp = kdSpot(K, "T"), P = { x: sp.x - vJ.x * SH * 0.4, y: sp.y - vJ.y * SH * 0.4 - T.r * 0.15 };
   J.kdPose = e < cuts[0].at ? { kind: "guard" } : { kind: "cut", e: ce, wind: wind, hit: hit, both: cur.both, side: cur.side, P: P };
   if (e >= cuts[0].at && !K.said["c" + ci] && ce >= hit) {
     K.said["c" + ci] = true;
     clashFx(P.x, P.y, -vJ.x, -vJ.y, ci === 0 ? 1.2 : 0.8, JP_STEEL);
+    var at = kdAng({ x: -vJ.x, y: -vJ.y });
+    if (cur.both) { K.shellMarks.push({ t: 0, at: at - 0.25, ang: at + Math.PI / 4 }); K.shellMarks.push({ t: 0, at: at + 0.25, ang: at - Math.PI / 4 }); }
+    else K.shellMarks.push({ t: 0, at: at + cur.side * 0.3, ang: at + Math.PI / 2 + cur.side * 0.4 });
     playShellClank(false); playSwordClash(0.7);
     if (ci === 0) floater(J.x, J.y - J.r - 34, "X CUT!", "crit");
     if (ci === 1) floater(T.x, T.y - T.r - 34, "SHELL!", "dodge");
@@ -317,7 +337,8 @@ function kdBeatRam(K, e) {
   var skid = e > hitE ? 22 * kdEO((e - hitE) / 0.15) * (1 - kdE((e - 0.4) / 0.2)) : 0;
   kdAt(K, "T", go + skid, 0); kdAt(K, "J", -skid, 0); // (Tony stays on the blades as Jiří skids back)
   var outT = 0.42;
-  T.kdPose = e < outT ? { kind: "shell", phase: "hold", t: e } : { kind: "shell", phase: "out", t: e - outT };
+  (K.shellMarks || []).forEach(function (m) { m.t += K.dt || 1 / 60; });
+  T.kdPose = e < outT ? { kind: "shell", phase: "hold", t: e, marks: K.shellMarks } : { kind: "shell", phase: "out", t: e - outT };
   J.kdPose = { kind: "block", u: kdE(e / 0.12) * (1 - kdE((e - 0.45) / 0.15)), P: { x: J.x - kdToward(K, "T").x * bl, y: J.y - kdToward(K, "T").y * bl - J.r * 0.2 } };
   if (!K.said.ramHit && e >= hitE) {
     K.said.ramHit = true;
@@ -370,8 +391,8 @@ function kdEnd() {
     b.kdPose = null;
     if (b === K.freed) return;
     if (!b.slam) { b.vx = 0; b.vy = 0; }
-    if (katanaOn(b) && b.igbb.phase === "close") { b.igbb.phase = "sheathe"; b.igbb.t = 0; b.igbb.sl = null; }
-    else if (samuraiOn(b) && b.igbb.phase === "close") { b.igbb.phase = "sheathe"; b.igbb.t = 0; b.igbb.sl = null; }
+    var ph = b.igbb && b.igbb.phase;
+    if ((katanaOn(b) || samuraiOn(b)) && (ph === "close" || ph === "draw")) { b.igbb.phase = "sheathe"; b.igbb.t = 0; b.igbb.sl = null; }
   });
 }
 // The camera: zoomed on the duel, with the letterbox and the colour grade.
@@ -429,6 +450,7 @@ function applyKatanaDuelPose(b) {
     if (K.both && k === "J") rot *= 0.4;
     base = b.y;
   } else if (p) {
+    if (p.kind === "flip") { kdFlipXform(b, p); return true; }
     if (p.kind === "crouch") { var c = kdEO(p.k); sx = 1 + 0.08 * c; sy = 1 - 0.12 * c; }
     else if (p.kind === "weave") rot = p.lean;
     else if (p.kind === "ready") { sx = 1 + 0.04 * p.k; sy = 1 - 0.07 * p.k; }
@@ -439,6 +461,27 @@ function applyKatanaDuelPose(b) {
   }
   if (rot || sx !== 1) { ctx.translate(b.x, base); ctx.rotate(rot); ctx.scale(sx, sy); ctx.translate(-b.x, -base); }
   return true;
+}
+
+// A backflip seen from above: up toward the camera (bigger, lifted), the body
+// turning over along the way he's going (squashed to nothing and back, the
+// far side showing), and down again.
+function kdFlipXform(b, p) {
+  var k = p.k, h = Math.sin(k * Math.PI), sc = 1 + 0.28 * h, turn = Math.cos(k * Math.PI * 2);
+  ctx.translate(b.x, b.y - h * b.r * 0.55); ctx.rotate(p.dir); ctx.scale(sc * (0.25 + 0.75 * Math.abs(turn)) * (turn < 0 ? -1 : 1), sc); ctx.rotate(-p.dir); ctx.translate(-b.x, -b.y);
+}
+// The shell taking a cut: a white flash across it and a scratch where the blade landed.
+function kdShellHit(b, p) {
+  (p.marks || []).forEach(function (m) {
+    var a = Math.max(0, 1 - m.t / 0.9), cx = b.x + Math.cos(m.at) * b.r * 0.5, cy = b.y + Math.sin(m.at) * b.r * 0.5, ca = Math.cos(m.ang), sa = Math.sin(m.ang), L = b.r * 0.55;
+    if (a <= 0) return;
+    ctx.save(); ctx.lineCap = "round";
+    ctx.globalAlpha = a; ctx.strokeStyle = "rgba(10,30,10,0.8)"; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(cx - ca * L, cy - sa * L); ctx.lineTo(cx + ca * L, cy + sa * L); ctx.stroke();
+    ctx.strokeStyle = "#f4fff0"; ctx.lineWidth = 2; ctx.stroke();
+    if (m.t < 0.12) { ctx.globalAlpha = 0.7 * (1 - m.t / 0.12); ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.ellipse(b.x, b.y, b.r * 1.14, b.r * 1.08, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  });
 }
 
 // ---- Tony
@@ -488,7 +531,7 @@ function drawKatanaDuelTony(b, ang) {
   }
   if (role === "def") { kdTonyBlock(b, ang, kdHitPoint(K, "J"), kdBlockU(K.t), kdSweep(K, K.t), L, 0); return true; }
   if (!p || p.kind === "guard") { [-1, 1].forEach(function (s) { kdTonyGuard(b, ang, s, L); }); return true; }
-  if (p.kind === "shell") { drawTfShell(b, { phase: p.phase, t: p.t }); if (p.phase === "out") [-1, 1].forEach(function (s) { katArm(b, ang, s, ang + s * 0.95, 0, ang + s * 0.35, L * kdC01(p.t / 0.15), 0); }); return true; } // (ferguson.js)
+  if (p.kind === "shell") { drawTfShell(b, { phase: p.phase, t: p.t }); kdShellHit(b, p); if (p.phase === "out") [-1, 1].forEach(function (s) { katArm(b, ang, s, ang + s * 0.95, 0, ang + s * 0.35, L * kdC01(p.t / 0.15), 0); }); return true; } // (ferguson.js)
   if (p.kind === "crouch") { var c = kdEO(p.k); [-1, 1].forEach(function (s) { var th = ang + s * (0.95 + 1.0 * c); katArm(b, ang, s, th, 0, th + s * 0.35, L, p.k > 0.5 ? 0.7 : 0); }); return true; }
   if (p.kind === "whiff") {
     // A full sweeping cut (his A slash) through the air where Jiří was.
@@ -568,6 +611,7 @@ function drawKatanaDuelJiri(b, ang) {
     return true;
   }
   if (role === "def") { kdJiriBlock(b, ang, kdHitPoint(K, "T"), kdBlockU(K.t), kdSweep(K, K.t), 0); return true; }
+  if (p && p.kind === "flip") { ctx.save(); kdFlipXform(b, p); kdJiriGuard(b, ang); ctx.restore(); return true; }
   if (!p || p.kind === "guard" || p.kind === "weave") { kdJiriGuard(b, ang); return true; }
   if (p.kind === "cut") {
     [1, -1].forEach(function (s) {
