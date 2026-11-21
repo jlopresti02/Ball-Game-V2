@@ -43,6 +43,7 @@ function tickRapier(b, dt) {
 // Same slots as swordTarget: hand x/y (x toward them), blade angle (0 points
 // at them, -PI/2 straight up), free hand x/y, lean toward them.
 function rapierTarget(b, sw, other) {
+  if (cutlassStyle(b)) return cutlassTarget(b, sw, other); // Bisping's cutlass: a swashbuckler's poses (bisping-cutlass.js)
   var t = sw.t + b.id * 1.3, sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), m = b.igbb;
   if (m && m.move === "lunge" && (m.phase === "coil" || m.phase === "lunge")) {
     // Pointed straight down the line, whichever way it goes (the pose slots
@@ -107,11 +108,12 @@ function updateRapierLunge(self, other, dt) {
     var len = Math.min(d + other.r + 30, hcRayToWall(self.x, self.y, ux, uy, self.r));
     self.igbb = { move: "lunge", phase: "coil", t: 0, sx: self.x, sy: self.y, dx: ux, dy: uy, len: len, run: 0, hit: false };
     self.invincible = true;
-    floater(self.x, self.y - self.r - 30, "EN GARDE", "note");
+    if (cfg.coilText !== "") floater(self.x, self.y - self.r - 30, cfg.coilText || "EN GARDE", cfg.coilKind || "note"); // (Bisping's AVAST! is its own shout burst instead, bisping-cutlass.js)
     playSwordDraw();
   }
   var m = self.igbb;
   m.t += dt;
+  cutlassChargeTick(self, other, m, cfg, dt); // Bisping's AVAST!: the stomp, glint and big swing (bisping-cutlass.js)
   self.vx = 0; self.vy = 0; self.immuneCd = 1;
   if (over || !self.alive) { endRapierLunge(self); return false; }
   if (m.phase === "coil") {
@@ -127,7 +129,7 @@ function updateRapierLunge(self, other, dt) {
     if (m.t >= cfg.warn) {
       m.phase = "lunge"; m.t = 0; m.sx = self.x; m.sy = self.y; m.len += back;
       playWhoosh();
-      floater(self.x, self.y - self.r - 30, "LUNGE!", "crit");
+      floater(self.x, self.y - self.r - 30, cfg.lungeText || "LUNGE!", "crit");
     }
     return true;
   }
@@ -138,13 +140,14 @@ function updateRapierLunge(self, other, dt) {
       particles.push({ x: self.x - m.dx * self.r, y: self.y + self.r * 0.6, vx: -m.dx * 70 + (Math.random() - 0.5) * 50, vy: -m.dy * 70 - 25, life: 0.3, max: 0.3, size: 2 + Math.random() * 3, color: "#d8cdb5" });
     }
     // Run through: the blade reaches well past his body.
-    var tipX = self.x + m.dx * self.r * (0.3 + RAPIER_LEN * 0.95), tipY = self.y + m.dy * self.r * (0.3 + RAPIER_LEN * 0.95);
+    var BL = bladeLen(self); // (Bisping's cutlass is shorter, bisping-cutlass.js)
+    var tipX = self.x + m.dx * self.r * (0.3 + BL * 0.95), tipY = self.y + m.dy * self.r * (0.3 + BL * 0.95);
     var hitD = lungeSegDist(other.x, other.y, self.x, self.y, tipX, tipY);
     if (!m.hit && other.alive && !other.invincible && hitD < other.r * 0.95) {
       m.hit = true;
       var dealt = hurt(other, cfg.damage, "igbb", self.id); // can't be slipped or blocked, only got out of the way of
       if (dealt > 0) {
-        floater(other.x, other.y - other.r - 30, "ESTOCADA!", "crit");
+        floater(other.x, other.y - other.r - 30, cfg.hitText || "ESTOCADA!", "crit");
         other.flash = 0.16;
         if (!reduceMotion) { shake = Math.max(shake, 16); hitStop = Math.max(hitStop, 0.1); }
         playRapierSlice();
@@ -192,7 +195,7 @@ function drawRapierLungeUnder() {
   balls.forEach(function (b) {
     var m = b.igbb;
     if (!lungeOn(b) || !b.alive || (m.phase !== "coil" && m.phase !== "lunge")) return;
-    var cfg = b.char.rapier.lunge, wdt = b.r * 0.55, len = m.len + b.r * (0.3 + RAPIER_LEN);
+    var cfg = b.char.rapier.lunge, wdt = b.r * 0.55, len = m.len + b.r * (0.3 + bladeLen(b));
     var show = m.phase === "coil" ? Math.min(1, m.t / 0.12) : Math.max(0, 1 - m.t / 0.4);
     if (show <= 0) return;
     var pulse = 0.7 + 0.3 * Math.sin(now * 20);
@@ -229,9 +232,13 @@ function drawRapierArms(b, sw, sh, fsh, hand, ang, len, k, alpha, sideK, pz, inD
   drawBentArm(b, fsh, free, -sg);
   drawGloveAt(free.x, free.y, r * 0.2, b.char);
   if (inDuel && swordDuel.dId === b.id && swordDuel.slashLine && swordDuel.done) drawSlashLine(b, swordDuel);
-  drawTrail(sw.trail, function (g, a) { drawRapier(g.x, g.y, g.ang, len, k, a); });
-  drawRapier(hand.x, hand.y, ang, len, k, 1);
+  ang += cutlassSpin(b); // Bisping's twirl after his charge (bisping-cutlass.js)
+  var fl = cutlassStyle(b) ? cutlassFlip(b, hand.x, hand.y, ang) : 1; // (the cutlass edge turned toward them, bisping-cutlass.js)
+  var dr = cutlassStyle(b) ? function (x, y, a2, l, kk, al) { drawCutlass(x, y, a2, l, kk, al, fl); } : drawRapier; // (or Bisping's cutlass, bisping-cutlass.js)
+  drawTrail(sw.trail, function (g, a) { dr(g.x, g.y, g.ang, len, k, a); });
+  dr(hand.x, hand.y, ang, len, k, 1);
   pushTrail(sw.trail, hand.x, hand.y, ang);
+  drawCutlassFx(b, hand, ang, len); // Bisping's AVAST! glint, speed lines and swing (bisping-cutlass.js)
   drawBentArm(b, sh, hand, sg);
   drawGloveAt(hand.x, hand.y, r * 0.22, b.char, ang);
   ctx.restore();

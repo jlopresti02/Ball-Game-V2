@@ -87,7 +87,7 @@ function pickCombo(self, cfg) {
 // Free to start one: rolling about, nothing else thrown.
 function comboFree(b) {
   return b.alive && !b.koOut && inOrdinaryMovement(b) && !b.punch && !b.kick && !b.koPunch && !b.swing && !b.throwAnim &&
-    !b.elbowAnim && !b.kneeAnim && !b.plum && !b.fknee && !b.dizzy && !swordDuelActive();
+    !b.elbowAnim && !b.kneeAnim && !b.plum && !b.fknee && !b.dizzy && !swordDuelActive() && !cutlassHeld(b); // (not with Bisping's cutlass out, bisping-cutlass.js)
 }
 
 // ---------------------------------------------------------------- abilities loop
