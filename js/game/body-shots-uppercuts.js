@@ -285,7 +285,7 @@ function ptBigShot(b, o, s, ux, uy) {
 function uppercutCounter(b, atk, back) {
   var c = ptCfg(b, "upper"), pct = c ? ptVal(c, "upper", "onGrab") : 0;
   if (!(pct > 0) || !atk || !b.alive || !atk.alive || over || !b.char.hasPunch) return false;
-  if (b.koOut || b.dazed || b.dizzy || b.grappled || b.grapple || b.sprawl || b.sprawled || b.slam || b.guard || b.igbb || subLocked(b) || specialBusy(b)) return false;
+  if (b.koOut || b.dazed || b.dizzy || b.grappled || b.grapple || b.sprawl || b.sprawled || b.slam || b.guard || b.igbb || subLocked(b) || specialBusy(b) || b.cheater) return false; // (not with a bat, club or saber in his hands: cheater.js)
   if ((b.ptCounterT || 0) > 0) return false;
   b.ptCounterT = ptVal(c, "upper", "counterGap");
   if (Math.random() * 100 >= pct) return false;
