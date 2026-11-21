@@ -124,7 +124,11 @@ function updateWeave(self, other, dt) {
   var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
   var nx = dx / d, ny = dy / d;
   var inReach = d < self.r + other.r + COMBO_REACH;
-  var chase = inReach ? Math.max(Math.sqrt(other.vx * other.vx + other.vy * other.vy), 160) : COMBO_CHASE_SPEED;
+  // In reach it keeps up with how fast they're moving away, never their whole
+  // speed: matching that while shoving them fed itself until both were flying
+  // round the cage (Joe 2026-11-21, push-flow.js).
+  var away = other.vx * nx + other.vy * ny;
+  var chase = inReach ? Math.min(COMBO_CHASE_SPEED, Math.max(away, 160)) : COMBO_CHASE_SPEED;
   self.vx = nx * chase; self.vy = ny * chase;
 
   cb.timer -= dt;

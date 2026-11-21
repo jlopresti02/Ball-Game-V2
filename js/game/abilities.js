@@ -173,6 +173,7 @@ function updateAbilities(dt) {
     var self = balls[i], other = balls[1 - i];
     if (!self.alive || self.grappled || self.sprawled || self.choked) continue;
     if (self.beamPin) continue; // pinned to the cage by a beam (beam-clash.js)
+    if (pushFlowHeld(self)) continue; // tied up in a push, or pivoting off the cage (push-flow.js)
     if (self.shocked || self.koOut || self.shelled || self.dazed || self.dizzy) continue; // frozen by a KO Rush, knocked out, shelled up under IGBB, or dazed by a chair shot
     if (americaOverwhelmed(self)) continue; // overwhelmed by Sean Strickland's America: throws nothing till it's over (strickland.js)
     if (updateDarkSide(self, other, dt)) continue; // Josh Hokit's Dark Side form change (hokit-darkside.js)
