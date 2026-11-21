@@ -30,10 +30,13 @@
 // defaults below; `on: false` turns the duel off and they fight as before).
 "use strict";
 
-var KD_DEFAULT = { on: true, exchanges: 6, tonyWins: 50, damage: 120, knockback: 1150, wallSlams: 1, slamDamage: 6 };
+var KD_DEFAULT = { on: true, exchanges: 9, tonyWins: 50, damage: 120, knockback: 1150, wallSlams: 1, slamDamage: 6 };
 var KD_SET = 0.35, KD_LOCK = 0.7;
 // One turn: coil (WIND), the cut (to HIT, blade on blade), held a moment, back to guard by BACK, next turn at EX.
-var KD_WIND = 0.16, KD_HIT = 0.24, KD_BACK = 0.5, KD_EX = 0.6;
+var KD_WIND = 0.1, KD_HIT = 0.15, KD_BACK = 0.3, KD_EX = 0.38;
+// Who cuts each turn (A = whoever goes first): a wild back-and-forth, now and then two in a row.
+var KD_ORDER = "ABAABBABA";
+var KD_CIRCLE = 1.1; // how fast they circle round each other through the turns (radians a second)
 // The cutscene's beats (seconds from its start).
 var KD_C = { flash: 0.6, slashes: 1.4, shell: 2.1, ram: 3.1, stand: 3.7, pass: 4.3, zan: 4.55, reveal: 5.35, out: 5.9, end: 6.4 };
 var kDuel = null;   // the duel, while it's on
@@ -72,14 +75,14 @@ function kdTryStart() {
   if (!kdReady(T, katanaOn) || !kdReady(J, samuraiOn)) return;
   if (sceneLocked()) return; // (scene-lock.js)
   var cfg = kdCfg(T), r = Math.max(T.r, J.r), D = T.r + J.r + 100;
-  var cx = Math.min(W - D / 2 - r - 12, Math.max(D / 2 + r + 12, (T.x + J.x) / 2));
-  var cy = Math.min(H - r * 1.6, Math.max(r * 2.6, (T.y + J.y) / 2));
+  var m = D / 2 + r + 12;
+  var cx = Math.min(W - m, Math.max(m, (T.x + J.x) / 2)), cy = Math.min(H - m, Math.max(m, (T.y + J.y) / 2));
   [T, J].forEach(function (b) {
     clearActions(b);
     b.igbb.sl = null; b.igbb.kdDone = true;
     b.vx = 0; b.vy = 0;
   });
-  kDuel = { T: T, J: J, cfg: cfg, phase: "set", t: 0, cx: cx, cy: cy, D: D, side: T.x <= J.x ? -1 : 1,
+  kDuel = { T: T, J: J, cfg: cfg, phase: "set", t: 0, cx: cx, cy: cy, D: D, side: 1, axis: Math.atan2(T.y - J.y, T.x - J.x), spin: Math.random() < 0.5 ? 1 : -1,
     from: { T: { x: T.x, y: T.y }, J: { x: J.x, y: J.y } }, first: Math.random() < 0.5 ? "T" : "J", n: 0,
     tonyWins: Math.random() * 100 < cfg.tonyWins, cam: { z: 1, bars: 0, grade: 0, flash: 0 }, ghosts: { T: [], J: [] }, said: {} };
   floater(cx, cy - r - 70, "KATANA DUEL!", "crit");
@@ -111,15 +114,20 @@ function tickKatanaDuel(dt) {
 }
 
 // Where each of them stands: Tony on `side` of the middle, Jiří across.
+// The line between them runs along K.axis (they circle round each other
+// in the turns), Tony at +side along it.
+function kdU(K) { return { x: Math.cos(K.axis), y: Math.sin(K.axis) }; }
 function kdSpot(K, who, side) {
-  var s = side == null ? K.side : side, d = who === "T" ? s : -s;
-  return { x: K.cx + d * K.D / 2, y: K.cy };
+  var s = side == null ? K.side : side, d = who === "T" ? s : -s, u = kdU(K);
+  return { x: K.cx + d * u.x * K.D / 2, y: K.cy + d * u.y * K.D / 2 };
 }
 function kdPlace(b, p) { b.x = Math.min(W - b.r, Math.max(b.r, p.x)); b.y = Math.min(H - b.r, Math.max(b.r, p.y)); }
 // Along the line between the spots: +1 toward the other one.
-function kdToward(K, who) { return who === "T" ? -K.side : K.side; }
+function kdToward(K, who) { var u = kdU(K), d = who === "T" ? -K.side : K.side; return { x: u.x * d, y: u.y * d }; }
+function kdAng(v) { return Math.atan2(v.y, v.x); }
 // Standing `off` along the line from his spot (+ toward the other), `up` across it.
-function kdAt(K, k, off, up) { var s = kdSpot(K, k); kdPlace(K[k], { x: s.x + kdToward(K, k) * off, y: s.y + (up || 0) }); }
+// (`up` is across the line: + is screen-up when the line runs left-right)
+function kdAt(K, k, off, up) { var s = kdSpot(K, k), v = kdToward(K, k), u = kdU(K), px = u.y, py = -u.x; if (py > 0) { px = -px; py = -py; } kdPlace(K[k], { x: s.x + v.x * off - px * (up || 0), y: s.y + v.y * off - py * (up || 0) }); }
 
 function kdTickSet(K, dt) {
   var u = kdE(K.t / KD_SET);
@@ -130,31 +138,32 @@ function kdTickSet(K, dt) {
 
 // ---- the turns: one cuts, the other blocks or parries it
 
-function kdAttacker(K) { return K.n % 2 === 0 ? K.first : (K.first === "T" ? "J" : "T"); }
+function kdAttacker(K) { var c = KD_ORDER.charAt(K.n % KD_ORDER.length); return c === "A" ? K.first : (K.first === "T" ? "J" : "T"); }
 // Where the cut meets the block: most of the attacker's reach toward the
 // defender, a little up. The defender's blades come up to it.
 function kdHitPoint(K, a) {
   var A = K[a], dir = kdToward(K, a), d = kdReach(K, a) * 0.82;
-  return { x: A.x + dir * d, y: A.y - A.r * 0.35 };
+  return { x: A.x + dir.x * d, y: A.y + dir.y * d - A.r * 0.35 };
 }
 function kdTickTurns(K, dt) {
   var a = kdAttacker(K), d = a === "T" ? "J" : "T", e = K.t;
   if (!K.started) {
     K.started = true;
     K.parry = K.n % 3 === 2;
-    K.both = a === "J" && K.n >= (K.cfg.exchanges || 6) - 2; // Jiří's last one: both swords
+    K.both = a === "J" && K.n % 4 === 3; // now and then Jiří cuts with both swords
     K.aSide = K.n % 4 < 2 ? 1 : -1;
   }
   // The attacker steps into the cut and bounces off the block; the defender is shoved a step.
   var off = e < KD_WIND ? -5 * kdE(e / KD_WIND) : e < KD_HIT ? kdLerp(-5, 14, kdEO((e - KD_WIND) / (KD_HIT - KD_WIND))) : kdLerp(14, 0, kdE((e - KD_HIT) / (KD_BACK - KD_HIT)));
-  if (e > KD_HIT && K.parry) off -= 10 * Math.sin(kdC01((e - KD_HIT) / 0.26) * Math.PI);
-  var push = e > KD_HIT ? 6 * Math.sin(kdC01((e - KD_HIT) / 0.26) * Math.PI) : 0;
+  if (e > KD_HIT && K.parry) off -= 10 * Math.sin(kdC01((e - KD_HIT) / 0.18) * Math.PI);
+  var push = e > KD_HIT ? 6 * Math.sin(kdC01((e - KD_HIT) / 0.18) * Math.PI) : 0;
+  K.axis += K.spin * KD_CIRCLE * dt; // circling as they trade
   kdAt(K, a, off, 0); kdAt(K, d, -push, 0);
   if (!K.whoosh && e >= KD_WIND) { K.whoosh = true; playElbowSwish(true); }
   if (!K.hit && e >= KD_HIT) {
     K.hit = true;
     var P = kdHitPoint(K, a), D = K[d];
-    clashFx(P.x, P.y, kdToward(K, a), 0, 0.9, a === "J" ? JP_STEEL : null); // (sword.js)
+    clashFx(P.x, P.y, kdToward(K, a).x, kdToward(K, a).y, 0.7, a === "J" ? JP_STEEL : null); // (sword.js)
     playSwordClash(1);
     floater(D.x, D.y - D.r - 34, K.parry ? "PARRIED!" : "BLOCKED!", "crit");
     crowdReact(0.45);
@@ -162,7 +171,7 @@ function kdTickTurns(K, dt) {
   kdCam(K, 1.25, 0, 0);
   if (e >= KD_EX) {
     K.n++; K.t = 0; K.hit = false; K.whoosh = false; K.started = false;
-    if (K.n >= (K.cfg.exchanges || 6)) { K.phase = "lock"; K.t = 0; K.sparkT = 0; floater(K.cx, K.cy - K.T.r - 70, "BLADE LOCK!", "crit"); playSwordClash(1.6); crowdReact(1); }
+    if (K.n >= (K.cfg.exchanges || 9)) { K.phase = "lock"; K.t = 0; K.sparkT = 0; floater(K.cx, K.cy - K.T.r - 70, "BLADE LOCK!", "crit"); playSwordClash(1.6); crowdReact(1); }
   }
 }
 function kdLockPoint(K) { return { x: (K.T.x + K.J.x) / 2, y: (K.T.y + K.J.y) / 2 - K.T.r * 0.8 }; }
@@ -201,7 +210,10 @@ function kdTickCut(K, dt) {
   var z = 1.25 + 0.25 * kdE(t / 0.6) + 0.2 * kdE((t - C.stand) / 0.5) - 0.1 * kdE((t - C.zan) / 0.4) - 0.6 * kdE((t - C.out) / 0.5);
   kdCam(K, z, bars, bars);
   if (!reduceMotion && nativeRandom() < dt * (t > C.stand ? 26 : 16)) kdPetal();
-  if (t < C.flash) { kdAt(K, "T", 0, 0); kdAt(K, "J", 0, 0); T.kdPose = { kind: "guard" }; J.kdPose = { kind: "guard" }; return kdCutDone(K); }
+  if (t < C.flash) {
+    if (K.axis0 == null) { K.axis0 = K.axis; var lv = Math.cos(K.axis) >= 0 ? 0 : Math.PI; K.axis1 = K.axis0 + Math.atan2(Math.sin(lv - K.axis0), Math.cos(lv - K.axis0)); }
+    K.axis = kdLerp(K.axis0, K.axis1, kdE(t / 0.45)); // circling round into a level line for the cutscene
+    kdAt(K, "T", 0, 0); kdAt(K, "J", 0, 0); T.kdPose = { kind: "guard" }; J.kdPose = { kind: "guard" }; return kdCutDone(K); }
   if (t < C.slashes) return kdBeatFlash(K, t - C.flash);
   if (t < C.shell) return kdBeatSlashes(K, t - C.slashes);
   if (t < C.ram) return kdBeatShell(K, t - C.shell);
@@ -216,21 +228,21 @@ function kdTickCut(K, dt) {
   }
   if (t < C.zan) {
     // The final slash: through each other (the one time they don't face each other).
-    var e6 = (t - C.pass) / (C.zan - C.pass), sw = K.side, u6 = kdEO(e6);
+    var e6 = (t - C.pass) / (C.zan - C.pass), sw = K.side, u6 = kdEO(e6), lane = 12; // (straight through each other: the one time they pass through)
     if (!K.said.pass) { K.said.pass = true; playElbowSwish(true); playKatanaDraw(); K.cam.flash = 0.4; }
-    var sT = kdSpot(K, "T"), sJ = kdSpot(K, "J");
+    var sT = kdSpot(K, "T"), sJ = kdSpot(K, "J"), eT = kdSpot(K, "T", -sw), eJ = kdSpot(K, "J", -sw), uu = kdU(K), px = -uu.y, py = uu.x;
+    var lift = Math.sin(u6 * Math.PI) * lane;
     K.ghosts.T.push({ x: T.x, y: T.y, t: 0 }); K.ghosts.J.push({ x: J.x, y: J.y, t: 0 });
-    kdPlace(T, { x: kdLerp(sT.x, kdSpot(K, "T", -sw).x, u6), y: sT.y - 30 * Math.sin(u6 * Math.PI) });
-    kdPlace(J, { x: kdLerp(sJ.x, kdSpot(K, "J", -sw).x, u6), y: sJ.y + 30 * Math.sin(u6 * Math.PI) });
-    T.kdPose = { kind: "pass", dir: -sw > 0 ? 0 : Math.PI, k: e6 }; J.kdPose = { kind: "pass", dir: sw > 0 ? 0 : Math.PI, k: e6 };
+    kdPlace(T, { x: kdLerp(sT.x, eT.x, u6) + px * lift, y: kdLerp(sT.y, eT.y, u6) + py * lift });
+    kdPlace(J, { x: kdLerp(sJ.x, eJ.x, u6) - px * lift, y: kdLerp(sJ.y, eJ.y, u6) - py * lift });
+    T.kdPose = { kind: "pass", dir: kdAng(kdToward(K, "T")), k: e6 }; J.kdPose = { kind: "pass", dir: kdAng(kdToward(K, "J")), k: e6 };
     return kdCutDone(K);
   }
   if (!K.passSwapped) { K.passSwapped = true; K.side = -K.side; }
   // Backs to each other, frozen... then the loser's cut opens.
   var win = K.tonyWins ? "T" : "J", lose = win === "T" ? "J" : "T", Wn = K[win], Ls = K[lose];
-  var e7 = t - C.zan, away = function (k) { return -kdToward(K, k) > 0 ? 0 : Math.PI; };
-  if (!K.revealed) kdAt(K, lose, 0, 0);
-  kdAt(K, win, 0, 0);
+  var e7 = t - C.zan, away = function (k) { var v = kdToward(K, k); return kdAng({ x: -v.x, y: -v.y }); };
+  if (!K.revealed) { kdAt(K, lose, 0, 0); kdAt(K, win, 0, 0); } // (after the cut their bodies are solid again: the winner isn't pinned to his spot)
   Wn.kdPose = { kind: "zanshin", dir: away(win), k: e7 };
   if (!K.revealed) Ls.kdPose = { kind: "frozen", dir: away(lose), k: e7 };
   if (!K.said.hair && e7 >= 0.3) { K.said.hair = true; kdCuts.push({ id: Ls.id, ang: Math.PI / 4, t: 0, max: C.reveal - C.zan - 0.3, kind: "hair" }); }
@@ -283,11 +295,11 @@ function kdBeatShell(K, e) {
   var off = e < cuts[0].at ? 0 : ce < wind ? kdLerp(ci ? reachIn : 0, reachIn, kdE(ce / wind)) : reachIn - 6 * Math.sin(kdC01((ce - hit) / 0.16) * Math.PI);
   if (ci === 2 && ce > 0.25) off = kdLerp(reachIn, 0, kdE((ce - 0.25) / 0.2));
   kdAt(K, "J", off, 0);
-  var P = { x: T.x - kdToward(K, "J") * SH, y: T.y - T.r * 0.2 };
+  var vJ = kdToward(K, "J"), P = { x: T.x - vJ.x * SH, y: T.y - vJ.y * SH - T.r * 0.2 };
   J.kdPose = e < cuts[0].at ? { kind: "guard" } : { kind: "cut", e: ce, wind: wind, hit: hit, both: cur.both, side: cur.side, P: P };
   if (e >= cuts[0].at && !K.said["c" + ci] && ce >= hit) {
     K.said["c" + ci] = true;
-    clashFx(P.x, P.y, -kdToward(K, "J"), 0, ci === 0 ? 1.2 : 0.8, JP_STEEL);
+    clashFx(P.x, P.y, -vJ.x, -vJ.y, ci === 0 ? 1.2 : 0.8, JP_STEEL);
     playShellClank(false); playSwordClash(0.7);
     if (ci === 0) floater(J.x, J.y - J.r - 34, "X CUT!", "crit");
     if (ci === 1) floater(T.x, T.y - T.r - 34, "SHELL!", "dodge");
@@ -306,11 +318,11 @@ function kdBeatRam(K, e) {
   kdAt(K, "T", go + skid, 0); kdAt(K, "J", -skid, 0); // (Tony stays on the blades as Jiří skids back)
   var outT = 0.42;
   T.kdPose = e < outT ? { kind: "shell", phase: "hold", t: e } : { kind: "shell", phase: "out", t: e - outT };
-  J.kdPose = { kind: "block", u: kdE(e / 0.12) * (1 - kdE((e - 0.45) / 0.15)), P: { x: J.x - kdToward(K, "T") * bl, y: J.y - J.r * 0.2 } };
+  J.kdPose = { kind: "block", u: kdE(e / 0.12) * (1 - kdE((e - 0.45) / 0.15)), P: { x: J.x - kdToward(K, "T").x * bl, y: J.y - kdToward(K, "T").y * bl - J.r * 0.2 } };
   if (!K.said.ramHit && e >= hitE) {
     K.said.ramHit = true;
-    var bp = { x: J.x - kdToward(K, "T") * bl, y: J.y - J.r * 0.2 };
-    clashFx(bp.x, bp.y, kdToward(K, "T"), 0, 1.1, JP_STEEL);
+    var vT = kdToward(K, "T"), bp = { x: J.x - vT.x * bl, y: J.y - vT.y * bl - J.r * 0.2 };
+    clashFx(bp.x, bp.y, vT.x, vT.y, 1.1, JP_STEEL);
     playShellClank(false); playSwordClash(1);
     floater(J.x, J.y - J.r - 34, "BLOCKED!", "crit");
     crowdReact(0.6);
@@ -336,8 +348,8 @@ function kdReveal(K, Wn, Ls) {
   playSamuraiTaiko();
   playSwordClash(1.6);
   K.cam.flash = 0.55;
-  var ux = Ls.x >= Wn.x ? 1 : -1;
-  if (dealt > 0 && Ls.alive && !Ls.koOut) beginWallSlam(Ls, ux, 0, { knockback: cfg.knockback, wallSlams: cfg.wallSlams, slamDamage: cfg.slamDamage });
+  var dx = Ls.x - Wn.x, dy = Ls.y - Wn.y, dd = Math.sqrt(dx * dx + dy * dy) || 1;
+  if (dealt > 0 && Ls.alive && !Ls.koOut) beginWallSlam(Ls, dx / dd, dy / dd, { knockback: cfg.knockback, wallSlams: cfg.wallSlams, slamDamage: cfg.slamDamage });
   if (!reduceMotion) shake = Math.max(shake, 26);
   hitStop = Math.max(hitStop, 0.2);
   crowdReact(1);
@@ -461,8 +473,8 @@ function kdTonyBlock(b, ang, P, u, sweep, L, glow) {
   });
 }
 // The block's rise and fall over a turn, and a parry's flick.
-function kdBlockU(e) { return kdE((e - 0.03) / 0.12) * (1 - kdE((e - 0.38) / 0.14)); }
-function kdSweep(K, e) { return K.parry ? kdEO((e - KD_HIT) / 0.08) * (1 - kdE((e - 0.34) / 0.14)) : 0; }
+function kdBlockU(e) { return kdE((e - 0.01) / 0.08) * (1 - kdE((e - 0.24) / 0.1)); }
+function kdSweep(K, e) { return K.parry ? kdEO((e - KD_HIT) / 0.06) * (1 - kdE((e - 0.24) / 0.1)) : 0; }
 
 // From drawTfKatanas (ferguson-katanas.js): Tony's arms and blades in the duel.
 function drawKatanaDuelTony(b, ang) {
