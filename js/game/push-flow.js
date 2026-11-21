@@ -76,7 +76,7 @@ function pushFlowHandsBusy(b) {
   if (m.kind === "tie") return m.a === b || m.b === b;
   if (m.kind === "pivot") return m.b === b;                       // framing on them
   if (m.kind === "plant") return m.b === b && m.t < PUSH_FLOW.plant.shell; // shelled up (then the counter is a normal punch)
-  if (m.kind === "dirty") return m.a === b;                       // collar tie and uppercuts
+  if (m.kind === "dirty") return true;                            // his collar tie and uppercuts; them covering up (their guard would reach in among his arms)
   if (m.kind === "check") return m.b === b && m.t < PUSH_FLOW.kickCheck.shin + 0.05; // guard tight while the shin's up
   return false;
 }
@@ -159,9 +159,17 @@ function tickPushFlow(dt) {
 function pfCool(w, dt) { w.pinT[0] = Math.max(0, w.pinT[0] - dt * 0.5); w.pinT[1] = Math.max(0, w.pinT[1] - dt * 0.5); }
 
 function pfStop(b) {
-  if (b.cmb && typeof endCombo === "function") endCombo(b, false);
-  b.combo = null; b.flow = null; b.punch = null; b.kick = null; b.jabAnim = null; b.knockFly = 0; b.speedEase = null;
+  pfQuiet(b);
+  b.jabAnim = null; b.knockFly = 0; b.speedEase = null;
   b.vx = 0; b.vy = 0;
+}
+// Held in one of these, nothing of his own can be going: a strike a timer
+// somewhere else starts (a combination's queued elbow, say) would draw a
+// third arm over the move's own two.
+function pfQuiet(b) {
+  if (b.cmb && typeof endCombo === "function") endCombo(b, false);
+  b.combo = null; b.flow = null; b.punch = null; b.kick = null; b.swing = null; b.throwAnim = null;
+  b.elbowAnim = null; b.kneeAnim = null; b.koPunch = null;
 }
 
 function pfStartTie(a, c, why) {
@@ -309,6 +317,8 @@ function pfRun(dt) {
   var gone = over || !a.alive || !c.alive || a.grappled || c.grappled || a.grapple || c.grapple || a.slam || c.slam || (a.igbb && !m.formA) || c.igbb || a.koOut || c.koOut || sceneLocked() || (m.formA && !pfForm(a)) || (m.kick && a.igbb);
   m.t += dt;
   if (gone) { pfPair = null; pfWatch.cd = PUSH_FLOW.cooldown; return; }
+  if (!m.loose) pfQuiet(a);
+  pfQuiet(c);
   if (m.kind === "tie") {
     pfPlaceTie(m.t);
     var k = Math.floor(m.t / 0.17);
@@ -447,6 +457,7 @@ function drawPushFlowOver() {
   } else if (m.kind === "plant" && m.t < PUSH_FLOW.plant.shell) {
     pfShellArms(m.b, m.a);
   } else if (m.kind === "dirty") {
+    pfCoverArms(m.b);
     pfDirtyArms(m.a, m.b, m);
   } else if (m.kind === "check" && m.t < PUSH_FLOW.kickCheck.shin + 0.05) {
     pfCheckShin(m.b, m.a, m.t / PUSH_FLOW.kickCheck.shin);
@@ -562,6 +573,18 @@ function pfDirtyArms(b, v, m) {
   strokeLimb(limb, armColor(b.char, -1), function () { ctx.moveTo(shR.x, shR.y); ctx.quadraticCurveTo(elR.x, elR.y, hd.x, hd.y); });
   var punching = active && p > 0.45 && p < 0.8;
   drawGloveAt(hd.x, hd.y, r * (punching ? 0.29 : 0.25), b.char, kind === "hook" ? (sx > 0 ? 0 : Math.PI) : -Math.PI / 2 + sx * 0.5);
+}
+
+// Covering up while he's dirty boxing them: gloves tight on the sides of his own head.
+function pfCoverArms(b) {
+  var r = b.r, limb = r * 0.2;
+  [-1, 1].forEach(function (side) {
+    var sh = { x: b.x + side * r * 0.62, y: b.y + r * 0.05 };
+    var hd = { x: b.x + side * r * 0.5, y: b.y - r * 0.42 };
+    var el = { x: b.x + side * r * 0.85, y: b.y - r * 0.12 };
+    strokeLimb(limb, armColor(b.char, side), function () { ctx.moveTo(sh.x, sh.y); ctx.quadraticCurveTo(el.x, el.y, hd.x, hd.y); });
+    drawGloveAt(hd.x, hd.y, r * 0.25, b.char, -Math.PI / 2);
+  });
 }
 
 // Checking the kick: his lead leg comes up, knee turned out toward the kicker.
