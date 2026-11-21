@@ -5195,12 +5195,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-michael-bisping",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "middleweight",
     "name": "Michael Bisping",
     "base": "Brawler",
-    "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. His special is Broadside: the sea spreads over the mat, a pirate ship with a Union Jack mainsail rises out of it in the middle of the cage, and he hops on deck in a captain's hat while three cannons on the bow fire volleys across the cage at them.",
+    "bio": "\"The Count\". Former UFC middleweight champion from England, now a commentator. He lost the sight in his right eye and won the title fighting with it, so here he wears a pirate's eye patch over it, with a skull and crossbones on his shorts. A volume kickboxer: quick punches, body kicks and combinations, and he never stands still, stepping back out after everything he throws and circling at the edge of his range while the 10-9 cards pile up. He moves to the side around kicks: he side-steps theirs, and steps off to an angle before he throws his own. Takedowns mostly get stuffed, and he hates grapplers: a shot he stuffs gets punished in the clinch. Every time he's in the clinch it's knees and elbows. When they pull out a weapon he draws his pirate cutlass: he parries their swings, charges in with boarding slashes, and every few parries it locks into a sword duel. His special is Broadside: the sea spreads over the mat, a pirate ship with a Union Jack mainsail rises out of it in the middle of the cage, and he hops on deck in a captain's hat while three cannons on the bow fire volleys across the cage at them.",
     "color": "#b3202a",
     "label": "",
     "imgData": null,
@@ -5258,6 +5258,46 @@ var SAVED_ROSTER = [
     "blockChance": 15,
     "tdd": {
       "sprawlChance": 75
+    },
+    "rapier": {
+      "enabled": true,
+      "style": "cutlass",
+      "weapons": [
+        "bat"
+      ],
+      "parryChance": 85,
+      "knockback": 420,
+      "recover": 0.6,
+      "drawText": "CUTLASS",
+      "duel": {
+        "after": 3,
+        "clashes": 6,
+        "gap": 80,
+        "disarmChance": 50,
+        "slashDamage": 40,
+        "slashKnockback": 1500,
+        "slashText": "CUTLASS SLASH!"
+      },
+      "lunge": {
+        "first": [
+          1.2,
+          2.5
+        ],
+        "every": [
+          3,
+          5
+        ],
+        "warn": 0.5,
+        "range": 300,
+        "speed": 1400,
+        "damage": 22,
+        "knockback": 1000,
+        "wallSlams": 1,
+        "slamDamage": 3,
+        "coilText": "AVAST!",
+        "lungeText": "BOARDING SLASH!",
+        "hitText": "CUTLASS SLASH!"
+      }
     },
     "knee": {
       "clinch": {

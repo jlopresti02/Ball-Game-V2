@@ -228,6 +228,7 @@ function updateAbilities(dt) {
       if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
       continue; // stunned while flying
     }
+    if (cutlassFistsOff(self)) continue; // Michael Bisping fights only with his cutlass while it's out (bisping-cutlass.js)
     // A critical-weave combo or the celebration after it takes over completely.
     if (updateWeave(self, other, dt)) continue;
     var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;

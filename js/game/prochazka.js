@@ -746,7 +746,7 @@ function tickSamuraiLock(dt) {
     // They muscle through it and get him.
     var dealt2 = hurt(t, cc.hurtDamage, "igbb", o.id);
     t.flash = 0.16;
-    floater(t.x, t.y - t.r - 34, L.w === "saber" ? "SABER SLASH!" : L.w === "katana" ? "KATANA SLASH!" : L.w === "blade" ? (o.rapier ? "RAPIER SLASH!" : "DIAMOND SLASH!") : (o.cheater && o.cheater.club ? "WHACK!" : "CRACK!"), "crit");
+    floater(t.x, t.y - t.r - 34, L.w === "saber" ? "SABER SLASH!" : L.w === "katana" ? "KATANA SLASH!" : L.w === "blade" ? (cutlassStyle(o) ? "CUTLASS SLASH!" : o.rapier ? "RAPIER SLASH!" : "DIAMOND SLASH!") : (o.cheater && o.cheater.club ? "WHACK!" : "CRACK!"), "crit");
     if (L.w === "saber") playSaberHit(true); else if (L.w === "bat") playBatHit(true); else playSwordClash(1.4);
     if (dealt2 > 0 && t.alive) beginWallSlam(t, -nx, 0, { knockback: 1100, wallSlams: 1, slamDamage: 4 });
     if (!reduceMotion) { shake = Math.max(shake, 20); hitStop = Math.max(hitStop, 0.08); }
@@ -756,7 +756,7 @@ function tickSamuraiLock(dt) {
     playSwordClash(1.6);
     if (L.w === "saber") startForce(o, t, nx, 0); // Hokit pulls it back with the Force and pushes him away (hokit-darkside.js)
     else {
-      var oh = bladeHost(o), blade = oh && oh.sword ? (o.rapier ? "rapier" : "longsword") : null;
+      var oh = bladeHost(o), blade = oh && oh.sword ? (cutlassStyle(o) ? "cutlass" : o.rapier ? "rapier" : "longsword") : null; // (Bisping's cutlass, bisping-cutlass.js)
       flyingBats.push({ x: o.x + nx * o.r * 0.5, y: o.y - o.r * 0.4, vx: nx * 380, vy: -820, rot: 0, spin: 19, t: 0, len: blade ? o.r * bladeLen(o) : weaponLen(o), trail: [], club: !!(o.cheater && o.cheater.club), blade: blade });
       if (o.cheater) { o.cheater = null; o.weaponLost = true; } // the bat or club is gone for the fight
       if (blade) { oh.sword = null; oh.disarmed = true; } // and so is a sword
