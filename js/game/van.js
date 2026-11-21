@@ -106,7 +106,7 @@ function vnGuardStance(b) {
   var cfg = vnCfg(b);
   return !!(cfg && cfg.highGuard && b.vn && b.alive && !b.koOut && !b.kick && !b.grappled && !b.grapple && !b.sprawl && !b.sprawled &&
     !subLocked(b) && !b.combo && !b.swing && !b.taunt && !b.mock && !b.throwAnim && !b.koRush && !b.koPunch && !b.igbb && !b.vnFlag &&
-    !b.ngDown && !b.shelled && !herbCovering(b) && !aaCovering(b));
+    !b.ngDown && !b.shelled && !herbCovering(b) && !aaCovering(b) && !pushFlowHandsBusy(b)); // (arms on them in a tie-up, push-flow.js)
 }
 // His hands are drawn by drawVan in his high guard and while he holds the
 // flag up (drawHands skips them, draw-attacks.js).
