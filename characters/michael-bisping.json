@@ -44,7 +44,7 @@
     "enabled": true, "style": "cutlass", "weapons": ["bat"], "parryChance": 85, "knockback": 420, "recover": 0.6, "drawText": "CUTLASS",
     "duel": { "after": 3, "clashes": 6, "gap": 80, "disarmChance": 50, "slashDamage": 40, "slashKnockback": 1500, "slashText": "CUTLASS SLASH!" },
     "lunge": { "first": [1.2, 2.5], "every": [3, 5], "warn": 0.5, "range": 300, "speed": 1400, "damage": 22, "knockback": 1000, "wallSlams": 1, "slamDamage": 3,
-      "coilText": "AVAST!", "lungeText": "BOARDING SLASH!", "hitText": "CUTLASS SLASH!" }
+      "coilText": "AVAST!", "coilKind": "crit", "lungeText": "BOARDING SLASH!", "hitText": "CUTLASS SLASH!" }
   },
   "knee": { "clinch": { "first": [3, 5], "every": [5, 8], "range": 16, "knees": [2, 4], "damage": 10, "gap": 0.66, "escape": 12, "grapplerEscape": 10, "knockback": 380 } },
   "combos": { "first": [4, 6], "every": [6, 9], "list": { "one-two-kick": 3, "jab-cross-hook": 2, "punch-clinch": 1 } },

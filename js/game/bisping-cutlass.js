@@ -94,10 +94,24 @@ var CUTLASS_FLOURISHES = {
 // ---------------------------------------------------------------- the sword
 
 // The cutlass, (x, y) at his hand on the grip, pointing along ang.
-function drawCutlass(x, y, ang, len, k, alpha) {
+// Which way the edge faces: the curve and cutting edge always turn toward
+// the opponent (Joe, 2026-11-21), so the blade flips over as he turns.
+// A little hysteresis keeps it from flickering while it points straight at them.
+function cutlassFlip(b, hx, hy, ang) {
+  var o = balls[1 - b.id], sw = b.rapier && b.rapier.sword;
+  if (!o || !sw) return 1;
+  var dx = o.x - hx, dy = o.y - hy, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  var dot = (-Math.sin(ang) * dx + Math.cos(ang) * dy) / d; // edge normal (local +y) toward them
+  if (sw.edge == null) sw.edge = dot >= 0 ? 1 : -1;
+  else if (dot > 0.2) sw.edge = 1;
+  else if (dot < -0.2) sw.edge = -1;
+  return sw.edge;
+}
+
+function drawCutlass(x, y, ang, len, k, alpha, flip) {
   ctx.save();
   ctx.globalAlpha *= alpha;
-  ctx.translate(x, y); ctx.rotate(ang); ctx.scale(k, k);
+  ctx.translate(x, y); ctx.rotate(ang); ctx.scale(k, k * (flip || 1));
   var B = "#a07a3a", BD = "#4a3416", BL = "#e0c27a", OUT = "#1f2328";
   // Blade: a curve that widens toward the tip, edge on the outside of the
   // curve (+y), clipped back to the point along the spine.

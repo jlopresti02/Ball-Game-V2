@@ -5295,6 +5295,7 @@ var SAVED_ROSTER = [
         "wallSlams": 1,
         "slamDamage": 3,
         "coilText": "AVAST!",
+        "coilKind": "crit",
         "lungeText": "BOARDING SLASH!",
         "hitText": "CUTLASS SLASH!"
       }
