@@ -113,6 +113,9 @@ function tickKatanaDuel(dt) {
   else kdTickCut(K, dt);
   if (!kDuel) return;
   [T, J].forEach(function (b) { if (b !== K.freed) { b.vx = 0; b.vy = 0; } });
+  // Their own clocks are held, so keep them squared up here: each one's
+  // facing (igbb.ang, which their arms are drawn from) points at the other.
+  if (!K.revealed) [[T, J], [J, T]].forEach(function (q) { if (q[0].igbb) q[0].igbb.ang = Math.atan2(q[1].y - q[0].y, q[1].x - q[0].x); });
 }
 
 // Where each of them stands: Tony on `side` of the middle, Jiří across.
@@ -155,8 +158,10 @@ function kdAttacker(K) { var c = KD_ORDER.charAt(K.n % KD_ORDER.length); return 
 // Where the cut meets the block: most of the attacker's reach toward the
 // defender, a little up. The defender's blades come up to it.
 function kdHitPoint(K, a) {
-  var A = K[a], dir = kdToward(K, a), d = kdReach(K, a) * 0.82;
-  return { x: A.x + dir.x * d, y: A.y + dir.y * d - A.r * 0.35 };
+  // Right on the line between them (never pushed off it), where both blades reach.
+  var A = K[a], B = K[a === "T" ? "J" : "T"], dir = kdToward(K, a), gap = Math.hypot(B.x - A.x, B.y - A.y);
+  var d = Math.min(kdReach(K, a) * 0.8, gap - B.r * 1.25);
+  return { x: A.x + dir.x * d, y: A.y + dir.y * d };
 }
 function kdTickTurns(K, dt) {
   var a = kdAttacker(K), d = a === "T" ? "J" : "T", e = K.t;
@@ -570,13 +575,17 @@ function kdJiriGuard(b, ang) { [1, -1].forEach(function (s) { var g = jpGuard(b,
 // One of Jiří's cuts that stops dead on the block (or the shell): the sword
 // up over his shoulder, brought down onto the point, held, back to guard.
 function kdJiriCut(b, ang, s, e, wind, hit, back, P) {
-  var L = kdJiriLen(b, s), g = jpGuard(b, ang, s), wH = jpAt(b, ang + s * 1.35, 0.88), wBa = ang + s * 2.55;
-  var cH = jpAt(b, ang + s * 0.22, 1.2), cBa = Math.atan2(P.y - cH.y, P.x - cH.x);
+  // A forehand cut: the hand draws back and out with the blade cocked up,
+  // then drives forward and in, the edge leading, onto the point. No
+  // swinging it round behind him: the blade only ever turns through the
+  // front, toward them.
+  var L = kdJiriLen(b, s), g = jpGuard(b, ang, s), wH = jpAt(b, ang + s * 1.05, 0.8), wBa = ang + s * 0.95;
+  var cH = jpAt(b, ang + s * 0.3, 1.2), cBa = Math.atan2(P.y - cH.y, P.x - cH.x);
   var pose = function (t) {
     if (t < wind) { var u = kdE(t / wind); return { h: kdLerpP(g.hand, wH, u), ba: kdLerpA(g.ba, wBa, u) }; }
     if (t < hit) { var v = kdEO((t - wind) / (hit - wind)); return { h: kdLerpP(wH, cH, v), ba: kdLerpA(wBa, cBa, v) }; }
     var w = kdE((t - hit - 0.05) / (back - hit - 0.05));
-    return { h: kdLerpP(cH, g.hand, w), ba: kdLerpA(cBa - s * 0.12 * Math.sin(kdC01((t - hit) / 0.08) * Math.PI), g.ba, w) };
+    return { h: kdLerpP(cH, g.hand, w), ba: kdLerpA(cBa + s * 0.1 * Math.sin(kdC01((t - hit) / 0.08) * Math.PI), g.ba, w) };
   };
   var Q = pose(e);
   if (e > wind && e < hit + 0.12) {
@@ -588,12 +597,13 @@ function kdJiriCut(b, ang, s, e, wind, hit, back, P) {
 }
 // Jiří's two swords raised into a point, from guard (u 0) to braced (u 1).
 function kdJiriBlock(b, ang, P, u, sweep, glow) {
-  var lang = Math.atan2(P.y - b.y, P.x - b.x);
+  // Both swords up in an X in front of him, crossing right where their blade
+  // comes in, so it lands in the cross.
   [1, -1].forEach(function (s) {
-    var g = jpGuard(b, ang, s), h = jpAt(b, lang + s * 0.45, 1.05);
-    var hand = kdLerpP(g.hand, h, u);
-    var ba = kdLerpA(g.ba, Math.atan2(P.y - hand.y, P.x - hand.x) + s * 0.05, u) + s * 0.5 * sweep;
-    jpArm(b, ang, s, hand, ba, kdJiriLen(b, s) * 0.92, glow);
+    var g = jpGuard(b, ang, s), h = jpAt(b, ang + s * 0.8, 1.0), L = kdJiriLen(b, s);
+    var hand = kdLerpP(g.hand, h, u), d = Math.hypot(P.x - hand.x, P.y - hand.y);
+    var ba = kdLerpA(g.ba, Math.atan2(P.y - hand.y, P.x - hand.x), u) + s * 0.5 * sweep;
+    jpArm(b, ang, s, hand, ba, Math.max(L * 0.75, Math.min(L, d * 1.35)) * (0.9 + 0.1 * u), glow); // (the cross on the point, the tips just past it)
   });
 }
 
