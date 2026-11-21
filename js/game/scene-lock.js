@@ -17,6 +17,7 @@ function sceneLocked() {
   if (typeof saberLock !== "undefined" && saberLock) return true;                    // Hokit's saber lock (hokit-darkside.js)
   if (typeof katanaLock !== "undefined" && katanaLock) return true;                  // Tony Ferguson's katana lock (ferguson-katanas.js)
   if (typeof jpLock !== "undefined" && jpLock) return true;                          // Jiří Procházka's blade lock (prochazka.js)
+  if (typeof kDuel !== "undefined" && kDuel) return true;                            // Tony vs Jiří's katana duel and its cutscene (katana-duel.js)
   if (typeof beamClash !== "undefined" && beamClash && !beamClash.done) return true; // Kamehameha vs rainbow beam struggle (beam-clash.js)
   if (typeof cncCut !== "undefined" && cncCut) return true;                          // Chuck Norris's entrance cutscene (chuck-norris-cut.js)
   if (typeof dcCut !== "undefined" && dcCut) return true;                            // DC's music video (cormier-cake-cut.js)

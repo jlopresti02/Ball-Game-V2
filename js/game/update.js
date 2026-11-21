@@ -48,6 +48,7 @@ function update(dt) {
   tickCheater(dt);
   tickDarkSide(dt); // Hokit's Dark Side: the Force push, the saber's hum (hokit-darkside.js)
   tickKatanaLock(dt); // Tony's katanas locked up with a sword, saber or bat (ferguson-katanas.js)
+  tickKatanaDuel(dt); // Tony vs Jiří: the katana duel, its turns and its cutscene (katana-duel.js)
   tickJon(dt);      // Jon Jones swapping between GOAT and EVIL mode (jon.js)
   tickHelmetCharge(dt); // the 67'ers ad's clock (hokit-helmet.js)
   tickRingBear(dt); // Khabib's bear wandering the ring (khabib-bear.js)
