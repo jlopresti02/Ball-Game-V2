@@ -61,7 +61,7 @@ function islamHandsBusy(b) {
   if (typeof axeCallBusy === "function" && axeCallBusy(b)) return true; // his hand out for the axe (islam-axe.js)
   if (m && m.move === "islam" && m.kind === "brotha" && m.phase !== "space") return true; // his arms in Brotha
   if (om && om.move === "islam" && om.kind === "brotha" && om.vicId === b.id && om.huh) return true; // theirs, lost
-  if (m && m.move === "islam" && m.kind === "cheesecake" && (m.phase === "serve" || m.phase === "toss")) return true;
+  if (m && m.move === "islam" && m.kind === "cheesecake" && (m.phase === "serve" || m.phase === "cakeToss")) return true;
   return !!(b && b.islamRoo && b.islamRoo.step !== "say");
 }
 
@@ -300,14 +300,14 @@ function islCake(self, other, m, dt) {
       // Lands behind them, away from him, inside the cage.
       var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1, M = 70;
       var tx = Math.max(M, Math.min(W - M, other.x + dx / d * c.past)), ty = Math.max(M, Math.min(H - M, other.y + dy / d * c.past));
-      m.phase = "toss"; m.t = 0;
+      m.phase = "cakeToss"; m.t = 0;
       m.cake = { x: self.x, y: self.y - self.r, sx: self.x + (dx / d) * self.r, sy: self.y - self.r * 0.4, tx: tx, ty: ty, z: 0, bites: 0, landed: false };
       playWhoosh();
     }
     return true;
   }
   var ck = m.cake;
-  if (m.phase === "toss") {
+  if (m.phase === "cakeToss") {
     var u = Math.min(1, m.t / c.toss);
     ck.x = ck.sx + (ck.tx - ck.sx) * u; ck.y = ck.sy + (ck.ty - ck.sy) * u; ck.z = Math.sin(Math.PI * u) * 120;
     if (u >= 1) {
@@ -414,10 +414,10 @@ function islDagestan(self, other, m, dt) {
     other.x = m.fly.x0 + (m.fly.x1 - m.fly.x0) * (1 - (1 - fu) * (1 - fu));
     v.x += v.dir * c.vanSpeed * Math.max(0, 1 - m.t / 0.35) * dt;
     islVanClamp(v, other);
-    if (m.t >= 0.4) { m.phase = "grab"; m.t = 0; }
+    if (m.t >= 0.4) { m.phase = "nab"; m.t = 0; }
     return true;
   }
-  if (m.phase === "grab") { // door slides open, two guys hop out and bundle them in
+  if (m.phase === "nab") { // door slides open, two guys hop out and bundle them in
     v.door = Math.min(1, m.t / 0.3); v.a = Math.min(1, v.a + dt / 0.18);
     var doorX = v.x - v.dir * 10, doorY = v.y - 10;
     if (m.t >= 0.6 && !m.carry) { m.carry = { x0: other.x, y0: other.y }; floater(other.x, other.y - other.r - 30, "KIDNAPPED!", "crit"); }
@@ -450,7 +450,7 @@ function islDagestan(self, other, m, dt) {
       hurt(other, Math.max(0, Math.min(c.beatDamage, other.hp - 1)), "igbb", self.id);
     }
     if (!islamTrip.boom && m.t >= 1.9) { islamTrip.boom = true; playSlam(); }
-    if (!islamTrip.fling && m.t >= 5.9) { islamTrip.fling = true; playWhoosh(); }
+    if (!islamTrip.fling && m.t >= 5.95) { islamTrip.fling = true; playWhoosh(); }
     if (m.t >= ISL_TRIP_T) { islamTrip = null; m.phase = "fall"; m.t = 0; }
     return true;
   }
@@ -601,7 +601,7 @@ function drawIslamTop() {
         drawGloveAt(hx, hy + 10, r * 0.22, b.char);
         drawGloveAt(b.x - side * r * 0.55, b.y - r * 0.05, r * 0.22, b.char);
         if (m.t > 0.1) islBubble(b, "CALIFORNIA CHEESECAKE!", 1, false, now);
-      } else if (m.phase === "toss") {
+      } else if (m.phase === "cakeToss") {
         var sd = o.x >= b.x ? 1 : -1;
         drawGloveAt(b.x + sd * r * 1.0, b.y - r * 0.5, r * 0.22, b.char);
         drawGloveAt(b.x - sd * r * 0.55, b.y - r * 0.05, r * 0.22, b.char);
@@ -785,10 +785,10 @@ function drawDagGuy(x, y, r, i) {
   ctx.restore();
 }
 
-function islVanScale(b) { return Math.max(0.8, b.r / 70); }
+function islVanScale(b) { return Math.max(0.62, b.r / 80); }
 // Keeps the van inside the ring and its bumper behind them.
 function islVanClamp(v, o) {
-  var half = 160 * v.s, lim = o.x - v.dir * (o.r + 150 * v.s + 4);
+  var half = 160 * v.s, lim = o.x - v.dir * (o.r * 1.3 + 156 * v.s + 10); // art and gloves clear of the bumper
   if (v.dir > 0) v.x = Math.min(v.x, lim); else v.x = Math.max(v.x, lim);
   v.x = Math.max(half, Math.min(W - half, v.x));
 }
@@ -805,7 +805,7 @@ function drawDagestanVan(b, o, m, now) {
   }
   ctx.restore();
   // The two guys.
-  if (m.phase === "grab") {
+  if (m.phase === "nab") {
     var out = Math.min(1, m.t / 0.35), doorX = v.x - v.dir * 10;
     for (var g = 0; g < 2; g++) {
       var gx0 = doorX + (g ? 18 : -18), gy0 = v.y - 40;
@@ -863,54 +863,61 @@ function drawIslamCutscene() {
     ctx.restore();
   }
   // A wooden road sign.
-  ctx.fillStyle = "#6b4a2a"; ctx.fillRect(150, 980, 14, 160);
+  ctx.fillStyle = "#6b4a2a"; ctx.fillRect(943, 940, 14, 150);
   ctx.fillStyle = "#8a6238"; ctx.strokeStyle = "#1f2328"; ctx.lineWidth = 4;
-  ctx.fillRect(70, 960, 200, 70); ctx.strokeRect(70, 960, 200, 70);
-  ctx.fillStyle = "#f4ead2"; ctx.font = "800 30px Impact, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("DAGESTAN", 170, 996);
+  ctx.fillRect(850, 920, 200, 70); ctx.strokeRect(850, 920, 200, 70);
+  ctx.fillStyle = "#f4ead2"; ctx.font = "800 30px Impact, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("DAGESTAN", 950, 956);
   var R = 78; // fighters at cutscene size
   // The van pulls up, throws them out, and drives off.
-  var vx = u < 1.3 ? -260 + 560 * islE(u / 1.3) : u < 2.0 ? 300 : 300 + (u - 2.0) * 900;
-  var door = u < 1.3 ? 0 : u < 1.5 ? (u - 1.3) / 0.2 : u < 1.9 ? 1 : Math.max(0, 1 - (u - 1.9) / 0.15);
-  if (u < 3.4) drawIslVan(vx, 1240, 1, door, 1.5);
-  var vicX = 640, vicY = 1220;
-  if (u >= 1.45 && u < 1.9) { // flung out of the door
+  var vx = u < 1.3 ? -260 + 520 * islE(u / 1.3) : u < 1.95 ? 260 : 260 + Math.pow((u - 1.95) / 0.3, 2) * 1150;
+  var door = u < 1.3 ? 0 : u < 1.45 ? (u - 1.3) / 0.15 : u < 1.8 ? 1 : Math.max(0, 1 - (u - 1.8) / 0.15);
+  var vicX = 640, vicY = 1330; // out in front of the van, clear of it
+  if (u >= 1.45 && u < 1.9) { // flung out of the door (behind the van's side), landing out in front
     var fu = (u - 1.45) / 0.45;
-    var fx = 300 + (vicX - 300) * fu, fy = 1150 + (vicY - 1150) * fu - Math.sin(Math.PI * fu) * 160;
-    islFighterAt(vic, fx, fy, R, fu * 8);
-  }
+    var fx = 270 + (vicX - 270) * fu, fy = 1170 + (vicY - 1170) * fu - Math.sin(Math.PI * fu) * 110;
+    drawIslVan(vx, 1240, 1, door, 1.5); islFighterAt(vic, fx, fy, R, fu * 8);
+  } else if (u < 2.3) drawIslVan(vx, 1240, 1, door, 1.5); // and away before the beating
   // The dust cloud beating.
-  if (u >= 1.9 && u < 4.1) {
-    for (var g = 0; g < 3; g++) { // Dagestani fighters piling in
-      var ju = Math.min(1, (u - 1.9) / 0.35), sx = [140, 940, 540][g], sy = [1500, 1500, 1640][g];
-      if (ju < 1) drawDagGuy(sx + (vicX - sx) * ju, sy + (vicY - sy) * ju - Math.sin(Math.PI * ju) * 120, R * 0.85, g);
+  if (u >= 1.9 && u < 2.6) { // dazed where they landed, as the van pulls away
+    islFighterAt(vic, vicX, vicY, R, 0.3);
+    for (var s0 = 0; s0 < 3; s0++) { var a0 = now * 5 + s0 * 2.1; drawStar(vicX + Math.cos(a0) * R * 0.6, vicY - R * 1.05 + Math.sin(a0) * 6, 12, "#ffd23f"); }
+  }
+  if (u >= 2.25 && u < 4.1) {
+    for (var g = 0; g < 3; g++) { // Dagestani fighters piling in from the sides and the front
+      var ju = Math.min(1, (u - 2.25) / 0.35), sx = [-80, 1160, 540][g], sy = [1520, 1520, 1780][g];
+      if (ju < 1) drawDagGuy(sx + (vicX - sx) * ju, sy + (vicY - sy) * ju - Math.sin(Math.PI * ju) * 160, R * 0.85, g);
     }
-    if (u > 2.1) islDustCloud(vicX, vicY, 230, now, vic);
+    if (u > 2.55) islDustCloud(vicX, vicY, 230, now, vic);
   }
   if (u >= 4.1) {
     // Cloud gone: they're left in a heap, Hasbulla wheels the catapult out,
     // they tumble into the spoon, he heaves on the rope and off they go.
     var CS = 1.3, cy = 1380, cx1 = 440, ru = Math.min(1, (u - 4.1) / 0.85), re = 1 - Math.pow(1 - ru, 3);
     var cx = -380 + (cx1 + 380) * re, roll = (cx + 380) / (40 * CS);
-    var swing = u < 5.8 ? 0 : Math.min(1, (u - 5.8) / 0.22);
-    var arm = -0.45 - swing * 1.65; // rests up to the right, swings up and over into the crossbar
+    var swing = u < 5.8 ? 0 : Math.min(1, Math.pow((u - 5.8) / 0.2, 1.6));
+    var arm = -0.45 - swing * 1.59; // rests up to the right, swings up and stops on the padded crossbar
     var hr = R * 0.85, rear = cx - 170 * CS;
     // Hasbulla: pushing from behind, then a step back onto the rope
     var back = u < 5.35 ? 0 : Math.min(1, (u - 5.35) / 0.3), lean = u < 5.62 ? 0 : Math.min(1, (u - 5.62) / 0.15);
-    var hx = rear - hr * 0.95 - back * 20 - lean * 10, hy = cy + 30 + back * 70, bob = ru < 1 ? Math.abs(Math.sin(u * 18)) * 6 : 0;
+    var hx = rear - hr * 1.35 - back * 20 - lean * 10, hy = cy + 30 + back * 70, bob = ru < 1 ? Math.abs(Math.sin(u * 18)) * 6 : 0;
     if (ru < 1 && !reduceMotion) { // dust off the wheels
       ctx.fillStyle = "rgba(214,196,156,0.55)";
       for (var dp = 0; dp < 5; dp++) { var dph = (u * 3 + dp / 5) % 1; ctx.beginPath(); ctx.arc(rear - 20 - dph * 120, cy + 70 - dph * 30, 14 + dph * 26, 0, Math.PI * 2); ctx.fill(); }
     }
     var sp = drawIslCatapult(ctx, cx, cy, arm, now, CS, roll); // Joe's catapult (islam-dagestan-art.js)
-    var bucket = { x: sp.x, y: sp.y - 26 };
-    // them: in a heap, then tumbling into the spoon, then launched
+    // sitting in the bowl of the spoon (it faces up along the arm)
+    var vr = R * 0.8, bucket = { x: sp.x + sp.ny * vr * 0.55, y: sp.y - Math.abs(sp.nx) * vr * 0.55 - vr * 0.25 };
+    // them: kicked clear of the cloud into a heap past where the spoon stops,
+    // then tumbling back into it, riding it up, and launched off the top
+    var heapX = 960, heapY = vicY;
     if (u < 5.05) {
-      islFighterAt(vic, vicX, vicY + 20, R * 0.8, 1.4);
-      for (var st = 0; st < 3; st++) { var sa = now * 5 + st * 2.1; drawStar(vicX + Math.cos(sa) * R * 0.6, vicY + 20 - R * 0.85 + Math.sin(sa) * 6, 12, "#ffd23f"); }
-    } else if (u < 5.85) {
-      var hu = Math.min(1, (u - 5.05) / 0.3);
-      islFighterAt(vic, vicX + (bucket.x - vicX) * hu, vicY + 20 + (bucket.y - vicY - 20) * hu - Math.sin(Math.PI * hu) * 140, R * 0.8, 1.4 + hu * 5);
-    } else { var lu = (u - 5.85) / 1.0; islFighterAt(vic, bucket.x - lu * 420, bucket.y - lu * 1900, R * 0.8 * (1 - lu * 0.4), -lu * 14); }
+      var ku = Math.min(1, (u - 4.1) / 0.3), kx = vicX + (heapX - vicX) * islE(ku), ky = vicY + (heapY - vicY) * ku - Math.sin(Math.PI * ku) * 120;
+      islFighterAt(vic, kx, ky, vr, 1.4 + ku * 4);
+      if (ku >= 1) for (var st = 0; st < 3; st++) { var sa = now * 5 + st * 2.1; drawStar(heapX + Math.cos(sa) * R * 0.6, heapY - R * 0.85 + Math.sin(sa) * 6, 12, "#ffd23f"); }
+    } else if (u < 6.0) {
+      var hu = Math.min(1, (u - 5.05) / 0.35);
+      islFighterAt(vic, heapX + (bucket.x - heapX) * hu, heapY + (bucket.y - heapY) * hu - Math.sin(Math.PI * hu) * 150, vr, 5.4 + hu * 5);
+    } else { var lu = (u - 6.0) / 1.0; islFighterAt(vic, bucket.x - lu * 300, bucket.y - lu * 1700, vr * (1 - lu * 0.4), -lu * 14); }
     if (back > 0) { // the release rope from his hands to the back of the frame
       ctx.save(); ctx.strokeStyle = "#cbb894"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx + hr * 0.9, hy - hr * 0.1); ctx.quadraticCurveTo((hx + rear) / 2, cy + 60 - lean * 40, rear, cy - 8); ctx.stroke(); ctx.restore();
     }
@@ -919,10 +926,10 @@ function drawIslamCutscene() {
     drawGloveAt(gx, gy - bob * 0.5, hr * 0.26, { look: ISL_HASBULLA, color: ISL_HASBULLA.skin, punch: {} }, 0); // his hands on the frame, then the rope
     drawGloveAt(gx - 8, gy + hr * 0.25 - bob * 0.5, hr * 0.26, { look: ISL_HASBULLA, color: ISL_HASBULLA.skin, punch: {} }, 0);
     ctx.save(); ctx.textAlign = "center"; ctx.font = "800 34px Impact, sans-serif"; ctx.lineWidth = 6; ctx.strokeStyle = "#1f2328"; ctx.globalAlpha = Math.min(1, (u - 4.3) / 0.2);
-    ctx.strokeText("HASBULLA", hx, hy + hr + 34); ctx.fillStyle = "#ffffff"; ctx.fillText("HASBULLA", hx, hy + hr + 34); ctx.restore();
-    if (u > 5.8) {
+    var lx = Math.max(95, hx); ctx.strokeText("HASBULLA", lx, hy + hr + 34); ctx.fillStyle = "#ffffff"; ctx.fillText("HASBULLA", lx, hy + hr + 34); ctx.restore();
+    if (u > 5.95) {
       ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 96px Impact, 'Arial Black', sans-serif";
-      ctx.globalAlpha = Math.min(1, (u - 5.8) / 0.15); ctx.lineWidth = 10; ctx.strokeStyle = "#1f2328"; ctx.strokeText("LAUNCHED!", 540, 700); ctx.fillStyle = "#ff5a3c"; ctx.fillText("LAUNCHED!", 540, 700); ctx.restore();
+      ctx.globalAlpha = Math.min(1, (u - 5.95) / 0.15); ctx.lineWidth = 10; ctx.strokeStyle = "#1f2328"; ctx.strokeText("LAUNCHED!", 540, 700); ctx.fillStyle = "#ff5a3c"; ctx.fillText("LAUNCHED!", 540, 700); ctx.restore();
     }
   }
   // Letterbox bars and a quick fade in / out.
