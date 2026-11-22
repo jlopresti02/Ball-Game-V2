@@ -500,7 +500,7 @@ function duelDisarm(d, o, sd, S) {
 // The slash: Dustin dashes straight through them, and a beat later it lands.
 function duelDash(d, o, sd, S) {
   sd.ux = S.ux; sd.uy = S.uy;
-  var run = sd.gap + d.r * 1.2;
+  var run = sd.gap + d.r + o.r + 8; // right through and out the far side: no standing inside them after (Joe, 2026-11-22)
   sd.dashFrom = { x: d.x, y: d.y };
   sd.dashTo = { x: Math.min(W - d.r, Math.max(d.r, d.x + S.ux * run)), y: Math.min(H - d.r, Math.max(d.r, d.y + S.uy * run)) };
   sd.slashLine = { x0: d.x, y0: d.y, x1: sd.dashTo.x, y1: sd.dashTo.y };
@@ -510,7 +510,7 @@ function duelDash(d, o, sd, S) {
 // Hokit winning it: he dashes through them with the saber (hokit-darkside.js).
 function duelOppDash(d, o, sd, S) {
   sd.ux = S.ux; sd.uy = S.uy;
-  var run = sd.gap + o.r * 1.2;
+  var run = sd.gap + d.r + o.r + 8; // (out the far side, as above)
   sd.dashFrom = { x: o.x, y: o.y };
   sd.dashTo = { x: Math.min(W - o.r, Math.max(o.r, o.x - S.ux * run)), y: Math.min(H - o.r, Math.max(o.r, o.y - S.uy * run)) };
   saberCuts.push({ x0: o.x, y0: o.y - o.r * 0.2, x1: sd.dashTo.x, y1: sd.dashTo.y - o.r * 0.2, t: 0, r: o.r });
@@ -568,6 +568,7 @@ function tickDuelFinish(d, o, sd, dt) {
     // The dash through, then the cut landing a beat later.
     var k = easeOut(Math.min(1, f / 0.14));
     if (sd.dashTo) { d.x = sd.dashFrom.x + (sd.dashTo.x - sd.dashFrom.x) * k; d.y = sd.dashFrom.y + (sd.dashTo.y - sd.dashFrom.y) * k; }
+    if (f >= 0.14) duelKeepApart(d, o); // bodies again the moment the dash is through
     if (f >= 0.45 && !sd.cut) {
       sd.cut = true; sd.let = true;
       var dealt = hurt(o, cfg.slashDamage, "igbb", d.id); // through the bind: can't be slipped or blocked
@@ -587,6 +588,13 @@ function tickDuelFinish(d, o, sd, dt) {
   if (f >= DUEL_FINISH) endSwordDuel(d, o, sd);
 }
 
+// After the dash through: if the cage stopped him short and he's still in
+// them, they're eased back out (they have a body again, Joe's rule).
+function duelKeepApart(d, o) {
+  var dx = o.x - d.x, dy = o.y - d.y, dd = Math.sqrt(dx * dx + dy * dy) || 1, need = d.r + o.r + 2;
+  if (dd >= need || !o.alive) return;
+  o.x = Math.min(W - o.r, Math.max(o.r, d.x + dx / dd * need)); o.y = Math.min(H - o.r, Math.max(o.r, d.y + dy / dd * need));
+}
 function endSwordDuel(d, o, sd) {
   swordDuel = null;
   var sw = bladeHost(d) && bladeHost(d).sword;

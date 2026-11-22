@@ -161,7 +161,11 @@ function tickAxeRecall(self, dt) {
   self.axeRecallT = 0;
   self.rapier.disarmed = false;
   floater(self.x, self.y - self.r - 50, "AXE RECALLED!", "crit");
-  axeRecalls.push({ id: self.id, t0: performance.now() / 1000, sx: self.x > W / 2 ? -60 : W + 60, sy: -80 });
+  // It flies back from wherever it went (still tumbling, or off in the crowd).
+  var fb = null, from = { x: self.x > W / 2 ? -60 : W + 60, y: -80 };
+  if (typeof flyingBats !== "undefined") flyingBats.forEach(function (f) { if (f.blade === "axe") fb = f; });
+  if (fb) { from = { x: fb.x, y: fb.y }; flyingBats.splice(flyingBats.indexOf(fb), 1); }
+  axeRecalls.push({ id: self.id, t0: performance.now() / 1000, sx: from.x, sy: from.y });
   playWhoosh();
 }
 
