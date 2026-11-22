@@ -398,6 +398,7 @@ function hurt(b, amount, source, attackerId) {
   commentaryHit(b, hpBefore - b.hp, source, attackerId); // a big punch gets the commentator's call (commentary-calls.js)
   icemanHit(b, hpBefore - b.hp, source, attackerId); // punches on Chuck Liddell frost their gloves (liddell.js)
   ngannouHurt(b, hpBefore - b.hp, source, attackerId); // Francis Ngannou's rage meter and punch-power reading (ngannou.js)
+  islamHurt(b, hpBefore - b.hp, source, attackerId); // Islam Makhachev's shaky start: the first punch can stagger him (islam.js)
   crowdReact((hpBefore - b.hp) / MAX_HP * 4); // a 50 HP shot lifts the crowd 40%
   // A clean hit charges the attacker's special move.
   if (amount > 0 && attackerId != null && attackerId !== b.id && source !== "laser" && source !== "igbb") addSpecialCharge(balls[attackerId], source);

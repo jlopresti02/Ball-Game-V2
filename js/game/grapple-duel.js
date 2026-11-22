@@ -206,6 +206,7 @@ function attemptGrab(attacker, target) {
   var gr = target.char.grapple;
   // A shot from a fighter in the Do Bronx state is half as easy to sprawl on.
   if (target.char.hasGrapple && gr && Math.random() < gr.sprawlChance / 100 * (attacker.doBronx ? 0.5 : 1) * grappleScale(target, attacker)) {
+    if (islamDarceOnShot(attacker, target)) return false; // Islam Makhachev snaps a D'Arce on it instead (islam.js)
     beginSprawl(attacker, target);
     return false;
   }
@@ -214,6 +215,7 @@ function attemptGrab(attacker, target) {
   if (tryJonTakedown(attacker, target)) return true; // GOAT Jon Jones: to the back, or ground and pound (jon.js)
   if (tryKhabibOnConor(attacker, target)) return true; // Khabib vs Conor McGregor: to the back, or ground and pound (conor.js)
   if (tryFergusonTakedown(attacker, target)) return true; // Tony Ferguson's shot: into the buggy choke, his D'Arce or elbows (ferguson.js)
+  if (islamTakedown(attacker, target)) return true; // Islam Makhachev: back take, body lock slam or single leg into the clinch (islam.js)
   beginGrapple(attacker, target);
   return true;
 }

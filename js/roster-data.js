@@ -3341,12 +3341,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-islam-makhachev",
-    "rev": 1,
+    "rev": 2,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Islam Makhachev",
     "base": "Grappler",
-    "bio": "Dagestani wrestler on the Grappler base: walks you down, cuts off the cage and chains takedowns, with a sharper jab than his old teammate. No special yet.",
+    "bio": "Dagestani grappler on the Grappler base, and some of the best grappling in the game: his shots finish as a back take into the rear naked choke, a body lock slam or a single leg he works up into the best clinch in the game, knees into a judo sweep. He snaps D'Arces on shots he sprawls on, and his takedown, kick and clinch defense are elite. His hands are light and his chin isn't great on the feet: punches can overwhelm him, and the first one that lands early can stagger him. Specials coming soon.",
     "color": "#2d4a6b",
     "label": "",
     "imgData": null,
@@ -3379,30 +3379,31 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 7,
-      "cooldown": 0.65,
-      "speed": 0.22,
+      "damage": 5,
+      "cooldown": 0.7,
+      "speed": 0.24,
       "size": 13,
-      "knockback": 90,
-      "reach": 32,
+      "knockback": 80,
+      "reach": 30,
       "koChance": 0
     },
-    "hasKick": false,
+    "hasKick": true,
     "hasGrapple": true,
     "grapple": {
-      "damage": 44,
-      "cooldown": 1.6,
+      "damage": 46,
+      "cooldown": 1.5,
       "speed": 0.45,
       "reach": 6,
-      "counterChance": 20,
-      "finSlamDamage": 18,
+      "counterChance": 30,
+      "finSlamDamage": 20,
       "finPunches": 3,
       "finPunchDamage": 9,
-      "sprawlChance": 40,
-      "reattackChance": 50,
-      "stuffChance": 15
+      "sprawlChance": 70,
+      "reattackChance": 60,
+      "stuffChance": 10,
+      "shotName": "TAKEDOWN"
     },
-    "hasSuplex": false,
+    "hasSuplex": true,
     "hasPowerPunch": false,
     "hasRage": false,
     "hasWatcher": false,
@@ -3421,7 +3422,122 @@ var SAVED_ROSTER = [
       }
     },
     "hasSpecial": false,
-    "blockChance": 12
+    "blockChance": 6,
+    "kick": {
+      "damage": 16,
+      "cooldown": 2.6,
+      "speed": 0.4,
+      "size": 14,
+      "knockback": 200,
+      "reach": 62,
+      "checkChance": 45
+    },
+    "legKick": {
+      "first": [
+        4,
+        7
+      ],
+      "every": [
+        7,
+        10
+      ],
+      "range": 56,
+      "reach": 88,
+      "damage": 7,
+      "slow": 0.85,
+      "time": 2
+    },
+    "suplex": {
+      "chance": 55,
+      "damage": 48,
+      "cooldown": 4
+    },
+    "rnc": {
+      "tapBase": 30,
+      "tapLowHp": 55
+    },
+    "darce": {
+      "chance": 6,
+      "lowHpChance": 20,
+      "lowHpAt": 40,
+      "cooldown": 10,
+      "lunge": {
+        "every": 3.5,
+        "range": 40,
+        "time": 0.3,
+        "speed": 600
+      },
+      "hold": 2.4,
+      "holdExtra": 1.2,
+      "tapBase": 20,
+      "tapLowHp": 55,
+      "escapeSpeed": 340
+    },
+    "clinch": {
+      "first": [
+        4,
+        7
+      ],
+      "every": [
+        7,
+        10
+      ],
+      "range": 18,
+      "tie": "overUnder",
+      "evade": 6,
+      "strikes": [
+        3,
+        5
+      ],
+      "gap": 0.34,
+      "mix": {
+        "bodyKnee": 4,
+        "headKnee": 3,
+        "elbow": 1
+      },
+      "knee": {
+        "damage": 9,
+        "headDamage": 12,
+        "critChance": 30,
+        "critMult": 2
+      },
+      "escape": 6,
+      "grapplerEscape": 5
+    },
+    "chin": {
+      "critChance": 12,
+      "critMult": 1.4,
+      "text": "OVERWHELMED!",
+      "sources": [
+        "punch",
+        "jab",
+        "combo",
+        "flow"
+      ]
+    },
+    "islam": {
+      "takedowns": {
+        "back": 2,
+        "bodyLock": 3,
+        "single": 3,
+        "double": 2
+      },
+      "sweep": {
+        "chance": 45
+      },
+      "darceShot": {
+        "chance": 25
+      },
+      "clinchDef": {
+        "evade": 30,
+        "escape": 25
+      },
+      "early": {
+        "window": 20,
+        "chance": 33,
+        "dizzy": 1.2
+      }
+    }
   },
   {
     "id": "c-jiri-prochazka",
