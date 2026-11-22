@@ -141,8 +141,9 @@ function islBrotha(self, other, m, dt) {
   }
   if (m.phase === "moan") {
     if (!m.huh && m.t >= c.confused) { m.huh = true; islHold(other); floater(other.x, other.y - other.r - 30, "HUH?!", "note"); }
-    if (!m.huh2 && m.t >= c.confused + 0.9) { m.huh2 = true; floater(other.x, other.y - other.r - 30, "???", "note"); }
-    if (m.t >= c.moan) { m.phase = "set"; m.t = 0; islBrothaDust(self, -Math.cos(m.aim), -Math.sin(m.aim), 10, 160); }
+    if (!m.huh2 && m.t >= c.confused + 0.45) { m.huh2 = true; floater(other.x, other.y - other.r - 30, "???", "note"); }
+    var lineEnd = (typeof clipBuffers !== "undefined" && clipBuffers.islamBrotha) ? clipBuffers.islamBrotha.duration : c.moan; // the moment Joe's clip ends
+    if (m.t >= lineEnd - c.set) { m.phase = "set"; m.t = 0; islBrothaDust(self, -Math.cos(m.aim), -Math.sin(m.aim), 10, 160); }
     return true;
   }
   if (m.phase === "set") { // drops his level
