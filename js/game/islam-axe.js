@@ -147,6 +147,7 @@ var AXE_FLOURISHES = {
 // own moves holds him (the axe throw or spin, the kangaroo lift).
 function updateIslamMoves(self, other, dt) {
   tickAxeRecall(self, dt);
+  if (typeof islamVoiceWarm === "function" && islamCfg(self)) islamVoiceWarm(); // decode his lines (islam-voice.js)
   if (typeof islamReleaseHeld === "function" && islamCfg(self)) islamReleaseHeld(self); // (islam-specials.js)
   if (typeof islamRooHeld === "function" && islamRooHeld(self, dt)) return true; // lifting Volk's kangaroo (islam-specials.js)
   return updateLeviathan(self, other, dt);

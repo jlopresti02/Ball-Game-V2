@@ -30,15 +30,14 @@
 //   Dustin      one punch a fight (and from Renato Moicano if he's added) gets
 //               through and launches Islam back across the cage, dizzy
 //               (islamHurt, islam.js; his `islam.bigPunch` block).
-// Voice lines: none of "Brotha", "Who check Kangaroo's grappling?" or "2-3
-// years Dagestan and forget" has a real clip yet, so they're speech bubbles
-// only (CLAUDE.md: no clip, no voice).
+// Voice lines: Joe's real clips (islam-voice.js) cut in as each special
+// starts and as he walks up under the kangaroo; the bubbles go with them.
 "use strict";
 
 SPECIAL_MOVES.islam = "Islam's specials";
 var ISL_TRIP_T = 6.0;      // the cut to Dagestan
 var islamTrip = null;      // { ownerId, vicId, u } while the fight holds for it
-var ISL_BUBBLES = { brotha: "BROTHAAAA...", dagestan: "2-3 YEARS DAGESTAN AND FORGET", roo: "WHO CHECK KANGAROO'S GRAPPLING?" };
+var ISL_BUBBLES = { brotha: "BROTHAAAA...", dagestan: "2-3 YEARS DAGESTAN AND FORGET", roo: "KANGAROO HAVE GOOD STRIKING...", roo2: "BUT NOBODY CHECK THE GRAPPLING!" };
 
 function islRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
 function islamSpOn(b) { return !!(b && b.igbb && b.igbb.move === "islam"); }
@@ -65,6 +64,7 @@ function islamHandsBusy(b) {
 function updateIslamSpecials(self, other, dt) {
   var sp = self.char.special;
   if (!self.igbb) {
+    if (self.islamQuietT > 0) { self.islamQuietT -= dt; return false; } // let his kangaroo line finish first
     if (self.specialT < sp.chargeTime || !started || over || !canStartIgbb(self, other)) return false;
     var order = sp.order || ["brotha"], kind = null;
     for (var i = 0; i < order.length && !kind; i++) {
@@ -79,6 +79,8 @@ function updateIslamSpecials(self, other, dt) {
     if (kind === "brotha") { self.igbb.phase = "moan"; floater(self.x, self.y - self.r - 30, "BROTHA!", "crit"); }
     if (kind === "cheesecake") { self.igbb.phase = "serve"; playSwordDraw(); } // (the bubble says it)
     if (kind === "dagestan") { self.igbb.phase = "call"; floater(self.x, self.y - self.r - 30, "DAGESTAN!", "crit"); }
+    var vk = { brotha: "islamBrotha", cheesecake: "islamCheesecake", dagestan: "islamDagestan" }[kind], mm = self.igbb;
+    islamVoice(vk, function () { return self.igbb === mm && mm.t < 0.6; }); // Joe's clip (islam-voice.js)
     crowdReact(0.6);
   }
   var m = self.igbb;
@@ -334,8 +336,10 @@ function islamRooCounter(volk, isl, m, roo) {
   if (m.phase !== "chase" || roo.mode !== "stand" || !isl.alive || isl.igbb || isl.grappled || isl.grapple || isl.dazed || subLocked(isl) || over) return false;
   clearActions(isl);
   isl.vx = 0; isl.vy = 0;
-  isl.islamRoo = { step: "say", t: 0 };
+  var sr = isl.islamRoo = { step: "say", t: 0, all: 0 };
   floater(isl.x, isl.y - isl.r - 30, "NOT TODAY!", "crit");
+  isl.islamQuietT = 4.8; // the clip's length: no special talks over it
+  islamVoice("islamKangaroo", function () { return isl.islamRoo === sr && sr.all < 0.6; }); // Joe's clip (islam-voice.js)
   crowdReact(0.8);
   return true;
 }
@@ -344,7 +348,7 @@ function islamRooCounter(volk, isl, m, roo) {
 function islamRooHeld(isl, dt) {
   var s = isl.islamRoo;
   if (!s) return false;
-  s.t += dt;
+  s.t += dt; s.all = (s.all || 0) + dt;
   isl.vx = 0; isl.vy = 0;
   var volk = balls[1 - isl.id], m = volk && volk.igbb, roo = vkRoo;
   if (!roo || over || !isl.alive) { isl.islamRoo = null; return false; }
@@ -649,7 +653,8 @@ function drawDagestanVan(b, o, m, now) {
 
 // Islam holding the kangaroo up over his head (his own two arms).
 function drawIslamRoo(b, s, now) {
-  if (s.step === "say") { islBubble(b, ISL_BUBBLES.roo, Math.min(1, s.t / 0.15), false, now); return; }
+  var rooLine = (s.all || 0) < 2.05 ? ISL_BUBBLES.roo : ISL_BUBBLES.roo2; // in time with Joe's clip
+  if (s.step === "say") { islBubble(b, rooLine, Math.min(1, s.t / 0.15), false, now); return; }
   if (s.step === "throw" || !vkRoo) return;
   var r = b.r, top = vkRoo.y - vkRoo.z;
   [-1, 1].forEach(function (sd) {
@@ -657,7 +662,7 @@ function drawIslamRoo(b, s, now) {
     drawBentArm(b, sh, hand, sd);
     drawGloveAt(hand.x, hand.y, r * 0.22, b.char);
   });
-  if (s.step === "shake" && s.t < 1.2) islBubble(b, ISL_BUBBLES.roo, 1, false, now);
+  if ((s.all || 0) < 4.7) islBubble(b, rooLine, 1, false, now);
 }
 
 // ---------------------------------------------------------------- the cut to Dagestan
