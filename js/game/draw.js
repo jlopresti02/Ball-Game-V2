@@ -105,6 +105,7 @@ function draw() {
   drawOmalleyAuraUnder(); // O'Malley's Sugar Rush swirl, flames and rings under him (omalley-aura.js)
   drawGspUnder(); // GSP's shadow in the air and the Superman Dive's red lane (gsp.js)
   drawLiddellUnder(); // snow on the mat, Chuck Liddell's ice flames (liddell.js)
+  drawVanMeltUnder(); // puddles of melt water from Van's fire hands (van-melt.js)
   drawNgannouUnder(); // Ngannou's rage punch line, the Smash circle and crater, Dana at the cage (ngannou.js)
   drawVolkUnder(); // Volkanovski's circling arrow, his flag, the kangaroo behind him (volkanovski.js)
   drawHollowayUnder(); // the gold ring in the middle of the cage, the commentary desk (holloway.js)
@@ -478,6 +479,7 @@ function draw() {
   drawClinchOver(); // the clinch: arms tied round them, each knee and elbow, the swirl of the spin on the break (clinch.js)
   drawJonClinch(); // Jon Jones's arms locked over-under, his clinch knees and elbows, the trip's leg and red arrow (jon-clinch.js)
   drawVanOver(); // Joshua Van's chain counter under him, lit while he keeps it (van.js)
+  drawVanMeltOver(); // Chuck's ice punch melting in Van's glove, steam, his fire sputtering out (van-melt.js)
 
   projectiles.forEach(function (p) {
     var pimg = getImg(p.imgData);

@@ -113,7 +113,7 @@ function icemanDamageMult(b, attackerId, source) {
   var ic = icCfg(atk);
   if (ic && ic.warmup && ic.warmup.damage != null) m *= ic.warmup.damage + (1 - ic.warmup.damage) * icWarm(ic, b); // cold hands early on
   if (ic && ic.frost && b.frost) m *= 1 + ic.frost.power * b.frost.level;
-  if (atk.iceRage) m *= atk.char.special.rampage.damage;
+  if (atk.iceRage && !vanMeltedFist(atk)) m *= atk.char.special.rampage.damage; // (not once Van's fire melted his fist: van-melt.js)
   return m;
 }
 
@@ -157,7 +157,7 @@ function frostGloves(atk, chuck, dealt, fc) {
 function hookLanded(chuck, other, dealt) {
   var dx = other.x - chuck.x, dy = other.y - chuck.y, d = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / d, uy = dy / d;
   var cx = other.x - ux * other.r, cy = other.y - uy * other.r;
-  var big = !!chuck.iceRage, frosty = big || (other.frost && other.frost.level > 0.4);
+  var big = !!chuck.iceRage && !vanMeltedFist(chuck), frosty = big || (other.frost && other.frost.level > 0.4);
   if (!frosty) return;
   for (var i = 0; i < (big ? 16 : 6) && !reduceMotion; i++) {
     var a = Math.atan2(uy, ux) + (Math.random() - 0.5) * 2.4, s = 140 + Math.random() * (big ? 360 : 180);
@@ -439,7 +439,7 @@ function icedGloveColor(ch) {
   var b = icBallOf(ch, null);
   if (!b) return null;
   var col = ch.look ? ch.look.gloves : ch.color;
-  if (b.iceRage || snowDayFlare(b)) return "#3fb2ff";
+  if ((b.iceRage && !vanMeltedFist(b)) || snowDayFlare(b)) return "#3fb2ff"; // (melted in Van's glove: van-melt.js)
   if (b.frost && b.frost.level > 0 && /^#[0-9a-f]{6}$/i.test(col)) return mixHex(col, "#dff4ff", 0.25 + 0.55 * b.frost.level);
   return null;
 }
@@ -451,7 +451,7 @@ function frostGloveOver(c, look, gr) {
   if (c !== ctx) return; // only in the fight (not the gallery's own canvases)
   var b = icBallOf(null, look);
   if (!b) return;
-  if (b.iceRage) { drawGloveFlare(c, 0, 0, gr, 1); return; }
+  if (b.iceRage) { if (!vanMeltedFist(b)) drawGloveFlare(c, 0, 0, gr, 1); return; } // (melted in Van's glove: van-melt.js)
   if (b.frost && b.frost.level > 0) drawGloveIce(c, 0, 0, gr, b.frost.level);
 }
 // From drawFist (draw-attacks.js): the same on a punching fist.
@@ -587,7 +587,7 @@ function drawLiddell(b) {
   if (!b.alive || !icCfg(b)) return;
   var m = b.igbb;
   if (m && m.move === "snow") { drawSnowDay(b, m); return; }
-  if (b.iceRage && b.swing) {
+  if (b.iceRage && b.swing && !vanMeltedFist(b)) { // (not while Van's fire melts it, van-melt.js)
     var fist = icSwingFist(b);
     if (fist) drawGloveFlare(ctx, fist.x, fist.y, SWING_FIST_R, 1);
   }
