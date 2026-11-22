@@ -827,17 +827,7 @@ function drawIslamCutscene() {
   ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cw, ch);
   ctx.translate((cw - 1080 * k) / 2, (ch - 1920 * k) / 2); ctx.scale(k, k);
   ctx.beginPath(); ctx.rect(0, 0, 1080, 1920); ctx.clip();
-  // Sky and the Caucasus.
-  var sky = ctx.createLinearGradient(0, 0, 0, 1100);
-  sky.addColorStop(0, "#7fb6e6"); sky.addColorStop(1, "#dcecf5");
-  ctx.fillStyle = sky; ctx.fillRect(0, 0, 1080, 1100);
-  islMountains(820, 330, "#8792a6", "#f4f7fb", 1);
-  islMountains(900, 250, "#6b7a63", "#e9efe6", 2);
-  var gr = ctx.createLinearGradient(0, 900, 0, 1920);
-  gr.addColorStop(0, "#c8a873"); gr.addColorStop(1, "#9d7d4c");
-  ctx.fillStyle = gr; ctx.fillRect(0, 900, 1080, 1020);
-  ctx.fillStyle = "rgba(120,90,50,0.35)"; // the dirt road
-  ctx.beginPath(); ctx.moveTo(0, 1180); ctx.lineTo(1080, 1140); ctx.lineTo(1080, 1290); ctx.lineTo(0, 1330); ctx.closePath(); ctx.fill();
+  drawDagestanBackdrop(ctx); // the Caucasus, the stone village, the hillside (islam-dagestan-art.js)
   // Title.
   var ta = Math.min(1, u / 0.3) * (u < 1.6 ? 1 : Math.max(0, 1 - (u - 1.6) / 0.4));
   if (ta > 0) {
@@ -874,24 +864,17 @@ function drawIslamCutscene() {
   }
   if (u >= 4.1) {
     // Cloud gone: they're in the catapult's bucket, Hasbulla on the lever.
-    var cx = 760, cy = 1380, swing = u < 4.9 ? 0 : Math.min(1, (u - 4.9) / 0.25);
-    var arm = -0.35 - swing * 2.0;
-    ctx.save();
-    ctx.strokeStyle = "#1f2328"; ctx.lineWidth = 6; ctx.fillStyle = "#7a5230";
-    ctx.fillRect(cx - 120, cy, 240, 30); ctx.strokeRect(cx - 120, cy, 240, 30);
-    [-90, 90].forEach(function (wx) { ctx.fillStyle = "#4a3220"; ctx.beginPath(); ctx.arc(cx + wx, cy + 40, 26, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
-    ctx.fillStyle = "#8a6238"; ctx.beginPath(); ctx.moveTo(cx - 20, cy); ctx.lineTo(cx, cy - 110); ctx.lineTo(cx + 20, cy); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.translate(cx, cy - 100); ctx.rotate(arm);
-    ctx.fillStyle = "#9a6d40"; ctx.fillRect(-20, -12, 260, 24); ctx.strokeRect(-20, -12, 260, 24);
-    ctx.fillStyle = "#6b4a2a"; ctx.beginPath(); ctx.arc(250, -20, 46, 0, Math.PI); ctx.fill(); ctx.stroke();
-    ctx.restore();
-    var bucket = { x: cx + Math.cos(arm) * 250, y: cy - 100 + Math.sin(arm) * 250 - 40 };
-    if (u < 4.95) islFighterAt(vic, bucket.x, bucket.y - 20, R * 0.8, 0, true);
-    else { var lu = (u - 4.95) / 1.0; islFighterAt(vic, bucket.x - lu * 300, bucket.y - 20 - lu * 1900, R * 0.8 * (1 - lu * 0.4), lu * 14); }
-    // Hasbulla, small, pulling the lever.
-    var hx = 470, hy = 1460, hr = R * 0.6;
-    drawFighterArt(ctx, hx, hy, hr, { skin: "#e6b994", build: "slim", hair: "short", hairColor: "#1a1410", beard: "none", tattoos: {}, shorts: "#1b1b1b", trim: "#ffffff", gloves: "#1b1b1b" }, theme.wall, { layout: "contained", name: "" });
-    ctx.save(); ctx.strokeStyle = "#1f2328"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(hx + hr, hy - hr * 0.2); ctx.lineTo(cx - 100, cy - 10 - swing * 30); ctx.stroke(); ctx.restore();
+    var cx = 640, cy = 1380, swing = u < 4.9 ? 0 : Math.min(1, (u - 4.9) / 0.22);
+    var arm = -0.45 - swing * 1.65; // rests up to the right, swings up and over into the crossbar
+    var sp = drawIslCatapult(ctx, cx, cy, arm, now, 1.3); // Joe's catapult (islam-dagestan-art.js)
+    var bucket = { x: sp.x, y: sp.y - 26 };
+    if (u < 4.95) islFighterAt(vic, bucket.x, bucket.y, R * 0.8, 0, true);
+    else { var lu = (u - 4.95) / 1.0; islFighterAt(vic, bucket.x - lu * 420, bucket.y - lu * 1900, R * 0.8 * (1 - lu * 0.4), -lu * 14); }
+    // Hasbulla, small, heaving on the release rope.
+    var hx = 290, hy = 1480, hr = R * 0.85, lean = u < 4.75 ? 0 : Math.min(1, (u - 4.75) / 0.15);
+    ctx.save(); ctx.strokeStyle = "#cbb894"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx + hr * 0.9 - lean * 8, hy - hr * 0.1); ctx.quadraticCurveTo((hx + cx - 220) / 2, cy + 50 - lean * 30, cx - 220, cy - 8); ctx.stroke(); ctx.restore();
+    drawHasbulla(ctx, hx - lean * 10, hy, hr, lean); // (islam-dagestan-art.js)
+    drawGloveAt(hx + hr * 0.9 - lean * 8, hy - hr * 0.1, hr * 0.26, { look: ISL_HASBULLA, color: ISL_HASBULLA.skin, punch: {} }, 0); // his hand on the rope
     ctx.save(); ctx.textAlign = "center"; ctx.font = "800 34px Impact, sans-serif"; ctx.lineWidth = 6; ctx.strokeStyle = "#1f2328"; ctx.strokeText("HASBULLA", hx, hy + hr + 34); ctx.fillStyle = "#ffffff"; ctx.fillText("HASBULLA", hx, hy + hr + 34); ctx.restore();
     if (u > 4.9) {
       ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 96px Impact, 'Arial Black', sans-serif";
@@ -910,19 +893,6 @@ function islFighterAt(b, x, y, r, rot, noShadow) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0); ctx.translate(-x, -y);
   drawFighterArt(ctx, x, y, r, b.char.look, theme.wall, { layout: "contained", name: b.char.name });
   ctx.restore();
-}
-function islMountains(baseY, h, col, snow, seed) {
-  ctx.fillStyle = col; ctx.strokeStyle = "rgba(31,35,40,0.5)"; ctx.lineWidth = 3;
-  var pts = [], n = 7;
-  for (var i = 0; i <= n; i++) { var x = i / n * 1080, hh = h * (0.55 + 0.45 * Math.abs(Math.sin(i * 1.7 + seed))); pts.push([x, baseY - (i % 2 ? hh * 0.45 : hh)]); }
-  ctx.beginPath(); ctx.moveTo(0, baseY + 200);
-  pts.forEach(function (p) { ctx.lineTo(p[0], p[1]); });
-  ctx.lineTo(1080, baseY + 200); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = snow;
-  pts.forEach(function (p, i) {
-    if (i % 2) return;
-    ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0] - 55, p[1] + 70); ctx.lineTo(p[0] - 20, p[1] + 55); ctx.lineTo(p[0], p[1] + 75); ctx.lineTo(p[0] + 25, p[1] + 55); ctx.lineTo(p[0] + 55, p[1] + 70); ctx.closePath(); ctx.fill();
-  });
 }
 function islDustCloud(cx, cy, R, now, vic) {
   var i, puffs = [];
