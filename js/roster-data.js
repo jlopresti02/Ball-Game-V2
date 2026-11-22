@@ -3341,7 +3341,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-islam-makhachev",
-    "rev": 4,
+    "rev": 5,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Islam Makhachev",
@@ -3649,7 +3649,18 @@ var SAVED_ROSTER = [
         "sources": []
       },
       "recall": 1.8,
-      "cutsBat": true
+      "cutsBat": true,
+      "mode": {
+        "first": [
+          6,
+          10
+        ],
+        "every": [
+          14,
+          22
+        ],
+        "time": 10
+      }
     },
     "special": {
       "move": "islam",

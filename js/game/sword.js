@@ -141,6 +141,7 @@ function tickDiamondSword(b, dt) {
   var dg = bladeHost(b), sc = bladeCfg(b), o = balls[1 - b.id], C = bladeColors(b);
   var want = dg.on && !dg.disarmed && b.alive && !over && sc && sc.enabled && (sc.weapons.indexOf(swordWeaponOut(o)) >= 0 || bladeRivals(b, o)) &&
     !(b.igbb && b.igbb.move !== "lunge"); // put away for his specials
+  if (axeModeWant(b, o, dt, want)) want = true; // Islam's own axe mode, and it stays out a while (islam-axe.js)
   if (swordDuel && swordDuel.dId === b.id) want = true; // held through the duel
   if (duelBladeOpp(b)) want = true;
   var sw = dg.sword;

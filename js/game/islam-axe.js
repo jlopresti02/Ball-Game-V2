@@ -66,7 +66,7 @@ function iceImmune(b) { return !!(b && b.char && (b.char.iceImmune || b.char.ice
 
 var KRATOS_LOOK = { skin: "#d9d3ca", bodyHair: "none", shorts: "#7a1d14", trim: "#c9a646",
   pattern: "plain", waistText: "", gloves: "#4b2f1c", kratosPaint: true };  // his own buzz cut and beard colour stay (Joe)
-var KRATOS_FX_ON = 0.62, KRATOS_FX_OFF = 0.4, KRATOS_SWAP_ON = 0.3, KRATOS_SWAP_OFF = 0.14;
+var KRATOS_FX_ON = 0.62, KRATOS_FX_OFF = 0.85, KRATOS_SWAP_ON = 0.3, KRATOS_SWAP_OFF = 0.36;
 // From draw.js: the god of war's look while the axe is out. The change
 // happens under a quick ice cloud as the axe whips round him (drawKratosFx).
 function islamKratosLook(b) {
@@ -92,6 +92,74 @@ function kratosArmSkin(ch) {
   for (var i = 0; i < balls.length; i++) if (balls[i].char === ch && balls[i].kratosShow) return KRATOS_LOOK.skin;
   return null;
 }
+// Back to Islam: the axe flips up over his head and bursts into frost, the
+// god of war freezes over in an ice shell that cracks from the middle out,
+// he changes inside it, and it shatters off him in pieces that fall away.
+var KRATOS_SHARDS = 11;
+function drawKratosOff(b, t) {
+  var r = b.r, x = b.x, y = b.y, sw = KRATOS_SWAP_OFF, i, a;
+  ctx.save();
+  if (t < sw) { // the axe tossed up, spinning, then gone in a frost burst
+    var u = t / sw, ay = y - r * (0.9 + 1.1 * Math.sin(u * Math.PI * 0.5)), len = r * AXE_LEN * 0.85 * (1 - 0.6 * u);
+    ctx.globalAlpha = 1 - u * u;
+    drawSpunAxe(x, ay, u * 14, len, 1);
+    if (u > 0.6) {
+      var bu = (u - 0.6) / 0.4;
+      ctx.globalAlpha = 1 - bu;
+      ctx.fillStyle = "#e9f7ff";
+      for (i = 0; i < 8; i++) { a = i / 8 * Math.PI * 2; ctx.beginPath(); ctx.arc(x + Math.cos(a) * r * 0.5 * bu, ay + Math.sin(a) * r * 0.5 * bu, r * 0.12 * (1 - bu * 0.5), 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  var sh = t < sw ? Math.min(1, t / (sw * 0.8)) : 0; // the shell freezing over him
+  if (sh > 0) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, r * 1.02, 0, Math.PI * 2); ctx.clip();
+    var g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.1, x, y, r * 1.05);
+    g.addColorStop(0, "rgba(255,255,255," + 0.9 * sh + ")"); g.addColorStop(0.55, "rgba(205,236,255," + 0.85 * sh + ")"); g.addColorStop(1, "rgba(120,190,235," + 0.9 * sh + ")");
+    ctx.fillStyle = g; ctx.fillRect(x - r * 1.1, y - r * 1.1, r * 2.2, r * 2.2);
+    // the frost creeps in from the rim
+    ctx.strokeStyle = "rgba(255,255,255," + 0.9 * sh + ")"; ctx.lineWidth = Math.max(1, r * 0.025);
+    for (i = 0; i < 9; i++) { a = i / 9 * Math.PI * 2 + 0.2; var l = r * (0.15 + 0.45 * sh); ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r); ctx.lineTo(x + Math.cos(a + 0.12) * (r - l), y + Math.sin(a + 0.12) * (r - l)); ctx.stroke(); }
+    // cracks running out from the middle just before it goes
+    var ck = Math.max(0, (t / sw - 0.55) / 0.45);
+    if (ck > 0) {
+      ctx.strokeStyle = "rgba(40,90,130,0.8)"; ctx.lineWidth = Math.max(1, r * 0.018);
+      for (i = 0; i < KRATOS_SHARDS; i++) {
+        a = (i + 0.5) / KRATOS_SHARDS * Math.PI * 2;
+        ctx.beginPath(); ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(a + 0.15) * r * 0.5 * ck, y + Math.sin(a + 0.15) * r * 0.5 * ck);
+        ctx.lineTo(x + Math.cos(a) * r * ck, y + Math.sin(a) * r * ck); ctx.stroke();
+      }
+    }
+    ctx.restore();
+    ctx.strokeStyle = "rgba(43,51,59," + 0.8 * sh + ")"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x, y, r * 1.02, 0, Math.PI * 2); ctx.stroke();
+  }
+  if (t >= sw) { // it shatters: wedges of ice flying out and dropping, a puff of mist
+    var v = t - sw, fade = Math.max(0, 1 - v / (KRATOS_FX_OFF - sw));
+    var mg = ctx.createRadialGradient(x, y, r * 0.2, x, y, r * (1.1 + v * 2));
+    mg.addColorStop(0, "rgba(235,248,255," + 0.6 * fade * fade + ")"); mg.addColorStop(1, "rgba(235,248,255,0)");
+    ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(x, y, r * (1.1 + v * 2), 0, Math.PI * 2); ctx.fill();
+    for (i = 0; i < KRATOS_SHARDS; i++) {
+      var a0 = i / KRATOS_SHARDS * Math.PI * 2, a1 = (i + 1) / KRATOS_SHARDS * Math.PI * 2, am = (a0 + a1) / 2;
+      var sp = r * (2.6 + (i % 3) * 0.7), dx = Math.cos(am) * sp * v, dy = Math.sin(am) * sp * v + r * 9 * v * v;
+      ctx.save();
+      ctx.globalAlpha = fade;
+      ctx.translate(x + dx + Math.cos(am) * r * 0.5, y + dy + Math.sin(am) * r * 0.5);
+      ctx.rotate(v * (i % 2 ? 7 : -7)); ctx.scale(1 - v * 0.6, 1 - v * 0.6);
+      ctx.translate(-Math.cos(am) * r * 0.5, -Math.sin(am) * r * 0.5);
+      ctx.beginPath(); ctx.moveTo(Math.cos(am) * r * 0.25, Math.sin(am) * r * 0.25);
+      ctx.lineTo(Math.cos(a0) * r, Math.sin(a0) * r); ctx.arc(0, 0, r, a0, a1); ctx.closePath();
+      ctx.fillStyle = i % 2 ? "rgba(214,240,255,0.92)" : "rgba(190,228,252,0.92)"; ctx.fill();
+      ctx.strokeStyle = "rgba(43,51,59,0.7)"; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a0 + 0.08) * r * 0.85, Math.sin(a0 + 0.08) * r * 0.85); ctx.lineTo(Math.cos(am) * r * 0.45, Math.sin(am) * r * 0.45); ctx.stroke();
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
 // The axe is whipping round him in the change, out of his hand.
 function kratosSwinging(b) { return !!(b.kratosFx && b.kratosFx.on && performance.now() / 1000 - b.kratosFx.t0 < KRATOS_SWAP_ON + 0.02); }
 // From drawLeviathanTop: the axe swung round him once, a frost trail behind
@@ -102,6 +170,7 @@ function drawKratosFx(b) {
   if (!fx || !b.alive) return;
   var t = performance.now() / 1000 - fx.t0, r = b.r, x = b.x, y = b.y, i;
   if (t < 0) return;
+  if (!fx.on) { drawKratosOff(b, t); return; }
   ctx.save();
   if (fx.on && t < KRATOS_SWAP_ON + 0.02) { // the swing: one and a bit turns round him
     var u = Math.min(1, t / KRATOS_SWAP_ON), a0 = (b.rapier && b.rapier.sword && b.rapier.sword.side < 0) ? Math.PI : 0;
@@ -168,12 +237,30 @@ function kratosBand(c, r, P) {
   };
   c.beginPath(); side(L, true); side(R.slice().reverse(), false); c.closePath();
 }
+// His hair's outline, the same as the hairline in drawArtHeadLayer
+// (fighter-art.js) for a buzz cut. `more` adds it to the current path.
+function kratosHairline(c, r, more) {
+  if (!more) c.beginPath();
+  c.moveTo(-r, -r * 0.5); c.lineTo(-r * 0.74, -r * 0.6);
+  c.quadraticCurveTo(-r * 0.62, -r * 0.76, -r * 0.4, -r * 0.74);
+  c.quadraticCurveTo(0, -r * 0.82, r * 0.4, -r * 0.74);
+  c.quadraticCurveTo(r * 0.62, -r * 0.76, r * 0.74, -r * 0.6);
+  c.lineTo(r, -r * 0.5); c.lineTo(r, -r); c.lineTo(-r, -r); c.closePath();
+}
 function drawKratosPaint(c, r) {
   c.save();
   c.beginPath(); c.arc(0, 0, r * 0.985, 0, Math.PI * 2); c.clip();
-  // the tattoo: muscle lines still show faintly through the ink
+  // the tattoo: muscle lines still show faintly through the ink, and over
+  // the scalp it runs under his buzz cut (only a shadow of it shows there)
+  c.save();
+  kratosHairline(c, r); c.clip();
+  c.globalAlpha = 0.2; c.fillStyle = "#b11f1a"; kratosBand(c, r, KRATOS_INK); c.fill();
+  c.restore();
+  c.save();
+  c.beginPath(); c.rect(-r, -r, 2 * r, 2 * r); kratosHairline(c, r, true); c.clip("evenodd");
   c.globalAlpha = 0.93; c.fillStyle = "#b11f1a"; kratosBand(c, r, KRATOS_INK); c.fill();
   c.globalAlpha = 1; c.strokeStyle = "rgba(90,8,6,0.55)"; c.lineWidth = Math.max(1, r * 0.012); c.stroke();
+  c.restore();
   // the strap from the pauldron down across his chest to his right hip
   var lth = "#5b3a22", ldk = "#2e1c10";
   c.fillStyle = lth; c.strokeStyle = ldk; c.lineWidth = Math.max(1, r * 0.012);
@@ -257,6 +344,33 @@ var AXE_FLOURISHES = {
     return { w: w, hx: 0.5, hy: -0.75 + Math.sin(u * 20) * 0.01 * w, a: -Math.PI / 2 - 0.2, lean: -0.05 * w };
   } }
 };
+
+// ---------------------------------------------------------------- axe mode
+
+// From tickDiamondSword (sword.js), every frame on a blade fighter: true
+// while Islam's axe mode should hold the axe out. He calls it up on his own
+// every so often (any opponent, armed or not), and once it's out, for
+// whatever reason, it stays out for axe.mode.time (Joe, 2026-11-22). The
+// clock waits through his specials and any clash or cutscene, and it never
+// starts during one.
+function axeModeWant(b, o, dt, want) {
+  var ac = axeCfg(b), md = ac && ac.mode;
+  if (!md || !axeStyle(b)) return false;
+  var dg = b.rapier, ok = dg.on && !dg.disarmed && b.alive && !over && started && !(b.igbb && b.igbb.move !== "lunge");
+  if (b.axeModeCd == null) { b.axeModeCd = axeRand(md.first); b.axeMode = 0; }
+  if (want) { b.axeMode = Math.max(b.axeMode, md.time); return false; } // out for their weapon: keep it a while after
+  if (b.axeMode > 0) {
+    if (!ok) return false;                       // stowed for a special: the clock waits
+    if (!formHeld(b)) b.axeMode -= dt;
+    if (b.axeMode <= 0) { b.axeMode = 0; b.axeModeCd = axeRand(md.every); return false; }
+    return true;
+  }
+  if (!ok) return false;
+  b.axeModeCd -= dt;
+  if (b.axeModeCd > 0 || sceneLocked() || b.axeCall) return false;
+  b.axeMode = md.time;
+  return true;
+}
 
 // ---------------------------------------------------------------- moves
 
