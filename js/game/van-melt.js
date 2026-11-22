@@ -192,6 +192,23 @@ function vmRelease(b, m, melted) {
   playVmDouse();
 }
 
+// Any fire touching Chuck's ice fists melts them the same way (Joe,
+// 2026-11-22: Dustin's hot sauce fire breath, hot-sauce.js). His overhand fist
+// steams and drips (MELTED!) and stays melted for the rest of his all-out
+// attack, like after Van's catch. Nothing gets put out: the fire's still going.
+function meltIceByFire(c) {
+  if (!c || !c.alive || !c.iceRage || c.iceRage.melted || over) return false;
+  c.iceRage.melted = true;
+  var F = (c.swing && icSwingFist(c)) || { x: c.x, y: c.y };
+  floater(F.x, F.y - 78, "MELTED!", "crit"); // (above the ON FIRE! call)
+  crowdReact(0.5);
+  if (!reduceMotion) for (var i = 0; i < 14; i++) vmFx.steam.push(vmPuff(F.x, F.y - 6, 1, false));
+  for (var j = 0; j < 6; j++) vmFx.drips.push({ x: F.x + (nativeRandom() - 0.5) * 20, y: F.y + 6, vx: (nativeRandom() - 0.5) * 50, vy: 50 + nativeRandom() * 70, life: 0.5, max: 0.5, land: F.y + 26 + nativeRandom() * 22 });
+  vmPuddle(F.x, F.y + c.r * 0.5, 0.7);
+  playVmSizzle(0.6);
+  return true;
+}
+
 // ---------------------------------------------------------------- drawing
 
 // From draw(), under the fighters: the puddles of melt water.
