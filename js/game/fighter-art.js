@@ -677,6 +677,7 @@ function drawArtHeadLayer(c, r, look, line, lw, name) {
   if (look.diazChin) drawDiazChin(c, r, look); // the Diaz brothers' chin beards (diaz-skins.js)
   if (look.glasses === "shades") drawShades(c, r, lw);
   if (look.eyePatch) drawEyePatch(c, r, look.eyePatch, lw); // Michael Bisping's pirate eye patch (bisping.js)
+  if (look.islamBeard) drawIslamBeard(c, r, look, line, lw); // Islam Makhachev's traced beard (islam-beard.js)
 }
 
 // A crowned lion's head in the middle of the chest with a shaggy mane hanging
