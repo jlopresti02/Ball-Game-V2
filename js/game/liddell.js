@@ -439,7 +439,7 @@ function icedGloveColor(ch) {
   var b = icBallOf(ch, null);
   if (!b) return null;
   var col = ch.look ? ch.look.gloves : ch.color;
-  if (b.iceRage || snowDayFlare(b)) return "#3fb2ff";
+  if ((b.iceRage && !vanMeltedFist(b)) || snowDayFlare(b)) return "#3fb2ff"; // (melted in Van's glove: van-melt.js)
   if (b.frost && b.frost.level > 0 && /^#[0-9a-f]{6}$/i.test(col)) return mixHex(col, "#dff4ff", 0.25 + 0.55 * b.frost.level);
   return null;
 }
@@ -451,7 +451,7 @@ function frostGloveOver(c, look, gr) {
   if (c !== ctx) return; // only in the fight (not the gallery's own canvases)
   var b = icBallOf(null, look);
   if (!b) return;
-  if (b.iceRage) { drawGloveFlare(c, 0, 0, gr, 1); return; }
+  if (b.iceRage) { if (!vanMeltedFist(b)) drawGloveFlare(c, 0, 0, gr, 1); return; } // (melted in Van's glove: van-melt.js)
   if (b.frost && b.frost.level > 0) drawGloveIce(c, 0, 0, gr, b.frost.level);
 }
 // From drawFist (draw-attacks.js): the same on a punching fist.
@@ -587,7 +587,7 @@ function drawLiddell(b) {
   if (!b.alive || !icCfg(b)) return;
   var m = b.igbb;
   if (m && m.move === "snow") { drawSnowDay(b, m); return; }
-  if (b.iceRage && b.swing) {
+  if (b.iceRage && b.swing && !vanMeltedFist(b)) { // (not while Van's fire melts it, van-melt.js)
     var fist = icSwingFist(b);
     if (fist) drawGloveFlare(ctx, fist.x, fist.y, SWING_FIST_R, 1);
   }

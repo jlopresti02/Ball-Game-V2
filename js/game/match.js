@@ -120,6 +120,7 @@ function startMatchSeeded(ch0, ch1) {
   resetConor(); // Conor McGregor's podium and 13 SECONDS (conor.js)
   resetRainbow(); resetBeamClash(); // the Pot o' Gold's coins, and a beam clash (rainbow-beam.js, beam-clash.js)
   resetLiddell(); // Chuck Liddell's snow (liddell.js)
+  resetVanMelt(); // steam and puddles from Van melting ice (van-melt.js)
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
   resetVolk(); // the kangaroo and the green and gold arena (volkanovski.js)
   resetHolloway(); // Max Holloway's ring in the middle, the clock, the flashback TV (holloway.js)

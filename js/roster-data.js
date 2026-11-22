@@ -4575,7 +4575,12 @@ var SAVED_ROSTER = [
       "keepMin": 2,
       "maxMult": 3,
       "pierce": 20,
-      "chase": 1.3
+      "chase": 1.3,
+      "meltIce": {
+        "chance": 0.85,
+        "melt": 0.95,
+        "douse": 0.7
+      }
     }
   },
   {

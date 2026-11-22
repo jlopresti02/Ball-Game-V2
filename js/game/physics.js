@@ -24,6 +24,7 @@ function inOrdinaryMovement(b) {
   if (ngannouBusy(b)) return false; // Francis Ngannou's rage punch, or off to rip up Dana's contract (ngannou.js)
   if (hollowayBusy(b)) return false; // Max Holloway at the booth or in his flashback (holloway.js)
   if (vanBusy(b)) return false; // Joshua Van stopped while his gloves catch fire (van.js)
+  if (vanMeltHolding(b)) return false; // Joshua Van and Chuck held while the ice punch melts (van-melt.js)
   if (teepBusy(b) || stricklandBusy(b)) return false; // planted for a teep (teep.js), or Sean Strickland's one-two (strickland.js)
   if (legKickBusy(b)) return false; // planted for a leg kick (leg-kick.js)
   if (headKickBusy(b)) return false; // planted for a head kick, off balance after a miss, or over them out cold (head-kick.js)
