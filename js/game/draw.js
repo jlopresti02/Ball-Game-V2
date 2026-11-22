@@ -241,6 +241,7 @@ function draw() {
     applyLegKickLimp(b); // limping on a kicked calf: dipping onto the bad leg, the leg hanging out bruised (leg-kick.js)
     applyClinchPose(b); // leaning into the clinch, whoever's held rocked by each knee and elbow, the spin on the break (clinch.js)
     applyPunchTypePose(b); // dipping into an uppercut or a body shot, folding over one, chin snapping up (body-shots-uppercuts.js)
+    applyIslamPose(b); // Islam's Brotha: swaying through the moan, low into the rush, and them looking round lost (islam-specials.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {

@@ -2,10 +2,12 @@
 //
 // His special (special.move "islam") charges like any other, and each time
 // it's full he goes to the next one in `special.order`:
-//   brotha      he moans "Brothaaaa..." (a speech bubble: there's no clip of
-//               the line yet, so it's silent), they stand there confused
-//               ("?" over their head, held), and he shoots in for a quick
-//               takedown (beginGrapple, with the ragdoll throw).
+//   brotha      he backs off to `space` px, moans "Brothaaaa..." (Joe's clip)
+//               arms out wide, they stand there lost (looking left and right,
+//               scratching their head, a shrug, "?"s, held), he drops his level
+//               and rushes in low (a blur behind him, dust, speed lines; they
+//               see him at the last second) for a takedown nothing can stop
+//               (straight into beginGrapple: no sprawl, counter or escape).
 //   cheesecake  "California Cheesecake": he pulls out a cheesecake (drawn in
 //               code from Joe's picture: graham crust, cream, raspberry glaze,
 //               raspberries and mint) and tosses it behind them. Heavyweights,
@@ -55,7 +57,9 @@ function islamDrawnApart(b) {
 }
 // His hands are drawn by us (drawHands skips them, draw-attacks.js).
 function islamHandsBusy(b) {
-  var m = b && b.igbb;
+  var m = b && b.igbb, om = b && balls[1 - b.id] && balls[1 - b.id].igbb;
+  if (m && m.move === "islam" && m.kind === "brotha" && m.phase !== "space") return true; // his arms in Brotha
+  if (om && om.move === "islam" && om.kind === "brotha" && om.vicId === b.id && om.huh) return true; // theirs, lost
   if (m && m.move === "islam" && m.kind === "cheesecake" && (m.phase === "serve" || m.phase === "toss")) return true;
   return !!(b && b.islamRoo && b.islamRoo.step !== "say");
 }
@@ -76,11 +80,11 @@ function updateIslamSpecials(self, other, dt) {
     clearActions(self);
     self.vx = 0; self.vy = 0;
     self.igbb = { move: "islam", kind: kind, phase: "start", t: 0, all: 0, vicId: other.id };
-    if (kind === "brotha") { self.igbb.phase = "moan"; floater(self.x, self.y - self.r - 30, "BROTHA!", "crit"); }
+    if (kind === "brotha") { self.igbb.phase = "space"; islHold(other); } // they stand still from here on
     if (kind === "cheesecake") { self.igbb.phase = "serve"; playSwordDraw(); } // (the bubble says it)
     if (kind === "dagestan") { self.igbb.phase = "call"; floater(self.x, self.y - self.r - 30, "DAGESTAN!", "crit"); }
-    var vk = { brotha: "islamBrotha", cheesecake: "islamCheesecake", dagestan: "islamDagestan" }[kind], mm = self.igbb;
-    islamVoice(vk, function () { return self.igbb === mm && mm.t < 0.6; }); // Joe's clip (islam-voice.js)
+    var vk = { cheesecake: "islamCheesecake", dagestan: "islamDagestan" }[kind], mm = self.igbb; // (Brotha's goes with the moan)
+    if (vk) islamVoice(vk, function () { return self.igbb === mm && mm.t < 0.6; }); // Joe's clip (islam-voice.js)
     crowdReact(0.6);
   }
   var m = self.igbb;
@@ -119,29 +123,169 @@ function islamReleaseHeld(self) {
 // ---------------------------------------------------------------- Brotha
 
 function islBrotha(self, other, m, dt) {
-  var c = self.char.special.brotha;
-  if (m.phase === "moan") {
-    if (!m.huh && m.t >= 0.45 && other.alive) {
-      m.huh = true;
-      islHold(other);
-      floater(other.x, other.y - other.r - 30, "HUH?!", "note");
+  var c = self.char.special.brotha, r = self.r;
+  if (!other.alive) { endIslamSpecial(self, other); return false; }
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  m.aim = Math.atan2(dy, dx);
+  if (m.phase === "space") { // backs off to give them room to look lost in
+    if (!m.to) m.to = islBrothaSpot(self, other, c.space);
+    var tx = m.to.x - self.x, ty = m.to.y - self.y, td = Math.sqrt(tx * tx + ty * ty);
+    if (td > 4) { var st = Math.min(td, c.backstep * dt); self.x += tx / td * st; self.y += ty / td * st; }
+    if (td <= 4 || m.t >= 1.1) {
+      m.phase = "moan"; m.t = 0;
+      floater(self.x, self.y - r - 30, "BROTHA!", "crit");
+      var mm = m;
+      islamVoice("islamBrotha", function () { return self.igbb === mm && mm.phase === "moan" && mm.t < 0.6; }); // Joe's clip (islam-voice.js)
     }
-    if (m.t >= c.moan) { m.phase = "close"; m.t = 0; playWhoosh(); }
     return true;
   }
-  // Shoots in on them while they're still scratching their head.
-  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-  self.vx = dx / d * c.dash; self.vy = dy / d * c.dash;
-  if (d < self.r + other.r + 8 && other.alive) {
+  if (m.phase === "moan") {
+    if (!m.huh && m.t >= c.confused) { m.huh = true; islHold(other); floater(other.x, other.y - other.r - 30, "HUH?!", "note"); }
+    if (!m.huh2 && m.t >= c.confused + 0.9) { m.huh2 = true; floater(other.x, other.y - other.r - 30, "???", "note"); }
+    if (m.t >= c.moan) { m.phase = "set"; m.t = 0; islBrothaDust(self, -Math.cos(m.aim), -Math.sin(m.aim), 10, 160); }
+    return true;
+  }
+  if (m.phase === "set") { // drops his level
+    if (m.t >= c.set) { m.phase = "rush"; m.t = 0; m.trail = []; m.v = c.dash * 0.45; playWhoosh(); crowdReact(0.7); }
+    return true;
+  }
+  // The rush: low and fast, a blur behind him, dust off his feet.
+  m.v = Math.min(c.dash, m.v + c.accel * dt);
+  var step = Math.min(m.v * dt, Math.max(0, d - (r + other.r + 2)));
+  self.x += dx / d * step; self.y += dy / d * step;
+  m.trail.unshift({ x: self.x, y: self.y, a: m.aim });
+  if (m.trail.length > 7) m.trail.length = 7;
+  m.dustT = (m.dustT || 0) - dt;
+  if (m.dustT <= 0) { m.dustT = 0.035; islBrothaDust(self, -dx / d, -dy / d, 3, 90); }
+  if (!m.saw && d < r + other.r + 140) { m.saw = true; } // they finally clock it (drawn as a "!")
+  if (d < r + other.r + 10 || m.t > 2.5) {
+    // Nothing stops this one: no sprawl, no counter, no escape.
     islLet(other);
     self.igbb = null; self.specialT = 0; self.vx = 0; self.vy = 0;
+    islBrothaDust(other, dx / d, dy / d, 16, 260);
+    if (!reduceMotion) { shake = Math.max(shake, 14); hitStop = Math.max(hitStop, 0.07); }
+    crowdReact(1);
     floater(other.x, other.y - other.r - 50, "QUICK TAKEDOWN!", "crit");
     beginGrapple(self, other);
     if (typeof commentaryCall === "function") commentaryCall("shot", self, other);
     return true;
   }
-  if (m.t > 1.6 || !other.alive) { endIslamSpecial(self, other); return false; }
   return true;
+}
+// Where he backs off to: `dist` away from them, straight back if there's
+// room, otherwise round to the side along the cage.
+function islBrothaSpot(self, o, dist) {
+  var back = Math.atan2(self.y - o.y, self.x - o.x), best = null;
+  [0, 0.6, -0.6, 1.2, -1.2, 1.8, -1.8, 2.5, -2.5, Math.PI].some(function (off) {
+    var a = back + off, x = o.x + Math.cos(a) * dist, y = o.y + Math.sin(a) * dist;
+    x = Math.max(self.r + 4, Math.min(W - self.r - 4, x)); y = Math.max(self.r + 4, Math.min(H - self.r - 4, y));
+    var dd = Math.hypot(x - o.x, y - o.y);
+    if (!best || dd > best.d + 20) best = { x: x, y: y, d: dd };
+    return dd >= dist * 0.85;
+  });
+  if (Math.hypot(self.x - o.x, self.y - o.y) >= best.d - 10) return { x: self.x, y: self.y }; // already far enough
+  return best;
+}
+function islBrothaDust(b, nx, ny, n, sp) {
+  if (reduceMotion) return;
+  var rnd = typeof nativeRandom === "function" ? nativeRandom : Math.random;
+  for (var i = 0; i < n; i++) {
+    var a = Math.atan2(ny, nx) + (rnd() - 0.5) * 1.6, v = sp * (0.4 + rnd() * 0.8);
+    particles.push({ x: b.x + nx * b.r * 0.6 + (rnd() - 0.5) * b.r * 0.6, y: b.y + b.r * 0.75, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40,
+      life: 0.45, max: 0.45, size: 4 + rnd() * 5, color: i % 3 ? "#c9b48a" : "#e8dcc0" });
+  }
+}
+// The body language, as a turn, a stretch and a lift about his feet: Islam
+// swaying through the moan, dropping his level and leaning into the rush;
+// them looking left and right, lost, then jolting when they see him coming.
+function islBrothaPoseOf(b) {
+  var o = balls[1 - b.id], m = b.igbb, om = o && o.igbb;
+  if (m && m.move === "islam" && m.kind === "brotha") {
+    var lean = Math.cos(m.aim || 0) * 0.3;
+    if (m.phase === "space") return { rot: 0, sx: 1, sy: 1, dy: -Math.abs(Math.sin(m.t * 15)) * 7 };
+    if (m.phase === "moan") return { rot: Math.sin(m.t * 3.2) * 0.13, sx: 1 + Math.sin(m.t * 6.4) * 0.02, sy: 1 - Math.sin(m.t * 6.4) * 0.02, dy: 0 };
+    var k = m.phase === "set" ? ease(m.t / 0.18) : 1;
+    return { rot: lean * k, sx: 1 + 0.16 * k, sy: 1 - 0.26 * k, dy: 0 };
+  }
+  if (om && om.move === "islam" && om.kind === "brotha" && om.vicId === b.id && om.huh && b.alive) {
+    if (om.phase === "rush" && om.saw) return { rot: 0, sx: 0.92, sy: 1.1, dy: -6 };
+    var t = om.phase === "moan" ? om.t - (o.char.special.brotha.confused || 0.35) : 3 + om.t, seg = Math.floor(t / 0.6), u = ease((t - seg * 0.6) / 0.25);
+    var from = seg === 0 ? 0 : (seg % 2 ? 1 : -1), to = seg % 2 ? -1 : 1;
+    return { rot: 0.24 * (from + (to - from) * u), sx: 1, sy: 1, dy: -Math.abs(Math.sin(t * 2.2)) * 3 };
+  }
+  return null;
+}
+// From draw.js, before the fighter is drawn.
+function applyIslamPose(b) {
+  var p = islBrothaPoseOf(b);
+  if (!p) return;
+  var ax = b.x, ay = b.y + b.r;
+  ctx.translate(ax, ay + p.dy); ctx.rotate(p.rot); ctx.scale(p.sx, p.sy); ctx.translate(-ax, -ay);
+}
+// A point on the fighter, moved the way the pose moves him.
+function islPosePt(b, x, y) {
+  var p = islBrothaPoseOf(b);
+  if (!p) return { x: x, y: y };
+  var ax = b.x, ay = b.y + b.r, px = (x - ax) * p.sx, py = (y - ay) * p.sy, c = Math.cos(p.rot), s = Math.sin(p.rot);
+  return { x: ax + px * c - py * s, y: ay + p.dy + px * s + py * c };
+}
+// His gloves through Brotha (his own two arms), and theirs while they're lost.
+function drawBrothaHands(b, o, m, now) {
+  var r = b.r, f = { x: Math.cos(m.aim || 0), y: Math.sin(m.aim || 0) }, side = { x: -f.y, y: f.x };
+  if (m.phase === "moan") { // arms out wide, palms up: "brothaaa"
+    [-1, 1].forEach(function (sd) {
+      var lift = Math.sin(m.t * 3.2 + sd) * r * 0.06;
+      var sh = islPosePt(b, b.x + sd * r * 0.62, b.y - r * 0.25), hd = islPosePt(b, b.x + sd * r * 1.08, b.y - r * 0.5 + lift);
+      drawBentArm(b, sh, hd, sd); drawGloveAt(hd.x, hd.y, r * 0.22, b.char);
+    });
+  } else if (m.phase === "set" || m.phase === "rush") { // both hands low and out in front, for the legs
+    [-1, 1].forEach(function (sd) {
+      var sh = islPosePt(b, b.x + side.x * sd * r * 0.6, b.y + side.y * sd * r * 0.4);
+      var hd = islPosePt(b, b.x + f.x * r * 1.05 + side.x * sd * r * 0.42, b.y + r * 0.25 + f.y * r * 0.8 + side.y * sd * r * 0.3);
+      drawBentArm(b, sh, hd, sd); drawGloveAt(hd.x, hd.y, r * 0.22, b.char);
+    });
+  }
+  if (!m.huh || !o.alive) return;
+  var or = o.r, saw = m.phase === "rush" && m.saw;
+  if (saw) { // hands up, too late
+    [-1, 1].forEach(function (sd) {
+      var sh = islPosePt(o, o.x + sd * or * 0.62, o.y - or * 0.25), hd = islPosePt(o, o.x + sd * or * 0.7, o.y - or * 1.0);
+      drawBentArm(o, sh, hd, sd); drawGloveAt(hd.x, hd.y, or * 0.22, o.char);
+    });
+    return;
+  }
+  // One glove scratching the top of the head, the other turned up in a shrug.
+  var scr = Math.sin(now * 18) * or * 0.08;
+  var sh1 = islPosePt(o, o.x + or * 0.62, o.y - or * 0.25), hd1 = islPosePt(o, o.x + or * 0.22 + scr, o.y - or * 1.02);
+  drawBentArm(o, sh1, hd1, 1); drawGloveAt(hd1.x, hd1.y, or * 0.22, o.char);
+  var sh2 = islPosePt(o, o.x - or * 0.62, o.y - or * 0.25), hd2 = islPosePt(o, o.x - or * 1.0, o.y - or * 0.42 - Math.abs(Math.sin(now * 2.2)) * or * 0.1);
+  drawBentArm(o, sh2, hd2, -1); drawGloveAt(hd2.x, hd2.y, or * 0.22, o.char);
+}
+// Under the fighters: the blur of him behind the rush, and the speed lines.
+function drawBrothaBlur(b, m) {
+  if (m.phase !== "rush" || !m.trail) return;
+  ctx.save();
+  for (var i = m.trail.length - 1; i >= 1; i -= 1) {
+    var p = m.trail[i];
+    ctx.globalAlpha = 0.28 * (1 - i / m.trail.length);
+    drawFighterArt(ctx, p.x, p.y, b.r, islamKratosLook(b) || b.char.look, theme.wall, { layout: "contained", name: b.char.name });
+  }
+  ctx.globalAlpha = 0.55; ctx.strokeStyle = "#ffffff"; ctx.lineCap = "round";
+  var f = { x: Math.cos(m.aim), y: Math.sin(m.aim) };
+  for (var j = 0; j < 6; j++) {
+    var off = (j - 2.5) * b.r * 0.32, ln = b.r * (1.2 + (j * 37 % 5) * 0.25), bx = b.x - f.x * b.r * 1.1 - f.y * off, by = b.y - f.y * b.r * 1.1 + f.x * off;
+    ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - f.x * ln, by - f.y * ln); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawSawHim(o, now) {
+  ctx.save();
+  ctx.font = "900 " + Math.round(o.r * 0.9) + "px Impact, 'Arial Black', sans-serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  var y = o.y - o.r * 1.75 + Math.sin(now * 30) * 2;
+  ctx.lineWidth = 6; ctx.strokeStyle = "#1f2328"; ctx.strokeText("!", o.x, y);
+  ctx.fillStyle = "#ff4d3d"; ctx.fillText("!", o.x, y);
+  ctx.restore();
 }
 
 // ---------------------------------------------------------------- California Cheesecake
@@ -406,6 +550,7 @@ function playVanScreech() { playWhoosh(); } // (placeholder: no van sound yet)
 function drawIslamUnder() {
   balls.forEach(function (b) {
     var m = b.igbb;
+    if (m && m.move === "islam" && m.kind === "brotha") drawBrothaBlur(b, m);
     if (!m || m.move !== "islam" || m.kind !== "cheesecake" || !m.cake || m.phase === "serve") return;
     var ck = m.cake;
     ctx.fillStyle = "rgba(0,0,0,0.18)";
@@ -432,7 +577,9 @@ function drawIslamTop() {
         var n = Math.min(8, 2 + Math.floor(m.t * 5));
         islBubble(b, "BROTHA" + new Array(n).join("A") + "...", Math.min(1, m.t / 0.15), true, now);
       }
-      if (m.huh && o.alive) drawHuh(o, now);
+      drawBrothaHands(b, o, m, now);
+      if (m.phase === "rush" && m.saw && o.alive) drawSawHim(o, now);
+      else if (m.huh && o.alive) drawHuh(o, now);
     }
     if (m.kind === "cheesecake") {
       if (m.phase === "serve") {
@@ -499,7 +646,7 @@ function drawHuh(o, now) {
   ctx.font = "900 " + Math.round(o.r * 0.5) + "px Impact, 'Arial Black', sans-serif";
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (var i = 0; i < 3; i++) {
-    var a = now * 2.2 + i * 2.1, x = o.x + Math.cos(a) * o.r * 0.7, y = o.y - o.r * 1.15 + Math.sin(a * 1.3) * 6;
+    var a = now * 2.2 + i * 2.1, x = o.x + Math.cos(a) * o.r * 0.7, y = o.y - o.r * 1.5 + Math.sin(a * 1.3) * 6;
     ctx.lineWidth = 4; ctx.strokeStyle = "#1f2328"; ctx.strokeText("?", x, y);
     ctx.fillStyle = "#ffd23f"; ctx.fillText("?", x, y);
   }

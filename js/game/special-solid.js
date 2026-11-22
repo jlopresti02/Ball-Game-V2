@@ -42,7 +42,7 @@ var SS_MOVES = {
   katana: { phases: ["draw", "sheathe"] },                      // Tony drawing and sheathing the katanas (ferguson-katanas.js)
   broadside: { phases: ["rise"], slip: false },                 // Bisping's ship rising under him (bisping.js)
   sugarrush: { phases: ["call"] },                              // O'Malley calling the Sugar Rush (omalley.js)
-  islam: { phases: ["moan", "serve", "call"] }                  // Islam moaning Brotha, holding up the cheesecake, calling the van (islam-specials.js)
+  islam: { phases: ["moan", "set", "serve", "call"] }                  // Islam moaning Brotha, holding up the cheesecake, calling the van (islam-specials.js)
 };
 
 function ssMove(b) {
