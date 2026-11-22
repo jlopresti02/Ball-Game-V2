@@ -148,7 +148,7 @@ function tickDiamondSword(b, dt) {
     sw = dg.sword = { t: 0, out: true, outT: 0, parry: -1, parries: 0, side: o.x > b.x ? 1 : -1, pose: null,
       fl: null, still: 0, feint: -1, feintCd: 2, trail: [] };
     playSwordDraw();
-    floater(b.x, b.y - b.r - 30, sc.drawText || "DIAMOND SWORD", "crit");
+    if (!(b.axeCaught > 0)) floater(b.x, b.y - b.r - 30, sc.drawText || "DIAMOND SWORD", "crit"); // (not when Islam's just caught his axe back, islam-axe.js)
     for (var i = 0; i < 16 && !reduceMotion; i++) {
       var a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 160;
       particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.45, max: 0.45, size: 2 + Math.random() * 3, color: C[i % 2 ? "L" : "W"] });

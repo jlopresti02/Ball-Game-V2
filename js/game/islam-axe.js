@@ -28,8 +28,10 @@
 //            ice hands (liddell.js frostGloves, with `frost`)
 //   ice      ice fighters never frost each other (iceImmune: Chuck, Islam, and
 //            any fighter with `iceImmune` or Chuck's `iceman` block)
-//   recall   disarmed in a duel, he calls the axe back to his hand after
-//            `recall` seconds
+//   recall   disarmed, he calls the axe back after `recall` seconds, like
+//            the god of war: his hand goes out toward it, it trembles where
+//            it lies in a frosty glow, then tears loose and flies back end
+//            over end on a curve into his glove (axeCall: "call", "fly")
 //   Gane     the first swing of Ciryl Gane's bat he blocks is cut clean in
 //            half ("BAT CUT IN HALF!", the bat is gone for the fight). Justin
 //            Gaethje's golf club is just blocked as usual.
@@ -40,7 +42,6 @@
 var AXE_LEN = 1.9;
 var AXE_C = { W: "#ffffff", L: "#bfe9ff", m: "#7fc8ff", o: "#2b333b", d: "#a9b6c2" };
 var axeHalves = [];   // Gane's bat, in two pieces (visual only, timed off the draw clock)
-var axeRecalls = [];  // the axe flying back in from the crowd after a disarm (visual only)
 
 function axeRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
 function axeStyle(b) { return !!(b && b.rapier && b.char.rapier && b.char.rapier.style === "axe"); }
@@ -67,7 +68,7 @@ var KRATOS_LOOK = { skin: "#d9d3ca", hair: "none", bodyHair: "none", beardColor:
   pattern: "plain", waistText: "", gloves: "#4b2f1c", kratosPaint: true };
 // From draw.js: the god of war's look while the axe is out.
 function islamKratosLook(b) {
-  if (!axeHeld(b) || !b.rapier.sword.out || !b.char.look) return null;
+  if (!b.char.look || (!b.axeCall && (!axeHeld(b) || !b.rapier.sword.out))) return null; // (kept while he calls it back)
   if (!b.kratosLook || b.kratosLook.src !== b.char.look) {
     b.kratosLook = Object.assign({}, b.char.look, KRATOS_LOOK, { src: b.char.look });
   }
@@ -146,7 +147,7 @@ var AXE_FLOURISHES = {
 // From the abilities loop, before the rapier lunge. True while one of his
 // own moves holds him (the axe throw or spin, the kangaroo lift).
 function updateIslamMoves(self, other, dt) {
-  tickAxeRecall(self, dt);
+  if (tickAxeRecall(self, dt)) return true; // calling the axe back after a disarm
   if (typeof islamVoiceWarm === "function" && islamCfg(self)) islamVoiceWarm(); // decode his lines (islam-voice.js)
   if (typeof islamReleaseHeld === "function" && islamCfg(self)) islamReleaseHeld(self); // (islam-specials.js)
   if (typeof islamRooHeld === "function" && islamRooHeld(self, dt)) return true; // lifting Volk's kangaroo (islam-specials.js)
@@ -155,18 +156,109 @@ function updateIslamMoves(self, other, dt) {
 
 function tickAxeRecall(self, dt) {
   var ac = axeCfg(self);
-  if (!ac || !ac.recall || !axeStyle(self) || !self.rapier.disarmed || over) return;
-  self.axeRecallT = (self.axeRecallT || 0) + dt;
-  if (self.axeRecallT < ac.recall) return;
-  self.axeRecallT = 0;
-  self.rapier.disarmed = false;
-  floater(self.x, self.y - self.r - 50, "AXE RECALLED!", "crit");
-  // It flies back from wherever it went (still tumbling, or off in the crowd).
-  var fb = null, from = { x: self.x > W / 2 ? -60 : W + 60, y: -80 };
-  if (typeof flyingBats !== "undefined") flyingBats.forEach(function (f) { if (f.blade === "axe") fb = f; });
-  if (fb) { from = { x: fb.x, y: fb.y }; flyingBats.splice(flyingBats.indexOf(fb), 1); }
-  axeRecalls.push({ id: self.id, t0: performance.now() / 1000, sx: from.x, sy: from.y });
-  playWhoosh();
+  if (self.axeCaught > 0) { // in his hand again: straight out, no second "LEVIATHAN AXE"
+    self.axeCaught -= dt;
+    if (self.rapier && self.rapier.sword) { self.rapier.sword.t = Math.max(self.rapier.sword.t, SWORD_DRAW); self.axeCaught = 0; }
+  }
+  if (!ac || !ac.recall || !axeStyle(self) || over || !self.alive) { self.axeCall = null; return false; }
+  var c = self.axeCall, r = self.r;
+  if (!c) {
+    if (!self.rapier.disarmed || self.igbb) return false;
+    self.axeRecallT = (self.axeRecallT || 0) + dt;
+    if (self.axeRecallT < ac.recall) return false;
+    self.axeRecallT = 0;
+    // Wherever it went: still tumbling, or out in the crowd past the cage.
+    var fb = null, R = r * 2.2;
+    if (typeof flyingBats !== "undefined") flyingBats.forEach(function (f) { if (f.blade === "axe") fb = f; });
+    var sx = fb ? fb.x : (self.x > W / 2 ? -R * 0.6 : W + R * 0.6), sy = fb ? fb.y : -R * 0.6;
+    sx = Math.max(-R, Math.min(W + R, sx)); sy = Math.max(-R, Math.min(H + R, sy));
+    if (fb) flyingBats.splice(flyingBats.indexOf(fb), 1);
+    clearActions(self);
+    self.axeCall = c = { phase: "call", t: 0, sx: sx, sy: sy, x: sx, y: sy, a: fb ? fb.rot : 0.6, trail: [] };
+    floater(self.x, self.y - r - 30, "RECALL!", "note");
+    playSwordDraw();
+  }
+  c.t += dt;
+  self.vx = 0; self.vy = 0;
+  var hand = axeCallHand(self, c);
+  if (c.phase === "call") { // it shakes where it lies, frost gathering on it
+    if (!reduceMotion && Math.random() < 0.5) particles.push({ x: c.x + (Math.random() - 0.5) * r, y: c.y + (Math.random() - 0.5) * r * 0.6, vx: (Math.random() - 0.5) * 30, vy: -30 - Math.random() * 40, life: 0.4, max: 0.4, size: 1.5 + Math.random() * 2, color: Math.random() < 0.5 ? AXE_C.L : AXE_C.W });
+    if (c.t >= 0.4) {
+      c.phase = "fly"; c.t = 0;
+      c.dur = Math.max(0.38, Math.min(0.62, Math.hypot(hand.x - c.sx, hand.y - c.sy) / 1300));
+      var mx = (c.sx + hand.x) / 2, my = (c.sy + hand.y) / 2, dx = hand.x - c.sx, dy = hand.y - c.sy, dd = Math.hypot(dx, dy) || 1;
+      c.cx = mx - dy / dd * dd * 0.28; c.cy = my + dx / dd * dd * 0.28; // a curve, not a straight line
+      playWhoosh();
+    }
+    return true;
+  }
+  // Tears loose and comes home, quicker all the way, spinning end over end.
+  var u = Math.min(1, c.t / c.dur), e = u * u * (1.4 - 0.4 * u), q = 1 - e;
+  c.trail.unshift({ x: c.x, y: c.y, a: c.a });
+  if (c.trail.length > 4) c.trail.length = 4;
+  c.x = q * q * c.sx + 2 * q * e * c.cx + e * e * hand.x;
+  c.y = q * q * c.sy + 2 * q * e * c.cy + e * e * hand.y;
+  c.a += dt * (16 + 10 * u);
+  axeTrailFx({ ax: c.x, ay: c.y });
+  var o = balls[1 - self.id], p0 = c.trail[0];
+  if (!c.hit && o && o.alive && !o.invincible && Math.hypot(o.x - c.x, o.y - c.y) < o.r + r * 0.45) { // anyone in the way gets it on the way back
+    c.hit = true;
+    axeHit(self, o, (ac.throw && ac.throw.returnDamage) || 10, c.x - p0.x, c.y - p0.y, "RECALL HIT!", (ac.throw && ac.throw.knockback) || 300);
+  }
+  if (u >= 1) {
+    self.axeCall = null;
+    self.rapier.disarmed = false;
+    self.axeCaught = 0.4;
+    axeCatchFx(self, hand.x, hand.y);
+    if (!reduceMotion) { shake = Math.max(shake, 8); hitStop = Math.max(hitStop, 0.05); }
+    self.squash = { t: 0.14, max: 0.14, nx: (c.sx - self.x) / (Math.hypot(c.sx - self.x, c.sy - self.y) || 1), ny: (c.sy - self.y) / (Math.hypot(c.sx - self.x, c.sy - self.y) || 1) };
+    floater(self.x, self.y - r - 50, "AXE RECALLED!", "crit");
+    crowdReact(0.7);
+  }
+  return true;
+}
+// His open hand, held out toward the axe.
+function axeCallHand(b, c) {
+  var dx = c.x - b.x, dy = c.y - b.y, d = Math.hypot(dx, dy) || 1;
+  return { x: b.x + dx / d * b.r * 1.35, y: b.y - b.r * 0.3 + dy / d * b.r * 1.1 };
+}
+// From draw-attacks.js via islamHandsBusy: his own arms while he calls it.
+function axeCallBusy(b) { return !!(b && b.axeCall); }
+function drawAxeCall(b) {
+  var c = b.axeCall, r = b.r, len = r * AXE_LEN * 0.85, now = performance.now() / 1000;
+  var hand = axeCallHand(b, c), side = c.x >= b.x ? 1 : -1;
+  // The frost pulling between his hand and the axe.
+  ctx.save();
+  var pulse = 0.5 + 0.5 * Math.sin(now * 20);
+  if (c.phase === "call") {
+    ctx.setLineDash([10, 9]); ctx.lineDashOffset = -now * 160; ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(30,70,110,0.45)"; ctx.lineWidth = 7;
+    ctx.beginPath(); ctx.moveTo(hand.x, hand.y); ctx.lineTo(c.x, c.y); ctx.stroke();
+    ctx.strokeStyle = "rgba(205,240,255," + (0.6 + 0.35 * pulse).toFixed(3) + ")"; ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.moveTo(hand.x, hand.y); ctx.lineTo(c.x, c.y); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  var g = ctx.createRadialGradient(hand.x, hand.y, 2, hand.x, hand.y, r * 0.6);
+  g.addColorStop(0, "rgba(220,245,255,0.75)"); g.addColorStop(1, "rgba(191,233,255,0)");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hand.x, hand.y, r * 0.6, 0, Math.PI * 2); ctx.fill();
+  if (c.phase === "call") {
+    var g2 = ctx.createRadialGradient(c.x, c.y, 2, c.x, c.y, len * 0.7);
+    g2.addColorStop(0, "rgba(191,233,255," + (0.35 + 0.3 * pulse).toFixed(3) + ")"); g2.addColorStop(1, "rgba(191,233,255,0)");
+    ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(c.x, c.y, len * 0.7, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+  // The axe: trembling where it lies, then spinning home with a blur behind.
+  if (c.phase === "call") {
+    var k = Math.min(1, c.t / 0.4);
+    drawSpunAxe(c.x + Math.sin(now * 70) * 3 * k, c.y + Math.cos(now * 63) * 2 * k, c.a + Math.sin(now * 55) * 0.12 * k, len, 1);
+  } else {
+    for (var i = c.trail.length - 1; i >= 0; i--) drawSpunAxe(c.trail[i].x, c.trail[i].y, c.trail[i].a, len, 0.14 * (c.trail.length - i));
+    drawSpunAxe(c.x, c.y, c.a, len, 1);
+  }
+  // His arm out, glove open, the other one up in his guard.
+  drawBentArm(b, { x: b.x + side * r * 0.62, y: b.y - r * 0.25 }, hand, side);
+  drawGloveAt(hand.x, hand.y, r * 0.24, b.char);
+  drawGloveAt(b.x - side * r * 0.5, b.y - r * 0.15, r * 0.22, b.char);
 }
 
 function updateLeviathan(self, other, dt) {
@@ -398,13 +490,7 @@ function drawLeviathanTop() {
     ctx.restore();
     return true;
   });
-  axeRecalls = axeRecalls.filter(function (f) {
-    var b = balls[f.id], t = (now - f.t0) / 0.45;
-    if (!b || t >= 1 || t < 0) return false;
-    var e = t * t, x = f.sx + (b.x - f.sx) * e, y = f.sy + (b.y - f.sy) * e;
-    drawSpunAxe(x, y, -t * 18, b.r * AXE_LEN * 0.85, 1);
-    return true;
-  });
+  balls.forEach(function (b) { if (b.axeCall && b.alive) drawAxeCall(b); }); // calling it back after a disarm
 }
 
 // The axe spinning free: drawn round its middle, not the grip.

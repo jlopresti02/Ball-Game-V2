@@ -58,6 +58,7 @@ function islamDrawnApart(b) {
 // His hands are drawn by us (drawHands skips them, draw-attacks.js).
 function islamHandsBusy(b) {
   var m = b && b.igbb, om = b && balls[1 - b.id] && balls[1 - b.id].igbb;
+  if (typeof axeCallBusy === "function" && axeCallBusy(b)) return true; // his hand out for the axe (islam-axe.js)
   if (m && m.move === "islam" && m.kind === "brotha" && m.phase !== "space") return true; // his arms in Brotha
   if (om && om.move === "islam" && om.kind === "brotha" && om.vicId === b.id && om.huh) return true; // theirs, lost
   if (m && m.move === "islam" && m.kind === "cheesecake" && (m.phase === "serve" || m.phase === "toss")) return true;
