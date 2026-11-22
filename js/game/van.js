@@ -541,6 +541,7 @@ function vnFist(b, o) {
 // a little toward them, each on an arm from his shoulder.
 function vnGuardPts(b, o) {
   var r = b.r, f = vnFacing(b, o);
+  if (b.vnMelt) return vanMeltGuard(b, vnGuardPts(Object.assign({}, b, { vnMelt: null }), o)); // the glove out catching Chuck's ice punch (van-melt.js)
   return [-1, 1].map(function (s) {
     return { x: b.x + s * r * 0.4 + f.x * r * 0.2, y: b.y - r * 0.52 + f.y * r * 0.16, r: r * 0.3, s: s,
       sx: b.x + s * r * 0.8, sy: b.y - r * 0.04, ang: Math.atan2(-1 + f.y * 0.25, -s * 0.38 + f.x * 0.45) };

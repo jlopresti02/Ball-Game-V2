@@ -73,6 +73,7 @@ function update(dt) {
   tickOliveiraHunt(dt); // Charles Oliveira hunting the sub once they're hurt: shoots more, walks them down (oliveira-hunt.js)
   tickHolloway(dt); // Max Holloway's Blessed meter, Button Mash buttons, the flashback (holloway.js)
   tickVan(dt); // Joshua Van's chain counter, the fire on his gloves, the win flag, his lines (van.js)
+  tickVanMelt(dt); // Van's fire hands melting Chuck's ice punch, the water putting them out (van-melt.js)
   tickStrickland(dt); // Sean Strickland's range, pace, trauma meter and the America show (strickland.js)
   tickDiaz(dt); // Nate Diaz's lines, holds and bottles, and Nick Diaz in the cage (diaz.js)
   tickFerguson(dt); // Tony Ferguson's Kaioken, won't-tap, lines, stamps, Burrito Bell (ferguson.js)

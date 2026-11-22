@@ -89,6 +89,7 @@ function updateSwing(self, other, dt) {
       var f = hookFist(self, st, kPrev + (k - kPrev) * i / 4);
       var ox = other.x - f.x, oy = other.y - f.y;
       if (ox * ox + oy * oy < (other.r + SWING_FIST_R) * (other.r + SWING_FIST_R)) {
+        if (vanCatchIce(other, self, st, f)) break; // Joshua Van catching Chuck Liddell's ice punch in his fire hands (van-melt.js)
         st.hit = true;
         var dealt = hurt(other, sw.damage, "swing", self.id);
         if (dealt > 0) {
