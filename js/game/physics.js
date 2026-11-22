@@ -76,6 +76,15 @@ function regulateSpeed(b, dt) {
   setSpeed(b, target);
 }
 
+// No body for the pair collision: mid special (igbbLocked), unless the move
+// is solid (Jon's duck, Charles's Kamehameha, Conor's pot of gold). A fighter
+// only dazed or knocked down (no special, not shelled) keeps his body, so a
+// stunning shot never lets them walk through him (Joe, 2026-11-22).
+function pairGhost(b) {
+  if (!igbbLocked(b) || duckSolid(b) || kameOn(b) || rainbowOn(b)) return false;
+  return !(b.dazed && !b.igbb && !b.shelled);
+}
+
 function step(dt) {
   var i, b;
   for (i = 0; i < balls.length; i++) {
@@ -104,7 +113,7 @@ function step(dt) {
   // Sees Red keeps a normal collision box even mid-charge-dash, so it
   // still bounces off the opponent on contact like any other pair of
   // balls; only its punch damage is handled separately, on a timer.
-  if (!a.alive || !c.alive || a.beamPin || c.beamPin || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || subLocked(a) || subLocked(c) || a.koDuel || c.koDuel || (igbbLocked(a) && !duckSolid(a) && !kameOn(a) && !rainbowOn(a)) || (igbbLocked(c) && !duckSolid(c) && !kameOn(c) && !rainbowOn(c)) || swordDuelLocked(a) || swordDuelLocked(c) || aSpin || cSpin) return;
+  if (!a.alive || !c.alive || a.beamPin || c.beamPin || a.grappled || c.grappled || a.grapple || c.grapple || a.sprawl || c.sprawl || a.sprawled || c.sprawled || subLocked(a) || subLocked(c) || a.koDuel || c.koDuel || pairGhost(a) || pairGhost(c) || swordDuelLocked(a) || swordDuelLocked(c) || aSpin || cSpin) return;
   // Jon's Duck Drop duck, and Jon in its landing pose, are solid like a seat (jon-duck.js).
   if (duckSolid(a)) aSit = true;
   if (duckSolid(c)) cSit = true;
