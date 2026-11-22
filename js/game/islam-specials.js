@@ -39,7 +39,6 @@
 SPECIAL_MOVES.islam = "Islam's specials";
 var ISL_TRIP_T = 7.0;      // the cut to Dagestan
 var islamTrip = null;      // { ownerId, vicId, u } while the fight holds for it
-var ISL_BUBBLES = { brotha: "BROTHAAAA...", dagestan: "2-3 YEARS DAGESTAN AND FORGET", roo: "KANGAROO HAVE GOOD STRIKING...", roo2: "BUT NOBODY CHECK THE GRAPPLING!" };
 
 function islRand(r) { return r[0] + Math.random() * (r[1] - r[0]); }
 function islamSpOn(b) { return !!(b && b.igbb && b.igbb.move === "islam"); }
@@ -83,7 +82,7 @@ function updateIslamSpecials(self, other, dt) {
     self.igbb = { move: "islam", kind: kind, phase: "start", t: 0, all: 0, vicId: other.id };
     if (kind === "brotha") { self.igbb.phase = "space"; islHold(other); } // they stand still from here on
     if (kind === "cheesecake") { self.igbb.phase = "serve"; playSwordDraw(); } // (the bubble says it)
-    if (kind === "dagestan") { self.igbb.phase = "call"; floater(self.x, self.y - self.r - 30, "DAGESTAN!", "crit"); }
+    if (kind === "dagestan") self.igbb.phase = "call";
     var vk = { cheesecake: "islamCheesecake", dagestan: "islamDagestan" }[kind], mm = self.igbb; // (Brotha's goes with the moan)
     if (vk) islamVoice(vk, function () { return self.igbb === mm && mm.t < 0.6; }); // Joe's clip (islam-voice.js)
     crowdReact(0.6);
@@ -134,7 +133,6 @@ function islBrotha(self, other, m, dt) {
     if (td > 4) { var st = Math.min(td, c.backstep * dt); self.x += tx / td * st; self.y += ty / td * st; }
     if (td <= 4 || m.t >= 1.1) {
       m.phase = "moan"; m.t = 0;
-      floater(self.x, self.y - r - 30, "BROTHA!", "crit");
       var mm = m;
       islamVoice("islamBrotha", function () { return self.igbb === mm && mm.phase === "moan" && mm.t < 0.6; }); // Joe's clip (islam-voice.js)
     }
@@ -585,10 +583,6 @@ function drawIslamTop() {
     if (b.islamRoo) drawIslamRoo(b, b.islamRoo, now);
     if (!m || m.move !== "islam" || !b.alive) return;
     if (m.kind === "brotha") {
-      if (m.phase === "moan") {
-        var n = Math.min(8, 2 + Math.floor(m.t * 5));
-        islBubble(b, "BROTHA" + new Array(n).join("A") + "...", Math.min(1, m.t / 0.15), true, now);
-      }
       drawBrothaHands(b, o, m, now);
       if (m.phase === "rush" && m.saw && o.alive) drawSawHim(o, now);
       else if (m.huh && o.alive) drawHuh(o, now);
@@ -601,7 +595,6 @@ function drawIslamTop() {
         drawCheesecake(hx, hy - 6, 0.85, 0);
         drawGloveAt(hx, hy + 10, r * 0.22, b.char);
         drawGloveAt(b.x - side * r * 0.55, b.y - r * 0.05, r * 0.22, b.char);
-        if (m.t > 0.1) islBubble(b, "CALIFORNIA CHEESECAKE!", 1, false, now);
       } else if (m.phase === "cakeToss") {
         var sd = o.x >= b.x ? 1 : -1;
         drawGloveAt(b.x + sd * r * 1.0, b.y - r * 0.5, r * 0.22, b.char);
@@ -610,7 +603,6 @@ function drawIslamTop() {
       if ((m.phase === "chase" || m.phase === "eat") && o.alive) drawHearts(o, now);
     }
     if (m.kind === "dagestan") {
-      if (m.phase === "call") islBubble(b, ISL_BUBBLES.dagestan, Math.min(1, m.t / 0.15), false, now);
       if (m.van) drawDagestanVan(b, o, m, now);
       if (m.phase === "fall") {
         // Straight down out of the sky onto his spot (seen from above): huge
@@ -635,34 +627,6 @@ function drawIslamTop() {
   });
 }
 
-// A comic speech bubble over his head (there's no clip of these lines yet).
-function islBubble(b, text, pop, wavy, now) {
-  var r = b.r, fs = Math.round(r * 0.36);
-  ctx.save();
-  ctx.font = "900 " + fs + "px Impact, 'Arial Black', sans-serif";
-  var words = text.split(" "), lines = [], cur = "";
-  words.forEach(function (w) { var t = cur ? cur + " " + w : w; if (ctx.measureText(t).width > r * 3.4 && cur) { lines.push(cur); cur = w; } else cur = t; });
-  lines.push(cur);
-  var tw = 0; lines.forEach(function (l) { tw = Math.max(tw, ctx.measureText(l).width); });
-  var bw = tw + fs * 1.2, bh = lines.length * fs * 1.15 + fs * 0.7;
-  var x = Math.max(bw / 2 + 4, Math.min(W - bw / 2 - 4, b.x)), y = Math.max(bh / 2 + 4, b.y - r - bh / 2 - 26);
-  ctx.translate(x, y); ctx.scale(pop, pop);
-  ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#1f2328"; ctx.lineWidth = 3.5; ctx.lineJoin = "round";
-  ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(-bw / 2, -bh / 2, bw, bh, fs * 0.6); else ctx.rect(-bw / 2, -bh / 2, bw, bh);
-  ctx.fill(); ctx.stroke();
-  var tx = b.x - x;
-  ctx.beginPath(); ctx.moveTo(tx - 10, bh / 2 - 2); ctx.lineTo(tx, bh / 2 + 20); ctx.lineTo(tx + 10, bh / 2 - 2); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(tx - 10, bh / 2); ctx.lineTo(tx, bh / 2 + 20); ctx.lineTo(tx + 10, bh / 2); ctx.stroke();
-  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#1f2328";
-  lines.forEach(function (l, li) {
-    var ly = (li - (lines.length - 1) / 2) * fs * 1.15;
-    if (!wavy) { ctx.fillText(l, 0, ly); return; }
-    var w0 = ctx.measureText(l).width, xx = -w0 / 2;
-    for (var i = 0; i < l.length; i++) { var cw = ctx.measureText(l[i]).width; ctx.fillText(l[i], xx + cw / 2, ly + Math.sin(now * 9 + i * 0.7) * fs * 0.12); xx += cw; }
-  });
-  ctx.restore();
-}
 
 function drawHuh(o, now) {
   ctx.save();
@@ -838,16 +802,14 @@ function drawDagestanVan(b, o, m, now) {
 
 // Islam holding the kangaroo up over his head (his own two arms).
 function drawIslamRoo(b, s, now) {
-  var rooLine = (s.all || 0) < 2.05 ? ISL_BUBBLES.roo : ISL_BUBBLES.roo2; // in time with Joe's clip
-  if (s.step === "say") { islBubble(b, rooLine, Math.min(1, s.t / 0.15), false, now); return; }
-  if (s.step === "throw" || !vkRoo) return;
+  // (no speech bubbles on his moves: Joe's voice clips say the lines, islam-voice.js)
+  if (s.step === "say" || s.step === "throw" || !vkRoo) return;
   var r = b.r, top = vkRoo.y - vkRoo.z;
   [-1, 1].forEach(function (sd) {
     var sh = { x: b.x + sd * r * 0.66, y: b.y - r * 0.3 }, hand = { x: vkRoo.x + sd * r * 0.4, y: top - r * 0.1 };
     drawBentArm(b, sh, hand, sd);
     drawGloveAt(hand.x, hand.y, r * 0.22, b.char);
   });
-  if ((s.all || 0) < 4.7) islBubble(b, rooLine, 1, false, now);
 }
 
 // ---------------------------------------------------------------- the cut to Dagestan
