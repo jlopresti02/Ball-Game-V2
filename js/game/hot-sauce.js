@@ -204,6 +204,7 @@ function runHotSauce(self, other, cfg, dt) {
         hs.tickT = 0.12;
         var got = hurt(other, cfg.tickDmg, "igbb", self.id); // fire: can't be slipped or blocked
         if (got > 0) other.flash = 0.08;
+        meltIceByFire(other); // the fire melts Chuck Liddell's ice fist (van-melt.js)
         if (!hs.burn) { floater(other.x, other.y - other.r - 30, "ON FIRE!", "crit"); playHotSauce("ignite"); }
         hs.burn = cfg.burn;
         other.vx += Math.cos(hs.aim) * 60; other.vy += Math.sin(hs.aim) * 60;
