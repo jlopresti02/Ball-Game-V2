@@ -42,9 +42,13 @@ function vanMeltHolding(b) {
   }
   return false;
 }
-// Chuck's fist being held melted (liddell.js: no blue flare, his own glove colour).
+// Chuck's overhand fist melted (liddell.js: no blue flare, his own glove
+// colour, no all-out-attack power or ice chips): while it's held, and for the
+// rest of that all-out attack once it's melted (Joe, 2026-11-22). His next
+// Snow Day starts a new b.iceRage, so the ice comes back then.
 function vanMeltedFist(b) {
   if (!b || typeof balls === "undefined") return false;
+  if (b.iceRage && b.iceRage.melted) return true;
   var o = balls[1 - b.id], m = o && o.vnMelt;
   return !!(m && m.chuck === b.id && m.phase !== "douse");
 }
@@ -53,7 +57,7 @@ function vanMeltedFist(b) {
 // `chuck` at fist point f. True when Van catches it (no damage).
 function vanCatchIce(van, chuck, st, f) {
   var mc = vmCfg(van);
-  if (!mc || !chuck.iceRage || van.vnMelt || !vnBurning(van) || !van.vn || over || !van.alive || !chuck.alive) return false;
+  if (!mc || !chuck.iceRage || chuck.iceRage.melted || van.vnMelt || !vnBurning(van) || !van.vn || over || !van.alive || !chuck.alive) return false;
   if (vnInterrupted(van) || van.punch && van.punch.hook) return false;
   if (Math.random() >= mc.chance) return false;
   st.hit = true;
@@ -121,6 +125,7 @@ function tickVanMelt(dt) {
         floater(F.x, F.y - 44, "MELTED!", "crit");
         crowdReact(0.6);
         vmPuddle((F.x + b.x) / 2, (F.y + b.y) / 2 + b.r * 0.6, 1);
+        if (c.iceRage) c.iceRage.melted = true; // that hand stays melted for the rest of his all-out attack
         vmRelease(b, m, true);
       }
     } else if (m.phase === "douse") {
@@ -129,6 +134,13 @@ function tickVanMelt(dt) {
       if (!m.called && m.t >= 0.3) { m.called = true; floater(b.x, b.y - b.r - 44, "FIRE'S OUT!", "note"); }
       if (m.t >= m.cfg.douse) b.vnMelt = null;
     }
+  });
+  // Chuck's melted fist still dripping while his all-out attack goes on.
+  balls.forEach(function (c) {
+    if (!c.alive || !c.iceRage || !c.iceRage.melted || !c.swing || reduceMotion) return;
+    if (nativeRandom() > dt * 7) return;
+    var F = icSwingFist(c);
+    if (F) vmFx.drips.push({ x: F.x + (nativeRandom() - 0.5) * 12, y: F.y + 6, vx: (nativeRandom() - 0.5) * 30, vy: 40 + nativeRandom() * 50, life: 0.5, max: 0.5, land: F.y + 26 + nativeRandom() * 20 });
   });
   vmFx.steam = vmFx.steam.filter(function (s) { s.life -= dt; s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 0.97; s.r += s.grow * dt; return s.life > 0; });
   vmFx.drips = vmFx.drips.filter(function (d) {
