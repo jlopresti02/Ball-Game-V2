@@ -613,11 +613,22 @@ function drawIslamTop() {
       if (m.phase === "call") islBubble(b, ISL_BUBBLES.dagestan, Math.min(1, m.t / 0.15), false, now);
       if (m.van) drawDagestanVan(b, o, m, now);
       if (m.phase === "fall") {
-        var u = Math.min(1, m.t / b.char.special.dagestan.fall), top = o.y - H * 0.7, y = top + (o.y - top) * u * u;
-        ctx.fillStyle = "rgba(0,0,0," + (0.08 + 0.2 * u).toFixed(3) + ")";
-        ctx.beginPath(); ctx.ellipse(o.x, o.y + o.r * 0.8, o.r * (0.4 + 0.6 * u), o.r * (0.12 + 0.18 * u), 0, 0, Math.PI * 2); ctx.fill();
-        ctx.save(); ctx.translate(o.x, y); ctx.rotate(u * 9); ctx.translate(-o.x, -y);
-        drawFighterArt(ctx, o.x, y, o.r, o.char.look, theme.wall, { layout: "contained", name: o.char.name });
+        // Straight down out of the sky onto his spot (seen from above): huge
+        // and close at first, shrinking to his size as he falls, picking up
+        // speed, with his shadow tightening under him and a target on the mat.
+        var u = Math.min(1, m.t / b.char.special.dagestan.fall), h = 1 - u * u, k = 1 + 2.6 * h, y = o.y - h * o.r * 0.8;
+        ctx.save();
+        ctx.strokeStyle = "rgba(220,40,40," + (0.35 + 0.35 * Math.abs(Math.sin(m.t * 14))).toFixed(3) + ")"; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(o.x, o.y, o.r * (1.1 + 0.4 * h), 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = "rgba(0,0,0," + (0.1 + 0.25 * u).toFixed(3) + ")";
+        ctx.beginPath(); ctx.ellipse(o.x, o.y + o.r * 0.15, o.r * (0.5 + 0.5 * u), o.r * (0.42 + 0.4 * u), 0, 0, Math.PI * 2); ctx.fill();
+        if (!reduceMotion && h > 0.15) { // air rushing past him
+          ctx.strokeStyle = "rgba(255,255,255," + (0.6 * h).toFixed(3) + ")"; ctx.lineWidth = 3; ctx.lineCap = "round";
+          for (var sl = 0; sl < 8; sl++) { var sa2 = sl / 8 * Math.PI * 2 + 0.3; var r1 = o.r * k * 1.05, r2 = r1 + o.r * (0.5 + 0.9 * h); ctx.beginPath(); ctx.moveTo(o.x + Math.cos(sa2) * r1, y + Math.sin(sa2) * r1); ctx.lineTo(o.x + Math.cos(sa2) * r2, y + Math.sin(sa2) * r2); ctx.stroke(); }
+        }
+        ctx.globalAlpha = Math.min(1, 0.55 + u * 1.5);
+        ctx.translate(o.x, y); ctx.rotate((1 - u) * 6); ctx.translate(-o.x, -y);
+        drawFighterArt(ctx, o.x, y, o.r * k, o.char.look, theme.wall, { layout: "contained", name: o.char.name });
         ctx.restore();
       }
     }
