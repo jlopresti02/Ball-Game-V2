@@ -616,6 +616,7 @@ function updateKangaroo(self, other, dt) {
     return true;
   }
   if (m.pouched) { var pq = rooPt(roo, KR_POUCH.x, KR_POUCH.y); self.x = pq.x; self.y = pq.y; }
+  if (islamRooCounter(self, other, m, roo)) return true; // Islam Makhachev lifts the kangaroo and shakes him out (islam-specials.js)
   if (m.phase === "chase") {
     if (roo.mode !== "stand" || roo.t < 0.08) return true;
     // Landed. Close enough and free to grab: caught.

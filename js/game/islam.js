@@ -86,6 +86,7 @@ function islamJudoSweep(self, v, how, m) {
 // (for the shaky start; there's no fight clock in the engine).
 function tickIslam(b, dt) {
   if (islamCfg(b) && started && !over) b.islamT = (b.islamT || 0) + dt;
+  if (b.islamDizzyAfter && !b.slam && b.alive) { makeDizzy(b, b.islamDizzyAfter); b.islamDizzyAfter = 0; } // after Dustin's big punch
 }
 
 // From attemptGrab (grapple-duel.js), when he's about to sprawl on their
@@ -110,6 +111,7 @@ function islamClinchDefense(v, key) {
 // From hurt() (match.js), after the damage: the shaky start.
 function islamHurt(b, dealt, source, attackerId) {
   var ic = islamCfg(b), e = ic && ic.early;
+  if (ic && islamBigPunch(b, ic, dealt, source, attackerId)) return;
   if (!e || b.islamEarlyDone || dealt <= 0 || attackerId == null || attackerId === b.id || !b.alive) return;
   if (["punch", "jab", "combo", "flow", "kopunch"].indexOf(source) < 0) return;
   b.islamEarlyDone = true; // only ever the first punch that lands
@@ -122,6 +124,31 @@ function islamHurt(b, dealt, source, attackerId) {
   b.squash = { t: 0.2, max: 0.2, nx: -dx / d, ny: -dy / d };
 }
 
+// Dustin Poirier (and Renato Moicano, if he's ever added) gets one big punch
+// through a fight: `bigPunch.chance`% of their punches that land until it
+// happens, and it always does by `bigPunch.by` landed. It launches him back
+// across the cage (a wall slam) and leaves him dizzy.
+function islamBigPunch(b, ic, dealt, source, attackerId) {
+  var bp = ic.bigPunch;
+  if (!bp || b.islamBigDone || dealt <= 0 || attackerId == null || attackerId === b.id || !b.alive) return false;
+  if (["punch", "jab", "combo", "flow", "hook", "kopunch"].indexOf(source) < 0) return false;
+  var a = balls[attackerId], id = String(a && a.char && a.char.id || "");
+  if (!bp.from.some(function (s) { return id.indexOf(s) >= 0; })) return false;
+  b.islamBigN = (b.islamBigN || 0) + 1;
+  if (b.islamBigN < bp.by && Math.random() * 100 >= bp.chance) return false;
+  b.islamBigDone = true;
+  if (b.grappled || b.grapple || b.igbb || subLocked(b) || b.suplex || b.rnc || b.darce || b.clin) { b.islamBigDone = false; return false; }
+  var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  floater(b.x, b.y - b.r - 64, "WHAT A SHOT!", "crit");
+  hurt(b, bp.damage, "igbb", attackerId);
+  if (!b.alive) return true;
+  if (!reduceMotion) { shake = Math.max(shake, 20); hitStop = Math.max(hitStop, 0.1); }
+  crowdReact(1);
+  beginWallSlam(b, dx / d, dy / d, { knockback: bp.knockback, wallSlams: 1, slamDamage: 4 });
+  b.islamDizzyAfter = bp.dizzy; // dizzy once he's come off the cage (tickIslam)
+  return true;
+}
+
 // The fighter card (gallery.js).
 function islamGalleryMoves(ch, add) {
   var ic = ch.islam;
@@ -129,5 +156,7 @@ function islamGalleryMoves(ch, add) {
   add("🤼", "Chain wrestling", "His shots finish as a back take into the rear naked choke, a body lock slam, a single leg worked up into the clinch, or a double leg.");
   if (ic.sweep) add("🥋", "Judo sweep", ic.sweep.chance + "% of his clinches end with knees into a judo sweep takedown (the single leg always does).");
   if (ic.darceShot) add("🐍", "D'Arce off the sprawl", ic.darceShot.chance + "% of the shots he sprawls on go straight into a D'Arce.");
+  if (ch.axe) add("🪓", "Leviathan axe", "When they pull a weapon he takes out a frost axe and looks like the god of war: blocks and clashes, throws it and calls it back, spins it round him like a saw blade, and every hit frosts their gloves. It cuts Gane's bat in half.");
+  if (ic.roo) add("🦘", "Who check Kangaroo's grappling?", "Lifts Volk's kangaroo over his head, shakes Volk out dizzy and throws it out of the arena.");
   if (ic.early) add("😵", "Shaky start", "The first punch that lands in the first " + ic.early.window + "s staggers him " + ic.early.chance + "% of the time.");
 }

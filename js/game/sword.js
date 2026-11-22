@@ -39,7 +39,7 @@
 function bladeHost(b) { return b ? (b.diamond || b.rapier || null) : null; }
 function bladeCfg(b) { return b.rapier ? b.char.rapier : b.char.diamond.swordClash; }
 function bladeColors(b) { return b && b.rapier ? RAPIER_C : DIAMOND_C; }
-function bladeLen(b) { return b && b.rapier ? (cutlassStyle(b) ? CUTLASS_LEN : RAPIER_LEN) : SWORD_LEN; } // (Bisping's cutlass, bisping-cutlass.js)
+function bladeLen(b) { return b && b.rapier ? (axeStyle(b) ? AXE_LEN : cutlassStyle(b) ? CUTLASS_LEN : RAPIER_LEN) : SWORD_LEN; } // (Bisping's cutlass, bisping-cutlass.js)
 
 // Two sword fighters (Dustin in Diamond Guard vs Ilia, Joe 2026-11-06): both
 // draw on each other, and after a short standoff they duel. Who wins is a
@@ -53,7 +53,7 @@ function bladeReady(b) {
   if (b && b.diamond && (!b.diamond.shown || diamondShow > 0)) return false;
   return !!(h && h.on && !h.disarmed && b.alive);
 }
-function bladeRivals(b, o) { return bladeReady(b) && bladeReady(o) && !cutlassNoRival(b, o); } // (rapier vs Bisping's cutlass never starts on its own, bisping-cutlass.js)
+function bladeRivals(b, o) { return bladeReady(b) && bladeReady(o) && !cutlassNoRival(b, o) && !axeNoRival(b, o); } // (rapier vs Bisping's cutlass never starts on its own, bisping-cutlass.js)
 function tickBladeRivals() {
   if (swordDuel || over || !started) return;
   var a = balls[0], c = balls[1];
@@ -135,7 +135,7 @@ var SWORD_FLOURISHES = {
   } }
 };
 
-function swordFlourishes(b) { return cutlassStyle(b) ? CUTLASS_FLOURISHES : b.rapier ? RAPIER_FLOURISHES : SWORD_FLOURISHES; } // (Bisping's cutlass, bisping-cutlass.js)
+function swordFlourishes(b) { return axeStyle(b) ? AXE_FLOURISHES : cutlassStyle(b) ? CUTLASS_FLOURISHES : b.rapier ? RAPIER_FLOURISHES : SWORD_FLOURISHES; } // (Bisping's cutlass, bisping-cutlass.js)
 
 function tickDiamondSword(b, dt) {
   var dg = bladeHost(b), sc = bladeCfg(b), o = balls[1 - b.id], C = bladeColors(b);
@@ -265,6 +265,7 @@ function diamondSwordClash(defender, attacker, weapon) {
   nx /= nd; ny /= nd;
   var cp = swordPoint(defender, sw, 0.45), cx = cp.x, cy = cp.y; // where the bat meets the blade
   attacker.chAct = null; // the swing is knocked away
+  if (axeCutsBat(defender, attacker, cx, cy)) return true; // Islam's axe cuts Ciryl Gane's bat in half (islam-axe.js)
   // Enough parries: the weapons lock up.
   if (sc.duel && sw.parries >= sc.duel.after) { startSwordDuel(defender, attacker); return true; }
   if (attacker.cheater) attacker.cheater.cd = Math.max(attacker.cheater.cd, sc.recover);
@@ -552,7 +553,7 @@ function tickDuelFinish(d, o, sd, dt) {
     if (f >= 0.38 && !sd.flung) { // ripped away: the bat goes flying into the crowd
       sd.flung = true; sd.let = true;
       var up = -1;
-      var oh = bladeHost(o), blade = oh && oh.sword ? (cutlassStyle(o) ? "cutlass" : o.rapier ? "rapier" : "longsword") : null;
+      var oh = bladeHost(o), blade = oh && oh.sword ? (axeStyle(o) ? "axe" : cutlassStyle(o) ? "cutlass" : o.rapier ? "rapier" : "longsword") : null;
       flyingBats.push({ x: o.x + sd.ux * o.r * 0.5, y: o.y - o.r * 0.4, vx: sd.ux * 380, vy: -820, rot: 0, spin: 19, t: 0, len: blade ? o.r * bladeLen(o) : weaponLen(o), trail: [], club: !!(o.cheater && o.cheater.club), blade: blade });
       if (o.cheater) { if (!o.cheater.saber) o.weaponLost = true; o.cheater = null; } // empty handed: back to fighting fair, and the bat or club is gone for the fight
       if (blade) { oh.sword = null; oh.disarmed = true; } // a sword fighter loses theirs for the fight
@@ -804,6 +805,7 @@ function drawDiamondSwordsTop() {
   flyingBats.forEach(function (fb) {
     ctx.save(); ctx.globalAlpha = Math.min(1, (2.4 - fb.t) / 0.4);
     var dr = fb.blade === "rapier" ? function (x, y, a, l) { drawRapier(x, y, a, l, 1, 1); }
+      : fb.blade === "axe" ? function (x, y, a, l) { drawLeviathan(x, y, a, l, 1, 1); } // (Islam's, islam-axe.js)
       : fb.blade === "cutlass" ? function (x, y, a, l) { drawCutlass(x, y, a, l, 1, 1); } // (Bisping's, bisping-cutlass.js)
       : fb.blade ? function (x, y, a, l) { var im = getImg(DIAMOND_SWORD_SRC); if (im) drawLongsword(im, x, y, a, l, 1, 1); }
       : fb.club ? drawClub : drawBat;

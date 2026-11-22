@@ -20,6 +20,7 @@ function sceneLocked() {
   if (typeof kDuel !== "undefined" && kDuel) return true;                            // Tony vs Jiří's katana duel and its cutscene (katana-duel.js)
   if (typeof beamClash !== "undefined" && beamClash && !beamClash.done) return true; // Kamehameha vs rainbow beam struggle (beam-clash.js)
   if (typeof cncCut !== "undefined" && cncCut) return true;                          // Chuck Norris's entrance cutscene (chuck-norris-cut.js)
+  if (typeof islamTrip !== "undefined" && islamTrip) return true;                  // Islam's cut to Dagestan (islam-specials.js)
   if (typeof dcCut !== "undefined" && dcCut) return true;                            // DC's music video (cormier-cake-cut.js)
   if (typeof hwFlash !== "undefined" && hwFlash) return true;                        // Max Holloway's flashback (holloway.js)
   if (typeof sl !== "undefined" && sl && sl.phase !== "over") return true;           // Khabib's orbital strike / Hokit's Death Star, space cut and all (send-location.js)
