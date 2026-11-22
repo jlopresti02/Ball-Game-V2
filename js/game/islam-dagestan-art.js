@@ -88,12 +88,15 @@ function islBuildDagBg() {
   }
   // houses, back rows first, climbing the hill to the left
   var hs = [];
-  for (j = 0; j < 46; j++) {
+  for (j = 0; j < 38; j++) {
     var hx = rnd() * 640 - 20, base = 560 + 0.25 * hx + Math.max(0, hx - 400) * 0.25;
-    hs.push([hx, base - 30 + rnd() * 110, 40 + rnd() * 38, 28 + rnd() * 34]);
+    hs.push([hx, base - 30 + rnd() * 110, 48 + rnd() * 40, 32 + rnd() * 34]);
   }
   hs.sort(function (a, b) { return a[1] - b[1]; });
   hs.forEach(function (h) { islDagHouse(c, h[0], h[1], h[2], h[3], rnd, 1); });
+  // morning haze over the village
+  var hz = c.createLinearGradient(0, 480, 0, 760); hz.addColorStop(0, "rgba(220,232,242,0.18)"); hz.addColorStop(1, "rgba(220,232,242,0)");
+  c.fillStyle = hz; c.fillRect(0, 440, 1080, 340);
   // autumn trees in front of the houses
   for (i = 0; i < 22; i++) {
     var ax = rnd() * 1000 + 20, ay = 660 + ax * 0.3 + rnd() * 200;
@@ -137,24 +140,46 @@ function islBuildDagBg() {
   return cv;
 }
 
-// A flat-roofed stone house: a box with a darker roof slab, small dark
-// windows, sometimes a wooden balcony.
-function islDagHouse(c, x, y, w, h, rnd, sc) {
-  var cols = ["#cdbb9c", "#b3a286", "#d9cdb5", "#9c8f7a", "#c2b49a", "#e2d8c4"];
-  var col = cols[Math.floor(rnd() * cols.length)];
-  c.fillStyle = col; c.strokeStyle = "rgba(40,32,24,0.55)"; c.lineWidth = 1.5 * sc;
-  c.fillRect(x, y - h, w, h); c.strokeRect(x, y - h, w, h);
-  c.fillStyle = "rgba(0,0,0,0.18)"; c.fillRect(x + w * 0.72, y - h, w * 0.28, h); // the side in shade
-  c.fillStyle = "#5e554a"; c.fillRect(x - 2, y - h - 4 * sc, w + 4, 4 * sc);       // roof slab
-  c.fillStyle = "#2a2622";
-  var n = Math.max(1, Math.floor(w / 14));
-  for (var i = 0; i < n; i++) {
-    for (var fl = 0; fl < Math.max(1, Math.floor(h / 16)); fl++) {
-      if (rnd() < 0.25) continue;
-      c.fillRect(x + 4 + i * (w - 8) / n, y - h + 5 + fl * 15, Math.max(3, w / n * 0.45), 6 * sc);
-    }
+// A flat-roofed stone house in the village style: rough stone courses, a
+// shaded side, a parapet and roof slab, framed windows (a few lit), now and
+// then a wooden balcony with a railing, or a second storey stepped back.
+function islDagHouse(c, x, y, w, h, rnd, sc, top) {
+  var cols = ["#cdbb9c", "#b9a688", "#d9cdb5", "#a59783", "#c4b598", "#e0d5bf", "#bfae92"];
+  var col = cols[Math.floor(rnd() * cols.length)], ink = "rgba(40,32,24,0.6)";
+  if (!top) { c.fillStyle = "rgba(0,0,0,0.25)"; c.beginPath(); c.ellipse(x + w * 0.5, y + 2, w * 0.6, 5 * sc, 0, 0, Math.PI * 2); c.fill(); }
+  var g = c.createLinearGradient(x, y - h, x + w, y);
+  g.addColorStop(0, shadeHex(col, 0.08)); g.addColorStop(1, shadeHex(col, -0.08));
+  c.fillStyle = g; c.fillRect(x, y - h, w, h);
+  c.fillStyle = "rgba(30,24,18,0.28)"; c.fillRect(x + w * 0.74, y - h, w * 0.26, h); // the side in shade
+  // stone courses with offset joints
+  c.strokeStyle = "rgba(70,58,44,0.28)"; c.lineWidth = 1;
+  var row = 0;
+  for (var cy = y - h + 6; cy < y; cy += 6 * sc) {
+    c.beginPath(); c.moveTo(x, cy); c.lineTo(x + w, cy); c.stroke();
+    for (var jx = x + (row++ % 2 ? 4 : 9); jx < x + w; jx += 11) { c.beginPath(); c.moveTo(jx, cy); c.lineTo(jx, Math.min(y, cy + 6 * sc)); c.stroke(); }
   }
-  if (rnd() < 0.3) { c.fillStyle = "#7a5634"; c.fillRect(x + w * 0.1, y - h * 0.45, w * 0.6, 3 * sc); }
+  c.strokeStyle = ink; c.lineWidth = 1.5 * sc; c.strokeRect(x, y - h, w, h);
+  // parapet and roof slab
+  c.fillStyle = "#6a6052"; c.fillRect(x - 3, y - h - 5 * sc, w + 6, 5 * sc);
+  c.fillStyle = shadeHex(col, -0.15); c.fillRect(x - 1, y - h - 9 * sc, w + 2, 4 * sc);
+  if (rnd() < 0.35) { c.fillStyle = "#7d7266"; c.fillRect(x + w * 0.2, y - h - 18 * sc, 6 * sc, 10 * sc); } // a chimney
+  // windows: a dark pane in a pale frame, a few lit warm
+  var n = Math.max(1, Math.floor(w / 15)), fls = Math.max(1, Math.floor(h / 17));
+  for (var i = 0; i < n; i++) for (var fl = 0; fl < fls; fl++) {
+    if (rnd() < 0.2) continue;
+    var wx = x + 5 + i * (w - 10) / n, wy = y - h + 6 + fl * 16, ww = Math.max(4, (w - 10) / n * 0.55), wh = 7 * sc;
+    c.fillStyle = "#efe8da"; c.fillRect(wx - 1, wy - 1, ww + 2, wh + 2);
+    c.fillStyle = rnd() < 0.15 ? "#f2c66b" : "#2c2a29"; c.fillRect(wx, wy, ww, wh);
+    c.fillStyle = "#efe8da"; c.fillRect(wx + ww / 2 - 0.5, wy, 1, wh);
+  }
+  if (rnd() < 0.35) { // wooden balcony
+    var by = y - h * 0.45, bx = x + w * 0.08, bw = w * 0.62;
+    c.fillStyle = "#6e4b2c"; c.fillRect(bx, by, bw, 3 * sc);
+    c.strokeStyle = "#5a3b20"; c.lineWidth = 1;
+    for (var rx = bx; rx <= bx + bw; rx += 4) { c.beginPath(); c.moveTo(rx, by); c.lineTo(rx, by - 6 * sc); c.stroke(); }
+    c.beginPath(); c.moveTo(bx, by - 6 * sc); c.lineTo(bx + bw, by - 6 * sc); c.stroke();
+  }
+  if (!top && rnd() < 0.25 && w > 40) islDagHouse(c, x + w * 0.15, y - h - 8 * sc, w * 0.55, h * 0.6, rnd, sc, true); // a storey stepped back on the roof
 }
 
 function islDagTree(c, x, y, r, rnd) {
@@ -169,67 +194,112 @@ function islDagTree(c, x, y, r, rnd) {
 
 // The catapult from Joe's photo, base at (cx, cy): a wooden frame on spoked
 // wheels, an A-frame at the back with a padded crossbar, and the long arm
-// pivoting low in the middle with the spoon at its end. `arm` is the arm's
-// angle (resting up to the right, swung up and over to hit the crossbar).
-// Returns where the spoon is.
+// pivoting low in the middle in a twisted rope bundle, the carved spoon at
+// its end. `arm` is the arm's angle (resting up to the right, swung up and
+// over to hit the crossbar), `sc` its size and `roll` the wheels' turn as
+// it's wheeled out. Returns where the spoon is.
 var ISL_CAT = { pivotX: 10, pivotY: -28, len: 290 };
-function drawIslCatapult(c, cx, cy, arm, now, sc) {
-  var W1 = "#5c3d22", W2 = "#7a5432", W3 = "#3e2914", ink = "#1f2328";
-  sc = sc || 1;
+function drawIslCatapult(c, cx, cy, arm, now, sc, roll) {
+  var ink = "#1f2328", IRON = "#3b3f44", IRONL = "#6b7178";
+  sc = sc || 1; roll = roll || 0;
   c.save();
   c.translate(cx, cy); c.scale(sc, sc); c.translate(-cx, -cy);
-  c.lineJoin = "round"; c.strokeStyle = ink; c.lineWidth = 4;
-  var beam = function (x0, y0, x1, y1, w, col) {
+  c.lineJoin = "round";
+  // a squared timber: shaded across its width, grain lines, dark outline
+  var beam = function (x0, y0, x1, y1, w, base) {
     var dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1, nx = -dy / l * w / 2, ny = dx / l * w / 2;
-    c.fillStyle = col;
+    var g = c.createLinearGradient(x0 + nx, y0 + ny, x0 - nx, y0 - ny);
+    g.addColorStop(0, shadeHex(base, -0.25)); g.addColorStop(0.35, shadeHex(base, 0.12)); g.addColorStop(1, shadeHex(base, -0.18));
+    c.fillStyle = g; c.strokeStyle = ink; c.lineWidth = 3.5;
     c.beginPath(); c.moveTo(x0 + nx, y0 + ny); c.lineTo(x1 + nx, y1 + ny); c.lineTo(x1 - nx, y1 - ny); c.lineTo(x0 - nx, y0 - ny); c.closePath(); c.fill(); c.stroke();
-    c.strokeStyle = "rgba(255,230,190,0.18)"; c.lineWidth = 2; // a grain line
-    c.beginPath(); c.moveTo(x0 + nx * 0.3, y0 + ny * 0.3); c.lineTo(x1 + nx * 0.3, y1 + ny * 0.3); c.stroke();
-    c.strokeStyle = ink; c.lineWidth = 4;
+    c.strokeStyle = "rgba(30,18,8,0.35)"; c.lineWidth = 1.2;
+    [0.45, -0.2].forEach(function (k) {
+      c.beginPath(); c.moveTo(x0 + nx * k + dx * 0.04, y0 + ny * k + dy * 0.04);
+      c.bezierCurveTo(x0 + dx * 0.35 + nx * (k + 0.15), y0 + dy * 0.35 + ny * (k + 0.15), x0 + dx * 0.65 + nx * (k - 0.15), y0 + dy * 0.65 + ny * (k - 0.15), x1 + nx * k - dx * 0.04, y1 + ny * k - dy * 0.04);
+      c.stroke();
+    });
   };
+  var strap = function (x, y, ang, len) { // an iron strap with two rivets
+    c.save(); c.translate(x, y); c.rotate(ang);
+    c.fillStyle = IRON; c.strokeStyle = ink; c.lineWidth = 2; c.fillRect(-5, -len / 2, 10, len); c.strokeRect(-5, -len / 2, 10, len);
+    c.fillStyle = IRONL; [-len * 0.3, len * 0.3].forEach(function (ry) { c.beginPath(); c.arc(0, ry, 2.2, 0, Math.PI * 2); c.fill(); });
+    c.restore();
+  };
+  var wheel = function (wx, wy, wr, far) {
+    c.save(); c.translate(wx, wy);
+    c.fillStyle = far ? "#2e1f10" : "#4d3219"; c.strokeStyle = ink; c.lineWidth = 3.5;
+    c.beginPath(); c.arc(0, 0, wr, 0, Math.PI * 2); c.fill(); c.stroke();
+    if (!far) {
+      c.rotate(roll);
+      c.fillStyle = "#6a4626"; // felloe ring
+      c.beginPath(); c.arc(0, 0, wr - 3, 0, Math.PI * 2); c.arc(0, 0, wr * 0.72, 0, Math.PI * 2, true); c.fill();
+      c.strokeStyle = "#2a1a0c"; c.lineWidth = 1.5;
+      var k, a;
+      for (k = 0; k < 8; k++) { a = k / 8 * Math.PI * 2; c.beginPath(); c.moveTo(Math.cos(a) * wr * 0.72, Math.sin(a) * wr * 0.72); c.lineTo(Math.cos(a) * (wr - 3), Math.sin(a) * (wr - 3)); c.stroke(); }
+      c.strokeStyle = "#5a3b1e"; c.lineWidth = 6; c.lineCap = "round"; // spokes
+      for (k = 0; k < 8; k++) { a = (k + 0.5) / 8 * Math.PI * 2; c.beginPath(); c.moveTo(Math.cos(a) * wr * 0.2, Math.sin(a) * wr * 0.2); c.lineTo(Math.cos(a) * wr * 0.74, Math.sin(a) * wr * 0.74); c.stroke(); }
+      c.strokeStyle = IRON; c.lineWidth = 4; c.beginPath(); c.arc(0, 0, wr - 1.5, 0, Math.PI * 2); c.stroke(); // iron tyre
+      c.fillStyle = IRON; c.strokeStyle = ink; c.lineWidth = 2; c.beginPath(); c.arc(0, 0, wr * 0.22, 0, Math.PI * 2); c.fill(); c.stroke();
+      c.fillStyle = IRONL; c.beginPath(); c.arc(0, 0, wr * 0.08, 0, Math.PI * 2); c.fill();
+    }
+    c.restore();
+  };
+  // shadow on the ground
+  c.fillStyle = "rgba(0,0,0,0.28)"; c.beginPath(); c.ellipse(cx, cy + 74, 200, 16, 0, 0, Math.PI * 2); c.fill();
   var apex = { x: cx - 70, y: cy - 165 };
-  // far-side A-frame leg (darker, behind)
-  beam(cx - 120, cy, apex.x + 10, apex.y, 16, W3);
-  // the base frame: two long rails and a cross piece
-  beam(cx - 170, cy - 6, cx + 175, cy - 6, 26, W1);
-  beam(cx - 160, cy + 16, cx + 150, cy + 16, 12, W3);
-  // A-frame legs and the crossbar with its padding
-  beam(cx - 150, cy - 10, apex.x, apex.y, 18, W2);
-  beam(cx + 15, cy - 10, apex.x + 6, apex.y, 18, W2);
-  beam(apex.x - 34, apex.y, apex.x + 40, apex.y, 20, W1);
-  c.fillStyle = "#6b5a46"; c.beginPath(); c.ellipse(apex.x + 4, apex.y - 12, 22, 10, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-  // iron brackets
-  c.fillStyle = "#3b3f44";
-  [[cx - 150, cy - 6], [cx + 15, cy - 6], [cx + 150, cy - 6]].forEach(function (p) { c.fillRect(p[0] - 7, p[1] - 9, 14, 18); });
-  // the arm: pivot low in the middle, a thick tapering beam, the spoon at the end
-  var px = cx + ISL_CAT.pivotX, py = cy + ISL_CAT.pivotY, L = ISL_CAT.len;
-  var ex = px + Math.cos(arm) * L, ey = py + Math.sin(arm) * L;
-  // the rope from the crossbar down to the arm, and from the spoon to the back of the base
-  c.strokeStyle = "#cbb894"; c.lineWidth = 3;
-  c.beginPath(); c.moveTo(apex.x + 30, apex.y + 4); c.quadraticCurveTo((apex.x + px + Math.cos(arm) * L * 0.55) / 2, (apex.y + py + Math.sin(arm) * L * 0.55) / 2 + 20, px + Math.cos(arm) * L * 0.55, py + Math.sin(arm) * L * 0.55); c.stroke();
-  if (arm > -0.9) { c.beginPath(); c.moveTo(ex, ey); c.lineTo(cx + 160, cy - 10); c.stroke(); }
-  c.strokeStyle = ink; c.lineWidth = 4;
-  beam(px - Math.cos(arm) * 30, py - Math.sin(arm) * 30, ex - Math.cos(arm) * 40, ey - Math.sin(arm) * 40, 22, W2);
-  // the spoon: a carved bowl
+  // far wheels and the far A-frame leg, behind everything
+  wheel(cx - 100, cy + 30, 32, true); wheel(cx + 135, cy + 30, 32, true);
+  beam(cx - 120, cy - 4, apex.x + 10, apex.y, 15, "#4a3019");
+  // the base: a lower rail and the heavy top rail
+  beam(cx - 160, cy + 18, cx + 150, cy + 18, 12, "#4a3019");
+  beam(cx - 175, cy - 6, cx + 178, cy - 6, 26, "#6b4626");
+  c.fillStyle = "#3d2814"; c.strokeStyle = ink; c.lineWidth = 3;
+  [[cx - 175, cy - 6], [cx + 178, cy - 6]].forEach(function (p) { c.fillRect(p[0] - 5, p[1] - 13, 10, 26); c.strokeRect(p[0] - 5, p[1] - 13, 10, 26); }); // end grain
+  // A-frame legs with a brace, the crossbar and its leather pad
+  beam(cx - 150, cy - 12, apex.x, apex.y + 4, 18, "#7a5230");
+  beam(cx + 18, cy - 12, apex.x + 6, apex.y + 4, 18, "#7a5230");
+  beam(cx - 118, cy - 70, cx - 8, cy - 70, 10, "#6b4626");
+  beam(apex.x - 38, apex.y, apex.x + 44, apex.y, 20, "#6b4626");
+  c.fillStyle = "#7a5a3c"; c.strokeStyle = ink; c.lineWidth = 3;
+  c.beginPath(); c.ellipse(apex.x + 4, apex.y - 13, 24, 11, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.strokeStyle = "rgba(240,220,180,0.6)"; c.lineWidth = 1; c.setLineDash([3, 3]);
+  c.beginPath(); c.ellipse(apex.x + 4, apex.y - 13, 18, 7, 0, 0, Math.PI * 2); c.stroke(); c.setLineDash([]);
+  strap(cx - 150, cy - 8, 0, 26); strap(cx + 18, cy - 8, 0, 26); strap(apex.x, apex.y, Math.PI / 2, 24); strap(cx + 150, cy - 6, 0, 26);
+  // the arm, the spoon at the end
+  var px = cx + ISL_CAT.pivotX, py = cy + ISL_CAT.pivotY, L = ISL_CAT.len, ca = Math.cos(arm), sa = Math.sin(arm);
+  var ex = px + ca * L, ey = py + sa * L;
+  c.strokeStyle = "#cbb894"; c.lineWidth = 3; // the pull-down rope from the spoon to the back trigger
+  if (arm > -0.9) { c.beginPath(); c.moveTo(ex - ca * 30, ey - sa * 30); c.quadraticCurveTo((ex + cx + 160) / 2, (ey + cy) / 2 + 20, cx + 160, cy - 12); c.stroke(); }
+  beam(px - ca * 34, py - sa * 34, ex - ca * 44, ey - sa * 44, 22, "#82582f");
+  strap(px + ca * L * 0.45, py + sa * L * 0.45, arm + Math.PI / 2, 26);
+  strap(ex - ca * 54, ey - sa * 54, arm + Math.PI / 2, 26);
   c.save(); c.translate(ex, ey); c.rotate(arm);
-  c.fillStyle = W1; c.beginPath(); c.ellipse(-8, 0, 52, 30, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-  c.fillStyle = W3; c.beginPath(); c.ellipse(-6, -2, 38, 19, 0, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = "#3b3f44"; c.lineWidth = 5; c.beginPath(); c.moveTo(-58, -14); c.lineTo(-58, 14); c.stroke(); // iron band
+  var bg = c.createRadialGradient(-12, -6, 6, -8, 0, 52);
+  bg.addColorStop(0, "#8a5f35"); bg.addColorStop(1, "#4e3219");
+  c.fillStyle = bg; c.strokeStyle = ink; c.lineWidth = 3.5;
+  c.beginPath(); c.ellipse(-8, 0, 54, 32, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  var ig = c.createRadialGradient(-2, 4, 4, -6, -2, 40);
+  ig.addColorStop(0, "#5a3a1c"); ig.addColorStop(1, "#24160a");
+  c.fillStyle = ig; c.beginPath(); c.ellipse(-6, -2, 40, 21, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "rgba(255,230,190,0.25)"; c.lineWidth = 2; c.beginPath(); c.ellipse(-8, 0, 50, 28, 0, Math.PI * 1.1, Math.PI * 1.7); c.stroke();
+  c.strokeStyle = IRON; c.lineWidth = 6; c.beginPath(); c.moveTo(-60, -16); c.lineTo(-60, 16); c.stroke();
   c.restore();
-  c.fillStyle = "#3b3f44"; c.beginPath(); c.arc(px, py, 10, 0, Math.PI * 2); c.fill(); c.stroke(); // the pivot pin
-  // the wheels: planked discs with an iron hub, a darker far pair
-  [[cx - 115, 0.75, W3], [cx + 115, 0.75, W3], [cx - 125, 1, W1], [cx + 120, 1, W1]].forEach(function (wh, k) {
-    var wr = 40 * wh[1], wx = wh[0] + (k < 2 ? 18 : 0), wy = cy + 34 - (k < 2 ? 6 : 0);
-    c.fillStyle = wh[2]; c.beginPath(); c.arc(wx, wy, wr, 0, Math.PI * 2); c.fill(); c.stroke();
-    if (k < 2) return;
-    c.strokeStyle = "rgba(20,12,6,0.6)"; c.lineWidth = 2;
-    [-0.5, 0, 0.5].forEach(function (o) { c.beginPath(); c.moveTo(wx + o * wr, wy - Math.sqrt(1 - o * o) * wr); c.lineTo(wx + o * wr, wy + Math.sqrt(1 - o * o) * wr); c.stroke(); });
-    c.strokeStyle = "#3b3f44"; c.lineWidth = 4; c.beginPath(); c.arc(wx, wy, wr - 2, 0, Math.PI * 2); c.stroke();
-    c.fillStyle = "#3b3f44"; c.beginPath(); c.arc(wx, wy, 9, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = ink; c.lineWidth = 4;
-  });
+  // the twisted rope bundle at the pivot
+  c.save(); c.translate(px, py);
+  for (var t = -3; t <= 3; t++) {
+    c.fillStyle = t % 2 ? "#b9a47c" : "#d1bd93"; c.strokeStyle = "rgba(60,45,25,0.7)"; c.lineWidth = 1.2;
+    c.beginPath(); c.ellipse(t * 4.5, 0, 5, 17, 0.25, 0, Math.PI * 2); c.fill(); c.stroke();
+  }
+  c.fillStyle = IRON; c.strokeStyle = ink; c.lineWidth = 2.5; c.beginPath(); c.arc(0, 0, 8, 0, Math.PI * 2); c.fill(); c.stroke();
   c.restore();
-  return { x: cx + (ex - cx) * sc, y: cy + (ey - cy) * sc, nx: Math.cos(arm), ny: Math.sin(arm) };
+  // the rope from the crossbar down to the arm
+  c.strokeStyle = "#cbb894"; c.lineWidth = 3;
+  var rx = px + ca * L * 0.55, ry = py + sa * L * 0.55;
+  c.beginPath(); c.moveTo(apex.x + 32, apex.y + 6); c.quadraticCurveTo((apex.x + rx) / 2 + 10, (apex.y + ry) / 2 + 24, rx, ry); c.stroke();
+  // the near wheels
+  wheel(cx - 122, cy + 34, 40, false); wheel(cx + 122, cy + 34, 40, false);
+  c.restore();
+  return { x: cx + (ex - cx) * sc, y: cy + (ey - cy) * sc, nx: ca, ny: sa };
 }
 
 // Hasbulla from Joe's photos: small, light brown hair, a light blue
