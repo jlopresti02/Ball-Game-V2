@@ -64,30 +64,146 @@ function iceImmune(b) { return !!(b && b.char && (b.char.iceImmune || b.char.ice
 
 // ---------------------------------------------------------------- the look
 
-var KRATOS_LOOK = { skin: "#d9d3ca", hair: "none", bodyHair: "none", beardColor: "#3b2416", shorts: "#7a1d14", trim: "#c9a646",
-  pattern: "plain", waistText: "", gloves: "#4b2f1c", kratosPaint: true };
-// From draw.js: the god of war's look while the axe is out.
+var KRATOS_LOOK = { skin: "#d9d3ca", bodyHair: "none", shorts: "#7a1d14", trim: "#c9a646",
+  pattern: "plain", waistText: "", gloves: "#4b2f1c", kratosPaint: true };  // his own buzz cut and beard colour stay (Joe)
+var KRATOS_FX_ON = 0.62, KRATOS_FX_OFF = 0.4, KRATOS_SWAP_ON = 0.3, KRATOS_SWAP_OFF = 0.14;
+// From draw.js: the god of war's look while the axe is out. The change
+// happens under a quick ice cloud as the axe whips round him (drawKratosFx).
 function islamKratosLook(b) {
-  if (!b.char.look || (!b.axeCall && (!axeHeld(b) || !b.rapier.sword.out))) return null; // (kept while he calls it back)
+  if (!b.char.look) return null;
+  var want = !!(b.axeCall || (axeHeld(b) && b.rapier.sword.out)), now = performance.now() / 1000; // (kept while he calls it back)
+  if (want !== !!b.kratosOn) {
+    b.kratosOn = want;
+    b.kratosFx = (want && b.axeCaught > 0) ? null : { t0: now, on: want }; // (no change when he catches it back)
+  }
+  var fx = b.kratosFx, ft = fx ? now - fx.t0 : 99;
+  if (fx && (ft > (fx.on ? KRATOS_FX_ON : KRATOS_FX_OFF) || ft < 0)) b.kratosFx = fx = null;
+  var show = fx ? (ft < (fx.on ? KRATOS_SWAP_ON : KRATOS_SWAP_OFF) ? !fx.on : fx.on) : want;
+  b.kratosShow = show; // his arms match (kratosArmSkin)
+  if (!show) return null;
   if (!b.kratosLook || b.kratosLook.src !== b.char.look) {
     b.kratosLook = Object.assign({}, b.char.look, KRATOS_LOOK, { src: b.char.look });
   }
   return b.kratosLook;
 }
-// From drawIslamBeard (islam-beard.js), under the beard: the red stripe down
-// over his head and round his chest.
+// From armColor (fighter-art.js): his arms in the god of war skin too.
+function kratosArmSkin(ch) {
+  if (!ch.rapier || ch.rapier.style !== "axe" || typeof balls === "undefined") return null;
+  for (var i = 0; i < balls.length; i++) if (balls[i].char === ch && balls[i].kratosShow) return KRATOS_LOOK.skin;
+  return null;
+}
+// The axe is whipping round him in the change, out of his hand.
+function kratosSwinging(b) { return !!(b.kratosFx && b.kratosFx.on && performance.now() / 1000 - b.kratosFx.t0 < KRATOS_SWAP_ON + 0.02); }
+// From drawLeviathanTop: the axe swung round him once, a frost trail behind
+// it, and an ice cloud that swells over him, hides the change and blows away
+// in shards. Putting it away is just a smaller puff.
+function drawKratosFx(b) {
+  var fx = b.kratosFx;
+  if (!fx || !b.alive) return;
+  var t = performance.now() / 1000 - fx.t0, r = b.r, x = b.x, y = b.y, i;
+  if (t < 0) return;
+  ctx.save();
+  if (fx.on && t < KRATOS_SWAP_ON + 0.02) { // the swing: one and a bit turns round him
+    var u = Math.min(1, t / KRATOS_SWAP_ON), a0 = (b.rapier && b.rapier.sword && b.rapier.sword.side < 0) ? Math.PI : 0;
+    var a = a0 - Math.PI * 0.5 + u * Math.PI * 2.4, R = r * (1.05 + 0.25 * Math.sin(u * Math.PI)), len = r * AXE_LEN * 0.85;
+    ctx.strokeStyle = "rgba(191,233,255,0.5)"; ctx.lineWidth = r * 0.42; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.arc(x, y, R, a - Math.min(2.4, u * 6), a, false); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(x, y, R + r * 0.2, a - Math.min(1.8, u * 5), a, false); ctx.stroke();
+    for (i = 3; i >= 0; i--) {
+      var ag = a - i * 0.32;
+      drawSpunAxe(x + Math.cos(ag) * R, y + Math.sin(ag) * R, ag + Math.PI / 2 + u * 9 - i * 0.5, len, i ? 0.15 * (4 - i) : 1);
+    }
+  }
+  // the cloud: puffs swelling in round him, thickest right at the swap
+  var dur = fx.on ? KRATOS_FX_ON : KRATOS_FX_OFF, sw = fx.on ? KRATOS_SWAP_ON : KRATOS_SWAP_OFF;
+  var c0 = fx.on ? 0.12 : 0, grow = Math.max(0, Math.min(1, (t - c0) / (sw - c0 + 0.02))), fade = t < sw ? 1 : Math.max(0, 1 - (t - sw) / (dur - sw));
+  var k = fx.on ? 1.4 : 0.95, n = 18;
+  if (grow > 0 && fade > 0) {
+    for (i = 0; i < n; i++) {
+      var pa = i / n * Math.PI * 2 + i * 0.37 + t * (i % 2 ? 1.2 : -1.2), spread = r * k * (0.35 + 0.55 * grow + (t > sw ? (t - sw) * 1.6 : 0)) * (0.8 + 0.3 * ((i * 7) % 5) / 4);
+      var px = x + Math.cos(pa) * spread, py = y + Math.sin(pa) * spread * 0.9 - (t > sw ? (t - sw) * r * 0.6 : 0);
+      var pr = r * k * (0.32 + 0.3 * grow) * (0.85 + 0.3 * ((i * 3) % 4) / 3);
+      var g = ctx.createRadialGradient(px, py, pr * 0.1, px, py, pr);
+      g.addColorStop(0, "rgba(255,255,255," + (0.95 * fade) + ")");
+      g.addColorStop(0.6, "rgba(226,244,255," + (0.85 * fade) + ")");
+      g.addColorStop(1, "rgba(160,215,250,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI * 2); ctx.fill();
+    }
+    // a solid core that fully hides him at the swap
+    var core = Math.max(0, 1 - Math.abs(t - sw) / 0.12) * fade;
+    if (core > 0) { ctx.fillStyle = "rgba(240,250,255," + (0.92 * core) + ")"; ctx.beginPath(); ctx.arc(x, y, r * 1.08 * k, 0, Math.PI * 2); ctx.fill(); }
+  }
+  if (t > sw && fade > 0) { // shards and frost glints blowing out
+    ctx.globalAlpha = fade;
+    for (i = 0; i < 10; i++) {
+      var sa = i / 10 * Math.PI * 2 + 0.3, sd = r * (0.9 + (t - sw) * 6 * (0.7 + (i % 3) * 0.2)) * k, sx = x + Math.cos(sa) * sd, sy = y + Math.sin(sa) * sd, ss = r * 0.09 * k;
+      ctx.fillStyle = i % 2 ? "#ffffff" : "#bfe9ff"; ctx.strokeStyle = "rgba(43,51,59,0.6)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(sx + Math.cos(sa) * ss * 1.6, sy + Math.sin(sa) * ss * 1.6);
+      ctx.lineTo(sx + Math.cos(sa + 1.9) * ss * 0.6, sy + Math.sin(sa + 1.9) * ss * 0.6);
+      ctx.lineTo(sx - Math.cos(sa) * ss, sy - Math.sin(sa) * ss);
+      ctx.lineTo(sx + Math.cos(sa - 1.9) * ss * 0.6, sy + Math.sin(sa - 1.9) * ss * 0.6); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+// From drawIslamBeard (islam-beard.js), under the beard: the god of war's
+// red tattoo (crown, down over his left eye, under the beard, down his left
+// pec and round his side), the leather pauldron on his left shoulder with its
+// strap across his chest, and the round bronze buckle on his belt.
+var KRATOS_INK = [ // centre line [x, y, half width] in r, his left = our right
+  [-0.04, -1.1, 0.08], [0.12, -0.94, 0.09], [0.25, -0.78, 0.105], [0.31, -0.62, 0.13],
+  [0.36, -0.42, 0.1], [0.4, -0.2, 0.08], [0.42, 0.0, 0.08], [0.52, 0.16, 0.075], [0.72, 0.27, 0.07], [1.04, 0.32, 0.065]];
+function kratosBand(c, r, P) {
+  var n = P.length, L = [], R = [];
+  for (var i = 0; i < n; i++) {
+    var a = P[Math.max(0, i - 1)], b = P[Math.min(n - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], d = Math.sqrt(dx * dx + dy * dy) || 1;
+    var nx = -dy / d, ny = dx / d, w = P[i][2];
+    L.push([(P[i][0] + nx * w) * r, (P[i][1] + ny * w) * r]); R.push([(P[i][0] - nx * w) * r, (P[i][1] - ny * w) * r]);
+  }
+  var side = function (S, first) {
+    if (first) c.moveTo(S[0][0], S[0][1]); else c.lineTo(S[0][0], S[0][1]);
+    for (var j = 1; j < S.length - 1; j++) c.quadraticCurveTo(S[j][0], S[j][1], (S[j][0] + S[j + 1][0]) / 2, (S[j][1] + S[j + 1][1]) / 2);
+    c.lineTo(S[S.length - 1][0], S[S.length - 1][1]);
+  };
+  c.beginPath(); side(L, true); side(R.slice().reverse(), false); c.closePath();
+}
 function drawKratosPaint(c, r) {
   c.save();
   c.beginPath(); c.arc(0, 0, r * 0.985, 0, Math.PI * 2); c.clip();
-  c.fillStyle = "#b3201b";
-  c.beginPath(); // over the crown and down the side of his face
-  c.moveTo(r * 0.02, -r * 1.02); c.quadraticCurveTo(r * 0.26, -r * 0.8, r * 0.3, -r * 0.42);
-  c.lineTo(r * 0.24, -r * 0.3); c.quadraticCurveTo(r * 0.14, -r * 0.72, -r * 0.14, -r * 1.0); c.closePath(); c.fill();
-  c.beginPath(); // round his shoulder and across his chest
-  c.moveTo(r * 0.78, -r * 0.3); c.bezierCurveTo(r * 0.55, r * 0.05, r * 0.05, r * 0.05, -r * 0.42, r * 0.42);
-  c.lineTo(-r * 0.5, r * 0.32); c.bezierCurveTo(-r * 0.02, -r * 0.08, r * 0.45, -r * 0.1, r * 0.66, -r * 0.4); c.closePath(); c.fill();
-  c.fillStyle = "rgba(255,255,255,0.12)";
-  c.beginPath(); c.moveTo(r * 0.02, -r * 1.0); c.quadraticCurveTo(r * 0.2, -r * 0.8, r * 0.26, -r * 0.5); c.lineTo(r * 0.22, -r * 0.5); c.quadraticCurveTo(r * 0.14, -r * 0.8, -r * 0.04, -r * 0.98); c.closePath(); c.fill();
+  // the tattoo: muscle lines still show faintly through the ink
+  c.globalAlpha = 0.93; c.fillStyle = "#b11f1a"; kratosBand(c, r, KRATOS_INK); c.fill();
+  c.globalAlpha = 1; c.strokeStyle = "rgba(90,8,6,0.55)"; c.lineWidth = Math.max(1, r * 0.012); c.stroke();
+  // the strap from the pauldron down across his chest to his right hip
+  var lth = "#5b3a22", ldk = "#2e1c10";
+  c.fillStyle = lth; c.strokeStyle = ldk; c.lineWidth = Math.max(1, r * 0.012);
+  c.beginPath(); c.moveTo(r * 0.76, -r * 0.1); c.lineTo(r * 0.8, -r * 0.02);
+  c.quadraticCurveTo(r * 0.1, r * 0.1, -r * 0.62, r * 0.38); c.lineTo(-r * 0.68, r * 0.32);
+  c.quadraticCurveTo(r * 0.06, r * 0.02, r * 0.76, -r * 0.1); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = "rgba(230,200,150,0.5)"; c.lineWidth = Math.max(1, r * 0.007); c.setLineDash([r * 0.025, r * 0.02]);
+  c.beginPath(); c.moveTo(r * 0.78, -r * 0.06); c.quadraticCurveTo(r * 0.08, r * 0.06, -r * 0.65, r * 0.35); c.stroke(); c.setLineDash([]);
+  // pauldron: three overlapping leather plates over his left shoulder, following the rim, bronze edges
+  for (var k = 2; k >= 0; k--) {
+    var a0 = -0.52 + k * 0.18, a1 = a0 + 0.4, ri = 0.68 - k * 0.02;
+    c.fillStyle = shadeHex("#6b4428", -0.1 * k); c.strokeStyle = ldk; c.lineWidth = Math.max(1, r * 0.014);
+    c.beginPath(); c.arc(0, 0, r * 1.05, a0, a1); c.arc(0, 0, r * ri, a1 - 0.04, a0 + 0.04, true); c.closePath(); c.fill(); c.stroke();
+    c.strokeStyle = "#b8873a"; c.lineWidth = Math.max(1, r * 0.018);
+    c.beginPath(); c.arc(0, 0, r * (ri + 0.025), a0 + 0.06, a1 - 0.06); c.stroke();
+    c.fillStyle = "#d8b26a"; var am = (a0 + a1) / 2;
+    c.beginPath(); c.arc(Math.cos(am) * r * (ri + 0.1), Math.sin(am) * r * (ri + 0.1), r * 0.016, 0, Math.PI * 2); c.fill();
+  }
+  // the belt buckle: a round bronze plate with a knot ring in it
+  var by = r * 0.425;
+  c.fillStyle = "#a8742c"; c.strokeStyle = "#4a2e10"; c.lineWidth = Math.max(1, r * 0.016);
+  c.beginPath(); c.arc(0, by, r * 0.1, 0, Math.PI * 2); c.fill(); c.stroke();
+  c.strokeStyle = "#e0bb6e"; c.lineWidth = Math.max(1, r * 0.014);
+  c.beginPath(); c.arc(0, by, r * 0.065, 0, Math.PI * 2); c.stroke();
+  for (var q = 0; q < 3; q++) {  // a three-point knot
+    var qa = -Math.PI / 2 + q * Math.PI * 2 / 3;
+    c.beginPath(); c.arc(Math.cos(qa) * r * 0.03, by + Math.sin(qa) * r * 0.03, r * 0.028, 0, Math.PI * 2); c.stroke();
+  }
+  c.fillStyle = "rgba(255,255,255,0.25)";
+  c.beginPath(); c.ellipse(-r * 0.035, by - r * 0.045, r * 0.035, r * 0.015, -0.5, 0, Math.PI * 2); c.fill();
   c.restore();
 }
 
@@ -453,7 +569,7 @@ function drawLeviathanUnder() {
 // From drawRapierArms (rapier.js): how the axe in his hand is drawn (nothing
 // while it's out of his hand).
 function axeDrawFn(b) {
-  return function (x, y, a, l, k, al) { if (!axeAway(b)) drawLeviathan(x, y, a, l, k, al); };
+  return function (x, y, a, l, k, al) { if (!axeAway(b) && !kratosSwinging(b)) drawLeviathan(x, y, a, l, k, al); }; // (not while it whips round him in the change)
 }
 
 // Over the fighters: the axe in flight or whirling round him, the halves of
@@ -491,6 +607,7 @@ function drawLeviathanTop() {
     return true;
   });
   balls.forEach(function (b) { if (b.axeCall && b.alive) drawAxeCall(b); }); // calling it back after a disarm
+  balls.forEach(function (b) { if (b.kratosFx) drawKratosFx(b); }); // the god of war change in an ice cloud
 }
 
 // The axe spinning free: drawn round its middle, not the grip.
