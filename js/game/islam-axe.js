@@ -347,29 +347,82 @@ var AXE_FLOURISHES = {
 
 // ---------------------------------------------------------------- axe mode
 
-// From tickDiamondSword (sword.js), every frame on a blade fighter: true
-// while Islam's axe mode should hold the axe out. He calls it up on his own
-// every so often (any opponent, armed or not), and once it's out, for
-// whatever reason, it stays out for axe.mode.time (Joe, 2026-11-22). The
-// clock waits through his specials and any clash or cutscene, and it never
-// starts during one.
+// From tickDiamondSword (sword.js), every frame on a blade fighter: whether
+// the axe should be out (`want` is the usual answer: their weapon, a duel).
+// Islam's axe mode: he calls it up on his own every so often (any opponent,
+// armed or not), and once it's out, for whatever reason, it stays out for
+// axe.mode.time (Joe, 2026-11-22). The clock waits through his specials,
+// any clash or cutscene, and any grapple or clinch, and it never starts
+// during one. He never changes (either way) while he's grappling or in a
+// clinch: it waits until they're apart. When he does change, the burst
+// shoves them back to make some space (axePushback).
 function axeModeWant(b, o, dt, want) {
-  var ac = axeCfg(b), md = ac && ac.mode;
-  if (!md || !axeStyle(b)) return false;
-  var dg = b.rapier, ok = dg.on && !dg.disarmed && b.alive && !over && started && !(b.igbb && b.igbb.move !== "lunge");
-  if (b.axeModeCd == null) { b.axeModeCd = axeRand(md.first); b.axeMode = 0; }
-  if (want) { b.axeMode = Math.max(b.axeMode, md.time); return false; } // out for their weapon: keep it a while after
-  if (b.axeMode > 0) {
-    if (!ok) return false;                       // stowed for a special: the clock waits
-    if (!formHeld(b)) b.axeMode -= dt;
-    if (b.axeMode <= 0) { b.axeMode = 0; b.axeModeCd = axeRand(md.every); return false; }
-    return true;
+  if (!axeStyle(b)) return want;
+  if (b.axePushT > 0) b.axePushT -= dt; // the frost ring from his last change (drawAxePush)
+  var ac = axeCfg(b), md = ac && ac.mode, dg = b.rapier, sw = dg.sword, isOut = !!(sw && sw.out), res = want;
+  var tied = axeTied(b) || axeTied(o) || (o.igbb && o.igbb.move !== "lunge" && Math.hypot(o.x - b.x, o.y - b.y) < b.r + o.r + 8), live = b.alive && !over; // (or caught up in their special, like DC's slam)
+  var ok = dg.on && !dg.disarmed && live && started && !(b.igbb && b.igbb.move !== "lunge");
+  if (md) {
+    if (b.axeModeCd == null) { b.axeModeCd = axeRand(md.first); b.axeMode = 0; }
+    if (want) b.axeMode = Math.max(b.axeMode, md.time); // out for their weapon: keep it a while after
+    else if (b.axeMode > 0) {
+      if (ok) {
+        if (!formHeld(b) && !tied) b.axeMode -= dt;
+        if (b.axeMode <= 0) { b.axeMode = 0; b.axeModeCd = axeRand(md.every); } else res = true;
+      }
+    } else if (ok) {
+      b.axeModeCd -= dt;
+      if (b.axeModeCd <= 0 && !sceneLocked() && !b.axeCall && !tied) { b.axeMode = md.time; res = true; }
+    }
   }
-  if (!ok) return false;
-  b.axeModeCd -= dt;
-  if (b.axeModeCd > 0 || sceneLocked() || b.axeCall) return false;
-  b.axeMode = md.time;
-  return true;
+  if (tied && live && !dg.disarmed && res !== isOut) res = isOut; // no change mid grapple or clinch
+  if (live && !dg.disarmed && !(b.igbb && b.igbb.move !== "lunge") && ((res && !sw) || (!res && isOut))) axePushback(b, o); // (not when a special of his puts it away)
+  return res;
+}
+// Tied up with them: any grab, shot, takedown, sub, clinch or plum on him.
+function axeTied(x) {
+  if (!x || !x.alive) return false;
+  if (x.grapple || x.grappled || x.sprawl || x.sprawled || x.slam || x.choked || x.hokitShot || x.armbar || x.guillo || x.rnc || x.suplex || x.guard || x.fenceGrab || x.darce) return true;
+  if (subLocked(x)) return true;
+  if (typeof clinchBusy === "function" && clinchBusy(x)) return true;
+  if (typeof kneesBusy === "function" && kneesBusy(x)) return true;
+  if (typeof jonClinchBusy === "function" && jonClinchBusy(x)) return true;
+  if (typeof pushFlowHeld === "function" && pushFlowHeld(x)) return true;
+  if (typeof fedorBusy === "function" && fedorBusy(x)) return true;
+  if (typeof cormierBusy === "function" && cormierBusy(x)) return true;
+  if (typeof ganeShotBusy === "function" && ganeShotBusy(x)) return true;
+  return false;
+}
+// The change bursts out of him: anyone close is shoved back to arm's length
+// and a frost ring blows out across the mat.
+var AXE_PUSH = { range: 150, speed: 760, recoil: 160 };
+function axePushback(b, o) {
+  var dx = o.x - b.x, dy = o.y - b.y, d = Math.sqrt(dx * dx + dy * dy) || 1, nx = dx / d, ny = dy / d;
+  b.axePushT = 0.35; // drawn as the frost ring (drawAxePush)
+  if (o.alive && !o.igbb && !axeTied(o) && d - b.r - o.r < AXE_PUSH.range) {
+    var k = 0.6 + 0.4 * Math.max(0, 1 - (d - b.r - o.r) / AXE_PUSH.range); // harder the closer they are
+    o.vx = nx * AXE_PUSH.speed * k; o.vy = ny * AXE_PUSH.speed * k;
+    o.squash = { t: 0.14, max: 0.14, nx: nx, ny: ny };
+    b.vx -= nx * AXE_PUSH.recoil; b.vy -= ny * AXE_PUSH.recoil;
+    floater(o.x, o.y - o.r - 30, "PUSHED BACK!", "crit");
+    if (!reduceMotion) shake = Math.max(shake, 8);
+  }
+  for (var i = 0; i < 18 && !reduceMotion; i++) {
+    var a = i / 18 * Math.PI * 2, sp = 260 + (i % 3) * 70;
+    particles.push({ x: b.x + Math.cos(a) * b.r, y: b.y + Math.sin(a) * b.r, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.4, max: 0.4, size: 2.5 + (i % 2) * 1.5, color: i % 2 ? AXE_C.W : AXE_C.L });
+  }
+}
+// From drawLeviathanUnder: the frost ring under the fighters as he changes.
+function drawAxePush(b) {
+  if (!(b.axePushT > 0)) return;
+  var u = 1 - b.axePushT / 0.35, R = b.r * (1.1 + u * 2.2);
+  ctx.save();
+  ctx.globalAlpha = 1 - u;
+  ctx.strokeStyle = "rgba(191,233,255,0.9)"; ctx.lineWidth = b.r * 0.28 * (1 - u) + 2;
+  ctx.beginPath(); ctx.arc(b.x, b.y, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.9)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(b.x, b.y, R * 0.9, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
 }
 
 // ---------------------------------------------------------------- moves
@@ -662,6 +715,7 @@ function axeCutsBat(d, a, cx, cy) {
 
 // Under the fighters: the red line he's about to throw down.
 function drawLeviathanUnder() {
+  balls.forEach(function (b) { if (b.axePushT > 0) drawAxePush(b); }); // the burst as he changes
   balls.forEach(function (b) {
     var m = axeMove(b);
     if (!m || m.axe !== "throw" || m.phase !== "wind" || !b.alive) return;
