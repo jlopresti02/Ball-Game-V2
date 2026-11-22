@@ -450,7 +450,8 @@ function islDagestan(self, other, m, dt) {
       hurt(other, Math.max(0, Math.min(c.beatDamage, other.hp - 1)), "igbb", self.id);
     }
     if (!islamTrip.boom && m.t >= 1.9) { islamTrip.boom = true; playSlam(); }
-    if (!islamTrip.fling && m.t >= 5.95) { islamTrip.fling = true; playWhoosh(); }
+    if (!islamTrip.fling && m.t >= 5.875) { islamTrip.fling = true; playWhoosh(); }
+    if (!islamTrip.slam && m.t >= 5.96) { islamTrip.slam = true; playSlam(); } // the arm hitting the crossbar
     if (m.t >= ISL_TRIP_T) { islamTrip = null; m.phase = "fall"; m.t = 0; }
     return true;
   }
@@ -890,46 +891,105 @@ function drawIslamCutscene() {
     if (u > 2.55) islDustCloud(vicX, vicY, 230, now, vic);
   }
   if (u >= 4.1) {
-    // Cloud gone: they're left in a heap, Hasbulla wheels the catapult out,
-    // they tumble into the spoon, he heaves on the rope and off they go.
-    var CS = 1.3, cy = 1380, cx1 = 440, ru = Math.min(1, (u - 4.1) / 0.85), re = 1 - Math.pow(1 - ru, 3);
+    // Cloud gone: they're kicked out of it into a heap, Hasbulla wheels the
+    // catapult out, two of the Dagestani guys heave them into the spoon, he
+    // yanks the release and the arm whips up and slams into the crossbar,
+    // throwing them off at a real 45 degrees.
+    var CS = 1.3, cx1 = 440, ru = Math.min(1, (u - 4.1) / 0.85), re = 1 - Math.pow(1 - ru, 3);
     var cx = -380 + (cx1 + 380) * re, roll = (cx + 380) / (40 * CS);
-    var swing = u < 5.8 ? 0 : Math.min(1, Math.pow((u - 5.8) / 0.2, 1.6));
-    var arm = -0.45 - swing * 1.59; // rests up to the right, swings up and stops on the padded crossbar
+    var U_PULL = 5.8, U_REL = 5.875, U_SLAM = 5.96, A_REST = -0.45, A_REL = -0.8, A_STOP = -2.04;
+    var swing = u < U_PULL ? 0 : Math.min(1, Math.pow((u - U_PULL) / 0.16, 2)); // accelerating hard
+    var arm = A_REST + (A_STOP - A_REST) * swing;
+    if (u >= U_SLAM) { var rt = u - U_SLAM; arm = A_STOP + 0.22 * Math.exp(-rt * 7) * Math.abs(Math.sin(rt * 26)); } // recoil off the pad
+    if (u >= 5.45 && u < U_PULL) arm = A_REST + 0.07 * Math.exp(-(u - 5.45) * 8) * Math.sin((u - 5.45) * 30); // dips as they land in it
+    // the whole frame hops and the picture shakes on the slam
+    var hop = 0, shk = 0;
+    if (u >= U_SLAM) { var st0 = u - U_SLAM; hop = 16 * Math.exp(-st0 * 8) * Math.abs(Math.sin(st0 * 22)); shk = reduceMotion ? 0 : 18 * Math.exp(-st0 * 9); }
+    var cy = 1380 - hop;
+    ctx.save();
+    if (shk > 0.5) ctx.translate(Math.sin(u * 97) * shk, Math.cos(u * 83) * shk);
     var hr = R * 0.85, rear = cx - 170 * CS;
-    // Hasbulla: pushing from behind, then a step back onto the rope
-    var back = u < 5.35 ? 0 : Math.min(1, (u - 5.35) / 0.3), lean = u < 5.62 ? 0 : Math.min(1, (u - 5.62) / 0.15);
-    var hx = rear - hr * 1.35 - back * 20 - lean * 10, hy = cy + 30 + back * 70, bob = ru < 1 ? Math.abs(Math.sin(u * 18)) * 6 : 0;
+    // Hasbulla: pushing from behind, then a step back onto the release rope, and a big yank
+    var back = u < 5.45 ? 0 : Math.min(1, (u - 5.45) / 0.25), lean = u < 5.65 ? 0 : Math.min(1, (u - 5.65) / 0.15);
+    var hx = rear - hr * 1.35 - back * 20 - lean * 16, hy = 1380 + 30 + back * 70, bob = ru < 1 ? Math.abs(Math.sin(u * 18)) * 6 : 0;
     if (ru < 1 && !reduceMotion) { // dust off the wheels
       ctx.fillStyle = "rgba(214,196,156,0.55)";
       for (var dp = 0; dp < 5; dp++) { var dph = (u * 3 + dp / 5) % 1; ctx.beginPath(); ctx.arc(rear - 20 - dph * 120, cy + 70 - dph * 30, 14 + dph * 26, 0, Math.PI * 2); ctx.fill(); }
     }
     var sp = drawIslCatapult(ctx, cx, cy, arm, now, CS, roll); // Joe's catapult (islam-dagestan-art.js)
-    // sitting in the bowl of the spoon (it faces up along the arm)
-    var vr = R * 0.8, bucket = { x: sp.x + sp.ny * vr * 0.55, y: sp.y - Math.abs(sp.nx) * vr * 0.55 - vr * 0.25 };
-    // them: kicked clear of the cloud into a heap past where the spoon stops,
-    // then tumbling back into it, riding it up, and launched off the top
-    var heapX = 960, heapY = vicY;
-    if (u < 5.05) {
-      var ku = Math.min(1, (u - 4.1) / 0.3), kx = vicX + (heapX - vicX) * islE(ku), ky = vicY + (heapY - vicY) * ku - Math.sin(Math.PI * ku) * 120;
-      islFighterAt(vic, kx, ky, vr, 1.4 + ku * 4);
-      if (ku >= 1) for (var st = 0; st < 3; st++) { var sa = now * 5 + st * 2.1; drawStar(heapX + Math.cos(sa) * R * 0.6, heapY - R * 0.85 + Math.sin(sa) * 6, 12, "#ffd23f"); }
-    } else if (u < 6.0) {
-      var hu = Math.min(1, (u - 5.05) / 0.35);
-      islFighterAt(vic, heapX + (bucket.x - heapX) * hu, heapY + (bucket.y - heapY) * hu - Math.sin(Math.PI * hu) * 150, vr, 5.4 + hu * 5);
-    } else { var lu = (u - 6.0) / 1.0; islFighterAt(vic, bucket.x - lu * 300, bucket.y - lu * 1700, vr * (1 - lu * 0.4), -lu * 14); }
+    var vr = R * 0.8;
+    var inBowl = function (s) { return { x: s.x + s.ny * vr * 0.55, y: s.y - Math.abs(s.nx) * vr * 0.55 - vr * 0.25 }; }; // sitting in the bowl
+    var bucket = inBowl(sp);
+    if (u >= U_SLAM && u < U_SLAM + 0.5) { // dust thrown up off the wheels, a crack at the crossbar
+      var du = (u - U_SLAM) / 0.5;
+      ctx.save(); ctx.globalAlpha = 0.7 * (1 - du); ctx.fillStyle = "#d8c8a2";
+      [-160, -122, 122, 160].forEach(function (wx, i) { for (var q = 0; q < 3; q++) { ctx.beginPath(); ctx.arc(cx + wx * CS + (q - 1) * 40 * du * (i < 2 ? -1 : 1), 1380 + 60 - du * (30 + q * 20), 20 + du * (40 + q * 10), 0, Math.PI * 2); ctx.fill(); } });
+      ctx.restore();
+      if (du < 0.35) {
+        var bx = cx + (-66) * CS, by = cy + (-185) * CS, ba = 1 - du / 0.35;
+        ctx.save(); ctx.globalAlpha = ba; ctx.strokeStyle = "#fff6d8"; ctx.lineWidth = 7; ctx.lineCap = "round";
+        for (var bl = 0; bl < 8; bl++) { var aa = bl / 8 * Math.PI * 2; ctx.beginPath(); ctx.moveTo(bx + Math.cos(aa) * 30, by + Math.sin(aa) * 30); ctx.lineTo(bx + Math.cos(aa) * (60 + 40 * (1 - ba)), by + Math.sin(aa) * (60 + 40 * (1 - ba))); ctx.stroke(); }
+        ctx.font = "900 70px Impact, 'Arial Black', sans-serif"; ctx.textAlign = "center"; ctx.lineWidth = 9; ctx.strokeStyle = "#1f2328"; ctx.strokeText("WHAM!", bx + 30, by - 70); ctx.fillStyle = "#ffd23f"; ctx.fillText("WHAM!", bx + 30, by - 70);
+        ctx.restore();
+      }
+    }
+    // them, and the two guys who load them
+    var heapX = 860, heapY = vicY, cd = vr + R * 0.8 + 6, gx0 = [heapX - cd - 30, heapX + cd + 30], gEnd = [heapX - cd + 40, heapX + cd + 10], gEndY = [80, 0], crew = [];
+    var restB = inBowl({ x: cx1 + (10 + Math.cos(A_REST) * 290) * CS, y: 1380 + (-28 + Math.sin(A_REST) * 290) * CS, nx: Math.cos(A_REST), ny: Math.sin(A_REST) });
+    var stars = function (x, y) { for (var st = 0; st < 3; st++) { var sa = now * 5 + st * 2.1; drawStar(x + Math.cos(sa) * R * 0.6, y - R * 0.85 + Math.sin(sa) * 6, 12, "#ffd23f"); } };
+    var vx0, vy0, vrot, hands = false;
+    if (u < 4.95) { // kicked clear of the cloud, the crew walks over
+      var ku = Math.min(1, (u - 4.1) / 0.3);
+      vx0 = vicX + (heapX - vicX) * islE(ku); vy0 = vicY + (heapY - vicY) * ku - Math.sin(Math.PI * ku) * 120; vrot = 1.4 + ku * 4;
+      var wu = islE((u - 4.15) / 0.45);
+      crew = [0, 1].map(function (g) { var g0 = vicX + (g ? 110 : -110); return { x: g0 + (gx0[g] - g0) * wu, y: heapY + 10 - Math.abs(Math.sin(u * 14 + g)) * 10 * (wu < 1 ? 1 : 0) }; });
+    } else if (u < 5.32) { // grabbed under the arms, lifted, swung back, and heaved up
+      var lu = (u - 4.95) / 0.37, sw2 = Math.sin(Math.PI * Math.min(1, lu / 0.6)) * (lu < 0.6 ? -1 : 0);
+      vx0 = heapX + sw2 * 20; vy0 = heapY - 50 * islE(lu / 0.4) - (lu > 0.6 ? (lu - 0.6) / 0.4 * 120 : 0); vrot = 5.4 + lu * 0.6;
+      crew = [0, 1].map(function (g) { return { x: heapX + (g ? 1 : -1) * cd, y: heapY + 10 - (lu > 0.6 ? 8 : 0) }; });
+      hands = true;
+    } else if (u < 5.45) { // in the air, into the spoon
+      var fu2 = (u - 5.32) / 0.13, fx0 = heapX, fy0 = heapY - 170;
+      vx0 = fx0 + (restB.x - fx0) * fu2; vy0 = fy0 + (restB.y - fy0) * fu2 - Math.sin(Math.PI * fu2) * 70; vrot = 6 + fu2 * 3;
+      crew = [0, 1].map(function (g) { return { x: heapX + (g ? 1 : -1) * cd, y: heapY + 2 }; });
+    } else if (u < U_REL) { // in the bowl, riding the arm until it lets go
+      vx0 = bucket.x; vy0 = bucket.y; vrot = 9 + (u > U_PULL ? (u - U_PULL) * -20 : 0);
+      var bk = Math.min(1, (u - 5.45) / 0.25);
+      crew = [0, 1].map(function (g) { var g0 = heapX + (g ? 1 : -1) * cd; return { x: g0 + (gEnd[g] - g0) * bk, y: heapY + 10 + gEndY[g] * bk + (u > 5.6 ? -Math.abs(Math.sin(u * 16 + g * 1.4)) * 14 : 0) }; });
+    } else { // let go at 45 degrees and gone, spinning
+      var rB = inBowl({ x: cx + (10 + Math.cos(A_REL) * 290) * CS, y: 1380 + (-28 + Math.sin(A_REL) * 290) * CS, nx: Math.cos(A_REL), ny: Math.sin(A_REL) });
+      var V = 3000, G = 2400, dxv = Math.sin(A_REL), dyv = -Math.cos(A_REL);
+      var pos = function (t) { return { x: rB.x + dxv * V * t, y: rB.y + dyv * V * t + G * t * t / 2 }; };
+      var tf = u - U_REL;
+      for (var tr = 4; tr >= 1; tr--) { var tp = tf - tr * 0.025; if (tp < 0) continue; var pp = pos(tp); ctx.save(); ctx.globalAlpha = 0.12 * (5 - tr); islFighterAt(vic, pp.x, pp.y, vr, 9 - tp * 30); ctx.restore(); }
+      var pc = pos(tf); vx0 = pc.x; vy0 = pc.y; vrot = 9 - tf * 30;
+      ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.75)"; ctx.lineWidth = 4; ctx.lineCap = "round";
+      for (var ln = 0; ln < 4; ln++) { var off = (ln - 1.5) * 26; ctx.beginPath(); ctx.moveTo(pc.x - dxv * 70 - dyv * off, pc.y - dyv * 70 + dxv * off); ctx.lineTo(pc.x - dxv * (170 + ln * 20) - dyv * off, pc.y - dyv * (170 + ln * 20) + dxv * off); ctx.stroke(); }
+      ctx.restore();
+      crew = [0, 1].map(function (g) { return { x: gEnd[g], y: heapY + 10 + gEndY[g] - Math.abs(Math.sin(u * 16 + g * 1.4)) * 18 }; });
+    }
+    crew.forEach(function (p, g) { drawDagGuy(p.x, p.y, R * 0.8, g); });
+    if (vy0 > -200) islFighterAt(vic, vx0, vy0, vr, vrot);
+    if (u < 4.95 && u > 4.4) stars(vx0, vy0);
+    if (hands) crew.forEach(function (p, g) { // their gloves under the arms
+      var sd = g ? 1 : -1;
+      drawGloveAt(vx0 + sd * vr * 0.9, vy0 + vr * 0.1, R * 0.8 * 0.26, { look: islGuyLook(g), color: "#151515", punch: {} }, 0);
+      drawGloveAt(vx0 + sd * vr * 0.75, vy0 + vr * 0.45, R * 0.8 * 0.26, { look: islGuyLook(g), color: "#151515", punch: {} }, 0);
+    });
     if (back > 0) { // the release rope from his hands to the back of the frame
-      ctx.save(); ctx.strokeStyle = "#cbb894"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx + hr * 0.9, hy - hr * 0.1); ctx.quadraticCurveTo((hx + rear) / 2, cy + 60 - lean * 40, rear, cy - 8); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.strokeStyle = "#cbb894"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx + hr * 0.9, hy - hr * 0.1); ctx.quadraticCurveTo((hx + rear) / 2, 1380 + 60 - lean * 40, rear, cy - 8); ctx.stroke(); ctx.restore();
     }
     drawHasbulla(ctx, hx, hy - bob, hr, back > 0 ? lean : -0.4); // (islam-dagestan-art.js)
-    var gx = back > 0 ? hx + hr * 0.9 : rear - 6, gy = back > 0 ? hy - hr * 0.1 : cy - 6;
-    drawGloveAt(gx, gy - bob * 0.5, hr * 0.26, { look: ISL_HASBULLA, color: ISL_HASBULLA.skin, punch: {} }, 0); // his hands on the frame, then the rope
-    drawGloveAt(gx - 8, gy + hr * 0.25 - bob * 0.5, hr * 0.26, { look: ISL_HASBULLA, color: ISL_HASBULLA.skin, punch: {} }, 0);
+    var hgx = back > 0 ? hx + hr * 0.9 : rear - 6, hgy = back > 0 ? hy - hr * 0.1 : cy - 6;
+    drawGloveAt(hgx, hgy - bob * 0.5, hr * 0.26, { look: ISL_HASBULLA, color: ISL_HASBULLA.skin, punch: {} }, 0); // his hands on the frame, then the rope
+    drawGloveAt(hgx - 8, hgy + hr * 0.25 - bob * 0.5, hr * 0.26, { look: ISL_HASBULLA, color: ISL_HASBULLA.skin, punch: {} }, 0);
     ctx.save(); ctx.textAlign = "center"; ctx.font = "800 34px Impact, sans-serif"; ctx.lineWidth = 6; ctx.strokeStyle = "#1f2328"; ctx.globalAlpha = Math.min(1, (u - 4.3) / 0.2);
     var lx = Math.max(95, hx); ctx.strokeText("HASBULLA", lx, hy + hr + 34); ctx.fillStyle = "#ffffff"; ctx.fillText("HASBULLA", lx, hy + hr + 34); ctx.restore();
-    if (u > 5.95) {
-      ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 96px Impact, 'Arial Black', sans-serif";
-      ctx.globalAlpha = Math.min(1, (u - 5.95) / 0.15); ctx.lineWidth = 10; ctx.strokeStyle = "#1f2328"; ctx.strokeText("LAUNCHED!", 540, 700); ctx.fillStyle = "#ff5a3c"; ctx.fillText("LAUNCHED!", 540, 700); ctx.restore();
+    ctx.restore(); // shake
+    if (u > U_REL) {
+      var la = Math.min(1, (u - U_REL) / 0.1), ls = 1 + 0.25 * Math.max(0, 1 - (u - U_REL) / 0.15);
+      ctx.save(); ctx.translate(540, 1660); ctx.scale(ls, ls); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "900 84px Impact, 'Arial Black', sans-serif";
+      ctx.globalAlpha = la; ctx.lineWidth = 10; ctx.strokeStyle = "#1f2328"; ctx.strokeText("LAUNCHED!", 0, 0); ctx.fillStyle = "#ff5a3c"; ctx.fillText("LAUNCHED!", 0, 0); ctx.restore();
     }
   }
   // Letterbox bars and a quick fade in / out.
