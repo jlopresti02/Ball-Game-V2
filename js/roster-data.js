@@ -4579,7 +4579,7 @@ var SAVED_ROSTER = [
       "meltIce": {
         "chance": 0.85,
         "melt": 0.95,
-        "douse": 0.7
+        "douse": 0.9
       }
     }
   },
