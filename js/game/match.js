@@ -123,6 +123,7 @@ function startMatchSeeded(ch0, ch1) {
   resetVanMelt(); // steam and puddles from Van melting ice (van-melt.js)
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
   resetVolk(); // the kangaroo and the green and gold arena (volkanovski.js)
+  resetIslam(); // the Dagestan cut and the cake on the mat (islam-specials.js)
   resetHolloway(); // Max Holloway's ring in the middle, the clock, the flashback TV (holloway.js)
   resetVan(); // Joshua Van's drawing clock (van.js)
   resetStrickland(); // the America show, the eagle and the bike (strickland.js)

@@ -385,7 +385,10 @@ function islCakeHeal(o, c) {
   o.hp += got;
   floater(o.x + o.r * 0.9, o.y - o.r - 10, "+" + Math.round(got) + " HP", "note");
 }
-var islamCakeLeft = null; // what's left of the cake, lying on the mat after the suplex (fades)
+var islamCakeLeft = null;
+// From startMatchSeeded (match.js): nothing of his carries into the next fight
+// (a rematch mid Dagestan cut used to keep the cut on screen).
+function resetIslam() { islamTrip = null; islamCakeLeft = null; islamRooTwinkle = null; if (typeof islamSfxStop === "function") islamSfxStop("islamBeating", 0); } // what's left of the cake, lying on the mat after the suplex (fades)
 
 // ---------------------------------------------------------------- 2-3 years Dagestan
 
