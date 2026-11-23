@@ -513,8 +513,9 @@ function islamRooHeld(isl, dt) {
   s.t += dt; s.all = (s.all || 0) + dt;
   isl.vx = 0; isl.vy = 0;
   var volk = balls[1 - isl.id], m = volk && volk.igbb, roo = vkRoo;
-  if (!roo || over || !isl.alive) { isl.islamRoo = null; if (roo) roo.roll = 0; return false; }
-  if (s.step !== "throw" && s.step !== "wind" && !(m && m.move === "kangaroo")) { isl.islamRoo = null; roo.roll = 0; return false; }
+  if (!roo || over || !isl.alive) { isl.islamRoo = null; if (roo) { roo.roll = 0; roo.islamHeld = false; } return false; }
+  if (s.step !== "throw" && s.step !== "wind" && !(m && m.move === "kangaroo")) { isl.islamRoo = null; roo.roll = 0; roo.islamHeld = false; return false; }
+  roo.islamHeld = s.step !== "say"; // Volk's own kangaroo code leaves it to us while it's up (volkanovski.js tickRoo)
   var r = isl.r, cfg = isl.char.islam.roo;
   roo.mode = "stand"; roo.t = 0.01;
   if (s.step === "say") { // walks up under it, talking
@@ -538,13 +539,13 @@ function islamRooHeld(isl, dt) {
   if (s.step === "shake") {
     // a steady, heavy shake: eased in, side to side with a bounce on each
     // swing and the body lagging behind it
-    // rocked side to side over his head like a log, easing in and out of
-    // each swing (no jolts), dipping a touch at the ends
-    var amp = Math.min(1, s.t / 0.4), ph = s.t * 7.0;
+    // shaken side to side only: it slides left and right over his head,
+    // level, at the same height, easing in and out of each swing
+    var amp = Math.min(1, s.t / 0.3), ph = s.t * 13.0;
     amp = amp * amp * (3 - 2 * amp);
-    roo.x = isl.x + Math.sin(ph) * r * 0.32 * amp; roo.y = isl.y - r * 0.2; roo.z = r * 1.6 - (1 - Math.cos(2 * ph)) * r * 0.06 * amp;
-    roo.tilt = 0; roo.roll = ISL_ROO_ROLL + Math.sin(ph) * 0.22 * amp;
-    if (Math.floor(ph / Math.PI) !== Math.floor((ph - 7.0 * dt) / Math.PI)) { floater(roo.x, roo.y - roo.z - 150, "SHAKE!", "note"); playRooBoing(0.6); }
+    roo.x = isl.x + Math.sin(ph) * r * 0.5 * amp; roo.y = isl.y - r * 0.2; roo.z = r * 1.6;
+    roo.tilt = 0; roo.roll = ISL_ROO_ROLL;
+    if (Math.floor(ph / Math.PI) !== Math.floor((ph - 13.0 * dt) / Math.PI)) { floater(roo.x, roo.y - roo.z - 150, "SHAKE!", "note"); playRooBoing(0.6); }
     if (s.t >= cfg.shake) {
       // Volk falls out of the pouch, dizzy.
       var side = isl.x < W / 2 ? 1 : -1;

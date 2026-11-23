@@ -897,6 +897,7 @@ function rooLeaves(roo) {
 // own once it's leaving, from tickAussie).
 function tickRoo(roo, dt) {
   roo.t += dt;
+  if (roo.islamHeld) return; // Islam has it up over his head (islam-specials.js)
   if (roo.mode === "hop") {
     var h = roo.hop;
     h.t += dt;
