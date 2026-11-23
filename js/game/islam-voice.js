@@ -22,6 +22,7 @@ function islamVoiceWarm() {
   if (islamVoiceWarmed || typeof withClip !== "function" || !audioCtx) return;
   islamVoiceWarmed = true;
   ISLAM_VOICE.forEach(function (n) { withClip(n); });
+  if (typeof islamSfxWarm === "function") islamSfxWarm(); // the Dagestan sound effects (islam-sfx.js)
 }
 // Plays one of his lines, cutting in (it's the special's own call). If it
 // isn't decoded yet it plays as soon as it is, while `still()` holds.

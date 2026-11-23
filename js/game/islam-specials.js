@@ -447,13 +447,20 @@ function islDagestan(self, other, m, dt) {
       islamTrip.dealt = true;
       hurt(other, Math.max(0, Math.min(c.beatDamage, other.hp - 1)), "igbb", self.id);
     }
-    if (!islamTrip.boom && m.t >= 1.9) { islamTrip.boom = true; playSlam(); }
-    if (!islamTrip.fling && m.t >= 5.875) { islamTrip.fling = true; playWhoosh(); }
+    if (!islamTrip.vanIn && m.t >= 0.75) { islamTrip.vanIn = true; playVanScreech(); } // pulling up in Dagestan
+    if (!islamTrip.boom && m.t >= 1.65) { islamTrip.boom = true; islamSfx("islamThump", 1); } // flung out onto the road (the thump peaks 0.25s in)
+    if (!islamTrip.vanOff && m.t >= 1.95) { islamTrip.vanOff = true; playVanScreech(); } // and the van's off
+    if (!islamTrip.beat && m.t >= 2.5) { islamTrip.beat = true; islamSfx("islamBeating", 1); } // the brawl in the dust cloud
+    if (islamTrip.beat && !islamTrip.beatEnd && m.t >= 4.0) { islamTrip.beatEnd = true; islamSfxStop("islamBeating", 0.3); }
+    if (!islamTrip.kickOut && m.t >= 4.15) { islamTrip.kickOut = true; islamSfx("islamThump", 0.7); } // kicked out of the cloud
+    if (!islamTrip.inSpoon && m.t >= 5.22) { islamTrip.inSpoon = true; islamSfx("islamThump", 0.6); } // into the spoon
+    if (!islamTrip.fling && m.t >= 5.42) { islamTrip.fling = true; islamSfx("islamCatapult", 1); } // Joe's catapult launch: the big hit lands on the crossbar slam
     if (!islamTrip.slam && m.t >= 5.96) { islamTrip.slam = true; playSlam(); } // the arm hitting the crossbar
     if (m.t >= ISL_TRIP_T) { islamTrip = null; m.phase = "fall"; m.t = 0; }
     return true;
   }
   if (m.phase === "fall") { // dropping back in from the sky
+    if (!m.thumped && m.t >= c.fall - 0.25) { m.thumped = true; islamSfx("islamThump", 1); } // Joe's body thump, peaking on the landing (islam-sfx.js)
     if (m.t >= c.fall) {
       m.inVan = false;
       var dl = hurt(other, c.landDamage, "igbb", self.id);
@@ -552,7 +559,7 @@ function islamRooHeld(isl, dt) {
 
 // ---------------------------------------------------------------- sounds
 
-function playVanScreech() { playWhoosh(); } // (placeholder: no van sound yet)
+function playVanScreech() { islamSfx("islamVanScreech", 0.9); } // Joe's van screech (islam-sfx.js)
 
 // ---------------------------------------------------------------- drawing
 
