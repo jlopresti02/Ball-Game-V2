@@ -1221,6 +1221,7 @@ function drawKangaroo(c, roo, layer, opts) {
   if (roo.alpha != null && roo.alpha < 1) c.globalAlpha *= roo.alpha;
   c.translate(roo.x, roo.y - (roo.z || 0));
   c.scale(roo.face * s, s);
+  if (roo.roll) { c.translate(0, -85); c.rotate(roo.roll); c.translate(0, 85); } // turned on its side over Islam's head (islam-specials.js)
   c.lineJoin = "round"; c.lineCap = "round";
   function paint(fill) {
     if (sil) { c.fillStyle = sil; c.fill(); return; }
