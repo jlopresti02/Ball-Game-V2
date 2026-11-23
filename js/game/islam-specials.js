@@ -331,12 +331,15 @@ function islCake(self, other, m, dt) {
   }
   if (m.phase === "eat") {
     m.chomp -= dt; other.cakeFed = false;
+    if (m.t >= (m.eatSfxAt || 0)) { // Tony's Minecraft eating noise, looped over the eating (ferguson-burrito.js's clip; a sound effect, not a voice line)
+      m.eatSfxAt = m.t + 99;
+      withClip("burritoEat", function (buf) { if (m.phase === "eat") { playClip("burritoEat", 0.95); m.eatSfxAt = m.t + (buf && buf.duration ? buf.duration - 0.05 : 1.6); } });
+    }
     var eatT = sean ? c.seanEat : c.eat;
     if (m.chomp <= 0) {
       m.chomp = eatT / c.bites;
       ck.bites = Math.min(c.bites, ck.bites + 1);
       floater(ck.x, ck.y - 40, ck.bites % 2 ? "CHOMP!" : "NOM NOM", "note");
-      playDcChomp();
       for (var i = 0; i < 6 && !reduceMotion; i++) {
         var a = Math.random() * Math.PI * 2, s = 40 + Math.random() * 120;
         particles.push({ x: ck.x, y: ck.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 40, life: 0.4, max: 0.4, size: 2 + Math.random() * 3, color: i % 3 ? "#f3ead2" : (i % 2 ? "#c9893f" : "#d4202c") });
@@ -441,7 +444,7 @@ function islDagestan(self, other, m, dt) {
     }
     return true;
   }
-  if (m.phase === "drive") { // door slams, a burnout, then it tears off out through the cage (Joe 2026-11-23)
+  if (m.phase === "drive") { // door slams, a burnout, then it tears off through the cage and away off the far side of the screen (Joe 2026-11-23)
     v.door = Math.max(0, 1 - m.t / 0.25); v.a = 1;
     if (m.t < ISL_VAN_GO) { // wheels spinning on the spot, the van rocking
       if (m.t >= 0.25 && !v.skid) v.skid = { x: v.x - v.dir * 92 * v.s, len: 0 };
@@ -456,7 +459,8 @@ function islDagestan(self, other, m, dt) {
     }
     if (v.outDust) v.outDust += dt;
     v.tilt = m.t >= ISL_VAN_GO ? Math.max(0, Math.sin(Math.PI * Math.min(1, (m.t - ISL_VAN_GO) / 0.35))) * 0.07 : 0; // nose up as it launches
-    if (m.t >= ISL_VAN_GO + 0.85) {
+    var gone = v.dir > 0 ? v.x - 160 * v.s > W + 260 : v.x + 160 * v.s < -260; // past the stands, off screen
+    if ((v.went && gone) || m.t >= ISL_VAN_GO + 2.5) {
       m.phase = "away"; m.t = 0;
       islamTrip = { ownerId: self.id, vicId: other.id, u: 0, dealt: false };
       // Where they'll come back down: well away from him.
@@ -910,8 +914,9 @@ var ISL_VAN_GO = 0.75; // the drive-off: burnout until then, then it launches
 function drawDagestanVan(b, o, m, now) {
   var v = m.van, r = b.r;
   if (m.phase === "away" || m.phase === "fall") return;
+  var free = m.phase === "drive" && v.went; // driving off, it goes on over the stands
   ctx.save();
-  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip(); // never past the cage
+  if (!free) { ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip(); } // never past the cage, until it drives off
   if (v.skid) { // rubber left on the mat
     ctx.fillStyle = "rgba(30,30,30,0.45)";
     for (var sk = 0; sk < 2; sk++) ctx.fillRect(v.dir > 0 ? v.skid.x - v.skid.len : v.skid.x, v.y - 4 * v.s - sk * 14 * v.s, v.skid.len, 6 * v.s);
@@ -924,7 +929,7 @@ function drawDagestanVan(b, o, m, now) {
   drawIslVan(v.x, v.y, v.dir, v.door, v.s || islVanScale(b));
   ctx.restore();
   ctx.save();
-  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+  if (!free) { ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip(); }
   if (m.phase === "drive" && m.t >= 0.25) { // tyre smoke off the back wheel, then exhaust and speed lines as it goes
     var rx = v.x - v.dir * 92 * v.s, ry = v.y - 10 * v.s, go = m.t >= ISL_VAN_GO;
     for (var sp = 0; sp < 7; sp++) {

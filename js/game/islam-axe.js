@@ -309,9 +309,14 @@ function axeTarget(b, sw, other) {
     if (m.axe === "spin" && m.phase === "spin") return { key: "conduct", rate: 14, p: [cx * 0.7, -0.55, a, -0.6, -0.1, 0.05] };              // hand up, steering it round him
     if (m.axe && m.phase !== "catch") return { key: "reach", rate: 22, p: [cx * 1.15, cy * 1.15 - 0.08, a, -0.6, -0.35, 0.16] };          // open hand out toward it
     if (m.axe) return { key: "catch", rate: 24, p: [0.85, -0.25, -0.6, -0.62, -0.1, 0.06] };
-    if (m.phase === "coil") return { key: "raise", rate: 16, p: [-0.05, -0.9, -Math.PI / 2 - 0.85, cx * 0.7, cy * 0.7 - 0.1, -0.18] };   // up over his head
-    if (m.phase === "lunge") return { key: "cleave", rate: 30, p: [cx * 1.15, cy * 1.15 + 0.05, a + 0.55, -0.7, -0.05, 0.38] };          // brought down through them
-    return { key: "follow", rate: 14, p: [0.85, 0.3, 1.0, -0.6, 0.0, 0.1] };
+    // Swung from all round him, a different way each time (Joe 2026-11-23):
+    // straight down over the top, a flat sweep from behind, a diagonal from
+    // high on the far side, or a rising cut up from low.
+    if (m.swing == null) m.swing = AXE_SWINGS[Math.floor(Math.random() * AXE_SWINGS.length)];
+    var SW = m.swing;
+    if (m.phase === "coil") return { key: "raise-" + SW.k, rate: 16, p: [SW.ch[0], SW.ch[1], SW.ca(a), cx * 0.7, cy * 0.7 - 0.1, -0.18] };
+    if (m.phase === "lunge") return { key: "cleave-" + SW.k, rate: 30, p: [cx * 1.15, cy * 1.15 + 0.05, SW.la(a), -0.7, -0.05, 0.38] };
+    return { key: "follow", rate: 12, p: [0.75, 0.05, -Math.PI / 2 + 0.45, -0.6, 0.0, 0.1] }; // back up the right way
   }
   if (sw.parry >= 0) {
     var p = sw.parry / SWORD_SLASH;
@@ -320,18 +325,25 @@ function axeTarget(b, sw, other) {
   }
   var swingIn = other && other.chAct && other.chAct.kind === "bat" && sw.actRef === other.chAct && sw.willParry;
   if (swingIn) return { key: "guard", rate: 18, p: [0.7, -0.45, -1.35, -0.55, -0.15, -0.05] };
-  // Held the way a real axe is (Joe 2026-11-23: no sticking it out on a
-  // diagonal): hanging down by his side, the head low.
-  if (sp > 70) { // on the move: hanging by his leg, swinging a touch with his step
+  // Held the way a real axe is (Joe 2026-11-23): always right side up, the
+  // head up, only ever tilted a little.
+  if (sp > 70) { // on the move: upright in his fist, rocking a touch with his step
     var step = Math.sin(t * 9), lean = Math.min(1, sp / 300);
-    return { key: "walk", rate: 7, p: [0.68, 0.32, Math.PI / 2 - 0.12 + step * 0.06, -0.62, 0.05, 0.06 * lean] };
+    return { key: "walk", rate: 7, p: [0.7, 0.15, -Math.PI / 2 + 0.3 + step * 0.05, -0.62, 0.05, 0.06 * lean] };
   }
-  // Ready: still down at his side but gripped and lifted a little, the head
-  // tipped forward toward them, frost breathing off it. (Kept close to the
-  // walking carry so going between the two never swings it out level.)
+  // Ready: upright, head up, tilted slightly toward them, frost breathing off it.
   var sway = Math.sin(t * 1.5), breath = Math.sin(t * 2.7);
-  return { key: "ready", rate: 8, p: [0.68 + sway * 0.02, 0.2 + breath * 0.02, Math.PI / 2 - 0.4 + sway * 0.04, -0.65, -0.05 + breath * 0.02, sway * 0.02] };
+  return { key: "ready", rate: 8, p: [0.68 + sway * 0.02, 0.05 + breath * 0.02, -Math.PI / 2 + 0.2 + sway * 0.06, -0.65, -0.05 + breath * 0.02, sway * 0.02] };
 }
+
+// His swings (axeTarget): where it's drawn back to (hand ch, angle ca) and
+// where it finishes (angle la), given a = the line to them.
+var AXE_SWINGS = [
+  { k: "over", ch: [-0.05, -0.9], ca: function () { return -Math.PI / 2 - 0.85; }, la: function (a) { return a + 0.55; } },     // straight down over the top
+  { k: "sweep", ch: [-0.35, -0.15], ca: function (a) { return a + Math.PI * 0.85; }, la: function (a) { return a - 0.7; } },     // flat, round from behind him
+  { k: "diag", ch: [-0.25, -0.7], ca: function () { return -Math.PI / 2 - 1.35; }, la: function (a) { return a + 1.0; } },      // high on the far side, down across
+  { k: "rise", ch: [0.05, 0.55], ca: function (a) { return a + Math.PI * 0.7; }, la: function (a) { return a - 1.0; } }          // up from low
+];
 
 // When he's stood still and nothing's coming (u = 0..1).
 var AXE_FLOURISHES = {
