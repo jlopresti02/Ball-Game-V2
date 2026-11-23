@@ -3341,7 +3341,7 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-islam-makhachev",
-    "rev": 5,
+    "rev": 6,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Islam Makhachev",
@@ -3538,7 +3538,7 @@ var SAVED_ROSTER = [
         "dizzy": 1.2
       },
       "roo": {
-        "say": 1.6,
+        "say": 2.8,
         "shake": 1.8,
         "dizzy": 2.5
       },

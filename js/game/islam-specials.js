@@ -64,7 +64,7 @@ function islamHandsBusy(b) {
   if (m && m.move === "islam" && m.kind === "brotha" && m.phase !== "space") return true; // his arms in Brotha
   if (om && om.move === "islam" && om.kind === "brotha" && om.vicId === b.id && om.huh) return true; // theirs, lost
   if (m && m.move === "islam" && m.kind === "cheesecake" && (m.phase === "serve" || m.phase === "cakeToss")) return true;
-  return !!(b && b.islamRoo && b.islamRoo.step !== "say");
+  return !!(b && b.islamRoo && (b.islamRoo.step !== "say" || b.islamRoo.dance > 0));
 }
 
 // From updateSpecial (special.js).
@@ -520,9 +520,22 @@ function islamRooHeld(isl, dt) {
   roo.islamHeld = s.step !== "say"; // Volk's own kangaroo code leaves it to us while it's up (volkanovski.js tickRoo)
   var r = isl.r, cfg = isl.char.islam.roo;
   roo.mode = "stand"; roo.t = 0.01;
-  if (s.step === "say") { // walks up under it, talking
+  if (s.step === "say") {
+    // stops where he is, steps back a little, dances while he says his
+    // line, then walks over under it
     var tx = roo.x, ty = Math.min(H - r, roo.y + r * 0.2), dx = tx - isl.x, dy = ty - isl.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
-    if (d > 3) { var st = Math.min(d, 300 * dt); isl.x += dx / d * st; isl.y += dy / d * st; }
+    var walkAt = cfg.say - 0.6;
+    if (!s.home) s.home = { x: isl.x, y: isl.y, bx: -dx / d, by: -dy / d };
+    if (s.t < walkAt) {
+      var bu = Math.min(1, Math.max(0, (s.t - 0.15) / 0.4)), be = bu * bu * (3 - 2 * bu), back = r * 0.6 * be;
+      var bx = s.home.x + s.home.bx * back, by = s.home.y + s.home.by * back;
+      s.dance = s.t > 0.55 ? s.t - 0.55 : 0; // side to side on the beat
+      var sway = s.dance ? Math.sin(s.dance * 9) * r * 0.16 : 0;
+      isl.x = Math.max(r, Math.min(W - r, bx + sway)); isl.y = Math.max(r, Math.min(H - r, by));
+    } else {
+      s.dance = 0;
+      if (d > 3) { var st = Math.min(d, 320 * dt); isl.x += dx / d * st; isl.y += dy / d * st; }
+    }
     if (s.t >= cfg.say && d < 8) {
       s.step = "lift"; s.t = 0; s.rx = roo.x; s.ry = roo.y; playWhoosh();
       var hsw = isl.rapier && isl.rapier.sword; // as Kratos, the axe goes up to hover beside him first
@@ -570,20 +583,26 @@ function islamRooHeld(isl, dt) {
   if (s.step === "wind") { // cocks it back over his shoulder, then lets it fly
     // cocked way back over his shoulder, trembling with the effort, then
     // heaved: up, over the cage and out into the sky
-    var wu = Math.min(1, s.t / 0.5), we = wu * wu * (3 - 2 * wu), trem = wu > 0.5 ? Math.sin(s.t * 90) * r * 0.05 : 0;
-    roo.x = s.wx + (isl.x + s.side * r * 0.9 - s.wx) * we + trem; roo.z = s.wz + (ISL_ROO_Z * r + r * 0.5 - s.wz) * we; roo.roll = s.wt + (ISL_ROO_ROLL + 0.6 * s.side * roo.face - s.wt) * we;
+    // a quick dip to load up, staying right over his head, then heaved
+    // toward the nearest side of the ring and out over the cage
+    if (!s.dir) {
+      var dl = isl.x, dr = W - isl.x, du0 = isl.y, dd = H - isl.y, mn = Math.min(dl, dr, du0, dd);
+      s.dir = mn === dl ? { x: -1, y: 0 } : mn === dr ? { x: 1, y: 0 } : mn === du0 ? { x: 0, y: -1 } : { x: 0, y: 1 };
+    }
+    var wu = Math.min(1, s.t / 0.3), dip = Math.sin(Math.PI * Math.min(1, wu / 0.8));
+    roo.x = s.wx + (isl.x - s.wx) * wu; roo.z = ISL_ROO_Z * r - dip * r * 0.25; roo.roll = s.wt + (ISL_ROO_ROLL - s.wt) * wu;
     if (wu >= 1) {
-      s.step = "throw"; s.t = 0; s.vx = -s.side * 260; s.vy = -260; s.vz = 700; s.spin = -s.side * 14; playWhoosh();
+      s.step = "throw"; s.t = 0; s.vx = s.dir.x * 820; s.vy = s.dir.y * 820; s.vz = 620; s.spin = (s.dir.x || s.dir.y) * roo.face * 13; playWhoosh();
       if (!reduceMotion) { shake = Math.max(shake, 16); hitStop = Math.max(hitStop, 0.06); }
       floater(isl.x, isl.y - r - 40, "YEET!", "crit"); crowdReact(1);
     }
     return true;
   }
   // Thrown out over the cage, end over end.
-  roo.x += s.vx * dt; roo.y += s.vy * dt; roo.z += s.vz * dt; s.vz -= 380 * dt; roo.roll = (roo.roll || 0) + s.spin * dt;
+  roo.x += s.vx * dt; roo.y += s.vy * dt; roo.z += s.vz * dt; s.vz -= 700 * dt; roo.roll = (roo.roll || 0) + s.spin * dt;
   if (!s.trail) s.trail = [];
   s.trail.push({ x: roo.x, y: roo.y - roo.z - 72 }); if (s.trail.length > 10) s.trail.shift();
-  if (s.t >= 1.4 || roo.x < -700 || roo.x > W + 700) {
+  if (s.t >= 1.3 || roo.x < -500 || roo.x > W + 500 || roo.y < -500 || roo.y > H + 500) {
     islamRooTwinkle = { x: roo.x, y: roo.y - roo.z - 72, t0: performance.now() / 1000 }; // a twinkle where it disappears
     vkRoo = null; isl.islamRoo = null;
     floater(W / 2, H * 0.2, "OUT OF THE ARENA!", "crit");
@@ -858,6 +877,14 @@ function drawIslamRoo(b, s, now) {
     ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineCap = "round";
     for (var tr = 1; tr < s.trail.length; tr++) { ctx.lineWidth = 2 + tr * 1.6; ctx.globalAlpha = tr / s.trail.length * 0.7; ctx.beginPath(); ctx.moveTo(s.trail[tr - 1].x, s.trail[tr - 1].y); ctx.lineTo(s.trail[tr].x, s.trail[tr].y); ctx.stroke(); }
     ctx.restore();
+  }
+  if (s.step === "say" && s.dance > 0) { // dancing: fists pumping, one up as the other comes down
+    var dr2 = b.r;
+    [-1, 1].forEach(function (sd) {
+      var ph = s.dance * 9 + (sd > 0 ? Math.PI : 0), up = Math.max(0, Math.sin(ph));
+      var shd = { x: b.x + sd * dr2 * 0.66, y: b.y - dr2 * 0.3 }, hd = { x: b.x + sd * dr2 * (0.85 + 0.1 * up), y: b.y - dr2 * (0.25 + 0.75 * up) };
+      drawBentArm(b, shd, hd, sd); drawGloveAt(hd.x, hd.y, dr2 * 0.22, b.char);
+    });
   }
   if (s.step === "say" || s.step === "throw" || !vkRoo) return;
   var r = b.r, ro = vkRoo.roll || 0, k = Math.min(1, ro / ISL_ROO_ROLL), mid = 85 * KR_S;
