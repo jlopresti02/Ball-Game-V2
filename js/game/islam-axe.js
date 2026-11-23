@@ -739,8 +739,19 @@ function drawLeviathanUnder() {
 // fl: which side of the blade faces them (cutlassFlip, bisping-cutlass.js).
 // Like Bisping's cutlass, the edge always turns toward the opponent (Joe,
 // 2026-11-23): the head's edge is local -y, the cutlass's is +y, hence -fl.
+// The turn is a quick wrist roll (the head narrows to edge-on and opens out
+// the other way over about 0.2s), never an instant mirror (Joe 2026-11-23:
+// watching it snap over looked unnatural).
 function axeDrawFn(b, fl) {
-  return function (x, y, a, l, k, al) { if (!axeAway(b) && !kratosSwinging(b)) drawLeviathan(x, y, a, l, k, al, -(fl || -1)); }; // (not while it whips round him in the change)
+  var sw = b.rapier && b.rapier.sword, want = -(fl || -1), fv = want;
+  if (sw) {
+    var now = performance.now() / 1000, dtt = sw.fvT == null ? 1 : Math.max(0, Math.min(0.1, now - sw.fvT));
+    sw.fvT = now;
+    if (sw.fv == null || dtt >= 1) sw.fv = want;
+    else sw.fv += Math.max(-dtt * 10, Math.min(dtt * 10, want - sw.fv)); // 2 units in 0.2s
+    var e = Math.max(-1, Math.min(1, sw.fv)); fv = Math.sign(e || want) * Math.max(0.12, Math.abs(Math.sin(e * Math.PI / 2)));
+  }
+  return function (x, y, a, l, k, al) { if (!axeAway(b) && !kratosSwinging(b)) drawLeviathan(x, y, a, l, k, al, fv); }; // (not while it whips round him in the change)
 }
 
 // Over the fighters: the axe in flight or whirling round him, the halves of
