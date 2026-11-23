@@ -209,7 +209,7 @@ function swordDrawPose(b, sw) {
     a += wrapA(F.a - a) * F.w + (F.spin || 0);
     lean += F.lean || 0;
   }
-  if (sw.feint >= 0 && b.rapier) { // a quick stab at them and back: testing the distance
+  if (sw.feint >= 0 && b.rapier && !axeStyle(b)) { // a quick stab at them and back: testing the distance (not with Islam's axe: he heaves it back instead, islam-axe.js)
     var ru = sw.feint / 0.6, rk = ru < 0.3 ? easeOut(ru / 0.3) : 1 - ease((ru - 0.3) / 0.7);
     hx += 0.35 * rk; a += wrapA(0 - a) * rk; lean += 0.12 * rk;
   } else if (sw.feint >= 0) { // heaving it back over his shoulder, threatening a big swing

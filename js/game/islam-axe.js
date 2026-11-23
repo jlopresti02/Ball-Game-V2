@@ -320,13 +320,17 @@ function axeTarget(b, sw, other) {
   }
   var swingIn = other && other.chAct && other.chAct.kind === "bat" && sw.actRef === other.chAct && sw.willParry;
   if (swingIn) return { key: "guard", rate: 18, p: [0.7, -0.45, -1.35, -0.55, -0.15, -0.05] };
-  if (sp > 70) { // on the move: carried low at his side, head forward
-    var step = Math.abs(Math.sin(t * 9)), lean = Math.min(1, sp / 300);
-    return { key: "walk", rate: 7, p: [0.6, 0.28 - step * 0.04, 0.85 + step * 0.06, -0.62, 0.05, 0.06 * lean] };
+  // Held the way a real axe is (Joe 2026-11-23: no sticking it out on a
+  // diagonal): hanging down by his side, the head low.
+  if (sp > 70) { // on the move: hanging by his leg, swinging a touch with his step
+    var step = Math.sin(t * 9), lean = Math.min(1, sp / 300);
+    return { key: "walk", rate: 7, p: [0.68, 0.32, Math.PI / 2 - 0.12 + step * 0.06, -0.62, 0.05, 0.06 * lean] };
   }
-  // Ready: up in front of him, angled at them, frost breathing off it.
+  // Ready: still down at his side but gripped and lifted a little, the head
+  // tipped forward toward them, frost breathing off it. (Kept close to the
+  // walking carry so going between the two never swings it out level.)
   var sway = Math.sin(t * 1.5), breath = Math.sin(t * 2.7);
-  return { key: "ready", rate: 8, p: [0.62 + sway * 0.03, -0.12 + breath * 0.02, -0.95 + sway * 0.08, -0.65, -0.05 + breath * 0.02, sway * 0.02] };
+  return { key: "ready", rate: 8, p: [0.68 + sway * 0.02, 0.2 + breath * 0.02, Math.PI / 2 - 0.4 + sway * 0.04, -0.65, -0.05 + breath * 0.02, sway * 0.02] };
 }
 
 // When he's stood still and nothing's coming (u = 0..1).

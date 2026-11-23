@@ -64,6 +64,7 @@ function islamHandsBusy(b) {
   if (m && m.move === "islam" && m.kind === "brotha" && m.phase !== "space") return true; // his arms in Brotha
   if (om && om.move === "islam" && om.kind === "brotha" && om.vicId === b.id && om.huh) return true; // theirs, lost
   if (m && m.move === "islam" && m.kind === "cheesecake" && (m.phase === "serve" || m.phase === "cakeToss")) return true;
+  if (om && om.move === "islam" && om.kind === "cheesecake" && om.phase === "eat" && om.cake) return true; // theirs, eating it
   return !!(b && b.islamRoo && (b.islamRoo.step !== "say" || b.islamRoo.dance > 0));
 }
 
@@ -329,7 +330,7 @@ function islCake(self, other, m, dt) {
     return true;
   }
   if (m.phase === "eat") {
-    m.chomp -= dt;
+    m.chomp -= dt; other.cakeFed = false;
     var eatT = sean ? c.seanEat : c.eat;
     if (m.chomp <= 0) {
       m.chomp = eatT / c.bites;
@@ -343,6 +344,7 @@ function islCake(self, other, m, dt) {
     }
     if (sean) {
       if (m.t >= eatT) { // wolfed down: straight onto a sugar high
+        islCakeHeal(other, c);
         islLet(other);
         m.cake = null;
         startSugarHigh(other);
@@ -358,6 +360,7 @@ function islCake(self, other, m, dt) {
     var gx = bx - self.x, gy = by - self.y, gd = Math.sqrt(gx * gx + gy * gy) || 1, gs = c.sneak * dt;
     if (gd > 4) { var g2 = Math.min(gs, gd); self.x += gx / gd * g2; self.y += gy / gd * g2; }
     if ((gd < 10 && m.t >= c.eat * 0.5) || m.t >= c.eat) {
+      islCakeHeal(other, c);
       islLet(other);
       floater(other.x, other.y - other.r - 34, "DISTRACTED!", "note");
       m.cake.gone = true;
@@ -369,6 +372,15 @@ function islCake(self, other, m, dt) {
     return true;
   }
   return true;
+}
+// Whoever eats it gets a little back (Joe 2026-11-23): +5, never past full.
+function islCakeHeal(o, c) {
+  if (!o.alive || o.cakeFed) return;
+  o.cakeFed = true;
+  var full = o.maxHp || MAX_HP, got = Math.max(0, Math.min(c.heal || 5, full - o.hp));
+  if (got <= 0) return;
+  o.hp += got;
+  floater(o.x + o.r * 0.9, o.y - o.r - 10, "+" + Math.round(got) + " HP", "note");
 }
 var islamCakeLeft = null; // what's left of the cake, lying on the mat after the suplex (fades)
 
@@ -429,12 +441,22 @@ function islDagestan(self, other, m, dt) {
     }
     return true;
   }
-  if (m.phase === "drive") {
-    v.door = Math.max(0, 1 - m.t / 0.25);
-    v.x += v.dir * c.vanSpeed * Math.min(1, m.t / 0.4) * dt;
-    v.x = Math.max(160 * v.s, Math.min(W - 160 * v.s, v.x)); // pulls up at the cage and fades out
-    v.a = Math.max(0, Math.min(1, (1.0 - m.t) / 0.35));
-    if (m.t >= 1.0) {
+  if (m.phase === "drive") { // door slams, a burnout, then it tears off out through the cage (Joe 2026-11-23)
+    v.door = Math.max(0, 1 - m.t / 0.25); v.a = 1;
+    if (m.t < ISL_VAN_GO) { // wheels spinning on the spot, the van rocking
+      if (m.t >= 0.25 && !v.skid) v.skid = { x: v.x - v.dir * 92 * v.s, len: 0 };
+      if (v.skid) v.skid.len = Math.min(70 * v.s, v.skid.len + 260 * v.s * dt);
+      v.jit = m.t >= 0.25 ? Math.sin(m.t * 70) * 2.2 * v.s : 0;
+    } else {
+      v.jit = 0;
+      if (!v.went) { v.went = true; v.vx = 200; if (!reduceMotion) shake = Math.max(shake, 6); }
+      v.vx = Math.min(1900, v.vx + 4200 * dt);
+      v.x += v.dir * v.vx * dt;
+      if (!v.outDust && (v.dir > 0 ? v.x + 150 * v.s >= W : v.x - 150 * v.s <= 0)) { v.outDust = 0.001; } // punching out through the cage
+    }
+    if (v.outDust) v.outDust += dt;
+    v.tilt = m.t >= ISL_VAN_GO ? Math.max(0, Math.sin(Math.PI * Math.min(1, (m.t - ISL_VAN_GO) / 0.35))) * 0.07 : 0; // nose up as it launches
+    if (m.t >= ISL_VAN_GO + 0.85) {
       m.phase = "away"; m.t = 0;
       islamTrip = { ownerId: self.id, vicId: other.id, u: 0, dealt: false };
       // Where they'll come back down: well away from him.
@@ -682,6 +704,7 @@ function drawIslamTop() {
         drawGloveAt(b.x - sd * r * 0.55, b.y - r * 0.05, r * 0.22, b.char);
       }
       if ((m.phase === "chase" || m.phase === "eat") && o.alive) drawHearts(o, now);
+      if (m.phase === "eat" && m.cake && o.alive) drawCakeEater(o, m, b.char.special.cheesecake, now);
     }
     if (m.kind === "dagestan") {
       if (m.van) drawDagestanVan(b, o, m, now);
@@ -708,6 +731,40 @@ function drawIslamTop() {
   });
 }
 
+
+// Their own two gloves while they eat (Joe 2026-11-23): one steadies the
+// plate, the other scoops a slice up to the mouth on every bite, chewing
+// with crumbs flying.
+function drawCakeEater(o, m, c, now) {
+  var ck = m.cake, r = o.r, sean = islIdHas(o, "sean-omalley");
+  var per = (sean ? c.seanEat : c.eat) / c.bites, u = 1 - Math.max(0, m.chomp) / per; // 0 at a bite, 1 just before the next
+  var f = m.face || { x: 0, y: 1 }, side = f.x >= 0 ? 1 : -1;
+  var mouth = { x: o.x + f.x * r * 0.05, y: o.y - r * 0.16 }; // under the beard line, where the art puts it
+  var cake = { x: ck.x - side * 8, y: ck.y - 4 };
+  // up at the mouth at the bite, down to the cake mid-way, back up again
+  var lift = u < 0.25 ? 1 - u / 0.25 : u < 0.55 ? 0 : (u - 0.55) / 0.45, e = lift * lift * (3 - 2 * lift);
+  var hx = cake.x + (mouth.x - cake.x) * e + side * r * 0.25 * (1 - e), hy = cake.y + (mouth.y - cake.y) * e - Math.sin(Math.PI * e) * r * 0.25;
+  var shR = { x: o.x + side * r * 0.62, y: o.y - r * 0.1 }, shL = { x: o.x - side * r * 0.62, y: o.y - r * 0.1 };
+  var steady = { x: cake.x - side * r * 0.35, y: cake.y + 6 };
+  drawBentArm(o, shL, steady, -side); drawGloveAt(steady.x, steady.y, r * 0.2, o.char);
+  drawBentArm(o, shR, { x: hx, y: hy }, side);
+  if (u > 0.4) { // the slice in his glove on the way up
+    var sk = r / 26; // sized to them
+    ctx.save(); ctx.translate(hx + side * r * 0.08, hy - r * 0.24); ctx.rotate(-side * 0.3); ctx.scale(sk, sk);
+    ctx.fillStyle = "#1f2328"; ctx.beginPath(); ctx.moveTo(-9, 5); ctx.lineTo(9, 5); ctx.lineTo(0, -10); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#c9893f"; ctx.fillRect(-7, 1, 14, 3);
+    ctx.fillStyle = "#f3ead2"; ctx.beginPath(); ctx.moveTo(-7, 1); ctx.lineTo(7, 1); ctx.lineTo(0, -8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#c8172a"; ctx.beginPath(); ctx.moveTo(-3, -4); ctx.lineTo(3, -4); ctx.lineTo(0, -8); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  drawGloveAt(hx, hy, r * 0.21, o.char);
+  if (u < 0.3) { // chewing: cheeks puffed, crumbs off the mouth
+    var ch = 1 - u / 0.3;
+    ctx.save(); ctx.globalAlpha = 0.85 * ch; ctx.fillStyle = "#f3ead2"; ctx.strokeStyle = "#1f2328"; ctx.lineWidth = 1;
+    for (var i = 0; i < 4; i++) { var a = i * 1.7 + 0.4, d = r * (0.25 + 0.35 * (1 - ch)); ctx.beginPath(); ctx.arc(mouth.x + Math.cos(a) * d, mouth.y + Math.sin(a) * d * 0.6 + (1 - ch) * 8, 2.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    ctx.restore();
+  }
+}
 
 function drawHuh(o, now) {
   ctx.save();
@@ -849,13 +906,46 @@ function islVanClamp(v, o) {
   if (v.dir > 0) v.x = Math.min(v.x, lim); else v.x = Math.max(v.x, lim);
   v.x = Math.max(half, Math.min(W - half, v.x));
 }
+var ISL_VAN_GO = 0.75; // the drive-off: burnout until then, then it launches
 function drawDagestanVan(b, o, m, now) {
   var v = m.van, r = b.r;
   if (m.phase === "away" || m.phase === "fall") return;
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip(); // never past the cage
+  if (v.skid) { // rubber left on the mat
+    ctx.fillStyle = "rgba(30,30,30,0.45)";
+    for (var sk = 0; sk < 2; sk++) ctx.fillRect(v.dir > 0 ? v.skid.x - v.skid.len : v.skid.x, v.y - 4 * v.s - sk * 14 * v.s, v.skid.len, 6 * v.s);
+  }
   ctx.globalAlpha = v.a == null ? 1 : v.a;
+  if (v.tilt || v.jit) { // the back wheel's the pivot
+    var px = v.x - v.dir * 92 * v.s, py = v.y;
+    ctx.translate(px, py + (v.jit || 0)); ctx.rotate(-v.dir * (v.tilt || 0)); ctx.translate(-px, -py);
+  }
   drawIslVan(v.x, v.y, v.dir, v.door, v.s || islVanScale(b));
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+  if (m.phase === "drive" && m.t >= 0.25) { // tyre smoke off the back wheel, then exhaust and speed lines as it goes
+    var rx = v.x - v.dir * 92 * v.s, ry = v.y - 10 * v.s, go = m.t >= ISL_VAN_GO;
+    for (var sp = 0; sp < 7; sp++) {
+      var ph = ((m.t - 0.25) * 2.2 + sp / 7) % 1, rad = (14 + ph * 46) * v.s;
+      ctx.globalAlpha = (1 - ph) * (go ? Math.max(0, 1 - (m.t - ISL_VAN_GO) / 0.5) : 0.85);
+      ctx.fillStyle = "#dcdcdc"; ctx.beginPath(); ctx.arc(rx - v.dir * ph * 110 * v.s, ry - ph * 50 * v.s + Math.sin(sp * 2.3) * 8, rad, 0, Math.PI * 2); ctx.fill();
+    }
+    if (!go) { // the spinning wheel's blur
+      ctx.globalAlpha = 0.8; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.5;
+      for (var wl = 0; wl < 3; wl++) { var wa = m.t * 40 + wl * 2.1; ctx.beginPath(); ctx.arc(rx, v.y - 14 * v.s, 20 * v.s, wa, wa + 1.1); ctx.stroke(); }
+    } else {
+      ctx.globalAlpha = 0.85; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3; ctx.lineCap = "round";
+      for (var k2 = 0; k2 < 4; k2++) { var ly2 = v.y - 30 * v.s - k2 * 30 * v.s, lx2 = v.x - v.dir * 175 * v.s; ctx.beginPath(); ctx.moveTo(lx2, ly2); ctx.lineTo(lx2 - v.dir * (60 + k2 * 14), ly2); ctx.stroke(); }
+    }
+  }
+  if (v.outDust) { // the dust burst where it goes through the cage
+    var du = Math.min(1, v.outDust / 0.6), ex = v.dir > 0 ? W : 0;
+    ctx.globalAlpha = 1 - du; ctx.fillStyle = "#e9dfc8";
+    for (var p2 = 0; p2 < 6; p2++) { ctx.beginPath(); ctx.arc(ex - v.dir * (10 + du * 30), v.y - 30 - p2 * 22 * v.s, (30 + p2 * 4 + du * 30) * v.s, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
   if (m.phase === "van" && v.a < 1) { // bursting in at the cage
     ctx.globalAlpha = 1 - v.a; ctx.fillStyle = "#e9dfc8";
     for (var p = 0; p < 6; p++) { ctx.beginPath(); ctx.arc(v.x - v.dir * 150 * v.s, v.y - 30 - p * 22, 30 + p * 4, 0, Math.PI * 2); ctx.fill(); }
