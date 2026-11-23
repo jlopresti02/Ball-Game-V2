@@ -234,8 +234,8 @@ function drawRapierArms(b, sw, sh, fsh, hand, ang, len, k, alpha, sideK, pz, inD
   drawGloveAt(free.x, free.y, r * 0.2, b.char);
   if (inDuel && swordDuel.dId === b.id && swordDuel.slashLine && swordDuel.done) drawSlashLine(b, swordDuel);
   ang += cutlassSpin(b); // Bisping's twirl after his charge (bisping-cutlass.js)
-  var fl = cutlassStyle(b) ? cutlassFlip(b, hand.x, hand.y, ang) : 1; // (the cutlass edge turned toward them, bisping-cutlass.js)
-  var dr = axeStyle(b) ? axeDrawFn(b) : cutlassStyle(b) ? function (x, y, a2, l, kk, al) { drawCutlass(x, y, a2, l, kk, al, fl); } : drawRapier; // (or Bisping's cutlass, bisping-cutlass.js)
+  var fl = cutlassStyle(b) || axeStyle(b) ? cutlassFlip(b, hand.x, hand.y, ang) : 1; // (the cutlass or axe edge turned toward them, bisping-cutlass.js)
+  var dr = axeStyle(b) ? axeDrawFn(b, fl) : cutlassStyle(b) ? function (x, y, a2, l, kk, al) { drawCutlass(x, y, a2, l, kk, al, fl); } : drawRapier; // (or Bisping's cutlass, bisping-cutlass.js)
   drawTrail(sw.trail, function (g, a) { dr(g.x, g.y, g.ang, len, k, a); });
   dr(hand.x, hand.y, ang, len, k, 1);
   pushTrail(sw.trail, hand.x, hand.y, ang);

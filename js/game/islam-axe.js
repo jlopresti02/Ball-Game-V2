@@ -736,8 +736,11 @@ function drawLeviathanUnder() {
 
 // From drawRapierArms (rapier.js): how the axe in his hand is drawn (nothing
 // while it's out of his hand).
-function axeDrawFn(b) {
-  return function (x, y, a, l, k, al) { if (!axeAway(b) && !kratosSwinging(b)) drawLeviathan(x, y, a, l, k, al); }; // (not while it whips round him in the change)
+// fl: which side of the blade faces them (cutlassFlip, bisping-cutlass.js).
+// Like Bisping's cutlass, the edge always turns toward the opponent (Joe,
+// 2026-11-23): the head's edge is local -y, the cutlass's is +y, hence -fl.
+function axeDrawFn(b, fl) {
+  return function (x, y, a, l, k, al) { if (!axeAway(b) && !kratosSwinging(b)) drawLeviathan(x, y, a, l, k, al, -(fl || -1)); }; // (not while it whips round him in the change)
 }
 
 // Over the fighters: the axe in flight or whirling round him, the halves of
@@ -790,10 +793,10 @@ function drawSpunAxe(x, y, a, len, alpha) {
 // curved wooden haft with a leather wrap by the hand and a carved pommel,
 // a steel head with a tall upswept beard and a short lower one, runes cut
 // into it and frost breathing off the edge.
-function drawLeviathan(x, y, ang, len, k, alpha) {
+function drawLeviathan(x, y, ang, len, k, alpha, flip) {
   ctx.save();
   ctx.globalAlpha *= alpha;
-  ctx.translate(x, y); ctx.rotate(ang); ctx.scale(k, k);
+  ctx.translate(x, y); ctx.rotate(ang); ctx.scale(k, k * (flip || 1));
   var L = len, OUT = "#1f2328";
   // The haft: a gentle S curve from the pommel to the head.
   var haft = function (grow) {
