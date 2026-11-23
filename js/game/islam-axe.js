@@ -342,16 +342,12 @@ function axeTarget(b, sw, other) {
   return { key: "ready", rate: 8, p: [0.68 + sway * 0.02, 0.05 + breath * 0.02, -Math.PI / 2 + 0.2 + sway * 0.06, -0.65, -0.05 + breath * 0.02, sway * 0.02] };
 }
 
-// The sweeping strike (Joe 2026-11-23). It starts from one of eight
-// directions on screen (right, below-right, below, below-left, left,
-// above-left, above, above-right), never from straight in front of them,
-// and sweeps through the line to them (th) and on past it. Screen angle.
+// The sweeping strike (Joe 2026-11-23): an arc across wherever they are,
+// so it catches them above him, below him or off to either side. It starts
+// beside the line to them (th), on one side or the other, and sweeps
+// across through them and on past. Screen angle.
 function axeSweepAngle(b, m, th) {
-  if (m.s0 == null) {
-    var opts = [];
-    for (var k = 0; k < 8; k++) { var a0 = k * Math.PI / 4; if (Math.abs(wrapA(a0 - th)) >= 1.2) opts.push(a0); }
-    m.s0 = opts[Math.floor(Math.random() * opts.length)];
-  }
+  if (m.s0 == null) m.s0 = th + (Math.random() < 0.5 ? 1 : -1) * 1.35; // from beside them, one side or the other
   var dl = wrapA(th - m.s0);
   if (m.phase === "coil" || m.phase === "swWind") return m.s0;
   if (m.sweepT == null) { var lc = b.char.rapier && b.char.rapier.lunge; m.sweepT = m.axe === "swing" ? (axeCfg(b).swing.cut || 0.18) : Math.max(0.16, (m.len || 100) / ((lc && lc.speed) || 1200)); }
