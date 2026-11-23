@@ -673,6 +673,7 @@ function pushTrail(trail, x, y, ang) {
 function drawDiamondSword(b, other, top) {
   var sw = bladeHost(b) && bladeHost(b).sword;
   if (!sw || !b.alive) return;
+  if (typeof islamRooHover === "function" && islamRooHover(b)) return; // Islam's axe hovers beside him while he lifts the kangaroo (islam-specials.js)
   var inDuel = swordDuel && (swordDuel.dId === b.id || duelBladeOpp(b));
   // Mid parry (and through a duel) it's drawn over both fighters
   // (drawDiamondSwordsTop), so the clash isn't hidden behind them.
