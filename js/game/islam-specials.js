@@ -496,11 +496,12 @@ function islamTripOn() { return !!islamTrip; }
 function islamRooCounter(volk, isl, m, roo) {
   var ic = islamCfg(isl);
   if (!ic || !ic.roo || !roo) return false;
-  if (isl.islamRoo) return true;
+  var pre = isl.islamRoo && isl.islamRoo.step === "pre" ? isl.islamRoo : null; // already dancing since the special started
+  if (isl.islamRoo && !pre) return true;
   if (m.phase !== "chase" || roo.mode !== "stand" || !isl.alive || isl.igbb || isl.grappled || isl.grapple || isl.dazed || subLocked(isl) || over) return false;
   clearActions(isl);
   isl.vx = 0; isl.vy = 0;
-  var sr = isl.islamRoo = { step: "say", t: 0, all: 0 };
+  var sr = isl.islamRoo = { step: "say", t: 0, all: 0, d0: pre ? pre.dance : 0.001 };
   floater(isl.x, isl.y - isl.r - 30, "NOT TODAY!", "crit");
   isl.islamQuietT = 4.8; // the clip's length: no special talks over it
   islamVoice("islamKangaroo", function () { return isl.islamRoo === sr && sr.all < 0.6; }); // Joe's clip (islam-voice.js)
@@ -510,8 +511,20 @@ function islamRooCounter(volk, isl, m, roo) {
 // From updateIslamMoves (islam-axe.js), on Islam: true while he's lifting,
 // shaking and throwing it.
 function islamRooHeld(isl, dt) {
-  var s = isl.islamRoo;
+  var s = isl.islamRoo, vm = balls[1 - isl.id] && balls[1 - isl.id].igbb;
+  // Dances from the moment Volk calls his kangaroo (Joe), in place until
+  // Volk's in the pouch and islamRooCounter takes over.
+  if (!s && vm && vm.move === "kangaroo" && vm.phase !== "chase" && vm.phase !== "out" && islamCfg(isl) && islamCfg(isl).roo && isl.alive && !isl.igbb && !isl.grappled && !isl.grapple && !isl.dazed && !subLocked(isl) && !over) {
+    clearActions(isl);
+    s = isl.islamRoo = { step: "pre", t: 0, all: 0, dance: 0.001, hx: isl.x, hy: isl.y };
+  }
   if (!s) return false;
+  if (s.step === "pre") {
+    if (!vm || vm.move !== "kangaroo" || vm.phase === "out" || over || !isl.alive || isl.grappled || isl.dazed) { isl.islamRoo = null; return false; }
+    s.t += dt; s.dance += dt; isl.vx = 0; isl.vy = 0;
+    isl.x = Math.max(isl.r, Math.min(W - isl.r, s.hx + Math.sin(s.dance * 9) * isl.r * 0.16));
+    return true;
+  }
   s.t += dt; s.all = (s.all || 0) + dt;
   isl.vx = 0; isl.vy = 0;
   var volk = balls[1 - isl.id], m = volk && volk.igbb, roo = vkRoo;
@@ -521,15 +534,15 @@ function islamRooHeld(isl, dt) {
   var r = isl.r, cfg = isl.char.islam.roo;
   roo.mode = "stand"; roo.t = 0.01;
   if (s.step === "say") {
-    // stops where he is, steps back a little, dances while he says his
-    // line, then walks over under it
+    // stops where he is and starts dancing right away, steps back a little
+    // while he says his line, then walks over under it
     var tx = roo.x, ty = Math.min(H - r, roo.y + r * 0.2), dx = tx - isl.x, dy = ty - isl.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
     var walkAt = cfg.say - 0.6;
-    if (!s.home) s.home = { x: isl.x, y: isl.y, bx: -dx / d, by: -dy / d };
+    if (!s.home) s.home = { x: isl.x - Math.sin(s.d0 * 9) * r * 0.16, y: isl.y, bx: -dx / d, by: -dy / d };
     if (s.t < walkAt) {
       var bu = Math.min(1, Math.max(0, (s.t - 0.15) / 0.4)), be = bu * bu * (3 - 2 * bu), back = r * 0.6 * be;
       var bx = s.home.x + s.home.bx * back, by = s.home.y + s.home.by * back;
-      s.dance = s.t > 0.55 ? s.t - 0.55 : 0; // side to side on the beat
+      s.dance = s.t + s.d0; // still dancing from when the special started (Joe), side to side on the beat
       var sway = s.dance ? Math.sin(s.dance * 9) * r * 0.16 : 0;
       isl.x = Math.max(r, Math.min(W - r, bx + sway)); isl.y = Math.max(r, Math.min(H - r, by));
     } else {
@@ -878,7 +891,7 @@ function drawIslamRoo(b, s, now) {
     for (var tr = 1; tr < s.trail.length; tr++) { ctx.lineWidth = 2 + tr * 1.6; ctx.globalAlpha = tr / s.trail.length * 0.7; ctx.beginPath(); ctx.moveTo(s.trail[tr - 1].x, s.trail[tr - 1].y); ctx.lineTo(s.trail[tr].x, s.trail[tr].y); ctx.stroke(); }
     ctx.restore();
   }
-  if (s.step === "say" && s.dance > 0) { // dancing: fists pumping, one up as the other comes down
+  if ((s.step === "say" || s.step === "pre") && s.dance > 0) { // dancing: fists pumping, one up as the other comes down
     var dr2 = b.r;
     [-1, 1].forEach(function (sd) {
       var ph = s.dance * 9 + (sd > 0 ? Math.PI : 0), up = Math.max(0, Math.sin(ph));
@@ -886,7 +899,7 @@ function drawIslamRoo(b, s, now) {
       drawBentArm(b, shd, hd, sd); drawGloveAt(hd.x, hd.y, dr2 * 0.22, b.char);
     });
   }
-  if (s.step === "say" || s.step === "throw" || !vkRoo) return;
+  if (s.step === "say" || s.step === "pre" || s.step === "throw" || !vkRoo) return;
   var r = b.r, ro = vkRoo.roll || 0, k = Math.min(1, ro / ISL_ROO_ROLL), mid = 85 * KR_S;
   // under its middle, which turns round 85 units up from its feet
   var cx = vkRoo.x, cy = vkRoo.y - vkRoo.z - mid * k, under = r * (0.1 + 0.55 * k);
