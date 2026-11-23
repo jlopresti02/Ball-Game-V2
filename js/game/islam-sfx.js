@@ -19,15 +19,16 @@ function islamSfxWarm() {
   if (typeof withClip !== "function") return;
   ISLAM_SFX.forEach(function (n) { withClip(n); });
 }
-// Plays one, `delay` seconds from now (0 = now). Silent if not decoded yet.
-function islamSfx(name, gain, delay) {
+// Plays one, `delay` seconds from now (0 = now), from `offset` seconds into
+// the clip. Silent if not decoded yet.
+function islamSfx(name, gain, delay, offset) {
   var ac = typeof audioCtx !== "undefined" ? audioCtx : null, buf = ac && clipBuffers[name];
   if (!buf) { if (typeof withClip === "function") withClip(name); return; }
   try {
     var src = ac.createBufferSource(), g = ac.createGain();
     src.buffer = buf; g.gain.value = gain == null ? 1 : gain;
     src.connect(g); g.connect(ac.destination);
-    src.start(ac.currentTime + Math.max(0, delay || 0));
+    src.start(ac.currentTime + Math.max(0, delay || 0), offset || 0);
     islamSfxLive[name] = { src: src, g: g };
   } catch (e) {}
 }

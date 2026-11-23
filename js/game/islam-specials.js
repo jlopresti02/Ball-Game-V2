@@ -396,7 +396,7 @@ function islDagestan(self, other, m, dt) {
       floater(other.x, other.y - other.r - 40, "VAN HIT!", "crit");
       other.flash = 0.16;
       if (!reduceMotion) { shake = Math.max(shake, 18); hitStop = Math.max(hitStop, 0.08); }
-      playSlam(); crowdReact(1);
+      islamSfx("islamThump", 1, 0, 0.2); crowdReact(1); // Joe's thud, from just before its peak so it lands on the hit (islam-sfx.js)
       // knocked along ahead of the bumper, never under the van
       m.fly = { x0: other.x, x1: Math.max(other.r + 4, Math.min(W - other.r - 4, other.x + v.dir * 140)) };
       checkEnd();
