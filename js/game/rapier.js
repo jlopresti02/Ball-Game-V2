@@ -143,6 +143,7 @@ function updateRapierLunge(self, other, dt) {
     // Run through: the blade reaches well past his body.
     var BL = bladeLen(self); // (Bisping's cutlass is shorter, bisping-cutlass.js)
     var tipX = self.x + m.dx * self.r * (0.3 + BL * 0.95), tipY = self.y + m.dy * self.r * (0.3 + BL * 0.95);
+    if (axeSweepParried(self, other, m)) return true; // Islam's sweep met by their weapon (islam-axe.js)
     var hitD = lungeSegDist(other.x, other.y, self.x, self.y, tipX, tipY);
     if (!m.hit && other.alive && !other.invincible && hitD < other.r * 0.95) {
       m.hit = true;

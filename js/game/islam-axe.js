@@ -301,6 +301,7 @@ function drawKratosPaint(c, r) {
 function axeTarget(b, sw, other) {
   var t = sw.t + b.id * 1.3, sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), m = b.igbb;
   var sg = sw.side >= 0 ? 1 : -1;
+  if (b.axeJar > 0 && !m) return { key: "jarred", rate: 18, p: [0.6, -0.15, -Math.PI / 2 - 0.25, -0.6, 0.0, -0.15] }; // knocked back up off their weapon (axeSweepParried)
   if (m && m.move === "lunge") {
     var th = Math.atan2(m.dy || 0, m.dx || 1);
     if (m.axe && m.phase !== "wind" && m.phase !== "catch" && m.ax != null) th = Math.atan2(m.ay - b.y, m.ax - b.x); // reaching for the axe
@@ -309,13 +310,13 @@ function axeTarget(b, sw, other) {
     if (m.axe === "spin" && m.phase === "spin") return { key: "conduct", rate: 14, p: [cx * 0.7, -0.55, a, -0.6, -0.1, 0.05] };              // hand up, steering it round him
     if (m.axe && m.phase !== "catch") return { key: "reach", rate: 22, p: [cx * 1.15, cy * 1.15 - 0.08, a, -0.6, -0.35, 0.16] };          // open hand out toward it
     if (m.axe) return { key: "catch", rate: 24, p: [0.85, -0.25, -0.6, -0.62, -0.1, 0.06] };
-    // Swung from all round him, a different way each time (Joe 2026-11-23):
-    // straight down over the top, a flat sweep from behind, a diagonal from
-    // high on the far side, or a rising cut up from low.
-    if (m.swing == null) m.swing = AXE_SWINGS[Math.floor(Math.random() * AXE_SWINGS.length)];
-    var SW = m.swing;
-    if (m.phase === "coil") return { key: "raise-" + SW.k, rate: 16, p: [SW.ch[0], SW.ch[1], SW.ca(a), cx * 0.7, cy * 0.7 - 0.1, -0.18] };
-    if (m.phase === "lunge") return { key: "cleave-" + SW.k, rate: 30, p: [cx * 1.15, cy * 1.15 + 0.05, SW.la(a), -0.7, -0.05, 0.38] };
+    // A sweeping strike from any direction (Joe 2026-11-23): drawn back
+    // above, below, left, right or on a diagonal, then swept right through
+    // the line to them and out the other side (axeSweepAngle).
+    if (m.phase === "coil" || m.phase === "lunge") {
+      var S = axeSweepAngle(b, m, th), pa = sg > 0 ? S : Math.PI - S, hr = m.phase === "coil" ? 0.55 : 0.75;
+      return { key: m.phase === "coil" ? "raise" : "sweep", rate: m.phase === "coil" ? 16 : 60, p: [Math.cos(S) * hr * sg, Math.sin(S) * hr, pa, -0.7, -0.05, m.phase === "lunge" ? 0.3 : -0.15] };
+    }
     return { key: "follow", rate: 12, p: [0.75, 0.05, -Math.PI / 2 + 0.45, -0.6, 0.0, 0.1] }; // back up the right way
   }
   if (sw.parry >= 0) {
@@ -336,14 +337,71 @@ function axeTarget(b, sw, other) {
   return { key: "ready", rate: 8, p: [0.68 + sway * 0.02, 0.05 + breath * 0.02, -Math.PI / 2 + 0.2 + sway * 0.06, -0.65, -0.05 + breath * 0.02, sway * 0.02] };
 }
 
-// His swings (axeTarget): where it's drawn back to (hand ch, angle ca) and
-// where it finishes (angle la), given a = the line to them.
-var AXE_SWINGS = [
-  { k: "over", ch: [-0.05, -0.9], ca: function () { return -Math.PI / 2 - 0.85; }, la: function (a) { return a + 0.55; } },     // straight down over the top
-  { k: "sweep", ch: [-0.35, -0.15], ca: function (a) { return a + Math.PI * 0.85; }, la: function (a) { return a - 0.7; } },     // flat, round from behind him
-  { k: "diag", ch: [-0.25, -0.7], ca: function () { return -Math.PI / 2 - 1.35; }, la: function (a) { return a + 1.0; } },      // high on the far side, down across
-  { k: "rise", ch: [0.05, 0.55], ca: function (a) { return a + Math.PI * 0.7; }, la: function (a) { return a - 1.0; } }          // up from low
-];
+// The sweeping strike (Joe 2026-11-23). It starts from one of eight
+// directions on screen (right, below-right, below, below-left, left,
+// above-left, above, above-right), never from straight in front of them,
+// and sweeps through the line to them (th) and on past it. Screen angle.
+function axeSweepAngle(b, m, th) {
+  if (m.s0 == null) {
+    var opts = [];
+    for (var k = 0; k < 8; k++) { var a0 = k * Math.PI / 4; if (Math.abs(wrapA(a0 - th)) >= 1.2) opts.push(a0); }
+    m.s0 = opts[Math.floor(Math.random() * opts.length)];
+  }
+  var dl = wrapA(th - m.s0);
+  if (m.phase === "coil") return m.s0;
+  if (m.sweepT == null) { var lc = b.char.rapier && b.char.rapier.lunge; m.sweepT = Math.max(0.16, (m.len || 100) / ((lc && lc.speed) || 1200)); }
+  var u = Math.min(1, m.t / m.sweepT);
+  return m.s0 + dl * 1.85 * ease(u);
+}
+// Where the axe head is right now (the parry meets it there).
+function axeHeadPoint(b) {
+  var sw = b.rapier && b.rapier.sword;
+  return sw ? swordPoint(b, sw, AXE_LEN * 0.86 / AXE_LEN) : { x: b.x, y: b.y };
+}
+
+// From rapierLunge (rapier.js), every frame of his sweeping strike: an
+// armed opponent (a bat, club or saber, Tony's katanas, Jiří's samurai
+// swords) can parry it in any direction by meeting the axe blade head on,
+// as in a sword fight (Joe 2026-11-23). True when it was parried (the
+// strike stops dead).
+function axeSweepParried(self, other, m) {
+  if (!axeStyle(self) || m.axe || m.hit || m.parried || !other.alive) return false;
+  var wp = typeof swordWeaponOut === "function" && swordWeaponOut(other);
+  if (!wp) return false;
+  var ac = axeCfg(self) || {};
+  if (m.willParry == null) m.willParry = Math.random() * 100 < (ac.sweepParry != null ? ac.sweepParry : 45);
+  if (!m.willParry) return false;
+  var P = axeHeadPoint(self), reach = other.r * 1.75;
+  if (Math.hypot(P.x - other.x, P.y - other.y) > reach && Math.hypot(self.x - other.x, self.y - other.y) > self.r + other.r * 2.2) return false; // (the head reaching them, or him closing on them)
+  m.parried = true;
+  endRapierLunge(self); // stops dead against it and bounces off (rapier.js)
+  self.axeJar = 0.4;
+  other.axeParry = { t: 0, x: P.x, y: P.y };
+  var nx = other.x - self.x, ny = other.y - self.y, nd = Math.sqrt(nx * nx + ny * ny) || 1; nx /= nd; ny /= nd;
+  self.vx = -nx * 380; self.vy = -ny * 380; other.vx += nx * 160; other.vy += ny * 160;
+  if (other.cheater) other.cheater.cd = Math.max(other.cheater.cd || 0, 0.5);
+  clashFx(P.x, P.y, -nx, -ny, 1.3, RAPIER_C);
+  floater(P.x, Math.min(self.y, other.y) - self.r - 34, "PARRIED!", "crit");
+  if (!reduceMotion) { shake = Math.max(shake, 8); hitStop = Math.max(hitStop, 0.06); }
+  playSwordClash(1); crowdReact(0.6);
+  return true;
+}
+// From updateIslamMoves: their weapon held where it met the axe, then let go.
+function axeParryTick(o, dt) { if (o && o.axeParry && (o.axeParry.t += dt) > 0.4) o.axeParry = null; }
+// From drawCheater (cheater.js): a bat, club or saber held up into the axe.
+function axeParryHeld(b) { return !!(b && b.axeParry); }
+// From drawTfKatanas (ferguson-katanas.js) and drawProchazka (prochazka.js):
+// both blades up into the axe where it landed (the katana duel's blocks, katana-duel.js).
+function axeParryDrawTony(b, ang) {
+  if (!b.axeParry) return false;
+  kdTonyBlock(b, ang, b.axeParry, 1, 0, b.r * KAT_LEN, 0.5);
+  return true;
+}
+function axeParryDrawJiri(b, ang) {
+  if (!b.axeParry) return false;
+  kdJiriBlock(b, ang, b.axeParry, 1, 0, 0.5);
+  return true;
+}
 
 // When he's stood still and nothing's coming (u = 0..1).
 var AXE_FLOURISHES = {
@@ -450,6 +508,7 @@ function updateIslamMoves(self, other, dt) {
   if (typeof islamVoiceWarm === "function" && islamCfg(self)) islamVoiceWarm(); // decode his lines (islam-voice.js)
   if (typeof islamReleaseHeld === "function" && islamCfg(self)) islamReleaseHeld(self); // (islam-specials.js)
   if (typeof islamRooHeld === "function" && islamRooHeld(self, dt)) return true; // lifting Volk's kangaroo (islam-specials.js)
+  axeParryTick(other, dt); if (self.axeJar > 0) self.axeJar -= dt;
   return updateLeviathan(self, other, dt);
 }
 

@@ -809,6 +809,7 @@ function drawProchazka(b, other) {
   if (m.phase === "iai") { jpDrawIai(b, sam, m); return; }
   if (samuraiLockHeld(b)) { jpDrawLockArms(b, ang); return; }
   if (drawKatanaDuelJiri(b, ang)) return; // in the katana duel with Tony (katana-duel.js)
+  if (axeParryDrawJiri(b, ang)) return; // blocking Islam's axe sweep (islam-axe.js)
   if (m.phase === "draw" || m.phase === "sheathe") {
     var k = m.phase === "draw" ? m.t / sam.draw : 1 - m.t / JP_SHEATHE;
     [1, -1].forEach(function (s) {

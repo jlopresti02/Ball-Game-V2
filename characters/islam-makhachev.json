@@ -1,6 +1,6 @@
 {
   "id": "c-islam-makhachev",
-  "rev": 7,
+  "rev": 8,
   "builtin": false,
   "weightClass": "lightweight",
   "name": "Islam Makhachev",
@@ -309,6 +309,7 @@
     },
     "recall": 1.8,
     "cutsBat": true,
+    "sweepParry": 45,
     "mode": {
       "first": [
         6,

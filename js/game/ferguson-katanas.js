@@ -475,6 +475,7 @@ function katGhosts(b, pts, fade) {
 function drawTfKatanas(b, other, ang) {
   var m = b.igbb, sp = b.char.special, L = b.r * KAT_LEN;
   if (drawKatanaDuelTony(b, ang)) return; // in the katana duel with Jiří (katana-duel.js)
+  if (axeParryDrawTony(b, ang)) return; // blocking Islam's axe sweep (islam-axe.js)
   if (katanaLock && katanaLock.tRef === b && m.phase === "close") {
     // In the lock: both elbows forward, the blades angled up into theirs, straining.
     var lp = katLockPoint(), jt = !reduceMotion ? Math.sin(performance.now() / 21) * 0.04 : 0;
