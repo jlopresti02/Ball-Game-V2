@@ -49,7 +49,7 @@ function axeCfg(b) { return b && b.char && b.char.axe; }
 function axeHeld(b) { return !!(axeStyle(b) && b.rapier.sword && b.alive); }
 function axeMove(b) { var m = b && b.igbb; return m && m.move === "lunge" && m.axe ? m : null; }
 // The axe is out of his hand: thrown, coming back, or whirling round him.
-function axeAway(b) { var m = axeMove(b); return !!(m && m.phase !== "wind" && m.phase !== "catch"); }
+function axeAway(b) { var m = axeMove(b); return !!(m && m.axe !== "swing" && m.phase !== "wind" && m.phase !== "catch"); }
 // From the abilities loop: while it's out, no punch or kick (one he was
 // throwing when it came out is dropped). Holds already on finish first.
 function axeFistsOff(b) {
@@ -306,6 +306,11 @@ function axeTarget(b, sw, other) {
     var th = Math.atan2(m.dy || 0, m.dx || 1);
     if (m.axe && m.phase !== "wind" && m.phase !== "catch" && m.ax != null) th = Math.atan2(m.ay - b.y, m.ax - b.x); // reaching for the axe
     var a = sg > 0 ? th : Math.PI - th, cx = Math.cos(th) * sg, cy = Math.sin(th);
+    if (m.axe === "swing") { // the swing: drawn back on its side, then right through where they are
+      if (m.phase === "swBack") return { key: "follow", rate: 12, p: [0.75, 0.05, -Math.PI / 2 + 0.45, -0.6, 0.0, 0.1] };
+      var S2 = axeSweepAngle(b, m, th), pa2 = sg > 0 ? S2 : Math.PI - S2, hr2 = m.phase === "swWind" ? 0.5 : 0.75;
+      return { key: m.phase, rate: m.phase === "swWind" ? 14 : 60, p: [Math.cos(S2) * hr2 * sg, Math.sin(S2) * hr2, pa2, -0.7, -0.05, m.phase === "swCut" ? 0.2 : -0.12] };
+    }
     if (m.axe === "throw" && m.phase === "wind") return { key: "wind", rate: 16, p: [-0.35, -0.8, a - 2.7, cx * 0.85, cy * 0.85 - 0.15, -0.16] }; // cocked back over his shoulder
     if (m.axe === "spin" && m.phase === "spin") return { key: "conduct", rate: 14, p: [cx * 0.7, -0.55, a, -0.6, -0.1, 0.05] };              // hand up, steering it round him
     if (m.axe && m.phase !== "catch") return { key: "reach", rate: 22, p: [cx * 1.15, cy * 1.15 - 0.08, a, -0.6, -0.35, 0.16] };          // open hand out toward it
@@ -348,8 +353,8 @@ function axeSweepAngle(b, m, th) {
     m.s0 = opts[Math.floor(Math.random() * opts.length)];
   }
   var dl = wrapA(th - m.s0);
-  if (m.phase === "coil") return m.s0;
-  if (m.sweepT == null) { var lc = b.char.rapier && b.char.rapier.lunge; m.sweepT = Math.max(0.16, (m.len || 100) / ((lc && lc.speed) || 1200)); }
+  if (m.phase === "coil" || m.phase === "swWind") return m.s0;
+  if (m.sweepT == null) { var lc = b.char.rapier && b.char.rapier.lunge; m.sweepT = m.axe === "swing" ? (axeCfg(b).swing.cut || 0.18) : Math.max(0.16, (m.len || 100) / ((lc && lc.speed) || 1200)); }
   var u = Math.min(1, m.t / m.sweepT);
   return m.s0 + dl * 1.85 * ease(u);
 }
@@ -366,15 +371,22 @@ function axeHeadPoint(b) {
 // strike stops dead).
 function axeSweepParried(self, other, m) {
   if (!axeStyle(self) || m.axe || m.hit || m.parried || !other.alive) return false;
+  var P = axeHeadPoint(self), reach = other.r * 1.75;
+  if (Math.hypot(P.x - other.x, P.y - other.y) > reach && Math.hypot(self.x - other.x, self.y - other.y) > self.r + other.r * 2.2) return false; // (the head reaching them, or him closing on them)
+  if (!axeParryCheck(self, other, m)) return false;
+  endRapierLunge(self); // stops dead against it and bounces off (rapier.js)
+  return true;
+}
+// Whether their weapon meets the axe this time (decided once a strike), and
+// the clash if it does.
+function axeParryCheck(self, other, m) {
   var wp = typeof swordWeaponOut === "function" && swordWeaponOut(other);
-  if (!wp) return false;
+  if (!wp || m.parried) return false;
   var ac = axeCfg(self) || {};
   if (m.willParry == null) m.willParry = Math.random() * 100 < (ac.sweepParry != null ? ac.sweepParry : 45);
   if (!m.willParry) return false;
-  var P = axeHeadPoint(self), reach = other.r * 1.75;
-  if (Math.hypot(P.x - other.x, P.y - other.y) > reach && Math.hypot(self.x - other.x, self.y - other.y) > self.r + other.r * 2.2) return false; // (the head reaching them, or him closing on them)
+  var P = axeHeadPoint(self);
   m.parried = true;
-  endRapierLunge(self); // stops dead against it and bounces off (rapier.js)
   self.axeJar = 0.4;
   other.axeParry = { t: 0, x: P.x, y: P.y };
   var nx = other.x - self.x, ny = other.y - self.y, nd = Math.sqrt(nx * nx + ny * ny) || 1; nx /= nd; ny /= nd;
@@ -386,6 +398,32 @@ function axeSweepParried(self, other, m) {
   playSwordClash(1); crowdReact(0.6);
   return true;
 }
+// The swing (updateLeviathan): wind-up, the cut (it lands, or their weapon
+// meets it, as it passes through them), then back up the right way.
+function tickAxeSwing(self, other, m, c, dt) {
+  var dx = other.x - self.x, dy = other.y - self.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+  if (m.phase === "swWind") {
+    if (m.t < c.wind * 0.6) { m.dx = dx / d; m.dy = dy / d; }
+    if (m.t >= c.wind) { m.phase = "swCut"; m.t = 0; playWhoosh(); }
+    return true;
+  }
+  if (m.phase === "swCut") {
+    if (!m.hit && m.t >= (c.cut || 0.18) * 0.5) { // passing through them
+      m.hit = true;
+      var reach = self.r + other.r + self.r * AXE_LEN * 0.8;
+      if (d < reach && other.alive && !other.invincible) {
+        if (axeParryCheck(self, other, m)) { endAxeMove(self); return false; }
+        axeHit(self, other, c.damage, dx / d, dy / d, null, c.knockback);
+        playRapierSlice();
+      }
+    }
+    if (m.t >= (c.cut || 0.18)) { m.phase = "swBack"; m.t = 0; }
+    return true;
+  }
+  if (m.t >= (c.back || 0.25)) { endAxeMove(self); return false; }
+  return true;
+}
+
 // From updateIslamMoves: their weapon held where it met the axe, then let go.
 function axeParryTick(o, dt) { if (o && o.axeParry && (o.axeParry.t += dt) > 0.4) o.axeParry = null; }
 // From drawCheater (cheater.js): a bat, club or saber held up into the axe.
@@ -628,13 +666,19 @@ function updateLeviathan(self, other, dt) {
     if (self.axeThrowT == null) { self.axeThrowT = ac.throw ? axeRand(ac.throw.first) : Infinity; self.axeSpinT = ac.spin ? axeRand(ac.spin.first) : Infinity; }
     if (!started || over || !sw || !sw.out || sw.t < SWORD_DRAW + 0.3 || sw.parry >= 0 || swordDuelActive() || bladeRivals(self, other)) return false;
     self.axeThrowT -= dt; self.axeSpinT -= dt;
-    var kind = null;
+    if (self.axeSwingT == null) self.axeSwingT = ac.swing ? axeRand(ac.swing.first) : Infinity;
+    self.axeSwingT -= dt;
+    var kind = null, reachSw = self.r + other.r + self.r * AXE_LEN * 0.75;
     if (ac.spin && self.axeSpinT <= 0 && d < ac.spin.range) kind = "spin";
     else if (ac.throw && self.axeThrowT <= 0 && d > ac.throw.range[0] && d < ac.throw.range[1]) kind = "throw";
+    else if (ac.swing && self.axeSwingT <= 0 && d < reachSw) kind = "swing";
     if (!kind || other.chAct || !canStartIgbb(self, other)) return false;
     clearActions(self);
     sw.fl = null; sw.feint = -1;
-    if (kind === "throw") {
+    if (kind === "swing") { // a plain swing where he stands (Joe 2026-11-23), from any direction
+      self.axeSwingT = axeRand(ac.swing.every);
+      self.igbb = { move: "lunge", axe: "swing", phase: "swWind", t: 0, dx: dx / d, dy: dy / d, hit: false };
+    } else if (kind === "throw") {
       self.axeThrowT = axeRand(ac.throw.every);
       self.axeSpinT = Math.max(self.axeSpinT, 1.5);
       self.igbb = { move: "lunge", axe: "throw", phase: "wind", t: 0, dx: dx / d, dy: dy / d, len: 0, sx: self.x, sy: self.y, aa: 0, hit: false, rhit: false };
@@ -652,6 +696,7 @@ function updateLeviathan(self, other, dt) {
   self.vx = 0; self.vy = 0;
   if (over || !self.alive) { endAxeMove(self); return false; }
   var r = self.r, tc = ac.throw, sc = ac.spin;
+  if (m.axe === "swing") return tickAxeSwing(self, other, m, ac.swing, dt);
   if (m.phase === "wind") { // the red line follows them for most of the wind-up, then locks
     if (m.t < tc.warn * 0.65 && other.alive) {
       m.dx = dx / d; m.dy = dy / d;
