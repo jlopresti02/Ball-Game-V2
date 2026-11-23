@@ -3341,12 +3341,12 @@ var SAVED_ROSTER = [
   },
   {
     "id": "c-islam-makhachev",
-    "rev": 1,
+    "rev": 9,
     "builtin": false,
     "weightClass": "lightweight",
     "name": "Islam Makhachev",
     "base": "Grappler",
-    "bio": "Dagestani wrestler on the Grappler base: walks you down, cuts off the cage and chains takedowns, with a sharper jab than his old teammate. No special yet.",
+    "bio": "Dagestani grappler on the Grappler base, and some of the best grappling in the game: his shots finish as a back take into the rear naked choke, a body lock slam or a single leg he works up into the best clinch in the game, knees into a judo sweep. He snaps D'Arces on shots he sprawls on, and his takedown, kick and clinch defense are elite. His hands are light and his chin isn't great on the feet: punches can overwhelm him, and the first one that lands early can stagger him. When they pull out a weapon he takes out a frost axe and turns into the god of war: he blocks and clashes with it, throws it and calls it back, spins it round him like a saw blade, and every hit frosts their gloves (he and Chuck Liddell are immune to each other's ice). It cuts Gane's bat clean in half. His specials take turns: \"Brotha\" (they stand there confused and he shoots in), California Cheesecake (heavyweights, Khabib and Sean O'Malley chase it down, and he suplexes them while they eat), and 2-3 years Dagestan (a van runs them over and drives them off to Dagestan, and Hasbulla catapults them back). He lifts Volk's kangaroo over his head and shakes Volk out of it, and once a fight Dustin lands the big one.",
     "color": "#2d4a6b",
     "label": "",
     "imgData": null,
@@ -3379,30 +3379,31 @@ var SAVED_ROSTER = [
     },
     "hasPunch": true,
     "punch": {
-      "damage": 7,
-      "cooldown": 0.65,
-      "speed": 0.22,
+      "damage": 5,
+      "cooldown": 0.7,
+      "speed": 0.24,
       "size": 13,
-      "knockback": 90,
-      "reach": 32,
+      "knockback": 80,
+      "reach": 30,
       "koChance": 0
     },
-    "hasKick": false,
+    "hasKick": true,
     "hasGrapple": true,
     "grapple": {
-      "damage": 44,
-      "cooldown": 1.6,
+      "damage": 46,
+      "cooldown": 1.5,
       "speed": 0.45,
       "reach": 6,
-      "counterChance": 20,
-      "finSlamDamage": 18,
+      "counterChance": 30,
+      "finSlamDamage": 20,
       "finPunches": 3,
       "finPunchDamage": 9,
-      "sprawlChance": 40,
-      "reattackChance": 50,
-      "stuffChance": 15
+      "sprawlChance": 70,
+      "reattackChance": 60,
+      "stuffChance": 10,
+      "shotName": "TAKEDOWN"
     },
-    "hasSuplex": false,
+    "hasSuplex": true,
     "hasPowerPunch": false,
     "hasRage": false,
     "hasWatcher": false,
@@ -3420,8 +3421,303 @@ var SAVED_ROSTER = [
         "fade": 80
       }
     },
-    "hasSpecial": false,
-    "blockChance": 12
+    "hasSpecial": true,
+    "blockChance": 6,
+    "kick": {
+      "damage": 16,
+      "cooldown": 2.6,
+      "speed": 0.4,
+      "size": 14,
+      "knockback": 200,
+      "reach": 62,
+      "checkChance": 45
+    },
+    "legKick": {
+      "first": [
+        4,
+        7
+      ],
+      "every": [
+        7,
+        10
+      ],
+      "range": 56,
+      "reach": 88,
+      "damage": 7,
+      "slow": 0.85,
+      "time": 2
+    },
+    "suplex": {
+      "chance": 55,
+      "damage": 48,
+      "cooldown": 4
+    },
+    "rnc": {
+      "tapBase": 30,
+      "tapLowHp": 55
+    },
+    "darce": {
+      "chance": 6,
+      "lowHpChance": 20,
+      "lowHpAt": 40,
+      "cooldown": 10,
+      "lunge": {
+        "every": 3.5,
+        "range": 40,
+        "time": 0.3,
+        "speed": 600
+      },
+      "hold": 2.4,
+      "holdExtra": 1.2,
+      "tapBase": 20,
+      "tapLowHp": 55,
+      "escapeSpeed": 340
+    },
+    "clinch": {
+      "first": [
+        4,
+        7
+      ],
+      "every": [
+        7,
+        10
+      ],
+      "range": 18,
+      "tie": "overUnder",
+      "evade": 6,
+      "strikes": [
+        3,
+        5
+      ],
+      "gap": 0.34,
+      "mix": {
+        "bodyKnee": 4,
+        "headKnee": 3,
+        "elbow": 1
+      },
+      "knee": {
+        "damage": 9,
+        "headDamage": 12,
+        "critChance": 30,
+        "critMult": 2
+      },
+      "escape": 6,
+      "grapplerEscape": 5
+    },
+    "chin": {
+      "critChance": 12,
+      "critMult": 1.4,
+      "text": "OVERWHELMED!",
+      "sources": [
+        "punch",
+        "jab",
+        "combo",
+        "flow"
+      ]
+    },
+    "islam": {
+      "takedowns": {
+        "back": 2,
+        "bodyLock": 3,
+        "single": 3,
+        "double": 2
+      },
+      "sweep": {
+        "chance": 45
+      },
+      "darceShot": {
+        "chance": 25
+      },
+      "clinchDef": {
+        "evade": 30,
+        "escape": 25
+      },
+      "early": {
+        "window": 20,
+        "chance": 33,
+        "dizzy": 1.2
+      },
+      "roo": {
+        "say": 2.8,
+        "shake": 1.8,
+        "dizzy": 2.5
+      },
+      "bigPunch": {
+        "from": [
+          "c-dustin-poirier",
+          "moicano"
+        ],
+        "chance": 25,
+        "by": 6,
+        "damage": 14,
+        "knockback": 1500,
+        "dizzy": 2.0
+      }
+    },
+    "rapier": {
+      "enabled": true,
+      "style": "axe",
+      "weapons": [
+        "bat"
+      ],
+      "parryChance": 75,
+      "knockback": 420,
+      "recover": 0.6,
+      "drawText": "LEVIATHAN AXE",
+      "duel": {
+        "after": 3,
+        "clashes": 6,
+        "gap": 80,
+        "disarmChance": 50,
+        "slashDamage": 40,
+        "slashKnockback": 1500,
+        "slashText": "AXE CLEAVE!"
+      },
+      "lunge": {
+        "first": [
+          1.5,
+          3
+        ],
+        "every": [
+          4,
+          6.5
+        ],
+        "warn": 0.6,
+        "range": 280,
+        "speed": 1250,
+        "damage": 20,
+        "knockback": 950,
+        "wallSlams": 1,
+        "slamDamage": 3,
+        "coilText": "",
+        "lungeText": "CLEAVE!",
+        "hitText": "CLEAVED!"
+      }
+    },
+    "axe": {
+      "throw": {
+        "first": [
+          2.5,
+          4
+        ],
+        "every": [
+          5,
+          8
+        ],
+        "range": [
+          130,
+          560
+        ],
+        "warn": 0.45,
+        "speed": 1150,
+        "maxDist": 560,
+        "damage": 16,
+        "returnDamage": 10,
+        "knockback": 420
+      },
+      "swing": {
+        "first": [
+          0.6,
+          1.2
+        ],
+        "every": [
+          1.1,
+          2.0
+        ],
+        "wind": 0.3,
+        "cut": 0.18,
+        "back": 0.25,
+        "damage": 12,
+        "knockback": 260
+      },
+      "spin": {
+        "first": [
+          4,
+          6
+        ],
+        "every": [
+          7,
+          11
+        ],
+        "range": 230,
+        "time": 1.5,
+        "radius": 1.9,
+        "turn": 10,
+        "walk": 120,
+        "damage": 6,
+        "gap": 0.24,
+        "hits": 5,
+        "knockback": 260
+      },
+      "frost": {
+        "perHit": 0.1,
+        "perDamage": 0.006,
+        "hold": 2,
+        "thaw": 0.015,
+        "soften": 0.15,
+        "slow": 0.25,
+        "atkSlow": 0.15,
+        "stiff": 0.3,
+        "chargeSlow": 0.15,
+        "hitChargeSlow": 0.4,
+        "power": 0,
+        "sources": []
+      },
+      "recall": 1.8,
+      "cutsBat": true,
+      "sweepParry": 45,
+      "mode": {
+        "first": [
+          6,
+          10
+        ],
+        "every": [
+          14,
+          22
+        ],
+        "time": 10
+      }
+    },
+    "special": {
+      "move": "islam",
+      "chargeTime": 40,
+      "hitCut": 2,
+      "punchCut": 1.5,
+      "order": [
+        "brotha",
+        "cheesecake",
+        "dagestan"
+      ],
+      "brotha": {
+        "space": 330,
+        "backstep": 900,
+        "moan": 1.0,
+        "confused": 0.15,
+        "set": 0.15,
+        "dash": 1400,
+        "accel": 4500
+      },
+      "cheesecake": {
+        "serve": 0.9,
+        "toss": 0.5,
+        "past": 170,
+        "run": 520,
+        "eat": 2.6,
+        "seanEat": 1.2,
+        "heal": 5,
+        "bites": 5,
+        "sneak": 420
+      },
+      "dagestan": {
+        "call": 1.8,
+        "vanSpeed": 1300,
+        "vanDamage": 10,
+        "beatDamage": 28,
+        "landDamage": 14,
+        "fall": 0.7,
+        "dizzy": 1.6
+      }
+    }
   },
   {
     "id": "c-jiri-prochazka",

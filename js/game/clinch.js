@@ -209,6 +209,7 @@ function startClinch(self, other, cmb) {
   clearActions(self);
   self.kneeAnim = null; self.elbowAnim = null;
   var evade = n.evade + (other.char.hasWeave ? n.weaverEvade : 0);
+  evade += islamClinchDefense(other, "evade"); // Islam Makhachev's clinch defense (islam.js)
   self.clin = { phase: "reach", t: 0, vicId: other.id, frame: clFrame, cmb: cmb, slip: Math.random() * 100 < evade, held: false,
     side: other.x >= self.x ? 1 : -1, count: 0, thrown: 0, landed: 0, row: 0, strike: null, jolt: 0, joltKind: null, leg: 1, arm: -1, next: 0 };
   floater(self.x, self.y - self.r - 30, "CLINCH!", "crit");
@@ -282,6 +283,7 @@ function holdClinch(self, v, m, n, dt) {
       if (m.thrown >= m.count) { endClinch(self, "done"); return clinchBusy(self); }
       // They fight hands and break free (a Grappler knows the clinch).
       var esc = n.escape + (v.char.hasGrapple ? n.grapplerEscape : 0);
+      esc += islamClinchDefense(v, "escape"); // Islam Makhachev's clinch defense (islam.js)
       if (Math.random() * 100 < esc) { endClinch(self, "escape"); return false; }
     }
     return true;
@@ -350,6 +352,7 @@ function endClinch(self, how) {
   // A combination into the clinch: every strike landed and every one in here too.
   if (m.cmb && how === "done" && typeof comboCounter === "function") comboCounter(self, m.cmb.hits + m.landed, m.cmb.n + m.thrown);
   if (!m.held || how === "lost" || !v || !v.alive || v.koOut) return;
+  if (islamJudoSweep(self, v, how, m)) return; // Islam Makhachev's knees into the judo sweep (islam.js)
   var s = m.side, esc = how === "escape", pc = clPart(n), part = null;
   if (!esc && pc.chance > 0 && self.alive && plumTarget(v) && Math.random() * 100 < pc.chance) part = clPick(pc.mix);
   var kb = esc ? 300 : (part ? pc.shove : n.knockback);

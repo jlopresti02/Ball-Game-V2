@@ -53,6 +53,7 @@ function islamEars(c, r, look, line, lw) {
 }
 // Called at the end of drawArtHeadLayer (fighter-art.js) when look.islamBeard is set.
 function drawIslamBeard(c, r, look, line, lw) {
+  if (look.kratosPaint) drawKratosPaint(c, r); // the god of war's red stripe while his axe is out (islam-axe.js)
   var bc = look.beardColor || look.hairColor, rnd = artRand(311), f = ISLAM_FIT, S = 2;
   // build the beard once per size on its own canvas so the traced outline, the
   // jaw fill and the strips by the ears merge into one shape

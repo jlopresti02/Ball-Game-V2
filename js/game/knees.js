@@ -92,7 +92,7 @@ function kneeKnockable(o) { return o.alive && !o.grappled && !o.grapple && !o.sl
 // Free to start a clinch or a flying knee: nothing else going on.
 function kneeFree(b) {
   return b.alive && !b.koOut && inOrdinaryMovement(b) && !b.punch && !b.kick && !b.koPunch && !b.swing && !b.throwAnim &&
-    !b.elbowAnim && !b.kneeAnim && !b.cmb && !b.dizzy && !swordDuelActive() && !cutlassHeld(b); // (not with Bisping's cutlass out, bisping-cutlass.js)
+    !b.elbowAnim && !b.kneeAnim && !b.cmb && !b.dizzy && !swordDuelActive() && !cutlassHeld(b) && !axeHeld(b); // (not with Bisping's cutlass out, bisping-cutlass.js; or Islam's axe, islam-axe.js)
 }
 // Someone he can leap at.
 function kneeTarget(o) {

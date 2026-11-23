@@ -43,6 +43,7 @@ function tickRapier(b, dt) {
 // Same slots as swordTarget: hand x/y (x toward them), blade angle (0 points
 // at them, -PI/2 straight up), free hand x/y, lean toward them.
 function rapierTarget(b, sw, other) {
+  if (axeStyle(b)) return axeTarget(b, sw, other); // Islam's Leviathan axe (islam-axe.js)
   if (cutlassStyle(b)) return cutlassTarget(b, sw, other); // Bisping's cutlass: a swashbuckler's poses (bisping-cutlass.js)
   var t = sw.t + b.id * 1.3, sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), m = b.igbb;
   if (m && m.move === "lunge" && (m.phase === "coil" || m.phase === "lunge")) {
@@ -142,6 +143,7 @@ function updateRapierLunge(self, other, dt) {
     // Run through: the blade reaches well past his body.
     var BL = bladeLen(self); // (Bisping's cutlass is shorter, bisping-cutlass.js)
     var tipX = self.x + m.dx * self.r * (0.3 + BL * 0.95), tipY = self.y + m.dy * self.r * (0.3 + BL * 0.95);
+    if (axeSweepParried(self, other, m)) return true; // Islam's sweep met by their weapon (islam-axe.js)
     var hitD = lungeSegDist(other.x, other.y, self.x, self.y, tipX, tipY);
     if (!m.hit && other.alive && !other.invincible && hitD < other.r * 0.95) {
       m.hit = true;
@@ -233,8 +235,8 @@ function drawRapierArms(b, sw, sh, fsh, hand, ang, len, k, alpha, sideK, pz, inD
   drawGloveAt(free.x, free.y, r * 0.2, b.char);
   if (inDuel && swordDuel.dId === b.id && swordDuel.slashLine && swordDuel.done) drawSlashLine(b, swordDuel);
   ang += cutlassSpin(b); // Bisping's twirl after his charge (bisping-cutlass.js)
-  var fl = cutlassStyle(b) ? cutlassFlip(b, hand.x, hand.y, ang) : 1; // (the cutlass edge turned toward them, bisping-cutlass.js)
-  var dr = cutlassStyle(b) ? function (x, y, a2, l, kk, al) { drawCutlass(x, y, a2, l, kk, al, fl); } : drawRapier; // (or Bisping's cutlass, bisping-cutlass.js)
+  var fl = cutlassStyle(b) || axeStyle(b) ? cutlassFlip(b, hand.x, hand.y, ang) : 1; // (the cutlass or axe edge turned toward them, bisping-cutlass.js)
+  var dr = axeStyle(b) ? axeDrawFn(b, fl) : cutlassStyle(b) ? function (x, y, a2, l, kk, al) { drawCutlass(x, y, a2, l, kk, al, fl); } : drawRapier; // (or Bisping's cutlass, bisping-cutlass.js)
   drawTrail(sw.trail, function (g, a) { dr(g.x, g.y, g.ang, len, k, a); });
   dr(hand.x, hand.y, ang, len, k, 1);
   pushTrail(sw.trail, hand.x, hand.y, ang);

@@ -181,8 +181,10 @@ function updateAbilities(dt) {
     if (saberLockHeld(self)) continue; // locked up blade on bat with him
     if (updateDuckDrop(self, other, dt)) continue; // Jon Jones's Duck Drop (jon-duck.js)
     if (bearOn(self)) continue; // Khabib fighting, lifting or throwing the bear (khabib-bear.js)
+    if (updateIslamMoves(self, other, dt)) continue; // Islam Makhachev's axe throw and spin, lifting Volk's kangaroo (islam-axe.js)
     if (updateRapierLunge(self, other, dt)) continue; // Ilia's rapier lunge (rapier.js)
     if (updateIliaTornado(self, other, dt)) continue; // Ilia's Rose Tornado (ilia-tornado.js)
+    tickIslam(self, dt); // Islam Makhachev's seconds since the bell, for his shaky start (islam.js)
     if (updateIliaDarce(self, other, dt)) continue; // Ilia's D'Arce: the hold, or lunging in for a front headlock (ilia-darce.js)
     if (!darkSideBlocks(self) && updateHelmetCharge(self, other, dt)) continue; // Josh Hokit's Helmet Charge (hokit-helmet.js)
     if (updateKamehameha(self, other, dt)) continue; // Charles's Kamehameha (kamehameha.js)
@@ -229,6 +231,7 @@ function updateAbilities(dt) {
       if (self.slam.t > SLAM_MAX_TIME) endWallSlam(self);
       continue; // stunned while flying
     }
+    if (axeFistsOff(self)) continue; // Islam Makhachev fights only with his axe while it's out (islam-axe.js)
     if (cutlassFistsOff(self)) continue; // Michael Bisping fights only with his cutlass while it's out (bisping-cutlass.js)
     // A critical-weave combo or the celebration after it takes over completely.
     if (updateWeave(self, other, dt)) continue;
