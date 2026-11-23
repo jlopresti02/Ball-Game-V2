@@ -501,7 +501,8 @@ function islamRooCounter(volk, isl, m, roo) {
   if (m.phase !== "chase" || roo.mode !== "stand" || !isl.alive || isl.igbb || isl.grappled || isl.grapple || isl.dazed || subLocked(isl) || over) return false;
   clearActions(isl);
   isl.vx = 0; isl.vy = 0;
-  var sr = isl.islamRoo = { step: "say", t: 0, all: 0, d0: pre ? pre.dance : 0.001 };
+  var sr = isl.islamRoo = { step: "say", t: 0, all: 0, d0: pre ? pre.dance : 0.001, axe: pre && pre.axe };
+  if (!sr.axe) islRooAxeUp(isl, sr);
   floater(isl.x, isl.y - isl.r - 30, "NOT TODAY!", "crit");
   isl.islamQuietT = 4.8; // the clip's length: no special talks over it
   islamVoice("islamKangaroo", function () { return isl.islamRoo === sr && sr.all < 0.6; }); // Joe's clip (islam-voice.js)
@@ -517,6 +518,11 @@ function islamRooHeld(isl, dt) {
   if (!s && vm && vm.move === "kangaroo" && vm.phase !== "chase" && vm.phase !== "out" && islamCfg(isl) && islamCfg(isl).roo && isl.alive && !isl.igbb && !isl.grappled && !isl.grapple && !isl.dazed && !subLocked(isl) && !over) {
     clearActions(isl);
     s = isl.islamRoo = { step: "pre", t: 0, all: 0, dance: 0.001, hx: isl.x, hy: isl.y };
+    islRooAxeUp(isl, s);
+  }
+  if (s && s.axe) { // keeps to the open side, toward the middle, gliding over if he walks across
+    s.axe.ft = (s.axe.ft || 0) + dt; s.axe.side = isl.x < W / 2 ? 1 : -1;
+    s.axe.sx += (s.axe.side - s.axe.sx) * Math.min(1, dt * 3);
   }
   if (!s) return false;
   if (s.step === "pre") {
@@ -551,8 +557,7 @@ function islamRooHeld(isl, dt) {
     }
     if (s.t >= cfg.say && d < 8) {
       s.step = "lift"; s.t = 0; s.rx = roo.x; s.ry = roo.y; playWhoosh();
-      var hsw = isl.rapier && isl.rapier.sword; // as Kratos, the axe goes up to hover beside him first
-      if (hsw && hsw.out) s.axe = { x0: isl.x + (hsw.side >= 0 ? 1 : -1) * r * 0.9, y0: isl.y - r * 0.1, side: isl.x < W / 2 ? 1 : -1 }; // (on the open side, toward the middle)
+      if (!s.axe) islRooAxeUp(isl, s); // (already hovering since he started dancing)
     }
     return true;
   }
@@ -924,14 +929,20 @@ function drawIslamRooTwinkle() {
 // As Kratos: the axe tossed up off his hand as he goes to lift, hovering
 // beside him in a frosty glow while his hands are full, and flying back to
 // his hand once the kangaroo's thrown.
+// As Kratos, the axe goes up to hover beside him while he dances and lifts
+// (on the open side, toward the middle).
+function islRooAxeUp(isl, s) {
+  var hsw = isl.rapier && isl.rapier.sword;
+  if (hsw && hsw.out) s.axe = { x0: isl.x + (hsw.side >= 0 ? 1 : -1) * isl.r * 0.9, y0: isl.y - isl.r * 0.1, side: isl.x < W / 2 ? 1 : -1, sx: isl.x < W / 2 ? 1 : -1, ft: 0 };
+}
 function islRooAxeSpot(b, s, now) {
-  return { x: b.x + s.axe.side * b.r * 1.75, y: b.y - b.r * 0.35 + Math.sin(now * 3.2) * b.r * 0.08 };
+  return { x: b.x + s.axe.sx * b.r * 1.75, y: b.y - b.r * 0.35 + Math.sin(now * 3.2) * b.r * 0.08 };
 }
 function drawIslRooAxe(b, s, now) {
   var len = b.r * AXE_LEN * 0.85, hov = islRooAxeSpot(b, s, now), hand = { x: b.x + s.axe.side * -1 * b.r * 0.9, y: b.y - b.r * 0.1 }, x, y, a, glow = 1;
   var hoverA = -Math.PI / 2 + Math.sin(now * 2.1) * 0.12; // head up, swaying a little
-  if (s.step === "lift" && s.t < 0.4) { // off his hand, up and over, spinning
-    var u = s.t / 0.4, e = u * u * (3 - 2 * u);
+  if (s.axe.ft < 0.4 && s.step !== "wind" && s.step !== "throw") { // off his hand, up and over, spinning
+    var u = s.axe.ft / 0.4, e = u * u * (3 - 2 * u);
     x = s.axe.x0 + (hov.x - s.axe.x0) * e; y = s.axe.y0 + (hov.y - s.axe.y0) * e - Math.sin(Math.PI * u) * b.r * 0.9;
     a = hoverA + (1 - e) * Math.PI * 2 * s.axe.side; glow = e;
   } else if (s.step === "wind" || s.step === "throw") { // back to his hand as Volk drops out
