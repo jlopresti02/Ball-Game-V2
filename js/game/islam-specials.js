@@ -38,6 +38,8 @@
 
 SPECIAL_MOVES.islam = "Islam's specials";
 var ISL_ROO_ROLL = Math.PI / 2; // the kangaroo held on its side over his head
+var ISL_ROO_Z = 0.25;          // how high it's held (in his radius): low enough for short arms
+var islamRooTwinkle = null;    // the "ding" where the thrown kangaroo vanishes
 var ISL_TRIP_T = 7.0;      // the cut to Dagestan
 var islamTrip = null;      // { ownerId, vicId, u } while the fight holds for it
 
@@ -531,7 +533,7 @@ function islamRooHeld(isl, dt) {
   if (s.step === "lift") {
     // up off the mat and turned on its side as it goes over his head
     var u = Math.min(1, s.t / 0.75), e = u * u * u * (u * (u * 6 - 15) + 10);
-    roo.x = s.rx + (isl.x - s.rx) * e; roo.y = s.ry + (isl.y - r * 0.2 - s.ry) * e; roo.z = r * 1.6 * e;
+    roo.x = s.rx + (isl.x - s.rx) * e; roo.y = s.ry + (isl.y - r * 0.2 - s.ry) * e; roo.z = ISL_ROO_Z * r * e;
     roo.tilt = 0; roo.roll = ISL_ROO_ROLL * e;
     if (u >= 1) { s.step = "shake"; s.t = 0; floater(isl.x, isl.y - r - 30, "LIFTED!", "crit"); crowdReact(1); }
     return true;
@@ -541,11 +543,15 @@ function islamRooHeld(isl, dt) {
     // swing and the body lagging behind it
     // shaken side to side only: it slides left and right over his head,
     // level, at the same height, easing in and out of each swing
-    var amp = Math.min(1, s.t / 0.3), ph = s.t * 13.0;
+    // a violent side to side shake, getting faster and wider, the
+    // kangaroo's body whipping a little behind it
+    var amp = Math.min(1, s.t / 0.25), sp = 22 + 10 * Math.min(1, s.t / cfg.shake), ph0 = s.ph || 0;
+    s.ph = ph0 + sp * dt; var ph = s.ph;
     amp = amp * amp * (3 - 2 * amp);
-    roo.x = isl.x + Math.sin(ph) * r * 0.5 * amp; roo.y = isl.y - r * 0.2; roo.z = r * 1.6;
-    roo.tilt = 0; roo.roll = ISL_ROO_ROLL;
-    if (Math.floor(ph / Math.PI) !== Math.floor((ph - 13.0 * dt) / Math.PI)) { floater(roo.x, roo.y - roo.z - 150, "SHAKE!", "note"); playRooBoing(0.6); }
+    roo.x = isl.x + Math.sin(ph) * r * 0.85 * amp; roo.y = isl.y - r * 0.2; roo.z = ISL_ROO_Z * r;
+    roo.tilt = 0; roo.roll = ISL_ROO_ROLL - Math.cos(ph) * 0.12 * amp;
+    if (!reduceMotion) shake = Math.max(shake, 5 * amp);
+    if (Math.floor(ph / Math.PI) !== Math.floor(ph0 / Math.PI)) { if (Math.floor(ph / Math.PI) % 2 === 0) floater(roo.x, roo.y - roo.z - 150, "SHAKE!", "note"); playRooBoing(0.5); }
     if (s.t >= cfg.shake) {
       // Volk falls out of the pouch, dizzy.
       var side = isl.x < W / 2 ? 1 : -1;
@@ -557,18 +563,28 @@ function islamRooHeld(isl, dt) {
       makeDizzy(volk, cfg.dizzy);
       floater(volk.x, volk.y - volk.r - 50, "FELL OUT!", "crit");
       s.step = "wind"; s.t = 0; s.side = side; s.wx = roo.x; s.wz = roo.z; s.wt = roo.roll;
+      floater(roo.x, roo.y - roo.z - 120, "DIZZY!", "note");
     }
     return true;
   }
   if (s.step === "wind") { // cocks it back over his shoulder, then lets it fly
-    var wu = Math.min(1, s.t / 0.35), we = wu * wu * (3 - 2 * wu);
-    roo.x = s.wx + (isl.x + s.side * r * 0.55 - s.wx) * we; roo.z = s.wz + (r * 1.95 - s.wz) * we; roo.roll = s.wt + (ISL_ROO_ROLL + 0.35 * s.side * roo.face - s.wt) * we;
-    if (wu >= 1) { s.step = "throw"; s.t = 0; s.vx = -s.side * 1150; s.vz = 720; s.spin = -s.side * 9; playWhoosh(); }
+    // cocked way back over his shoulder, trembling with the effort, then
+    // heaved: up, over the cage and out into the sky
+    var wu = Math.min(1, s.t / 0.5), we = wu * wu * (3 - 2 * wu), trem = wu > 0.5 ? Math.sin(s.t * 90) * r * 0.05 : 0;
+    roo.x = s.wx + (isl.x + s.side * r * 0.9 - s.wx) * we + trem; roo.z = s.wz + (ISL_ROO_Z * r + r * 0.5 - s.wz) * we; roo.roll = s.wt + (ISL_ROO_ROLL + 0.6 * s.side * roo.face - s.wt) * we;
+    if (wu >= 1) {
+      s.step = "throw"; s.t = 0; s.vx = -s.side * 260; s.vy = -260; s.vz = 700; s.spin = -s.side * 14; playWhoosh();
+      if (!reduceMotion) { shake = Math.max(shake, 16); hitStop = Math.max(hitStop, 0.06); }
+      floater(isl.x, isl.y - r - 40, "YEET!", "crit"); crowdReact(1);
+    }
     return true;
   }
   // Thrown out over the cage, end over end.
-  roo.x += s.vx * dt; roo.z += s.vz * dt; s.vz -= 600 * dt; roo.roll = (roo.roll || 0) + s.spin * dt;
-  if (s.t >= 1.3 || roo.x < -400 || roo.x > W + 400) {
+  roo.x += s.vx * dt; roo.y += s.vy * dt; roo.z += s.vz * dt; s.vz -= 380 * dt; roo.roll = (roo.roll || 0) + s.spin * dt;
+  if (!s.trail) s.trail = [];
+  s.trail.push({ x: roo.x, y: roo.y - roo.z - 72 }); if (s.trail.length > 10) s.trail.shift();
+  if (s.t >= 1.4 || roo.x < -700 || roo.x > W + 700) {
+    islamRooTwinkle = { x: roo.x, y: roo.y - roo.z - 72, t0: performance.now() / 1000 }; // a twinkle where it disappears
     vkRoo = null; isl.islamRoo = null;
     floater(W / 2, H * 0.2, "OUT OF THE ARENA!", "crit");
     crowdReact(1);
@@ -605,6 +621,7 @@ function drawIslamUnder() {
 // confused head, the van and its crew, the kangaroo lift, the fall from the sky.
 function drawIslamTop() {
   var now = performance.now() / 1000;
+  drawIslamRooTwinkle();
   balls.forEach(function (b) {
     var m = b.igbb, o = balls[1 - b.id], r = b.r;
     if (b.islamRoo) drawIslamRoo(b, b.islamRoo, now);
@@ -831,10 +848,21 @@ function drawDagestanVan(b, o, m, now) {
 function drawIslamRoo(b, s, now) {
   // (no speech bubbles on his moves: Joe's voice clips say the lines, islam-voice.js)
   if (s.axe) drawIslRooAxe(b, s, now);
+  if (vkRoo && (s.step === "shake" || s.step === "wind" || s.step === "throw")) { // everyone's dizzy
+    var hd = rooPt(vkRoo, 34, -168), dz = s.step === "shake" ? Math.min(1, s.t / 0.6) : 1;
+    for (var st = 0; st < 3; st++) { var sa = now * 7 + st * 2.1; ctx.save(); ctx.globalAlpha = dz; drawStar(hd.x + Math.cos(sa) * 26, hd.y - 20 + Math.sin(sa) * 9, 10, "#ffd23f"); ctx.restore(); }
+    var vo = balls[1 - b.id], vm = vo && vo.igbb;
+    if (s.step === "shake" && vm && vm.pouched) for (var sv = 0; sv < 3; sv++) { var va = -now * 8 + sv * 2.1; ctx.save(); ctx.globalAlpha = dz; drawStar(vo.x + Math.cos(va) * vo.r * 0.6, vo.y - vo.r * 0.7 + Math.sin(va) * 6, 8, "#ffd23f"); ctx.restore(); }
+  }
+  if (s.step === "throw" && s.trail) { // speed streaks behind it
+    ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineCap = "round";
+    for (var tr = 1; tr < s.trail.length; tr++) { ctx.lineWidth = 2 + tr * 1.6; ctx.globalAlpha = tr / s.trail.length * 0.7; ctx.beginPath(); ctx.moveTo(s.trail[tr - 1].x, s.trail[tr - 1].y); ctx.lineTo(s.trail[tr].x, s.trail[tr].y); ctx.stroke(); }
+    ctx.restore();
+  }
   if (s.step === "say" || s.step === "throw" || !vkRoo) return;
   var r = b.r, ro = vkRoo.roll || 0, k = Math.min(1, ro / ISL_ROO_ROLL), mid = 85 * KR_S;
   // under its middle, which turns round 85 units up from its feet
-  var cx = vkRoo.x, cy = vkRoo.y - vkRoo.z - mid * k, under = r * (0.1 + 0.25 * k);
+  var cx = vkRoo.x, cy = vkRoo.y - vkRoo.z - mid * k, under = r * (0.1 + 0.55 * k);
   var ease = s.step === "lift" ? Math.min(1, s.t / 0.25) : 1; ease = ease * ease * (3 - 2 * ease); // hands come up from his guard
   [-1, 1].forEach(function (sd) {
     var sh = { x: b.x + sd * r * 0.66, y: b.y - r * 0.3 }, tgt = { x: cx + sd * r * (0.4 + 0.15 * k), y: cy + under };
@@ -842,6 +870,15 @@ function drawIslamRoo(b, s, now) {
     drawBentArm(b, sh, hand, sd);
     drawGloveAt(hand.x, hand.y, r * 0.22, b.char);
   });
+}
+
+// The twinkle in the sky where the kangaroo vanished (over everything).
+function drawIslamRooTwinkle() {
+  var tw = islamRooTwinkle; if (!tw) return;
+  var t = performance.now() / 1000 - tw.t0; if (t > 0.7 || t < 0) { islamRooTwinkle = null; return; }
+  var x = Math.max(30, Math.min(W - 30, tw.x)), y = Math.max(30, tw.y), k = Math.sin(Math.PI * t / 0.7);
+  ctx.save(); ctx.translate(x, y); ctx.rotate(t * 4); ctx.fillStyle = "#fffbe0"; ctx.strokeStyle = "#ffd23f"; ctx.lineWidth = 2;
+  ctx.beginPath(); for (var i = 0; i < 8; i++) { var a = i * Math.PI / 4, rr = (i % 2 ? 6 : 26) * k; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
 }
 
 // As Kratos: the axe tossed up off his hand as he goes to lift, hovering

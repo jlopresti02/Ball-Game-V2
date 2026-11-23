@@ -848,6 +848,7 @@ function endKangaroo(self, other, landed) {
 function rooPt(roo, lx, ly, ground) {
   var tilt = roo.tilt || 0, dx = lx - KR_HIP.x, dy = ly - KR_HIP.y, c = Math.cos(tilt), s = Math.sin(tilt);
   var rx = KR_HIP.x + dx * c - dy * s, ry = KR_HIP.y + dx * s + dy * c + (roo.crouch || 0) * 10;
+  if (roo.roll) { var cr = Math.cos(roo.roll), sr = Math.sin(roo.roll), qx = rx, qy = ry + 85; rx = qx * cr - qy * sr; ry = qx * sr + qy * cr - 85; } // turned on its side over Islam's head (islam-specials.js)
   return { x: roo.x + roo.face * rx * KR_S, y: roo.y + ry * KR_S - (ground ? 0 : roo.z) };
 }
 
