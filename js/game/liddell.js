@@ -132,6 +132,7 @@ function icemanHit(b, dealt, source, attackerId) {
 
 // A punch landed on him: ice spreads over the puncher's gloves.
 function frostGloves(atk, chuck, dealt, fc) {
+  if (iceImmune(atk)) return; // ice fighters never frost each other: Chuck, Islam, and any to come (islam-axe.js)
   var f = atk.frost || (atk.frost = { level: 0, cfg: fc, hold: 0, full: false });
   var was = f.level;
   f.cfg = fc;

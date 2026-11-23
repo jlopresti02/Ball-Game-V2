@@ -123,6 +123,7 @@ function startMatchSeeded(ch0, ch1) {
   resetVanMelt(); // steam and puddles from Van melting ice (van-melt.js)
   resetNgannou(); // Francis Ngannou's Smash crater, Dana White, the punch-power reading (ngannou.js)
   resetVolk(); // the kangaroo and the green and gold arena (volkanovski.js)
+  resetIslam(); // the Dagestan cut and the cake on the mat (islam-specials.js)
   resetHolloway(); // Max Holloway's ring in the middle, the clock, the flashback TV (holloway.js)
   resetVan(); // Joshua Van's drawing clock (van.js)
   resetStrickland(); // the America show, the eagle and the bike (strickland.js)
@@ -398,6 +399,7 @@ function hurt(b, amount, source, attackerId) {
   commentaryHit(b, hpBefore - b.hp, source, attackerId); // a big punch gets the commentator's call (commentary-calls.js)
   icemanHit(b, hpBefore - b.hp, source, attackerId); // punches on Chuck Liddell frost their gloves (liddell.js)
   ngannouHurt(b, hpBefore - b.hp, source, attackerId); // Francis Ngannou's rage meter and punch-power reading (ngannou.js)
+  islamHurt(b, hpBefore - b.hp, source, attackerId); // Islam Makhachev's shaky start: the first punch can stagger him (islam.js)
   crowdReact((hpBefore - b.hp) / MAX_HP * 4); // a 50 HP shot lifts the crowd 40%
   // A clean hit charges the attacker's special move.
   if (amount > 0 && attackerId != null && attackerId !== b.id && source !== "laser" && source !== "igbb") addSpecialCharge(balls[attackerId], source);

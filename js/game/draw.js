@@ -94,6 +94,8 @@ function draw() {
   drawJonLanes();       // GOAT Stampede: red lanes where the goats will charge, and his shadow (jon.js)
   drawHelmetChargeUnder(); // Helmet Charge: the red path he's about to run (hokit-helmet.js)
   drawItGhosts(); // Charles's afterimage where he teleported from (instant-transmission.js)
+  drawIslamUnder(); // Islam's cheesecake on the mat (islam-specials.js)
+  drawLeviathanUnder(); // Islam's axe throw: the red line it's about to fly down (islam-axe.js)
   drawRapierLungeUnder(); // Ilia's lunge: the red line he's about to lunge down (rapier.js)
   drawLadderUnder();   // Hokit's ladder standing in the ring, the red circle, his shadow (hokit-ladder.js)
   drawTopRopeUnder();  // Top Rope Body Slam: the red circle (cut off at the cage), his shadow (hokit-toprope.js)
@@ -127,7 +129,7 @@ function draw() {
   // Whoever took the back for a rear naked choke goes behind the one it chokes.
   // A bat swing goes over whoever it's hitting.
   (balls[0].igbb || guilloUnder(balls[1]) || rncBehind(balls[1]) || (balls[0].chAct && balls[0].chAct.kind === "bat") ? [balls[1], balls[0]] : balls).forEach(function (b) {
-    if (!b.alive || duckDrawnApart(b) || golfDrawnApart(b) || topRopeDrawnApart(b) || ladderDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
+    if (!b.alive || duckDrawnApart(b) || golfDrawnApart(b) || topRopeDrawnApart(b) || ladderDrawnApart(b) || islamDrawnApart(b)) return; // (a duck, up in the sky, or falling in: drawDuckOver, drawDuckSky)
     var other = balls[1 - b.id];
 
     // Weaving slips the whole fighter sideways for a moment, and a taunting
@@ -239,11 +241,12 @@ function draw() {
     applyLegKickLimp(b); // limping on a kicked calf: dipping onto the bad leg, the leg hanging out bruised (leg-kick.js)
     applyClinchPose(b); // leaning into the clinch, whoever's held rocked by each knee and elbow, the spin on the break (clinch.js)
     applyPunchTypePose(b); // dipping into an uppercut or a body shot, folding over one, chin snapping up (body-shots-uppercuts.js)
+    applyIslamPose(b); // Islam's Brotha: swaying through the moan, low into the rush, and them looking round lost (islam-specials.js)
 
     var img = getImg(b.char.imgData);
     if (b.char.look) {
       // Fighter art: the muscled ball in its fight kit (beats a face photo)
-      drawFighterArt(ctx, b.x, b.y, b.r, prGear5Look(b) || b.char.look, theme.wall, { layout: "contained", name: b.char.name }); // Carlos Prates's white Gear 5 kit (prates-gear5.js)
+      drawFighterArt(ctx, b.x, b.y, b.r, prGear5Look(b) || islamKratosLook(b) || b.char.look, theme.wall, { layout: "contained", name: b.char.name }); // Carlos Prates's white Gear 5 kit (prates-gear5.js); Islam's god of war look with the axe out (islam-axe.js)
     } else if (img) {
       ctx.save();
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
@@ -426,6 +429,8 @@ function draw() {
   balls.forEach(drawSpecial); // the IGBB grab hand goes over the opponent
   drawSpecialSolid(); // a guard snapping up as a special blocks a strike (special-solid.js)
   balls.forEach(drawPunchTypesOver); // uppercuts and body shots go over the opponent (body-shots-uppercuts.js)
+  drawIslamTop(); // Islam's speech bubbles, the cheesecake in his hand, the van, the kangaroo over his head (islam-specials.js)
+  drawLeviathanTop(); // Islam's axe in flight or whirling round him, Gane's bat in two halves (islam-axe.js)
   drawDiamondSwordsTop(); // Dustin's sword slashing into a bat, over both fighters (sword.js)
   drawDarkSideTop(); // Hokit's saber flying loose, the Force push, a saber lock (hokit-darkside.js)
   drawDuelVignette(); // the duel's dark edges and impact flash (sword.js)
@@ -558,6 +563,7 @@ function draw() {
   drawTaleTape(); // the tale of the tape before the whistle, which then starts the fight (tale-tape.js)
   drawIntroMsg(s, ox, oy); // the instruction to the viewer at the start (intro-msg.js)
   drawSendLocSpace(); // cut up to the space station while the fight holds (send-location.js)
+  drawIslamCutscene(); // Islam's "2-3 years Dagestan": the van trip, the dust cloud and Hasbulla's catapult while the fight holds (islam-specials.js)
   drawCnCut(s, ox, oy); // Chuck Norris's entrance cutscene in Sean Strickland's America (chuck-norris-cut.js)
   drawDcCakeCut(); // Daniel Cormier's All About That Cake music video, over everything while the fight holds (cormier-cake-cut.js)
 }

@@ -20,6 +20,7 @@ function defaultLook() {
 // lone punching arm leaves it out. tattoos.armInkSide limits the ink to one arm.
 function armColor(ch, side) {
   if (!ch.look) return ch.color;
+  if (ch.rapier && typeof kratosArmSkin === "function" && kratosArmSkin(ch)) return kratosArmSkin(ch); // Islam's god of war skin with the axe out (islam-axe.js)
   if (ch.look.sleeves) return ch.look.sleeves; // robe sleeves (Hokit's Dark Side)
   var tat = ch.look.tattoos || {};
   // A traced sleeve only shows on a punching arm, drawn by drawTracedArm

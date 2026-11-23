@@ -39,7 +39,7 @@
 function bladeHost(b) { return b ? (b.diamond || b.rapier || null) : null; }
 function bladeCfg(b) { return b.rapier ? b.char.rapier : b.char.diamond.swordClash; }
 function bladeColors(b) { return b && b.rapier ? RAPIER_C : DIAMOND_C; }
-function bladeLen(b) { return b && b.rapier ? (cutlassStyle(b) ? CUTLASS_LEN : RAPIER_LEN) : SWORD_LEN; } // (Bisping's cutlass, bisping-cutlass.js)
+function bladeLen(b) { return b && b.rapier ? (axeStyle(b) ? AXE_LEN : cutlassStyle(b) ? CUTLASS_LEN : RAPIER_LEN) : SWORD_LEN; } // (Bisping's cutlass, bisping-cutlass.js)
 
 // Two sword fighters (Dustin in Diamond Guard vs Ilia, Joe 2026-11-06): both
 // draw on each other, and after a short standoff they duel. Who wins is a
@@ -53,7 +53,7 @@ function bladeReady(b) {
   if (b && b.diamond && (!b.diamond.shown || diamondShow > 0)) return false;
   return !!(h && h.on && !h.disarmed && b.alive);
 }
-function bladeRivals(b, o) { return bladeReady(b) && bladeReady(o) && !cutlassNoRival(b, o); } // (rapier vs Bisping's cutlass never starts on its own, bisping-cutlass.js)
+function bladeRivals(b, o) { return bladeReady(b) && bladeReady(o) && !cutlassNoRival(b, o) && !axeNoRival(b, o); } // (rapier vs Bisping's cutlass never starts on its own, bisping-cutlass.js)
 function tickBladeRivals() {
   if (swordDuel || over || !started) return;
   var a = balls[0], c = balls[1];
@@ -135,12 +135,13 @@ var SWORD_FLOURISHES = {
   } }
 };
 
-function swordFlourishes(b) { return cutlassStyle(b) ? CUTLASS_FLOURISHES : b.rapier ? RAPIER_FLOURISHES : SWORD_FLOURISHES; } // (Bisping's cutlass, bisping-cutlass.js)
+function swordFlourishes(b) { return axeStyle(b) ? AXE_FLOURISHES : cutlassStyle(b) ? CUTLASS_FLOURISHES : b.rapier ? RAPIER_FLOURISHES : SWORD_FLOURISHES; } // (Bisping's cutlass, bisping-cutlass.js)
 
 function tickDiamondSword(b, dt) {
   var dg = bladeHost(b), sc = bladeCfg(b), o = balls[1 - b.id], C = bladeColors(b);
   var want = dg.on && !dg.disarmed && b.alive && !over && sc && sc.enabled && (sc.weapons.indexOf(swordWeaponOut(o)) >= 0 || bladeRivals(b, o)) &&
     !(b.igbb && b.igbb.move !== "lunge"); // put away for his specials
+  want = axeModeWant(b, o, dt, want); // Islam's own axe mode: stays out a while, never changes mid grapple or clinch (islam-axe.js)
   if (swordDuel && swordDuel.dId === b.id) want = true; // held through the duel
   if (duelBladeOpp(b)) want = true;
   var sw = dg.sword;
@@ -148,7 +149,7 @@ function tickDiamondSword(b, dt) {
     sw = dg.sword = { t: 0, out: true, outT: 0, parry: -1, parries: 0, side: o.x > b.x ? 1 : -1, pose: null,
       fl: null, still: 0, feint: -1, feintCd: 2, trail: [] };
     playSwordDraw();
-    floater(b.x, b.y - b.r - 30, sc.drawText || "DIAMOND SWORD", "crit");
+    if (!(b.axeCaught > 0)) floater(b.x, b.y - b.r - 30, sc.drawText || "DIAMOND SWORD", "crit"); // (not when Islam's just caught his axe back, islam-axe.js)
     for (var i = 0; i < 16 && !reduceMotion; i++) {
       var a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 160;
       particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.45, max: 0.45, size: 2 + Math.random() * 3, color: C[i % 2 ? "L" : "W"] });
@@ -208,7 +209,7 @@ function swordDrawPose(b, sw) {
     a += wrapA(F.a - a) * F.w + (F.spin || 0);
     lean += F.lean || 0;
   }
-  if (sw.feint >= 0 && b.rapier) { // a quick stab at them and back: testing the distance
+  if (sw.feint >= 0 && b.rapier && !axeStyle(b)) { // a quick stab at them and back: testing the distance (not with Islam's axe: he heaves it back instead, islam-axe.js)
     var ru = sw.feint / 0.6, rk = ru < 0.3 ? easeOut(ru / 0.3) : 1 - ease((ru - 0.3) / 0.7);
     hx += 0.35 * rk; a += wrapA(0 - a) * rk; lean += 0.12 * rk;
   } else if (sw.feint >= 0) { // heaving it back over his shoulder, threatening a big swing
@@ -265,6 +266,7 @@ function diamondSwordClash(defender, attacker, weapon) {
   nx /= nd; ny /= nd;
   var cp = swordPoint(defender, sw, 0.45), cx = cp.x, cy = cp.y; // where the bat meets the blade
   attacker.chAct = null; // the swing is knocked away
+  if (axeCutsBat(defender, attacker, cx, cy)) return true; // Islam's axe cuts Ciryl Gane's bat in half (islam-axe.js)
   // Enough parries: the weapons lock up.
   if (sc.duel && sw.parries >= sc.duel.after) { startSwordDuel(defender, attacker); return true; }
   if (attacker.cheater) attacker.cheater.cd = Math.max(attacker.cheater.cd, sc.recover);
@@ -499,7 +501,7 @@ function duelDisarm(d, o, sd, S) {
 // The slash: Dustin dashes straight through them, and a beat later it lands.
 function duelDash(d, o, sd, S) {
   sd.ux = S.ux; sd.uy = S.uy;
-  var run = sd.gap + d.r * 1.2;
+  var run = sd.gap + d.r + o.r + 8; // right through and out the far side: no standing inside them after (Joe, 2026-11-22)
   sd.dashFrom = { x: d.x, y: d.y };
   sd.dashTo = { x: Math.min(W - d.r, Math.max(d.r, d.x + S.ux * run)), y: Math.min(H - d.r, Math.max(d.r, d.y + S.uy * run)) };
   sd.slashLine = { x0: d.x, y0: d.y, x1: sd.dashTo.x, y1: sd.dashTo.y };
@@ -509,7 +511,7 @@ function duelDash(d, o, sd, S) {
 // Hokit winning it: he dashes through them with the saber (hokit-darkside.js).
 function duelOppDash(d, o, sd, S) {
   sd.ux = S.ux; sd.uy = S.uy;
-  var run = sd.gap + o.r * 1.2;
+  var run = sd.gap + d.r + o.r + 8; // (out the far side, as above)
   sd.dashFrom = { x: o.x, y: o.y };
   sd.dashTo = { x: Math.min(W - o.r, Math.max(o.r, o.x - S.ux * run)), y: Math.min(H - o.r, Math.max(o.r, o.y - S.uy * run)) };
   saberCuts.push({ x0: o.x, y0: o.y - o.r * 0.2, x1: sd.dashTo.x, y1: sd.dashTo.y - o.r * 0.2, t: 0, r: o.r });
@@ -552,7 +554,7 @@ function tickDuelFinish(d, o, sd, dt) {
     if (f >= 0.38 && !sd.flung) { // ripped away: the bat goes flying into the crowd
       sd.flung = true; sd.let = true;
       var up = -1;
-      var oh = bladeHost(o), blade = oh && oh.sword ? (cutlassStyle(o) ? "cutlass" : o.rapier ? "rapier" : "longsword") : null;
+      var oh = bladeHost(o), blade = oh && oh.sword ? (axeStyle(o) ? "axe" : cutlassStyle(o) ? "cutlass" : o.rapier ? "rapier" : "longsword") : null;
       flyingBats.push({ x: o.x + sd.ux * o.r * 0.5, y: o.y - o.r * 0.4, vx: sd.ux * 380, vy: -820, rot: 0, spin: 19, t: 0, len: blade ? o.r * bladeLen(o) : weaponLen(o), trail: [], club: !!(o.cheater && o.cheater.club), blade: blade });
       if (o.cheater) { if (!o.cheater.saber) o.weaponLost = true; o.cheater = null; } // empty handed: back to fighting fair, and the bat or club is gone for the fight
       if (blade) { oh.sword = null; oh.disarmed = true; } // a sword fighter loses theirs for the fight
@@ -567,6 +569,7 @@ function tickDuelFinish(d, o, sd, dt) {
     // The dash through, then the cut landing a beat later.
     var k = easeOut(Math.min(1, f / 0.14));
     if (sd.dashTo) { d.x = sd.dashFrom.x + (sd.dashTo.x - sd.dashFrom.x) * k; d.y = sd.dashFrom.y + (sd.dashTo.y - sd.dashFrom.y) * k; }
+    if (f >= 0.14) duelKeepApart(d, o); // bodies again the moment the dash is through
     if (f >= 0.45 && !sd.cut) {
       sd.cut = true; sd.let = true;
       var dealt = hurt(o, cfg.slashDamage, "igbb", d.id); // through the bind: can't be slipped or blocked
@@ -586,6 +589,13 @@ function tickDuelFinish(d, o, sd, dt) {
   if (f >= DUEL_FINISH) endSwordDuel(d, o, sd);
 }
 
+// After the dash through: if the cage stopped him short and he's still in
+// them, they're eased back out (they have a body again, Joe's rule).
+function duelKeepApart(d, o) {
+  var dx = o.x - d.x, dy = o.y - d.y, dd = Math.sqrt(dx * dx + dy * dy) || 1, need = d.r + o.r + 2;
+  if (dd >= need || !o.alive) return;
+  o.x = Math.min(W - o.r, Math.max(o.r, d.x + dx / dd * need)); o.y = Math.min(H - o.r, Math.max(o.r, d.y + dy / dd * need));
+}
 function endSwordDuel(d, o, sd) {
   swordDuel = null;
   var sw = bladeHost(d) && bladeHost(d).sword;
@@ -663,6 +673,7 @@ function pushTrail(trail, x, y, ang) {
 function drawDiamondSword(b, other, top) {
   var sw = bladeHost(b) && bladeHost(b).sword;
   if (!sw || !b.alive) return;
+  if (typeof islamRooHover === "function" && islamRooHover(b)) return; // Islam's axe hovers beside him while he lifts the kangaroo (islam-specials.js)
   var inDuel = swordDuel && (swordDuel.dId === b.id || duelBladeOpp(b));
   // Mid parry (and through a duel) it's drawn over both fighters
   // (drawDiamondSwordsTop), so the clash isn't hidden behind them.
@@ -804,6 +815,7 @@ function drawDiamondSwordsTop() {
   flyingBats.forEach(function (fb) {
     ctx.save(); ctx.globalAlpha = Math.min(1, (2.4 - fb.t) / 0.4);
     var dr = fb.blade === "rapier" ? function (x, y, a, l) { drawRapier(x, y, a, l, 1, 1); }
+      : fb.blade === "axe" ? function (x, y, a, l) { drawLeviathan(x, y, a, l, 1, 1); } // (Islam's, islam-axe.js)
       : fb.blade === "cutlass" ? function (x, y, a, l) { drawCutlass(x, y, a, l, 1, 1); } // (Bisping's, bisping-cutlass.js)
       : fb.blade ? function (x, y, a, l) { var im = getImg(DIAMOND_SWORD_SRC); if (im) drawLongsword(im, x, y, a, l, 1, 1); }
       : fb.club ? drawClub : drawBat;

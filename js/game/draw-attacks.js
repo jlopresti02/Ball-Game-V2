@@ -123,6 +123,7 @@ function drawHands(b, other) {
   if (rainbowOn(b)) return; // hands on the pot of gold (drawRainbowPot, rainbow-beam.js)
   if (b.mock) return; // giving a thumbs down (drawMock)
   if (cheaterHandsBusy(b)) return; // cheating (drawCheater)
+  if (islamHandsBusy(b)) return; // the cheesecake, or the kangaroo over his head (islam-specials.js)
   if (bearHandsBusy(b)) return; // holding the bear up over his head (khabib-bear.js)
   if (diamondHandsBusy(b)) return; // holding his diamond sword (drawDiamondSword, sword.js)
   if (b.igbb && b.igbb.move === "chairshot") return; // both hands on the chair (drawChairShot)

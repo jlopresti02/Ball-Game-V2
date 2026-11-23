@@ -616,6 +616,7 @@ function updateKangaroo(self, other, dt) {
     return true;
   }
   if (m.pouched) { var pq = rooPt(roo, KR_POUCH.x, KR_POUCH.y); self.x = pq.x; self.y = pq.y; }
+  if (islamRooCounter(self, other, m, roo)) return true; // Islam Makhachev lifts the kangaroo and shakes him out (islam-specials.js)
   if (m.phase === "chase") {
     if (roo.mode !== "stand" || roo.t < 0.08) return true;
     // Landed. Close enough and free to grab: caught.
@@ -847,6 +848,7 @@ function endKangaroo(self, other, landed) {
 function rooPt(roo, lx, ly, ground) {
   var tilt = roo.tilt || 0, dx = lx - KR_HIP.x, dy = ly - KR_HIP.y, c = Math.cos(tilt), s = Math.sin(tilt);
   var rx = KR_HIP.x + dx * c - dy * s, ry = KR_HIP.y + dx * s + dy * c + (roo.crouch || 0) * 10;
+  if (roo.roll) { var cr = Math.cos(roo.roll), sr = Math.sin(roo.roll), qx = rx, qy = ry + 85; rx = qx * cr - qy * sr; ry = qx * sr + qy * cr - 85; } // turned on its side over Islam's head (islam-specials.js)
   return { x: roo.x + roo.face * rx * KR_S, y: roo.y + ry * KR_S - (ground ? 0 : roo.z) };
 }
 
@@ -896,6 +898,7 @@ function rooLeaves(roo) {
 // own once it's leaving, from tickAussie).
 function tickRoo(roo, dt) {
   roo.t += dt;
+  if (roo.islamHeld) return; // Islam has it up over his head (islam-specials.js)
   if (roo.mode === "hop") {
     var h = roo.hop;
     h.t += dt;
@@ -1220,6 +1223,7 @@ function drawKangaroo(c, roo, layer, opts) {
   if (roo.alpha != null && roo.alpha < 1) c.globalAlpha *= roo.alpha;
   c.translate(roo.x, roo.y - (roo.z || 0));
   c.scale(roo.face * s, s);
+  if (roo.roll) { c.translate(0, -85); c.rotate(roo.roll); c.translate(0, 85); } // turned on its side over Islam's head (islam-specials.js)
   c.lineJoin = "round"; c.lineCap = "round";
   function paint(fill) {
     if (sil) { c.fillStyle = sil; c.fill(); return; }

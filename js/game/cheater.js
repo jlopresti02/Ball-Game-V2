@@ -423,7 +423,8 @@ function drawCheater(b) {
   }
   if (b.cheater && b.cheater.saber && sendLocHandsBusy(b)) return; // calling in the Death Star (send-location.js draws him)
   if (b.cheater && b.cheater.saber && drawSithArms(b)) return; // Hokit's Force pull and push (hokit-darkside.js)
-  if (b.cheater && b.cheater.mode === "bat" && (saberLockHeld(b) || katanaLockOpp(b))) { drawBatIdle(b, "lock"); return; } // blade on bat (or in a katana lock, ferguson-katanas.js)
+  if (b.cheater && b.cheater.mode === "bat" && (saberLockHeld(b) || katanaLockOpp(b))) { drawBatIdle(b, "lock"); return; }
+  if (b.cheater && b.cheater.mode === "bat" && axeParryHeld(b)) { drawBatIdle(b, "axeParry"); return; } // met Islam's axe sweep head on (islam-axe.js) // blade on bat (or in a katana lock, ferguson-katanas.js)
   if (b.cheater && b.cheater.mode === "bat" && !swordDuelLocked(b)) { // (sword.js draws it in a sword duel)
     // The bat: held and played with between swings, or swung two-handed
     // across at them (one set of poses, so it flows between the two).
@@ -455,7 +456,16 @@ function drawBatIdle(b, swing) {
   var bH, fH, batA, bEl = null, fEl = null, key;
   var COCK_A = -Math.PI / 2 + 1.35; // barrel back and down behind him (s = 1)
   var saber = !!(b.cheater && b.cheater.saber);
-  if (swing === "lock") {
+  if (swing === "axeParry") {
+    // Thrust out into Islam's axe sweep (islam-axe.js): the barrel right
+    // where the axe head is, both hands on it.
+    key = "axeParry";
+    var AP = b.axeParry, sh0 = Q(0.66, -0.3), dpx = AP.x - sh0.x, dpy = AP.y - sh0.y, dpd = Math.sqrt(dpx * dpx + dpy * dpy) || 1;
+    var reachP = Math.min(r * 0.75, Math.max(r * 0.3, dpd - len * 0.75));
+    bH = { x: sh0.x + dpx / dpd * reachP, y: sh0.y + dpy / dpd * reachP };
+    batA = Math.atan2(AP.y - bH.y, AP.x - bH.x);
+    fH = { x: bH.x + Math.cos(batA) * len * 0.16, y: bH.y + Math.sin(batA) * len * 0.16 };
+  } else if (swing === "lock") {
     // Locked up blade on bat (hokit-darkside.js): both hands out in front
     // toward them, the weapon angled up so the two cross over the middle,
     // shaking with the strain.
