@@ -77,6 +77,7 @@ function drawIslamDagJumbo(x, y, w, h) {
   ctx.globalAlpha = a;
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
   isdBackdrop(x, y, w, h, k, false);
+  isdTrain(x, y, w, h, k, isdTrainHead(x, y, w, h, k, t)); // the coaster running behind the park
   isdBalloons(x, y, w, h, k, t);
   isdBulbs(x, y, w, h, k, t);
 
@@ -246,8 +247,8 @@ function isdScene(x, y, w, h, k, still) {
   dwRange(x, y, w, h, 0.66, 0.15, 2.6, ["#4c6a8f", "#6f8db0"], 0.72, 0.95);
   // The park behind: the Ferris wheel, a coaster loop, the big top.
   ctx.save(); ctx.globalAlpha = 0.85; dwFerrisWheel(x + w * 0.335, y + h * 0.43, h * 0.27, k); ctx.restore();
-  isdCoasterLoop(x + w * 0.73, y + h * 0.8, h * 0.2, k);
-  isdBigTop(x + w * 0.645, y + h * 0.8, h * 0.17, k);
+  isdCoaster(x, y, w, h, k);
+  isdBigTop(x + w * 0.64, y + h * 0.8, h * 0.17, k);
   var hill = ctx.createLinearGradient(0, y + h * 0.74, 0, y + h);
   hill.addColorStop(0, "#6dbb4a"); hill.addColorStop(1, "#2f7d2c");
   ctx.fillStyle = hill;
@@ -328,16 +329,102 @@ function isdBunting(x0, y0, x1, y1, k) {
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(m.x, m.y + 11 * k); ctx.closePath(); ctx.fill();
   }
 }
-// A coaster loop on its A-frame, peeking up behind the hills.
-function isdCoasterLoop(cx, ground, R, k) {
+// The coaster behind the park, in the style of Khabib's (dagestan-ad.js):
+// a flat start, the lift hill with its chain, the drop, a vertical loop
+// that comes out still going forward, and a run off behind the wait-time
+// board. Steel supports down to the ground, ties, two red rails.
+var ISD_COASTER = [[0.692, 0.03], [0.704, 0.03], [0.715, 0.12], [0.736, 0.88], [0.747, 1], [0.758, 0.88], [0.77, 0.25], [0.779, 0.03], [0.788, 0], [0.796, 0]];
+function isdTrack(x, y, w, h, k) {
+  var yb = y + h * 0.795, H = h * 0.4;
+  var P = ISD_COASTER.map(function (p) { return [x + w * p[0], yb - H * p[1]]; }), pts = [];
+  for (var i = 0; i < P.length - 2; i++) { // Catmull-Rom through the control points
+    var p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)];
+    for (var s = 0; s < 20; s++) {
+      var t = s / 20, t2 = t * t, t3 = t2 * t;
+      pts.push({
+        x: 0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+        y: 0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3),
+        lift: i === 2 || i === 3
+      });
+    }
+  }
+  var xv = P[P.length - 2][0], R = h * 0.105, lc = R * 0.3;
+  for (var l = 0; l <= 80; l++) { var th = l / 80 * Math.PI * 2; pts.push({ x: xv + lc * th + R * Math.sin(th), y: yb - R + R * Math.cos(th), loop: true }); }
+  for (var e = 1; e <= 8; e++) pts.push({ x: xv + lc * Math.PI * 2 + (x + w * 0.9 - xv - lc * Math.PI * 2) * e / 8, y: yb });
+  var len = 0;
+  pts.forEach(function (p, j) {
+    var a = pts[Math.max(0, j - 1)], b = pts[Math.min(pts.length - 1, j + 1)];
+    var dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    p.nx = dy / d; p.ny = -dx / d;
+    if (j) len += Math.hypot(p.x - pts[j - 1].x, p.y - pts[j - 1].y);
+    p.s = len;
+  });
+  return { pts: pts, yb: yb, gap: 3.2 * k, xv: xv, R: R, lc: lc, len: len };
+}
+function isdCoaster(x, y, w, h, k) {
+  var tr = isdTrack(x, y, w, h, k), pts = tr.pts, gap = tr.gap, ground = y + h * 0.84;
   ctx.save();
-  ctx.strokeStyle = "#f2f2f2"; ctx.lineWidth = 2 * k;
-  ctx.beginPath(); ctx.moveTo(cx - R * 0.9, ground); ctx.lineTo(cx, ground - R * 2); ctx.lineTo(cx + R * 0.9, ground); ctx.stroke();
-  ctx.strokeStyle = "#b71c1c"; ctx.lineWidth = 3 * k;
-  ctx.beginPath(); ctx.arc(cx, ground - R, R, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx - R * 2.2, ground - R * 0.05); ctx.quadraticCurveTo(cx - R, ground + R * 0.05, cx, ground); ctx.quadraticCurveTo(cx + R, ground - R * 0.05, cx + R * 2.2, ground - R * 0.6); ctx.stroke();
+  ctx.strokeStyle = "#f2f2f2"; ctx.lineWidth = 1.6 * k;
+  var cols = [], last = -1e9;
+  pts.forEach(function (p) { if (p.loop || tr.yb - p.y < h * 0.04 || p.x - last < 12 * k) return; last = p.x; cols.push(p); });
+  cols.forEach(function (p, i) { // columns, X-braced where they're close
+    ctx.beginPath(); ctx.moveTo(p.x, p.y + gap); ctx.lineTo(p.x, ground); ctx.stroke();
+    var q = cols[i + 1];
+    if (!q || q.x - p.x > 24 * k) return;
+    ctx.lineWidth = 0.8 * k;
+    for (var by = Math.max(p.y, q.y) + 8 * k; by + 10 * k < ground; by += 14 * k) { ctx.beginPath(); ctx.moveTo(p.x, by); ctx.lineTo(q.x, by + 10 * k); ctx.moveTo(q.x, by); ctx.lineTo(p.x, by + 10 * k); ctx.stroke(); }
+    ctx.lineWidth = 1.6 * k;
+  });
+  var top = tr.xv + tr.lc * Math.PI; // the loop's A-frame
+  ctx.lineWidth = 2 * k;
+  ctx.beginPath(); ctx.moveTo(top - tr.R * 0.85, ground); ctx.lineTo(top, tr.yb - tr.R * 2 - gap); ctx.lineTo(top + tr.R * 0.85, ground); ctx.stroke();
+  ctx.strokeStyle = "#4a4a4a"; ctx.lineWidth = 1.6 * k; // ties
+  var acc = 0;
+  for (var i = 1; i < pts.length; i++) {
+    acc += pts[i].s - pts[i - 1].s;
+    if (acc < 5 * k) continue;
+    acc = 0;
+    var T = pts[i];
+    ctx.beginPath(); ctx.moveTo(T.x - T.nx * gap * 1.7, T.y - T.ny * gap * 1.7); ctx.lineTo(T.x + T.nx * gap * 1.7, T.y + T.ny * gap * 1.7); ctx.stroke();
+  }
+  ctx.strokeStyle = "#222222"; ctx.lineWidth = 1.2 * k; ctx.setLineDash([2 * k, 2 * k]); // the lift chain
+  ctx.beginPath(); var on = false;
+  pts.forEach(function (p) { if (p.lift) { if (on) ctx.lineTo(p.x, p.y); else { ctx.moveTo(p.x, p.y); on = true; } } });
+  ctx.stroke(); ctx.setLineDash([]);
+  [-1, 1].forEach(function (side) {
+    ctx.strokeStyle = "#b71c1c"; ctx.lineWidth = 2.4 * k; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.beginPath();
+    pts.forEach(function (p, j) { var a = p.x + p.nx * gap * side, b = p.y + p.ny * gap * side; if (j) ctx.lineTo(a, b); else ctx.moveTo(a, b); });
+    ctx.stroke();
+  });
   ctx.restore();
 }
+// The coaster's train: three little cars with riders, `head` along the
+// track from the start (it rides the drop and the loop in the animated ad).
+function isdTrain(x, y, w, h, k, head) {
+  var tr = isdTrack(x, y, w, h, k), cl = 15 * k, riders = ["#e2b18c", "#c68e6a", "#f1c6a4"], body = ["#ffe14d", "#ffb300", "#ffe14d"];
+  for (var i = 0; i < 3; i++) {
+    var s = head - i * (cl + 2 * k);
+    if (s < 0 || s > tr.len) continue;
+    var at = dwAt(tr, s); // (dagestan-ad.js)
+    ctx.save();
+    ctx.translate(at.x, at.y); ctx.rotate(at.ang); ctx.translate(0, -tr.gap * 1.6);
+    ctx.fillStyle = riders[i]; ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = 1 * k;
+    [-0.22, 0.22].forEach(function (f) { ctx.beginPath(); ctx.arc(f * cl, -7 * k, 3.2 * k, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+    ctx.fillStyle = body[i]; ctx.lineWidth = 1.4 * k;
+    ctx.beginPath(); ctx.moveTo(-cl / 2, -6 * k); ctx.lineTo(cl / 2 - (i ? 0 : 2 * k), -6 * k); ctx.quadraticCurveTo(cl / 2 + (i ? 0 : 3 * k), -4 * k, cl / 2, 0); ctx.lineTo(-cl / 2, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#c62828"; ctx.fillRect(-cl / 2, -3.6 * k, cl, 1.4 * k);
+    ctx.restore();
+  }
+}
+// From the station, up the lift, over, down, round the loop and away, then
+// round again: where the front car is at time t.
+function isdTrainHead(x, y, w, h, k, t) {
+  var tr = isdTrack(x, y, w, h, k), lift = tr.pts.filter(function (p) { return p.lift; }), top = lift.length ? lift[lift.length - 1].s : tr.len * 0.4;
+  var cyc = 4.2, u = (t % cyc) / cyc, slow = 0.55; // slow up the lift, fast after
+  return u < slow ? top * u / slow : top + (tr.len + 60 * k - top) * Math.pow((u - slow) / (1 - slow), 0.8);
+}
+
 // A striped circus big top with a flag.
 function isdBigTop(cx, ground, s, k) {
   var top = ground - s * 1.25, wl = s * 0.95;
@@ -444,6 +531,7 @@ function stopIslamDagSound() {
 // beside it, the wait-time board on 2-3 YEARS, the slogan on the sign.
 function drawIslamDagStill(x, y, w, h, k, ch) {
   isdBackdrop(x, y, w, h, k, true);
+  isdTrain(x, y, w, h, k, isdTrainHead(x, y, w, h, k, 2.3)); // (cresting the lift hill)
   drawIslVan(x + w * ISD_L.van, y + h * ISD_L.rail, 1, 0, 0.4 * k); // (islam-specials.js)
   isdStationFront(x, y, w, h, k);
   if (ch && ch.look) isdOperator(x + w * 0.665, y + h * ISD_L.rail, h * 0.15, ch.look, k, true, 0);
