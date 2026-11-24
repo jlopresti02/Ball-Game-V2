@@ -31,6 +31,7 @@ function resetAdBreaks() {
   resetTapWater();
   resetMaxxAd();
   resetProper12(); // (proper12-ad.js)
+  resetIslamDagAd(); // (islam-dagestan-ad.js)
 }
 // Every frame from update().
 function tickAdBreaks(dt) {
@@ -43,6 +44,7 @@ function tickAdBreaks(dt) {
   tickTapWater(dt);
   tickMaxxAd(dt);
   tickProper12(dt); // (proper12-ad.js)
+  tickIslamDagAd(dt); // (islam-dagestan-ad.js)
   // No ad breaks in gallery demos, or once the fight's over.
   if (over || (typeof galleryDemo !== "undefined" && galleryDemo) || !SPONSOR_ADS.length) return;
   adBreakT -= dt;
