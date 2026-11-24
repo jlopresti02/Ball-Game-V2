@@ -541,7 +541,7 @@ function draw() {
   ctx.globalAlpha = 1;
   drawIliaCombos(); // Ilia's combo finisher: the gold ring and 4-PIECE! over them (ilia-combos.js)
 
-  if (stadium) drawJumbotron(px);
+  if (stadium) drawJumbotronUnlessCutscene(px); // hidden in special cutscenes (jumbo-cutscene.js)
   drawLadderSky(s, ox, oy); // Hokit up the ladder and diving off it (hokit-ladder.js)
   drawHotSauce(s, ox, oy); // Dustin's bottle, gloves, steam and fire breath (hot-sauce.js)
   drawChamaCrowd(s, ox, oy); // the crowd shouting CHAMA back (pereira.js)
