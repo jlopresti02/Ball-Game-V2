@@ -216,6 +216,7 @@ function setGamePlan(b, other, cfg) {
   mouseArm(b, cfg);
   floater(b.x, b.y - b.r - 44, "GAME PLAN: " + MM_PLAN_NAMES[rd.plan], "crit");
   playScoutDone();
+  mmPoorbetOnPlan(b); // Fight Analysis sponsored by Poorbet on the jumbotron, 3s later (mighty-mouse-poorbet-ad.js)
   crowdReact(0.4);
   if (cfg.copycat) m.copyAt = m.t + cfg.copycat.delay;
 }
