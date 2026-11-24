@@ -404,6 +404,7 @@ function islDagestan(self, other, m, dt) {
       m.van = { x: fromLeft ? half : W - half, y: Math.max(170 * vs, Math.min(H - 10, other.y + other.r * 0.4)), dir: fromLeft ? 1 : -1, door: 0, guys: 0, s: vs, a: 0 };
       m.phase = "van"; m.t = 0;
       playVanScreech();
+      islamDagAdOnVan(self, m); // his Dagestan World Van Tours ad on the jumbotron, first van of the fight (islam-dagestan-ad.js)
     }
     return true;
   }

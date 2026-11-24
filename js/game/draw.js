@@ -518,6 +518,7 @@ function draw() {
   drawMaxxBanner(); // and Max's Maxx Energy ad (maxx-energy-ad.js)
   drawProper12Banner(); // and Conor's Proper No. 12 ad (proper12-ad.js)
   drawBurritoBellBanner(); // and Tony Ferguson's Burrito Bell ad (burrito-bell-ad.js)
+  drawIslamDagBanner(); // and Islam's Dagestan World Van Tours ad (islam-dagestan-ad.js)
   drawConorBanner(); // and Conor McGregor's 13 SECONDS (conor.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)

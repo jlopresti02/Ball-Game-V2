@@ -319,5 +319,9 @@ var STILL_ADS = [
 
   // ---------------------------------------------------------------- Maxx Energy
   // Max Holloway's energy drink: game night, a CRT, the controller and the can (maxx-energy-ad.js).
-  { name: "maxx-gamenight", fighter: "Max Holloway", draw: function (x, y, w, h, k, ch) { drawMaxxStill(x, y, w, h, k, ch); } }
+  { name: "maxx-gamenight", fighter: "Max Holloway", draw: function (x, y, w, h, k, ch) { drawMaxxStill(x, y, w, h, k, ch); } },
+
+  // ---------------------------------------------------------------- Dagestan World Van Tours
+  // Islam's: a vintage travel poster, the van on a switchback, 2-3 YEARS DAGESTAN AND FORGET (islam-dagestan-ad.js).
+  { name: "dagestan-van-tours", fighter: "Islam Makhachev", draw: function (x, y, w, h, k, ch) { drawIslamDagStill(x, y, w, h, k, ch); } }
 ];
