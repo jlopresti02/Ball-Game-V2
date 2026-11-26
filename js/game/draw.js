@@ -520,6 +520,7 @@ function draw() {
   drawBurritoBellBanner(); // and Tony Ferguson's Burrito Bell ad (burrito-bell-ad.js)
   drawIslamDagBanner(); // and Islam's Dagestan World Van Tours ad (islam-dagestan-ad.js)
   drawMmPoorbetBanner(); // and Mighty Mouse's Fight Analysis ad (mighty-mouse-poorbet-ad.js)
+  drawSugaSmilesBanner(); // and Sean O'Malley's Suga Smiles Dental ad (suga-smiles-ad.js)
   drawConorBanner(); // and Conor McGregor's 13 SECONDS (conor.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)

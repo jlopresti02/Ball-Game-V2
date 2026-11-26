@@ -323,5 +323,9 @@ var STILL_ADS = [
 
   // ---------------------------------------------------------------- Dagestan World Van Tours
   // Islam's: a vintage travel poster, the van on a switchback, 2-3 YEARS DAGESTAN AND FORGET (islam-dagestan-ad.js).
-  { name: "dagestan-van-tours", fighter: "Islam Makhachev", draw: function (x, y, w, h, k, ch) { drawIslamDagStill(x, y, w, h, k, ch); } }
+  { name: "dagestan-van-tours", fighter: "Islam Makhachev", draw: function (x, y, w, h, k, ch) { drawIslamDagStill(x, y, w, h, k, ch); } },
+
+  // ---------------------------------------------------------------- Suga Smiles Dental
+  // Sean O'Malley's: a waiting-room poster, the tooth in rainbow veneers, Dr. Suga (suga-smiles-ad.js).
+  { name: "suga-smiles-veneers", fighter: "Sean O'Malley", draw: function (x, y, w, h, k, ch) { drawSugaSmilesStill(x, y, w, h, k, ch); } }
 ];

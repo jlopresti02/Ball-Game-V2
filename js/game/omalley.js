@@ -513,6 +513,7 @@ function updateSugarRush(self, other, dt) {
     floater(self.x, self.y - self.r - 84, "SUGAR RUSH!", "crit"); // (over the speech bubble)
     sgSayAlways(self, "Welcome to the Suga Show."); // every Sugar Rush (it waits its turn)
     playSugarRush();
+    if (typeof sugaSmilesOnRush === "function") sugaSmilesOnRush(self); // his Suga Smiles Dental ad, first Sugar Rush only (suga-smiles-ad.js)
     crowdReact(1);
   }
   var m = self.igbb;
