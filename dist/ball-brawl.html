@@ -33084,7 +33084,7 @@ function drawSugaSmilesJumbo(x, y, w, h) {
     ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.beginPath(); ctx.arc(sx0 - sr * 0.2, sy0 - sr * 0.77, sr * 0.07, 0, Math.PI * 2); ctx.fill();
     if (t > 3.5 && t < 3.9) ssdStar(sx0 - sr * 0.15, sy0 - sr * 0.72, sr * 0.45 * Math.sin((t - 3.5) / 0.4 * Math.PI), 1);
     ctx.restore();
-    drawGlove(ctx, sx0 - sr * 1.0, sy0 + sr * 0.32, gr, look, "#0b0f12", Math.PI + 0.15); // guard glove at his side, like in the fight
+    drawGlove(ctx, sx0 + sr * 0.98, sy0 + sr * 0.22 + Math.sin(t * 6) * sr * 0.03, gr, look, "#0b0f12", -0.35); // his other glove up on his far side (the brush hand is on the near side)
     var twirl = t > SSD_SCRUB[1] && t < SSD_SCRUB[1] + 0.5 ? Math.sin((t - SSD_SCRUB[1]) / 0.5 * Math.PI) * 0.5 : 0;
     var grip = ssdBrushGrip(bx, brush.y, brush.a + twirl, L);
     // one arm from his shoulder, bending at the elbow (down and out) to the grip
@@ -93277,21 +93277,21 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261126015807"></script>
-  <script src="js/game/tale-tape.js?v=20261126015807"></script>
-  <script src="js/game/tape-taunts.js?v=20261126015807"></script>
-<script src="js/game/special-solid.js?v=20261126015807"></script>
-<script src="js/game/watchdog.js?v=20261126015807"></script>
-<script src="js/game/update.js?v=20261126015807"></script>
-<script src="js/game/fighter-art.js?v=20261126015807"></script>
-<script src="js/game/fedor-skin.js?v=20261126015807"></script>
-<script src="js/game/draw-attacks.js?v=20261126015807"></script>
-<script src="js/game/wwit-badge.js?v=20261126015807"></script>
-<script src="js/game/stadium.js?v=20261126015807"></script>
-<script src="js/game/draw.js?v=20261126015807"></script>
-<script src="js/ui/gallery.js?v=20261126015807"></script>
-<script src="js/ui/saved-fights.js?v=20261126015807"></script>
-<script src="js/main.js?v=20261126015807"></script>
-<script src="js/ui/fight-link.js?v=20261126015807"></script>
+  <script src="js/game/intro-msg.js?v=20261126025624"></script>
+  <script src="js/game/tale-tape.js?v=20261126025624"></script>
+  <script src="js/game/tape-taunts.js?v=20261126025624"></script>
+<script src="js/game/special-solid.js?v=20261126025624"></script>
+<script src="js/game/watchdog.js?v=20261126025624"></script>
+<script src="js/game/update.js?v=20261126025624"></script>
+<script src="js/game/fighter-art.js?v=20261126025624"></script>
+<script src="js/game/fedor-skin.js?v=20261126025624"></script>
+<script src="js/game/draw-attacks.js?v=20261126025624"></script>
+<script src="js/game/wwit-badge.js?v=20261126025624"></script>
+<script src="js/game/stadium.js?v=20261126025624"></script>
+<script src="js/game/draw.js?v=20261126025624"></script>
+<script src="js/ui/gallery.js?v=20261126025624"></script>
+<script src="js/ui/saved-fights.js?v=20261126025624"></script>
+<script src="js/main.js?v=20261126025624"></script>
+<script src="js/ui/fight-link.js?v=20261126025624"></script>
 </body>
 </html>
