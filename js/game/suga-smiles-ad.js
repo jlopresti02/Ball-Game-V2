@@ -10,9 +10,9 @@
 //   - NEW! RAINBOW VENEERS: the tooth turns his hair colors. MATCH YOUR HAIR.
 //     50% OFF, code SUGASHOW.
 //   - End card: SUGA SMILES DENTAL. "Eat the candy. We'll handle the rest."
-// Sound (code-made): a chime, a bonk per candy, an uh-oh, the electric
-// toothbrush buzz, a sparkle twinkle and a closing jingle, all cues on the
-// ad's own clock.
+// Sound: Joe's song looped under it (sugaSmilesMusic, sound-clips.js), with
+// code-made effects on top: a bonk per candy, an uh-oh, the electric
+// toothbrush buzz, a sparkle and a ding, all cues on the ad's own clock.
 // Like Mighty Mouse's Poorbet ad, if a special, clash, lock or cutscene
 // starts while it's playing it pauses (off the jumbotron, sound stopped,
 // clock held) and finishes after. suga.dentalAd false in his character file
@@ -24,9 +24,10 @@ var SSD_SHOW = 9.5;
 var SSD_PINK = "#ff5fa8", SSD_MINT = "#3fd6b8", SSD_DEEP = "#7a1f5c";
 var SSD_DROPS = [0.7, 1.05, 1.4, 1.75, 2.1, 2.45]; // when each candy lands on the tooth
 var SSD_SCRUB = [3.7, 5.6], SSD_VENEER = 6.3, SSD_END = 7.9;
-var SSD_CUES = [["chime", 0.05]].concat(SSD_DROPS.map(function (d) { return ["bonk", d]; }),
-  [["uhoh", 2.75], ["swoosh", 3.25], ["buzz", SSD_SCRUB[0]], ["sparkle", 5.75], ["ding", SSD_VENEER + 0.1], ["jingle", SSD_END + 0.05]]);
-var SSD = { show: 0, t: 0, id: 0, done: false, queued: false, paused: false, cue: 0, out: null };
+var SSD_CUES = SSD_DROPS.map(function (d) { return ["bonk", d]; }).concat(
+  [["uhoh", 2.75], ["swoosh", 3.25], ["buzz", SSD_SCRUB[0]], ["sparkle", 5.75], ["ding", SSD_VENEER + 0.1]]);
+var SSD_MUSIC_GAIN = 0.95;
+var SSD = { show: 0, t: 0, id: 0, done: false, queued: false, paused: false, cue: 0, out: null, music: null };
 
 // From startMatchWith (through resetAdBreaks).
 function resetSugaSmiles() { SSD.show = 0; SSD.t = 0; SSD.done = false; SSD.queued = false; SSD.paused = false; SSD.cue = 0; stopSugaSmilesSound(); }
@@ -38,6 +39,29 @@ function sugaSmilesOnRush(b) {
   queueJumboAd(SSD_SHOW, function () {
     if (over) { jumboAdLeft = 0; return; }
     SSD.show = SSD_SHOW; SSD.t = 0; SSD.cue = 0; SSD.paused = false;
+    sugaSmilesMusic();
+  });
+}
+// Joe's song (sugaSmilesMusic, sound-clips.js), looped under the ad from
+// where the ad's clock is, to the end. Through SSD.out, so it stops with the
+// ad's sound when it pauses, and picks back up in place after.
+function sugaSmilesMusic() {
+  if (typeof withClip !== "function") return;
+  withClip("sugaSmilesMusic", function (buf) {
+    try {
+      if (SSD.show <= 0 || SSD.paused || SSD.music) return;
+      var ac = getAudioCtx(); if (!ac) return;
+      if (!SSD.out) { SSD.out = ac.createGain(); SSD.out.gain.value = 0.6; SSD.out.connect(ac.destination); }
+      var now = ac.currentTime + 0.02, left = SSD.show;
+      var src = ac.createBufferSource(), g = ac.createGain();
+      src.buffer = buf; src.loop = true;
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(SSD_MUSIC_GAIN, now + 0.08);
+      g.gain.setValueAtTime(SSD_MUSIC_GAIN, now + Math.max(0.1, left - 0.45)); g.gain.exponentialRampToValueAtTime(0.0001, now + left);
+      src.connect(g); g.connect(SSD.out);
+      src.start(now, SSD.t % buf.duration); src.stop(now + left + 0.05);
+      SSD.music = src;
+      if (typeof duckMusic === "function") duckMusic(now, now + left);
+    } catch (e) { /* no audio */ }
   });
 }
 // A special, a clash, a lock or a cutscene on: the ad holds.
@@ -52,8 +76,9 @@ function tickSugaSmiles(dt) {
     if (typeof jumboAdLeft !== "undefined" && jumboAdLeft > 0) jumboAdLeft += dt;
     return;
   }
-  if (SSD.paused) { // back on: pick the buzz back up if it was mid scrub
+  if (SSD.paused) { // back on: the song picks up where it was, and the buzz if it was mid scrub
     SSD.paused = false;
+    sugaSmilesMusic();
     if (SSD.t > SSD_SCRUB[0] + 0.1 && SSD.t < SSD_SCRUB[1] - 0.2) playSugaSmilesCue("buzz", SSD_SCRUB[1] - SSD.t);
   }
   SSD.show = Math.max(0, SSD.show - dt);
@@ -580,6 +605,7 @@ function playSugaSmilesCue(name, len) {
   } catch (e) { /* no audio */ }
 }
 function stopSugaSmilesSound() {
+  if (SSD.music) { try { SSD.music.stop(); } catch (e) { /* already stopped */ } SSD.music = null; }
   if (!SSD.out) return;
   try { SSD.out.disconnect(); } catch (e) { /* already gone */ }
   SSD.out = null;
