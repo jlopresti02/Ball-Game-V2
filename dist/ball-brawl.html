@@ -33170,13 +33170,27 @@ function drawSugaSmilesStill(x, y, w, h, k, ch) {
   stillText("RAINBOW VENEERS", x + w * 0.2, y + h * 0.5, 28 * k, SSD_PINK, w * 0.34, { stroke: "#ffffff", strokeW: 0.2 });
   stillText("Your smile. Your hair. Finally matching.", x + w * 0.2, y + h * 0.65, 14 * k, "#1b2a33", w * 0.34, { face: sans, weight: "800" });
   ssdTooth(x + w * 0.52, y + h * 0.58, h * 0.24, { mood: 1, veneer: 1, hair: hair, shine: 0.9, t: 1.3 });
-  var sr = h * 0.25, sx = x + w * 0.8, sy = y + h * 0.58;
+  // Dr. Suga's pose: the toothbrush raised high in his near glove like a
+  // trophy, bristles toward the tooth, his other glove pumped up on his far
+  // side. Only his own two arms.
+  var sr = h * 0.25, sx = x + w * 0.79, sy = y + h * 0.6, gr = sr * 0.28, skin = look.skin || "#f3d0b5";
   stillFighter(sx, sy, sr, look, (ch && ch.name) || "");
   ctx.fillStyle = "#cfd8dc"; ctx.strokeStyle = "#1b2a33"; ctx.lineWidth = 2 * k;
   ctx.beginPath(); ctx.arc(sx - sr * 0.15, sy - sr * 0.72, sr * 0.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  stillText("DR. SUGA", sx, y + h * 0.14, 16 * k, SSD_DEEP, w * 0.18, { stroke: "#ffffff", strokeW: 0.2 });
+  ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.beginPath(); ctx.arc(sx - sr * 0.2, sy - sr * 0.77, sr * 0.07, 0, Math.PI * 2); ctx.fill();
+  var sh = { x: sx - sr * 0.86, y: sy - sr * 0.2 }, el = { x: sx - sr * 1.45, y: sy - sr * 0.02 }, gp = { x: sx - sr * 1.32, y: sy - sr * 0.78 };
+  strokeLimb(sr * 0.2, skin, function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(el.x, el.y); ctx.lineTo(gp.x, gp.y); });
+  var L = h * 0.36, ba = Math.PI / 2 - 0.38, gx = L * 0.78, gy = -L * 0.02;
+  var ox = gp.x - (Math.cos(ba) * gx - Math.sin(ba) * gy), oy = gp.y - (Math.sin(ba) * gx + Math.cos(ba) * gy);
+  ssdBrush(ox, oy, ba, L, k);
+  ssdStar(ox - L * 0.02, oy + L * 0.1, L * 0.16, 1); ssdStar(ox + L * 0.12, oy - L * 0.06, L * 0.08, 0.9);
+  drawGlove(ctx, gp.x, gp.y, gr, look, "#0b0f12", Math.atan2(gp.y - el.y, gp.x - el.x));
+  var fs = { x: sx + sr * 0.86, y: sy - sr * 0.2 }, fe = { x: sx + sr * 1.38, y: sy - sr * 0.05 }, fg = { x: sx + sr * 1.32, y: sy - sr * 0.7 };
+  strokeLimb(sr * 0.2, skin, function () { ctx.moveTo(fs.x, fs.y); ctx.lineTo(fe.x, fe.y); ctx.lineTo(fg.x, fg.y); });
+  drawGlove(ctx, fg.x, fg.y, gr, look, "#0b0f12", Math.atan2(fg.y - fe.y, fg.x - fe.x));
+  stillText("DR. SUGA", sx, y + h * 0.12, 16 * k, SSD_DEEP, w * 0.18, { stroke: "#ffffff", strokeW: 0.2 });
   // the lollipop jar
-  var jx = x + w * 0.66, jy = y + h * 0.78;
+  var jx = x + w * 0.95, jy = y + h * 0.8;
   ctx.fillStyle = "rgba(220,245,255,0.6)"; ctx.strokeStyle = "#1b2a33"; ctx.lineWidth = 2 * k;
   stillRoundRect(jx - 18 * k, jy - 34 * k, 36 * k, 40 * k, 8 * k); ctx.fill(); ctx.stroke();
   if (typeof drawSweet === "function") { drawSweet({ kind: "lollipop" }, jx - 6 * k, jy - 40 * k, 12 * k, -0.3); drawSweet({ kind: "lollipop" }, jx + 7 * k, jy - 44 * k, 12 * k, 0.3); }
@@ -93277,21 +93291,21 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261126025624"></script>
-  <script src="js/game/tale-tape.js?v=20261126025624"></script>
-  <script src="js/game/tape-taunts.js?v=20261126025624"></script>
-<script src="js/game/special-solid.js?v=20261126025624"></script>
-<script src="js/game/watchdog.js?v=20261126025624"></script>
-<script src="js/game/update.js?v=20261126025624"></script>
-<script src="js/game/fighter-art.js?v=20261126025624"></script>
-<script src="js/game/fedor-skin.js?v=20261126025624"></script>
-<script src="js/game/draw-attacks.js?v=20261126025624"></script>
-<script src="js/game/wwit-badge.js?v=20261126025624"></script>
-<script src="js/game/stadium.js?v=20261126025624"></script>
-<script src="js/game/draw.js?v=20261126025624"></script>
-<script src="js/ui/gallery.js?v=20261126025624"></script>
-<script src="js/ui/saved-fights.js?v=20261126025624"></script>
-<script src="js/main.js?v=20261126025624"></script>
-<script src="js/ui/fight-link.js?v=20261126025624"></script>
+  <script src="js/game/intro-msg.js?v=20261126030023"></script>
+  <script src="js/game/tale-tape.js?v=20261126030023"></script>
+  <script src="js/game/tape-taunts.js?v=20261126030023"></script>
+<script src="js/game/special-solid.js?v=20261126030023"></script>
+<script src="js/game/watchdog.js?v=20261126030023"></script>
+<script src="js/game/update.js?v=20261126030023"></script>
+<script src="js/game/fighter-art.js?v=20261126030023"></script>
+<script src="js/game/fedor-skin.js?v=20261126030023"></script>
+<script src="js/game/draw-attacks.js?v=20261126030023"></script>
+<script src="js/game/wwit-badge.js?v=20261126030023"></script>
+<script src="js/game/stadium.js?v=20261126030023"></script>
+<script src="js/game/draw.js?v=20261126030023"></script>
+<script src="js/ui/gallery.js?v=20261126030023"></script>
+<script src="js/ui/saved-fights.js?v=20261126030023"></script>
+<script src="js/main.js?v=20261126030023"></script>
+<script src="js/ui/fight-link.js?v=20261126030023"></script>
 </body>
 </html>
