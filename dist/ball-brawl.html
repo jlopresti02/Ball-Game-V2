@@ -32929,7 +32929,7 @@ function ssdBurst(x, y, r, u, col) {
 // In: raised, coming in with him. Scrub: fast strokes side to side, working
 // down the tooth row by row. Out: lifted away with a twirl.
 function ssdBrushAt(t, tx, ty, ts) {
-  var up = { x: tx + ts * 1.25, y: ty - ts * 0.7, a: 0.55 }; // held up in front of him, bristles out
+  var up = { x: tx + ts * 0.85, y: ty - ts * 1.5, a: 1.1 }; // held up out in front of him, bristles out
   if (t < SSD_SCRUB[0]) return up;
   if (t < SSD_SCRUB[1]) {
     var u = (t - SSD_SCRUB[0]) / (SSD_SCRUB[1] - SSD_SCRUB[0]);
@@ -33073,11 +33073,9 @@ function drawSugaSmilesJumbo(x, y, w, h) {
       for (var sl = 0; sl < 4; sl++) { var ly = sy0 + (sl - 1.5) * sr * 0.45; ctx.beginPath(); ctx.moveTo(sx0 + sr * 1.1, ly); ctx.lineTo(sx0 + sr * 1.1 + slide * 0.5, ly); ctx.stroke(); }
     }
     var bx = brush.x + (slide > 0 ? slide : 0);
-    var L = ts * 2.0, skin = look.skin || "#f3d0b5", arm = sr * 0.24;
-    var guard = { x: sx0 - sr * 0.78, y: sy0 + sr * 0.42 };
-    // back arm in his guard, the ball, then the brush arm in front
-    strokeLimb(arm, skin, function () { ctx.moveTo(sx0 - sr * 0.4, sy0 + sr * 0.3); ctx.lineTo(guard.x, guard.y); });
-    drawGlove(ctx, guard.x, guard.y, sr * 0.3, look, "#0b0f12", Math.PI * 1.1);
+    var L = ts * 2.0, skin = look.skin || "#f3d0b5", arm = sr * 0.2;
+    var gr = sr * 0.28;
+    // the ball, then his back hand in its guard, then the brush arm
     ctx.save(); ctx.translate(sx0, sy0 + sr); ctx.rotate((brush.stroke || 0) * 0.035 - (slide > 0 ? 0.12 : 0)); ctx.translate(-sx0, -sy0 - sr);
     stillFighter(sx0, sy0, sr, look, ch.name);
     // the dentist's head mirror, with a glint as he arrives
@@ -33086,17 +33084,22 @@ function drawSugaSmilesJumbo(x, y, w, h) {
     ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.beginPath(); ctx.arc(sx0 - sr * 0.2, sy0 - sr * 0.77, sr * 0.07, 0, Math.PI * 2); ctx.fill();
     if (t > 3.5 && t < 3.9) ssdStar(sx0 - sr * 0.15, sy0 - sr * 0.72, sr * 0.45 * Math.sin((t - 3.5) / 0.4 * Math.PI), 1);
     ctx.restore();
+    drawGlove(ctx, sx0 - sr * 1.0, sy0 + sr * 0.32, gr, look, "#0b0f12", Math.PI + 0.15); // guard glove at his side, like in the fight
     var twirl = t > SSD_SCRUB[1] && t < SSD_SCRUB[1] + 0.5 ? Math.sin((t - SSD_SCRUB[1]) / 0.5 * Math.PI) * 0.5 : 0;
     var grip = ssdBrushGrip(bx, brush.y, brush.a + twirl, L);
-    var sh = { x: sx0 - sr * 0.62, y: sy0 - sr * 0.15 };
-    var elbow = { x: (sh.x + grip.x) / 2 + sr * 0.15, y: Math.max(sh.y, grip.y) + sr * 0.3 };
-    strokeLimb(arm, skin, function () { ctx.moveTo(sh.x, sh.y); ctx.quadraticCurveTo(elbow.x, elbow.y, grip.x, grip.y); });
+    // one arm from his shoulder, bending at the elbow (down and out) to the grip
+    var sh = { x: sx0 - sr * 0.86, y: sy0 - sr * 0.22 };
+    var ddx = grip.x - sh.x, ddy = grip.y - sh.y, dd = Math.sqrt(ddx * ddx + ddy * ddy) || 1, reach = sr * 1.3;
+    var bend = Math.sqrt(Math.max(0, reach * reach / 4 - dd * dd / 4));
+    var nx = -ddy / dd, ny = ddx / dd; if (ny < 0) { nx = -nx; ny = -ny; } // the elbow drops below the line
+    var elbow = { x: (sh.x + grip.x) / 2 + nx * bend, y: (sh.y + grip.y) / 2 + ny * bend };
+    strokeLimb(arm, skin, function () { ctx.moveTo(sh.x, sh.y); ctx.lineTo(elbow.x, elbow.y); ctx.lineTo(grip.x, grip.y); });
     if (brush.stroke) { // motion arcs behind the head
       ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 3 * k;
       ctx.beginPath(); ctx.moveTo(bx - brush.stroke * ts * 0.25, brush.y - ts * 0.08); ctx.quadraticCurveTo(bx - brush.stroke * ts * 0.5, brush.y - ts * 0.2, bx - brush.stroke * ts * 0.8, brush.y - ts * 0.05); ctx.stroke();
     }
     ssdBrush(bx, brush.y - L * 0.11, brush.a + twirl, L, k);
-    drawGlove(ctx, grip.x, grip.y, sr * 0.3, look, "#0b0f12", brush.a + twirl + Math.PI);
+    drawGlove(ctx, grip.x, grip.y, gr, look, "#0b0f12", Math.atan2(grip.y - elbow.y, grip.x - elbow.x)); // knuckles out along his forearm, round the handle
     if (t > SSD_SCRUB[0] && t < SSD_SCRUB[1] + 0.3) {
       ssdFoam(tx, ty - ts * 0.35 + scrubU * ts * 0.3, ts * 0.9, Math.min(1, (t - SSD_SCRUB[0]) / 0.3) * (1 - ssdFade(t, SSD_SCRUB[1], 0.3)), t);
       var sc = Math.floor((t - SSD_SCRUB[0]) / 0.45);
@@ -93274,21 +93277,21 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261126014013"></script>
-  <script src="js/game/tale-tape.js?v=20261126014013"></script>
-  <script src="js/game/tape-taunts.js?v=20261126014013"></script>
-<script src="js/game/special-solid.js?v=20261126014013"></script>
-<script src="js/game/watchdog.js?v=20261126014013"></script>
-<script src="js/game/update.js?v=20261126014013"></script>
-<script src="js/game/fighter-art.js?v=20261126014013"></script>
-<script src="js/game/fedor-skin.js?v=20261126014013"></script>
-<script src="js/game/draw-attacks.js?v=20261126014013"></script>
-<script src="js/game/wwit-badge.js?v=20261126014013"></script>
-<script src="js/game/stadium.js?v=20261126014013"></script>
-<script src="js/game/draw.js?v=20261126014013"></script>
-<script src="js/ui/gallery.js?v=20261126014013"></script>
-<script src="js/ui/saved-fights.js?v=20261126014013"></script>
-<script src="js/main.js?v=20261126014013"></script>
-<script src="js/ui/fight-link.js?v=20261126014013"></script>
+  <script src="js/game/intro-msg.js?v=20261126015807"></script>
+  <script src="js/game/tale-tape.js?v=20261126015807"></script>
+  <script src="js/game/tape-taunts.js?v=20261126015807"></script>
+<script src="js/game/special-solid.js?v=20261126015807"></script>
+<script src="js/game/watchdog.js?v=20261126015807"></script>
+<script src="js/game/update.js?v=20261126015807"></script>
+<script src="js/game/fighter-art.js?v=20261126015807"></script>
+<script src="js/game/fedor-skin.js?v=20261126015807"></script>
+<script src="js/game/draw-attacks.js?v=20261126015807"></script>
+<script src="js/game/wwit-badge.js?v=20261126015807"></script>
+<script src="js/game/stadium.js?v=20261126015807"></script>
+<script src="js/game/draw.js?v=20261126015807"></script>
+<script src="js/ui/gallery.js?v=20261126015807"></script>
+<script src="js/ui/saved-fights.js?v=20261126015807"></script>
+<script src="js/main.js?v=20261126015807"></script>
+<script src="js/ui/fight-link.js?v=20261126015807"></script>
 </body>
 </html>
