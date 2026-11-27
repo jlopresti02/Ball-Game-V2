@@ -270,7 +270,7 @@ function atkStrickland(cx, cy, r, look, name, o) {
   drawGlove(ctx, g.x, g.y, gr * (1 + 0.25 * p), look, "#0b0f12", Math.atan2(g.y - el.y, g.x - el.x));
 }
 // Chuck Norris (his own art, kit and hat from chuck-norris.js), drawn at r.
-// o.arms "crossed" | "low"; o.kick { ang, len, blur }; o.spin; o.tilt.
+// Arms at his sides (o.arms is ignored now); o.kick { ang, len, blur }; o.spin; o.tilt.
 function atkChuck(cx, cy, r, o) {
   if (typeof CN_LOOK === "undefined") return;
   o = o || {};
@@ -284,10 +284,32 @@ function atkChuck(cx, cy, r, o) {
   ctx.lineWidth = Math.max(2, r * 0.05) / s; ctx.strokeStyle = "#0b0f12"; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.stroke(); // the same dark outline as Sean's (stillFighter)
   drawCnHat(R);
   ctx.restore();
-  if (o.kick) { if (!o.kick.blur) cnLeg(R, o.kick.ang, o.kick.len, false); cnBalanceArms(R, o.kick.ang); }
-  else if (o.arms === "crossed") cnCrossedArms(R);
-  else { cnArm(-R * 0.82, R * 0.16, -R * 1.0, R * 0.7, 13); cnArm(R * 0.82, R * 0.16, R * 1.0, R * 0.7, 13); }
+  if (o.kick && !o.kick.blur) cnLeg(R, o.kick.ang, o.kick.len, false);
   ctx.restore();
+  // his two arms, drawn the way Sean's are (same thickness and outline), bare fists
+  var skin = CN_LOOK.skin || "#e3a98f";
+  if (o.kick) { // out to the sides for balance, square to the kick
+    var ux = Math.cos(o.kick.ang), uy = Math.sin(o.kick.ang), px = -uy, py = ux;
+    [-1, 1].forEach(function (sd) {
+      var sx = cx + px * sd * r * 0.78, sy = cy + py * sd * r * 0.78;
+      var hx = cx + px * sd * r * 1.3 - ux * r * 0.3, hy = cy + py * sd * r * 1.3 - uy * r * 0.3;
+      strokeLimb(r * 0.18, skin, function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
+      atkFist(hx, hy, r * 0.2);
+    });
+  } else { // down at his sides, like Sean's off arm
+    [-1, 1].forEach(function (sd) {
+      var sx = cx + sd * r * 0.8, sy = cy + r * 0.1, hx = cx + sd * r * 1.02, hy = cy + r * 0.62;
+      strokeLimb(r * 0.18, skin, function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
+      atkFist(hx, hy, r * 0.2);
+    });
+  }
+}
+// Chuck's bare fist (no gloves on Chuck Norris), outlined dark like Sean's gloves.
+function atkFist(x, y, g) {
+  ctx.fillStyle = (CN_LOOK && CN_LOOK.skin) || "#e3a98f"; ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = Math.max(1.5, g * 0.14);
+  ctx.beginPath(); ctx.arc(x, y, g, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = Math.max(1, g * 0.08);
+  ctx.beginPath(); ctx.arc(x, y, g * 0.55, -0.9, 0.9); ctx.stroke();
 }
 // A comic star burst with words.
 function atkBurst(x, y, r, col, text, size, rot, sc) {
