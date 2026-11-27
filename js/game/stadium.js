@@ -639,6 +639,7 @@ function drawJumbotron(px) {
   drawAmTrucksJumbo(sx, sy, sw, jt.h - 28); // Strickland & Chuck's American Discount Trucks ad (american-trucks-ad.js)
   drawSalkilldJumbo(sx, sy, sw, jt.h - 28); // Daniel Cormier's Salkilld Bakery ad (salkilld-ad.js)
   drawNgannouJumbo(sx, sy, sw, jt.h - 28); // Ngannou's rage meter, Dana White, the punch-power reading (ngannou.js)
+  drawBulkJumbo(sx, sy, sw, jt.h - 28); // Francis Ngannou's Incredible Bulk ad, over his rage meter (incredible-bulk-ad.js)
   drawBearWarnJumbo(sx, sy, sw, jt.h - 28); // WARNING: BEAR IN ARENA, over everything (bear-warning.js)
   drawConorJumbo(sx, sy, sw, jt.h - 28); // Conor McGregor's 13 SECONDS (conor.js)
   drawVolkJumbo(sx, sy, sw, jt.h - 28); // AUSSIE AUSSIE AUSSIE, OI OI OI for Volkanovski's Kangaroo (volkanovski.js)

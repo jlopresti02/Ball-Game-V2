@@ -524,6 +524,7 @@ function draw() {
   drawSamuraiSushiBanner(); // and Jiří Procházka's Samurai Sushi ad (samurai-sushi-ad.js)
   drawAmTrucksBanner(); // and Strickland & Chuck's American Discount Trucks ad (american-trucks-ad.js)
   drawSalkilldBanner(); // and Daniel Cormier's Salkilld Bakery ad (salkilld-ad.js)
+  drawBulkBanner(); // and Francis Ngannou's Incredible Bulk ad (incredible-bulk-ad.js)
   drawConorBanner(); // and Conor McGregor's 13 SECONDS (conor.js)
   drawBearWarnBanner(); // and WARNING: BEAR IN ARENA (bear-warning.js)
   drawTossOver(); // the throw's dust, ring and THROWN! (toss.js)
