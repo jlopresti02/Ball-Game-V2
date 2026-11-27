@@ -45,7 +45,13 @@ var TAPE_FACTS = {
   "c-sean-strickland": { from: "USA", ht: "6'1\"", reach: "76\"", nick: "Tarzan" },
   "c-tony-ferguson": { from: "USA", ht: "5'11\"", reach: "76.5\"" },
   "c-jiri-prochazka": { from: "CZECHIA", ht: "6'3\"", reach: "80\"" },
-  "c-joshua-van": { from: "MYANMAR", ht: "5'5\"", reach: "65\"" }
+  "c-joshua-van": { from: "MYANMAR", ht: "5'5\"", reach: "65\"" },
+  "c-anderson-silva": { from: "BRAZIL", ht: "6'2\"", reach: "77.5\"" },
+  "c-carlos-prates": { from: "BRAZIL", ht: "6'1\"", reach: "78\"" },
+  "c-daniel-cormier": { from: "USA", ht: "5'11\"", reach: "72.5\"" },
+  "c-fedor-emelianenko": { from: "RUSSIA", ht: "6'0\"", reach: "74\"" },
+  "c-islam-makhachev": { from: "RUSSIA", ht: "5'10\"", reach: "70.5\"" },
+  "c-michael-bisping": { from: "ENGLAND", ht: "6'1\"", reach: "75.5\"" }
 };
 
 function setTapeOn(on) {
