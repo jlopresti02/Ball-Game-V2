@@ -706,7 +706,7 @@ function updateCake(self, other, dt) {
     if (e.t >= fd.eatTime) { e.phase = "swell"; e.t = 0; dcServe(self, e.kind, false); }
     return true;
   }
-  if (e.t >= DC_SWELL) { self.igbb = null; self.specialT = 0; m.eating = false; return false; }
+  if (e.t >= DC_SWELL) { self.igbb = null; self.specialT = 0; m.eating = false; if (typeof salkilldOnCake === "function") salkilldOnCake(self); /* his Salkilld Bakery ad, once a match (salkilld-ad.js) */ return false; }
   return true;
 }
 

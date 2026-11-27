@@ -333,5 +333,8 @@ var STILL_ADS = [
   { name: "samurai-sushi-omakase", fighter: "Jiří Procházka", draw: function (x, y, w, h, k, ch) { drawSamuraiSushiStill(x, y, w, h, k, ch); } },
   // ---------------------------------------------------------------- American Discount Trucks
   // Sean Strickland's: the lot at sunset, Sean and Chuck Norris in front of the red truck (american-trucks-ad.js).
-  { name: "american-discount-trucks", fighter: "Sean Strickland", draw: function (x, y, w, h, k, ch) { drawAmTrucksStill(x, y, w, h, k, ch); } }
+  { name: "american-discount-trucks", fighter: "Sean Strickland", draw: function (x, y, w, h, k, ch) { drawAmTrucksStill(x, y, w, h, k, ch); } },
+  // ---------------------------------------------------------------- Salkilld Bakery
+  // Daniel Cormier's: a shop-window poster, DC the baker, the boxes and the logo (salkilld-ad.js).
+  { name: "salkilld-bakery", fighter: "Daniel Cormier", draw: function (x, y, w, h, k, ch) { drawSalkilldStill(x, y, w, h, k, ch); } }
 ];
