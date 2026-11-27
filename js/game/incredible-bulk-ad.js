@@ -1,8 +1,9 @@
 // Incredible Bulk (Joe, 2026-11-27): Francis Ngannou's protein powder
 // commercial on the jumbotron (a banner in the test arena), a parody of the
 // old green-giant comics, with the logo from incredible-bulk-art.js. It plays
-// once a match, right after his first rage punch (his Hulk mode, ngannou.js
-// endRage), hit or miss. Shot like a movie trailer, letterboxed with grain:
+// once a match, after his first rage punch (his Hulk mode, ngannou.js
+// endRage), hit or miss, once he's finished Hulk mode and gone back to his own
+// colour and size. Shot like a movie trailer, letterboxed with grain:
 //   1. A dark gym at night, one lamp swinging over a tub of Incredible Bulk
 //      on the bench in the fog. THEY TRAIN. HE BULKS.
 //   2. Francis shakes the shaker (SHAKE SHAKE) and chugs it (GLUG GLUG).
@@ -36,15 +37,20 @@ var IBK_CUES = [["thump", 0.1], ["thump", 0.9], ["thump", 1.7],
   ["slam", 7.15], ["slam", 7.65], ["roll", 8.05], ["bigslam", 8.5], ["sparkle", 8.6],
   ["rattle", 9.75], ["rattle", 9.95], ["squeeze", 10.2], ["splat", 10.32],
   ["whoosh", 11.4], ["sting", 11.5], ["sparkle", 11.9]];
-var IBK = { show: 0, t: 0, id: 0, done: false, paused: false, cue: 0, out: null, nb: null };
+var IBK = { wait: false, show: 0, t: 0, id: 0, done: false, paused: false, cue: 0, out: null, nb: null };
 
 // From startMatchWith (through resetAdBreaks).
-function resetBulkAd() { IBK.show = 0; IBK.t = 0; IBK.done = false; IBK.paused = false; IBK.cue = 0; stopBulkSound(); }
-// From endRage (ngannou.js): his first rage punch is done.
+function resetBulkAd() { IBK.wait = false; IBK.show = 0; IBK.t = 0; IBK.done = false; IBK.paused = false; IBK.cue = 0; stopBulkSound(); }
+// From endRage (ngannou.js): his first rage punch is done. The ad waits
+// until he's finished Hulk mode, back to his own colour and size (Joe,
+// 2026-11-27), then goes up (tickBulkAd).
 function bulkOnRage(b) {
   var c = b && b.char && b.char.ngannou;
-  if (IBK.done || (c && c.bulkAd === false) || (typeof galleryDemo !== "undefined" && galleryDemo)) return;
-  IBK.done = true; IBK.id = b.id; // (once a match)
+  if (IBK.done || IBK.wait || (c && c.bulkAd === false) || (typeof galleryDemo !== "undefined" && galleryDemo)) return;
+  IBK.wait = true; IBK.id = b.id;
+}
+function bulkQueue() {
+  IBK.wait = false; IBK.done = true; // (once a match)
   queueJumboAd(IBK_SHOW, function () {
     if (over) { jumboAdLeft = 0; return; }
     IBK.show = IBK_SHOW; IBK.t = 0; IBK.cue = 0; IBK.paused = false;
@@ -60,6 +66,11 @@ function bulkHold() {
 }
 // Every frame, from tickAdBreaks (ad-breaks.js).
 function tickBulkAd(dt) {
+  if (IBK.wait) {
+    var nb = balls && balls[IBK.id];
+    if (!nb || over) IBK.wait = false;
+    else if (!nb.ngSt && !(nb.ngGreen > 0)) bulkQueue(); // the green's gone: he's done with Hulk mode
+  }
   if (IBK.show <= 0) return;
   if (bulkHold()) {
     if (!IBK.paused) { IBK.paused = true; stopBulkSound(); }
