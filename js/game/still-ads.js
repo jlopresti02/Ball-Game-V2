@@ -327,5 +327,8 @@ var STILL_ADS = [
 
   // ---------------------------------------------------------------- Suga Smiles Dental
   // Sean O'Malley's: a waiting-room poster, the tooth in rainbow veneers, Dr. Suga (suga-smiles-ad.js).
-  { name: "suga-smiles-veneers", fighter: "Sean O'Malley", draw: function (x, y, w, h, k, ch) { drawSugaSmilesStill(x, y, w, h, k, ch); } }
+  { name: "suga-smiles-veneers", fighter: "Sean O'Malley", draw: function (x, y, w, h, k, ch) { drawSugaSmilesStill(x, y, w, h, k, ch); } },
+  // ---------------------------------------------------------------- Samurai Sushi
+  // Jiří Procházka's: an omakase poster, nigiri on the slate, Jiří with his sword home (samurai-sushi-ad.js).
+  { name: "samurai-sushi-omakase", fighter: "Jiří Procházka", draw: function (x, y, w, h, k, ch) { drawSamuraiSushiStill(x, y, w, h, k, ch); } }
 ];
