@@ -1,8 +1,8 @@
 // Samurai Sushi (Joe, 2026-11-27): Jiří Procházka's cinematic restaurant ad
 // on the jumbotron (a banner in the test arena), the first time he goes
-// samurai in a fight. It's queued as the kimono goes on (jpSuitUp,
-// prochazka.js) and goes up once his samurai run is over (a special, so the
-// jumbotron waits for it). Shot like a high-end knife commercial, letterboxed,
+// samurai in a fight (once a match). It goes up as the kimono goes on
+// (jpSuitUp, prochazka.js) and plays during his samurai run (his own run
+// doesn't hold it up: igbb.adOwn). Shot like a high-end knife commercial, letterboxed,
 // with film grain, following the shot list Joe got with it:
 //   1. Wide: a giant bluefin tuna on a cedar board in a dark dojo, one paper
 //      lantern above, mist and petals, a slow push-in. ONE FISH. ONE SAMURAI.
@@ -44,19 +44,20 @@ function resetSamuraiSushi() { SSU.show = 0; SSU.t = 0; SSU.done = false; SSU.pa
 function samuraiSushiOnSuit(b) {
   var c = b && b.char && b.char.prochazka;
   if (SSU.done || (c && c.sushiAd === false) || (typeof galleryDemo !== "undefined" && galleryDemo)) return;
-  SSU.done = true; SSU.id = b.id;
+  SSU.done = true; SSU.id = b.id; // (once a match)
+  if (b.igbb) b.igbb.adOwn = true; // his own samurai run doesn't hold it up (Joe: it plays once he's gone samurai)
   queueJumboAd(SSU_SHOW, function () {
     if (over) { jumboAdLeft = 0; return; }
     SSU.show = SSU_SHOW; SSU.t = 0; SSU.cue = 0; SSU.paused = false;
     ssuDuck();
-  });
+  }, b);
 }
 function ssuDuck() {
   try { var ac = getAudioCtx(); if (ac && typeof duckMusic === "function") duckMusic(ac.currentTime, ac.currentTime + SSU.show); } catch (e) { /* no audio */ }
 }
 // A special, a clash, a lock or a cutscene on: the ad holds.
 function samuraiSushiHold() {
-  return (typeof jumboHold === "function" && jumboHold(null)) || (typeof sceneLocked === "function" && sceneLocked());
+  return (typeof jumboHold === "function" && jumboHold(balls && balls[SSU.id])) || (typeof sceneLocked === "function" && sceneLocked());
 }
 // Every frame, from tickAdBreaks (ad-breaks.js).
 function tickSamuraiSushi(dt) {
