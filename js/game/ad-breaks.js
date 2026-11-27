@@ -36,6 +36,7 @@ function resetAdBreaks() {
   resetSugaSmiles(); // (suga-smiles-ad.js)
   resetSamuraiSushi(); // (samurai-sushi-ad.js)
   resetAmTrucks(); // (american-trucks-ad.js)
+  resetSalkilld(); // (salkilld-ad.js)
 }
 // Every frame from update().
 function tickAdBreaks(dt) {
@@ -53,6 +54,7 @@ function tickAdBreaks(dt) {
   tickSugaSmiles(dt); // (suga-smiles-ad.js)
   tickSamuraiSushi(dt); // (samurai-sushi-ad.js)
   tickAmTrucks(dt); // (american-trucks-ad.js)
+  tickSalkilld(dt); // (salkilld-ad.js)
   // No ad breaks in gallery demos, or once the fight's over.
   if (over || (typeof galleryDemo !== "undefined" && galleryDemo) || !SPONSOR_ADS.length) return;
   adBreakT -= dt;
