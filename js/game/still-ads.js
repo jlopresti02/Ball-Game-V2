@@ -330,5 +330,8 @@ var STILL_ADS = [
   { name: "suga-smiles-veneers", fighter: "Sean O'Malley", draw: function (x, y, w, h, k, ch) { drawSugaSmilesStill(x, y, w, h, k, ch); } },
   // ---------------------------------------------------------------- Samurai Sushi
   // Jiří Procházka's: an omakase poster, nigiri on the slate, Jiří with his sword home (samurai-sushi-ad.js).
-  { name: "samurai-sushi-omakase", fighter: "Jiří Procházka", draw: function (x, y, w, h, k, ch) { drawSamuraiSushiStill(x, y, w, h, k, ch); } }
+  { name: "samurai-sushi-omakase", fighter: "Jiří Procházka", draw: function (x, y, w, h, k, ch) { drawSamuraiSushiStill(x, y, w, h, k, ch); } },
+  // ---------------------------------------------------------------- American Discount Trucks
+  // Sean Strickland's: the lot at sunset, Sean and Chuck Norris in front of the red truck (american-trucks-ad.js).
+  { name: "american-discount-trucks", fighter: "Sean Strickland", draw: function (x, y, w, h, k, ch) { drawAmTrucksStill(x, y, w, h, k, ch); } }
 ];
