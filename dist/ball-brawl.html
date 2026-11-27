@@ -33958,7 +33958,7 @@ function drawSamuraiSushiStill(x, y, w, h, k, ch) {
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
   ctx.translate(x, y); ctx.scale(s, s);
-  ssuDojo(ww, 1, 1);
+  ssuDojo(ww, 1, 1, ww * 0.68);
   ssuLantern(ww * 0.68, 48, 0.9, 0.5);
   ssuMist(ww, 3, 190, 1);
   ctx.fillStyle = "#16181b"; stillRoundRect(ww * 0.03, 168, ww * 0.5, 50, 8); ctx.fill();
@@ -33966,7 +33966,7 @@ function drawSamuraiSushiStill(x, y, w, h, k, ch) {
   ssuJiri(ww * 0.86, 160, 66, look, name, { sheathed: true });
   stillText("SAMURAI", ww * 0.28, 70, 46, SSU_CREAM, ww * 0.4, { face: SSU_SERIF, weight: "700", glow: "rgba(255,180,120,0.35)" });
   stillText("S  U  S  H  I", ww * 0.28, 106, 22, SSU_CREAM, ww * 0.34, { face: SSU_SERIF, weight: "400" });
-  ctx.save(); ctx.translate(ww * 0.51, 58); ctx.rotate(0.12);
+  ctx.save(); ctx.translate(ww * 0.43, 50); ctx.rotate(0.12);
   ctx.fillStyle = SSU_RED; stillRoundRect(-17, -17, 34, 34, 5); ctx.fill();
   ctx.strokeStyle = "#f8e9e0"; ctx.lineWidth = 2; stillRoundRect(-13, -13, 26, 26, 3); ctx.stroke();
   ctx.fillStyle = "#f8e9e0"; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
@@ -94097,21 +94097,21 @@ requestAnimationFrame(frame);
 
 })();
 </script>
-  <script src="js/game/intro-msg.js?v=20261127001501"></script>
-  <script src="js/game/tale-tape.js?v=20261127001501"></script>
-  <script src="js/game/tape-taunts.js?v=20261127001501"></script>
-<script src="js/game/special-solid.js?v=20261127001501"></script>
-<script src="js/game/watchdog.js?v=20261127001501"></script>
-<script src="js/game/update.js?v=20261127001501"></script>
-<script src="js/game/fighter-art.js?v=20261127001501"></script>
-<script src="js/game/fedor-skin.js?v=20261127001501"></script>
-<script src="js/game/draw-attacks.js?v=20261127001501"></script>
-<script src="js/game/wwit-badge.js?v=20261127001501"></script>
-<script src="js/game/stadium.js?v=20261127001501"></script>
-<script src="js/game/draw.js?v=20261127001501"></script>
-<script src="js/ui/gallery.js?v=20261127001501"></script>
-<script src="js/ui/saved-fights.js?v=20261127001501"></script>
-<script src="js/main.js?v=20261127001501"></script>
-<script src="js/ui/fight-link.js?v=20261127001501"></script>
+  <script src="js/game/intro-msg.js?v=20261127002228"></script>
+  <script src="js/game/tale-tape.js?v=20261127002228"></script>
+  <script src="js/game/tape-taunts.js?v=20261127002228"></script>
+<script src="js/game/special-solid.js?v=20261127002228"></script>
+<script src="js/game/watchdog.js?v=20261127002228"></script>
+<script src="js/game/update.js?v=20261127002228"></script>
+<script src="js/game/fighter-art.js?v=20261127002228"></script>
+<script src="js/game/fedor-skin.js?v=20261127002228"></script>
+<script src="js/game/draw-attacks.js?v=20261127002228"></script>
+<script src="js/game/wwit-badge.js?v=20261127002228"></script>
+<script src="js/game/stadium.js?v=20261127002228"></script>
+<script src="js/game/draw.js?v=20261127002228"></script>
+<script src="js/ui/gallery.js?v=20261127002228"></script>
+<script src="js/ui/saved-fights.js?v=20261127002228"></script>
+<script src="js/main.js?v=20261127002228"></script>
+<script src="js/ui/fight-link.js?v=20261127002228"></script>
 </body>
 </html>
