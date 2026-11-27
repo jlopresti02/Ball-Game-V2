@@ -1121,7 +1121,8 @@ function drawSkMatFlag(k) {
   for (var i = 0; i < 13; i++) { ctx.fillStyle = i % 2 ? SK_USA.white : SK_USA.red; ctx.fillRect(0, i * H / 13, W, H / 13 + 0.5); }
   ctx.fillStyle = SK_USA.blue; ctx.fillRect(0, 0, W * 0.42, H * 7 / 13);
   ctx.globalAlpha = 0.3 * k; ctx.fillStyle = "#ffffff";
-  for (var r = 0; r < 5; r++) for (var c = 0; c < 6; c++) skStar(ctx, W * 0.035 + c * W * 0.067 + (r % 2) * W * 0.033, H * 0.045 + r * H * 0.1, 7);
+  var cw = W * 0.42, chh = H * 7 / 13; // the real 50 stars: 9 rows of 6 and 5 (Joe, 2026-11-27)
+  for (var r = 0; r < 9; r++) for (var c = 0; c < (r % 2 ? 5 : 6); c++) skStar(ctx, (2 * c + 1 + (r % 2)) * cw / 12, (r + 1) * chh / 10, Math.min(cw / 12, chh / 10) * 0.75);
   ctx.restore();
 }
 
@@ -1262,7 +1263,7 @@ function drawSkBike(x, y, ang, r, wheel, k, go, face) {
   ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(top.x, top.y); ctx.stroke();
   ctx.translate(top.x, top.y);
   if (!left) ctx.scale(-1, 1);
-  drawAaFlag(0, 0, r * 1.25, r * 0.75, skClock * (go ? 18 : 8), Math.PI / 2); // Gaethje's flag (allamerican.js)
+  drawRealFlag(0, 0, r * 1.25, r * 0.75, skClock * (go ? 18 : 8), Math.PI / 2); // Joe's real flag (real-flag.js)
   ctx.restore();
 }
 
@@ -1526,7 +1527,7 @@ function drawStricklandSky(sc, ox, oy) {
       var fx = f.x + f.r * 0.25, fy = f.y - f.r * 0.2, ty = fy - f.r * (1.25 + 0.15 * Math.sin(now * 6 + f.phase));
       ctx.strokeStyle = "#8a6a3c"; ctx.lineWidth = 4; ctx.lineCap = "round";
       ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx, ty); ctx.stroke();
-      drawAaFlag(fx, ty, f.r * 1.3, f.r * 0.8, now * 9 + f.phase, Math.PI / 2 + Math.sin(now * 4 + f.phase) * 0.4);
+      drawRealFlag(fx, ty, f.r * 1.3, f.r * 0.8, now * 9 + f.phase, Math.PI / 2 + Math.sin(now * 4 + f.phase) * 0.4);
     });
     drawSkFireworks(s);
   } else if (!stadium) {
@@ -1535,7 +1536,7 @@ function drawStricklandSky(sc, ox, oy) {
         var top = j ? H - 26 : 4;
         ctx.strokeStyle = "#8a6a3c"; ctx.lineWidth = 2; ctx.lineCap = "round";
         ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0], top); ctx.stroke();
-        drawAaFlag(p[0], top, 28, 17, now * 9 + i, Math.PI / 2);
+        drawRealFlag(p[0], top, 28, 17, now * 9 + i, Math.PI / 2);
       });
     }
   }
