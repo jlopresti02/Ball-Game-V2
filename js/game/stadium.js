@@ -635,6 +635,7 @@ function drawJumbotron(px) {
   drawIslamDagJumbo(sx, sy, sw, jt.h - 28); // Islam's Dagestan World Van Tours ad (islam-dagestan-ad.js)
   drawMmPoorbetJumbo(sx, sy, sw, jt.h - 28); // Mighty Mouse's Fight Analysis sponsored by Poorbet (mighty-mouse-poorbet-ad.js)
   drawSugaSmilesJumbo(sx, sy, sw, jt.h - 28); // Sean O'Malley's Suga Smiles Dental ad (suga-smiles-ad.js)
+  drawSamuraiSushiJumbo(sx, sy, sw, jt.h - 28); // Jiří Procházka's Samurai Sushi ad (samurai-sushi-ad.js)
   drawNgannouJumbo(sx, sy, sw, jt.h - 28); // Ngannou's rage meter, Dana White, the punch-power reading (ngannou.js)
   drawBearWarnJumbo(sx, sy, sw, jt.h - 28); // WARNING: BEAR IN ARENA, over everything (bear-warning.js)
   drawConorJumbo(sx, sy, sw, jt.h - 28); // Conor McGregor's 13 SECONDS (conor.js)

@@ -34,6 +34,7 @@ function resetAdBreaks() {
   resetIslamDagAd(); // (islam-dagestan-ad.js)
   resetMmPoorbet(); // (mighty-mouse-poorbet-ad.js)
   resetSugaSmiles(); // (suga-smiles-ad.js)
+  resetSamuraiSushi(); // (samurai-sushi-ad.js)
 }
 // Every frame from update().
 function tickAdBreaks(dt) {
@@ -49,6 +50,7 @@ function tickAdBreaks(dt) {
   tickIslamDagAd(dt); // (islam-dagestan-ad.js)
   tickMmPoorbet(dt); // (mighty-mouse-poorbet-ad.js)
   tickSugaSmiles(dt); // (suga-smiles-ad.js)
+  tickSamuraiSushi(dt); // (samurai-sushi-ad.js)
   // No ad breaks in gallery demos, or once the fight's over.
   if (over || (typeof galleryDemo !== "undefined" && galleryDemo) || !SPONSOR_ADS.length) return;
   adBreakT -= dt;

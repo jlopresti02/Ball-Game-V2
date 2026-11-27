@@ -394,6 +394,7 @@ function jpSuitUp(self, other, cfg, m) {
   if (!reduceMotion) shake = Math.max(shake, 10);
   crowdReact(1);
   playSamuraiTaiko();
+  if (typeof samuraiSushiOnSuit === "function") samuraiSushiOnSuit(self); // his Samurai Sushi ad, the first time a fight (samurai-sushi-ad.js)
   var L = jpCfg(self).lines;
   if (L) jpOwe(self, L.samurai, "samurai", (jpCfg(self).talk || {}).wait || 12); // (every time he goes samurai)
 }
