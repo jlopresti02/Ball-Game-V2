@@ -270,7 +270,7 @@ function atkStrickland(cx, cy, r, look, name, o) {
   drawGlove(ctx, g.x, g.y, gr * (1 + 0.25 * p), look, "#0b0f12", Math.atan2(g.y - el.y, g.x - el.x));
 }
 // Chuck Norris (his own art, kit and hat from chuck-norris.js), drawn at r.
-// Arms at his sides (o.arms is ignored now); o.kick { ang, len, blur }; o.spin; o.tilt.
+// o.arms "crossed" folds them, otherwise at his sides; o.kick { ang, len, blur }; o.spin; o.tilt.
 function atkChuck(cx, cy, r, o) {
   if (typeof CN_LOOK === "undefined") return;
   o = o || {};
@@ -295,6 +295,12 @@ function atkChuck(cx, cy, r, o) {
       var hx = cx + px * sd * r * 1.3 - ux * r * 0.3, hy = cy + py * sd * r * 1.3 - uy * r * 0.3;
       strokeLimb(r * 0.18, skin, function () { ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); });
       atkFist(hx, hy, r * 0.2);
+    });
+  } else if (o.arms === "crossed") { // arms folded across his chest, the far arm under the near one
+    [[1, 0.24], [-1, 0.3]].forEach(function (a) {
+      var sd = a[0], sx = cx + sd * r * 0.8, sy = cy + r * 0.12, ex = cx + sd * r * 0.62, ey = cy + r * (a[1] + 0.22), hx = cx - sd * r * 0.5, hy = cy + r * a[1];
+      strokeLimb(r * 0.18, skin, function () { ctx.moveTo(sx, sy); ctx.quadraticCurveTo(ex, ey, hx, hy); });
+      atkFist(hx, hy, r * 0.17);
     });
   } else { // down at his sides, like Sean's off arm
     [-1, 1].forEach(function (sd) {
