@@ -92,6 +92,7 @@ function step(dt) {
     var spinning = b.powerState && b.powerState.phase === "attack";
     var sitting = b.watcherState && (b.watcherState.phase === "charge" || b.watcherState.phase === "laser");
     if (!b.alive || b.beamPin || b.grappled || b.grapple || b.sprawl || b.sprawled || subLocked(b) || b.koDuel || igbbLocked(b) || swordDuelLocked(b) || spinning || sitting) continue;
+    holdRange(b, balls[1 - i], dt); // stops at fighting range, in close only for a grab or the clinch (range.js)
     b.x += b.vx * dt; b.y += b.vy * dt;
     var hitWall = false, wnx = 0, wny = 0;
     if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); hitWall = true; wnx = 1; }
