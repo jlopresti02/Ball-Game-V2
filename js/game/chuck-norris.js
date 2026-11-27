@@ -123,6 +123,7 @@ function chuckNorrisArrives(self, other) {
   chuckNorris = { ownerId: self.id, phase: "rappel", t: 0, x: best.x, y0: stadiumOn() ? -420 : -CN_R * 4, y: -CN_R * 4, landY: best.y,
     rode: false, huntT: 0, aim: Math.atan2(other.y - best.y, other.x - best.x), say: 0, sayKey: null, touched: false, hop: 0, alpha: 1 };
   chuckNorris.y = chuckNorris.y0;
+  if (typeof amTrucksOnChuck === "function") amTrucksOnChuck(self); // Strickland & Chuck's truck ad, once a match (american-trucks-ad.js)
   playCnZip(cnNum(cfg.rappel, 0.9));
 }
 
