@@ -372,6 +372,7 @@ function endRage(self) {
   var rc = ngCfg(self).rage;
   self.ngSt = null;
   self.ngMeter = rc.keep || 0;
+  if (typeof bulkOnRage === "function") bulkOnRage(self); // his Incredible Bulk ad, once a match (incredible-bulk-ad.js)
   if (self.alive && inOrdinaryMovement(self)) setSpeed(self, (self.baseSpeed || SPEED) * slowMult(self));
 }
 // Grabbed, slammed or the like before it went off: stays full, tries again soon.

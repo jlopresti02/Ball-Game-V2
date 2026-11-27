@@ -336,5 +336,8 @@ var STILL_ADS = [
   { name: "american-discount-trucks", fighter: "Sean Strickland", draw: function (x, y, w, h, k, ch) { drawAmTrucksStill(x, y, w, h, k, ch); } },
   // ---------------------------------------------------------------- Salkilld Bakery
   // Daniel Cormier's: a shop-window poster, DC the baker, the boxes and the logo (salkilld-ad.js).
-  { name: "salkilld-bakery", fighter: "Daniel Cormier", draw: function (x, y, w, h, k, ch) { drawSalkilldStill(x, y, w, h, k, ch); } }
+  { name: "salkilld-bakery", fighter: "Daniel Cormier", draw: function (x, y, w, h, k, ch) { drawSalkilldStill(x, y, w, h, k, ch); } },
+  // ---------------------------------------------------------------- Incredible Bulk
+  // Francis Ngannou's: a supplement-store poster, the logo, the three tubs, Bulk Francis (incredible-bulk-ad.js).
+  { name: "incredible-bulk-flavours", fighter: "Francis Ngannou", draw: function (x, y, w, h, k, ch) { drawBulkStill(x, y, w, h, k, ch); } }
 ];
