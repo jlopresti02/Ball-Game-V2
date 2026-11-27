@@ -460,7 +460,7 @@ function drawChuckNorrisUnder() {
   ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(f.x, top); ctx.stroke();
   ctx.translate(f.x, top + 2);
   if (f.side < 0) ctx.scale(-1, 1);
-  drawAaFlag(0, 0, CN_R * 1.6, CN_R * 0.95, cnClock * 9, Math.PI / 2); // Gaethje's flag (allamerican.js)
+  drawRealFlag(0, 0, CN_R * 1.6, CN_R * 0.95, cnClock * 9, Math.PI / 2); // Joe's real flag (real-flag.js)
   ctx.fillStyle = "#c9a24a"; ctx.beginPath(); ctx.arc(0, -2, 4, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
 }
@@ -501,7 +501,7 @@ function drawCnChuck(n) {
   // the flag streaming up over him on the way down
   if (n.phase === "rappel") {
     ctx.save(); ctx.rotate(-Math.PI / 2 + Math.sin(cnClock * 5) * 0.06);
-    drawAaFlag(r * 0.1, -r * 0.95, r * 3, r * 1.9, cnClock * 16, Math.PI / 2);
+    drawRealFlag(r * 0.1, -r * 0.95, r * 3, r * 1.9, cnClock * 16, Math.PI / 2);
     ctx.restore();
   }
   var spin = 0;
