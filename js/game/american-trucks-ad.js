@@ -279,8 +279,10 @@ function atkChuck(cx, cy, r, o) {
   ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.beginPath(); ctx.ellipse(0, R * 1.02, R * 0.95, R * 0.16, 0, 0, Math.PI * 2); ctx.fill();
   if (o.kick && o.kick.blur) cnLeg(R, o.kick.ang, o.kick.len, true);
   ctx.save(); ctx.rotate((o.spin || 0) + (o.tilt || 0));
-  drawFighterArt(ctx, 0, 0, R, CN_LOOK, theme.wall, { layout: "contained", name: "chuck norris" });
-  drawCnKit(R); drawCnHat(R);
+  drawFighterArt(ctx, 0, 0, R, CN_LOOK, "#0b0f12", { layout: "contained", name: "chuck norris" });
+  drawCnKit(R);
+  ctx.lineWidth = Math.max(2, r * 0.05) / s; ctx.strokeStyle = "#0b0f12"; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.stroke(); // the same dark outline as Sean's (stillFighter)
+  drawCnHat(R);
   ctx.restore();
   if (o.kick) { if (!o.kick.blur) cnLeg(R, o.kick.ang, o.kick.len, false); cnBalanceArms(R, o.kick.ang); }
   else if (o.arms === "crossed") cnCrossedArms(R);
