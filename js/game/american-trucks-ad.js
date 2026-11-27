@@ -5,7 +5,8 @@
 // following the shot list Joe got with it:
 //   1. Aerial over the lot at sunset: lifted pickups, a giant flag, bunting,
 //      tube men, the sign lighting up bulb by bulb.
-//   2. Low-angle hero shot: a red lifted pickup rolls up, the grille glints.
+//   2. Low-angle hero shot: the red pickup rolls up, flashes its lights, the grille glints.
+// The trucks and the flag are Joe's photos (american-trucks-art.js).
 //   3. Strickland walks up and points down the lens: "HERE'S THE DEAL, GUYS."
 //   4. The windshield price, slashed and slashed again, star bursts.
 //   5. Chuck Norris, co-owner: looks at the price, shakes his head, and
@@ -110,9 +111,14 @@ function atkGround(ww, hz) {
   for (var i = -10; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(ww / 2 + i * 70, hz); ctx.lineTo(ww / 2 + i * 190, 260); ctx.stroke(); }
 }
 function atkPoleFlag(x, top, h, fw, t) {
-  ctx.fillStyle = "#c9ccd1"; ctx.fillRect(x - 2, top, 4, h);
-  ctx.fillStyle = ATK_GOLD; ctx.beginPath(); ctx.arc(x, top, 4, 0, Math.PI * 2); ctx.fill();
-  if (typeof drawAaFlag === "function") drawAaFlag(x + 2, top + 3, fw, fw * 0.55, t * 5, Math.PI / 2);
+  var p = ATK_PIC.flag, pic = atkPic("flag"), k = fw * 1.03 / p.w, ph = p.h * k;
+  ctx.fillStyle = "#b9bcc1"; ctx.fillRect(x - Math.max(1, 2.5 * k), top + ph * 0.9, Math.max(2, 5 * k), h - ph * 0.9);
+  if (!pic) return;
+  var x0 = x - p.pole * k, step = 4;
+  for (var sx = 0; sx < p.w; sx += step) { // Joe's flag in slices, rippling out from the pole
+    var u = sx / p.w, dy = Math.sin(u * 6 - t * 5) * u * fw * 0.035;
+    ctx.drawImage(pic, sx, 0, Math.min(step, p.w - sx), p.h, x0 + sx * k, top + dy, Math.min(step, p.w - sx) * k + 0.6, ph);
+  }
 }
 // Pennant bunting sagging between two points.
 function atkBunting(x0, x1, y, sag, t) {
@@ -173,59 +179,68 @@ function skStarSafe(x, y, s) {
 }
 // A lifted pickup from the side, facing left, standing on (cx, gy), L long.
 // o.sticker: the price on the side window ({ text, a, dx, dy, rot }).
-function atkTruck(cx, gy, L, col, o) {
+// Joe's truck and flag photos (american-trucks-art.js), graded for the
+// sunset once they've loaded. "red" and "white" are the photos as they are;
+// any other colour repaints the white truck (the black trim stays black).
+var ATK_PIC = { red: { src: "ATK_RED_SRC", w: 617, h: 383, glass: [0.54, 0.22], grille: [0.694, 0.47], lights: [[0.42, 0.46], [0.9, 0.44]] },
+  white: { src: "ATK_WHITE_SRC", w: 616, h: 322, glass: [0.45, 0.21] },
+  flag: { src: "ATK_FLAG_SRC", w: 389, h: 350, pole: 11.5 } };
+var atkPicImg = {}, atkPicCache = {};
+function atkPicRaw(n) {
+  var p = ATK_PIC[n];
+  if (!atkPicImg[n]) {
+    var src = typeof window !== "undefined" ? window[p.src] : null;
+    if (!src) return null;
+    atkPicImg[n] = new Image(); atkPicImg[n].src = src;
+  }
+  var im = atkPicImg[n];
+  return im.complete && im.naturalWidth ? im : null;
+}
+if (typeof Image !== "undefined") ["red", "white", "flag"].forEach(atkPicRaw); // start loading them now, so the still is ready when the rotation picks it
+function atkPic(kind) {
+  if (atkPicCache[kind]) return atkPicCache[kind];
+  var base = kind === "red" || kind === "flag" ? kind : "white", im = atkPicRaw(base);
+  if (!im || typeof document === "undefined") return null;
+  var p = ATK_PIC[base], cv = document.createElement("canvas"); cv.width = p.w; cv.height = p.h;
+  var c = cv.getContext("2d");
+  c.drawImage(im, 0, 0, p.w, p.h);
+  if (kind !== "red" && kind !== "white" && kind !== "flag") { // repaint: multiply, then back to the truck's own outline
+    c.globalCompositeOperation = "multiply"; c.fillStyle = kind; c.fillRect(0, 0, p.w, p.h);
+    c.globalCompositeOperation = "destination-in"; c.drawImage(im, 0, 0, p.w, p.h);
+  }
+  if (kind !== "flag") { // golden hour: warm light on the roof, cooler shade low down
+    c.globalCompositeOperation = "source-atop";
+    var g = c.createLinearGradient(0, 0, 0, p.h);
+    g.addColorStop(0, "rgba(255,160,80,0.22)"); g.addColorStop(0.5, "rgba(255,120,60,0.08)"); g.addColorStop(1, "rgba(30,15,40,0.3)");
+    c.fillStyle = g; c.fillRect(0, 0, p.w, p.h);
+  }
+  atkPicCache[kind] = cv;
+  return cv;
+}
+// A truck photo standing on the ground at gy, H tall, centred on cx.
+// o.flip mirrors it; o.sticker puts a price sticker on the windshield;
+// o.glint (0..1) runs a glint across the grille; o.lights flashes the headlights.
+function atkTruck(cx, gy, H, kind, o) {
   o = o || {};
+  var base = kind === "red" ? "red" : "white", p = ATK_PIC[base], W = H * p.w / p.h, pic = atkPic(kind);
   ctx.save(); ctx.translate(cx, gy);
-  var wr = 0.125 * L;
-  // suspension
-  ctx.fillStyle = "#1b1b1f";
-  [-0.32, 0.3].forEach(function (wx) { ctx.fillRect(wx * L - 0.05 * L, -0.3 * L, 0.1 * L, 0.12 * L); });
-  // the body
-  ctx.beginPath();
-  ctx.moveTo(-0.52 * L, -0.2 * L);
-  ctx.lineTo(-0.52 * L, -0.33 * L);
-  ctx.quadraticCurveTo(-0.5 * L, -0.37 * L, -0.4 * L, -0.38 * L);
-  ctx.lineTo(-0.2 * L, -0.39 * L);
-  ctx.lineTo(-0.12 * L, -0.56 * L);
-  ctx.lineTo(0.08 * L, -0.56 * L);
-  ctx.lineTo(0.11 * L, -0.4 * L);
-  ctx.lineTo(0.5 * L, -0.4 * L);
-  ctx.lineTo(0.52 * L, -0.2 * L);
-  ctx.closePath();
-  var bg = ctx.createLinearGradient(0, -0.56 * L, 0, -0.2 * L);
-  bg.addColorStop(0, shadeHex(col, 0.3)); bg.addColorStop(0.5, col); bg.addColorStop(1, shadeHex(col, -0.35));
-  ctx.fillStyle = bg; ctx.fill();
-  ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = Math.max(1, L * 0.008); ctx.stroke();
-  // a warm sunset sheen along the top edge
-  ctx.strokeStyle = "rgba(255,220,160,0.7)"; ctx.lineWidth = Math.max(1, L * 0.006);
-  ctx.beginPath(); ctx.moveTo(-0.5 * L, -0.365 * L); ctx.lineTo(-0.2 * L, -0.38 * L); ctx.moveTo(0.11 * L, -0.395 * L); ctx.lineTo(0.5 * L, -0.395 * L); ctx.stroke();
-  // windows
-  ctx.fillStyle = "#1d2836";
-  ctx.beginPath(); ctx.moveTo(-0.18 * L, -0.4 * L); ctx.lineTo(-0.11 * L, -0.53 * L); ctx.lineTo(-0.025 * L, -0.53 * L); ctx.lineTo(-0.025 * L, -0.4 * L); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(-0.005 * L, -0.4 * L); ctx.lineTo(-0.005 * L, -0.53 * L); ctx.lineTo(0.065 * L, -0.53 * L); ctx.lineTo(0.08 * L, -0.4 * L); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = "rgba(255,210,160,0.25)"; ctx.beginPath(); ctx.moveTo(-0.15 * L, -0.42 * L); ctx.lineTo(-0.1 * L, -0.52 * L); ctx.lineTo(-0.07 * L, -0.52 * L); ctx.lineTo(-0.12 * L, -0.42 * L); ctx.closePath(); ctx.fill();
-  // door seam, handle, a flag stripe down the side
-  ctx.strokeStyle = "rgba(0,0,0,0.4)"; ctx.lineWidth = Math.max(1, L * 0.004);
-  ctx.beginPath(); ctx.moveTo(0.1 * L, -0.4 * L); ctx.lineTo(0.1 * L, -0.22 * L); ctx.moveTo(-0.16 * L, -0.39 * L); ctx.lineTo(-0.16 * L, -0.22 * L); ctx.stroke();
-  [[ATK_RED, 0], ["#ffffff", 1], [ATK_BLUE, 2]].forEach(function (s) { ctx.fillStyle = s[0]; ctx.fillRect(-0.46 * L, -0.3 * L + s[1] * 0.014 * L, 0.94 * L, 0.012 * L); });
-  // chrome bumper, grille, headlight, tail light
-  ctx.fillStyle = "#d9dde2"; ctx.fillRect(-0.55 * L, -0.24 * L, 0.06 * L, 0.06 * L); ctx.fillRect(0.5 * L, -0.24 * L, 0.04 * L, 0.05 * L);
-  ctx.fillStyle = "#b9bec4"; ctx.fillRect(-0.53 * L, -0.35 * L, 0.025 * L, 0.1 * L);
-  ctx.fillStyle = "#fff4c2"; ctx.fillRect(-0.525 * L, -0.345 * L, 0.02 * L, 0.035 * L);
-  ctx.fillStyle = "#e01f2f"; ctx.fillRect(0.5 * L, -0.38 * L, 0.018 * L, 0.06 * L);
-  // wheel arches and the wheels: big tires, chrome rims
-  [-0.32, 0.3].forEach(function (wx) {
-    ctx.fillStyle = "#0e0e10"; ctx.beginPath(); ctx.arc(wx * L, -0.2 * L, wr * 1.12, Math.PI, 0); ctx.fill();
-    ctx.fillStyle = "#16161a"; ctx.beginPath(); ctx.arc(wx * L, -wr, wr, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "#2b2b30"; ctx.lineWidth = Math.max(1, wr * 0.12);
-    for (var k = 0; k < 10; k++) { var a = k / 10 * Math.PI * 2 + (o.roll || 0); ctx.beginPath(); ctx.moveTo(wx * L + Math.cos(a) * wr * 0.85, -wr + Math.sin(a) * wr * 0.85); ctx.lineTo(wx * L + Math.cos(a) * wr, -wr + Math.sin(a) * wr); ctx.stroke(); }
-    var rg = ctx.createRadialGradient(wx * L - wr * 0.2, -wr * 1.2, 1, wx * L, -wr, wr * 0.6);
-    rg.addColorStop(0, "#ffffff"); rg.addColorStop(1, "#8d949c");
-    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(wx * L, -wr, wr * 0.55, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#5c636b"; ctx.beginPath(); ctx.arc(wx * L, -wr, wr * 0.14, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(10,6,12,0.45)"; ctx.beginPath(); ctx.ellipse(0, -H * 0.015, W * 0.5, H * 0.07, 0, 0, Math.PI * 2); ctx.fill();
+  if (o.flip) ctx.scale(-1, 1);
+  if (pic) ctx.drawImage(pic, -W / 2, -H, W, H);
+  if (o.lights > 0 && p.lights) p.lights.forEach(function (l) {
+    var lx = -W / 2 + l[0] * W, ly = -H + l[1] * H, lr = W * 0.12 * o.lights;
+    var hg = ctx.createRadialGradient(lx, ly, 1, lx, ly, lr);
+    hg.addColorStop(0, "rgba(255,252,235,0.95)"); hg.addColorStop(0.3, "rgba(255,245,210,0.45)"); hg.addColorStop(1, "rgba(255,240,200,0)");
+    ctx.fillStyle = hg; ctx.fillRect(lx - lr, ly - lr, lr * 2, lr * 2);
   });
-  if (o.sticker) atkSticker(0.03 * L + (o.sticker.dx || 0), -0.465 * L + (o.sticker.dy || 0), 0.085 * L, o.sticker.text, o.sticker.rot || 0, o.sticker.a == null ? 1 : o.sticker.a, o.sticker.sq);
+  if (o.glint > 0 && o.glint < 1 && p.grille) ssuStar(-W / 2 + (p.grille[0] - 0.16 + o.glint * 0.3) * W, -H + (p.grille[1] - 0.08) * H, W * 0.07 * Math.sin(o.glint * Math.PI), 1);
   ctx.restore();
+  if (o.sticker) { var sp = atkTruckSpot(cx, gy, H, kind, o.flip); atkSticker(sp.x + (o.sticker.dx || 0), sp.y + (o.sticker.dy || 0), W * 0.06, o.sticker.text, o.sticker.rot || 0, o.sticker.a == null ? 1 : o.sticker.a, o.sticker.sq); }
+}
+// Where the windshield is on a truck drawn by atkTruck (for the sticker).
+function atkTruckSpot(cx, gy, H, kind, flip) {
+  var p = ATK_PIC[kind === "red" ? "red" : "white"], W = H * p.w / p.h, fx = (p.glass[0] - 0.5) * W;
+  return { x: cx + (flip ? -fx : fx), y: gy - H + p.glass[1] * H };
 }
 // A windshield price sticker: neon yellow with the price in marker.
 function atkSticker(x, y, s, text, rot, a, sq) {
@@ -236,53 +251,6 @@ function atkSticker(x, y, s, text, rot, a, sq) {
   for (var i = 0; i < 16; i++) { var an = i / 16 * Math.PI * 2, rr = i % 2 ? s * 0.82 : s; ctx.lineTo(Math.cos(an) * rr * 1.15, Math.sin(an) * rr * 0.8); }
   ctx.closePath(); ctx.fill(); ctx.stroke();
   stillText(text, 0, 0, s * 0.55, ATK_RED, s * 1.8, { face: ATK_SLAB });
-  ctx.restore();
-}
-// A lifted pickup head-on, low angle: grille, lights, big tires, sky under it.
-function atkTruckFront(cx, gy, W2, col, glint, t) {
-  ctx.save(); ctx.translate(cx, gy);
-  var tw = W2 * 0.2, th = W2 * 0.42;
-  // tires
-  ctx.fillStyle = "#121215";
-  [-1, 1].forEach(function (s) { stillRoundRect(s * W2 * 0.5 - (s > 0 ? tw : 0) - s * 4, -th, tw, th, tw * 0.25); ctx.fill(); });
-  ctx.strokeStyle = "#2c2c32"; ctx.lineWidth = 3;
-  [-1, 1].forEach(function (s) { var x0 = s * W2 * 0.5 - (s > 0 ? tw : 0) - s * 4; for (var k = 1; k < 7; k++) { ctx.beginPath(); ctx.moveTo(x0 + 3, -th + k * th / 7); ctx.lineTo(x0 + tw - 3, -th + k * th / 7); ctx.stroke(); } });
-  // axle and lift
-  ctx.fillStyle = "#1b1b1f"; ctx.fillRect(-W2 * 0.33, -th * 0.6, W2 * 0.66, th * 0.14);
-  ctx.fillStyle = "#e03a2f"; ctx.fillRect(-W2 * 0.3, -th * 0.98, 8, th * 0.4); ctx.fillRect(W2 * 0.3 - 8, -th * 0.98, 8, th * 0.4);
-  // body
-  var by = -th * 0.95, bh = W2 * 0.36;
-  var g = ctx.createLinearGradient(0, by - bh, 0, by);
-  g.addColorStop(0, shadeHex(col, 0.25)); g.addColorStop(1, shadeHex(col, -0.3));
-  ctx.fillStyle = g; stillRoundRect(-W2 * 0.5, by - bh, W2, bh, 10); ctx.fill();
-  ctx.strokeStyle = "#0b0f12"; ctx.lineWidth = 2.5; ctx.stroke();
-  // cab and windshield
-  ctx.fillStyle = shadeHex(col, -0.1);
-  ctx.beginPath(); ctx.moveTo(-W2 * 0.38, by - bh); ctx.lineTo(-W2 * 0.32, by - bh - W2 * 0.28); ctx.lineTo(W2 * 0.32, by - bh - W2 * 0.28); ctx.lineTo(W2 * 0.38, by - bh); ctx.closePath(); ctx.fill(); ctx.stroke();
-  var wg = ctx.createLinearGradient(0, by - bh - W2 * 0.25, 0, by - bh);
-  wg.addColorStop(0, "#f0a060"); wg.addColorStop(0.4, "#3a3550"); wg.addColorStop(1, "#151a26");
-  ctx.fillStyle = wg; ctx.beginPath(); ctx.moveTo(-W2 * 0.34, by - bh - 4); ctx.lineTo(-W2 * 0.29, by - bh - W2 * 0.25); ctx.lineTo(W2 * 0.29, by - bh - W2 * 0.25); ctx.lineTo(W2 * 0.34, by - bh - 4); ctx.closePath(); ctx.fill();
-  // grille: chrome bars and a star
-  var gx = -W2 * 0.3, gw = W2 * 0.6, gyy = by - bh * 0.85, gh = bh * 0.55;
-  var cg = ctx.createLinearGradient(0, gyy, 0, gyy + gh);
-  cg.addColorStop(0, "#ffffff"); cg.addColorStop(0.5, "#8f969e"); cg.addColorStop(1, "#e6e9ec");
-  ctx.fillStyle = cg; stillRoundRect(gx, gyy, gw, gh, 6); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#24272c";
-  for (var b = 0; b < 4; b++) ctx.fillRect(gx + 6, gyy + 6 + b * (gh - 8) / 4, gw - 12, (gh - 8) / 8);
-  ctx.fillStyle = ATK_BLUE; ctx.beginPath(); ctx.arc(0, gyy + gh / 2, gh * 0.24, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#ffffff"; skStarSafe(0, gyy + gh / 2, gh * 0.18);
-  // headlights
-  [-1, 1].forEach(function (s) {
-    var hx = s * W2 * 0.41, hy = gyy + gh * 0.3;
-    var hg = ctx.createRadialGradient(hx, hy, 1, hx, hy, W2 * 0.12);
-    hg.addColorStop(0, "rgba(255,250,220,1)"); hg.addColorStop(0.3, "rgba(255,240,190,0.6)"); hg.addColorStop(1, "rgba(255,240,190,0)");
-    ctx.fillStyle = hg; ctx.fillRect(hx - W2 * 0.12, hy - W2 * 0.12, W2 * 0.24, W2 * 0.24);
-    ctx.fillStyle = "#fffbe6"; stillRoundRect(hx - W2 * 0.06, hy - W2 * 0.03, W2 * 0.12, W2 * 0.06, 4); ctx.fill();
-  });
-  // bumper
-  ctx.fillStyle = "#cfd4d9"; stillRoundRect(-W2 * 0.54, by - 10, W2 * 1.08, 18, 6); ctx.fill(); ctx.stroke();
-  // the glint running across the chrome
-  if (glint > 0 && glint < 1) ssuStar(gx + gw * glint, gyy + gh * 0.2, W2 * 0.09 * Math.sin(glint * Math.PI), 1);
   ctx.restore();
 }
 // Sean Strickland: o.point (0..1 how far up his pointing glove is), o.walk.
@@ -374,11 +342,11 @@ function atkShot(i, ww, t, lt, sk, skName) {
     atkSky(ww, ww * 0.7, 140, hz);
     atkGround(ww, hz);
     atkPoleFlag(ww * 0.83, 22, 150, 120, t);
-    var cols = ["#c8102e", "#f2f2f2", "#1f3a8a", "#2b2b2b", "#8a8f96", "#b5651d"];
+    var cols = ["red", "white", "#6a8be0", "#4a4d52", "#c9ccd1", "#e09050"];
     for (var row = 0; row < 2; row++) for (var k = 0; k < 9; k++) {
       var tx = ww * 0.06 + k * ww * 0.115 + row * ww * 0.05, ty = hz + 18 + row * 40;
       if (Math.abs(tx - ww * 0.33) < 90 && row === 0) continue;
-      atkTruck(tx, ty, 70 + row * 18, cols[(k + row * 2) % cols.length], {});
+      atkTruck(tx, ty, (70 + row * 18) * 0.62, cols[(k + row * 2) % cols.length], { flip: (k + row) % 2 === 1 });
     }
     atkBunting(ww * 0.02, ww * 0.5, hz - 8, 10, t); atkBunting(ww * 0.5, ww * 0.98, hz - 8, 10, t + 1);
     atkSign(ww * 0.33, 95, 1.05, lt / 1.6, t);
@@ -390,7 +358,7 @@ function atkShot(i, ww, t, lt, sk, skName) {
     var roll = ssuOut(lt / 1.0), dip = lt > 1.0 && lt < 1.35 ? Math.sin((lt - 1.0) / 0.35 * Math.PI) * 4 : 0;
     var sc = 0.55 + 0.22 * roll;
     ctx.save(); ctx.translate(ww / 2, 238); ctx.scale(sc, sc); ctx.translate(-ww / 2, -238);
-    atkTruckFront(ww / 2, 238 + dip, 270, "#b3121f", (lt - 1.05) / 0.4, t);
+    atkTruck(ww / 2, 238 + dip, 290, "red", { glint: (lt - 1.05) / 0.4, lights: 0.45 + (lt > 0.85 && lt < 1.35 ? 0.55 * Math.sin((lt - 0.85) / 0.5 * Math.PI) : 0) });
     ctx.restore();
     atkDust(ww / 2 - 130, 238, 160, lt / 1.6, 7, 3); atkDust(ww / 2 + 130, 238, 160, lt / 1.6, 7, 17);
     atkFlare(ww, ww * 0.5, 175, 0.9);
@@ -400,7 +368,7 @@ function atkShot(i, ww, t, lt, sk, skName) {
     atkSky(ww, ww * 0.85, 120, hz);
     atkGround(ww, hz);
     ctx.save(); ctx.globalAlpha *= 0.55; atkPoleFlag(ww * 0.2, -10, 200, 150, t); ctx.restore();
-    atkTruck(ww * 0.74, 244, 440, "#b3121f", {});
+    atkTruck(ww * 0.74, 244, 270, "red", {});
     var walk = ssuOut(lt / 0.45), sx = ww * 0.12 + (ww * 0.42 - ww * 0.12) * walk;
     atkStrickland(sx, 158, 62, sk, skName, { walk: lt < 0.45 ? lt : 0, point: (lt - 0.55) / 0.2 });
   } else if (i === 3) { // 4. the prices, slashed
@@ -444,14 +412,14 @@ function atkShot(i, ww, t, lt, sk, skName) {
     atkSky(ww, ww * 0.35, 132, hz);
     atkGround(ww, hz);
     var slow = lt > 0.85 && lt < 1.9;
-    var truckX = ww * 0.62, L = 360, stX = truckX + 0.03 * L, stY = 222 - 0.465 * L;
+    var truckX = ww * 0.62, L = 360, TH = 220, spot = atkTruckSpot(truckX, 222, TH, "white"), stX = spot.x, stY = spot.y;
     var kickAt = 1.25, flyU = (lt - kickAt) / 1.0, newU = (lt - 1.6) / 0.15;
-    atkTruck(truckX, 222, L, "#f0f0f0", { sticker: lt < kickAt ? { text: "$19,999" } : newU > 0 ? { text: "$9,999", sq: newU < 1 ? 1 - newU : 0 } : null });
+    atkTruck(truckX, 222, TH, "white", { sticker: lt < kickAt ? { text: "$19,999" } : newU > 0 ? { text: "$9,999", sq: newU < 1 ? 1 - newU : 0 } : null });
     if (lt >= kickAt && flyU < 1) { // the old sticker flying off, spinning
       var fx = stX + flyU * 160, fy = stY - Math.sin(flyU * Math.PI * 0.8) * 90 + flyU * flyU * 60;
       atkSticker(fx, fy, 0.085 * L, "$19,999", flyU * 9, 1 - Math.max(0, flyU - 0.7) / 0.3);
     }
-    var cx = stX - 100, cy = 168, r = 52;
+    var cx = stX - 95, cy = 174, r = 50;
     var dxk = stX - cx, dyk = stY - cy, kAng = Math.atan2(dyk, dxk), kLen = Math.sqrt(dxk * dxk + dyk * dyk) / r * CN_R - CN_R * 0.2;
     var o = { arms: "crossed" };
     if (lt > 0.55 && lt < 0.9) o.tilt = Math.sin((lt - 0.55) / 0.35 * Math.PI * 3) * 0.08; // shakes his head
@@ -468,7 +436,7 @@ function atkShot(i, ww, t, lt, sk, skName) {
     atkGround(ww, hz);
     ctx.save(); ctx.globalAlpha *= 0.85; atkPoleFlag(ww * 0.46, 0, 190, 110, t); ctx.restore();
     var z6 = 1 + lt * 0.02; ctx.save(); ctx.translate(ww * 0.25, 230); ctx.scale(z6, z6); ctx.translate(-ww * 0.25, -230);
-    atkTruck(ww * 0.25, 214, 330, "#b3121f", {});
+    atkTruck(ww * 0.25, 214, 205, "red", {});
     atkStrickland(ww * 0.1, 168, 50, sk, skName, { point: 1 });
     atkChuck(ww * 0.39, 170, 48, { arms: "crossed" });
     ctx.restore();
@@ -547,7 +515,7 @@ function drawAmTrucksStill(x, y, w, h, k, ch) {
   atkGround(ww, 168);
   atkPoleFlag(ww * 0.47, 6, 180, 110, 1.3);
   atkBunting(0, ww * 0.5, 160, 8, 0.4);
-  atkTruck(ww * 0.25, 214, 330, "#b3121f", { sticker: { text: "$9,999" } });
+  atkTruck(ww * 0.25, 214, 205, "red", { sticker: { text: "$9,999" } });
   atkStrickland(ww * 0.1, 168, 50, look, name, { point: 1 });
   atkChuck(ww * 0.39, 170, 48, { arms: "crossed" });
   atkSign(ww * 0.75, 78, 1.25, 1, 0.3);
